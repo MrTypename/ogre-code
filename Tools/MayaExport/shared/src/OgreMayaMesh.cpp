@@ -26,7 +26,6 @@ or go to http://www.gnu.org/licenses/gpl.txt
 #include <maya/MItGeometry.h>
 #include <maya/MFnMesh.h>
 #include <maya/MDagPath.h>
-#include <maya/MDagPathArray.h>
 #include <maya/MGlobal.h>
 #include <maya/MPlug.h>
 #include <maya/MFnLambertShader.h>
@@ -162,7 +161,9 @@ namespace OgreMaya {
 	MStatus MeshGenerator::_processPolyMesh(ofstream& out, const MDagPath dagPath) {		        
 
         cout << "\nMeshGenerator::_processPolyMesh\n";
-        cout << "\tdagPath = \"" << dagPath.fullPathName().asChar() << "\"\n";       
+        cout << "\tdagPath = \"" << dagPath.fullPathName().asChar() << "\"\n";
+        
+        MFnMesh* fnMesh = 0;                                    
 
         MStatus status = MStatus::kSuccess;
         MeshMayaGeometry MayaGeometry;
@@ -175,7 +176,7 @@ namespace OgreMaya {
 	    //search the skin cluster affecting this geometry
 	    MItDependencyNodes kDepNodeIt( MFn::kSkinClusterFilter );            
 
-        MFnMesh fnMesh(dagPath, &status);
+        MFnMesh fnTargetMesh(dagPath, &status);
 
 	    for( ;!kDepNodeIt.isDone() && !hasSkinCluster; kDepNodeIt.next()) {            
 
@@ -198,20 +199,11 @@ namespace OgreMaya {
 	            kInputObject = kSkinClusterFn.inputShapeAtIndex( uiIndex, &status );
 	            kOutputObject = kSkinClusterFn.outputShapeAtIndex( uiIndex, &status );
 
-                if(kOutputObject == fnMesh.object()) {
+                if(kOutputObject == fnTargetMesh.object()) {
                     cout << "\tgeometry located in skin cluster\n";
                     hasSkinCluster = true;
 
-/*                    
-                    MDagPathArray jointPaths;
-                    kSkinClusterFn.influenceObjects(jointPaths, &status);
-                    int dummy;
-	                string rootName = jointPaths[0].partialPathName(&status).asChar();
-
-           	        MGlobal::executeCommand("ikSystem -e -sol 0;");
-	                MGlobal::selectByName(rootName.c_str());
-	                MGlobal::executeCommand("dagPose -r -g -bp");
-*/
+                    fnMesh = new MFnMesh(kInputObject);
 
                     // get weights
                     MItGeometry kGeometryIt(kInputObject);
@@ -228,28 +220,33 @@ namespace OgreMaya {
                 }
             }
         
-        }           
-                          
+        }
+                
+        if(!hasSkinCluster)
+            fnMesh = new MFnMesh(dagPath, &status); 
+
+
+        //MFnMesh fnMesh(dagPath, &status); 
+        
+//*******************************************************************        
         
         // ===== Get Maya geometry		
-		status = _queryMayaGeometry(fnMesh, MayaGeometry);
+		status = _queryMayaGeometry(*fnMesh, MayaGeometry);
 		if (status == MStatus::kFailure) {
 			return status;
 		}
 
-/*
-        if(hasSkinCluster) {	
-	        MGlobal::executeCommand("ikSystem -e -sol 1;");
-        }
-*/
 
 		// ===== Parse into MeshGenerator format
 		MeshFaceVertexVector FaceVertices;
 		MeshTriFaceList      TriFaces;
-		status = _parseMayaGeometry(fnMesh, MayaGeometry, FaceVertices, TriFaces);
+		status = _parseMayaGeometry(*fnMesh, MayaGeometry, FaceVertices, TriFaces);
 		if (status == MStatus::kFailure) {
 			return status;
 		}
+
+		
+        delete fnMesh;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -677,19 +674,17 @@ namespace OgreMaya {
 				/*if (OPTIONS.exportUVs)*/ {
 					MeshMayaUVSetList::iterator iterUVSet;
 					iterUVSet = MayaGeometry.UVSets.begin();
-					while (iterUVSet != MayaGeometry.UVSets.end()) {                        
+					while (iterUVSet != MayaGeometry.UVSets.end()) {
 						int iUV;
-						MStatus stat = fnMesh.getPolygonUVid(iPoly, iPolyVertex, iUV, &(iterUVSet->sName));
+						fnMesh.getPolygonUVid(iPoly, iPolyVertex, iUV, &(iterUVSet->sName));
 					
-                        if(!stat.error()) {
-						    MeshVertexUV VertexUV;
-						    VertexUV.u = iterUVSet->uArray[iUV];
-						    VertexUV.v = 1.0f - iterUVSet->vArray[iUV];	// CJV 2004-01-05: Required for Ogre 0.13
+						MeshVertexUV VertexUV;
+						VertexUV.u = iterUVSet->uArray[iUV];
+						VertexUV.v = 1.0f - iterUVSet->vArray[iUV];	// CJV 2004-01-05: Required for Ogre 0.13
 					
-						    FaceVertex.listUV.push_back(VertexUV);
-		                }
-						
-                        ++iterUVSet;                        
+						FaceVertex.listUV.push_back(VertexUV);
+		
+						++iterUVSet;
 					}
 				}
 
