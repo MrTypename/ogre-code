@@ -1,0 +1,681 @@
+/*
+-----------------------------------------------------------------------------
+This source file is part of OGRE
+    (Object-oriented Graphics Rendering Engine)
+For the latest info, see http://ogre.sourgeforge.net/
+
+Copyright © 2000-2003 The OGRE Team
+Also see acknowledgements in Readme.html
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/gpl.html.
+-----------------------------------------------------------------------------
+*/
+
+/* Static water simulation by eru
+ * Started 29.05.2003, 20:54:37
+ */
+#include "Ogre.h"
+#include "OgreStringConverter.h"
+
+#include "ExampleApplication.h"
+#include "WaterMesh.h"
+
+#include "OgreParticle.h"
+#include "OgreMaterial.h"
+
+#include "iostream.h"
+
+AnimationState* mAnimState;
+
+// Mesh stuff 
+#define MESH_NAME "WaterMesh"
+#define ENTITY_NAME "WaterEntity"
+#define MATERIAL_PREFIX "Examples/Water"
+#define MATERIAL_NAME "Examples/Water0"
+#define COMPLEXITY 64 		// watch out - number of polys is 2*ACCURACY*ACCURACY !
+#define PLANE_SIZE 3000.0f
+//~ #define CIRCLES_MATERIAL "Examples/Water/Circles"
+#define CIRCLES_MATERIAL "Examples/Water6"
+
+/* Some global variables */
+SceneNode *headNode ;
+Overlay *waterOverlay ;
+ParticleSystem *particleSystem ;
+ParticleEmitter *particleEmitter ;
+SceneManager *sceneMgr ;
+
+void prepareCircleMaterial()
+{
+	char *bmap = new char[256 * 256 * 4] ;
+	memset(bmap, 127, 256 * 256 * 4);
+	for(int b=0;b<16;b++) {
+		int x0 = b % 4 ;
+		int y0 = b >> 2 ;
+		Real radius = 4.0f + 1.4 * (float) b ;
+		for(int x=0;x<64;x++) {
+			for(int y=0;y<64;y++) {
+				Real dist = Math::Sqrt((x-32)*(x-32)+(y-32)*(y-32)); // 0..ca.45
+				dist = fabs(dist -radius -2) / 2.0f ; 
+				dist = dist * 255.0f;
+				if (dist>255)
+					dist=255 ;
+				int colour = 255-(int)dist ;
+				colour = (int)( ((Real)(15-b))/15.0f * (Real) colour );
+				
+				bmap[4*(256*(y+64*y0)+x+64*x0)+0]=colour ;
+				bmap[4*(256*(y+64*y0)+x+64*x0)+1]=colour ;
+				bmap[4*(256*(y+64*y0)+x+64*x0)+2]=colour ;
+				bmap[4*(256*(y+64*y0)+x+64*x0)+3]=colour ;
+			}
+		}
+	}
+	
+	SDDataChunk imgchunk(bmap, 256 * 256 * 4);
+	Image img; 
+	img.loadRawData( imgchunk, 256, 256, PF_A8R8G8B8 );
+	TextureManager::getSingleton().loadImage( CIRCLES_MATERIAL , img );
+	Material *material = (Material*) 
+		MaterialManager::getSingleton().create( CIRCLES_MATERIAL );
+	Material::TextureLayer *texLayer = material->addTextureLayer( CIRCLES_MATERIAL );
+	texLayer->setTextureAddressingMode( Material::TextureLayer::TAM_CLAMP );	
+	material->setSceneBlending( SBT_ADD );
+}
+
+
+/* =========================================================================*/
+/*               WaterCircle class                                          */
+/* =========================================================================*/
+#define CIRCLE_SIZE 500.0 
+#define CIRCLE_TIME 0.5f
+class WaterCircle 
+{
+private:
+	String name ;
+	SceneNode *node ;
+	Mesh *mesh ;
+	SubMesh *subMesh ;
+	Entity *entity ;
+	Real tm ;
+	static bool first ;
+	// some buffers shared by all circles
+	static HardwareVertexBufferSharedPtr posnormVertexBuffer ; 
+	static HardwareIndexBufferSharedPtr indexBuffer ; // indices for 2 faces
+	static HardwareVertexBufferSharedPtr texcoordsVertexBuffer ;
+	
+	Real *texBufData;
+	void _prepareMesh()
+	{
+		int i,lvl ;
+		
+		mesh= (Mesh*) MeshManager::getSingleton().createManual(name) ;
+		subMesh = mesh->createSubMesh();
+		subMesh->useSharedVertices=false;
+
+		int numFaces = 2 ;
+		int numVertices = 4 ;
+
+		if (first) { // first Circle, create some static common data
+			first = false ;
+			
+			// static buffer for position and normals
+			posnormVertexBuffer = 
+				HardwareBufferManager::getSingleton().createVertexBuffer( 
+					6*sizeof(Real), // size of one vertex data
+					4, // number of vertices
+					HardwareBuffer::HBU_STATIC_WRITE_ONLY, // usage
+					false); // no shadow buffer
+			Real *posnormBufData = (Real*) posnormVertexBuffer->
+				lock(HardwareBuffer::HBL_DISCARD);
+			for(i=0;i<numVertices;i++) {
+				posnormBufData[6*i+0]=((Real)(i%2)-0.5f)*CIRCLE_SIZE; // pos X
+				posnormBufData[6*i+1]=0; // pos Y
+				posnormBufData[6*i+2]=((Real)(i/2)-0.5f)*CIRCLE_SIZE; // pos Z
+				posnormBufData[6*i+3]=0 ; // normal X
+				posnormBufData[6*i+4]=1 ; // normal Y
+				posnormBufData[6*i+5]=0 ; // normal Z
+			}
+			posnormVertexBuffer->unlock();
+			//~ posnormVertexBuffer->writeData(0, 
+				//~ posnormVertexBuffer->getSizeInBytes(),
+				//~ posnormBufData,
+				//~ true); // discard ?
+
+			// static buffer for 16 sets of texture coordinates
+			texcoordsVertexBuffer = 
+				HardwareBufferManager::getSingleton().createVertexBuffer( 
+					2*sizeof(Real), // size of one vertex data
+					16*numVertices, // number of vertices
+					HardwareBuffer::HBU_STATIC_WRITE_ONLY, // usage
+					false); // no shadow buffer
+			Real *texcoordsBufData = (Real*) texcoordsVertexBuffer->
+				lock(HardwareBuffer::HBL_DISCARD);
+			for(lvl=0;lvl<16;lvl++) {
+				float x0 = (Real)(lvl % 4) * 0.25 ;
+				float y0 = (Real)(lvl / 4) * 0.25 ;
+				y0 = 0.75-y0 ; // upside down
+				for(i=0;i<4;i++) {
+					texcoordsBufData[(lvl*numVertices+i)*2 + 0]=
+						x0 + 0.25 * (Real)(i%2) ;
+					texcoordsBufData[(lvl*numVertices+i)*2 + 1]=
+						y0 + 0.25 * (Real)(i/2) ;
+				}
+			}
+			texcoordsVertexBuffer->unlock();
+
+			// Index buffer for 2 faces
+			unsigned short faces[6] = {2,1,0,  2,3,1};
+			indexBuffer = 
+				HardwareBufferManager::getSingleton().createIndexBuffer(
+					HardwareIndexBuffer::IT_16BIT, 
+					6, 
+					HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+			indexBuffer->writeData(0, 
+				indexBuffer->getSizeInBytes(),
+				faces,
+				true); // true?
+		}
+		
+		// Initialize vertex data
+		subMesh->vertexData = new VertexData();
+		// first, set vertex buffer bindings
+		VertexBufferBinding *vbind = subMesh->vertexData->vertexBufferBinding ; 
+		vbind->setBinding(0, posnormVertexBuffer);
+		vbind->setBinding(1, texcoordsVertexBuffer);
+		// now, set vertex buffer declaration
+		VertexDeclaration *vdecl = subMesh->vertexData->vertexDeclaration ;
+		vdecl->addElement(0, 0, VET_FLOAT3, VES_POSITION);
+		vdecl->addElement(0, 3*sizeof(Real), VET_FLOAT3, VES_NORMAL);
+		vdecl->addElement(0, 0, VET_FLOAT2, VES_TEXTURE_COORDINATES); 
+		
+		// Initialize index data
+		subMesh->indexData->indexBuffer = indexBuffer;
+		subMesh->indexData->indexStart = 0;
+		subMesh->indexData->indexCount = 6;
+		
+		// set mesh bounds
+		AxisAlignedBox circleBounds(-CIRCLE_SIZE/2.0f, 0, -CIRCLE_SIZE/2.0f,
+			CIRCLE_SIZE/2.0f, 0, CIRCLE_SIZE/2.0f);
+		mesh->_setBounds(circleBounds);
+	}
+public:
+	int lvl ;
+	void setTextureLevel()
+	{
+		subMesh->vertexData->vertexDeclaration->modifyElement(2,
+			1, lvl*8*sizeof(Real), VET_FLOAT2, VES_TEXTURE_COORDINATES); // I like it :)
+	}
+	WaterCircle(const String& name, Real x, Real y)
+	{
+		this->name = name ;
+		_prepareMesh();
+		node = static_cast<SceneNode*> (sceneMgr->getRootSceneNode()->createChild(name));
+		node->translate(x*(PLANE_SIZE/COMPLEXITY), 10, y*(PLANE_SIZE/COMPLEXITY));
+		entity = sceneMgr->createEntity(name, name);
+		entity->setMaterialName(CIRCLES_MATERIAL);
+		node->attachObject(entity);
+		tm = 0 ;
+		lvl = 0 ;
+		setTextureLevel();
+	}
+	~WaterCircle()
+	{
+		MeshManager::getSingleton().unload(mesh);
+		delete mesh ; // nice, I think I don't have to delete any buffers here ;)
+		sceneMgr->removeEntity(entity->getName());
+		static_cast<SceneNode*> (sceneMgr->getRootSceneNode())->removeChild(node->getName());
+	}
+	void animate(Real timeSinceLastFrame)
+	{
+		int lastlvl = lvl ;
+		tm += timeSinceLastFrame ;
+		lvl = (int) ( (Real)(tm)/CIRCLE_TIME * 16 );
+		if (lvl<16 && lvl!=lastlvl) {
+			setTextureLevel();
+		}
+	}
+	static void clearStaticBuffers()
+	{
+		posnormVertexBuffer = HardwareVertexBufferSharedPtr() ;
+		indexBuffer = HardwareIndexBufferSharedPtr() ;
+		texcoordsVertexBuffer = HardwareVertexBufferSharedPtr() ;
+	}
+} ;
+bool WaterCircle::first = true ;
+HardwareVertexBufferSharedPtr WaterCircle::posnormVertexBuffer = 
+	HardwareVertexBufferSharedPtr() ;
+HardwareIndexBufferSharedPtr WaterCircle::indexBuffer = 
+	HardwareIndexBufferSharedPtr() ;
+HardwareVertexBufferSharedPtr WaterCircle::texcoordsVertexBuffer =
+	HardwareVertexBufferSharedPtr() ;
+
+/* =========================================================================*/
+/*               WaterListener class                                          */
+/* =========================================================================*/
+// Event handler 
+class WaterListener: public ExampleFrameListener
+{
+protected:
+	WaterMesh *waterMesh ;
+	Entity *waterEntity ;
+	int materialNumber ;
+	Real timeoutDelay ;
+
+#define RAIN_FREQ 2
+#define RAIN_HEIGHT_RANDOM 5
+#define RAIN_HEIGHT_CONSTANT 5
+	
+
+	typedef std::vector<WaterCircle*> WaterCircles ;
+	WaterCircles circles ;
+	
+	void processCircles(Real timeSinceLastFrame)
+	{
+		for(int i=0;i<circles.size();i++) {
+			circles[i]->animate(timeSinceLastFrame);
+		}
+		bool found ;
+		do {
+			found = false ;
+			for(WaterCircles::iterator it = circles.begin() ; 
+					it != circles.end(); 
+					++it) {
+				if ((*it)->lvl>=16) {
+					delete (*it);
+					circles.erase(it);
+					found = true ;
+					break ;
+				}
+			}
+		} while (found) ;
+	}
+
+	void processParticles()
+	{
+		static int pindex = 0 ;
+		ParticleIterator pit = particleSystem->_getIterator() ;
+		while(!pit.end()) {
+			Particle *particle = pit.getNext();
+			Vector3 ppos = particle->getPosition();
+			if (ppos.y<=0 && particle->mTimeToLive>0) { // hits the water!
+				// delete particle
+				particle->mTimeToLive = 0.0f;
+				// push the water
+				float x = ppos.x / PLANE_SIZE * COMPLEXITY ;
+				float y = ppos.z / PLANE_SIZE * COMPLEXITY ;
+				float h = rand() % RAIN_HEIGHT_RANDOM + RAIN_HEIGHT_CONSTANT ;
+				if (x<1) x=1 ;
+				if (x>COMPLEXITY-1) x=COMPLEXITY-1;
+				if (y<1) y=1 ;
+				if (y>COMPLEXITY-1) y=COMPLEXITY-1;
+				waterMesh->push(x,y,-h) ;
+				WaterCircle *circle = new WaterCircle(
+					"Circle#"+StringConverter::toString(pindex++),
+					x, y);
+				circles.push_back(circle);
+			}
+		}
+	}
+	
+	/** Simple rain */
+	void rain()
+	{
+		if (! (rand() % RAIN_FREQ )) { // every X frames
+			float x = rand() % (COMPLEXITY-1) + 1 ;
+			float y = rand() % (COMPLEXITY-1) + 1 ;
+			float h = rand() % RAIN_HEIGHT_RANDOM + RAIN_HEIGHT_CONSTANT ;
+			waterMesh->push(x,y,-h) ;
+		}
+	}
+
+	/** Head animation */
+	Real headDepth ;
+	void animateHead(Real timeSinceLastFrame)
+	{
+		// sine track? :)
+		static double sines[4] = {0,100,200,300};
+		static const double adds[4] = {0.3,-1.6,1.1,0.5};
+		static Vector3 oldPos = Vector3::UNIT_Z;
+		for(int i=0;i<4;i++) {
+			sines[i]+=adds[i]*timeSinceLastFrame;
+		}
+		Real tx = ((sin(sines[0]) + sin(sines[1])) / 4 + 0.5 ) * (float)(COMPLEXITY-2) + 1 ;
+		Real ty = ((sin(sines[2]) + sin(sines[3])) / 4 + 0.5 ) * (float)(COMPLEXITY-2) + 1 ;
+		waterMesh->push(tx,ty, -headDepth);
+		Real step = PLANE_SIZE / COMPLEXITY ;
+		headNode->resetToInitialState();
+		headNode->scale(3,3,3);
+		Vector3 newPos = Vector3(step*tx, headDepth, step*ty);
+		Vector3 diffPos = newPos - oldPos ;
+		Quaternion headRotation = Vector3::UNIT_Z.getRotationTo(diffPos);
+		oldPos = newPos ;
+		headNode->translate(newPos);
+		headNode->rotate(headRotation);
+	}
+	
+	// GUI updaters
+	void updateInfoParamC()
+	{
+		GuiManager::getSingleton().getGuiElement("Example/Water/Param_C") \
+			->setCaption("[1/2]Ripple speed: "+StringConverter::toString(waterMesh->PARAM_C));		
+	}
+	void updateInfoParamD()
+	{
+		GuiManager::getSingleton().getGuiElement("Example/Water/Param_D") \
+			->setCaption("[3/4]Distance: "+StringConverter::toString(waterMesh->PARAM_D));		
+	}
+	void updateInfoParamU()
+	{
+		GuiManager::getSingleton().getGuiElement("Example/Water/Param_U") \
+			->setCaption("[5/6]Viscosity: "+StringConverter::toString(waterMesh->PARAM_U));		
+	}
+	void updateInfoParamT()
+	{
+		GuiManager::getSingleton().getGuiElement("Example/Water/Param_T") \
+			->setCaption("[7/8]Frame time: "+StringConverter::toString(waterMesh->PARAM_T));		
+	}
+	void updateInfoNormals()
+	{
+		GuiManager::getSingleton().getGuiElement("Example/Water/Normals") \
+			->setCaption(String("[N]Normals: ")+((waterMesh->useFakeNormals)?"fake":"real"));
+	}
+	void switchNormals()
+	{
+		waterMesh->useFakeNormals = !waterMesh->useFakeNormals ;
+		updateInfoNormals() ;
+	}
+	void updateInfoHeadDepth()
+	{
+		GuiManager::getSingleton().getGuiElement("Example/Water/Depth") \
+			->setCaption(String("[U/J]Head depth: ")+StringConverter::toString(headDepth));
+	}
+	
+	void updateMaterial()
+	{
+		String materialName = MATERIAL_PREFIX+StringConverter::toString(materialNumber);
+		Material *material = static_cast<Material*> (MaterialManager::getSingleton().getByName(materialName));
+		if (!material){
+			if(materialNumber){
+				materialNumber = 0 ;
+				updateMaterial();
+				return ;
+			} else {
+				Except(Exception::ERR_INTERNAL_ERROR,
+					"Material "+materialName+"doesn't exist!",
+					"WaterListener::updateMaterial");
+			}
+		}
+		waterEntity->setMaterialName(materialName);
+		GuiManager::getSingleton().getGuiElement("Example/Water/Material") \
+			->setCaption(String("[M]Material: ")+materialName);
+	}
+	void switchMaterial()
+	{
+		materialNumber++;
+		updateMaterial();
+	}
+public:
+    WaterListener(RenderWindow* win, Camera* cam, 
+		WaterMesh *waterMesh, Entity *waterEntity)
+        : ExampleFrameListener(win, cam)
+    {
+		this->waterMesh = waterMesh ;
+		this->waterEntity = waterEntity ;
+		materialNumber = 5;
+		timeoutDelay = 0.0f;
+		headDepth = 2.0f;
+		
+		updateMaterial();
+		updateInfoParamC();
+		updateInfoParamD();
+		updateInfoParamU();
+		updateInfoParamT();
+		updateInfoNormals();
+		updateInfoHeadDepth();
+    }
+
+    bool frameStarted(const FrameEvent& evt)
+    {
+		bool retval = ExampleFrameListener::frameStarted(evt); 
+        //~ mAnimState->addTime(evt.timeSinceLastFrame);
+		
+		// process keyboard events
+		mInputDevice->capture();
+		Real changeSpeed = evt.timeSinceLastFrame ;
+		
+		// adjust keyboard speed with SHIFT (increase) and CONTROL (decrease)
+		if (mInputDevice->isKeyDown(KC_LSHIFT) || mInputDevice->isKeyDown(KC_RSHIFT)) {
+			changeSpeed *= 10.0f ;
+		}
+		if (mInputDevice->isKeyDown(KC_LCONTROL)) { 
+			changeSpeed /= 10.0f ;
+		}
+		
+		// rain
+		processCircles(evt.timeSinceLastFrame);
+		if (mInputDevice->isKeyDown(KC_SPACE)) {
+			//~ rain();
+			particleEmitter->setEmissionRate(20.0f);
+		} else {
+			particleEmitter->setEmissionRate(0.0f);
+		}
+		processParticles();
+
+		// adjust values (some macros for faster change		
+#define ADJUST_RANGE(_value,_keyPlus,_keyMinus,_minVal,_maxVal,_change,_macro) {\
+	if (mInputDevice->isKeyDown(_keyPlus)) \
+		{ _value+=_change ; if (_value>=_maxVal) _value = _maxVal ; _macro ; } ; \
+	if (mInputDevice->isKeyDown(_keyMinus)) \
+		{ _value-=_change; if (_value<=_minVal) _value = _minVal ; _macro ; } ; \
+}
+
+		ADJUST_RANGE(headDepth, KC_U, KC_J, 0, 10, 0.5*changeSpeed, updateInfoHeadDepth()) ;
+
+		ADJUST_RANGE(waterMesh->PARAM_C, KC_2, KC_1, 0, 10, 0.1f*changeSpeed, updateInfoParamC()) ;
+
+		ADJUST_RANGE(waterMesh->PARAM_D, KC_4, KC_3, 0.1, 10, 0.1f*changeSpeed, updateInfoParamD()) ;
+
+		ADJUST_RANGE(waterMesh->PARAM_U, KC_6, KC_5, -2, 10, 0.1f*changeSpeed, updateInfoParamU()) ;
+
+		ADJUST_RANGE(waterMesh->PARAM_T, KC_8, KC_7, 0, 10, 0.1f*changeSpeed, updateInfoParamT()) ;
+
+		timeoutDelay-=evt.timeSinceLastFrame ;
+		if (timeoutDelay<=0)
+			timeoutDelay = 0;
+
+#define SWITCH_VALUE(_key,_timeDelay, _macro) { \
+		if (mInputDevice->isKeyDown(_key) && timeoutDelay==0) { \
+			timeoutDelay = _timeDelay ; _macro ;} }
+	
+		SWITCH_VALUE(KC_N, 0.5f, switchNormals());
+			
+		SWITCH_VALUE(KC_M, 0.5f, switchMaterial());
+
+		animateHead(evt.timeSinceLastFrame);
+			
+		waterMesh->updateMesh(evt.timeSinceLastFrame);
+			
+		// check if we are exiting, if so, clear static HardwareBuffers to avoid
+		// segfault
+		if (!retval)
+			WaterCircle::clearStaticBuffers();
+
+        // return result from default
+		return retval ;
+    }
+};
+
+class WaterApplication : public ExampleApplication
+{
+public:
+    WaterApplication() {
+    
+    }
+
+    ~WaterApplication() {  }
+
+protected:
+	WaterMesh *waterMesh ;
+	Entity *waterEntity ;
+
+// Just override the mandatory create scene method
+    void createScene(void)
+    {
+		sceneMgr = mSceneMgr ;
+        // Set ambient light
+        mSceneMgr->setAmbientLight(ColourValue(0.75, 0.75, 0.75));
+
+        // Create a light
+        Light* l = mSceneMgr->createLight("MainLight");
+        // Accept default settings: point light, white diffuse, just set position
+        // NB I could attach the light to a SceneNode if I wanted it to move automatically with
+        //  other objects, but I don't
+        l->setPosition(200,300,100);
+
+		// Create water mesh and entity
+		waterMesh = new WaterMesh(MESH_NAME, PLANE_SIZE, COMPLEXITY);
+		waterEntity = mSceneMgr->createEntity(ENTITY_NAME, 
+			MESH_NAME);
+		waterEntity->setMaterialName(MATERIAL_NAME);
+		SceneNode *waterNode = static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild());
+		waterNode->attachObject(waterEntity);
+		SceneNode *followNode = static_cast<SceneNode*>(waterNode->createChild());
+		followNode->translate(PLANE_SIZE/2, 0, PLANE_SIZE/2);
+
+        // Add a head, give it it's own node
+        headNode = static_cast<SceneNode*>(waterNode->createChild());
+        Entity *ent = mSceneMgr->createEntity("head", "ogrehead.mesh");
+        headNode->attachObject(ent);
+
+		// Make sure the camera track this node
+        //~ mCamera->setAutoTracking(true, headNode);
+
+		// Create the camera node & attach camera
+        SceneNode* camNode = static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild());
+        camNode->attachObject(mCamera);
+		
+		// Create light node
+        SceneNode* lightNode = static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild());
+		lightNode->attachLight(l);
+
+        // set up spline animation of node
+        Animation* anim = mSceneMgr->createAnimation("WaterTracks", 20);
+        // Spline it for nice curves
+        anim->setInterpolationMode(Animation::IM_SPLINE);
+        // Create a track to animate the camera's node
+        AnimationTrack* track = anim->createTrack(0, camNode);
+        // Setup keyframes
+        KeyFrame* key ;
+		//~ = track->createKeyFrame(0); // startposition
+        //~ key = track->createKeyFrame(2.5);
+        //~ key->setTranslate(Vector3(500,500,-1000));
+        //~ key = track->createKeyFrame(5);
+        //~ key->setTranslate(Vector3(-1500,1000,-600));
+        //~ key = track->createKeyFrame(7.5);
+        //~ key->setTranslate(Vector3(0,200,0));
+		Vector3 cpos0 ;
+		for(int kf=0;kf<=16;kf+=2) {
+			Vector3 cpos (
+				rand()%(int)PLANE_SIZE,
+				rand()%500+500,
+				rand()%(int)PLANE_SIZE
+				);
+			key = track->createKeyFrame(kf);
+			key->setTranslate(cpos);
+			if (!kf) {
+				cpos0=cpos ;
+			}
+		}
+        key = track->createKeyFrame(20);
+        key->setTranslate(cpos0);
+		
+		// create a random spline for light as well 
+		track = anim->createTrack(1, lightNode);
+		key = track->createKeyFrame(0);
+		for(int ff=1;ff<=19;ff++) {
+			key = track->createKeyFrame(ff);
+			Vector3 lpos (
+				rand()%(int)PLANE_SIZE , //- PLANE_SIZE/2,
+				rand()%300+100,
+				rand()%(int)PLANE_SIZE //- PLANE_SIZE/2
+				);
+			key->setTranslate(lpos);
+		}
+		key = track->createKeyFrame(20);
+		
+        // Create a new animation state to track this
+        mAnimState = mSceneMgr->createAnimationState("WaterTracks");
+        mAnimState->setEnabled(true);
+
+        // Put in a bit of fog for the hell of it
+        //mSceneMgr->setFog(FOG_EXP, ColourValue::White, 0.0002);
+
+		// show overlay
+		waterOverlay = (Overlay*)OverlayManager::getSingleton().getByName("Example/WaterOverlay");    
+		waterOverlay->show();
+		
+        // Let there be rain
+        particleSystem = ParticleSystemManager::getSingleton().createSystem("rain", 
+            "Examples/Water/Rain");
+		particleEmitter = particleSystem->getEmitter(0);
+        SceneNode* rNode = static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild());
+        rNode->translate(PLANE_SIZE/2.0f, 3000, PLANE_SIZE/2.0f);
+        rNode->attachObject(particleSystem);
+        // Fast-forward the rain so it looks more natural
+        particleSystem->fastForward(20);
+		// It can't be set in .particle file, and we need it ;)
+		particleSystem->setBillboardOrigin(BBO_BOTTOM_CENTER);
+		
+		prepareCircleMaterial();
+	}
+
+    // Create new frame listener
+    void createFrameListener(void)
+    {
+        mFrameListener= new WaterListener(mWindow, mCamera, waterMesh, waterEntity);
+        mRoot->addFrameListener(mFrameListener);
+    }
+
+};
+
+
+
+#if OGRE_PLATFORM == PLATFORM_WIN32
+#define WIN32_LEAN_AND_MEAN
+#include "windows.h"
+
+
+INT WINAPI WinMain( HINSTANCE hInst, HINSTANCE, LPSTR strCmdLine, INT )
+#else
+int main(int argc, char **argv)
+#endif
+{
+    // Create application object
+    WaterApplication app;
+	
+	srand(time(0));
+
+    try {
+        app.go();
+    } catch( Exception& e ) {
+#if OGRE_PLATFORM == PLATFORM_WIN32
+        MessageBox( NULL, e.getFullDescription().c_str(), "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+#else
+        fprintf(stderr, "An exception has occured: %s\n",
+                e.getFullDescription().c_str());
+#endif
+    }
+
+    return 0;
+}
