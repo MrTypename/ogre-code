@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -37,6 +37,11 @@ email                : kenny@sparksuit.com
 #define __EVENT_QUEUE_H__
 
 #include "OgrePrerequisites.h"
+#include "OgreResourceManager.h"
+#include "OgreSingleton.h"
+#include "OgreEventDispatcher.h"
+
+#include <queue>
 
 namespace Ogre {
 

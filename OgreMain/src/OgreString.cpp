@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,14 +22,12 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreString.h"
 
 #include "OgreStringVector.h"
 
 namespace Ogre {
 
-    String String::BLANK = String("");
     //-----------------------------------------------------------------------
     void String::trim(bool left, bool right)
     {
@@ -78,7 +76,6 @@ namespace Ogre {
             {
                 // Copy the rest of the string
                 ret.push_back( substr(start) );
-                break;
             }
             else
             {
@@ -125,35 +122,5 @@ namespace Ogre {
     {
         return (Real)atof(this->c_str());
     }
-    //-----------------------------------------------------------------------
-    bool String::startsWith(const String& pattern, bool lowerCase) const
-    {
-        size_t thisLen = this->length();
-        size_t patternLen = pattern.length();
-        if (thisLen < patternLen || patternLen == 0)
-            return false;
-
-        String startOfThis = substr(0, patternLen);
-        if (lowerCase)
-            startOfThis.toLowerCase();
-
-        return (startOfThis == pattern);
-    }
-    //-----------------------------------------------------------------------
-    bool String::endsWith(const String& pattern, bool lowerCase) const
-    {
-        size_t thisLen = this->length();
-        size_t patternLen = pattern.length();
-        if (thisLen < patternLen || patternLen == 0)
-            return false;
-
-        String endOfThis = substr(thisLen - patternLen, patternLen);
-        if (lowerCase)
-            endOfThis.toLowerCase();
-
-        return (endOfThis == pattern);
-    }
-    //-----------------------------------------------------------------------
-
 }
 

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -31,7 +31,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreCommon.h"
 #include "OgreColourValue.h"
 #include "OgreBlendMode.h"
-#include "OgreTextureUnitState.h"
+#include "OgreMaterial.h"
 
 namespace Ogre {
 
@@ -77,7 +77,7 @@ namespace Ogre {
             SceneBlendFactor blendDest;
             bool customBlend;
             CompareFunction depthFunc;
-            TextureUnitState::TextureAddressingMode addressMode;
+            Material::TextureLayer::TextureAddressingMode addressMode;
             // TODO - alphaFunc
             GenFunc rgbGenFunc;
             WaveType rgbGenWave;

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -77,16 +77,6 @@ namespace Ogre {
         {
             return *mCurrent;
         }
-        /** Returns a pointer to the next element in the collection, without advancing to the next afterwards. */
-        typename T::pointer peekNextPtr(void)
-        {
-            return &(*mCurrent);
-        }
-        /** Moves the iterator on one element. */
-        void moveNext(void)
-        {
-            mCurrent++;
-        }
 
 
 
@@ -152,17 +142,6 @@ namespace Ogre {
  		    mEnd = rhs.mEnd;
  		    return *this;
  	    }
-        /** Returns a pointer to the next value element in the collection, without 
-            advancing to the next afterwards. */
-        typename T::pointer peekNextValuePtr(void)
-        {
-            return &(mCurrent->second);
-        }
-        /** Moves the iterator on one element. */
-        void moveNext(void)
-        {
-            mCurrent++;
-        }
 
 
 

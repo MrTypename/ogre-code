@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -52,11 +52,11 @@ namespace Ogre {
                 bool useSystemMemory, bool useShadowBuffer);
             ~HardwareIndexBuffer();
     		/// Get the type of indexes used in this buffer
-            IndexType getType(void) const { return mIndexType; }
+            IndexType getType(void) { return mIndexType; }
             /// Get the number of indexes in this buffer
-            size_t getNumIndexes(void) const { return mNumIndexes; }
+            size_t getNumIndexes(void) { return mNumIndexes; }
             /// Get the size in bytes of each index
-            size_t getIndexSize(void) const { return mIndexSize; }
+            size_t getIndexSize(void) { return mIndexSize; }
 
 		    // NB subclasses should override lock, unlock, readData, writeData
     };

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreString.h"
 #include "OgreKeyEvent.h"
@@ -56,7 +55,7 @@ namespace Ogre {
 	 *
 	 * @return a string identifying the event and its attributes
 	 */
-	 String KeyEvent::paramString() const {
+	 String KeyEvent::paramString() {
 		String typeStr;
 		switch(mId) {
 		  case KE_KEY_PRESSED:
@@ -67,12 +66,6 @@ namespace Ogre {
 			  break;
 		  case KE_KEY_CLICKED:
 			  typeStr = "KEY_CLICKED";
-			  break;
-		  case KE_KEY_FOCUSIN:
-			  typeStr = "KEY_FOCUSIN";
-			  break;
-		  case KE_KEY_FOCUSOUT:
-			  typeStr = "KEY_FOCUSOUT";
 			  break;
 		  default:
 			  typeStr = "unknown type";

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -27,106 +27,11 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgrePrerequisites.h"
 #include "OgreMaterial.h"
-#include "OgreBlendMode.h"
-#include "OgreTextureUnitState.h"
-#include "OgreGpuProgram.h"
 
 namespace Ogre {
-
-    /** Enum to identify material sections. */
-    enum MaterialScriptSection
-    {
-        MSS_NONE,
-        MSS_MATERIAL,
-        MSS_TECHNIQUE,
-        MSS_PASS,
-        MSS_TEXTUREUNIT,
-        MSS_PROGRAM_REF,
-		MSS_PROGRAM
-    };
-	/** Struct for holding a program definition which is in progress. */
-	struct MaterialScriptProgramDefinition
-	{
-		String name;
-		GpuProgramType progType;
-		String language;
-		String source;
-		String syntax;
-		std::map<String, String> customParameters;
-	};
-    /** Struct for holding the script context while parsing. */
-    struct MaterialScriptContext 
-    {
-        MaterialScriptSection section;
-        Material* material;
-        Technique* technique;
-        Pass* pass;
-        TextureUnitState* textureUnit;
-        GpuProgram* program; // used when referencing a program, not when defining it
-        GpuProgramParametersSharedPtr programParams;
-		MaterialScriptProgramDefinition* programDef; // this is used while defining a program
-
-		// Error reporting state
-        size_t lineNo;
-        String filename;
-    };
-    /// Function def for material attribute parser; return value determines if the next line should be {
-    typedef bool (*ATTRIBUTE_PARSER)(String& params, MaterialScriptContext& context);
-
-    /** Class for serializing Materials to / from a .material script.*/
+    /** Class for serializing a Material to a material.script.*/
     class _OgreExport MaterialSerializer
     {
-    protected:
-        /// Keyword-mapped attribute parsers.
-        typedef std::map<String, ATTRIBUTE_PARSER> AttribParserList;
-
-        MaterialScriptContext mScriptContext;
-
-        /** internal method for parsing a material
-        @returns true if it expects the next line to be a {
-        */
-        bool parseScriptLine(String& line);
-        /** internal method for finding & invoking an attribute parser. */
-        bool invokeParser(String& line, AttribParserList& parsers);
-		/** Internal method for saving a program definition which has been
-		    built up.
-		*/
-		void finishProgramDefinition(void);
-        /// Parsers for the root of the material script
-        AttribParserList mRootAttribParsers;
-        /// Parsers for the material section of a script
-        AttribParserList mMaterialAttribParsers;
-        /// Parsers for the technique section of a script
-        AttribParserList mTechniqueAttribParsers;
-        /// Parsers for the pass section of a script
-        AttribParserList mPassAttribParsers;
-        /// Parsers for the texture unit section of a script
-        AttribParserList mTextureUnitAttribParsers;
-        /// Parsers for the program reference section of a script
-        AttribParserList mProgramRefAttribParsers;
-        /// Parsers for the program definition section of a script
-        AttribParserList mProgramAttribParsers;
-
-        void writeMaterial(const Material *pMat);
-        void writeTechnique(const Technique* pTech);
-        void writePass(const Pass* pPass);
-		void writeTextureUnit(const TextureUnitState *pTex);
-
-		void writeSceneBlendFactor(const SceneBlendFactor sbf_src, const SceneBlendFactor sbf_dest);
-		void writeSceneBlendFactor(const SceneBlendFactor sbf);
-		void writeCompareFunction(const CompareFunction cf);
-		void writeColourValue(const ColourValue &colour, bool writeAlpha = false);
-		void writeLayerBlendOperationEx(const LayerBlendOperationEx op);
-		void writeLayerBlendSource(const LayerBlendSource lbs);
-		
-		typedef std::multimap<TextureUnitState::TextureEffectType, TextureUnitState::TextureEffect> EffectMap;
-
-		void writeRotationEffect(const TextureUnitState::TextureEffect& effect, const TextureUnitState *pTex);
-		void writeTransformEffect(const TextureUnitState::TextureEffect& effect, const TextureUnitState *pTex);
-		void writeScrollEffect(const TextureUnitState::TextureEffect& effect, const TextureUnitState *pTex);
-		void writeEnvironmentMapEffect(const TextureUnitState::TextureEffect& effect, const TextureUnitState *pTex);
-
-        String convertFiltering(FilterOptions fo);
     public:
 		/** default constructor*/
 		MaterialSerializer();
@@ -144,46 +49,51 @@ namespace Ogre {
 		/** Clears the internal buffer */
 		void clearQueue();
 
-        /** Parses a Material script file passed as a chunk.
-        @remarks
-            The filename is optional, if specified it will appear in the log
-            of any errors which are reported.
-        */
-        void parseScript(DataChunk& chunk, const String& filename = "");
+    protected:
+		void writeMaterial(const Material *pMat);
+		void writeTextureLayer(const Material::TextureLayer *pTex);
 
+		void writeSceneBlendFactor(const SceneBlendFactor sbf_src, const SceneBlendFactor sbf_dest);
+		void writeSceneBlendFactor(const SceneBlendFactor sbf);
+		void writeCompareFunction(const CompareFunction cf);
+		void writeColourValue(const ColourValue &colour, bool writeAlpha = false);
+		void writeLayerBlendOperationEx(const LayerBlendOperationEx op);
+		void writeLayerBlendSource(const LayerBlendSource lbs);
+		
+		typedef std::multimap<Material::TextureLayer::TextureEffectType, Material::TextureLayer::TextureEffect> EffectMap;
 
+		void writeRotationEffect(const Material::TextureLayer::TextureEffect effect, const Material::TextureLayer *pTex);
+		void writeTransformEffect(const Material::TextureLayer::TextureEffect effect, const Material::TextureLayer *pTex);
+		void writeScrollEffect(const Material::TextureLayer::TextureEffect effect, const Material::TextureLayer *pTex);
+		void writeEnvironmentMapEffect(const Material::TextureLayer::TextureEffect effect, const Material::TextureLayer *pTex);
 
 	private:
 		String mBuffer;
 		bool mDefaults;
 
-		void beginSection(unsigned short level)
+		void beginSection(void)
 		{
-			mBuffer += "\n";
-            for (unsigned short i = 0; i < level; ++i)
-            {
-                mBuffer += "\t";
-            }
-            mBuffer += "{";
-		}
-		void endSection(unsigned short level)
-		{
-			mBuffer += "\n";
-            for (unsigned short i = 0; i < level; ++i)
-            {
-                mBuffer += "\t";
-            }
-            mBuffer += "}";
+			mBuffer += "\n{";
 		}
 
-		void writeAttribute(unsigned short level, const String& att)
+		void endSection(void)
 		{
-			mBuffer += "\n";
-            for (unsigned short i = 0; i < level; ++i)
-            {
-                mBuffer += "\t";
-            }
-            mBuffer += att;
+			mBuffer += "\n}\n";
+		}
+
+		void beginSubSection(void)
+		{
+			mBuffer += "\n\t{";
+		}
+
+		void endSubSection(void)
+		{
+			mBuffer += "\n\t}";
+		}
+
+		void writeAttribute(const String& att)
+		{
+			mBuffer += ("\n\t" + att);
 		}
 
 		void writeValue(const String& val)
@@ -191,16 +101,20 @@ namespace Ogre {
 			mBuffer += (" " + val);
 		}
 
-		void writeComment(unsigned short level, const String& comment)
+		void writeSubAttribute(const String& att)
 		{
-			mBuffer += "\n";
-            for (unsigned short i = 0; i < level; ++i)
-            {
-                mBuffer += "\t";
-            }
-            mBuffer += "// " + comment;
+			mBuffer += ("\n\t\t" + att);
 		}
 
+		void writeComment(const String& comment)
+		{
+			mBuffer += ("\n\t//" + comment);
+		}
+
+		void writeSubComment(const String& comment)
+		{
+			mBuffer += ("\n\t\t//" + comment);
+		}
     };
 }
 #endif

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright ) 2002 Tels >http://bloodgate.com> based on BoxEmitter
 Also see acknowledgements in Readme.html
@@ -42,7 +42,7 @@ namespace Ogre {
 
     public:
         /** See ParticleEmitterFactory */
-        String getName() const
+        String getName() 
         { 
             return "HollowEllipsoid"; 
         }

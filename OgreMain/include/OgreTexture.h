@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -48,7 +48,7 @@ namespace Ogre {
         TEX_TYPE_1D = 1,
         /// 2D texture, used in combination with 2D texture coordinates (default)
         TEX_TYPE_2D = 2,
-        /// 3D volume texture, used in combination with 3D texture coordinates
+        /// 3D texture, used in combination with 3D texture coordinates
         TEX_TYPE_3D = 3,
         /// 3D cube map, used in combination with 3D texture coordinates
         TEX_TYPE_CUBE_MAP = 4
@@ -73,7 +73,7 @@ namespace Ogre {
 
         /** Gets the number of mipmaps to be used for this texture.
         */
-        unsigned short getNumMipMaps(void) const {return mNumMipMaps;}
+        unsigned short getNumMipMaps(void) {return mNumMipMaps;}
 
         /** Sets the number of mipmaps to be used for this texture.
             @note
@@ -83,7 +83,7 @@ namespace Ogre {
 
         /** Returns the gamma adjustment factor applied to this texture.
         */
-        float getGamma(void) const { return mGamma; }
+        float getGamma(void) { return mGamma; }
 
         /** Sets the gamma adjustment factor applied to this texture.
             @note
@@ -93,19 +93,15 @@ namespace Ogre {
 
         /** Returns the height of the texture.
         */
-        unsigned int getHeight(void) const { return mHeight; }
+        unsigned int getHeight(void) { return mHeight; }
 
         /** Returns the width of the texture.
         */
-        unsigned int getWidth(void) const { return mWidth; }
-
-        /** Returns the depth of the texture (only applicable for 3D textures).
-        */
-        unsigned int getDepth(void) const { return mDepth; }
+        unsigned int getWidth(void) { return mWidth; }
 
         /** Returns both the width and height of the texture.
         */
-        std::pair< uint, uint > getDimensions() const { return std::pair< uint, uint >( mWidth, mHeight ); }
+        std::pair< uint, uint > getDimensions() { return std::pair< uint, uint >( mWidth, mHeight ); }
 
         /** Returns the TextureUsage indentifier for this Texture
         */
@@ -161,7 +157,7 @@ namespace Ogre {
 		}
 
         /** Returns true if the texture has an alpha layer. */
-        virtual bool hasAlpha(void) const
+        virtual bool hasAlpha(void)
         {
             return mHasAlpha;
         }
@@ -169,7 +165,6 @@ namespace Ogre {
     protected:
         unsigned long mHeight;
         unsigned long mWidth;
-        unsigned long mDepth;
 
         unsigned short mNumMipMaps;
         float mGamma;

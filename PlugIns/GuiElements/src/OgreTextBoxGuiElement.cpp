@@ -2,7 +2,7 @@
 This source file is a part of OGRE
 (Object-oriented Graphics Rendering Engine)
 
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -27,7 +27,6 @@ http://www.gnu.org/copyleft/lesser.txt
 #include "OgreKeyEvent.h"
 #include "OgreInput.h"
 #include "OgreGuiManager.h"
-#include "OgreException.h"
 
 namespace Ogre {
 
@@ -56,7 +55,7 @@ namespace Ogre {
     {
     }
     //---------------------------------------------------------------------
-    const String& TextBoxGuiElement::getTypeName(void) const
+    const String& TextBoxGuiElement::getTypeName(void)
     {
         return msTypeName;
     }

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -60,9 +60,6 @@ namespace Ogre {
     class _OgreExport Light : public MovableObject
     {
     public:
-        /// Temp tag used for sorting
-        Real tempSquareDist;
-
         /// Defines the type of light
         enum LightTypes
         {
@@ -96,7 +93,7 @@ namespace Ogre {
 
         /** Returns the light type.
         */
-        LightTypes getType(void) const;
+        LightTypes getType(void);
 
         /** Sets the colour of the diffuse light given off by this source.
             @remarks
@@ -122,7 +119,7 @@ namespace Ogre {
 
         /** Returns the colour of the diffuse light given off by this light source (see setDiffuseColour for more info).
         */
-        const ColourValue& getDiffuseColour(void) const;
+        ColourValue getDiffuseColour(void);
 
         /** Sets the colour of the specular light given off by this source.
             @remarks
@@ -148,7 +145,7 @@ namespace Ogre {
 
         /** Returns the colour of specular light given off by this light source.
         */
-        const ColourValue& getSpecularColour(void) const;
+        ColourValue getSpecularColour(void);
 
         /** Sets the attenuation parameters of the light source ie how it diminishes with distance.
             @remarks
@@ -173,19 +170,19 @@ namespace Ogre {
 
         /** Returns the absolute upper range of the light.
         */
-        Real getAttenuationRange(void) const;
+        Real getAttenuationRange(void);
 
         /** Returns the constant factor in the attenuation formula.
         */
-        Real getAttenuationConstant(void) const;
+        Real getAttenuationConstant(void);
 
         /** Returns the linear factor in the attenuation formula.
         */
-        Real getAttenuationLinear(void) const;
+        Real getAttenuationLinear(void);
 
         /** Returns the quadric factor in the attenuation formula.
         */
-        Real getAttenuationQuadric(void) const;
+        Real getAttenuationQuadric(void);
 
         /** Sets the position of the light.
             @remarks
@@ -207,7 +204,7 @@ namespace Ogre {
             @note
                 Applicable to point lights and spotlights only.
         */
-        const Vector3& getPosition(void) const;
+        Vector3 getPosition(void);
 
         /** Sets the direction in which a light points.
             @remarks
@@ -229,7 +226,7 @@ namespace Ogre {
             @remarks
                 Applicable only to the spotlight and directional light types.
         */
-        const Vector3& getDirection(void) const;
+        Vector3 getDirection(void);
 
         /** Sets the range of a spotlight, i.e. the angle of the inner and outer cones and the rate of falloff between them.
             @param
@@ -243,15 +240,23 @@ namespace Ogre {
 
         /** Returns the angle covered by the spotlights inner cone, in degrees.
         */
-        Real getSpotlightInnerAngle(void) const;
+        Real getSpotlightInnerAngle(void);
 
         /** Returns the angle covered by the spotlights outer cone, in degrees.
         */
-        Real getSpotlightOuterAngle(void) const;
+        Real getSpotlightOuterAngle(void);
 
         /** Returns the falloff between the inner and outer cones of the spotlight.
         */
-        Real getSpotlightFalloff(void) const;
+        Real getSpotlightFalloff(void);
+
+        /** Returns a true/false value indicating if this light has changed since it was last issued to the renderer.
+        */
+        bool isModified(void);
+
+        /** Clears the light's modified flag (should only be done by the engine itself).
+        */
+        void _clearModified(void);
 
         /** Overridden from MovableObject */
         void _notifyCurrentCamera(Camera* cam);
@@ -266,10 +271,10 @@ namespace Ogre {
         const String& getMovableType(void) const;
 
         /** Retrieves the position of the light including any transform from nodes it is attached to. */
-        const Vector3& getDerivedPosition(void) const;
+        const Vector3& getDerivedPosition(void);
 
         /** Retrieves the direction of the light including any transform from nodes it is attached to. */
-        const Vector3& getDerivedDirection(void) const;
+        const Vector3& getDerivedDirection(void);
 
         /** Overridden from MovableObject.
         @remarks
@@ -283,8 +288,6 @@ namespace Ogre {
 
 
     private:
-        /// internal method for synchronising with parent node (if any)
-        void update(void) const;
         String mName;
 
         LightTypes mLightType;
@@ -302,11 +305,13 @@ namespace Ogre {
         Real mAttenuationLinear;
         Real mAttenuationQuad;
 
-        mutable Vector3 mDerivedPosition;
-        mutable Vector3 mDerivedDirection;
+        bool mModified;
+
+        Vector3 mDerivedPosition;
+        Vector3 mDerivedDirection;
         /// Stored versions of parent orientation / position
-        mutable Quaternion mLastParentOrientation;
-        mutable Vector3 mLastParentPosition;
+        Quaternion mLastParentOrientation;
+        Vector3 mLastParentPosition;
 
         /// Shared class-level name for Movable type
         static String msMovableType;

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -26,6 +26,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define __Math_H__
 
 #include "OgrePrerequisites.h"
+#include "OgreSingleton.h"
 
 namespace Ogre
 {
@@ -39,7 +40,7 @@ namespace Ogre
             <br>This is based on MgcMath.h from
             <a href="http://www.magic-software.com">Wild Magic</a>.
     */
-    class _OgreExport Math 
+    class _OgreExport Math : public Singleton<Math>
     {
    public:
        /** The angular units used by the API.
@@ -235,11 +236,6 @@ namespace Ogre
         static bool RealEqual(Real a, Real b,
             Real tolerance = std::numeric_limits<Real>::epsilon());
 
-        /** Calculates the tangent space vector for a given set of positions / texture coords. */
-        static Vector3 calculateTangentSpaceVector(
-            const Vector3& position1, const Vector3& position2, const Vector3& position3,
-            Real u1, Real v1, Real u2, Real v2, Real u3, Real v3);
-
         static const Real POS_INFINITY;
         static const Real NEG_INFINITY;
         static const Real PI;
@@ -248,6 +244,22 @@ namespace Ogre
 		static const Real fDeg2Rad;
 		static const Real fRad2Deg;
 
+        /** Override standard Singleton retrieval.
+            @remarks
+                Why do we do this? Well, it's because the Singleton
+                implementation is in a .h file, which means it gets compiled
+                into anybody who includes it. This is needed for the
+                Singleton template to work, but we actually only want it
+                compiled into the implementation of the class based on the
+                Singleton, not all of them. If we don't change this, we get
+                link errors when trying to use the Singleton-based class from
+                an outside dll.
+            @par
+                This method just delegates to the template version anyway,
+                but the implementation stays in this single compilation unit,
+                preventing link errors.
+        */
+        static Math& getSingleton(void);
     };
 }
 #endif

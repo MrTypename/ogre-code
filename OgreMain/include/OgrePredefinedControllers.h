@@ -3,7 +3,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -61,9 +61,9 @@ namespace Ogre {
     class _OgreExport TextureFrameControllerValue : public ControllerValue
     {
     protected:
-        TextureUnitState* mTextureLayer;
+        Material::TextureLayer* mTextureLayer;
     public:
-        TextureFrameControllerValue(TextureUnitState* t);
+        TextureFrameControllerValue(Material::TextureLayer* t);
 
         /** Gets the frame number as a parametric value in the range [0,1]
         */
@@ -88,11 +88,11 @@ namespace Ogre {
         bool mTransU, mTransV;
         bool mScaleU, mScaleV;
         bool mRotate;
-        TextureUnitState* mTextureLayer;
+        Material::TextureLayer* mTextureLayer;
     public:
         /** Constructor.
             @param
-                t TextureUnitState to apply the modification to.
+                t TextureLayer to apply the modification to.
             @param
                 translateU If true, the u coordinates will be translated by the modification.
             @param
@@ -104,7 +104,7 @@ namespace Ogre {
             @param
                 rotate If true, the texture will be rotated by the modification.
         */
-        TexCoordModifierControllerValue(TextureUnitState* t, bool translateU = false, bool translateV = false,
+        TexCoordModifierControllerValue(Material::TextureLayer* t, bool translateU = false, bool translateV = false,
             bool scaleU = false, bool scaleV = false, bool rotate = false );
 
         Real getValue(void) const;

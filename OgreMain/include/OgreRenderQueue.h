@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -130,7 +130,7 @@ namespace Ogre {
         /** Gets the current default queue group, which will be used for all renderable which do not
             specify which group they wish to be on.
         */
-        RenderQueueGroupID getDefaultQueueGroup(void) const;
+        RenderQueueGroupID getDefaultQueueGroup(void);
 
         /** Sets the current default queue group, which will be used for all renderable which do not
             specify which group they wish to be on.

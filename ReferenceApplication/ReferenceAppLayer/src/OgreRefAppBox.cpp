@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of the OGRE Reference Application, a layer built
 on top of OGRE(Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2003 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -47,7 +47,7 @@ namespace OgreRefApp
         // Create visual presence
         SceneManager* sm = World::getSingleton().getSceneManager();
         mEntity = sm->createEntity(name, "cube.mesh");
-        mSceneNode = sm->getRootSceneNode()->createChildSceneNode(name);
+        mSceneNode = static_cast<SceneNode*>(sm->getRootSceneNode()->createChild(name));
         // Scale down, default size is 100x100x100
         mSceneNode->scale(mDimensions.x / 100.f, 
             mDimensions.y / 100.f, mDimensions.z / 100.f);

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE 
 	(Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -90,13 +90,6 @@ namespace Ogre  {
         };
         /// Command object for GuiElement  - see ParamCommand 
         class _OgreExport CmdVerticalAlign : public ParamCommand
-        {
-        public:
-            String doGet(void* target);
-            void doSet(void* target, const String& val);
-        };
-        /// Command object for GuiElement  - see ParamCommand 
-        class _OgreExport CmdVisible : public ParamCommand
         {
         public:
             String doGet(void* target);

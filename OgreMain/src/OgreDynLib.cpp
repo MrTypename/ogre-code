@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreDynLib.h"
 
@@ -34,11 +33,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #   include <windows.h>
 #endif
 
-#if OGRE_PLATFORM == PLATFORM_APPLE
-#   include "macPlugins.h"
-#endif
-
-
 namespace Ogre {
 
     //-----------------------------------------------------------------------
@@ -47,7 +41,7 @@ namespace Ogre {
         OgreGuard("DynLib::DynLib");
 
         mName = name;
-#if OGRE_PLATFORM == PLATFORM_LINUX
+#if OGRE_PLATFORM == PLATFORM_LINUX || OGRE_PLATFORM == PLATFORM_APPLE
         // dlopen() does not add .so to the filename, like windows does for .dll
         if (mName.substr(mName.length() - 3, 3) != ".so")
             mName += ".so";

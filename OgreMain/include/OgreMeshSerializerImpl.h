@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -73,6 +73,8 @@ namespace Ogre {
         bool mIsSkeletallyAnimated;
 
         // Internal methods
+        virtual void writeMaterial(const Material* m);
+        virtual void writeTextureLayer(const Material::TextureLayer* pTex);
         virtual void writeMesh(const Mesh* pMesh);
         virtual void writeSubMesh(const SubMesh* s);
         virtual void writeSubMeshOperation(const SubMesh* s);
@@ -88,6 +90,8 @@ namespace Ogre {
         virtual void writeCondensedVertexBuffer(HardwareVertexBufferSharedPtr vbuf, 
             const VertexElement* elem, size_t vertexCount);
 
+        virtual unsigned long calcMaterialSize(const Material* pMat);
+        virtual unsigned long calcTextureLayerSize(const Material::TextureLayer* pTex);
         virtual unsigned long calcMeshSize(const Mesh* pMesh);
         virtual unsigned long calcSubMeshSize(const SubMesh* pSub);
         virtual unsigned long calcGeometrySize(const VertexData* pGeom);
@@ -101,11 +105,6 @@ namespace Ogre {
         virtual void readSubMesh(DataChunk& chunk);
         virtual void readSubMeshOperation(DataChunk& chunk, SubMesh* sub);
         virtual void readGeometry(DataChunk& chunk, VertexData* dest);
-        virtual void readGeometryPositions(unsigned short bindIdx, DataChunk& chunk, VertexData* dest);
-        virtual void readGeometryNormals(unsigned short bindIdx, DataChunk& chunk, VertexData* dest);
-        virtual void readGeometryColours(unsigned short bindIdx, DataChunk& chunk, VertexData* dest);
-        virtual void readGeometryTexCoords(unsigned short bindIdx, DataChunk& chunk, VertexData* dest, unsigned short set);
-
         virtual void readSkeletonLink(DataChunk &chunk);
         virtual void readMeshBoneAssignment(DataChunk& chunk);
         virtual void readSubMeshBoneAssignment(DataChunk& chunk, SubMesh* sub);
@@ -117,17 +116,8 @@ namespace Ogre {
 
     };
 
-    /** Class for providing backwards-compatibility for loading version 1.1 of the .mesh format. */
-    class MeshSerializerImpl_v1_1 : public MeshSerializerImpl
-    {
-    public:
-        MeshSerializerImpl_v1_1();
-        ~MeshSerializerImpl_v1_1();
-        void readGeometryTexCoords(unsigned short bindIdx, DataChunk& chunk, VertexData* dest, unsigned short set);
-    };
-
     /** Class for providing backwards-compatibility for loading version 1.0 of the .mesh format. */
-    class MeshSerializerImpl_v1 : public MeshSerializerImpl_v1_1
+    class MeshSerializerImpl_v1 : public MeshSerializerImpl
     {
     protected:
         bool mFirstGeometry;

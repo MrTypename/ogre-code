@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -74,16 +74,14 @@ namespace Ogre {
             Given a t value between 0 and 1 representing the parametric distance along the
             whole length of the spline, this method returns an interpolated point.
         @param t Parametric value.
-		@param useShortestPath Defines if rotation should take the shortest possible path
         */
-        Quaternion interpolate(Real t, bool useShortestPath=true);
+        Quaternion interpolate(Real t);
 
         /** Interpolates a single segment of the spline given a parametric value.
         @param fromIndex The point index to treat as t=0. fromIndex + 1 is deemed to be t=1
         @param t Parametric value
-		@param useShortestPath Defines if rotation should take the shortest possible path
         */
-        Quaternion interpolate(unsigned int fromIndex, Real t, bool useShortestPath=true);
+        Quaternion interpolate(unsigned int fromIndex, Real t);
 
         /** Tells the spline whether it should automatically calculate tangents on demand
             as points are added.

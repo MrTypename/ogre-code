@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -95,15 +95,15 @@ namespace Ogre
 		return 0;
 	}
 	//---------------------------------------------------------------------
-	D3DTEXTUREADDRESS D3D9Mappings::get(TextureUnitState::TextureAddressingMode tam)
+	D3DTEXTUREADDRESS D3D9Mappings::get(Material::TextureLayer::TextureAddressingMode tam)
 	{
 		switch( tam )
 		{
-		case TextureUnitState::TAM_WRAP:
+		case Material::TextureLayer::TAM_WRAP:
 			return D3DTADDRESS_WRAP;
-		case TextureUnitState::TAM_MIRROR:
+		case Material::TextureLayer::TAM_MIRROR:
 			return D3DTADDRESS_MIRROR;
-		case TextureUnitState::TAM_CLAMP:
+		case Material::TextureLayer::TAM_CLAMP:
 			return D3DTADDRESS_CLAMP;
 		}
 		return D3DTADDRESS_FORCE_DWORD;
@@ -298,29 +298,26 @@ namespace Ogre
 		return 0;
 	}
 	//---------------------------------------------------------------------
-	D3DSAMPLERSTATETYPE D3D9Mappings::get(FilterType ft)
-    {
-        switch (ft)
-        {
-        case FT_MIN:
-            return D3DSAMP_MINFILTER;
-            break;
-        case FT_MAG:
-            return D3DSAMP_MAGFILTER;
-            break;
-        case FT_MIP:
-            return D3DSAMP_MIPFILTER;
-            break;
-        }
-
-        // to keep compiler happy
-        return D3DSAMP_MINFILTER;
-    }
-	//---------------------------------------------------------------------
-	DWORD D3D9Mappings::get(FilterType ft, FilterOptions fo, D3DCAPS9 devCaps, 
-        eD3DTexType texType)
+	DWORD D3D9Mappings::get(TextureFilterOptions tfo, D3DCAPS9 devCaps, eD3DTexType texType, eD3DFilterUsage usage)
 	{
 		DWORD capsType;
+		DWORD anisoUsage;
+		DWORD linearUsage;
+
+		switch( usage )
+		{
+		case D3D_FUSAGE_MIN:
+			anisoUsage = D3DPTFILTERCAPS_MINFANISOTROPIC;
+			linearUsage = D3DPTFILTERCAPS_MINFLINEAR;
+			break;
+		case D3D_FUSAGE_MAG:
+			anisoUsage = D3DPTFILTERCAPS_MAGFANISOTROPIC;
+			linearUsage = D3DPTFILTERCAPS_MAGFLINEAR;
+			break;
+		case D3D_FUSAGE_MIP:
+			linearUsage = D3DPTFILTERCAPS_MIPFLINEAR;
+			break;
+		}
 
 		switch( texType )
 		{
@@ -335,78 +332,32 @@ namespace Ogre
 			break;
 		}
 
-        switch (ft)
-        {
-        case FT_MIN:
-            switch( fo )
+		switch( tfo )
+		{
+		// NOTE: Fall through if device doesn't support requested type
+		case TFO_ANISOTROPIC:
+			// mip filter anisotropic don't exist
+			// fall to linear...
+			if (usage != D3D_FUSAGE_MIP)
+			{
+				if( capsType & anisoUsage )
+					return D3DTEXF_ANISOTROPIC;
+			}
+		case TFO_TRILINEAR:
+		case TFO_BILINEAR:
+			if( capsType & linearUsage )
+				return D3DTEXF_LINEAR;
+		case TFO_NONE:
+            if (usage == D3D_FUSAGE_MIP)
             {
-                // NOTE: Fall through if device doesn't support requested type
-            case FO_ANISOTROPIC:
-                if( capsType & D3DPTFILTERCAPS_MINFANISOTROPIC )
-                {
-                    return D3DTEXF_ANISOTROPIC;
-                    break;
-                }
-            case FO_LINEAR:
-                if( capsType & D3DPTFILTERCAPS_MINFLINEAR )
-                {
-                    return D3DTEXF_LINEAR;
-                    break;
-                }
-            case FO_POINT:
-            case TFO_NONE:
-                return D3DTEXF_POINT;
-                break;
+			    return D3DTEXF_POINT;
             }
-            break;
-        case FT_MAG:
-            switch( fo )
+            else
             {
-            // NOTE: Fall through if device doesn't support requested type
-            case FO_ANISOTROPIC:
-                if( capsType & D3DPTFILTERCAPS_MAGFANISOTROPIC )
-                {
-                    return D3DTEXF_ANISOTROPIC;
-                    break;
-                }
-            case FO_LINEAR:
-                if( capsType & D3DPTFILTERCAPS_MAGFLINEAR )
-                {
-                    return D3DTEXF_LINEAR;
-                    break;
-                }
-            case FO_POINT:
-            case FO_NONE:
-                return D3DTEXF_POINT;
-                break;
+			    return D3DTEXF_NONE;
             }
-            break;
-        case FT_MIP:
-            switch( fo )
-            {
-            case FO_ANISOTROPIC:
-            case FO_LINEAR:
-                if( capsType & D3DPTFILTERCAPS_MIPFLINEAR )
-                {
-                    return D3DTEXF_LINEAR;
-                    break;
-                }
-            case FO_POINT:
-                if( capsType & D3DPTFILTERCAPS_MIPFPOINT )
-                {
-                    return D3DTEXF_POINT;
-                    break;
-                }
-            case TFO_NONE:
-                return D3DTEXF_NONE;
-                break;
-            }
-            break;
-        }
-
-        // should never get here
-        return 0;
-
+		}
+		return 0;
 	}
 	//---------------------------------------------------------------------
 	D3D9Mappings::eD3DTexType D3D9Mappings::get(TextureType ogreTexType)
@@ -524,61 +475,6 @@ namespace Ogre
 		}
 		// to keep compiler happy
 		return D3DDECLUSAGE_POSITION;
-	}
-	//---------------------------------------------------------------------
-	D3DXMATRIX D3D9Mappings::makeD3DXMatrix( const Matrix4& mat )
-	{
-		// Transpose matrix
-		// D3D9 uses row vectors i.e. V*M
-		// Ogre, OpenGL and everything else uses column vectors i.e. M*V
-		D3DXMATRIX d3dMat;
-		d3dMat.m[0][0] = mat[0][0];
-		d3dMat.m[0][1] = mat[1][0];
-		d3dMat.m[0][2] = mat[2][0];
-		d3dMat.m[0][3] = mat[3][0];
-
-		d3dMat.m[1][0] = mat[0][1];
-		d3dMat.m[1][1] = mat[1][1];
-		d3dMat.m[1][2] = mat[2][1];
-		d3dMat.m[1][3] = mat[3][1];
-
-		d3dMat.m[2][0] = mat[0][2];
-		d3dMat.m[2][1] = mat[1][2];
-		d3dMat.m[2][2] = mat[2][2];
-		d3dMat.m[2][3] = mat[3][2];
-
-		d3dMat.m[3][0] = mat[0][3];
-		d3dMat.m[3][1] = mat[1][3];
-		d3dMat.m[3][2] = mat[2][3];
-		d3dMat.m[3][3] = mat[3][3];
-
-		return d3dMat;
-	}
-	//---------------------------------------------------------------------
-	Matrix4 D3D9Mappings::convertD3DXMatrix( const D3DXMATRIX& mat )
-	{
-		Matrix4 ogreMat;
-		ogreMat[0][0] = mat.m[0][0];
-		ogreMat[1][0] = mat.m[0][1];
-		ogreMat[2][0] = mat.m[0][2];
-		ogreMat[3][0] = mat.m[0][3];
-
-		ogreMat[0][1] = mat.m[1][0];
-		ogreMat[1][1] = mat.m[1][1];
-		ogreMat[2][1] = mat.m[1][2];
-		ogreMat[3][1] = mat.m[1][3];
-
-		ogreMat[0][2] = mat.m[2][0];
-		ogreMat[1][2] = mat.m[2][1];
-		ogreMat[2][2] = mat.m[2][2];
-		ogreMat[3][2] = mat.m[2][3];
-
-		ogreMat[0][3] = mat.m[3][0];
-		ogreMat[1][3] = mat.m[3][1];
-		ogreMat[2][3] = mat.m[3][2];
-		ogreMat[3][3] = mat.m[3][3];
-
-		return ogreMat;
 	}
 
 

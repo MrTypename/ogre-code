@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreMouseEvent.h"
 #include "OgreEventDispatcher.h"
@@ -34,24 +33,23 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 namespace Ogre {
 
-    EventDispatcher::EventDispatcher(TargetManager* pTargetManager)
-        :mTargetManager(pTargetManager)	// abstract this out TODO
+    EventDispatcher::EventDispatcher(TargetManager* pTargetManager, EventProcessor* pEventProcessor) :
+	mTargetManager (pTargetManager),	// abstract this out TODO
+	mEventProcessor (pEventProcessor)
     {
 		mFocus = 0;
-        mMouseDragSource = 0;
+		mMousePositionTarget = 0;
 		mKeyCursorOn = 0;
 		mEventMask = 0;
 		mTargetLastEntered = 0;
-        mMouseX = 0;
-        mMouseY = 0;
 		mDragging = false;
-        mDragDropOn = false;
-        mDragDropActive = false;
-    }
 
+
+    }
     //---------------------------------------------------------------------
     EventDispatcher::~EventDispatcher()
     {
+
     }
 
     //---------------------------------------------------------------------
@@ -70,119 +68,132 @@ namespace Ogre {
 			ret = processKeyEvent(ke);
 
 		}
+		// todo do focus and key event handling
 		return ret;
 	}
 
-    //---------------------------------------------------------------------
-    void EventDispatcher::setDragDrop(bool dragDropOn)
-    {
-        mDragDropOn = dragDropOn;
-    }
 
-    //---------------------------------------------------------------------
 	bool EventDispatcher::processKeyEvent(KeyEvent* e) 
 	{
-		if (mKeyCursorOn != 0)
+		if (mKeyCursorOn)
 		{
 			mKeyCursorOn->processEvent(e);
 		}
 		return e->isConsumed();
+
 	}
 	
     //---------------------------------------------------------------------
+
 	bool EventDispatcher::processMouseEvent(MouseEvent* e) 
 	{
+		int id = e->getID();
 		PositionTarget* targetOver;
 
-        mMouseX = e->getX();
-        mMouseY = e->getY();
-
-		targetOver = mTargetManager->getPositionTargetAt(e->getX(), e->getY());
-		trackMouseEnterExit(targetOver, e);
-
-		switch (e->getID())
+		switch (id) 
 		{		
 		case MouseEvent::ME_MOUSE_PRESSED:
 			mDragging = true;
-            if (mDragDropOn)
-                mDragDropActive = true;
-			mMouseDragSource = targetOver;
-    		retargetMouseEvent(targetOver, e);
-            trackKeyEnterExit(targetOver, e);
+			if (mMousePositionTarget && mMousePositionTarget->isKeyEnabled())
+			{
+				mKeyCursorOn = mMousePositionTarget;
+			}
+			else
+			{
+				mKeyCursorOn = NULL;
+			}
 			break;
 
 		case MouseEvent::ME_MOUSE_RELEASED:
-            if (targetOver != 0)
-            {
-			    if (targetOver == mMouseDragSource)
-			    {
-                    retargetMouseEvent(mMouseDragSource, MouseEvent::ME_MOUSE_CLICKED, e);
-			    }
-			    else // i.e. targetOver != mMouseDragSource
-			    {
-                    if (mDragDropActive)
-                        retargetMouseEvent(targetOver, MouseEvent::ME_MOUSE_DRAGDROPPED, e);
-				    retargetMouseEvent(targetOver, MouseEvent::ME_MOUSE_ENTERED, e);
-			    }
-            }
-
-            retargetMouseEvent(mMouseDragSource, e);
-
 			mDragging = false;
-            mDragDropActive = false;
-            mMouseDragSource = 0;
+			targetOver = mTargetManager->getPositionTargetAt(e->getX(), e->getY());
+
+			if (targetOver && targetOver != mMousePositionTarget)
+			{
+				
+                if (mMousePositionTarget)
+					mMousePositionTarget->processEvent(e); 
+				retargetMouseEvent(targetOver, MouseEvent::ME_MOUSE_ENTERED, e);
+				setMouseTarget(targetOver, e);
+
+				e->consume();
+				return e->isConsumed();
+			}
+			else if (targetOver && targetOver == mMousePositionTarget)
+			{
+				mMousePositionTarget->processEvent(e);
+				id = MouseEvent::ME_MOUSE_CLICKED;
+			}
+			break;
+
+		case MouseEvent::ME_MOUSE_ENTERED:
+			// If there is a click and drag, only give enter and exit events to the item originally clicked in
+			//
+			// This makes it tough to implement drag and drop, but works for everything else. Drag and
+			//	drop requires more extensive changes like testing if the original item can be dropped on the
+			//	item the mouse is currently over. So this seems like a reasonable limitation for now.
+			if (mDragging && mTargetManager->getPositionTargetAt(e->getX(), e->getY()) != mMousePositionTarget)
+			{
+				e->consume();
+
+				return e->isConsumed();
+			}
+			break;
+
+		case MouseEvent::ME_MOUSE_EXITED:
+			if (!mDragging) 
+			{
+				setMouseTarget(NULL, e);
+			}
+			else if (mTargetManager->getPositionTargetAt(e->getX(), e->getY()) != mMousePositionTarget)
+			{
+				e->consume();
+
+				return e->isConsumed();
+			}
 			break;
 
 		case MouseEvent::ME_MOUSE_MOVED:
 		case MouseEvent::ME_MOUSE_DRAGGED:
-            if (!mDragging || targetOver == mMouseDragSource)
-            {
-        		retargetMouseEvent(targetOver, e);
-            }
-            else // i.e. mDragging && targetOver != mMouseDragSource
-            {
-        		retargetMouseEvent(mMouseDragSource, MouseEvent::ME_MOUSE_DRAGGED, e, true);
-                if (mDragDropActive)
-        		    retargetMouseEvent(targetOver, MouseEvent::ME_MOUSE_DRAGMOVED, e);
-            }
+			targetOver = mTargetManager->getPositionTargetAt(e->getX(), e->getY());
+			trackMouseEnterExit(targetOver, e);
+
+			if (!mDragging) 
+			{
+				setMouseTarget(targetOver, e);
+			}
 			break;
+
+			break;
+		
+		case MouseEvent::ME_MOUSE_CLICKED:
+			break;
+
 		}
+		retargetMouseEvent(mMousePositionTarget, id, e);
 
 		return e->isConsumed();
 	}
-
     //---------------------------------------------------------------------
-	void EventDispatcher::retargetMouseEvent(PositionTarget* target, MouseEvent* e) 
+
+	void EventDispatcher::retargetMouseEvent(PositionTarget* target, int id, MouseEvent* e) 
 	{
+
 		if (target == NULL)
 		{
 			return;
+
 		}
+		/*Real x = e->getX(), y = e->getY();
+		PositionTarget* positionTarget;
 
-		MouseEvent* retargeted = new MouseEvent(target,
-											   e->getID(), 
-											   e->getButtonID(),
-											   e->getWhen(), 
-											   e->getModifiers(),
-											   e->getX(), 
-											   e->getY(), 
-											   e->getZ(),
-											   e->getClickCount());
-
-		target->processEvent(retargeted);		
-		delete retargeted;
-		
-		e->consume();
-	}
-
-    //---------------------------------------------------------------------
-	void EventDispatcher::retargetMouseEvent(PositionTarget* target, int id, MouseEvent* e, bool consume) 
-	{
-		if (target == NULL)
+		for(positionTarget = target;
+			positionTarget != NULL ;
+			positionTarget = positionTarget->getPositionTargetParent()) 
 		{
-			return;
-		}
-
+			x -= positionTarget->getLeft();
+			y -= positionTarget->getTop();
+		}*/
 		MouseEvent* retargeted = new MouseEvent(target,
 											   id, 
 											   e->getButtonID(),
@@ -193,88 +204,61 @@ namespace Ogre {
 											   e->getZ(),
 											   e->getClickCount());
 
-		target->processEvent(retargeted);		
+		target->processEvent(retargeted);
+		
+		e->consume();
+		
 		delete retargeted;
-
-        if (consume)
-		    e->consume();
 	}
-
     //---------------------------------------------------------------------
-	void EventDispatcher::retargetKeyEvent(PositionTarget* target, int id, MouseEvent* e) 
+	void EventDispatcher::setMouseTarget(PositionTarget* target, MouseEvent* e) 
 	{
-		if (target == NULL)
+		if (target != mMousePositionTarget) 
 		{
-			return;
+			mMousePositionTarget = target;
 		}
-
-		KeyEvent* retargeted = new KeyEvent(target,
-											   id,
-                                               0,
-											   e->getWhen(), 
-											   e->getModifiers());
-
-		target->processEvent(retargeted);		
-		delete retargeted;
 	}
 
     //---------------------------------------------------------------------
 	void EventDispatcher::trackMouseEnterExit(PositionTarget* targetOver, MouseEvent* e) 
 	{
-		if (mTargetLastEntered == targetOver)
+		int	id = e->getID();
+
+		if (mTargetLastEntered == targetOver) 
 		{
 			return;
 		}
 
-		if (mTargetLastEntered != 0)
+		// If there is a click and drag, only give enter and exit events to the item originally clicked in
+		//
+		// This makes it tough to implement drag and drop, but works for everything else. Drag and
+		//	drop requires more extensive changes like testing if the original item can be dropped on the
+		//	item the mouse is currently over. So this seems like a reasonable limitation for now.
+
+		if (mTargetLastEntered && (!mDragging || mTargetLastEntered == mMousePositionTarget))
 		{
-            if (!mDragging || mTargetLastEntered == mMouseDragSource)
-            {
-			    retargetMouseEvent(mTargetLastEntered, MouseEvent::ME_MOUSE_EXITED, e);
-            }
-            else if (mDragDropActive) // i.e. mDragging && mTargetLastEntered != mMouseDragSource && mDragDropActive
-            {
-		        retargetMouseEvent(mTargetLastEntered, MouseEvent::ME_MOUSE_DRAGEXITED, e);
-            }
+			retargetMouseEvent(mTargetLastEntered, MouseEvent::ME_MOUSE_EXITED, e);
+			if (id == MouseEvent::ME_MOUSE_EXITED) 
+			{
+				// consume native exit event if we generate one
+				e->consume();
+			}
+
+			mTargetLastEntered = NULL;
 		}
 
-		if (targetOver != 0)
+		if (targetOver && (!mDragging || targetOver == mMousePositionTarget))
 		{
-            if (!mDragging || targetOver == mMouseDragSource)
-            {
-			    retargetMouseEvent(targetOver, MouseEvent::ME_MOUSE_ENTERED, e);
-            }
-            else if (mDragDropActive) // i.e. mDragging && targetOver != mMouseDragSource && mDragDropActive
-            {
-		        retargetMouseEvent(targetOver, MouseEvent::ME_MOUSE_DRAGENTERED, e);
-            }
-		}
+			retargetMouseEvent(targetOver, MouseEvent::ME_MOUSE_ENTERED, e);
+			if (id == MouseEvent::ME_MOUSE_ENTERED) 
+			{
+				// consume native enter event if we generate one
+				e->consume();
+			}
 
-        mTargetLastEntered = targetOver;
+			mTargetLastEntered = targetOver;
+		}
 	}
-
-    //---------------------------------------------------------------------
-    void EventDispatcher::trackKeyEnterExit(PositionTarget* targetOver, MouseEvent* e)
-    {
-        if (targetOver != mKeyCursorOn)
-        {
-            if (mKeyCursorOn != 0)
-            {
-                retargetKeyEvent(mKeyCursorOn, KeyEvent::KE_KEY_FOCUSOUT, e);
-            }
-
-			if (targetOver != 0 && targetOver->isKeyEnabled())
-			{
-				mKeyCursorOn = targetOver;
-                retargetKeyEvent(targetOver, KeyEvent::KE_KEY_FOCUSIN, e);
-			}
-			else
-			{
-				mKeyCursorOn = NULL;
-			}
-        }
-    }
-
 }
 
 

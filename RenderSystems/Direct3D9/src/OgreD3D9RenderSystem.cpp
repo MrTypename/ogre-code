@@ -38,10 +38,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreD3D9HardwareIndexBuffer.h"
 #include "OgreD3D9HardwareVertexBuffer.h"
 #include "OgreD3D9VertexDeclaration.h"
-#include "OgreD3D9GpuProgram.h"
-#include "OgreD3D9GpuProgramManager.h"
-#include "OgreD3D9HLSLProgramFactory.h"
-#include "OgreHighLevelGpuProgramManager.h"
+
 
 namespace Ogre 
 {
@@ -62,8 +59,6 @@ namespace Ogre
 		mExternalHandle = NULL;
         mTextureManager = NULL;
         mHardwareBufferManager = NULL;
-		mGpuProgramManager = NULL;
-        mHLSLProgramFactory = NULL;
 
 		// init lights
 		for(int i = 0; i < MAX_LIGHTS; i++ )
@@ -92,7 +87,6 @@ namespace Ogre
 		mLastVertexSourceCount = 0;
 
         mForcedNormalisation = false;
-        mCurrentLights = 0;
 
 
 		OgreUnguard();
@@ -112,8 +106,6 @@ namespace Ogre
 		SAFE_DELETE( mDriverList );
 		SAFE_DELETE( mTextureManager );
         SAFE_DELETE(mHardwareBufferManager);
-        SAFE_DELETE(mHLSLProgramFactory);
-		SAFE_DELETE(mGpuProgramManager);
 		SAFE_RELEASE( mpD3D );
 
         if (mCapabilities)
@@ -581,22 +573,34 @@ namespace Ogre
 		if( firstWindow )
 		{
 			win->getCustomAttribute( "D3DDEVICE", &mpD3DDevice );
+			// get caps
+			mpD3D->GetDeviceCaps( mActiveD3DDriver->getAdapterNumber(), D3DDEVTYPE_HAL, &mCaps );
 
 			// Create the texture manager for use by others
 			mTextureManager = new D3D9TextureManager( mpD3DDevice );
             // Also create hardware buffer manager
             mHardwareBufferManager = new D3D9HardwareBufferManager(mpD3DDevice);
 
-			// Create the GPU program manager
-			mGpuProgramManager = new D3D9GpuProgramManager(mpD3DDevice);
-            // create & register HLSL factory
-            mHLSLProgramFactory = new D3D9HLSLProgramFactory();
-            HighLevelGpuProgramManager::getSingleton().addFactory(mHLSLProgramFactory);
+			LogManager::getSingleton().logMessage(
+				"The following capabilities are available:");
 
+			// Check for hardware stencil support
+			LPDIRECT3DSURFACE9 pSurf;
+			D3DSURFACE_DESC surfDesc;
+			mpD3DDevice->GetDepthStencilSurface(&pSurf);
+			pSurf->GetDesc(&surfDesc);
 
-            // Initialise the capabilities structures
-            initCapabilities();
+			if (surfDesc.Format == D3DFMT_D24S8)
+			{
+				LogManager::getSingleton().logMessage("- Hardware Stencil Buffer");
+				mCapabilities->setCapability(RSC_HWSTENCIL);
+				// Actually, it's always 8-bit
+				mCapabilities->setStencilBufferBitDepth(8);
 
+			}
+
+			// Set number of texture units
+			mCapabilities->setNumTextureUnits(mCaps.MaxSimultaneousTextures);
 
 			firstWindow = false;
 			
@@ -604,217 +608,7 @@ namespace Ogre
 
 		OgreUnguardRet( win );
 	}
-    //---------------------------------------------------------------------
-    void D3D9RenderSystem::initCapabilities(void)
-    {
-		// get caps
-		mpD3D->GetDeviceCaps( mActiveD3DDriver->getAdapterNumber(), D3DDEVTYPE_HAL, &mCaps );
-
-        // Check for hardware stencil support
-		LPDIRECT3DSURFACE9 pSurf;
-		D3DSURFACE_DESC surfDesc;
-		mpD3DDevice->GetDepthStencilSurface(&pSurf);
-		pSurf->GetDesc(&surfDesc);
-
-		if (surfDesc.Format == D3DFMT_D24S8 || surfDesc.Format == D3DFMT_D24X8)
-		{
-			mCapabilities->setCapability(RSC_HWSTENCIL);
-			// Actually, it's always 8-bit
-			mCapabilities->setStencilBufferBitDepth(8);
-
-		}
-
-		// Set number of texture units
-		mCapabilities->setNumTextureUnits(mCaps.MaxSimultaneousTextures);
-        // Anisotropy?
-        if (mCaps.MaxAnisotropy > 1)
-            mCapabilities->setCapability(RSC_ANISOTROPY);
-        // Automatic mipmap generation?
-        if (mCaps.Caps2 & D3DCAPS2_CANAUTOGENMIPMAP)
-            mCapabilities->setCapability(RSC_AUTOMIPMAP);
-        // Blending between stages supported
-        mCapabilities->setCapability(RSC_BLENDING);
-        // Dot 3
-        if (mCaps.TextureOpCaps & D3DTEXOPCAPS_DOTPRODUCT3)
-            mCapabilities->setCapability(RSC_DOT3);
-        // Cube map
-        if (mCaps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP)
-            mCapabilities->setCapability(RSC_CUBEMAPPING);
-
-        mCapabilities->setCapability(RSC_VBO);
-
-        convertVertexShaderCaps();
-        convertPixelShaderCaps();
-
-        mCapabilities->log(LogManager::getSingleton().getDefaultLog());
-    }
-    //---------------------------------------------------------------------
-    void D3D9RenderSystem::convertVertexShaderCaps(void)
-    {
-        ushort major, minor;
-        major = static_cast<ushort>((mCaps.VertexShaderVersion & 0x0000FF00) >> 8);
-        minor = static_cast<ushort>(mCaps.VertexShaderVersion & 0x000000FF);
-
-        // Populate max version & params
-        switch (major)
-        {
-        case 1:
-            mCapabilities->setMaxVertexProgramVersion("vs_1_1");
-            // No boolean params allowed
-            mCapabilities->setVertexProgramConstantBoolCount(0);
-            // No integer params allowed
-            mCapabilities->setVertexProgramConstantIntCount(0);
-            // float params, always 4D
-            mCapabilities->setVertexProgramConstantFloatCount(mCaps.MaxVertexShaderConst);
-           
-            break;
-        case 2:
-            if (minor > 0)
-            {
-                mCapabilities->setMaxVertexProgramVersion("vs_2_x");
-            }
-            else
-            {
-                mCapabilities->setMaxVertexProgramVersion("vs_2_0");
-            }
-            // 16 boolean params allowed
-            mCapabilities->setVertexProgramConstantBoolCount(16);
-            // 16 integer params allowed, 4D
-            mCapabilities->setVertexProgramConstantIntCount(16);
-            // float params, always 4D
-            mCapabilities->setVertexProgramConstantFloatCount(mCaps.MaxVertexShaderConst);
-            break;
-        case 3:
-            mCapabilities->setMaxVertexProgramVersion("vs_3_0");
-            // 16 boolean params allowed
-            mCapabilities->setVertexProgramConstantBoolCount(16);
-            // 16 integer params allowed, 4D
-            mCapabilities->setVertexProgramConstantIntCount(16);
-            // float params, always 4D
-            mCapabilities->setVertexProgramConstantFloatCount(mCaps.MaxVertexShaderConst);
-            break;
-        default:
-            mCapabilities->setMaxVertexProgramVersion("");
-            break;
-        }
-
-        // populate syntax codes in program manager (no breaks in this one so it falls through)
-        switch(major)
-        {
-        case 3:
-            mGpuProgramManager->_pushSyntaxCode("vs_3_0");
-        case 2:
-            if (major > 2 || minor > 0)
-                mGpuProgramManager->_pushSyntaxCode("vs_2_x");
-
-            mGpuProgramManager->_pushSyntaxCode("vs_2_0");
-        case 1:
-            mGpuProgramManager->_pushSyntaxCode("vs_1_1");
-            mCapabilities->setCapability(RSC_VERTEX_PROGRAM);
-        }
-    }
-    //---------------------------------------------------------------------
-    void D3D9RenderSystem::convertPixelShaderCaps(void)
-    {
-        ushort major, minor;
-        major = static_cast<ushort>((mCaps.PixelShaderVersion & 0x0000FF00) >> 8);
-        minor = static_cast<ushort>(mCaps.PixelShaderVersion & 0x000000FF);
-        switch (major)
-        {
-        case 1:
-            switch(minor)
-            {
-            case 1:
-                mCapabilities->setMaxFragmentProgramVersion("ps_1_1");
-                break;
-            case 2:
-                mCapabilities->setMaxFragmentProgramVersion("ps_1_2");
-                break;
-            case 3:
-                mCapabilities->setMaxFragmentProgramVersion("ps_1_3");
-                break;
-            case 4:
-                mCapabilities->setMaxFragmentProgramVersion("ps_1_4");
-                break;
-            }
-            break;
-            // no boolean params allowed
-            mCapabilities->setFragmentProgramConstantBoolCount(0);
-            // no integer params allowed
-            mCapabilities->setFragmentProgramConstantIntCount(0);
-            // float params, always 4D
-            // NB in ps_1_x these are actually stored as fixed point values,
-            // but they are entered as floats
-            mCapabilities->setFragmentProgramConstantFloatCount(8);
-        case 2:
-            if (minor > 0)
-            {
-                mCapabilities->setMaxFragmentProgramVersion("ps_2_x");
-                // 16 boolean params allowed
-                mCapabilities->setFragmentProgramConstantBoolCount(16);
-                // 16 integer params allowed, 4D
-                mCapabilities->setFragmentProgramConstantIntCount(16);
-                // float params, always 4D
-                mCapabilities->setFragmentProgramConstantFloatCount(224);
-            }
-            else
-            {
-                mCapabilities->setMaxFragmentProgramVersion("ps_2_0");
-                // no boolean params allowed
-                mCapabilities->setFragmentProgramConstantBoolCount(0);
-                // no integer params allowed
-                mCapabilities->setFragmentProgramConstantIntCount(0);
-                // float params, always 4D
-                mCapabilities->setFragmentProgramConstantFloatCount(32);
-            }
-            break;
-        case 3:
-            if (minor > 0)
-            {
-                mCapabilities->setMaxFragmentProgramVersion("ps_3_x");
-            }
-            else
-            {
-                mCapabilities->setMaxFragmentProgramVersion("ps_3_0");
-            }
-            // 16 boolean params allowed
-            mCapabilities->setFragmentProgramConstantBoolCount(16);
-            // 16 integer params allowed, 4D
-            mCapabilities->setFragmentProgramConstantIntCount(16);
-            // float params, always 4D
-            mCapabilities->setFragmentProgramConstantFloatCount(224);
-            break;
-        default:
-            mCapabilities->setMaxFragmentProgramVersion("");
-            break;
-        }
-
-        // populate syntax codes in program manager (no breaks in this one so it falls through)
-        switch(major)
-        {
-        case 3:
-            if (minor > 0)
-                mGpuProgramManager->_pushSyntaxCode("ps_3_x");
-
-            mGpuProgramManager->_pushSyntaxCode("ps_3_0");
-        case 2:
-            if (major > 2 || minor > 0)
-                mGpuProgramManager->_pushSyntaxCode("ps_2_x");
-
-            mGpuProgramManager->_pushSyntaxCode("ps_2_0");
-        case 1:
-            if (major > 1 || minor >= 4)
-                mGpuProgramManager->_pushSyntaxCode("ps_1_4");
-            if (major > 1 || minor >= 3)
-                mGpuProgramManager->_pushSyntaxCode("ps_1_3");
-            if (major > 1 || minor >= 2)
-                mGpuProgramManager->_pushSyntaxCode("ps_1_2");
-            
-            mGpuProgramManager->_pushSyntaxCode("ps_1_1");
-            mCapabilities->setCapability(RSC_FRAGMENT_PROGRAM);
-        }
-    }
-    //---------------------------------------------------------------------
+	//---------------------------------------------------------------------
 	RenderTexture * D3D9RenderSystem::createRenderTexture( const String & name, int width, int height )
 	{
 		RenderTexture *rt = new D3D9RenderTexture( name, width, height );
@@ -838,10 +632,77 @@ namespace Ogre
 		}
 	}
 	//---------------------------------------------------------------------
+	void D3D9RenderSystem::_pushRenderState()
+	{
+		Except( Exception::UNIMPLEMENTED_FEATURE, "Sorry, this feature is not yet available.",
+			"D3D9RenderSystem::_pushRenderState" );
+	}
+	//---------------------------------------------------------------------
+	void D3D9RenderSystem::_popRenderState()
+	{
+		Except( Exception::UNIMPLEMENTED_FEATURE, "Sorry, this feature is not yet available.",
+			"D3D9RenderSystem::_popRenderState" );
+	}
+	//---------------------------------------------------------------------
 	String D3D9RenderSystem::getErrorDescription( long errorNumber )
 	{
 		String errMsg = DXGetErrorDescription9( errorNumber );
 		return errMsg;
+	}
+	//---------------------------------------------------------------------
+	D3DXMATRIX D3D9RenderSystem::makeD3DXMatrix( const Matrix4& mat )
+	{
+		// Transpose matrix
+		// D3D9 uses row vectors i.e. V*M
+		// Ogre, OpenGL and everything else uses column vectors i.e. M*V
+		D3DXMATRIX d3dMat;
+		d3dMat.m[0][0] = mat[0][0];
+		d3dMat.m[0][1] = mat[1][0];
+		d3dMat.m[0][2] = mat[2][0];
+		d3dMat.m[0][3] = mat[3][0];
+
+		d3dMat.m[1][0] = mat[0][1];
+		d3dMat.m[1][1] = mat[1][1];
+		d3dMat.m[1][2] = mat[2][1];
+		d3dMat.m[1][3] = mat[3][1];
+
+		d3dMat.m[2][0] = mat[0][2];
+		d3dMat.m[2][1] = mat[1][2];
+		d3dMat.m[2][2] = mat[2][2];
+		d3dMat.m[2][3] = mat[3][2];
+
+		d3dMat.m[3][0] = mat[0][3];
+		d3dMat.m[3][1] = mat[1][3];
+		d3dMat.m[3][2] = mat[2][3];
+		d3dMat.m[3][3] = mat[3][3];
+
+		return d3dMat;
+	}
+	//---------------------------------------------------------------------
+	Matrix4 D3D9RenderSystem::convertD3DXMatrix( const D3DXMATRIX& mat )
+	{
+		Matrix4 ogreMat;
+		ogreMat[0][0] = mat.m[0][0];
+		ogreMat[1][0] = mat.m[0][1];
+		ogreMat[2][0] = mat.m[0][2];
+		ogreMat[3][0] = mat.m[0][3];
+
+		ogreMat[0][1] = mat.m[1][0];
+		ogreMat[1][1] = mat.m[1][1];
+		ogreMat[2][1] = mat.m[1][2];
+		ogreMat[3][1] = mat.m[1][3];
+
+		ogreMat[0][2] = mat.m[2][0];
+		ogreMat[1][2] = mat.m[2][1];
+		ogreMat[2][2] = mat.m[2][2];
+		ogreMat[3][2] = mat.m[2][3];
+
+		ogreMat[0][3] = mat.m[3][0];
+		ogreMat[1][3] = mat.m[3][1];
+		ogreMat[2][3] = mat.m[3][2];
+		ogreMat[3][3] = mat.m[3][3];
+
+		return ogreMat;
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::convertColourValue( const ColourValue& colour, unsigned long* pDest )
@@ -849,29 +710,17 @@ namespace Ogre
 		*pDest = colour.getAsLongARGB();
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_makeProjectionMatrix(Real fovy, Real aspect, Real nearPlane, 
-        Real farPlane, Matrix4& dest, bool forGpuProgram)
+	void D3D9RenderSystem::_makeProjectionMatrix(Real fovy, Real aspect, Real nearPlane, Real farPlane, Matrix4& dest)
 	{
 
         D3DXMATRIX d3dMatrix;
-        if (forGpuProgram)
-        {
-            D3DXMatrixPerspectiveFovRH(&d3dMatrix,
-                Math::AngleUnitsToRadians(fovy),
-                aspect,
-                nearPlane,
-                farPlane);
-        }
-        else
-        {
-            D3DXMatrixPerspectiveFovLH(&d3dMatrix,
-                Math::AngleUnitsToRadians(fovy),
-                aspect,
-                nearPlane,
-                farPlane);
-        }
-        dest = D3D9Mappings::convertD3DXMatrix(d3dMatrix);
+        D3DXMatrixPerspectiveFovLH(&d3dMatrix,
+          Math::AngleUnitsToRadians(fovy),
+          aspect,
+          nearPlane,
+          farPlane);
 
+        dest = convertD3DXMatrix(d3dMatrix);
 
         /*
         Real theta = Math::AngleUnitsToRadians(fovy * 0.5);
@@ -911,23 +760,65 @@ namespace Ogre
 			Except( hr, "Failed to set render stat D3DRS_AMBIENT", "D3D9RenderSystem::setAmbientLight" );
 	}
 	//---------------------------------------------------------------------
-    void D3D9RenderSystem::_useLights(const LightList& lights, unsigned short limit)
-    {
-        LightList::const_iterator i, iend;
-        iend = lights.end();
-        unsigned short num = 0;
-        for (i = lights.begin(); i != iend && num < limit; ++i, ++num)
-        {
-            setD3D9Light(num, *i);
-        }
-        // Disable extra lights
-        for (; num < mCurrentLights; ++num)
-        {
-            setD3D9Light(num, NULL);
-        }
-        mCurrentLights = std::min(limit, static_cast<unsigned short>(lights.size()));
+	void D3D9RenderSystem::_addLight( Light* lt )
+	{
+		// Find first free slot
+		int i;
+		for( i=0; i < MAX_LIGHTS; i++ )
+		{
+			if( !mLights[i] )
+			{
+				mLights[i] = lt;
+				break;
+			}
+		}
 
-    }
+		// No space in array?
+		if( i == MAX_LIGHTS )
+			Except( Exception::ERR_INTERNAL_ERROR, "No free light slots - cannot add light.", "D3D9RenderSystem::_addLight" );
+
+		setD3D9Light( i, lt );
+	}
+	//---------------------------------------------------------------------
+	void D3D9RenderSystem::_removeLight( Light* lt )
+	{
+		for( int i=0; i < MAX_LIGHTS; i++ )
+		{
+			if( mLights[i] == lt )
+			{
+				mpD3DDevice->LightEnable( i, FALSE );
+				mLights[0] = NULL;
+				break;
+			}
+		}
+	}
+	//---------------------------------------------------------------------
+	void D3D9RenderSystem::_modifyLight( Light* lt )
+	{
+		int i;
+		for( i=0; i < MAX_LIGHTS; i++ )
+		{
+			if( mLights[i] == lt )
+				break;
+		}
+
+		if( i == MAX_LIGHTS )
+			Except( Exception::ERR_INVALIDPARAMS, "Cannot locate light to modify.", "D3D9RenderSystem::_modifyLight" );
+
+		setD3D9Light( i, lt );
+	}
+	//---------------------------------------------------------------------
+	void D3D9RenderSystem::_removeAllLights()
+	{
+		for( int i=0; i < MAX_LIGHTS; i++ )
+		{
+			if( mLights[i] )
+			{
+				mpD3DDevice->LightEnable( i, FALSE );
+				mLights[i] = NULL;
+			}
+		}
+	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::setShadingType( ShadeOptions so )
 	{
@@ -950,13 +841,8 @@ namespace Ogre
 		D3DLIGHT9 d3dLight;
 		ZeroMemory( &d3dLight, sizeof(d3dLight) );
 
-        if (!lt)
-        {
-            if( FAILED( hr = mpD3DDevice->LightEnable( index, FALSE) ) )
-			    Except( hr, "Unable to disable light", "D3D9RenderSystem::setD3D9Light" );
-        }
-        else
-        {
+		if (lt->isVisible())
+		{
 			switch( lt->getType() )
 			{
 			case Light::LT_POINT:
@@ -1001,17 +887,17 @@ namespace Ogre
 
 			if( FAILED( hr = mpD3DDevice->SetLight( index, &d3dLight ) ) )
 				Except( hr, "Unable to set light details", "D3D9RenderSystem::setD3D9Light" );
+		}
 
-            if( FAILED( hr = mpD3DDevice->LightEnable( index, TRUE ) ) )
-			    Except( hr, "Unable to enable light", "D3D9RenderSystem::setD3D9Light" );
-        }
+		if( FAILED( hr = mpD3DDevice->LightEnable( index, lt->isVisible() ) ) )
+			Except( hr, "Unable to enable/disable light", "D3D9RenderSystem::setD3D9Light" );
 
-
+		lt->_clearModified();
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_setViewMatrix( const Matrix4 &m )
 	{
-        D3DXMATRIX d3dmat = D3D9Mappings::makeD3DXMatrix( m );
+		D3DXMATRIX d3dmat = makeD3DXMatrix( m );
 		d3dmat.m[0][2] = -d3dmat.m[0][2];
 		d3dmat.m[1][2] = -d3dmat.m[1][2];
 		d3dmat.m[2][2] = -d3dmat.m[2][2];
@@ -1024,7 +910,7 @@ namespace Ogre
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_setProjectionMatrix( const Matrix4 &m )
 	{
-		D3DXMATRIX d3dMat = D3D9Mappings::makeD3DXMatrix( m );
+		D3DXMATRIX d3dMat = makeD3DXMatrix( m );
 
 		if( mActiveRenderTarget->requiresTextureFlipping() )
 			d3dMat._22 = - d3dMat._22;
@@ -1036,7 +922,7 @@ namespace Ogre
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_setWorldMatrix( const Matrix4 &m )
 	{
-		D3DXMATRIX d3dMat = D3D9Mappings::makeD3DXMatrix( m );
+		D3DXMATRIX d3dMat = makeD3DXMatrix( m );
 
 		HRESULT hr;
 		if( FAILED( hr = mpD3DDevice->SetTransform( D3DTS_WORLD, &d3dMat ) ) )
@@ -1078,7 +964,7 @@ namespace Ogre
 		}
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setTexture( size_t stage, bool enabled, const String &texname )
+	void D3D9RenderSystem::_setTexture( int stage, bool enabled, const String &texname )
 	{
 		HRESULT hr;
 		D3D9Texture *dt = (D3D9Texture *)TextureManager::getSingleton().getByName(texname);
@@ -1126,7 +1012,7 @@ namespace Ogre
 		}
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setTextureCoordSet( size_t stage, size_t index )
+	void D3D9RenderSystem::_setTextureCoordSet( int stage, int index )
 	{
 		HRESULT hr;
 		hr = __SetTextureStageState( stage, D3DTSS_TEXCOORDINDEX, index );
@@ -1136,7 +1022,7 @@ namespace Ogre
         mTexStageDesc[stage].coordIndex = index;
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setTextureCoordCalculation( size_t stage, TexCoordCalcMethod m)
+	void D3D9RenderSystem::_setTextureCoordCalculation( int stage, TexCoordCalcMethod m)
 	{
 		HRESULT hr = S_OK;
 		// record the stage state
@@ -1166,7 +1052,7 @@ namespace Ogre
 		}
 	}
     //---------------------------------------------------------------------
-	void D3D9RenderSystem::_setTextureMatrix( size_t stage, const Matrix4& xForm )
+	void D3D9RenderSystem::_setTextureMatrix( int stage, const Matrix4& xForm )
 	{
 		HRESULT hr;
 		D3DXMATRIX d3dMatId; // ident. matrix in D3DX format
@@ -1193,7 +1079,7 @@ namespace Ogre
 			d3dMatEnvMap(1,1) = -0.5f;
 			d3dMatEnvMap(3,1) = 0.5f;
 			// convert it to ogre format
-            Matrix4 ogreMatEnvMap = D3D9Mappings::convertD3DXMatrix(d3dMatEnvMap);
+			Matrix4 ogreMatEnvMap = convertD3DXMatrix(d3dMatEnvMap);
 			// concatenate with the xForm
 			newMat = newMat.concatenate(ogreMatEnvMap);
 		}
@@ -1232,7 +1118,7 @@ namespace Ogre
         }
 
 		// convert our matrix to D3D format
-		d3dMat = D3D9Mappings::makeD3DXMatrix(newMat);
+		d3dMat = makeD3DXMatrix(newMat);
 
 		// need this if texture is a cube map, to invert D3D's z coord
 		if (mTexStageDesc[stage].autoTexCoordType != TEXCALC_NONE)
@@ -1281,7 +1167,7 @@ namespace Ogre
 		}
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setTextureAddressingMode( size_t stage, TextureUnitState::TextureAddressingMode tam )
+	void D3D9RenderSystem::_setTextureAddressingMode( int stage, Material::TextureLayer::TextureAddressingMode tam )
 	{
 		HRESULT hr;
 		if( FAILED( hr = __SetSamplerState( stage, D3DSAMP_ADDRESSU, D3D9Mappings::get(tam) ) ) )
@@ -1292,7 +1178,7 @@ namespace Ogre
 			Except( hr, "Failed to set texture addressing mode for W", "D3D9RenderSystem::_setTextureAddressingMode" );
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setTextureBlendMode( size_t stage, const LayerBlendModeEx& bm )
+	void D3D9RenderSystem::_setTextureBlendMode( int stage, const LayerBlendModeEx& bm )
 	{
 		HRESULT hr = S_OK;
 		D3DTEXTURESTAGESTATETYPE tss;
@@ -1448,25 +1334,7 @@ namespace Ogre
 			Except(hr, "Error setting depth bias", "D3D9RenderSystem::_setDepthBias");
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setColourBufferWriteEnabled(bool red, bool green, 
-		bool blue, bool alpha)
-	{
-		DWORD val = 0;
-		if (red) 
-			val |= D3DCOLORWRITEENABLE_RED;
-		if (green)
-			val |= D3DCOLORWRITEENABLE_GREEN;
-		if (blue)
-			val |= D3DCOLORWRITEENABLE_BLUE;
-		if (alpha)
-			val |= D3DCOLORWRITEENABLE_ALPHA;
-		HRESULT hr = __SetRenderState(D3DRS_COLORWRITEENABLE, val); 
-		if (FAILED(hr))
-			Except(hr, "Error setting colour write enable flags", 
-			"D3D9RenderSystem::_setColourWriteEnabled");
-	}
-	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setFog( FogMode mode, const ColourValue& colour, Real densitiy, Real start, Real end )
+	void D3D9RenderSystem::_setFog( FogMode mode, ColourValue colour, Real densitiy, Real start, Real end )
 	{
 		HRESULT hr;
 
@@ -1570,25 +1438,32 @@ namespace Ogre
 			"D3D9RenderSystem::setStencilBufferPassOperation");
 	}
 	//---------------------------------------------------------------------
-    void D3D9RenderSystem::_setTextureUnitFiltering(size_t unit, FilterType ftype, 
-        FilterOptions filter)
+	void D3D9RenderSystem::_setTextureLayerFiltering(int unit, const TextureFilterOptions texLayerFilterOps)
 	{
 		HRESULT hr;
 		D3D9Mappings::eD3DTexType texType = mTexStageDesc[unit].texType;
-        hr = __SetSamplerState( unit, D3D9Mappings::get(ftype), 
-            D3D9Mappings::get(ftype, filter, mCaps, texType));
+		// set mag. filter
+		hr = __SetSamplerState( unit, D3DSAMP_MAGFILTER, D3D9Mappings::get(texLayerFilterOps, mCaps, texType, D3D9Mappings::D3D_FUSAGE_MAG) );
 		if (FAILED(hr))
-			Except(hr, "Failed to set texture filter ", "D3D9RenderSystem::_setTextureUnitFiltering");
+			Except(hr, "Failed to set MagFilter", "D3D9RenderSystem::_setTextureLayerFiltering");
+		// set min. filter
+		hr = __SetSamplerState( unit, D3DSAMP_MINFILTER, D3D9Mappings::get(texLayerFilterOps, mCaps, texType, D3D9Mappings::D3D_FUSAGE_MIN) );
+		if (FAILED(hr))
+			Except(hr, "Failed to set MinFilter", "D3D9RenderSystem::_setTextureLayerFiltering");
+		// set mip filter
+		hr = __SetSamplerState( unit, D3DSAMP_MIPFILTER, D3D9Mappings::get(texLayerFilterOps, mCaps, texType, D3D9Mappings::D3D_FUSAGE_MIP) );
+		if (FAILED(hr))
+			Except(hr, "Failed to set MipFilter", "D3D9RenderSystem::_setTextureLayerFiltering");
 	}
     //---------------------------------------------------------------------
-	DWORD D3D9RenderSystem::_getCurrentAnisotropy(size_t unit)
+	DWORD D3D9RenderSystem::_getCurrentAnisotropy(int unit)
 	{
 		DWORD oldVal;
 		mpD3DDevice->GetSamplerState(unit, D3DSAMP_MAXANISOTROPY, &oldVal);
 			return oldVal;
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setTextureLayerAnisotropy(size_t unit, int maxAnisotropy)
+	void D3D9RenderSystem::_setTextureLayerAnisotropy(int unit, int maxAnisotropy)
 	{
 		if ((DWORD)maxAnisotropy > mCaps.MaxAnisotropy)
 			maxAnisotropy = mCaps.MaxAnisotropy;
@@ -1960,164 +1835,4 @@ namespace Ogre
             (normalise || mForcedNormalisation) ? TRUE : FALSE);
     }
 	//---------------------------------------------------------------------
-    void D3D9RenderSystem::bindGpuProgram(GpuProgram* prg)
-    {
-        HRESULT hr;
-        switch (prg->getType())
-        {
-        case GPT_VERTEX_PROGRAM:
-            hr = mpD3DDevice->SetVertexShader(
-                static_cast<D3D9GpuVertexProgram*>(prg)->getVertexShader());
-            if (FAILED(hr))
-            {
-                Except(hr, "Error calling SetVertexShader", "D3D9RenderSystem::bindGpuProgram");
-            }
-            break;
-        case GPT_FRAGMENT_PROGRAM:
-            hr = mpD3DDevice->SetPixelShader(
-                static_cast<D3D9GpuFragmentProgram*>(prg)->getPixelShader());
-            if (FAILED(hr))
-            {
-                Except(hr, "Error calling SetPixelShader", "D3D9RenderSystem::bindGpuProgram");
-            }
-            break;
-        };
-
-    }
-	//---------------------------------------------------------------------
-    void D3D9RenderSystem::unbindGpuProgram(GpuProgramType gptype)
-    {
-        HRESULT hr;
-        switch(gptype)
-        {
-        case GPT_VERTEX_PROGRAM:
-            hr = mpD3DDevice->SetVertexShader(NULL);
-            if (FAILED(hr))
-            {
-                Except(hr, "Error resetting SetVertexShader to NULL", 
-                    "D3D9RenderSystem::unbindGpuProgram");
-            }
-            break;
-        case GPT_FRAGMENT_PROGRAM:
-            hr = mpD3DDevice->SetPixelShader(NULL);
-            if (FAILED(hr))
-            {
-                Except(hr, "Error resetting SetPixelShader to NULL", 
-                    "D3D9RenderSystem::unbindGpuProgram");
-            }
-            break;
-        };
-    }
-	//---------------------------------------------------------------------
-    void D3D9RenderSystem::bindGpuProgramParameters(GpuProgramType gptype, 
-        GpuProgramParametersSharedPtr params)
-    {
-        HRESULT hr;
-        unsigned int index;
-        GpuProgramParameters::IntConstantIterator intIt = params->getIntConstantIterator();
-        GpuProgramParameters::RealConstantIterator realIt = params->getRealConstantIterator();
-
-        switch(gptype)
-        {
-        case GPT_VERTEX_PROGRAM:
-            // Bind floats
-            if (params->hasRealConstantParams())
-            {
-                // Iterate over params and set the relevant ones
-                index = 0;
-                while (realIt.hasMoreElements())
-                {
-                    GpuProgramParameters::RealConstantEntry* e = realIt.peekNextPtr();
-                    if (e->isSet)
-                    {
-                        if (FAILED(hr = mpD3DDevice->SetVertexShaderConstantF(
-                            index, e->val, 1)))
-                        {
-                            Except(hr, "Unable to upload shader float parameters", 
-                                "D3D9RenderSystem::bindGpuProgramParameters");
-                        }
-                    }
-                    index++;
-                    realIt.moveNext();
-                }
-            }
-            // Bind ints
-            if (params->hasIntConstantParams())
-            {
-                // Iterate over params and set the relevant ones
-                index = 0;
-                while (intIt.hasMoreElements())
-                {
-                    GpuProgramParameters::IntConstantEntry* e = intIt.peekNextPtr();
-                    if (e->isSet)
-                    {
-                        if (FAILED(hr = mpD3DDevice->SetVertexShaderConstantI(
-                            index, e->val, 1)))
-                        {
-                            Except(hr, "Unable to upload shader float parameters", 
-                                "D3D9RenderSystem::bindGpuProgramParameters");
-                        }
-                    }
-                    index++;
-                    intIt.moveNext();
-                }
-            }
-            break;
-        case GPT_FRAGMENT_PROGRAM:
-            // Bind floats
-            if (params->hasRealConstantParams())
-            {
-                // Iterate over params and set the relevant ones
-                index = 0;
-                while (realIt.hasMoreElements())
-                {
-                    GpuProgramParameters::RealConstantEntry* e = realIt.peekNextPtr();
-                    if (e->isSet)
-                    {
-                        /*
-                        // TEST
-                        LogManager::getSingleton().logMessage(
-                            "  Set Constant " + StringConverter::toString(index) + " to float4(" +
-                            StringConverter::toString(e->val[0]) + ", " + 
-                            StringConverter::toString(e->val[1]) + ", " + 
-                            StringConverter::toString(e->val[2]) + ", " + 
-                            StringConverter::toString(e->val[3]) + ")"); 
-                        */
-
-                        if (FAILED(hr = mpD3DDevice->SetPixelShaderConstantF(
-                            index, e->val, 1)))
-                        {
-                            Except(hr, "Unable to upload shader float parameters", 
-                                "D3D9RenderSystem::bindGpuProgramParameters");
-                        }
-                    }
-                    index++;
-                    realIt.moveNext();
-                }
-            }
-            // Bind ints
-            if (params->hasIntConstantParams())
-            {
-                // Iterate over params and set the relevant ones
-                index = 0;
-                while (intIt.hasMoreElements())
-                {
-                    GpuProgramParameters::IntConstantEntry* e = intIt.peekNextPtr();
-                    if (e->isSet)
-                    {
-                        if (FAILED(hr = mpD3DDevice->SetPixelShaderConstantI(
-                            index, e->val, 1)))
-                        {
-                            Except(hr, "Unable to upload shader float parameters", 
-                                "D3D9RenderSystem::bindGpuProgramParameters");
-                        }
-                    }
-                    index++;
-                    intIt.moveNext();
-                }
-            }
-            break;
-        };
-    }
-
 }

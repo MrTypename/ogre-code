@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreEntity.h"
 
 #include "OgreMesh.h"
@@ -93,9 +92,6 @@ namespace Ogre {
 		mMaxMeshLodIndex = 0; 		// Backwards, remember low value = high detail
 		mMinMeshLodIndex = 99;
 
-		mMaterialLodFactorInv = 1.0f;
-		mMaxMaterialLodIndex = 0; 		// Backwards, remember low value = high detail
-		mMinMaterialLodIndex = 99;
 
 
     }
@@ -156,7 +152,7 @@ namespace Ogre {
 		return getSubEntity(index);
     }
     //-----------------------------------------------------------------------
-    unsigned int Entity::getNumSubEntities(void) const
+    unsigned int Entity::getNumSubEntities(void)
     {
         return static_cast< unsigned int >( mSubEntityList.size() );
     }
@@ -193,36 +189,17 @@ namespace Ogre {
 		if (mParentNode)
 		{
 			Real squaredDepth = mParentNode->getSquaredViewDepth(cam);
-
-            // Do Mesh LOD
 			// Adjust this depth by the entity bias factor
-			Real tmp = squaredDepth * mMeshLodFactorInv;
+			squaredDepth = squaredDepth * mMeshLodFactorInv;
 			// Now adjust it by the camera bias
-			tmp = tmp * cam->_getLodBiasInverse();
+			squaredDepth = squaredDepth * cam->_getLodBiasInverse();
 			// Get the index at this biased depth
-			mMeshLodIndex = mMesh->getLodIndexSquaredDepth(tmp);
+			mMeshLodIndex = mMesh->getLodIndexSquaredDepth(squaredDepth);
 			// Apply maximum detail restriction (remember lower = higher detail)
 			mMeshLodIndex = std::max(mMaxMeshLodIndex, mMeshLodIndex);
 			// Apply minimum detail restriction (remember higher = lower detail)
 			mMeshLodIndex = std::min(mMinMeshLodIndex, mMeshLodIndex);
 			
-            // Now do material LOD
-			// Adjust this depth by the entity bias factor
-			tmp = squaredDepth * mMaterialLodFactorInv;
-			// Now adjust it by the camera bias
-			tmp = tmp * cam->_getLodBiasInverse();
-            SubEntityList::iterator i, iend;
-            iend = mSubEntityList.end();
-            for (i = mSubEntityList.begin(); i != iend; ++i)
-            {
-			    // Get the index at this biased depth
-                unsigned short idx = (*i)->mpMaterial->getLodIndexSquaredDepth(tmp);
-			    // Apply maximum detail restriction (remember lower = higher detail)
-			    idx = std::max(mMaxMaterialLodIndex, idx);
-			    // Apply minimum detail restriction (remember higher = lower detail)
-			    (*i)->mMaterialLodIndex = std::min(mMinMaterialLodIndex, idx);
-            }
-
 
 		}
         // Notify any child objects
@@ -404,21 +381,12 @@ namespace Ogre {
         mDisplaySkeleton = display;
     }
     //-----------------------------------------------------------------------
-	void Entity::setMeshLodBias(Real factor, ushort maxDetailIndex, ushort minDetailIndex)
+	void Entity::setLodBias(Real factor, ushort maxDetailIndex, ushort minDetailIndex)
 	{
 		assert(factor > 0.0f && "Bias factor must be > 0!");
 		mMeshLodFactorInv = 1.0f / factor;
 		mMaxMeshLodIndex = maxDetailIndex;
 		mMinMeshLodIndex = minDetailIndex;
-
-	}
-    //-----------------------------------------------------------------------
-	void Entity::setMaterialLodBias(Real factor, ushort maxDetailIndex, ushort minDetailIndex)
-	{
-		assert(factor > 0.0f && "Bias factor must be > 0!");
-		mMaterialLodFactorInv = 1.0f / factor;
-		mMaxMaterialLodIndex = maxDetailIndex;
-		mMinMaterialLodIndex = minDetailIndex;
 
 	}
     //-----------------------------------------------------------------------
@@ -484,7 +452,7 @@ namespace Ogre {
 	void Entity::attachObjectImpl(MovableObject *pObject, TagPoint *pAttachingPoint)
 	{
 		mChildObjectList[pObject->getName()] = pObject;
-		pObject->_notifyAttached(pAttachingPoint, true);
+		pObject->_notifyAttached(pAttachingPoint);
 	}
 
     //-----------------------------------------------------------------------

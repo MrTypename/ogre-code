@@ -29,6 +29,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreD3D7Prerequisites.h"
 #include "OgreString.h"
 
+// Include D3D and DirectDraw stuff
+#define D3D_OVERLOADS
+#include <ddraw.h>
+#include <d3d.h>
 
 
 #include "OgreRenderSystem.h"
@@ -55,6 +59,13 @@ namespace Ogre {
         DDDriverList* mDriverList;
         // Currently active driver
         DDDriver* mActiveDDDriver;
+
+        // Array of up to 8 lights, indexed as per API
+        // Note that a null value indicates a free slot
+        #define MAX_LIGHTS 8
+        Light* mLights[MAX_LIGHTS];
+
+
 
 
         HINSTANCE mhInstance;
@@ -129,17 +140,14 @@ namespace Ogre {
 		HRESULT __SetRenderState(D3DRENDERSTATETYPE state, DWORD value);
 		HRESULT __SetTextureStageState(DWORD stage, D3DTEXTURESTAGESTATETYPE type, DWORD value);
 
-
-        D3DTEXTURESTAGESTATETYPE _getFilterCode(FilterType ft);
-        DWORD _getFilter(FilterType ft, FilterOptions fo);
-		DWORD _getCurrentAnisotropy(size_t unit);
+		DWORD _getMipFilter(const TextureFilterOptions fo);
+		DWORD _getMagFilter(const TextureFilterOptions fo);
+		DWORD _getMinFilter(const TextureFilterOptions fo);
+		DWORD _getCurrentAnisotropy(int unit);
 
         HardwareBufferManager* mHardwareBufferManager;
-        GpuProgramManager* mGpuProgramManager;
 
         bool mForcedNormalisation;
-
-        unsigned short mCurrentLights;
 
 
 	public:
@@ -227,7 +235,27 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _useLights(const LightList& lights, unsigned short limit);
+        void _addLight(Light *lt);
+        /** See
+          RenderSystem
+         */
+        void _removeLight(Light *lt);
+        /** See
+          RenderSystem
+         */
+        void _modifyLight(Light* lt);
+        /** See
+          RenderSystem
+         */
+        void _removeAllLights(void);
+        /** See
+          RenderSystem
+         */
+        void _pushRenderState(void);
+        /** See
+          RenderSystem
+         */
+        void _popRenderState(void);
         /** See
           RenderSystem
          */
@@ -249,27 +277,27 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _setTexture(size_t unit, bool enabled, const String &texname);
+        void _setTexture(int unit, bool enabled, const String &texname);
         /** See
           RenderSystem
          */
-        void _setTextureBlendMode(size_t unit, const LayerBlendModeEx& bm);
+        void _setTextureBlendMode(int stage, const LayerBlendModeEx& bm);
         /** See
           RenderSystem
          */
-        void _setTextureAddressingMode(size_t unit, TextureUnitState::TextureAddressingMode tam);
+        void _setTextureAddressingMode(int stage, Material::TextureLayer::TextureAddressingMode tam);
         /** See
           RenderSystem
          */
-        void _setTextureMatrix(size_t unit, const Matrix4& xform);
+        void _setTextureMatrix(int stage, const Matrix4& xform);
         /** See
           RenderSystem
          */
-        void _setTextureCoordSet( size_t unit, size_t index );
+        void _setTextureCoordSet( int stage, int index );
         /** See
           RenderSystem
          */
-        void _setTextureCoordCalculation(size_t unit, TexCoordCalcMethod m);
+        void _setTextureCoordCalculation(int unit, TexCoordCalcMethod m);
         /** See
           RenderSystem
          */
@@ -318,22 +346,14 @@ namespace Ogre {
           RenderSystem
          */
         void _setDepthBias(ushort bias);
-        /** See RenderSystem
-		@remarks
-			Direct3D7 DOES NOT SUPPORT COLOUR WRITE MASKING! This feature will not work
-			on this legacy render system.
-         */
-		void _setColourBufferWriteEnabled(bool red, bool green, bool blue, bool alpha) {}
-        
-		/** See
-          RenderSystem
-         */
-        void _setFog(FogMode mode, const ColourValue& colour, Real density, Real start, Real end);
         /** See
           RenderSystem
          */
-        void _makeProjectionMatrix(Real fovy, Real aspect, Real nearPlane, 
-            Real farPlane, Matrix4& dest, bool forGpuProgram = false);
+        void _setFog(FogMode mode, ColourValue colour, Real density, Real start, Real end);
+        /** See
+          RenderSystem
+         */
+        void _makeProjectionMatrix(Real fovy, Real aspect, Real nearPlane, Real farPlane, Matrix4& dest);
         /** See
           RenderSystem
          */
@@ -369,11 +389,11 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _setTextureUnitFiltering(size_t unit, FilterType ftype, FilterOptions filter);
+		void _setTextureLayerFiltering(int unit, const TextureFilterOptions texLayerFilterOps);
         /** See
           RenderSystem
          */
-		void _setTextureLayerAnisotropy(size_t unit, int maxAnisotropy);
+		void _setTextureLayerAnisotropy(int unit, int maxAnisotropy);
         /** See
           RenderSystem
          */
@@ -386,19 +406,6 @@ namespace Ogre {
           RenderSystem
          */
         void setNormaliseNormals(bool normalise);
-        /** See
-          RenderSystem
-         */
-        void bindGpuProgram(GpuProgram* prg) { /* do nothing */}
-        /** See
-          RenderSystem
-         */
-        void unbindGpuProgram(GpuProgramType gptype){ /* do nothing */}
-        /** See
-          RenderSystem
-         */
-        void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params) { /* do nothing */}
-
         // ----------------------------------
         // End Overridden members
         // ----------------------------------

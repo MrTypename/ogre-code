@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -28,20 +28,12 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgrePrerequisites.h"
 
+#include "Unknwn.h"
+
 // Define versions for if DirectX is in use (Win32 only)
 #define DIRECT3D_VERSION  0x0700
 #define DIRECTINPUT_VERSION 0x0700
 #define DIRECTDRAW_VERSION 0x0700
-
-// Include D3D and DirectDraw stuff
-#define D3D_OVERLOADS
-#define NOMINMAX // required to stop windows.h screwing up std::min definition
-#include <ddraw.h>
-#include <d3d.h>
-#include <d3dx.h>
-#include <d3dxcore.h>
-#include "d3dutil.h"
-
 
 namespace Ogre {
 

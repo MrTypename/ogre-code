@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -60,11 +60,11 @@ email                : kenny@sparksuit.com
 #ifndef __EventProcessor_H__
 #define __EventProcessor_H__
 
-#include <list>
 #include "OgrePrerequisites.h"
 #include "OgreSingleton.h"
 #include "OgreFrameListener.h"
 #include "OgreMouseTarget.h"
+#include "OgreActionTarget.h"
 #include "OgreKeyTarget.h"
 #include "OgreMouseMotionTarget.h"
 
@@ -97,20 +97,18 @@ namespace Ogre {
 		 */
 		void cleanup();
 		InputReader* mInputDevice;
-		typedef std::list<EventDispatcher*> DispatcherList;
-		typedef std::list<EventTarget*> EventTargetList;
+		typedef std::vector<EventDispatcher*> DispatcherList;
 		DispatcherList mDispatcherList;
-        EventTargetList mEventTargetList;
-        bool mRegisteredAsFrameListener;
 
     public:
         EventProcessor();
         virtual ~EventProcessor();
 
 		/**
-		 * Registers FrameListener, and activates the queue
+		 * Removes this from being a FrameListener,
+		 * and deactivates the queue
 		 */
-		void startProcessingEvents(bool registerListener=true);
+		void startProcessingEvents();
 
 		/**
 		 * Removes this from being a FrameListener,
@@ -149,13 +147,6 @@ namespace Ogre {
 		 */
 
 		void addTargetManager(TargetManager* targetManager);
-
-		/**
-		 * Creates a dispatcher object that dispatches to the targetManager.
-		 * Adds the new dispatcher object to the dispatcher list.
-		 */
-
-		void addEventTarget(EventTarget* eventTarget);
 
 		/**
 		 * Processes all events on the queue.
@@ -197,7 +188,7 @@ namespace Ogre {
         */
         static EventProcessor& getSingleton(void);
 
-		bool isKeyEnabled() const
+		bool isKeyEnabled() 
 		{ return true; }
 
 		inline InputReader* getInputReader()

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -29,7 +29,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgrePanelGuiElement.h"
 #include "OgreButtonGuiElement.h"
 #include "OgreEventListeners.h"
-#include "OgreScrollTarget.h"
 
 namespace Ogre {
 
@@ -54,7 +53,7 @@ namespace Ogre {
 	 *
 	 */
 
-	class _OgreGuiElementExport ScrollBarGuiElement : public PanelGuiElement, ActionListener, public ScrollTarget, public MouseMotionListener, public MouseListener
+	class ScrollBarGuiElement : public PanelGuiElement, ActionListener, public ScrollTarget, public MouseMotionListener, public MouseListener
     {
 	public :
 //	    void addBaseParameters(void);
@@ -84,20 +83,21 @@ namespace Ogre {
             void doSet(void* target, const String& val);
         };
 
-		virtual void setUpButtonName(const String& val);
-		virtual void setDownButtonName(const String& val);
-		virtual void setScrollBitName(const String& val);
-		virtual String getUpButtonName();
-		virtual String getDownButtonName();
-		virtual String getScrollBitName();
+		void setUpButtonName(const String& val);
+		void setDownButtonName(const String& val);
+		void setScrollBitName(const String& val);
+		String getUpButtonName();
+		String getDownButtonName();
+		String getScrollBitName();
 
-		virtual void setLimits(size_t first, size_t visibleRange, size_t total);
-		virtual void layoutItems();
-		virtual void updateScrollBit();
-		virtual void scrollToIndex(size_t index);
+		void createElements();
+		void setLimits(size_t first, size_t visibleRange, size_t total);
+		void layoutItems();
+		void updateScrollBit();
+		void scrollToIndex(size_t index);
 
         /** See GuiElement. */
-        virtual const String& getTypeName(void) const;
+        virtual const String& getTypeName(void);
 		void actionPerformed(ActionEvent* e) ;
 		void fireScrollPerformed();
 		void processEvent(InputEvent* e) ;

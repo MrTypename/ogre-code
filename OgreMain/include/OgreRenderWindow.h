@@ -2,7 +2,7 @@
 This source file is a part of OGRE
 (Object-oriented Graphics Rendering Engine)
 
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -134,7 +134,7 @@ namespace Ogre
 
         /** Returns true if window is running in fullscreen mode.
         */
-        virtual bool isFullScreen(void) const;
+        virtual bool isFullScreen(void);
 
         /** Overloaded version of getMetrics from RenderTarget, including extra details
             specific to windowing systems.

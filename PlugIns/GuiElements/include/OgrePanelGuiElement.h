@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -81,7 +81,7 @@ namespace Ogre {
         bool isTransparent(void);
 
         /** See GuiElement. */
-        virtual const String& getTypeName(void) const;
+        virtual const String& getTypeName(void);
         /** See Renderable. */
         void getRenderOperation(RenderOperation& op);
         /** Overridden from GuiElement */
@@ -110,7 +110,7 @@ namespace Ogre {
         // Texture tiling
         Real mTileX[OGRE_MAX_TEXTURE_LAYERS];
         Real mTileY[OGRE_MAX_TEXTURE_LAYERS];
-        size_t mNumTexCoordsInBuffer;
+        unsigned short mNumTexCoordsInBuffer;
 
         RenderOperation mRenderOp;
 

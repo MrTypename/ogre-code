@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -29,7 +29,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreTexture.h"
 #include "OgreRenderTexture.h"
 #include "OgreImage.h"
-#include "OgreException.h"
 
 #include "OgreNoMemoryMacros.h"
 #include <d3d9.h>
@@ -49,8 +48,6 @@ namespace Ogre {
 		IDirect3DTexture9		*mpNormTex;	
 		/// cubic texture pointer
 		IDirect3DCubeTexture9	*mpCubeTex;	
-        /// Volume texture
-        IDirect3DVolumeTexture9 *mpVolumeTex;
 		/// temp. 1D/2D normal texture pointer
 		IDirect3DTexture9		*mpTmpNormTex;
 		/// temp cubic texture pointer
@@ -62,6 +59,8 @@ namespace Ogre {
 
 		/// cube texture individual face names
 		String							mCubeFaceNames[6];
+		/// description of the texture
+		D3DSURFACE_DESC					mTexDesc;
 		/// device creation parameters
 		D3DDEVICE_CREATION_PARAMETERS	mDevCreParams;
 		/// back buffer pixel format
@@ -73,8 +72,6 @@ namespace Ogre {
 		void _loadCubeTex();
 		/// internal method, load a normal texture
 		void _loadNormTex();
-		/// internal method, load a volume texture
-		void _loadVolumeTex();
 
 		/// internal method, create a blank texture
 		void _createTex();
@@ -108,9 +105,9 @@ namespace Ogre {
 		/// internal method, construct full cube texture face names from a given string
 		void _constructCubeFaceNames(const String& name);
 		/// internal method, set Texture class source image protected attributes
-		void _setSrcAttributes(unsigned long width, unsigned long height, unsigned long depth, PixelFormat format);
+		void _setSrcAttributes(unsigned long width, unsigned long height, PixelFormat format);
 		/// internal method, set Texture class final texture protected attributes
-		void _setFinalAttributes(unsigned long width, unsigned long height, unsigned long depth, PixelFormat format);
+		void _setFinalAttributes(unsigned long width, unsigned long height, PixelFormat format);
 		/// internal method, return the best by hardware supported filter method
 		D3DTEXTUREFILTERTYPE _getBestFilterMethod();
 		/// internal method, return true if the device/texture combination can auto gen. mip maps
@@ -228,7 +225,7 @@ namespace Ogre {
             }
         }
 
-		bool requiresTextureFlipping() const { return false; }
+		bool requiresTextureFlipping() const { return true; }
         virtual void writeContentsToFile( const String & filename ) {}
         virtual void outputText(int x, int y, const String& text) {}
 

@@ -2,7 +2,7 @@
 This source file is a part of OGRE
 (Object-oriented Graphics Rendering Engine)
 
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -47,7 +47,7 @@ namespace Ogre
     layers, scrolling / animated textures etc. For multiple texture layers, you have to set 
     the tiling level for each layer.
     */
-    class _OgreGuiElementExport TextBoxGuiElement : public PanelGuiElement
+    class TextBoxGuiElement : public PanelGuiElement
     {
     public:
         /** Constructor. */
@@ -56,7 +56,7 @@ namespace Ogre
 
 
         /** See GuiElement. */
-        const String& getTypeName(void) const;
+        const String& getTypeName(void);
 
         // inherited
         void setCaption(const String& text);
@@ -64,7 +64,7 @@ namespace Ogre
 
 	    void addBaseParameters(void);
 
-		inline bool isKeyEnabled() const
+		inline bool isKeyEnabled()
 		{ return true; }
 		
 		void processEvent(InputEvent* e) ;

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -254,14 +254,14 @@ void meshToXML(XmlOptions opts)
     struct stat tagStat;
 
     SDDataChunk chunk;
+    stat( opts.source, &tagStat );
+    chunk.allocate( tagStat.st_size );
     FILE* pFile = fopen( opts.source.c_str(), "rb" );
     if (!pFile)
     {
         cout << "Unable to open file " << opts.source << " - fatal error." << endl;
         exit (1);
     }
-    stat( opts.source, &tagStat );
-    chunk.allocate( tagStat.st_size );
     fread( (void*)chunk.getPtr(), tagStat.st_size, 1, pFile );
     fclose( pFile );
 
@@ -366,7 +366,7 @@ void XMLToBinary(XmlOptions opts)
                 cout << "\nHow many extra LOD levels would you like to generate?";
                 cin >> numLod;
 
-                cout << "\nWhat unit of reduction would you like to use:" <<
+                cout << "\nWhat unit of reduction would you like to use:"
                     "\n(f)ixed or (p)roportional?";
                 cin >> response;
                 if (response.toLowerCase() == "f")
@@ -470,8 +470,7 @@ int main(int numargs, char** args)
 
     logMgr = new LogManager();
     mth = new Math();
-    matMgr = new MaterialManager();
-    matMgr->initialise();
+    matMgr = new MaterialManager();;
     skelMgr = new SkeletonManager();
     meshSerializer = new MeshSerializer();
     xmlMeshSerializer = new XMLMeshSerializer();

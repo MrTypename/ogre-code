@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -143,7 +143,7 @@ namespace Ogre {
             void setEnabled(bool enabled);
 
             /** Gets whether this profiler is enabled */
-            bool getEnabled() const;
+            bool getEnabled();
 
             /** Enables a previously disabled profile 
             @remarks Only enables the profile if this function is not 
@@ -192,7 +192,7 @@ namespace Ogre {
             void setUpdateDisplayFrequency(uint freq);
 
             /** Gets the frequency that the Profiler display is updated */
-            uint getUpdateDisplayFrequency() const;
+            uint getUpdateDisplayFrequency();
 
             static Profiler& getSingleton();
 

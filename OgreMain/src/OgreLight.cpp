@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreLight.h"
 
 #include "OgreException.h"
@@ -46,8 +45,9 @@ namespace Ogre {
         // Center in world, direction irrelevant but set anyway
         mPosition = Vector3::ZERO;
         mDirection = Vector3::UNIT_Z;
-        mParentNode = NULL;
 
+        // Deafult modified
+        mModified = true;
     }
     //-----------------------------------------------------------------------
     Light::Light(const String& name)
@@ -71,9 +71,10 @@ namespace Ogre {
         mSpotInner = 30.0f;
         mSpotOuter = 40.0f;
         mSpotFalloff = 1.0f;
-        mParentNode = NULL;
 
 
+        // Deafult modified
+        mModified = true;
     }
     //-----------------------------------------------------------------------
     Light::~Light()
@@ -89,9 +90,10 @@ namespace Ogre {
     void Light::setType(LightTypes type)
     {
         mLightType = type;
+        mModified = true;
     }
     //-----------------------------------------------------------------------
-    Light::LightTypes Light::getType(void) const
+    Light::LightTypes Light::getType(void)
     {
         return mLightType;
     }
@@ -101,15 +103,17 @@ namespace Ogre {
         mPosition.x = x;
         mPosition.y = y;
         mPosition.z = z;
+        mModified = true;
 
     }
     //-----------------------------------------------------------------------
     void Light::setPosition(const Vector3& vec)
     {
         mPosition = vec;
+        mModified = true;
     }
     //-----------------------------------------------------------------------
-    const Vector3& Light::getPosition(void) const
+    Vector3 Light::getPosition(void)
     {
         return mPosition;
     }
@@ -119,14 +123,16 @@ namespace Ogre {
         mDirection.x = x;
         mDirection.y = y;
         mDirection.z = z;
+        mModified = true;
     }
     //-----------------------------------------------------------------------
     void Light::setDirection(const Vector3& vec)
     {
         mDirection = vec;
+        mModified = true;
     }
     //-----------------------------------------------------------------------
-    const Vector3& Light::getDirection(void) const
+    Vector3 Light::getDirection(void)
     {
         return mDirection;
     }
@@ -142,19 +148,20 @@ namespace Ogre {
         mSpotInner =innerAngle;
         mSpotOuter = outerAngle;
         mSpotFalloff = falloff;
+        mModified = true;
     }
     //-----------------------------------------------------------------------
-    Real Light::getSpotlightInnerAngle(void) const
+    Real Light::getSpotlightInnerAngle(void)
     {
         return mSpotInner;
     }
     //-----------------------------------------------------------------------
-    Real Light::getSpotlightOuterAngle(void) const
+    Real Light::getSpotlightOuterAngle(void)
     {
         return mSpotOuter;
     }
     //-----------------------------------------------------------------------
-    Real Light::getSpotlightFalloff(void) const
+    Real Light::getSpotlightFalloff(void)
     {
         return mSpotFalloff;
     }
@@ -164,14 +171,16 @@ namespace Ogre {
         mDiffuse.r = red;
         mDiffuse.b = blue;
         mDiffuse.g = green;
+        mModified = true;
     }
     //-----------------------------------------------------------------------
     void Light::setDiffuseColour(const ColourValue& colour)
     {
         mDiffuse = colour;
+        mModified = true;
     }
     //-----------------------------------------------------------------------
-    const ColourValue& Light::getDiffuseColour(void) const
+    ColourValue Light::getDiffuseColour(void)
     {
         return mDiffuse;
     }
@@ -181,14 +190,16 @@ namespace Ogre {
         mSpecular.r = red;
         mSpecular.b = blue;
         mSpecular.g = green;
+        mModified = true;
     }
     //-----------------------------------------------------------------------
     void Light::setSpecularColour(const ColourValue& colour)
     {
         mSpecular = colour;
+        mModified = true;
     }
     //-----------------------------------------------------------------------
-    const ColourValue& Light::getSpecularColour(void) const
+    ColourValue Light::getSpecularColour(void)
     {
         return mSpecular;
     }
@@ -200,48 +211,61 @@ namespace Ogre {
         mAttenuationConst = constant;
         mAttenuationLinear = linear;
         mAttenuationQuad = quadratic;
+        mModified = true;
     }
     //-----------------------------------------------------------------------
-    Real Light::getAttenuationRange(void) const
+    Real Light::getAttenuationRange(void)
     {
         return mRange;
     }
     //-----------------------------------------------------------------------
-    Real Light::getAttenuationConstant(void) const
+    Real Light::getAttenuationConstant(void)
     {
         return mAttenuationConst;
     }
     //-----------------------------------------------------------------------
-    Real Light::getAttenuationLinear(void) const
+    Real Light::getAttenuationLinear(void)
     {
         return mAttenuationLinear;
     }
     //-----------------------------------------------------------------------
-    Real Light::getAttenuationQuadric(void) const
+    Real Light::getAttenuationQuadric(void)
     {
         return mAttenuationQuad;
     }
     //-----------------------------------------------------------------------
-    void Light::update(void) const
+    bool Light::isModified(void)
     {
         if (mParentNode)
         {
-            if (!(mParentNode->_getDerivedOrientation() == mLastParentOrientation &&
-                mParentNode->_getDerivedPosition() == mLastParentPosition))
+            if (!mModified && mParentNode->_getDerivedOrientation() == mLastParentOrientation &&
+                mParentNode->_getDerivedPosition() == mLastParentPosition)
+            {
+                return false;
+            }
+            else
             {
                 // Ok, we're out of date with SceneNode we're attached to
                 mLastParentOrientation = mParentNode->_getDerivedOrientation();
                 mLastParentPosition = mParentNode->_getDerivedPosition();
                 mDerivedDirection = mLastParentOrientation * mDirection;
                 mDerivedPosition = (mLastParentOrientation * mPosition) + mLastParentPosition;
+                return true;
             }
         }
         else
         {
             mDerivedPosition = mPosition;
             mDerivedDirection = mDirection;
+            return mModified;
         }
 
+    }
+    //-----------------------------------------------------------------------
+    void Light::_clearModified(void)
+    {
+
+        mModified = false;
     }
     //-----------------------------------------------------------------------
     void Light::_notifyCurrentCamera(Camera* cam)
@@ -266,21 +290,22 @@ namespace Ogre {
         return msMovableType;
     }
     //-----------------------------------------------------------------------
-    const Vector3& Light::getDerivedPosition(void) const
+    const Vector3& Light::getDerivedPosition(void)
     {
-        update();
+        isModified();
         return mDerivedPosition;
     }
     //-----------------------------------------------------------------------
-    const Vector3& Light::getDerivedDirection(void) const
+    const Vector3& Light::getDerivedDirection(void)
     {
-        update();
+        isModified();
         return mDerivedDirection;
     }
     //-----------------------------------------------------------------------
     void Light::setVisible(bool visible)
     {
         MovableObject::setVisible(visible);
+        mModified = true;
     }
 
 

@@ -2,15 +2,27 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourgeforge.net/
 
 Copyright © 2000-2003 The OGRE Team
 Also see acknowledgements in Readme.html
 
-You may use this sample code for anything you like, it is not covered by the
-LGPL like the rest of the engine.
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/gpl.html.
 -----------------------------------------------------------------------------
 */
+
 /* Static water simulation by eru
  * Started 29.05.2003, 20:54:37
  */
@@ -22,8 +34,6 @@ LGPL like the rest of the engine.
 
 #include "OgreParticle.h"
 #include "OgreMaterial.h"
-#include "OgreTechnique.h"
-#include "OgrePass.h"
 
 #include <iostream>
 
@@ -79,11 +89,10 @@ void prepareCircleMaterial()
 		imgchunk, 256, 256, PF_A8R8G8B8);
 	Material *material = (Material*) 
 		MaterialManager::getSingleton().create( CIRCLES_MATERIAL );
-	TextureUnitState *texLayer = material->getTechnique(0)->getPass(0)->createTextureUnitState( CIRCLES_MATERIAL );
-	texLayer->setTextureAddressingMode( TextureUnitState::TAM_CLAMP );	
+	Material::TextureLayer *texLayer = material->addTextureLayer( CIRCLES_MATERIAL );
+	texLayer->setTextureAddressingMode( Material::TextureLayer::TAM_CLAMP );	
 	material->setSceneBlending( SBT_ADD );
 	material->setDepthWriteEnabled( false ) ;
-    material->load();
 }
 
 
@@ -545,11 +554,11 @@ protected:
 		waterEntity = mSceneMgr->createEntity(ENTITY_NAME, 
 			MESH_NAME);
 		//~ waterEntity->setMaterialName(MATERIAL_NAME);
-		SceneNode *waterNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+		SceneNode *waterNode = static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild());
 		waterNode->attachObject(waterEntity);
 
         // Add a head, give it it's own node
-        headNode = waterNode->createChildSceneNode();
+        headNode = static_cast<SceneNode*>(waterNode->createChild());
         Entity *ent = mSceneMgr->createEntity("head", "ogrehead.mesh");
         headNode->attachObject(ent);
 
@@ -557,13 +566,13 @@ protected:
         //~ mCamera->setAutoTracking(true, headNode);
 
 		// Create the camera node, set its position & attach camera
-        SceneNode* camNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+        SceneNode* camNode = static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild());
 		camNode->translate(0, 500, PLANE_SIZE);
 		camNode->yaw(-45);
         camNode->attachObject(mCamera);
 		
 		// Create light node
-        SceneNode* lightNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+        SceneNode* lightNode = static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild());
 		lightNode->attachLight(l);
 
         // set up spline animation of light node
@@ -599,7 +608,7 @@ protected:
         particleSystem = ParticleSystemManager::getSingleton().createSystem("rain", 
             "Examples/Water/Rain");
 		particleEmitter = particleSystem->getEmitter(0);
-        SceneNode* rNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+        SceneNode* rNode = static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild());
         rNode->translate(PLANE_SIZE/2.0f, 3000, PLANE_SIZE/2.0f);
         rNode->attachObject(particleSystem);
         // Fast-forward the rain so it looks more natural

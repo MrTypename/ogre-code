@@ -20,7 +20,6 @@
 #include <set>
 #include <list>
 #include <deque>
-#include <queue>
 
 // Note - not in the original STL, but exists in SGI STL and STLport
 #ifdef EXT_HASH
@@ -63,20 +62,12 @@ extern "C" {
 
 #endif
 
-#if OGRE_PLATFORM == PLATFORM_LINUX
+#if OGRE_PLATFORM == PLATFORM_LINUX || OGRE_PLATFORM == PLATFORM_APPLE
 extern "C" {
 
 #   include <unistd.h>
 #   include <dlfcn.h>
 
-}
-#endif
-
-#if OGRE_PLATFORM == PLATFORM_APPLE
-extern "C" {
-#   include <unistd.h>
-#   include <sys/param.h>
-#   include <CoreFoundation/CoreFoundation.h>
 }
 #endif
 

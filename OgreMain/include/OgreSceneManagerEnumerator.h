@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -39,7 +39,6 @@ namespace Ogre {
         ST_GENERIC,
         ST_EXTERIOR_CLOSE,
         ST_EXTERIOR_FAR,
-        ST_EXTERIOR_REAL_FAR,
         ST_INTERIOR
     };
     /** Enumerates the SceneManager classes available to applications.

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -36,6 +36,9 @@ Description: Base class for all the OGRE examples
 #include "OgreConfigFile.h"
 #include "ExampleFrameListener.h"
 
+#if OGRE_PLATFORM == PLATFORM_APPLE
+#    include <SDL.h>
+#endif
 
 using namespace Ogre;
 

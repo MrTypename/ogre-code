@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -41,15 +41,11 @@ namespace Ogre {
     protected:
         /** Override this method to prevent parent transforms (rotation,translation,scale)
         */
-		void getWorldTransforms( Matrix4* xform ) const;
-        /** @copydoc Renderable::getWorldOrientation */
-        const Quaternion& getWorldOrientation(void) const;
-        /** @copydoc Renderable::getWorldPosition */
-        const Vector3& getWorldPosition(void) const;
+		void getWorldTransforms( Matrix4* xform );
 		
         /** Builds the wireframe line list.
         */
-		void setupBoundingBoxVertices(const AxisAlignedBox& aab);
+		void setupBoundingBoxVertices(AxisAlignedBox &aab);
 
         Real mRadius;
 
@@ -62,7 +58,7 @@ namespace Ogre {
             @param
                 aabb bounding box to build a wireframe from.
         */
-		void setupBoundingBox(const AxisAlignedBox& aabb);
+		void setupBoundingBox(AxisAlignedBox aabb);
 
 		Real getSquaredViewDepth(const Camera* cam) const;
 

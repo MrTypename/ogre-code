@@ -12,11 +12,6 @@
 #include <OgreMaterialManager.h>
 #include <OgreStringConverter.h>
 #include <OgreImage.h>
-#include <OgreSceneNode.h>
-#include <OgreTechnique.h>
-#include <OgrePass.h>
-#include <OgreTextureUnitState.h>
-#include <OgreSceneManager.h>
 
 #include "HeightmapLoader.h"
 
@@ -138,8 +133,8 @@ bool HeightmapLoader::initialise(const String& filename)
     {
 	mMaterial = mSceneRoot->getCreator()->createMaterial("NaturePatchMaterial");
     
-	TextureUnitState *layer;
-	layer = mMaterial->getTechnique(0)->getPass(0)->createTextureUnitState(texture, 1);
+	Material::TextureLayer *layer;
+	layer = mMaterial->addTextureLayer(texture, 1);
 //	layer->setColourOperation(LBO_REPLACE);
 
 #if USE_NORMALS
@@ -149,14 +144,12 @@ bool HeightmapLoader::initialise(const String& filename)
 	String detail_texture = config.getSetting("DetailTexture");
 	if (detail_texture != "")
 	{
-	    layer = mMaterial->getTechnique(0)->getPass(0)->createTextureUnitState(detail_texture, 0);
+	    layer = mMaterial->addTextureLayer(detail_texture, 0);
 //	    layer->setColourOperation(LBO_MODULATE);
 	    layer->setTextureScale(0.2, 0.2);
 	}
     }
 #endif
-
-    mMaterial->load();
 
     mInited = true;
     return true;

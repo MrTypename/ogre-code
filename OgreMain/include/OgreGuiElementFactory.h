@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -50,7 +50,7 @@ namespace Ogre {
         /** Destroys a GuiElement which this factory created previously. */
         virtual void destroyGuiElement(GuiElement* pElement) { delete pElement; };
         /** Gets the string uniquely identifying the type of element this factory creates. */
-        virtual const String& getTypeName(void) const = 0;
+        virtual const String& getTypeName(void) = 0;
     };
 
 }

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -92,14 +92,14 @@ namespace Ogre
         void setManuallyControlled(bool manuallyControlled);
 
         /** Getter for mManuallyControlled Flag */
-        bool isManuallyControlled() const;
+        bool isManuallyControlled();
 
         
         /** Gets the inverse transform which takes bone space to origin from the binding pose. 
         @remarks
             Internal use only.
         */
-        const Matrix4& _getBindingPoseInverseTransform(void) const;
+        Matrix4 _getBindingPoseInverseTransform(void);
 
     protected:
         /// The numeric handle of this bone

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,8 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
-
 #include "OgreMeshManager.h"
 
 #include "OgreMesh.h"
@@ -227,7 +225,7 @@ namespace Ogre
                 for (i = 0; i < numTexCoordSets; ++i)
                 {
                     *pReal++ = x * xTex;
-                    *pReal++ = 1 - (y * yTex);
+                    *pReal++ = y * yTex;
                 }
 
 
@@ -388,7 +386,7 @@ namespace Ogre
                 for (i = 0; i < numTexCoordSets; ++i)
                 {
                     *pReal++ = x * xTex;
-                    *pReal++ = 1 - (y * yTex);
+                    *pReal++ = y * yTex;
                 }
 
             } // x
@@ -570,7 +568,7 @@ namespace Ogre
 
 				// Use x and y on sphere as texture coordinates, tiled
 				Real s = vec.x * (0.01 * uTile);
-				Real t = 1 - (vec.z * (0.01 * vTile));
+				Real t = vec.z * (0.01 * vTile);
                 for (i = 0; i < numTexCoordSets; ++i)
                 {
                     *pReal++ = s;
@@ -687,16 +685,16 @@ namespace Ogre
         Real vertices[32] = {
 			-100, -100, 0,	// pos
 			0,0,1,			// normal
-			0,1,			// texcoord
+			0,0,			// texcoord
             100, -100, 0,
             0,0,1,
-            1,1,
+            1,0,
             100,  100, 0,
             0,0,1,
-            1,0,
+            1,1,
             -100,  100, 0 ,
 			0,0,1,
-            0,0 
+            0,1 
 		};
         msh->sharedVertexData = new VertexData();
         msh->sharedVertexData->vertexCount = 4;

@@ -504,9 +504,9 @@ Ogre::Material *parseMaterial(const Appearance *app, const String &name)
 
 		LogManager::getSingleton().logMessage("Adding texture layer for " + texName);
 
-		Ogre::TextureUnitState *l = m->addTextureLayer(texName);
+		Ogre::Material::TextureLayer *l = m->addTextureLayer(texName);
 		l->setTextureAddressingMode(texture->repeatS ?
-			Ogre::TextureUnitState::TAM_WRAP : Ogre::TextureUnitState::TAM_CLAMP);
+			Ogre::Material::TextureLayer::TAM_WRAP : Ogre::Material::TextureLayer::TAM_CLAMP);
 	}
 
 	return m;

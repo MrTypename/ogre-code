@@ -29,7 +29,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgrePlatform.h"
 #include "OgreRenderSystem.h"
 #include "OgreGLHardwareBufferManager.h"
-#include "OgreGLGpuProgramManager.h"
 
 #include "OgreGLSupport.h"
 
@@ -53,10 +52,6 @@ namespace Ogre {
         Matrix4 mWorldMatrix;
         Matrix4 mTextureMatrix;
 
-        // Last min & mip filtering options, so we can combine them
-        FilterOptions mMinFilter;
-        FilterOptions mMipFilter;
-
         // XXX 8 max texture units?
         int mTextureCoordIndex[OGRE_MAX_TEXTURE_COORD_SETS];
 
@@ -76,8 +71,6 @@ namespace Ogre {
 
         // Store last depth write state
         bool mDepthWrite;
-		// Store last colour write state
-		bool mColourWrite[4];
 
         GLint convertCompareFunction(CompareFunction func);
         GLint convertStencilOp(StencilOperation op);
@@ -89,7 +82,7 @@ namespace Ogre {
         GLint mStencilFail, mStencilZFail, mStencilPass;
 
 		// internal method for anisotrophy validation
-		GLfloat _getCurrentAnisotropy(size_t unit);
+		GLfloat _getCurrentAnisotropy(int unit);
 		
         /// GL support class, used for creating windows etc
         GLSupport* mGLSupport;
@@ -104,14 +97,6 @@ namespace Ogre {
         void initGL(void);
 
         HardwareBufferManager* mHardwareBufferManager;
-        GLGpuProgramManager* mGpuProgramManager;
-
-        unsigned short mCurrentLights;
-
-        GLuint getCombinedMinMipFilter(void);
-
-        GLGpuProgram* mCurrentVertexProgram;
-        GLGpuProgram* mCurrentFragmentProgram;
 
     public:
         // Default constructor / destructor
@@ -199,7 +184,27 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _useLights(const LightList& lights, unsigned short limit);
+        void _addLight(Light *lt);
+        /** See
+          RenderSystem
+         */
+        void _removeLight(Light *lt);
+        /** See
+          RenderSystem
+         */
+        void _modifyLight(Light* lt);
+        /** See
+          RenderSystem
+         */
+        void _removeAllLights(void);
+        /** See
+          RenderSystem
+         */
+        void _pushRenderState(void);
+        /** See
+          RenderSystem
+         */
+        void _popRenderState(void);
         /** See
           RenderSystem
          */
@@ -221,27 +226,27 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _setTexture(size_t unit, bool enabled, const String &texname);
+        void _setTexture(int unit, bool enabled, const String &texname);
         /** See
           RenderSystem
          */
-        void _setTextureCoordSet(size_t stage, size_t index);
+        void _setTextureCoordSet(int stage, int index);
         /** See
           RenderSystem
          */
-        void _setTextureCoordCalculation(size_t stage, TexCoordCalcMethod m);
+        void _setTextureCoordCalculation(int stage, TexCoordCalcMethod m);
         /** See
           RenderSystem
          */
-        void _setTextureBlendMode(size_t stage, const LayerBlendModeEx& bm);
+        void _setTextureBlendMode(int stage, const LayerBlendModeEx& bm);
         /** See
           RenderSystem
          */
-        void _setTextureAddressingMode(size_t stage, TextureUnitState::TextureAddressingMode tam);
+        void _setTextureAddressingMode(int stage, Material::TextureLayer::TextureAddressingMode tam);
         /** See
           RenderSystem
          */
-        void _setTextureMatrix(size_t stage, const Matrix4& xform);
+        void _setTextureMatrix(int stage, const Matrix4& xform);
         /** See
           RenderSystem
          */
@@ -289,16 +294,11 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _setColourBufferWriteEnabled(bool red, bool green, bool blue, bool alpha);
-		/** See
-          RenderSystem
-         */
-        void _setFog(FogMode mode, const ColourValue& colour, Real density, Real start, Real end);
+        void _setFog(FogMode mode, ColourValue colour, Real density, Real start, Real end);
         /** See
           RenderSystem
          */
-        void _makeProjectionMatrix(Real fovy, Real aspect, Real nearPlane, Real farPlane, 
-            Matrix4& dest, bool forGpuProgram = false);
+        void _makeProjectionMatrix(Real fovy, Real aspect, Real nearPlane, Real farPlane, Matrix4& dest);
         /** See
           RenderSystem
          */
@@ -344,11 +344,15 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _setTextureUnitFiltering(size_t unit, FilterType ftype, FilterOptions filter);
+		void _setTextureLayerFiltering(int unit, const TextureFilterOptions texLayerFilterOps);
         /** See
           RenderSystem
          */
-		void _setTextureLayerAnisotropy(size_t unit, int maxAnisotropy);
+		void _setAnisotropy(int maxAnisotropy);
+        /** See
+          RenderSystem
+         */
+		void _setTextureLayerAnisotropy(int unit, int maxAnisotropy);
         /** See
           RenderSystem
          */
@@ -361,18 +365,6 @@ namespace Ogre {
           RenderSystem
          */
         void _render(const RenderOperation& op);
-        /** See
-          RenderSystem
-         */
-        void bindGpuProgram(GpuProgram* prg);
-        /** See
-          RenderSystem
-         */
-        void unbindGpuProgram(GpuProgramType gptype);
-        /** See
-          RenderSystem
-         */
-        void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params);
 
         // ----------------------------------
         // End Overridden members

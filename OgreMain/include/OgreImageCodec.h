@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -26,7 +26,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define _ImageCodec_H__
 
 #include "OgreCodec.h"
-#include "OgreCommon.h"
+#include "OgreImage.h"
 
 namespace Ogre {
 
@@ -37,6 +37,9 @@ namespace Ogre {
     */
     class _OgreExport ImageCodec : public Codec
     {
+	protected:
+		static bool _is_initialized;
+
     public:
         /** Codec return class for images. Has imformation about the size and the
             pixel format of the image. */
@@ -49,7 +52,7 @@ namespace Ogre {
             PixelFormat format;
 
         public:
-            String dataType() const
+            String dataType()
             {
                 return "ImageData";
             }
@@ -63,7 +66,7 @@ namespace Ogre {
         @param outFileName Filename to output to (extension implies type)
         @param pData ImageData pointer
         */
-        virtual void codeToFile( const DataChunk& input, const String& outFileName, CodecData* pData) const = 0;
+        void codeToFile( const DataChunk& input, const String& outFileName, CodecData* pData) const;
 
         virtual String getType() const = 0;
     };

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -373,7 +373,7 @@ namespace Ogre {
 			This is to assist in binding the vertex buffers such that there are
 			not gaps in the list.
 		*/
-		virtual unsigned short getNextIndex(void) const { return mHighIndex; }
+		virtual unsigned short getNextIndex(void) { return mHighIndex; }
 
 
 

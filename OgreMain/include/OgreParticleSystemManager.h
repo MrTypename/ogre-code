@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE 
 	(Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -305,7 +305,7 @@ namespace Ogre {
         @remarks
             See setTimeFactor for full information on the meaning of this value.
 		*/
-		Real getTimeFactor(void) const;
+		Real getTimeFactor(void);
 
 		/** Set the relative speed of time as perceived by particle systems.
         @remarks

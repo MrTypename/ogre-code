@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -35,6 +35,7 @@ email                : kenny@sparksuit.com
 
 #include "OgrePrerequisites.h"
 #include "OgreInputEvent.h"
+#include "OgreKeyTarget.h"
 
 namespace Ogre {
 
@@ -57,16 +58,14 @@ namespace Ogre {
 		enum
 		{
 			KE_FIRST_EVENT = 2500,
-			KE_LAST_EVENT = 2504
+			KE_LAST_EVENT = 2502
 		};
 
 		enum 
 		{
 			KE_KEY_CLICKED 	= KE_FIRST_EVENT,
 			KE_KEY_PRESSED,
-			KE_KEY_RELEASED,
-            KE_KEY_FOCUSIN,
-            KE_KEY_FOCUSOUT
+			KE_KEY_RELEASED
 		};
 
 		/**
@@ -90,7 +89,7 @@ namespace Ogre {
 		 *
 		 * @return a string identifying the event and its attributes
 		 */
-		 String paramString() const;
+		 String paramString();
 
 
 		 /** return the ID of the button */

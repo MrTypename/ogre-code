@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -49,7 +49,6 @@ Description: Defines an example frame listener which responds to frame events.
 #include "OgreKeyEvent.h"
 #include "OgreEventListeners.h"
 #include "OgreStringConverter.h"
-#include "OgreException.h"
 
 using namespace Ogre;
 

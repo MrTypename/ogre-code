@@ -2,7 +2,7 @@
 This source file is a part of OGRE
 (Object-oriented Graphics Rendering Engine)
 
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -70,45 +70,45 @@ namespace Ogre
             This method is used to append text to the end of the
             screen buffer using the default colours.
         */
-        virtual void appendText(const String &text) { appendText(mTopColour, mBottomColour, text); }
+        void appendText(const String &text) { appendText(mTopColour, mBottomColour, text); }
         /** Appends specified text to end of screen buffer. 
         @remarks
             This method is used to append text to the end of the
             screen buffer using the specified color for both the top and bottom colors.
         */
-        virtual void appendText(const ColourValue& colour, const String &text);
+        void appendText(const ColourValue& colour, const String &text);
         /** Appends specified text to end of screen buffer. 
         @remarks
             This method is used to append text to the end of the
             screen buffer using the specified colors.
         */
-        virtual void appendText(const ColourValue& tColour, const ColourValue& bColour, const String &text);
+        void appendText(const ColourValue& tColour, const ColourValue& bColour, const String &text);
         /** Appends specified text to end of screen buffer. 
         @remarks
             This method is used to append text to the end of the
             screen buffer using the specified colors.
         */
-        virtual void appendText(const RGBA& tColour, const RGBA& bColour, const String &text);
+        void appendText(const RGBA& tColour, const RGBA& bColour, const String &text);
 
-        virtual void clearText();
+        void clearText();
 
-        virtual void setScrollBar(ScrollBarGuiElement *scrollBar);
-        virtual ScrollBarGuiElement* getScrollBar() const { return mScrollBar; }
+        void setScrollBar(ScrollBarGuiElement *scrollBar);
+        ScrollBarGuiElement* getScrollBar() const { return mScrollBar; }
 
-        virtual void setTextLimit( uint maxChars );
-        virtual uint getTextLimit() const { return mMaxChars; }
+        void setTextLimit( uint maxChars );
+        uint getTextLimit() const { return mMaxChars; }
 
-        virtual void setCharHeight( Real height );
-        virtual Real getCharHeight() const;
+        void setCharHeight( Real height );
+        Real getCharHeight() const;
 
-        virtual void setSpaceWidth( Real width );
-        virtual Real getSpaceWidth() const;
+        void setSpaceWidth( Real width );
+        Real getSpaceWidth() const;
 
-        virtual void setFontName( const String& font );
-        virtual const String& getFontName() const;
+        void setFontName( const String& font );
+        const String& getFontName() const;
 
         /** See GuiElement. */
-        virtual const String& getTypeName(void) const;
+        virtual const String& getTypeName(void);
         /** See Renderable. */
         void getRenderOperation(RenderOperation& op);
         /** Overridden from GuiElement */
@@ -120,28 +120,28 @@ namespace Ogre
             the entire text. Also see setColourBottom and 
             setColourTop which allow you to set a colour gradient.
         */
-        virtual void setColour(const ColourValue& col);
+        void setColour(const ColourValue& col);
 
         /** Gets the colour of the text. */
-        virtual const ColourValue& getColour(void) const;
+        ColourValue getColour(void) const;
         /** Sets the colour of the bottom of the letters.
         @remarks
             By setting a separate top and bottom colour, you
             can create a text area which has a graduated colour
             effect to it.
         */
-        virtual void setColourBottom(const ColourValue& col);
+        void setColourBottom(const ColourValue& col);
         /** Gets the colour of the bottom of the letters. */
-        virtual const ColourValue& getColourBottom(void) const;
+        ColourValue getColourBottom(void);
         /** Sets the colour of the top of the letters.
         @remarks
             By setting a separate top and bottom colour, you
             can create a text area which has a graduated colour
             effect to it.
         */
-        virtual void setColourTop(const ColourValue& col);
+        void setColourTop(const ColourValue& col);
         /** Gets the colour of the top of the letters. */
-        virtual const ColourValue& getColourTop(void) const;
+        ColourValue getColourTop(void);
 
         /** Overridden from GuiElement */
         void setMetricsMode(GuiMetricsMode gmm);

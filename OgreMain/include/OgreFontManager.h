@@ -2,7 +2,7 @@
 This source file is a part of OGRE
 (Object-oriented Graphics Rendering Engine)
 
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -27,8 +27,8 @@ http://www.gnu.org/copyleft/lesser.txt
 #define _FontManager_H__
 
 #include "OgrePrerequisites.h"
-#include "OgreSingleton.h"
 #include "OgreResourceManager.h"
+#include "OgreFont.h"
 
 namespace Ogre
 {
@@ -66,7 +66,7 @@ namespace Ogre
     protected:
 
         /// Internal methods
-        void parseAttribute(const String& line, Font* pFont);
+        void parseAttribute(String& line, Font* pFont);
 
         void logBadAttrib(const String& line, Font* pFont);
 

@@ -2,21 +2,30 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright © 2000-2003 The OGRE Team
+Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
 
-You may use this sample code for anything you like, it is not covered by the
-LGPL like the rest of the engine.
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
 /*
 -----------------------------------------------------------------------------
-Filename:    CameraTrack.cpp
-Description: An example of using AnimationTracks to smoothly make a node
-             follow a predefined path, with spline interpolation. Also 
-             uses the auto tracking ability of the camera.
+Filename:    PlayPen.cpp
+Description: Somewhere to play in the sand...
 -----------------------------------------------------------------------------
 */
 
@@ -91,10 +100,10 @@ protected:
         ent = mSceneMgr->createEntity("floor", "FloorPlane");
         ent->setMaterialName("Examples/RustySteel");
         // Attach to child of root node, better for culling (otherwise bounds are the combination of the 2)
-        mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
+        static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild())->attachObject(ent);
 
         // Add a head, give it it's own node
-        SceneNode* headNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+        SceneNode* headNode = static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild());
         ent = mSceneMgr->createEntity("head", "ogrehead.mesh");
         headNode->attachObject(ent);
 
@@ -102,7 +111,7 @@ protected:
         mCamera->setAutoTracking(true, headNode);
 
         // Create the camera node & attach camera
-        SceneNode* camNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+        SceneNode* camNode = static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild());
         camNode->attachObject(mCamera);
 
         // set up spline animation of node

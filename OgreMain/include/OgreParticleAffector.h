@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE 
 	(Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -70,16 +70,6 @@ namespace Ogre {
         /** Virtual destructor essential. */
         virtual ~ParticleAffector() {};
 
-        /** Method called to allow the affector to initialize all newly created particles in the system.
-        @remarks
-            This is where the affector gets the chance to initialize it's effects to the particles of a system.
-            The affector is expected to initialize some or all of the particles in the system
-            passed to it, depending on the affector's approach.
-        @param
-            pParticle Pointer to a Particle to initialize.
-        */
-		virtual void _initParticle(Particle* pParticle) { /* by default do nothing */ }
-
         /** Method called to allow the affector to 'do it's stuff' on all active particles in the system.
         @remarks
             This is where the affector gets the chance to apply it's effects to the particles of a system.
@@ -91,7 +81,6 @@ namespace Ogre {
             timeElapsed The number of seconds which have elapsed since the last call.
         */
         virtual void _affectParticles(ParticleSystem* pSystem, Real timeElapsed) = 0;
-
         /** Returns the name of the type of affector. 
         @remarks
             This property is useful for determining the type of affector procedurally so another

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -71,9 +71,9 @@ namespace Ogre
         RenderSystemList mRenderers;
         RenderSystem* mActiveRenderer;
         String mVersion;
-				String mConfigFileName;
 
         // Singletons
+        Math* mMath;
         LogManager* mLogManager;
         ControllerManager* mControllerManager;
         SceneManagerEnumerator* mSceneManagerEnum;
@@ -88,11 +88,10 @@ namespace Ogre
         OverlayManager* mOverlayManager;
         FontManager* mFontManager;
         ArchiveFactory *mZipArchiveFactory;
-        Codec* mPNGCodec, *mJPGCodec, *mJPEGCodec, *mTGACodec, *mDDSCodec, *mBMPCodec;
+        Codec* mPNGCodec, *mJPGCodec, *mJPEGCodec, *mTGACodec;
         Timer* mTimer;
         RenderWindow* mAutoWindow;
         Profiler* mProfiler;
-        HighLevelGpuProgramManager* mHighLevelGpuProgramManager;
 
         std::vector<DynLib*> mPluginLibs;
         /** Method reads a plugins configuration file and instantiates all
@@ -118,7 +117,7 @@ namespace Ogre
                 pluginFileName The file that contains plugins information.
                 Defaults to "plugins.cfg".
 		*/
-        Root(const String& pluginFileName = "plugins.cfg", const String& configFileName = "ogre.cfg", const String& logFileName = "Ogre.log");
+        Root(const String& pluginFileName = "plugins.cfg");
         ~Root();
 
         /** Saves the details of the current configuration

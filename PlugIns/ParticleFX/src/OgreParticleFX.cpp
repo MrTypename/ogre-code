@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -37,10 +37,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreLinearForceAffectorFactory.h"
 #include "OgreColourFaderAffectorFactory.h"
 #include "OgreColourFaderAffectorFactory2.h"
-#include "OgreColourImageAffectorFactory.h"
-#include "OgreColourInterpolatorAffectorFactory.h"
 #include "OgreScaleAffectorFactory.h"
-#include "OgreRotationAffectorFactory.h"
 
 namespace Ogre {
 
@@ -96,28 +93,13 @@ namespace Ogre {
         ParticleSystemManager::getSingleton().addAffectorFactory(pAffFact);
         affectorFactories.push_back(pAffFact);
 
-        // ColourFaderAffector2
+        // ColourFaderAffector
         pAffFact = new ColourFaderAffectorFactory2();
-        ParticleSystemManager::getSingleton().addAffectorFactory(pAffFact);
-        affectorFactories.push_back(pAffFact);
-
-        // ColourImageAffector
-        pAffFact = new ColourImageAffectorFactory();
-        ParticleSystemManager::getSingleton().addAffectorFactory(pAffFact);
-        affectorFactories.push_back(pAffFact);
-
-        // ColourInterpolatorAffector
-        pAffFact = new ColourInterpolatorAffectorFactory();
         ParticleSystemManager::getSingleton().addAffectorFactory(pAffFact);
         affectorFactories.push_back(pAffFact);
 
         // ScaleAffector
         pAffFact = new ScaleAffectorFactory();
-        ParticleSystemManager::getSingleton().addAffectorFactory(pAffFact);
-        affectorFactories.push_back(pAffFact);
-
-        // RotationAffector
-        pAffFact = new RotationAffectorFactory();
         ParticleSystemManager::getSingleton().addAffectorFactory(pAffFact);
         affectorFactories.push_back(pAffFact);
 

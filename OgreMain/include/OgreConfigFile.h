@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -53,9 +53,9 @@ namespace Ogre {
         void load(const String& filename, const String& separators = "\t:=", bool trimWhitespace = true);
 
         /** Gets the first setting from the file with the named key. */
-        String getSetting(const String& key) const;
+        String getSetting(const String& key);
         /** Gets all settings from the file with the named key. */
-        StringVector getMultiSetting(const String& key) const;
+        StringVector getMultiSetting(const String& key);
 
         typedef MapIterator< std::multimap<String, String> > SettingsIterator;
         /** Gets an iterator for stepping through all the keys / values in the file. */

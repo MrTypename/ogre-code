@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -81,14 +81,14 @@ namespace Ogre {
         virtual ~RenderTarget();
 
         /// Retrieve target's name.
-        virtual const String& getName(void) const;
+        virtual String getName(void);
 
         /// Retrieve information about the render target.
         virtual void getMetrics(int &width, int &height, int &colourDepth);
 
-        virtual int getWidth(void) const;
-        virtual int getHeight(void) const;
-        virtual int getColourDepth(void) const;
+        virtual int getWidth(void);
+        virtual int getHeight(void);
+        virtual int getColourDepth(void);
 
         /** Tells the target to update it's contents.
             @remarks
@@ -132,7 +132,7 @@ namespace Ogre {
             float width = 1.0f, float height = 1.0f);
 
         /** Returns the number of viewports attached to this target.*/
-        virtual unsigned short getNumViewports(void) const;
+        virtual unsigned short getNumViewports(void);
 
         /** Retrieves a pointer to the viewport with the given index. */
         virtual Viewport* getViewport(unsigned short index);
@@ -228,7 +228,7 @@ namespace Ogre {
         virtual void setDebugText(const String& text);
 
 		/** Returns the debug text. */
-		const String& getDebugText() const;
+		const String& RenderTarget::getDebugText() const;
 
         /** Add a listener to this RenderTarget which will be called back before & after rendering.
         @remarks

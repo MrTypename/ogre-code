@@ -19,8 +19,6 @@ email                : janders@users.sf.net
 #include <OgreImage.h>
 #include <OgreConfigFile.h>
 #include <OgreMaterial.h>
-#include <OgreTechnique.h>
-#include <OgrePass.h>
 #include <OgreCamera.h>
 #include "OgreException.h"
 #include "OgreStringConverter.h"
@@ -129,20 +127,17 @@ void TerrainSceneManager::setWorldGeometry( const String& filename )
     mTerrainMaterial = createMaterial( "Terrain" );
 
     if ( world_texture != "" )
-        mTerrainMaterial->getTechnique(0)->getPass(0)->createTextureUnitState( world_texture, 0 );
+        mTerrainMaterial -> addTextureLayer( world_texture, 0 );
 
     if ( detail_texture != "" )
     {
-        mTerrainMaterial->getTechnique(0)->getPass(0)->createTextureUnitState( detail_texture, 1 );
+        mTerrainMaterial -> addTextureLayer( detail_texture, 1 );
     }
 
     mTerrainMaterial -> setLightingEnabled( options.lit );
 
-    mTerrainMaterial->load();
-
-
     //create a root terrain node.
-    mTerrainRoot = getRootSceneNode() -> createChildSceneNode( "Terrain" );
+    mTerrainRoot = static_cast<SceneNode*>(getRootSceneNode() -> createChild( "Terrain" ));
 
     //setup the tile array.
     int num_tiles = ( options.world_size - 1 ) / ( options.size - 1 );
@@ -171,7 +166,7 @@ void TerrainSceneManager::setWorldGeometry( const String& filename )
             options.startz = j;
             sprintf( name, "tile[%d,%d]", p, q );
 
-            SceneNode *c = mTerrainRoot -> createChildSceneNode( name );
+            SceneNode *c = static_cast<SceneNode*>(mTerrainRoot -> createChild( name ));
             TerrainRenderable *tile = new TerrainRenderable();
 
             tile -> setMaterial( mTerrainMaterial );

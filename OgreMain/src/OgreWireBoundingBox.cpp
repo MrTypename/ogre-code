@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreWireBoundingBox.h"
 
 #include "OgreSimpleRenderable.h"
@@ -69,7 +68,7 @@ namespace Ogre {
         delete mRenderOp.vertexData;
 	}
 
-	void WireBoundingBox::setupBoundingBox(const AxisAlignedBox& aabb) 
+	void WireBoundingBox::setupBoundingBox(AxisAlignedBox aabb) 
     {
 		// init the vertices to the aabb
 		setupBoundingBoxVertices(aabb);
@@ -80,24 +79,13 @@ namespace Ogre {
 	}
 
 	// Override this method to prevent parent transforms (rotation,translation,scale)
-    void WireBoundingBox::getWorldTransforms( Matrix4* xform ) const
+    void WireBoundingBox::getWorldTransforms( Matrix4* xform )
     {
 		// return identity matrix to prevent parent transforms
         *xform = Matrix4::IDENTITY;
     }
-    //-----------------------------------------------------------------------
-    const Quaternion& WireBoundingBox::getWorldOrientation(void) const
-    {
-        return Quaternion::IDENTITY;
-    }
-    //-----------------------------------------------------------------------
-    const Vector3& WireBoundingBox::getWorldPosition(void) const
-    {
-        return Vector3::ZERO;
-    }
 
-
-	void WireBoundingBox::setupBoundingBoxVertices(const AxisAlignedBox& aab) {
+	void WireBoundingBox::setupBoundingBoxVertices(AxisAlignedBox &aab) {
 
 		Vector3 vmax = aab.getMaximum();
 		Vector3 vmin = aab.getMinimum();

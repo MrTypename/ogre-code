@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -52,6 +52,7 @@ email                : kenny@sparksuit.com
 #include "OgrePrerequisites.h"
 #include "OgreString.h"
 #include "OgreInputEvent.h"
+#include "OgreActionTarget.h"
 
 namespace Ogre {
 
@@ -143,7 +144,7 @@ namespace Ogre {
 		 * 
 		 * @return a string identifying the event and its associated command 
 		 */
-		String paramString() const;
+		String paramString();
 
     };
 

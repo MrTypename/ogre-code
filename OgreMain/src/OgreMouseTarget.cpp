@@ -3,7 +3,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -23,7 +23,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreMouseEvent.h"
 #include "OgreEventListeners.h"
@@ -68,17 +67,6 @@ namespace Ogre {
 				mMouseWithin = true;
 				listener->mouseEntered(e);
 				break;
-			case MouseEvent::ME_MOUSE_DRAGENTERED:
-				mMouseWithin = true;
-				listener->mouseDragEntered(e);
-				break;
-			case MouseEvent::ME_MOUSE_DRAGEXITED:
-				mMouseWithin = false;
-				listener->mouseDragExited(e);
-				break;
-			case MouseEvent::ME_MOUSE_DRAGDROPPED:
-				listener->mouseDragDropped(e);
-				break;
 			}
 		}
 	}
@@ -102,7 +90,7 @@ namespace Ogre {
 	}
 
     //-----------------------------------------------------------------------
-	bool MouseTarget::isMouseWithin() const
+	bool MouseTarget::isMouseWithin()
 	{ 
 		return mMouseWithin;
 	}

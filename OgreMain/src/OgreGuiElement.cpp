@@ -3,7 +3,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -23,7 +23,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreGuiElement.h"
 #include "OgreMaterialManager.h"
@@ -33,8 +32,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreEventMulticaster.h"
 #include "OgreEventListeners.h"
 #include "OgreOverlayManager.h"
-#include "OgreException.h"
-#include "OgreRenderQueue.h"
 
 namespace Ogre {
 
@@ -50,7 +47,6 @@ namespace Ogre {
     GuiElementCommands::CmdMetricsMode GuiElement::msMetricsModeCmd;
     GuiElementCommands::CmdHorizontalAlign GuiElement::msHorizontalAlignCmd;
     GuiElementCommands::CmdVerticalAlign GuiElement::msVerticalAlignCmd;
-    GuiElementCommands::CmdVisible GuiElement::msVisibleCmd;
     //---------------------------------------------------------------------
     GuiElement::GuiElement(const String& name)
         : MouseTarget(),
@@ -94,7 +90,7 @@ namespace Ogre {
         mVisible = false;
     }
     //---------------------------------------------------------------------
-    bool GuiElement::isVisible(void) const
+    bool GuiElement::isVisible(void)
     {
         return mVisible;
     }
@@ -147,14 +143,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     Real GuiElement::getWidth(void) const
     {
-        if (mMetricsMode == GMM_PIXELS)
-        {
-			return (Real)mPixelWidth;
-		}
-		else
-		{
-        	return mWidth;
-		}
+        return mWidth;
     }
     //---------------------------------------------------------------------
     void GuiElement::setHeight(Real height)
@@ -172,14 +161,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     Real GuiElement::getHeight(void) const
     {
-        if (mMetricsMode == GMM_PIXELS)
-        {
-			return (Real)mPixelHeight;
-		}
-		else
-		{
-			return mHeight;
-		}
+        return mHeight;
     }
     //---------------------------------------------------------------------
     void GuiElement::setLeft(Real left)
@@ -198,14 +180,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     Real GuiElement::getLeft(void) const
     {
-        if (mMetricsMode == GMM_PIXELS)
-        {
-			return (Real)mPixelLeft;
-		}
-		else
-		{
-        	return mLeft;
-		}
+        return mLeft;
     }
     //---------------------------------------------------------------------
     void GuiElement::setTop(Real top)
@@ -225,14 +200,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     Real GuiElement::getTop(void) const
     {
-        if (mMetricsMode == GMM_PIXELS)
-        {
-			return (Real)mPixelTop;
-		}
-		else
-		{
-	        return mTop;
-		}
+        return mTop;
     }
     //---------------------------------------------------------------------
     const String& GuiElement::getMaterialName(void) const
@@ -260,27 +228,17 @@ namespace Ogre {
         return mpMaterial;
     }
     //---------------------------------------------------------------------
-    void GuiElement::getWorldTransforms(Matrix4* xform) const
+    void GuiElement::getWorldTransforms(Matrix4* xform)
     {
         mOverlay->_getWorldTransforms(xform);
     }
-    //-----------------------------------------------------------------------
-    const Quaternion& GuiElement::getWorldOrientation(void) const
-    {
-        return mOverlay->getWorldOrientation();
-    }
-    //-----------------------------------------------------------------------
-    const Vector3& GuiElement::getWorldPosition(void) const
-    {
-        return mOverlay->getWorldPosition();
-    }
     //---------------------------------------------------------------------
-    bool GuiElement::useIdentityProjection(void) const
+    bool GuiElement::useIdentityProjection(void)
     {
         return true;
     }
     //---------------------------------------------------------------------
-    bool GuiElement::useIdentityView(void) const
+    bool GuiElement::useIdentityView(void)
     {
         return true;
     }
@@ -456,10 +414,6 @@ namespace Ogre {
             "The vertical alignment, 'top', 'bottom' or 'center'."
             , PT_STRING),
             &msVerticalAlignCmd);
-        dict->addParameter(ParameterDef("visible", 
-            "Initial visibility of element, either 'true' or 'false' (default true)."
-            , PT_STRING),
-            &msVisibleCmd);
     }
     //-----------------------------------------------------------------------
     void GuiElement::setCaption( const String& caption )
@@ -478,7 +432,7 @@ namespace Ogre {
         mColour = col;
     }
     //-----------------------------------------------------------------------
-    const ColourValue& GuiElement::getColour(void) const
+    ColourValue GuiElement::getColour(void) const
     {
         return mColour;
     }
@@ -499,7 +453,7 @@ namespace Ogre {
         _positionsOutOfDate();
     }
     //-----------------------------------------------------------------------
-    GuiMetricsMode GuiElement::getMetricsMode(void) const
+    GuiMetricsMode GuiElement::getMetricsMode(void)
     {
         return mMetricsMode;
     }
@@ -510,7 +464,7 @@ namespace Ogre {
         _positionsOutOfDate();
     }
     //-----------------------------------------------------------------------
-    GuiHorizontalAlignment GuiElement::getHorizontalAlignment(void) const
+    GuiHorizontalAlignment GuiElement::getHorizontalAlignment(void)
     {
         return mHorzAlign;
     }
@@ -521,7 +475,7 @@ namespace Ogre {
         _positionsOutOfDate();
     }
     //-----------------------------------------------------------------------
-    GuiVerticalAlignment GuiElement::getVerticalAlignment(void) const
+    GuiVerticalAlignment GuiElement::getVerticalAlignment(void)
     {
         return mVertAlign;
     }
@@ -563,14 +517,10 @@ namespace Ogre {
 		case MouseEvent::ME_MOUSE_CLICKED:
 		case MouseEvent::ME_MOUSE_ENTERED:
 		case MouseEvent::ME_MOUSE_EXITED:
-		case MouseEvent::ME_MOUSE_DRAGENTERED:
-		case MouseEvent::ME_MOUSE_DRAGEXITED:
-		case MouseEvent::ME_MOUSE_DRAGDROPPED:
 			processMouseEvent(static_cast<MouseEvent*>(e));
 			break;
 		case MouseEvent::ME_MOUSE_MOVED:
 		case MouseEvent::ME_MOUSE_DRAGGED:
-		case MouseEvent::ME_MOUSE_DRAGMOVED:
 			processMouseMotionEvent(static_cast<MouseEvent*>(e));
 			break;
 		}
@@ -594,7 +544,7 @@ namespace Ogre {
 	}
 
     //-----------------------------------------------------------------------
-	bool GuiElement::isEnabled() const
+	bool GuiElement::isEnabled()
 	{ 
 		return mEnabled;
 	}

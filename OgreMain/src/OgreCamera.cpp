@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreCamera.h"
 
 #include "OgreMath.h"
@@ -294,23 +293,17 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    const Matrix4& Camera::getProjectionMatrix(void) const
+    const Matrix4& Camera::getProjectionMatrix(void)
     {
 
         updateFrustum();
+
 
         return mProjMatrix;
     }
-    //-----------------------------------------------------------------------
-    const Matrix4& Camera::getStandardProjectionMatrix(void) const
-    {
 
-        updateFrustum();
-
-        return mStandardProjMatrix;
-    }
     //-----------------------------------------------------------------------
-    const Matrix4& Camera::getViewMatrix(void) const
+    const Matrix4& Camera::getViewMatrix(void)
     {
         updateView();
 
@@ -479,22 +472,16 @@ namespace Ogre {
             // Recalc if frustum params changed
             if (mProjType == PT_PERSPECTIVE)
             {
-                // PERSPECTIVE transform, API specific
+                // PERSPECTIVE transform
                 Root::getSingleton().getRenderSystem()->_makeProjectionMatrix(mFOVy, 
                     mAspect, mNearDist, mFarDist, mProjMatrix);
-
-                // PERSPECTIVE transform, API specific for Gpu Programs
-                Root::getSingleton().getRenderSystem()->_makeProjectionMatrix(mFOVy, 
-                    mAspect, mNearDist, mFarDist, mStandardProjMatrix, true);
-
-                // standard perspective transform, not API specific
-                Real thetaY = Math::AngleUnitsToRadians(mFOVy / 2.0f);
-                Real tanThetaY = Math::Tan(thetaY);
 
                 // Calculate co-efficients for the frustum planes
                 // Special-cased for L = -R and B = -T i.e. viewport centered 
                 // on direction vector.
                 // Taken from ideas in WildMagic 0.2 http://www.magic-software.com
+                Real thetaY = Math::AngleUnitsToRadians(mFOVy / 2.0f);
+                Real tanThetaY = Math::Tan(thetaY);
                 //Real thetaX = thetaY * mAspect;
                 Real tanThetaX = tanThetaY * mAspect;
 
@@ -866,12 +853,12 @@ namespace Ogre {
 		mSceneLodFactorInv = 1.0f / factor;
 	}
     //-----------------------------------------------------------------------
-	Real Camera::getLodBias(void) const
+	Real Camera::getLodBias(void)
 	{
 		return mSceneLodFactor;
 	}
     //-----------------------------------------------------------------------
-	Real Camera::_getLodBiasInverse(void) const
+	Real Camera::_getLodBiasInverse(void)
 	{
 		return mSceneLodFactorInv;
 	}

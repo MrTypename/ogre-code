@@ -136,10 +136,6 @@ SOURCE=..\include\OgreD3D7DeviceList.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\include\OgreD3D7GpuProgramManager.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\include\OgreD3D7HardwareBufferManager.h
 # End Source File
 # Begin Source File

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -28,7 +28,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgrePrerequisites.h"
 #include "OgreString.h"
-#include "OgreStringVector.h"
 
 namespace Ogre {
 
@@ -63,10 +62,8 @@ namespace Ogre {
         static String toString(long val);
         /** Converts a long to a String. */
         static String toString(unsigned long val);
-        /** Converts a boolean to a String. 
-        @param yesNo If set to true, result is 'yes' or 'no' instead of 'true' or 'false'
-        */
-        static String toString(bool val, bool yesNo = false);
+        /** Converts a boolean to a String. */
+        static String toString(bool val);
         /** Converts a Vector3 to a String. 
         @remarks
             Format is "x y z" (i.e. 3x Real values, space delimited)
@@ -93,12 +90,6 @@ namespace Ogre {
             Format is "r g b a" (i.e. 4x Real values, space delimited). 
         */
         static String toString(const ColourValue& val);
-        /** Converts a StringVector to a string.
-        @remarks
-            Strings must not contain spaces since space is used as a delimeter in
-            the output.
-        */
-        static String toString(const StringVector& val);
 
         /** Converts a String to a Real. 
         @returns
@@ -162,12 +153,6 @@ namespace Ogre {
         */
         static ColourValue parseColourValue(const String& val);
 
-        /** Pareses a StringVector from a string.
-        @remarks
-            Strings must not contain spaces since space is used as a delimeter in
-            the output.
-        */
-        static StringVector parseStringVector(const String& val);
     };
 
 

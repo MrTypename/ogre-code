@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2003 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreSceneQuery.h"
 #include "OgreException.h"
 
@@ -43,7 +42,7 @@ namespace Ogre {
         mQueryMask = mask;
     }
     //-----------------------------------------------------------------------
-    unsigned long SceneQuery::getQueryMask(void) const
+    unsigned long SceneQuery::getQueryMask(void)
     {
         return mQueryMask;
     }
@@ -60,7 +59,7 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     SceneQuery::WorldFragmentType 
-    SceneQuery::getWorldFragmentType(void) const
+    SceneQuery::getWorldFragmentType(void)
     {
         return mWorldFragmentType;
     }
@@ -75,7 +74,7 @@ namespace Ogre {
         clearResults();
     }
     //-----------------------------------------------------------------------
-    SceneQueryResult& RegionSceneQuery::getLastResults(void) const
+    SceneQueryResult& RegionSceneQuery::getLastResults(void)
     {
         assert(mLastResult);
         return *mLastResult;
@@ -131,7 +130,7 @@ namespace Ogre {
         mAABB = box;
     }
     //-----------------------------------------------------------------------
-    const AxisAlignedBox& AxisAlignedBoxSceneQuery::getBox(void) const
+    const AxisAlignedBox& AxisAlignedBoxSceneQuery::getBox(void)
     {
         return mAABB;
     }
@@ -150,7 +149,7 @@ namespace Ogre {
         mSphere = sphere;
     }
     //-----------------------------------------------------------------------
-    const Sphere& SphereSceneQuery::getSphere() const
+    const Sphere& SphereSceneQuery::getSphere()
     {
         return mSphere;
     }
@@ -171,7 +170,7 @@ namespace Ogre {
         mRay = ray;
     }
     //-----------------------------------------------------------------------
-    const Ray& RaySceneQuery::getRay(void) const
+    const Ray& RaySceneQuery::getRay(void)
     {
         return mRay;
     }
@@ -182,12 +181,12 @@ namespace Ogre {
         mMaxResults = maxresults;
     }
     //-----------------------------------------------------------------------
-    bool RaySceneQuery::getSortByDistance(void) const
+    bool RaySceneQuery::getSortByDistance(void)
     {
         return mSortByDistance;
     }
     //-----------------------------------------------------------------------
-    ushort RaySceneQuery::getMaxResults(void) const
+    ushort RaySceneQuery::getMaxResults(void)
     {
         return mMaxResults;
     }
@@ -223,7 +222,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    RaySceneQueryResult& RaySceneQuery::getLastResults(void) const
+    RaySceneQueryResult& RaySceneQuery::getLastResults(void)
     {
         assert (mLastResult);
         return *mLastResult;
@@ -282,7 +281,7 @@ namespace Ogre {
         clearResults();
     }
     //-----------------------------------------------------------------------
-    IntersectionSceneQueryResult& IntersectionSceneQuery::getLastResults(void) const
+    IntersectionSceneQueryResult& IntersectionSceneQuery::getLastResults(void)
     {
         assert(mLastResult);
         return *mLastResult;

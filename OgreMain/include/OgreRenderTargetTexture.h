@@ -11,7 +11,7 @@ namespace Ogre
     {
     public:
         /// @copydoc Texture::isRenderTarget
-        virtual bool isRenderTarget() const { return false; }
+        virtual bool isRenderTarget() { return false; }
     };
 }
 

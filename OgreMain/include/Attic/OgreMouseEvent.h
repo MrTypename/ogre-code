@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -92,6 +92,7 @@ email                : kenny@sparksuit.com
 
 #include "OgrePrerequisites.h"
 #include "OgreInputEvent.h"
+#include "OgreMouseTarget.h"
 
 namespace Ogre {
 
@@ -201,7 +202,7 @@ namespace Ogre {
 		enum
 		{
 			ME_FIRST_EVENT = 500,
-			ME_LAST_EVENT = 510
+			ME_LAST_EVENT = 506
 		};
 
 		enum 
@@ -212,12 +213,7 @@ namespace Ogre {
 			ME_MOUSE_MOVED,
 			ME_MOUSE_ENTERED,
 			ME_MOUSE_EXITED,
-			ME_MOUSE_DRAGGED,
-
-      ME_MOUSE_DRAGENTERED,
-      ME_MOUSE_DRAGEXITED,
-      ME_MOUSE_DRAGMOVED,
-      ME_MOUSE_DRAGDROPPED
+			ME_MOUSE_DRAGGED
 		};
 
 		/**
@@ -253,7 +249,7 @@ namespace Ogre {
 		 * @return x  an integer indicating horizontal position relative to
 		 *            the MouseTarget
 		 */
-		 Real getX() const;
+		 Real getX();
 
 		/**
 		 * Returns the vertical y position of the event relative to the
@@ -262,7 +258,7 @@ namespace Ogre {
 		 * @return y  an integer indicating vertical position relative to
 		 *            the MouseTarget
 		 */
-		 Real getY() const;
+		 Real getY();
 
 		/**
 		 * Returns the scrollwheel z position of the event relative to the
@@ -271,7 +267,7 @@ namespace Ogre {
 		 * @return y  an integer indicating scrollwheel position relative to
 		 *            the MouseTarget
 		 */
-		 Real getZ() const;
+		 Real getZ();
 
          /** get relative X cursor movement */
          Real getRelX() const {return mRelX;}
@@ -288,7 +284,7 @@ namespace Ogre {
 		 *
 		 * @return a string identifying the event and its attributes
 		 */
-		 String paramString() const;
+		 String paramString();
 
 		/**
 		 * Translates the event's coordinates to a new position
@@ -300,7 +296,7 @@ namespace Ogre {
 		 void translatePoint(Real x, Real y);
 
 		 /** return the ID of the button */
-		 int getButtonID() const;
+		 int getButtonID();
     };
 
 

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -70,11 +70,10 @@ namespace Ogre {
 	public :
 		CursorGuiElement(const String& name);
 
-		const String& getTypeName(void) const;
+		const String& getTypeName(void);
 
         /** Inherited from PanelGuiElement, should only be called from the OverlayManager */
         void show(void);
-        void hide(void);
 
         /** Used to set the cursor's hot spot X coordinate */
         void setOffsetX(Real x);
