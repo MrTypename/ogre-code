@@ -87,13 +87,13 @@ namespace Ogre {
         @remarks This is used by pixel-based GuiElements to work out if they need to
             reclaculate their sizes.
         */
-        bool hasViewportChanged(void) const;
+        bool hasViewportChanged(void);
 
         /** Gets the height of the destination viewport in pixels. */
-        int getViewportHeight(void) const;
+        int getViewportHeight(void);
         
         /** Gets the width of the destination viewport in pixels. */
-        int getViewportWidth(void) const;
+        int getViewportWidth(void);
 
         /** Override standard Singleton retrieval.
             Why do we do this? Well, it's because the Singleton implementation is in a .h file,
@@ -116,8 +116,8 @@ namespace Ogre {
 		void setCursorGui(GuiContainer* cursor, MouseMotionListener* cursorListener);
 		void mouseMoved(MouseEvent* e);
 		void mouseDragged(MouseEvent* e);
-        Real getMouseX() const { return mMouseX; }
-        Real getMouseY() const { return mMouseY; }
+        Real getMouseX() { return mMouseX; }
+        Real getMouseY() { return mMouseY; }
 
 		/** returns the registered cursor GUI */
 		GuiContainer* getCursorGui();

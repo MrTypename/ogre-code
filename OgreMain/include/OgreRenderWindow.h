@@ -134,7 +134,7 @@ namespace Ogre
 
         /** Returns true if window is running in fullscreen mode.
         */
-        virtual bool isFullScreen(void) const;
+        virtual bool isFullScreen(void);
 
         /** Overloaded version of getMetrics from RenderTarget, including extra details
             specific to windowing systems.

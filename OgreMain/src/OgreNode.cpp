@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreNode.h"
 
 #include "OgreException.h"
@@ -175,6 +174,8 @@ namespace Ogre {
             {
                 // Scale own position by parent scale
                 Vector3 parentScale = mParent->_getDerivedScale();
+                mDerivedPosition = mDerivedPosition * parentScale;
+
                 // Set own scale, NB just combine as equivalent axes, no shearing
                 mDerivedScale = mScale * parentScale;
 
@@ -556,20 +557,10 @@ namespace Ogre {
         pSubMesh->_getRenderOperation(op);
     }
     //-----------------------------------------------------------------------
-    void Node::getWorldTransforms(Matrix4* xform) const
+    void Node::getWorldTransforms(Matrix4* xform)
     {
         // Assumes up to date
         *xform = this->_getFullTransform();
-    }
-    //-----------------------------------------------------------------------
-    const Quaternion& Node::getWorldOrientation(void) const
-    {
-        return _getDerivedOrientation();
-    }
-    //-----------------------------------------------------------------------
-    const Vector3& Node::getWorldPosition(void) const
-    {
-        return _getDerivedPosition();
     }
     //-----------------------------------------------------------------------
     void Node::setInitialState(void)

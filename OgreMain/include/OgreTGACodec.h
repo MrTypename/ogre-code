@@ -26,6 +26,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define _TGACodec_H__
 
 #include "OgreImageCodec.h"
+#include "OgreSDDataChunk.h"
 
 namespace Ogre {
 
@@ -57,8 +58,6 @@ namespace Ogre {
         CodecData * decode( const DataChunk& input, DataChunk* output, ... ) const;
 
         String getType() const { return "tga"; }
-
-        unsigned int getILType(void) const;
     };
 
 }

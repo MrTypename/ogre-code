@@ -92,6 +92,7 @@ email                : kenny@sparksuit.com
 
 #include "OgrePrerequisites.h"
 #include "OgreInputEvent.h"
+#include "OgreMouseTarget.h"
 
 namespace Ogre {
 
@@ -248,7 +249,7 @@ namespace Ogre {
 		 * @return x  an integer indicating horizontal position relative to
 		 *            the MouseTarget
 		 */
-		 Real getX() const;
+		 Real getX();
 
 		/**
 		 * Returns the vertical y position of the event relative to the
@@ -257,7 +258,7 @@ namespace Ogre {
 		 * @return y  an integer indicating vertical position relative to
 		 *            the MouseTarget
 		 */
-		 Real getY() const;
+		 Real getY();
 
 		/**
 		 * Returns the scrollwheel z position of the event relative to the
@@ -266,7 +267,7 @@ namespace Ogre {
 		 * @return y  an integer indicating scrollwheel position relative to
 		 *            the MouseTarget
 		 */
-		 Real getZ() const;
+		 Real getZ();
 
          /** get relative X cursor movement */
          Real getRelX() const {return mRelX;}
@@ -283,7 +284,7 @@ namespace Ogre {
 		 *
 		 * @return a string identifying the event and its attributes
 		 */
-		 String paramString() const;
+		 String paramString();
 
 		/**
 		 * Translates the event's coordinates to a new position
@@ -295,7 +296,7 @@ namespace Ogre {
 		 void translatePoint(Real x, Real y);
 
 		 /** return the ID of the button */
-		 int getButtonID() const;
+		 int getButtonID();
     };
 
 

@@ -29,7 +29,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreConfigFile.h"
 #include "OgreMaterial.h"
 #include "OgreException.h"
-#include "OgreRoot.h"
 
 
 namespace Ogre {
@@ -45,7 +44,6 @@ namespace Ogre {
 
         // All scene types defaulted to begin with (plugins may alter this)
         setSceneManager(ST_GENERIC, mDefaultManager);
-        setSceneManager(ST_EXTERIOR_REAL_FAR, mDefaultManager);
         setSceneManager(ST_EXTERIOR_FAR, mDefaultManager);
         setSceneManager(ST_EXTERIOR_CLOSE, mDefaultManager);
         setSceneManager(ST_INTERIOR, mDefaultManager);

@@ -74,7 +74,8 @@ PostBuild_Cmds=copy ..\lib\Release\OgreMain.dll ..\..\Samples\Common\bin\Release
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "OGREMAIN_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /G6 /MDd /W3 /Gm /Gi /GX /ZI /Od /I "..\include" /I "..\..\Dependencies\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "OGRE_NONCLIENT_BUILD" /Yu"OgreStableHeaders.h" /FD /GZ /c
+# ADD CPP /nologo /G6 /MDd /W3 /Gm /Gi /GX /ZI /Od /I "..\include" /I "..\..\Dependencies\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "OGRE_NONCLIENT_BUILD" /FD /GZ /c
+# SUBTRACT CPP /YX /Yc /Yu
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x418 /d "_DEBUG"
@@ -130,10 +131,6 @@ SOURCE=..\src\OgreArchiveManager.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\OgreAutoParamDataSource.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\OgreAxisAlignedBox.cpp
 # End Source File
 # Begin Source File
@@ -147,10 +144,6 @@ SOURCE=..\src\OgreBillboardSet.cpp
 # Begin Source File
 
 SOURCE=..\src\OgreBitwise.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\OgreBMPCodec.cpp
 # End Source File
 # Begin Source File
 
@@ -198,10 +191,6 @@ SOURCE=..\src\OgreDataChunk.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\OgreDDSCodec.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\OgreDefaultHardwareBufferManager.cpp
 # End Source File
 # Begin Source File
@@ -244,18 +233,6 @@ SOURCE=..\src\OgreFont.cpp
 # Begin Source File
 
 SOURCE=..\src\OgreFontManager.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\OgreGpuProgram.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\OgreGpuProgramManager.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\OgreGpuProgramUsage.cpp
 # End Source File
 # Begin Source File
 
@@ -433,10 +410,6 @@ SOURCE=..\src\OgreParticleSystemManager.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\OgrePass.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\OgrePatchMesh.cpp
 # End Source File
 # Begin Source File
@@ -455,11 +428,6 @@ SOURCE=..\src\OgrePlatformManager.cpp
 # Begin Source File
 
 SOURCE=..\src\OgrePNGCodec.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\OgrePrecompiledHeaders.cpp
-# ADD CPP /Yc"OgreStableHeaders.h"
 # End Source File
 # Begin Source File
 
@@ -504,6 +472,10 @@ SOURCE=..\src\OgreRenderWindow.cpp
 # Begin Source File
 
 SOURCE=..\src\OgreResourceManager.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\OgreResourceMap.cpp
 # End Source File
 # Begin Source File
 
@@ -601,20 +573,16 @@ SOURCE=..\src\OgreTagPoint.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\OgreTechnique.cpp
+SOURCE=..\src\OgreTexture.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\OgreTexture.cpp
+SOURCE=..\src\OgreTextureLayer.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=..\src\OgreTextureManager.cpp
 # SUBTRACT CPP /YX /Yc /Yu
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\OgreTextureUnitState.cpp
 # End Source File
 # Begin Source File
 
@@ -703,10 +671,6 @@ SOURCE=..\include\OgreArchiveManager.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\include\OgreAutoParamDataSource.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\include\OgreAxisAlignedBox.h
 # End Source File
 # Begin Source File
@@ -724,10 +688,6 @@ SOURCE=..\include\OgreBitwise.h
 # Begin Source File
 
 SOURCE=..\include\OgreBlendMode.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\OgreBMPCodec.h
 # End Source File
 # Begin Source File
 
@@ -788,10 +748,6 @@ SOURCE=..\include\OgreCustomizable.h
 # Begin Source File
 
 SOURCE=..\include\OgreDataChunk.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\OgreDDSCodec.h
 # End Source File
 # Begin Source File
 
@@ -856,18 +812,6 @@ SOURCE=..\include\OgreFrameListener.h
 # Begin Source File
 
 SOURCE=..\include\OgreGeometryData.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\OgreGpuProgram.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\OgreGpuProgramManager.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\OgreGpuProgramUsage.h
 # End Source File
 # Begin Source File
 
@@ -1095,10 +1039,6 @@ SOURCE=..\include\OgreParticleSystemManager.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\include\OgrePass.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\include\OgrePatchMesh.h
 # End Source File
 # Begin Source File
@@ -1200,6 +1140,10 @@ SOURCE=..\include\OgreResource.h
 # Begin Source File
 
 SOURCE=..\include\OgreResourceManager.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\OgreResourceMap.h
 # End Source File
 # Begin Source File
 
@@ -1327,19 +1271,11 @@ SOURCE=..\include\OgreTargetManager.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\include\OgreTechnique.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\include\OgreTexture.h
 # End Source File
 # Begin Source File
 
 SOURCE=..\include\OgreTextureManager.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\OgreTextureUnitState.h
 # End Source File
 # Begin Source File
 

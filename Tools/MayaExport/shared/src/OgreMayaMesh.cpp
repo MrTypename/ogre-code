@@ -1,25 +1,24 @@
 /*
-============================================================================
+===============================================================================
 This source file is part of the Ogre-Maya Tools.
 Distributed as part of Ogre (Object-oriented Graphics Rendering Engine).
-Copyright (C) 2003 Fifty1 Software Inc., Bytelords
 
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-or go to http://www.gnu.org/licenses/gpl.txt
-============================================================================
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+===============================================================================
 */
+
 #include "OgreMayaMesh.h"
 #include "OgreMayaOptions.h"
 
@@ -126,7 +125,7 @@ namespace OgreMaya {
 
             out << "\t</submeshes>\n";
             
-            if(OPTIONS.exportSkeleton || OPTIONS.exportVBA) {
+            if(OPTIONS.exportSkeleton) {
                 string skeletonName =
                     OPTIONS.outSkelFile.substr(
                         0, OPTIONS.outSkelFile.find_last_of('.')
@@ -156,10 +155,9 @@ namespace OgreMaya {
 		\todo		Submesh optimization (merge submeshes that share materials)
 	*/	
 	//	--------------------------------------------------------------------------
-	MStatus MeshGenerator::_processPolyMesh(ofstream& out, const MDagPath dagPath) {		        
-
-        cout << "\nMeshGenerator::_processPolyMesh\n";
-        cout << "\tdagPath = \"" << dagPath.fullPathName().asChar() << "\"\n";
+	MStatus MeshGenerator::_processPolyMesh(ofstream& out, const MDagPath dagPath) {
+		
+        cout << "dagPath = \"" << dagPath.fullPathName().asChar() << "\"\n";
         
         MFnMesh* fnMesh = 0;                                    
 
@@ -176,19 +174,19 @@ namespace OgreMaya {
 
         MFnMesh fnTargetMesh(dagPath, &status);
 
-	    for( ;!kDepNodeIt.isDone() && !hasSkinCluster; kDepNodeIt.next()) {            
+	    for( ;!kDepNodeIt.isDone() && !hasSkinCluster; kDepNodeIt.next())  {            
 
             MObject	kInputObject, kOutputObject;                    
 		    MObject kObject = kDepNodeIt.item();
 
 		    MFnSkinCluster kSkinClusterFn(kObject, &status);
 
-            cout << "\tskin cluster name: " << kSkinClusterFn.name().asChar() << '\n';
+            cout << kSkinClusterFn.name().asChar() << '\n';
 
 
             unsigned int uiNumGeometries = kSkinClusterFn.numOutputConnections();
 
-            cout << "\tfound " << uiNumGeometries << " geometry object(s) in skin cluster\n";
+            cout << "[" << uiNumGeometries << "] geometry objects\n";
 
             for(unsigned int uiGeometry = 0; uiGeometry < uiNumGeometries; ++uiGeometry ) {
 	            unsigned int uiIndex = kSkinClusterFn.indexForOutputConnection( uiGeometry, &status );
@@ -198,7 +196,7 @@ namespace OgreMaya {
 	            kOutputObject = kSkinClusterFn.outputShapeAtIndex( uiIndex, &status );
 
                 if(kOutputObject == fnTargetMesh.object()) {
-                    cout << "\tgeometry located in skin cluster\n";
+                    cout << "geometry found in skin cluster\n";
                     hasSkinCluster = true;
 
                     fnMesh = new MFnMesh(kInputObject);
@@ -227,7 +225,8 @@ namespace OgreMaya {
         //MFnMesh fnMesh(dagPath, &status); 
         
 //*******************************************************************        
-        
+
+        cout << "_queryMayaGeometry\n";
         // ===== Get Maya geometry		
 		status = _queryMayaGeometry(*fnMesh, MayaGeometry);
 		if (status == MStatus::kFailure) {
@@ -235,6 +234,7 @@ namespace OgreMaya {
 		}
 
 
+        cout << "_parseMayaGeometry\n";
 		// ===== Parse into MeshGenerator format
 		MeshFaceVertexVector FaceVertices;
 		MeshTriFaceList      TriFaces;
@@ -250,7 +250,7 @@ namespace OgreMaya {
 ////////////////////////////////////////////////////////////////////////////////
                 
         // export as XML
-        out << "\t\t<submesh material=\"" << OPTIONS.matPrefix << MayaGeometry.MaterialName.asChar() << "\" usesharedvertices=\"false\" use32bitindexes=\"false\">\n";    
+        out << "\t\t<submesh material=\"" << MayaGeometry.MaterialName.asChar() << "\" usesharedvertices=\"false\" use32bitindexes=\"false\">\n";    
 	
 
 		// ===== Create Ogre face list
@@ -451,8 +451,6 @@ namespace OgreMaya {
         MFnMesh &fnMesh, 
 		MeshMayaGeometry &rGeom
     ) {
-        cout << "\nMeshGenerator::_queryMayaGeometry\n";
-
 		MStatus status = MStatus::kSuccess;                
 
 		// ===== Identification		
@@ -465,16 +463,16 @@ namespace OgreMaya {
 		// --- Vertices
 		status = fnMesh.getPoints(rGeom.Vertices, MSpace::kWorld);
 		if (status == MStatus::kFailure) {
-			cout << "\t[ERROR] MFnMesh::getPoints() failed\n"; 
+			MGlobal::displayError("MFnMesh::getPoints()"); 
 			return status;
 		}
 
-        cout << "\tvertices count: " << rGeom.Vertices.length() << '\n';
+        cout << "vertices count: " << rGeom.Vertices.length() << '\n';
 
 		// --- Vertex normals
 		status = fnMesh.getNormals(rGeom.FaceVertexNormals);
 		if (status == MStatus::kFailure) {
-			cout << "\t[ERROR] MFnMesh::getNormals() failed\n"; 
+			MGlobal::displayError("MFnMesh::getNormals()"); 
 			return status;
 		}
 
@@ -508,7 +506,7 @@ namespace OgreMaya {
 		// --- Face vertex colours
 		status = fnMesh.getFaceVertexColors(rGeom.FaceVertexColours);
 		if (status == MStatus::kFailure) {
-			cout << "\t[ERROR] MFnMesh::getFaceVertexColors() failed\n"; 
+			MGlobal::displayError("MFnMesh::getFaceVertexColors()"); 
 			return status;
 		}
 		// Override non-existent colours with semi-transparent white
@@ -527,7 +525,7 @@ namespace OgreMaya {
 		MStringArray UVSetNames;
 		status = fnMesh.getUVSetNames(UVSetNames);
 		if (status == MStatus::kFailure) {
-			cout << "\t[ERROR] MFnMesh::getUVSetNames() failed\n"; 
+			MGlobal::displayError("MFnMesh::getUVSetNames()"); 
 			return status;
 		}
 
@@ -569,8 +567,6 @@ namespace OgreMaya {
 		MeshFaceVertexVector &FaceVertices, 
 		MeshTriFaceList &TriFaces
     ) {
-        cout << "\nMeshGenerator::_parseMayaGeometry\n";
-
 		MStatus status;
 
 		// --- Determine number of triangles
@@ -582,13 +578,13 @@ namespace OgreMaya {
 		// --- Confirm number of triangle vertices
 		unsigned int nTriVertices = MayaGeometry.TriangleVertexIds.length();
 		if (nTriVertices != 3*nTris) {
-			cout << "\t[ERROR] "<<nTris<<" triangles require "<<(3*nTris)<<" vertices but "<<nTriVertices<<" vertices present!\n";
+			cout << "MeshGenerator: "<<nTris<<" triangles require "<<(3*nTris)<<" vertices but "<<nTriVertices<<" vertices present!\n";
 			return MStatus::kFailure;
 		}
 
 		// --- Loop over all triangles
 		unsigned int iTri;
-		cout << "\texporting "<<fnMesh.numPolygons()<<" faces as "<<nTris<<" triangles from "<<MayaGeometry.Name.asChar()<<" (material "<<MayaGeometry.MaterialName.asChar()<<")...\n";
+		cout << "MeshGenerator: Exporting "<<fnMesh.numPolygons()<<" faces as "<<nTris<<" triangles from "<<MayaGeometry.Name.asChar()<<" (material "<<MayaGeometry.MaterialName.asChar()<<")...\n";
 
 		for (iTri = 0; iTri < nTris; ++iTri) {
 
@@ -754,21 +750,19 @@ namespace OgreMaya {
 					unable to determine visibility
 	*/	
 	//	--------------------------------------------------------------------------
-	bool MeshGenerator::_isVisible(MFnDagNode &fnDag, MStatus &status) {		        
-
-        if(fnDag.isIntermediateObject()) {
+	bool MeshGenerator::_isVisible(MFnDagNode &fnDag, MStatus &status) {
+		if(fnDag.isIntermediateObject()) {
 			return false;
 		}
 
 		bool bVisible = false;
 		MPlug visPlug = fnDag.findPlug("visibility", &status);
 		if (MStatus::kFailure == status) {
-			cout << "[WARNING] can not find \"visibility\" plug, returning false\n";
+			MGlobal::displayError("MPlug::findPlug");
 		} else {
 			status = visPlug.getValue(bVisible);
 			if (MStatus::kFailure == status) {
-				bVisible = false;
-                cout << "[WARNING] can not query \"visibility\" plug, returning false\n";
+				MGlobal::displayError("MPlug::getValue");
 			}
 		}
 

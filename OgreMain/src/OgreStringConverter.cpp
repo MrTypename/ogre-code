@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreStringConverter.h"
 #include "OgreVector3.h"
 #include "OgreMatrix3.h"
@@ -90,28 +89,13 @@ namespace Ogre {
         return stream.str();
     }
     //-----------------------------------------------------------------------
-    String StringConverter::toString(bool val, bool yesNo)
+    String StringConverter::toString(bool val)
     {
         if (val)
-        {
-            if (yesNo)
-            {
-                return "yes";
-            }
-            else
-            {
-                return "true";
-            }
-        }
+            return "true";
         else
-            if (yesNo)
-            {
-                return "no";
-            }
-            else
-            {
-                return "false";
-            }
+            return "false";
+
     }
     //-----------------------------------------------------------------------
     String StringConverter::toString(const Matrix4& val)

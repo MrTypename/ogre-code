@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreSceneManager.h"
 
@@ -44,11 +43,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreOverlayManager.h"
 #include "OgreStringConverter.h"
 #include "OgreRenderQueueListener.h"
-#include "OgreBillboardSet.h"
-#include "OgrePass.h"
-#include "OgreTechnique.h"
-#include "OgreTextureUnitState.h"
-#include "OgreException.h"
 
 // This class implements the most basic scene manager
 
@@ -166,14 +160,16 @@ namespace Ogre {
     Light* SceneManager::createLight(const String& name)
     {
         Light *l = new Light(name);
-        mLights.insert(SceneLightList::value_type(name, l));
+        mLights.insert(LightList::value_type(name, l));
+        // Add light to render system
+        mDestRenderSystem->_addLight(l);
         return l;
     }
 
     //-----------------------------------------------------------------------
     Light* SceneManager::getLight(const String& name)
     {
-        SceneLightList::iterator i = mLights.find(name);
+        LightList::iterator i = mLights.find(name);
         if (i == mLights.end())
         {
             return 0;
@@ -188,12 +184,13 @@ namespace Ogre {
     void SceneManager::removeLight(Light *l)
     {
         // Find in list
-        SceneLightList::iterator i = mLights.begin();
+        LightList::iterator i = mLights.begin();
         for (; i != mLights.end(); ++i)
         {
             if (i->second == l)
             {
                 mLights.erase(i);
+                mDestRenderSystem->_removeLight(l);
                 delete l;
                 break;
             }
@@ -205,10 +202,11 @@ namespace Ogre {
     void SceneManager::removeLight(const String& name)
     {
         // Find in list
-        SceneLightList::iterator i = mLights.find(name);
+        LightList::iterator i = mLights.find(name);
         if (i != mLights.end())
         {
             delete i->second;
+            mDestRenderSystem->_removeLight(i->second);
             mLights.erase(i);
         }
 
@@ -218,55 +216,13 @@ namespace Ogre {
     void SceneManager::removeAllLights(void)
     {
 
-        SceneLightList::iterator i = mLights.begin();
+        LightList::iterator i = mLights.begin();
         for (; i != mLights.end(); ++i)
         {
+            mDestRenderSystem->_removeLight(i->second);
             delete i->second;
         }
         mLights.clear();
-    }
-    //-----------------------------------------------------------------------
-    bool SceneManager::lightLess::operator()(const Light* a, const Light* b) const
-    {
-        return a->tempSquareDist < b->tempSquareDist;
-    }
-    //-----------------------------------------------------------------------
-    void SceneManager::_populateLightList(const Vector3& position, LightList& destList)
-    {
-        // Really basic trawl of the lights, then sort
-        destList.clear();
-
-        SceneLightList::iterator i, iend;
-        iend = mLights.end();
-        for (i = mLights.begin(); i != iend; ++i)
-        {
-            Light* lt = i->second;
-            if (lt->isVisible())
-            {
-                if (lt->getType() == Light::LT_DIRECTIONAL)
-                {
-                    // No distance
-                    lt->tempSquareDist = 0.0f;
-                    destList.push_back(lt);
-                }
-                else
-                {
-                    // Calc squared distance
-                    lt->tempSquareDist = (lt->getDerivedPosition() - position).squaredLength();
-                    // only add in-range lights
-                    Real range = lt->getAttenuationRange();
-                    if (lt->tempSquareDist <= (range * range))
-                    {
-                        destList.push_back(lt);
-                    }
-                }
-            }
-        }
-
-        // Sort
-        std::sort(destList.begin(), destList.end(), lightLess());
-
-
     }
     //-----------------------------------------------------------------------
     Entity* SceneManager::createEntity(const String& entityName, PrefabType ptype)
@@ -429,6 +385,13 @@ namespace Ogre {
         return Material::mDefaultSettings;
     }
     //-----------------------------------------------------------------------
+    void SceneManager::addMaterial(const Material& mat)
+    {
+        // Add using MaterialManager
+        /* Material* newMat = */ MaterialManager::getSingleton().add(mat);
+    }
+
+    //-----------------------------------------------------------------------
     Material* SceneManager::getMaterial(const String& name)
     {
         return (Material*)MaterialManager::getSingleton().getByName(name);
@@ -437,8 +400,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     Material* SceneManager::getMaterial(int handle)
     {
-        return static_cast<Material*>(
-            MaterialManager::getSingleton().getByHandle(handle));
+        return MaterialManager::getSingleton().getByHandle(handle);
     }
     //-----------------------------------------------------------------------
     SceneNode* SceneManager::createSceneNode(void)
@@ -488,117 +450,194 @@ namespace Ogre {
         
     }
     //-----------------------------------------------------------------------
-    void SceneManager::setPass(Pass* pass)
+    int SceneManager::setMaterial(Material* mat, int numLayersLeft)
     {
-		static bool lastUsedVertexProgram = false;
-		static bool lastUsedFragmentProgram = false;
-        if (pass->hasVertexProgram())
+        //static bool firstTime = true;
+        static bool lastUsedFallback = false;
+        static int lastNumTexUnitsUsed = 0;
+        //static Material lastMat; // Last material settings, to minimise render state changes
+
+        // Recent changes: eliminated the need to copy all material settings to set with RenderSystem
+        // Now only issues required render state changes to the render system for maximum performance
+
+        // Set surface properties
+        //if (firstTime || mat->_compareSurfaceParams(lastMat) == false)
+        //{
+           ColourValue a, b, c, d;
+           a = mat->getAmbient();
+           b = mat->getDiffuse();
+           c = mat->getSpecular();
+           d = mat->getSelfIllumination();
+            mDestRenderSystem->_setSurfaceParams( a, b, c, d, mat->getShininess() );
+        //}
+
+        // Set global blending, play it safe if last one was fallback
+        //if (firstTime || lastUsedFallback ||
+        //(lastMat.getSourceBlendFactor() != mat->getSourceBlendFactor() ||
+        // lastMat.getDestBlendFactor() != mat->getDestBlendFactor()))
+        //{
+            mDestRenderSystem->_setSceneBlending(mat->getSourceBlendFactor(), mat->getDestBlendFactor());
+        //}
+
+        // Fog
+        // New fog params can either be from scene or from material
+        FogMode newFogMode;
+        ColourValue newFogColour;
+        Real newFogStart, newFogEnd, newFogDensity;
+        //static FogMode oldFogMode;
+        //static ColourValue oldFogColour;
+        //static Real oldFogStart, oldFogEnd, oldFogDensity;
+        if (mat->getFogOverride())
         {
-            mDestRenderSystem->bindGpuProgram(pass->getVertexProgram());
-            mDestRenderSystem->bindGpuProgramParameters(GPT_VERTEX_PROGRAM, 
-                pass->getVertexProgramParameters());
-            lastUsedVertexProgram = true;
+            // New fog params from material
+            newFogMode = mat->getFogMode();
+            newFogColour = mat->getFogColour();
+            newFogStart = mat->getFogStart();
+            newFogEnd = mat->getFogEnd();
+            newFogDensity = mat->getFogDensity();
         }
         else
         {
-			// Unbind program?
-			if (lastUsedVertexProgram)
-			{
-				mDestRenderSystem->unbindGpuProgram(GPT_VERTEX_PROGRAM);
-                lastUsedVertexProgram = false;
-            }
-            // Set fixed-function vertex parameters
-
-            // Set surface reflectance properties        
-            mDestRenderSystem->_setSurfaceParams( 
-                pass->getAmbient(), 
-                pass->getDiffuse(), 
-                pass->getSpecular(), 
-                pass->getSelfIllumination(), 
-                pass->getShininess() );
-
-            // Dynamic lighting enabled?
-            mDestRenderSystem->setLightingEnabled(pass->getLightingEnabled());
+            // New fog params from scene
+            newFogMode = mFogMode;
+            newFogColour = mFogColour;
+            newFogStart = mFogStart;
+            newFogEnd = mFogEnd;
+            newFogDensity = mFogDensity;
         }
+        //if (firstTime || newFogMode != oldFogMode || newFogColour != oldFogColour ||
+        //    newFogStart != oldFogStart || newFogEnd != oldFogEnd ||
+        //    newFogDensity != oldFogDensity)
+        //{
+            mDestRenderSystem->_setFog(newFogMode, newFogColour, newFogDensity, newFogStart, newFogEnd);
+        //    oldFogMode = newFogMode;
+        //    oldFogColour = newFogColour;
+        //    oldFogStart = newFogStart;
+        //    oldFogEnd = newFogEnd;
+        //    oldFogDensity = newFogDensity;
+        //}
 
-        // Using a fragment program?
-        if (pass->hasFragmentProgram())
+
+
+        // Texture layers
+        int texLayer = mat->getNumTextureLayers() - numLayersLeft;
+        int thisUnitsRequested = numLayersLeft;
+        int texUnits = mDestRenderSystem->getCapabilities()->numTextureUnits();
+
+#if OGRE_TEST_MULTIPASS == 1
+        texUnits = 1;
+#endif
+
+        // Iterate over texture units, set them up to the higher of the last texturing units used and the current to be used
+        //   but no higher than the number of units
+        lastUsedFallback = false;
+       int unit;
+        for (unit = 0;
+            (unit < lastNumTexUnitsUsed || unit < thisUnitsRequested) && unit < texUnits;
+            ++unit, ++texLayer)
         {
-            mDestRenderSystem->bindGpuProgram(pass->getFragmentProgram());
-            mDestRenderSystem->bindGpuProgramParameters(GPT_FRAGMENT_PROGRAM, 
-                pass->getFragmentProgramParameters());
-			lastUsedFragmentProgram = true;
-        }
-        else
-        {
-			// Unbind program?
-			if (lastUsedFragmentProgram)
-			{
-				mDestRenderSystem->unbindGpuProgram(GPT_FRAGMENT_PROGRAM);
-				lastUsedFragmentProgram = false;
-			}
-
-            // Set fixed-function fragment settings
-
-            // Fog (assumes we want pixel fog which is the usual)
-            // New fog params can either be from scene or from material
-            FogMode newFogMode;
-            ColourValue newFogColour;
-            Real newFogStart, newFogEnd, newFogDensity;
-            if (pass->getFogOverride())
+            if (unit >= thisUnitsRequested)
             {
-                // New fog params from material
-                newFogMode = pass->getFogMode();
-                newFogColour = pass->getFogColour();
-                newFogStart = pass->getFogStart();
-                newFogEnd = pass->getFogEnd();
-                newFogDensity = pass->getFogDensity();
+                // We've run out of texture layers before we ran out of units to set
+                // Turn off the texturing for this unit
+                mDestRenderSystem->_disableTextureUnit(unit);
             }
             else
             {
-                // New fog params from scene
-                newFogMode = mFogMode;
-                newFogColour = mFogColour;
-                newFogStart = mFogStart;
-                newFogEnd = mFogEnd;
-                newFogDensity = mFogDensity;
+                Material::TextureLayer* pTex = mat->getTextureLayer(texLayer);
+                // We still have texture layers to put in this unit
+                if (unit == 0 && 
+                    thisUnitsRequested > 0 && 
+                    thisUnitsRequested < mat->getNumTextureLayers())
+                {
+                    // We're on the second (or more) leg of a multipass render
+                    // because remaining layers is not the total number
+
+                    // So we need to use the multipass fallback and override first texture layer blend
+                    lastUsedFallback = true;
+
+                    // Copy texture layer info and set custom blending
+                    Material::TextureLayer newTex = *pTex;
+
+                    // Set multitexture blend to NO blend (avoids any modulation with material colour)
+                    newTex.setColourOperation(LBO_REPLACE);
+                    // Set scene blending to colour blending equivalent (fallback)
+                    mDestRenderSystem->_setSceneBlending(pTex->getColourBlendFallbackSrc(), pTex->getColourBlendFallbackDest());
+
+                    // Set texture unit settings
+                    // NB rendersystem will know to only change relevant settings
+                    mDestRenderSystem->_setTextureUnitSettings(unit, newTex);
+                }
+                else
+                {
+                    if (lastUsedFallback)
+                    {
+                        // Ensure that fallback alpha on bottom layer does not mask out alpha on this layer
+                        pTex->setAlphaOperation(LBX_ADD);
+                    }
+
+                    // Standard issue
+                    mDestRenderSystem->_setTextureUnitSettings(unit, *pTex);
+                }
+
+                numLayersLeft--;
             }
-            mDestRenderSystem->_setFog(
-                newFogMode, newFogColour, newFogDensity, newFogStart, newFogEnd);
-
         }
-
-        // The rest of the settings are the same no matter whether we use programs or not
-
-        // Set scene blending
-        mDestRenderSystem->_setSceneBlending(
-            pass->getSourceBlendFactor(), pass->getDestBlendFactor());
-
-
-        // Texture unit settings
-        
-        Pass::TextureUnitStateIterator texIter =  pass->getTextureUnitStateIterator();
-        size_t unit = 0;
-        while(texIter.hasMoreElements())
-        {
-            TextureUnitState* pTex = texIter.getNext();
-            mDestRenderSystem->_setTextureUnitSettings(unit, *pTex);
-            ++unit;
-        }
-        // Disable remaining texture units
-        mDestRenderSystem->_disableTextureUnitsFrom(pass->getNumTextureUnitStates());
 
         // Set up non-texture related material settings
         // Depth buffer settings
-        mDestRenderSystem->_setDepthBufferFunction(pass->getDepthFunction());
-        mDestRenderSystem->_setDepthBufferCheckEnabled(pass->getDepthCheckEnabled());
-        mDestRenderSystem->_setDepthBufferWriteEnabled(pass->getDepthWriteEnabled());
-        mDestRenderSystem->_setDepthBias(pass->getDepthBias());
+        //if (firstTime || lastMat.getDepthFunction() != mat->getDepthFunction())
+        //{
+            mDestRenderSystem->_setDepthBufferFunction(mat->getDepthFunction());
+        //}
+        //if (firstTime || lastMat.getDepthCheckEnabled() != mat->getDepthCheckEnabled())
+        //{
+            mDestRenderSystem->_setDepthBufferCheckEnabled(mat->getDepthCheckEnabled());
+        //}
+        //if (firstTime || lastMat.getDepthWriteEnabled() != mat->getDepthWriteEnabled())
+        //{
+            mDestRenderSystem->_setDepthBufferWriteEnabled(mat->getDepthWriteEnabled());
+        //}
+        //if (firstTime || lastMat.getDepthBias() != mat->getDepthBias())
+        //{
+            mDestRenderSystem->_setDepthBias(mat->getDepthBias());
+        //}
+
 
         // Culling mode
-        mDestRenderSystem->_setCullingMode(pass->getCullingMode());
+        //if (firstTime || lastMat.getCullingMode() != mat->getCullingMode())
+        //{
+            mDestRenderSystem->_setCullingMode(mat->getCullingMode());
+        //}
+        // Dynamic lighting enabled
+        //if (firstTime || lastMat.getLightingEnabled() != mat->getLightingEnabled())
+        //{
+            mDestRenderSystem->setLightingEnabled(mat->getLightingEnabled());
+        //}
         // Shading
-        mDestRenderSystem->setShadingType(pass->getShadingMode());
+        //if (firstTime || lastMat.getShadingMode() != mat->getShadingMode())
+        //{
+            mDestRenderSystem->setShadingType(mat->getShadingMode());
+        //}
+        
+		// FIX : texture filtering not needed here, it is set by RenderSystem->_setTextureUnitSettings
+		// Texture filtering
+        //if (firstTime || lastMat.getTextureFiltering() != mat->getTextureFiltering())
+        //{
+            //mDestRenderSystem->setTextureFiltering(mat->getTextureFiltering());
+        //}
+        // anisotropy
+        //if (firstTime || lastMat.getAnisotropy() != mat->getAnisotropy())
+        //{
+            //mDestRenderSystem->_setAnisotropy(mat->getAnisotropy());
+        //}
+
+
+        //firstTime = false;
+        // Copy material settings from last render
+        //lastMat = *mat;
+        lastNumTexUnitsUsed = unit;
+        return numLayersLeft;
 
     }
     //-----------------------------------------------------------------------
@@ -611,13 +650,11 @@ namespace Ogre {
         // Set the viewport
         setViewport(vp);
 
-        // Tell params about camera
-        mAutoParamDataSource.setCurrentCamera(camera);
-
 
         // Update the scene
         _applySceneAnimations();
         _updateSceneGraph(camera);
+        _updateDynamicLights();
 
         // Auto-track camera if required
         camera->_autoTrack();
@@ -807,11 +844,11 @@ namespace Ogre {
             }
             // Make sure the material doesn't update the depth buffer
             m->setDepthWriteEnabled(false);
+            // Also clamp texture, don't wrap (otherwise edges can get filtered)
+            m->getTextureLayer(0)->setTextureAddressingMode(Material::TextureLayer::TAM_CLAMP);
+
             // Ensure loaded
             m->load();
-            // Also clamp texture, don't wrap (otherwise edges can get filtered)
-            m->getBestTechnique()->getPass(0)->getTextureUnitState(0)->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
-
 
             mSkyBoxDrawFirst = drawFirst;
 
@@ -847,17 +884,14 @@ namespace Ogre {
                 {
                     // Create new by clone
                     boxMat = m->clone(entName);
-                    boxMat->load();
                 }
                 else
                 {
                     // Copy over existing
                     m->copyDetailsTo(boxMat);
-                    boxMat->load();
                 }
                 // Set active frame
-                boxMat->getBestTechnique()->getPass(0)->getTextureUnitState(0)
-                    ->setCurrentFrame(i);
+                boxMat->getTextureLayer(0)->setCurrentFrame(i);
 
                 mSkyBoxEntity[i]->setMaterialName(boxMat->getName());
 
@@ -1095,9 +1129,13 @@ namespace Ogre {
         int render_count = 0;
         // Render each separate queue
         RenderQueue::QueueGroupIterator queueIt = mRenderQueue._getQueueGroupIterator();
+        RenderOperation ro;
 
         // NB only queues which have been created are rendered, no time is wasted
         //   parsing through non-existent queues (even though there are 10 available)
+        SceneDetailLevel lastDetailLevel, camDetailLevel;
+        camDetailLevel = mCameraInProgress->getDetailLevel();
+        lastDetailLevel = camDetailLevel;
 
         while (queueIt.hasMoreElements())
         {
@@ -1124,44 +1162,158 @@ namespace Ogre {
                     render_count++;
                     RenderPriorityGroup* pPriorityGrp = groupIt.getNext();
 
-                    // Sort the queue first
-                    pPriorityGrp->sort(mCameraInProgress);
-
-
-
-                    // ----- SOLIDS LOOP -----
-                    RenderPriorityGroup::SolidRenderablePassMap::iterator ipass, ipassend;
-                    ipassend = pPriorityGrp->mSolidPasses.end();
-                    for (ipass = pPriorityGrp->mSolidPasses.begin(); ipass != ipassend; ++ipass)
-                    {
-                        // Fast bypass if this group is now empty
-                        if (ipass->second->empty()) continue;
-                        // For solids, we try to do each pass in turn
-                        setPass(ipass->first);
-                        RenderPriorityGroup::RenderableList* rendList = ipass->second;
-                        RenderPriorityGroup::RenderableList::const_iterator irend, irendend;
-                        irendend = rendList->end();
-                        for (irend = rendList->begin(); irend != irendend; ++irend)
-                        {
-                            // Render a single object, this will set up auto params if required
-                            renderSingleObject(*irend, ipass->first);
-                        }
-                    } 
-
-                    // ----- TRANSPARENT LOOP -----
-                    // This time we render by Z, not by pass
-                    // The mTransparentObjects set needs to be ordered first
                     // Render each non-transparent entity in turn, grouped by material
-                    RenderPriorityGroup::TransparentRenderablePassList::iterator itrans, itransend;
+                    RenderPriorityGroup::MaterialGroupMap::iterator imat, imatend;
+                    imatend = pPriorityGrp->mMaterialGroups.end();
+                    static Matrix4 xform[256];
+                    int matLayersLeft;
+                    Material* thisMaterial;
+                    unsigned short numMatrices;
 
-                    itransend = pPriorityGrp->mTransparentPasses.end();
-                    for (itrans = pPriorityGrp->mTransparentPasses.begin(); 
-                        itrans != itransend; ++itrans)
+                    // ----- NON-TRANSPARENT ENTITY LOOP -----
+                    for (imat = pPriorityGrp->mMaterialGroups.begin(); imat != imatend; ++imat)
                     {
-                        // For transparents, we have to accept that we can't sort entirely by pass
-                        setPass(itrans->pass);
-                        renderSingleObject(itrans->renderable, itrans->pass);
+                        bool isMaterialSet = false;
+
+                        // Set Material
+                        thisMaterial = imat->first;
+                        matLayersLeft = thisMaterial->getNumTextureLayers();
+
+                        // NB do at least one rendering pass even if no layers! (Untextured materials)
+                        do
+                        {
+                            // Iterate through renderables and render
+                            // Note this may happen multiple times for multipass render
+                            std::vector<Renderable*>::iterator irend, irendend;
+                            irendend = imat->second.end();
+
+                            bool normalisedNormals = false;
+
+                            for (irend = imat->second.begin(); irend != irendend; ++irend)
+                            {
+                                // Set world transformation
+                                (*irend)->getWorldTransforms(xform);
+                                numMatrices = (*irend)->getNumWorldTransforms();
+                                if (numMatrices > 1)
+                                {
+                                    mDestRenderSystem->_setWorldMatrices(xform, numMatrices);
+                                }
+                                else
+                                {
+                                    mDestRenderSystem->_setWorldMatrix(*xform);
+                                }
+
+                                // Issue view / projection changes if any
+                                useRenderableViewProjMode(*irend);
+
+                                // Set material - will return non-zero if multipass required so loop will continue, 0 otherwise
+                                if(!isMaterialSet)
+                                {
+                                    matLayersLeft = setMaterial(thisMaterial, matLayersLeft);
+                                    isMaterialSet = true;
+                                }
+                        
+                                // Sort out normalisation
+                                bool thisNormalise = (*irend)->getNormaliseNormals();
+                                if (thisNormalise != normalisedNormals)
+                                {
+                                    mDestRenderSystem->setNormaliseNormals(thisNormalise);
+                                    normalisedNormals = thisNormalise;
+                                }
+
+                                // Set up the solid / wireframe override
+                                SceneDetailLevel reqDetail = (*irend)->getRenderDetail();
+                                if (reqDetail != lastDetailLevel)
+                                {
+                                    if (reqDetail > camDetailLevel)
+                                    {
+                                        // only downgrade detail; if cam says wireframe we don't go up to solid
+                                        reqDetail = camDetailLevel;
+                                    }
+                                    mDestRenderSystem->_setRasterisationMode(reqDetail);
+                                    lastDetailLevel = reqDetail;
+
+                                }
+
+                                // Set up rendering operation
+                                (*irend)->getRenderOperation(ro);
+								#if OGRE_DEBUG_MODE
+									ro.srcRenderable = *irend;
+								#endif
+                                mDestRenderSystem->_render(ro);
+
+                            }
+                        } while (matLayersLeft > 0);
+
+
+                    } // for each material
+
+                    // ----- TRANSPARENT ENTITY LOOP -----
+                    // This time we render by Z, not by material
+                    // The mTransparentObjects set needs to be ordered first
+                    pPriorityGrp->sortTransparentObjects(mCameraInProgress);
+
+                    std::vector<Renderable*>::iterator iTrans, iTransEnd;
+                    iTransEnd = pPriorityGrp->mTransparentObjects.end();
+                    for (iTrans = pPriorityGrp->mTransparentObjects.begin(); 
+                    iTrans != iTransEnd; ++iTrans)
+                    {
+                        thisMaterial = (*iTrans)->getMaterial();
+                        matLayersLeft = thisMaterial->getNumTextureLayers();
+                        // NB do at least one rendering pass even if no layers! (Untextured materials)
+                        do
+                        {
+                            // Set world transformation
+                            (*iTrans)->getWorldTransforms(xform);
+                            numMatrices = (*iTrans)->getNumWorldTransforms();
+                            if (numMatrices > 1)
+                            {
+                                mDestRenderSystem->_setWorldMatrices(xform, numMatrices);
+                            }
+                            else
+                            {
+                                mDestRenderSystem->_setWorldMatrix(*xform);
+                            }
+
+                            // Issue view / projection changes if any
+                            useRenderableViewProjMode(*iTrans);
+
+                            // Set material - will return non-zero if multipass required so loop will continue, 0 otherwise
+                            matLayersLeft = setMaterial(thisMaterial, matLayersLeft);
+
+                            // Sort out normalisation - always do it since material set every time
+                            mDestRenderSystem->setNormaliseNormals(
+                                (*iTrans)->getNormaliseNormals());
+
+                            // Set up the solid / wireframe override
+                            SceneDetailLevel reqDetail = (*iTrans)->getRenderDetail();
+                            if (reqDetail != lastDetailLevel)
+                            {
+                                if (reqDetail > camDetailLevel)
+                                {
+                                    // only downgrade detail; if cam says wireframe we don't go up to solid
+                                    reqDetail = camDetailLevel;
+                                }
+                                mDestRenderSystem->_setRasterisationMode(reqDetail);
+                                lastDetailLevel = reqDetail;
+
+                            }
+
+                            // Set up rendering operation
+                            (*iTrans)->getRenderOperation(ro);
+							#if OGRE_DEBUG_MODE
+								ro.srcRenderable = *iTrans;
+							#endif
+                            mDestRenderSystem->_render(ro);
+
+                        } while (matLayersLeft > 0);
+
+
                     }
+
+
+
+
                 }// for each priority
             
                 // Fire queue ended event
@@ -1179,98 +1331,27 @@ namespace Ogre {
         } // for each queue group
     }
     //-----------------------------------------------------------------------
-    void SceneManager::renderSingleObject(Renderable* rend, Pass* pass)
+    void SceneManager::_updateDynamicLights(void)
     {
-        static Matrix4 xform[256];
-        unsigned short numMatrices;
-        static bool normalisedNormals = false;
-        static SceneDetailLevel camDetailLevel = mCameraInProgress->getDetailLevel();
-        static SceneDetailLevel lastDetailLevel = camDetailLevel;
-        static RenderOperation ro;
-
-        if (pass->isProgrammable())
+        // Update all lights
+        LightList::iterator i;
+        Light* lt;
+        for (i = mLights.begin(); i != mLights.end(); ++i)
         {
-            // Update any automatic gpu params
-            // Pass renderable and camera
-            // Other bits of information will have to be looked up
-            mAutoParamDataSource.setCurrentRenderable(rend);
-            pass->_updateAutoParams(mAutoParamDataSource);
-        }
-
-
-        // Set world transformation
-        rend->getWorldTransforms(xform);
-        numMatrices = rend->getNumWorldTransforms();
-        if (numMatrices > 1)
-        {
-            mDestRenderSystem->_setWorldMatrices(xform, numMatrices);
-        }
-        else
-        {
-            mDestRenderSystem->_setWorldMatrix(*xform);
-        }
-
-        // Issue view / projection changes if any
-        useRenderableViewProjMode(rend);
-
-        // Do we need to update light states? 
-        // Only do this if fixed-function vertex lighting applies
-        if (pass->getLightingEnabled() && !pass->hasVertexProgram())
-        {
-            mDestRenderSystem->_useLights(rend->getLights(), pass->getMaxSimultaneousLights());
-        }
-
-        // Reissue any texture gen settings which are dependent on view matrix
-        Pass::TextureUnitStateIterator texIter =  pass->getTextureUnitStateIterator();
-        size_t unit = 0;
-        while(texIter.hasMoreElements())
-        {
-            TextureUnitState* pTex = texIter.getNext();
-            if (pTex->hasViewRelativeTextureCoordinateGeneration())
-            {
-                mDestRenderSystem->_setTextureUnitSettings(unit, *pTex);
-            }
-            ++unit;
-        }
-
-
-        // Sort out normalisation
-        bool thisNormalise = rend->getNormaliseNormals();
-        if (thisNormalise != normalisedNormals)
-        {
-            mDestRenderSystem->setNormaliseNormals(thisNormalise);
-            normalisedNormals = thisNormalise;
-        }
-
-        // Set up the solid / wireframe override
-        SceneDetailLevel reqDetail = rend->getRenderDetail();
-        if (reqDetail != lastDetailLevel)
-        {
-            if (reqDetail > camDetailLevel)
-            {
-                // only downgrade detail; if cam says wireframe we don't go up to solid
-                reqDetail = camDetailLevel;
-            }
-            mDestRenderSystem->_setRasterisationMode(reqDetail);
-            lastDetailLevel = reqDetail;
+            lt = i->second;
+            if (lt->isModified())
+                mDestRenderSystem->_modifyLight(lt);
 
         }
-
-        // Set up rendering operation
-        rend->getRenderOperation(ro);
-		#if OGRE_DEBUG_MODE
-			ro.srcRenderable = rend;
-		#endif
-        mDestRenderSystem->_render(ro);
     }
     //-----------------------------------------------------------------------
-    void SceneManager::setAmbientLight(const ColourValue& colour)
+    void SceneManager::setAmbientLight(ColourValue colour)
     {
         mAmbientLight = colour;
         mDestRenderSystem->setAmbientLight(colour.r, colour.g, colour.b);
     }
     //-----------------------------------------------------------------------
-    const ColourValue& SceneManager::getAmbientLight(void) const
+    ColourValue SceneManager::getAmbientLight(void)
     {
         return mAmbientLight;
     }
@@ -1284,7 +1365,7 @@ namespace Ogre {
         return vp;
     }
     //-----------------------------------------------------------------------
-    void SceneManager::setFog(FogMode mode, const ColourValue& colour, Real density, Real start, Real end)
+    void SceneManager::setFog(FogMode mode, ColourValue colour, Real density, Real start, Real end)
     {
         mFogMode = mode;
         mFogColour = colour;
@@ -1526,7 +1607,7 @@ namespace Ogre {
     }
     //---------------------------------------------------------------------
     void SceneManager::manualRender(RenderOperation* rend, 
-        Pass* pass, Viewport* vp, const Matrix4& worldMatrix, 
+        Material* mat, Viewport* vp, const Matrix4& worldMatrix, 
         const Matrix4& viewMatrix, const Matrix4& projMatrix) 
     {
         mDestRenderSystem->_setViewport(vp);
@@ -1536,8 +1617,13 @@ namespace Ogre {
 
         mDestRenderSystem->_beginFrame();
 
-        setPass(pass);
-        mDestRenderSystem->_render(*rend);
+        // NB do at least one rendering pass even if no layers! (Untextured materials)
+        unsigned short layersLeft = mat->getNumTextureLayers(); 
+        do
+        {
+            layersLeft = setMaterial(mat, layersLeft);
+            mDestRenderSystem->_render(*rend);
+        } while (layersLeft > 0);
 
         mDestRenderSystem->_endFrame();
         
@@ -1785,7 +1871,7 @@ namespace Ogre {
 		mShowBoundingBoxes = bShow;
 	}
 	//---------------------------------------------------------------------
-	bool SceneManager::getShowBoundingBoxes() const
+	bool SceneManager::getShowBoundingBoxes() 
 	{
 		return mShowBoundingBoxes;
 	}

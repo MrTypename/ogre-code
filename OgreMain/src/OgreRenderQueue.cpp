@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreRenderQueue.h"
 
@@ -107,7 +106,7 @@ namespace Ogre {
         addRenderable(pRend, mDefaultQueueGroup, priority);
     }
     //-----------------------------------------------------------------------
-    RenderQueueGroupID RenderQueue::getDefaultQueueGroup(void) const
+    RenderQueueGroupID RenderQueue::getDefaultQueueGroup(void)
     {
         return mDefaultQueueGroup;
     }

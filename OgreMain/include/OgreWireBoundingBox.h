@@ -41,11 +41,7 @@ namespace Ogre {
     protected:
         /** Override this method to prevent parent transforms (rotation,translation,scale)
         */
-		void getWorldTransforms( Matrix4* xform ) const;
-        /** @copydoc Renderable::getWorldOrientation */
-        const Quaternion& getWorldOrientation(void) const;
-        /** @copydoc Renderable::getWorldPosition */
-        const Vector3& getWorldPosition(void) const;
+		void getWorldTransforms( Matrix4* xform );
 		
         /** Builds the wireframe line list.
         */

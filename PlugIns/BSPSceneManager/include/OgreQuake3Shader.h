@@ -31,7 +31,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreCommon.h"
 #include "OgreColourValue.h"
 #include "OgreBlendMode.h"
-#include "OgreTextureUnitState.h"
+#include "OgreMaterial.h"
 
 namespace Ogre {
 
@@ -77,7 +77,7 @@ namespace Ogre {
             SceneBlendFactor blendDest;
             bool customBlend;
             CompareFunction depthFunc;
-            TextureUnitState::TextureAddressingMode addressMode;
+            Material::TextureLayer::TextureAddressingMode addressMode;
             // TODO - alphaFunc
             GenFunc rgbGenFunc;
             WaveType rgbGenWave;

@@ -67,11 +67,7 @@ namespace Ogre {
         virtual void getRenderOperation(RenderOperation& op);
 
         void setWorldTransform( const Matrix4& xform );
-        virtual void getWorldTransforms( Matrix4* xform ) const;
-        /** @copydoc Renderable::getWorldOrientation */
-        const Quaternion& getWorldOrientation(void) const;
-        /** @copydoc Renderable::getWorldPosition */
-        const Vector3& getWorldPosition(void) const;
+        virtual void getWorldTransforms( Matrix4* xform );
 
 
         virtual void _notifyCurrentCamera(Camera* cam);
@@ -89,8 +85,6 @@ namespace Ogre {
         /** Overridden from MovableObject */
         virtual const String& getMovableType(void) const;
 
-        /** @copydoc Renderable::getLights */
-        const LightList& getLights(void) const;
 
     };
 }

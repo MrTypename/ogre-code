@@ -35,6 +35,7 @@ email                : kenny@sparksuit.com
 
 #include "OgrePrerequisites.h"
 #include "OgreInputEvent.h"
+#include "OgreKeyTarget.h"
 
 namespace Ogre {
 
@@ -88,7 +89,7 @@ namespace Ogre {
 		 *
 		 * @return a string identifying the event and its attributes
 		 */
-		 String paramString() const;
+		 String paramString();
 
 
 		 /** return the ID of the button */

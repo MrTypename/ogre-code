@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreBone.h"
 #include "OgreSkeleton.h"
@@ -83,11 +82,11 @@ namespace Ogre {
         this->mManuallyControlled = manuallyControlled;
     }
     //---------------------------------------------------------------------
-    bool Bone::isManuallyControlled() const {
+    bool Bone::isManuallyControlled() {
         return mManuallyControlled;
     }
     //---------------------------------------------------------------------
-    const Matrix4& Bone::_getBindingPoseInverseTransform(void) const
+    Matrix4 Bone::_getBindingPoseInverseTransform(void)
     {
         return mBindDerivedInverseTransform;
     }

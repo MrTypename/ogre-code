@@ -22,27 +22,40 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreConfigOptionMap.h"
+#include "OgreResourceMap.h"
 
 #include "OgreException.h"
 
 namespace Ogre {
 
 #ifdef __OBSOLETE__DO__NOT__DEFINE__THIS__
-    ConfigOptionMap::ConfigOptionMap()
+    ResourceMap::ResourceMap()
     {
     }
 
-    ConfigOptionMap::~ConfigOptionMap()
+    ResourceMap::~ResourceMap()
     {
     }
 
-    void ConfigOptionMap::insert(const String& key, const ConfigOption& value)
+    void ResourceMap::insert(const String& key, Resource* value)
     {
         mImpl.insert(MapImpl::value_type(key, value));
     }
 
-    ConfigOptionMap::iterator ConfigOptionMap::find(const String& key)
+    void/*ResourceMap::iterator*/ ResourceMap::erase(iterator e)
+    {
+       /*MapImpl::iterator newe = ;*/
+       /*std::map<String, Resource*, std::less<String> > mappie = mImpl;*/
+        mImpl.erase( e.mIter );
+       //return iterator(mappie.erase( e.mIter )/**/, mImpl.end());
+    }
+
+    void ResourceMap::erase(const String& key)
+    {
+        mImpl.erase(key);
+    }
+
+    ResourceMap::iterator ResourceMap::find(const String& key)
     {
         MapImpl::iterator i = mImpl.find(key);
 
@@ -51,37 +64,43 @@ namespace Ogre {
     }
 
 
-    ConfigOptionMap::iterator ConfigOptionMap::begin(void)
+    ResourceMap::iterator ResourceMap::begin(void)
     {
         return iterator(mImpl.begin(), mImpl.end());
     }
 
-    ConfigOptionMap::iterator::iterator(MapImpl::iterator startAt, MapImpl::iterator end)
+    ResourceMap::iterator::iterator(MapImpl::iterator startAt, MapImpl::iterator end)
     {
         mIter = startAt;
         mEnd = end;
     }
 
-    bool ConfigOptionMap::iterator::end()
+    bool ResourceMap::iterator::end()
     {
         return (mIter == mEnd);
     }
 
-    ConfigOptionMap::iterator& ConfigOptionMap::iterator::operator++()
+    ResourceMap::iterator& ResourceMap::iterator::operator++()
     {
         mIter++;
         return *this;
     }
 
-    const String& ConfigOptionMap::iterator::getKey()
+    const String& ResourceMap::iterator::getKey()
     {
         return mIter->first;
     }
 
-    ConfigOption& ConfigOptionMap::iterator::getValue()
+    Resource* ResourceMap::iterator::getValue()
     {
         return mIter->second;
     }
+
+    void ResourceMap::clear()
+    {
+        mImpl.clear();
+    }
 #endif
+
 
 }

@@ -26,8 +26,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define __Common_H__
 // Common stuff
 
-#include <utility>
-
 namespace Ogre {
 
 	enum ResourceType
@@ -175,8 +173,6 @@ namespace Ogre {
 
 	PixelFormat ilFormat2OgreFormat( int ImageFormat, int BytesPerPixel );
 	std::pair< int, int > OgreFormat2ilFormat( PixelFormat format );
-
-    typedef std::vector<Light*> LightList;
 }
 
 #endif

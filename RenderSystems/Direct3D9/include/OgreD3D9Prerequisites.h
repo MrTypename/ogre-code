@@ -37,7 +37,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 
 #include "OgreNoMemoryMacros.h"
-#define NOMINMAX // required to stop windows.h screwing up std::min definition
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <dxerr9.h>
@@ -54,8 +53,6 @@ namespace Ogre
 	class D3D9DriverList;
 	class D3D9VideoMode;
 	class D3D9VideoModeList;
-	class D3D9GpuProgram;
-	class D3D9GpuProgramManager;
     class D3D9HardwareBufferManager;
     class D3D9HardwareIndexBuffer;
     class D3D9VertexDeclaration;

@@ -38,9 +38,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 
 #include "ExampleApplication.h"
-#include "OgreMaterial.h"
-#include "OgreTechnique.h"
-#include "OgrePass.h"
 
 class RttFrameListener : public ExampleFrameListener
 {
@@ -112,7 +109,7 @@ protected:
         SceneNode* rootNode = mSceneMgr->getRootSceneNode();
         rootNode->attachObject(planeEnt);
 
-        rootNode->createChildSceneNode( "Head" )->attachObject( ogreHead );
+        static_cast<SceneNode*>(rootNode->createChild( "Head" ))->attachObject( ogreHead );
 
         Camera *rttCam = mSceneMgr->createCamera( "rttCam" );
         rootNode->attachCamera( rttCam ); rttCam->setPosition( 0.0, 0.0, -0.1 ); rttCam->setDirection( 0.0, 0.0, -100.0 );
@@ -124,7 +121,7 @@ protected:
             v->setBackgroundColour( ColourValue::Black );
 
             Material* mat = mSceneMgr->createMaterial("RttMat");
-            mat->getTechnique(0)->getPass(0)->createTextureUnitState("RttTex");
+            mat->addTextureLayer("RttTex");
         }
 
         // Give the plane a texture

@@ -269,13 +269,13 @@ namespace Ogre {
             }
 
             /// Returns the size of this buffer in bytes
-            size_t getSizeInBytes(void) const { return mSizeInBytes; }
+            size_t getSizeInBytes(void) { return mSizeInBytes; }
             /// Returns the Usage flags with which this buffer was created
-            Usage getUsage(void) const { return mUsage; }
+            Usage getUsage(void) { return mUsage; }
 			/// Returns whether this buffer is held in system memory
-			bool isSystemMemory(void) const { return mSystemMemory; }
+			bool isSystemMemory(void) { return mSystemMemory; }
             /// Returns whether or not this buffer is currently locked.
-            bool isLocked(void) const { 
+            bool isLocked(void) { 
                 return mIsLocked || (mUseShadowBuffer && mpShadowBuffer->isLocked()); 
             }
 

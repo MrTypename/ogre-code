@@ -28,6 +28,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgrePrerequisites.h"
 
+#include "OgreString.h"
+
 namespace Ogre {
 
     // LogMessageLevel + LoggingLevel > LOG_THRESHOLD = message logged

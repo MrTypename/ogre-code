@@ -30,6 +30,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 // Declaration
 #include "OgreString.h"
+#include <ddraw.h>
+#include <d3d.h>
 
 namespace Ogre {
 

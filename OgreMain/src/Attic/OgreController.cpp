@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreController.h"
 
@@ -46,7 +45,7 @@ namespace Ogre
         mSource = src;
     }
     //-----------------------------------------------------------------------
-    SharedPtr<ControllerValue> Controller::getSource(void) const
+    SharedPtr<ControllerValue> Controller::getSource(void)
     {
         return mSource;
     }
@@ -56,7 +55,7 @@ namespace Ogre
         mDest = dest;
     }
     //-----------------------------------------------------------------------
-    SharedPtr<ControllerValue> Controller::getDestination(void) const
+    SharedPtr<ControllerValue> Controller::getDestination(void)
     {
         return mDest;
     }
@@ -66,7 +65,7 @@ namespace Ogre
         mFunc = func;
     }
     //-----------------------------------------------------------------------
-    SharedPtr<ControllerFunction> Controller::getFunction(void) const
+    SharedPtr<ControllerFunction> Controller::getFunction(void)
     {
         return mFunc;
     }

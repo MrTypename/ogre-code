@@ -22,14 +22,12 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreResourceManager.h"
 
 #include "OgreException.h"
 #include "OgreArchiveEx.h"
 #include "OgreArchiveManager.h"
 #include "OgreStringVector.h"
-#include "OgreStringConverter.h"
 
 namespace Ogre {
 
@@ -55,8 +53,9 @@ namespace Ogre {
         // Init memory limit & usage
         mMemoryBudget = std::numeric_limits<unsigned long>::max();
         mMemoryUsage = 0;
-        mNextHandle = 1;
+
     }
+
     //-----------------------------------------------------------------------
     ResourceManager::~ResourceManager()
     {
@@ -68,31 +67,10 @@ namespace Ogre {
     {
         res->load();
         res->touch();
-        this->add(res);
+
+        mResources.insert( ResourceMap::value_type( res->getName(), res ) );
     }
 
-    //-----------------------------------------------------------------------
-    void ResourceManager::add( Resource *res )
-    {
-        std::pair<ResourceMap::iterator, bool> result = 
-            mResources.insert( ResourceMap::value_type( res->getName(), res ) );
-        if (!result.second)
-        {
-            Except(Exception::ERR_DUPLICATE_ITEM, "Resource with the name " + res->getName() + 
-                " already exists.", "ResourceManager::add");
-        }
-        // Assign a new handle
-        res->mHandle = getNextHandle();
-        std::pair<ResourceHandleMap::iterator, bool> resultHandle = 
-            mResourcesByHandle.insert( ResourceHandleMap::value_type( res->mHandle, res ) );
-        if (!result.second)
-        {
-            Except(Exception::ERR_DUPLICATE_ITEM, "Resource with the handle " + 
-                StringConverter::toString(res->mHandle) + 
-                " already exists.", "ResourceManager::add");
-        }
-
-    }
     //-----------------------------------------------------------------------
     void ResourceManager::setMemoryBudget( size_t bytes)
     {
@@ -112,7 +90,6 @@ namespace Ogre {
 
         // Erase entry in map
         mResources.erase( res->getName() );
-        mResourcesByHandle.erase( res->getHandle() );
 
         // Update memory usage
         mMemoryUsage -= res->getSize();
@@ -133,7 +110,6 @@ namespace Ogre {
 
         // Empty the list
         mResources.clear();
-        mResourcesByHandle.clear();
     }
     //-----------------------------------------------------------------------
     Resource* ResourceManager::getByName(const String& name)
@@ -143,29 +119,9 @@ namespace Ogre {
         if( it == mResources.end() )
             return 0;
         else
-        {
             return it->second;
-        }
     }
-    //-----------------------------------------------------------------------
-    Resource* ResourceManager::getByHandle(ResourceHandle handle)
-    {
-        ResourceHandleMap::iterator it = mResourcesByHandle.find(handle);
-        if (it == mResourcesByHandle.end())
-        {
-            return NULL;
-        }
-        else
-        {
-            it->second->touch();
-            return it->second;
-        }
-    }
-    //-----------------------------------------------------------------------
-    ResourceHandle ResourceManager::getNextHandle(void)
-    {
-        return mNextHandle++;
-    }
+
     //-----------------------------------------------------------------------
     void ResourceManager::checkUsage(void)
     {

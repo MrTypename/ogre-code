@@ -35,7 +35,7 @@ namespace Ogre {
     class _OgreParticleFXExport ColourFaderAffectorFactory : public ParticleAffectorFactory
     {
         /** See ParticleAffectorFactory */
-        String getName() const { return "ColourFader"; }
+        String getName() { return "ColourFader"; }
 
         /** See ParticleAffectorFactory */
         ParticleAffector* createAffector(void)

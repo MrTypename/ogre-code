@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreMeshSerializerImpl.h"
 #include "OgreMeshFileFormat.h"
@@ -33,9 +32,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreLogManager.h"
 #include "OgreSkeleton.h"
 #include "OgreHardwareBufferManager.h"
-#include "OgreMaterial.h"
-#include "OgreTechnique.h"
-#include "OgrePass.h"
 
 
 namespace Ogre {
@@ -101,6 +97,59 @@ namespace Ogre {
                  break;                
             }
         }
+    }
+    //---------------------------------------------------------------------
+    void MeshSerializerImpl::writeMaterial(const Material* m)
+    {
+        /* No longer supported in 1.1 mesh format 
+
+        // Header
+        writeChunkHeader(M_MATERIAL, calcMaterialSize(m));
+
+        // Name
+        writeString(m->getName());
+
+        // Ambient
+        const ColourValue& ambient = m->getAmbient();
+        writeReals(&ambient.r, 1);
+        writeReals(&ambient.g, 1);
+        writeReals(&ambient.b, 1);
+
+        // Diffuse
+        const ColourValue& diffuse = m->getDiffuse();
+        writeReals(&diffuse.r, 1);
+        writeReals(&diffuse.g, 1);
+        writeReals(&diffuse.b, 1);
+
+        // Specular
+        const ColourValue& specular = m->getSpecular();
+        writeReals(&specular.r, 1);
+        writeReals(&specular.g, 1);
+        writeReals(&specular.b, 1);
+
+        // Shininess
+        Real val = m->getShininess();
+        writeReals(&val, 1);
+
+        // Nested texture layers
+        for (int i = 0; i < m->getNumTextureLayers(); ++i)
+        {
+            writeTextureLayer(m->getTextureLayer(i));
+        }
+        */
+
+    }
+    //---------------------------------------------------------------------
+    void MeshSerializerImpl::writeTextureLayer(const Material::TextureLayer* pTex)
+    {
+        /* No longer supported in 1.1 mesh format
+        // Header
+        writeChunkHeader(M_TEXTURE_LAYER, calcTextureLayerSize(pTex));
+
+        // Name
+        writeString(pTex->getTextureName());
+        */
+
     }
     //---------------------------------------------------------------------
     void MeshSerializerImpl::writeMesh(const Mesh* pMesh)
@@ -327,6 +376,40 @@ namespace Ogre {
 
     }
     //---------------------------------------------------------------------
+    unsigned long MeshSerializerImpl::calcMaterialSize(const Material* pMat)
+    {
+        unsigned long size = CHUNK_OVERHEAD_SIZE;
+
+        // Name, including terminator
+        size += (unsigned long)pMat->getName().length() + 1;
+        // Ambient 
+        size += sizeof(Real) * 3;
+        // Diffuse
+        size += sizeof(Real) * 3;
+        // Specular
+        size += sizeof(Real) * 3;
+        // Shininess
+        size += sizeof(Real);
+
+        // Nested texture layers
+        for (int i = 0; i < pMat->getNumTextureLayers(); ++i)
+        {
+            size += calcTextureLayerSize(pMat->getTextureLayer(i));
+        }
+
+        return size;
+    }
+    //---------------------------------------------------------------------
+    unsigned long MeshSerializerImpl::calcTextureLayerSize(const Material::TextureLayer* pTex)
+    {
+        unsigned long size = CHUNK_OVERHEAD_SIZE;
+
+        // Name, including terminator
+        size += (unsigned long)pTex->getTextureName().length() + 1;
+
+        return size;
+    }
+    //---------------------------------------------------------------------
     unsigned long MeshSerializerImpl::calcMeshSize(const Mesh* pMesh)
     {
         unsigned long size = CHUNK_OVERHEAD_SIZE;
@@ -405,6 +488,21 @@ namespace Ogre {
             size += VertexElement::getTypeSize(elem.getType()) * vertexData->vertexCount;
         }
         return static_cast<unsigned long>(size);
+    }
+    //---------------------------------------------------------------------
+    void MeshSerializerImpl::readMaterial(DataChunk& chunk)
+    {
+
+        // Material definition section phased out of 1.1
+
+    }
+    //---------------------------------------------------------------------
+    void MeshSerializerImpl::readTextureLayer(DataChunk& chunk, Material* pMat)
+    {
+        // Just name for now
+        String name = readString(chunk);
+
+        pMat->addTextureLayer(name);
     }
     //---------------------------------------------------------------------
     void MeshSerializerImpl::readMesh(DataChunk& chunk)
@@ -755,18 +853,6 @@ namespace Ogre {
     {
         String skelName = readString(chunk);
         mpMesh->setSkeletonName(skelName);
-    }
-    //---------------------------------------------------------------------
-    void MeshSerializerImpl::readMaterial(DataChunk& chunk)
-    {
-
-        // Material definition section phased out of 1.1
-
-    }
-    //---------------------------------------------------------------------
-    void MeshSerializerImpl::readTextureLayer(DataChunk& chunk, Material* pMat)
-    {
-        // Material definition section phased out of 1.1
     }
     //---------------------------------------------------------------------
     unsigned long MeshSerializerImpl::calcSkeletonLinkSize(const String& skelName)
@@ -1631,8 +1717,7 @@ namespace Ogre {
         Material* pMat;
         try 
         {
-            pMat = (Material*)MaterialManager::getSingleton().create(name);
-            Pass* p = pMat->createTechnique()->createPass();
+            pMat = (Material*)MaterialManager::getSingleton().createDeferred(name);
         }
         catch (Exception& e)
         {
@@ -1709,7 +1794,7 @@ namespace Ogre {
         // Just name for now
         String name = readString(chunk);
 
-        pMat->getTechnique(0)->getPass(0)->createTextureUnitState(name);
+        pMat->addTextureLayer(name);
     }
 
 

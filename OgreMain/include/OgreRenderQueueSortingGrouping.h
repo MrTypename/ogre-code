@@ -29,9 +29,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgrePrerequisites.h"
 #include "OgreIteratorWrappers.h"
 #include "OgreMaterial.h"
-#include "OgreTechnique.h"
-#include "OgrePass.h"
-#include "OgreMaterialManager.h"
 
 namespace Ogre {
 
@@ -49,186 +46,93 @@ namespace Ogre {
     */
     class RenderPriorityGroup
     {
-        /** Internal struct reflecting a single Pass for a Renderable. 
-        This is used to sort transparent objects.
-        */
-        struct RenderablePass
-        {
-            /// Pointer to the Renderable details
-            Renderable* renderable;
-            /// Pointer to the Pass
-            Pass* pass;
-
-            RenderablePass(Renderable* rend, Pass* p) :renderable(rend), pass(p) {}
-        };
-
         friend class Ogre::SceneManager;
-        /// Comparator to order non-transparent object passes
-        struct SolidQueueItemLess
-        {
-            _OgreExport bool operator()(const Pass* a, const Pass* b) const
-            {
-                // Sort by passHash, which is pass, then texture unit changes
-                unsigned long hasha = a->getHash();
-                unsigned long hashb = a->getHash();
-                if (hasha == hashb)
-                {
-                    // Must differentiate by pointer incase 2 passes end up with the same hash
-                    return a < b;
-                }
-                else
-                {
-                    return hasha < hashb;
-                }
-            }
-        };
-        /// Comparator to order transparent object passes
+        /** Comparator to order transparent objects
+        */
         struct TransparentQueueItemLess
         {
             const Camera* camera;
 
-            _OgreExport bool operator()(const RenderablePass& a, const RenderablePass& b) const
+            _OgreExport bool operator()(const Renderable* a, const Renderable* b) const
             {
-                if (a.renderable == b.renderable)
-                {
-                    // Same renderable, sort by pass
-                    return a.pass < b.pass;
-                }
-                else
-                {
-                    // Different renderables, sort by depth
-                    Real adepth = a.renderable->getSquaredViewDepth(camera);
-                    Real bdepth = b.renderable->getSquaredViewDepth(camera);
-				    if (adepth == bdepth)
-				    {
-                        // Must return deterministic result, doesn't matter what
-                        return a.pass < b.pass;
-				    }
-				    else
-				    {
-				        // Sort DESCENDING by depth (ie far objects first)
-					    return (adepth > bdepth);
-				    }
-                }
+                Real adepth = a->getSquaredViewDepth(camera);
+                Real bdepth = b->getSquaredViewDepth(camera);
+				if (adepth == bdepth)
+				{
+                    // Must return deterministic result, doesn't matter what
+                    return a < b;
+				}
+				else
+				{
+				    // Sort DESCENDING by depth (ie far objects first)
+					return (adepth > bdepth);
+				}
 
             }
         };
     public:
-        /** Vector of RenderablePass objects, this is built on the assumption that
-         vectors only ever increase in size, so even if we do clear() the memory stays
-         allocated, ie fast */
-        typedef std::vector<RenderablePass> TransparentRenderablePassList;
         typedef std::vector<Renderable*> RenderableList;
-        /** Map of pass to renderable lists, used for solid objects since ordering within objects not
-        important. */
-        typedef std::map<Pass*, RenderableList*, SolidQueueItemLess> SolidRenderablePassMap;
+        /// Map on material within each queue group, this is for non-transparent objects only
+        typedef std::map<Material*, RenderableList > MaterialGroupMap;
+		/// Transparent object list, these are not grouped by material but will be sorted by descending Z
+		typedef std::vector<Renderable*> TransparentObjectList;
     protected:
-        /// Solid pass list
-        SolidRenderablePassMap mSolidPasses;
-		/// Transparent list
-		TransparentRenderablePassList mTransparentPasses;
-
-        /** Storage of transparent RenderablePass structs, this is separate from list because
-            it makes sorting faster */
-        typedef std::vector<RenderablePass> TransparentRenderablePasses;
-        TransparentRenderablePasses mRenderablePasses;
+        MaterialGroupMap mMaterialGroups;
+		TransparentObjectList mTransparentObjects;
 
     public:
         RenderPriorityGroup() {}
 
-        ~RenderPriorityGroup() {
-            // destroy all the pass map entries
-            SolidRenderablePassMap::iterator i, iend;
-            iend = mSolidPasses.end();
-            for (i = mSolidPasses.begin(); i != iend; ++i)
-            {
-                // Free the list associated with this pass
-                delete i->second;
-            }
-            mSolidPasses.clear();
-            mTransparentPasses.clear();
-
-        }
+        ~RenderPriorityGroup() {}
 
         /** Add a renderable to this group. */
         void addRenderable(Renderable* pRend)
         {
-            // Check material & technique supplied (the former since the default implementation
-            // of getTechnique is based on it for backwards compatibility
-            Technique* pTech;
-            if(!pRend->getMaterial() || !pRend->getTechnique())
-            {
-                // Use default base white
-                pTech = static_cast<Material*>(
-                    MaterialManager::getSingleton().getByName("BaseWhite"))->getTechnique(0);
-            }
-            else
-            {
-                // Get technique
-                pTech = pRend->getTechnique();
-            }
-            Technique::PassIterator pi = pTech->getPassIterator();
+            std::pair<MaterialGroupMap::iterator, bool> retPair;
+            RenderableList newList;
 
-            if (pTech->isTransparent())
+            Material* pMat = pRend->getMaterial();
+
+            assert(pMat && "Can't add a renderable with a null material!");
+
+			if (pMat->isTransparent())
 			{
-                while (pi.hasMoreElements())
-                {
-				    // Insert into transparent list
-				    mTransparentPasses.push_back(RenderablePass(pRend, pi.getNext()));
-			    }
-            }
+				// Insert into transparent object vector
+				mTransparentObjects.push_back(pRend);
+				
+			}
 			else
 			{
-                while (pi.hasMoreElements())
-                {
-                    // Insert into solid list
-                    Pass* p = pi.getNext();
-                    SolidRenderablePassMap::iterator i = mSolidPasses.find(p);
-                    if (i == mSolidPasses.end())
-                    {
-                        std::pair<SolidRenderablePassMap::iterator, bool> retPair;
-                        // Create new pass entry, build a new list
-                        // Note that this pass and list are never destroyed until the engine
-                        // shuts down, although the lists will be cleared
-                        retPair = mSolidPasses.insert(
-                            SolidRenderablePassMap::value_type(p, new RenderableList() ) );
-                        assert(retPair.second && "Error inserting new pass entry into SolidRenderablePassMap");
-                        i = retPair.first;
-                    }
-                    // Insert renderable
-                    i->second->push_back(pRend);
-			    }
-            }
+
+            	// Try to insert, if already there existing will be returned
+            	retPair = mMaterialGroups.insert(MaterialGroupMap::value_type(pMat, newList));
+
+	            // Insert new Renderable
+    	        // retPair.first is iterator on map (Material*, std::vector)
+        	    // retPair.first->second is the vector of renderables
+            	retPair.first->second.push_back(pRend);
+			}
 
         }
 
-		/** Sorts the objects which have been added to the queue; transparent objects by their 
-            depth in relation to the passed in Camera. */
-		void sort(const Camera* cam)
+		/** Sorts the transparent objects which have been added to the queue by their depth
+		    in relation to the passed in Camera. */
+		void sortTransparentObjects(const Camera* cam)
 		{
-            TransparentQueueItemLess transFunctor;
-            transFunctor.camera = cam;
+            TransparentQueueItemLess lessFunctor;
+            lessFunctor.camera = cam;
 
-			std::stable_sort(mTransparentPasses.begin(), mTransparentPasses.end(), 
-                transFunctor);
+			std::sort(mTransparentObjects.begin(), mTransparentObjects.end(), 
+                lessFunctor);
 		}
-
 		 
 
         /** Clears this group of renderables. 
         */
         void clear(void)
         {
-            // NB we do not clear the solid pass map, only the contents of each list
-            // This is because we assume passes are reused a lot and it saves resorting
-            SolidRenderablePassMap::iterator i, iend;
-            iend = mSolidPasses.end();
-            for (i = mSolidPasses.begin(); i != iend; ++i)
-            {
-                // Clear the list associated with this pass, but leave the pass entry
-                i->second->clear();
-            }
-            mTransparentPasses.clear();
+            mMaterialGroups.clear();
+            mTransparentObjects.clear();
 
         }
 

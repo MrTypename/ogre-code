@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreInputEvent.h"
 
@@ -45,54 +44,54 @@ namespace Ogre {
 	}
 
     //-----------------------------------------------------------------------
-	int InputEvent::getModifiers() const {
+	int InputEvent::getModifiers() {
 		return mModifiers;
 	}
 
     //-----------------------------------------------------------------------
-	Real InputEvent::getWhen() const {
+	Real InputEvent::getWhen() {
 		return mWhen;
 	}
 
     //-----------------------------------------------------------------------
-	bool InputEvent::isAltDown() const {
+	bool InputEvent::isAltDown() {
 		return (mModifiers & InputEvent::ALT_MASK) != 0;
 	}
 
     //-----------------------------------------------------------------------
-	bool InputEvent::isConsumed() const {
+	bool InputEvent::isConsumed() {
 		return mConsumed;
 	}
 
     //-----------------------------------------------------------------------
-	bool InputEvent::isControlDown() const {
+	bool InputEvent::isControlDown() {
 		return (mModifiers & InputEvent::CTRL_MASK) != 0;
 	}
 
     //-----------------------------------------------------------------------
-	bool InputEvent::isMetaDown() const {
+	bool InputEvent::isMetaDown() {
 		return (mModifiers & InputEvent::META_MASK) != 0;
 	}
 
     //-----------------------------------------------------------------------
-	bool InputEvent::isShiftDown() const {
+	bool InputEvent::isShiftDown() {
 		return (mModifiers & InputEvent::SHIFT_MASK) != 0;
 	}
 
     //-----------------------------------------------------------------------
-	bool InputEvent::isEventBetween(int start, int end) const
+	bool InputEvent::isEventBetween(int start, int end)
 	{
 		return (mId >= start) && (mId <= end);
 	}
 
     //-----------------------------------------------------------------------
-	int InputEvent::getID() const
+	int InputEvent::getID()
 	{
 		return mId;
 
 	}
 
-	EventTarget* InputEvent::getSource() const
+	EventTarget* InputEvent::getSource()
 	{
 		return mSource;
 

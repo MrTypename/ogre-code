@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreRenderTarget.h"
 #include "OgreGuiElement.h"
 #include "OgreGuiManager.h"
@@ -65,7 +64,7 @@ namespace Ogre {
 
     }
 
-    const String& RenderTarget::getName(void) const
+    String RenderTarget::getName(void)
     {
         return mName;
     }
@@ -78,15 +77,15 @@ namespace Ogre {
         colourDepth = mColourDepth;
     }
 
-    int RenderTarget::getWidth(void) const
+    int RenderTarget::getWidth(void)
     {
         return mWidth;
     }
-    int RenderTarget::getHeight(void) const
+    int RenderTarget::getHeight(void)
     {
         return mHeight;
     }
-    int RenderTarget::getColourDepth(void) const
+    int RenderTarget::getColourDepth(void)
     {
         return mColourDepth;
     }
@@ -183,27 +182,27 @@ namespace Ogre {
 
     }
 
-    float RenderTarget::getLastFPS() const
+    float RenderTarget::getLastFPS()
     {
         return mLastFPS;
     }
-    float RenderTarget::getAverageFPS() const
+    float RenderTarget::getAverageFPS()
     {
         return mAvgFPS;
     }
-    float RenderTarget::getBestFPS() const
+    float RenderTarget::getBestFPS()
     {
         return mBestFPS;
     }
-    float RenderTarget::getWorstFPS() const
+    float RenderTarget::getWorstFPS()
     {
         return mWorstFPS;
     }
-    float RenderTarget::getBestFrameTime() const
+    float RenderTarget::getBestFrameTime()
     {
         return mBestFrameTime;
     }
-    float RenderTarget::getWorstFrameTime() const
+    float RenderTarget::getWorstFrameTime()
     {
         return mWorstFrameTime;
     }
@@ -375,7 +374,7 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    unsigned short RenderTarget::getNumViewports(void) const
+    unsigned short RenderTarget::getNumViewports(void)
     {
         return (unsigned short)mViewportList.size();
 

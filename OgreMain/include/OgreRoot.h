@@ -71,7 +71,6 @@ namespace Ogre
         RenderSystemList mRenderers;
         RenderSystem* mActiveRenderer;
         String mVersion;
-				String mConfigFileName;
 
         // Singletons
         Math* mMath;
@@ -89,7 +88,7 @@ namespace Ogre
         OverlayManager* mOverlayManager;
         FontManager* mFontManager;
         ArchiveFactory *mZipArchiveFactory;
-        Codec* mPNGCodec, *mJPGCodec, *mJPEGCodec, *mTGACodec, *mDDSCodec, *mBMPCodec;
+        Codec* mPNGCodec, *mJPGCodec, *mJPEGCodec, *mTGACodec;
         Timer* mTimer;
         RenderWindow* mAutoWindow;
         Profiler* mProfiler;
@@ -118,7 +117,7 @@ namespace Ogre
                 pluginFileName The file that contains plugins information.
                 Defaults to "plugins.cfg".
 		*/
-        Root(const String& pluginFileName = "plugins.cfg", const String& configFileName = "ogre.cfg", const String& logFileName = "Ogre.log");
+        Root(const String& pluginFileName = "plugins.cfg");
         ~Root();
 
         /** Saves the details of the current configuration

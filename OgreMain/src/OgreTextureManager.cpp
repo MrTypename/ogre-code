@@ -23,7 +23,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
 #include "OgreTextureManager.h"
-#include "OgreException.h"
 
 namespace Ogre {
     //-----------------------------------------------------------------------

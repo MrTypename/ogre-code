@@ -75,7 +75,7 @@ namespace Ogre
 		/// return a D3D9 equivalent for a Ogre TexCoordCalsMethod value
 		static DWORD get(TexCoordCalcMethod m, const D3DCAPS9& caps);
 		/// return a D3D9 equivalent for a Ogre TextureAddressingMode value
-		static D3DTEXTUREADDRESS get(TextureUnitState::TextureAddressingMode tam);
+		static D3DTEXTUREADDRESS get(Material::TextureLayer::TextureAddressingMode tam);
 		/// return a D3D9 equivalent for a Ogre LayerBlendType value
 		static D3DTEXTURESTAGESTATETYPE get(LayerBlendType lbt);
 		/// return a D3D9 equivalent for a Ogre LayerBlendOperationEx value
@@ -108,11 +108,6 @@ namespace Ogre
 		static D3DDECLTYPE get(VertexElementType vType);
 		/// Get vertex semantic
 		static D3DDECLUSAGE get(VertexElementSemantic sem);
-        // Convert matrix to D3D style
-        static 	D3DXMATRIX makeD3DXMatrix( const Matrix4& mat );
-        // Convert matrix from D3D style
-        static Matrix4 D3D9Mappings::convertD3DXMatrix( const D3DXMATRIX& mat );
-
 	};
 }
 #endif

@@ -180,10 +180,7 @@ public:
         return mMaterial;
     };
 
-    virtual void getWorldTransforms( Matrix4* xform ) const;
-
-    virtual const Quaternion& getWorldOrientation(void) const;
-    virtual const Vector3& getWorldPosition(void) const;
+    virtual void getWorldTransforms( Matrix4* xform );
 
     /** Returns the size of the TerrainRenderable */
     inline int getSize()
@@ -204,7 +201,7 @@ public:
     }
 
     /** Returns the maximum number of mipmaps used for LOD. */
-    inline int getNumMipMaps() const
+    inline int getNumMipMaps()
     {
         return mNumMipMaps;
     };
@@ -260,10 +257,6 @@ public:
 
     /** Overridden from MovableObject */
     Real getBoundingRadius(void) const { return 0; /* not needed */ }
-
-    /** @copydoc Renderable::getLights */
-    const LightList& getLights(void) const;
-
 
 
 protected:

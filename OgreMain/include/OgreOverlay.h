@@ -27,6 +27,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define __Overlay_H__
 
 #include "OgrePrerequisites.h"
+#include "OgreString.h"
 #include "OgreSceneNode.h"
 #include "OgreIteratorWrappers.h"
 #include "OgreMatrix4.h"
@@ -80,10 +81,10 @@ namespace Ogre {
         // Scale values
         Real mScaleX, mScaleY;
 
-        mutable Matrix4 mTransform;
-        mutable bool mTransformOutOfDate;
+        Matrix4 mTransform;
+        bool mTransformOutOfDate;
         /** Internal lazy update method. */
-        void updateTransform(void) const;
+        void updateTransform(void);
 
     public:
         /// Constructor: do not call direct, use SceneManager::createOverlay
@@ -183,10 +184,10 @@ namespace Ogre {
         void setScroll(Real x, Real y);
 
         /** Gets the current X scroll value */
-        Real getScrollX(void) const;
+        Real getScrollX(void);
 
         /** Gets the current Y scroll value */
-        Real getScrollY(void) const;
+        Real getScrollY(void);
 
         /** Scrolls the overlay by the offsets provided.
         @remarks
@@ -200,7 +201,7 @@ namespace Ogre {
         void setRotate(Real degrees);
 
         /** Gets the rotation applied to this overlay, in degrees.*/
-        Real getRotate(void) const;
+        Real getRotate(void);
 
         /** Adds the passed in angle to the rotation applied to this overlay. */
         void rotate(Real degrees);
@@ -216,17 +217,13 @@ namespace Ogre {
         void setScale(Real x, Real y);
 
         /** Gets the current X scale value */
-        Real getScaleX(void) const;
+        Real getScaleX(void);
 
         /** Gets the current Y scale value */
-        Real getScaleY(void) const;
+        Real getScaleY(void);
 
         /** Used to transform the overlay when scrolling, scaling etc. */
-        void _getWorldTransforms(Matrix4* xform) const;
-        /** @copydoc Renderable::getWorldOrientation */
-        const Quaternion& getWorldOrientation(void) const;
-        /** @copydoc Renderable::getWorldPosition */
-        const Vector3& getWorldPosition(void) const;
+        void _getWorldTransforms(Matrix4* xform);
 
         /** Internal method to put the overlay contents onto the render queue. */
         void _findVisibleObjects(Camera* cam, RenderQueue* queue);

@@ -60,7 +60,7 @@ namespace Ogre
         void setTranslate(const Vector3& trans);
 
         /** Gets the translation applied by this keyframe. */
-        const Vector3& getTranslate(void) const;
+        Vector3 getTranslate(void) const;
 
         /** Sets the scaling factor applied by this keyframe to the animable
         object at it's time index.
@@ -70,7 +70,7 @@ namespace Ogre
         void setScale(const Vector3& scale);
 
         /** Gets the scaling factor applied by this keyframe. */
-        const Vector3& getScale(void) const;
+        Vector3 getScale(void) const;
 
         /** Sets the rotation applied by this keyframe.
         @param rot The rotation applied; use Quaternion methods to convert from angle/axis or Matrix3 if
@@ -79,7 +79,7 @@ namespace Ogre
         void setRotation(const Quaternion& rot);
 
         /** Gets the rotation applied by this keyframe. */
-        const Quaternion& getRotation(void) const;
+        Quaternion getRotation(void) const;
 
 
     protected:

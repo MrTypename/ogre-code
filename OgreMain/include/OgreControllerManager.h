@@ -31,7 +31,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreSingleton.h"
 #include "OgreController.h"
 #include "OgrePredefinedControllers.h"
-#include "OgreTextureUnitState.h"
+#include "OgreMaterial.h"
 #include "OgreSharedPtr.h"
 
 namespace Ogre {
@@ -78,18 +78,18 @@ namespace Ogre {
             @see
                 RenderSystem::beginFrame
         */
-        SharedPtr<ControllerValue> getFrameTimeSource(void) const;
+        SharedPtr<ControllerValue> getFrameTimeSource(void);
 
         /** Creates a texture layer animator controller.
             @remarks
                 This helper method creates the Controller, ControllerValue and ControllerFunction classes required
                 to animate a texture.
             @param
-                layer TextureUnitState object to animate
+                layer TextureLayer object to animate
             @param
                 sequenceTime The amount of time in seconds it will take to loop through all the frames.
         */
-        Controller* createTextureAnimator(TextureUnitState* layer, Real sequenceTime);
+        Controller* createTextureAnimator(Material::TextureLayer* layer, Real sequenceTime);
 
         /** Creates a basic time-based texture coordinate modifier designed for creating scrolling textures.
             @remarks
@@ -103,7 +103,7 @@ namespace Ogre {
             @param
                 vSpeed Speed of vertical (v-coord) scroll, in complete wraps per second
         */
-        Controller* createTextureScroller(TextureUnitState* layer, Real uSpeed, Real vSpeed);
+        Controller* createTextureScroller(Material::TextureLayer* layer, Real uSpeed, Real vSpeed);
 
         /** Creates a basic time-based texture coordinate modifier designed for creating rotating textures.
             @return
@@ -115,7 +115,7 @@ namespace Ogre {
             @param
                 vSpeed Speed of rotation, in complete anticlockwise revolutions per second
         */
-        Controller* createTextureRotater(TextureUnitState* layer, Real speed);
+        Controller* createTextureRotater(Material::TextureLayer* layer, Real speed);
 
         /** Creates a very flexible time-based texture transformation which can alter the scale, position or
             rotation of a texture based on a wave function.
@@ -134,7 +134,7 @@ namespace Ogre {
             @param
                 amplitude Scales the output so that instead of lying within 0..1 it lies within 0..1*amplitude for exaggerated effects
         */
-        Controller* createTextureWaveTransformer(TextureUnitState* layer, TextureUnitState::TextureTransformType ttype,
+        Controller* createTextureWaveTransformer(Material::TextureLayer* layer, Material::TextureLayer::TextureTransformType ttype,
             WaveformType waveType, Real base = 0, Real frequency = 1, Real phase = 0, Real amplitude = 1);
 
 

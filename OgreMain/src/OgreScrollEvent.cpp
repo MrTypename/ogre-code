@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreString.h"
 #include "OgreScrollEvent.h"
@@ -62,7 +61,7 @@ namespace Ogre {
 	}
 
     //-----------------------------------------------------------------------
-	String ScrollEvent::paramString() const {
+	String ScrollEvent::paramString() {
 		String typeStr;
 		switch(mId) {
 		  case SE_SCROLL_PERFORMED:

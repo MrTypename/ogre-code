@@ -38,10 +38,7 @@ namespace Ogre {
         String libraryName = "OgrePlatform.";
         #if OGRE_PLATFORM == PLATFORM_WIN32
             libraryName += "dll";
-        #elif OGRE_PLATFORM == PLATFORM_APPLE
-            libraryName += "bundle";
         #else
-            //PLATFORM_LINUX
             libraryName = "lib" + libraryName + "so";
         #endif
 

@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreSubEntity.h"
 
 #include "OgreEntity.h"
@@ -84,7 +83,7 @@ namespace Ogre {
         mSubMesh->_getRenderOperation(op, mParentEntity->mMeshLodIndex);
     }
     //-----------------------------------------------------------------------
-    void SubEntity::getWorldTransforms(Matrix4* xform) const
+    void SubEntity::getWorldTransforms(Matrix4* xform)
     {
         if (!mParentEntity->mNumBoneMatrices)
         {
@@ -102,18 +101,7 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    const Quaternion& SubEntity::getWorldOrientation(void) const
-    {
-        return mParentEntity->mParentNode->_getDerivedOrientation();
-    }
-    //-----------------------------------------------------------------------
-    const Vector3& SubEntity::getWorldPosition(void) const
-    {
-        return mParentEntity->mParentNode->_getDerivedPosition();
-    }
-
-    //-----------------------------------------------------------------------
-    unsigned short SubEntity::getNumWorldTransforms(void) const
+    unsigned short SubEntity::getNumWorldTransforms(void)
     {
         if (!mParentEntity->mNumBoneMatrices)
             return 1;
@@ -128,16 +116,9 @@ namespace Ogre {
         return n->getSquaredViewDepth(cam);
     }
     //-----------------------------------------------------------------------
-    bool SubEntity::getNormaliseNormals(void) const
+    bool SubEntity::getNormaliseNormals(void) 
     {
         return mParentEntity->mNormaliseNormals;
-    }
-    //-----------------------------------------------------------------------
-    const LightList& SubEntity::getLights(void) const
-    {
-        Node* n = mParentEntity->getParentNode();
-        assert(n);
-        return n->getLights();
     }
 
 }

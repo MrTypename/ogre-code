@@ -28,13 +28,13 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgrePrerequisites.h"
 
 #if OGRE_PLATFORM == PLATFORM_WIN32
-#   define NOMINMAX // required to stop windows.h messing up std::min
 #   include <windows.h>
 #   include <wingdi.h>
 #   include "gl.h"
 #   define GL_GLEXT_PROTOTYPES
 #   include "glprocs.h"
 #   include <GL/glu.h>
+#   include "glext.h"
 // Windows library does not include glSecondaryColorPointer even though it's standard now
 #   define glSecondaryColorPointer glSecondaryColorPointerEXT
 #elif OGRE_PLATFORM == PLATFORM_LINUX
@@ -44,15 +44,13 @@ http://www.gnu.org/copyleft/lesser.txt.
 #   include <GL/gl.h>
 #   include <GL/glu.h>
 #   define GL_GLEXT_PROTOTYPES
+#   include "glext.h"
 #elif OGRE_PLATFORM == PLATFORM_APPLE
-#   define GL_GLEXT_PROTOTYPES
-#   ifndef APIENTRY
-#       define APIENTRY
-#   endif
 #   include <OpenGL/gl.h>
+#   define GL_EXT_texture_env_combine 1
+#   include <OpenGL/glext.h>
 #   include <OpenGL/glu.h>
 #endif
-#include "glext.h"
 
 extern "C" {
 // Pointer to glActiveTextureARB function

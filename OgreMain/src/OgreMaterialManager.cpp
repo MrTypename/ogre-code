@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreMaterialManager.h"
 
 #include "OgreMaterial.h"
@@ -31,11 +30,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreSDDataChunk.h"
 #include "OgreArchiveEx.h"
 #include "OgreStringConverter.h"
-#include "OgreBlendMode.h"
-#include "OgreTechnique.h"
-#include "OgrePass.h"
-#include "OgreTextureUnitState.h"
-#include "OgreException.h"
 
 namespace Ogre {
 
@@ -392,7 +386,7 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     // Texture layer attributes
-    void parseTexture(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseTexture(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    if (numParams != 2)
 	    {
@@ -403,7 +397,7 @@ namespace Ogre {
 	    pTex->setTextureName(params[1]);
     }
     //-----------------------------------------------------------------------
-    void parseAnimTexture(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseAnimTexture(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    // Determine which form it is
 	    // Must have at least 3 params though
@@ -427,7 +421,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void parseCubicTexture(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseCubicTexture(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 
 	    // Get final param
@@ -464,7 +458,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void parseTexCoord(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseTexCoord(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    if (numParams != 2)
 	    {
@@ -476,7 +470,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void parseTexAddressMode(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseTexAddressMode(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    if (numParams != 2)
 	    {
@@ -485,18 +479,18 @@ namespace Ogre {
 		    return;
 	    }
 	    if (params[1]=="wrap")
-		    pTex->setTextureAddressingMode(TextureUnitState::TAM_WRAP);
+		    pTex->setTextureAddressingMode(Material::TextureLayer::TAM_WRAP);
 	    else if (params[1]=="mirror")
-		    pTex->setTextureAddressingMode(TextureUnitState::TAM_MIRROR);
+		    pTex->setTextureAddressingMode(Material::TextureLayer::TAM_MIRROR);
 	    else if (params[1]=="clamp")
-		    pTex->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
+		    pTex->setTextureAddressingMode(Material::TextureLayer::TAM_CLAMP);
 	    else
 		    LogManager::getSingleton().logMessage("Bad " + params[0] + " attribute line in "
 			    + pMat->getName() + ", valid parameters are 'wrap', 'clamp' or 'mirror'.");
 
     }
     //-----------------------------------------------------------------------
-    void parseColourOp(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseColourOp(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    if (numParams != 2)
 	    {
@@ -517,7 +511,7 @@ namespace Ogre {
 			    + pMat->getName() + ", valid parameters are 'replace', 'add', 'modulate' or 'alpha_blend'.");
     }
     //-----------------------------------------------------------------------
-    void parseAlphaRejection(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseAlphaRejection(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    if (numParams != 3)
 	    {
@@ -591,7 +585,7 @@ namespace Ogre {
 		    Except(Exception::ERR_INVALIDPARAMS, "Invalid blend source", "convertBlendSource");
     }
     //-----------------------------------------------------------------------
-    void parseLayerFiltering(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseLayerFiltering(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    if (numParams != 2)
 	    {
@@ -600,19 +594,19 @@ namespace Ogre {
 		    return;
 	    }
 	    if (params[1]=="none")
-		    pTex->setTextureFiltering(TFO_NONE);
+		    pTex->setTextureLayerFiltering(TFO_NONE);
 	    else if (params[1]=="bilinear")
-		    pTex->setTextureFiltering(TFO_BILINEAR);
+		    pTex->setTextureLayerFiltering(TFO_BILINEAR);
 	    else if (params[1]=="trilinear")
-		    pTex->setTextureFiltering(TFO_TRILINEAR);
+		    pTex->setTextureLayerFiltering(TFO_TRILINEAR);
 	    else if (params[1]=="anisotropic")
-		    pTex->setTextureFiltering(TFO_ANISOTROPIC);
+		    pTex->setTextureLayerFiltering(TFO_ANISOTROPIC);
 	    else
 		    LogManager::getSingleton().logMessage("Bad texture layer filtering attribute line in "
 			    + pMat->getName() + ", valid parameters are 'none', 'bilinear', 'trilinear' or 'anisotropic'.");
     }
     //-----------------------------------------------------------------------
-    void parseColourOpEx(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseColourOpEx(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    if (numParams < 4 || numParams > 13)
 	    {
@@ -690,7 +684,7 @@ namespace Ogre {
 	    pTex->setColourOperationEx(op, src1, src2, colSrc1, colSrc2, manual);
     }
     //-----------------------------------------------------------------------
-    void parseColourOpFallback(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseColourOpFallback(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    if (numParams != 3)
 	    {
@@ -714,7 +708,7 @@ namespace Ogre {
 	    }
     }
     //-----------------------------------------------------------------------
-    void parseAlphaOpEx(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseAlphaOpEx(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    if (numParams < 4 || numParams > 7)
 	    {
@@ -785,7 +779,7 @@ namespace Ogre {
 	    pTex->setAlphaOperation(op, src1, src2, arg1, arg2, manual);
     }
     //-----------------------------------------------------------------------
-    void parseEnvMap(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseEnvMap(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    if (numParams != 2)
 	    {
@@ -796,20 +790,20 @@ namespace Ogre {
 	    if (params[1]=="off")
 		    pTex->setEnvironmentMap(false);
 	    else if (params[1]=="spherical")
-		    pTex->setEnvironmentMap(true, TextureUnitState::ENV_CURVED);
+		    pTex->setEnvironmentMap(true, Material::TextureLayer::ENV_CURVED);
 	    else if (params[1]=="planar")
-		    pTex->setEnvironmentMap(true, TextureUnitState::ENV_PLANAR);
+		    pTex->setEnvironmentMap(true, Material::TextureLayer::ENV_PLANAR);
 	    else if (params[1]=="cubic_reflection")
-		    pTex->setEnvironmentMap(true, TextureUnitState::ENV_REFLECTION);
+		    pTex->setEnvironmentMap(true, Material::TextureLayer::ENV_REFLECTION);
 	    else if (params[1]=="cubic_normal")
-		    pTex->setEnvironmentMap(true, TextureUnitState::ENV_NORMAL);
+		    pTex->setEnvironmentMap(true, Material::TextureLayer::ENV_NORMAL);
 	    else
 		    LogManager::getSingleton().logMessage("Bad " + params[0] + " attribute line in "
 			    + pMat->getName() + ", valid parameters are 'off', 'spherical', 'planar', 'cubic_reflection' and 'cubic_normal'.");
 
     }
     //-----------------------------------------------------------------------
-    void parseScroll(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseScroll(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    if (numParams != 3)
 	    {
@@ -827,7 +821,7 @@ namespace Ogre {
 	    }
     }
     //-----------------------------------------------------------------------
-    void parseRotate(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseRotate(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    if (numParams != 2)
 	    {
@@ -845,7 +839,7 @@ namespace Ogre {
 	    }
     }
     //-----------------------------------------------------------------------
-    void parseScale(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseScale(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    if (numParams != 3)
 	    {
@@ -856,7 +850,7 @@ namespace Ogre {
 	    pTex->setTextureScale(atof(params[1].c_str()), atof(params[2].c_str()) );
     }
     //-----------------------------------------------------------------------
-    void parseWaveXform(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseWaveXform(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    if (numParams != 7)
 	    {
@@ -864,19 +858,19 @@ namespace Ogre {
 			    + pMat->getName() + ", wrong number of parameters (expected 6)");
 		    return;
 	    }
-	    TextureUnitState::TextureTransformType ttype;
+	    Material::TextureLayer::TextureTransformType ttype;
 	    WaveformType waveType;
 	    // Check transform type
 	    if (params[1]=="scroll_x")
-		    ttype = TextureUnitState::TT_TRANSLATE_U;
+		    ttype = Material::TextureLayer::TT_TRANSLATE_U;
 	    else if (params[1]=="scroll_y")
-		    ttype = TextureUnitState::TT_TRANSLATE_V;
+		    ttype = Material::TextureLayer::TT_TRANSLATE_V;
 	    else if (params[1]=="rotate")
-		    ttype = TextureUnitState::TT_ROTATE;
+		    ttype = Material::TextureLayer::TT_ROTATE;
 	    else if (params[1]=="scale_x")
-		    ttype = TextureUnitState::TT_SCALE_U;
+		    ttype = Material::TextureLayer::TT_SCALE_U;
 	    else if (params[1]=="scale_y")
-		    ttype = TextureUnitState::TT_SCALE_V;
+		    ttype = Material::TextureLayer::TT_SCALE_V;
 	    else
 	    {
 		    LogManager::getSingleton().logMessage("Bad " + params[0] + " attribute line in "
@@ -925,10 +919,10 @@ namespace Ogre {
 			    + pMat->getName() + ", wrong number of parameters (expected 2)");
 		    return;
 	    }
-	    pMat->setTextureAnisotropy(atoi(params[1].c_str()));
+	    pMat->setAnisotropy(atoi(params[1].c_str()));
     }
 	//-----------------------------------------------------------------------
-    void parseLayerAnisotropy(StringVector::iterator& params, int numParams, Material* pMat, TextureUnitState* pTex)
+    void parseLayerAnisotropy(StringVector::iterator& params, int numParams, Material* pMat, Material::TextureLayer* pTex)
     {
 	    if (numParams != 2)
 	    {
@@ -949,8 +943,6 @@ namespace Ogre {
 		// Set up default material - don't use name contructor as we want to avoid applying defaults
 	    Material::mDefaultSettings = new Material();
 	    Material::mDefaultSettings->mName = "DefaultSettings";
-        // Add a single technique and pass, non-programmable
-        Material::mDefaultSettings->createTechnique()->createPass();
 
 	    // Set up a lit base white material
 	    this->create("BaseWhite");
@@ -1022,7 +1014,8 @@ namespace Ogre {
 			    {
 				    // No current material
 				    // So first valid data should be a material name
-				    pMat = (Material*)create(line);
+				    // NB defer loading until later
+				    pMat = (Material*)createDeferred(line);
 				    // Skip to and over next {
 				    chunk.readUpTo(tempBuf, 511, "{");
 			    }
@@ -1091,12 +1084,31 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
+    Resource* MaterialManager::create( const String& name)
+    {
+	    // Check name not already used
+	    if (getByName(name) != 0)
+		    Except(Exception::ERR_DUPLICATE_ITEM, "Material " + name + " already exists.",
+			    "MaterialManager::create");
+
+	    Material* m = new Material(name);
+	    m->assignNextHandle();
+	    // Load immediately
+	    m->load();
+
+	    mResources[name] = m;
+	    mHandles.insert(MaterialHandleList::value_type(m->mHandle, m));
+
+
+	    return m;
+    }
+    //-----------------------------------------------------------------------
     void MaterialManager::parseNewTextureLayer(DataChunk& chunk, Material* pMat)
     {
 	    String line;
-	    TextureUnitState* pLayer;
+	    Material::TextureLayer* pLayer;
 
-	    pLayer = pMat->getTechnique(0)->getPass(0)->createTextureUnitState("");
+	    pLayer = pMat->addTextureLayer("");
 
 
 	    while (!chunk.isEOF())
@@ -1148,7 +1160,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void MaterialManager::parseLayerAttrib( const String& line, Material* pMat, TextureUnitState* pLayer)
+    void MaterialManager::parseLayerAttrib( const String& line, Material* pMat, Material::TextureLayer* pLayer)
     {
 	    StringVector vecparams;
 
@@ -1187,15 +1199,59 @@ namespace Ogre {
 	    return Singleton<MaterialManager>::getSingleton();
     }
     //-----------------------------------------------------------------------
-    Resource* MaterialManager::create( const String& name)
+    Material* MaterialManager::add(const Material& mat)
+    {
+	    // Check no material with that name already
+	    String name = mat.getName();
+	    Material* oldMat = (Material*)getByName(name);
+	    if (oldMat != 0)
+	    {
+		    Except(Exception::ERR_DUPLICATE_ITEM,
+			    "Material cannot be added since a "
+			    "Material already exists with the name " + name,
+			    "MaterialManager::add");
+	    }
+	    // Copy Material
+	    Material* newMat = new Material();
+	    *newMat = mat;
+	    if (newMat->getHandle() == -1)
+		    newMat->assignNextHandle();
+	    // Load immediately
+	    newMat->load();
+
+	    mResources[name] = newMat;
+	    mHandles.insert(MaterialHandleList::value_type(newMat->mHandle, newMat));
+
+	    return newMat;
+    }
+    //-----------------------------------------------------------------------
+    Material* MaterialManager::getByHandle(int handle)
+    {
+	    MaterialHandleList::iterator i = mHandles.find(handle);
+
+	    if (i == mHandles.end())
+	    {
+		    return 0;
+	    }
+	    else
+	    {
+		    return i->second;
+	    }
+    }
+    //-----------------------------------------------------------------------
+    Material* MaterialManager::createDeferred( const String& name)
     {
 	    // Check name not already used
 	    if (getByName(name) != 0)
 		    Except(Exception::ERR_DUPLICATE_ITEM, "Material " + name + " already exists.",
 			    "MaterialManager::create");
 
-	    Material* m = new Material(name);
-        this->add(m);
+	    Material* m = new Material(name, true);
+	    m->assignNextHandle();
+	    // Defer load until used
+
+	    mResources[name] = m;
+	    mHandles.insert(MaterialHandleList::value_type(m->mHandle, m));
 
 	    return m;
     }
@@ -1203,9 +1259,12 @@ namespace Ogre {
 	void MaterialManager::setDefaultTextureFiltering(TextureFilterOptions fo)
 	{
 		mDefTextureFiltering = fo;
+		MaterialHandleList::iterator i;
+		for (i = mHandles.begin(); i != mHandles.end(); ++i)
+			i->second->_setDefTextureFiltering(mDefTextureFiltering);
 	}
     //-----------------------------------------------------------------------
-	TextureFilterOptions MaterialManager::getDefaultTextureFiltering() const
+	TextureFilterOptions MaterialManager::getDefaultTextureFiltering()
 	{
 		return mDefTextureFiltering;
 	}
@@ -1213,9 +1272,12 @@ namespace Ogre {
 	void MaterialManager::setDefaultAnisotropy(int maxAniso)
 	{
 		mDefAniso = maxAniso;
+		MaterialHandleList::iterator i;
+		for (i = mHandles.begin(); i != mHandles.end(); ++i)
+			i->second->_setDefAnisotropy(mDefAniso);
 	}
     //-----------------------------------------------------------------------
-	int MaterialManager::getDefaultAnisotropy() const
+	int MaterialManager::getDefaultAnisotropy()
 	{
 		return mDefAniso;
 	}

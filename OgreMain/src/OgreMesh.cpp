@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreMesh.h"
 
 #include "OgreSubMesh.h"
@@ -32,10 +31,9 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreMeshSerializer.h"
 #include "OgreSkeletonManager.h"
 #include "OgreSkeleton.h"
+#include <algorithm>
 #include "OgreHardwareBufferManager.h"
 #include "OgreStringConverter.h"
-#include "OgreException.h"
-#include "OgreMeshManager.h"
 
 
 namespace Ogre {
@@ -380,7 +378,7 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    unsigned short Mesh::_getNumBoneMatrices(void) const
+    unsigned short Mesh::_getNumBoneMatrices(void)
     {
         // Delegate to Skeleton
         assert(mSkeleton && "Skeleton not present");

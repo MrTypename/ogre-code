@@ -103,25 +103,19 @@ namespace Ogre {
 
         /** Overridden - see Renderable.
         */
-        void getWorldTransforms(Matrix4* xform) const;
-        /** @copydoc Renderable::getWorldOrientation */
-        const Quaternion& getWorldOrientation(void) const;
-        /** @copydoc Renderable::getWorldPosition */
-        const Vector3& getWorldPosition(void) const;
+        void getWorldTransforms(Matrix4* xform);
         /** Overridden - see Renderable.
         */
-        bool getNormaliseNormals(void) const;      
+        bool SubEntity::getNormaliseNormals(void);      
         /** Overridden - see Renderable.
         */
-        unsigned short getNumWorldTransforms(void) const;
+        unsigned short getNumWorldTransforms(void);
         /** Overridden, see Renderable */
         Real getSquaredViewDepth(const Camera* cam) const;
         /** Sets the rendering level (solid, wireframe) of this SubEntity. */
         void setRenderDetail(SceneDetailLevel renderDetail) { mRenderDetail = renderDetail; } 
         /** Overridden, see Renderable */
-        SceneDetailLevel getRenderDetail() const {return mRenderDetail;}
-        /** @copydoc Renderable::getLights */
-        const LightList& getLights(void) const;
+        SceneDetailLevel getRenderDetail(){return mRenderDetail;}
     };
 
 }

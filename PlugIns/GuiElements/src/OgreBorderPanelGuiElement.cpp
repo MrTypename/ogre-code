@@ -31,8 +31,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreHardwareBufferManager.h"
 #include "OgreHardwareVertexBuffer.h"
 #include "OgreHardwareIndexBuffer.h"
-#include "OgreException.h"
-#include "OgreRenderQueue.h"
 
 namespace Ogre {
     //---------------------------------------------------------------------
@@ -548,7 +546,6 @@ namespace Ogre {
         {
 
             // Add outer
-            mpBorderMaterial->touch();
             queue->addRenderable(mBorderRenderable, RENDER_QUEUE_OVERLAY, mZOrder);
 
 			// do inner last so the border artifacts don't overwrite the children

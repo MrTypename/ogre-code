@@ -40,7 +40,7 @@ namespace OgreRefApp {
     {
         // Create visual presence
         SceneManager* sm = World::getSingleton().getSceneManager();
-        mSceneNode = sm->getRootSceneNode()->createChildSceneNode(name);
+        mSceneNode = static_cast<SceneNode*>(sm->getRootSceneNode()->createChild(name));
 
         mCamera = sm->createCamera(name);
 

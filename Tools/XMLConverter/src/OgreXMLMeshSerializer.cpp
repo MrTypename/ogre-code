@@ -30,7 +30,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreSkeleton.h"
 #include "OgreStringConverter.h"
 #include "OgreHardwareBufferManager.h"
-#include "OgreException.h"
 
 namespace Ogre {
 
@@ -823,8 +822,6 @@ namespace Ogre {
                                 xmlElem->Attribute("w"));
                         }
 
-                        break;
-                    default:
                         break;
                     }
                 } // semantic

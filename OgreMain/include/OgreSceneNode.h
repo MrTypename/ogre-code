@@ -49,8 +49,6 @@ namespace Ogre {
 
     protected:
         ObjectMap mObjectsByName;
-        mutable LightList mLightList;
-        mutable bool mLightListDirty;
 
 		/// Pointer to a Wire Bounding Box for this Node
 		WireBoundingBox *mWireBoundingBox;
@@ -94,7 +92,7 @@ namespace Ogre {
 
         /** Reports the number of objects attached to this node.
         */
-        virtual unsigned short numAttachedObjects(void) const;
+        virtual unsigned short numAttachedObjects(void);
 
         /** Retrieves a pointer to an attached object.
         @remarks Retrieves by index, see alternate version to retrieve by name. The index
@@ -113,8 +111,6 @@ namespace Ogre {
             may change as other objects are added / removed.
         */
         virtual MovableObject* detachObject(unsigned short index);
-        /** Detaches an object by pointer. */
-        virtual void detachObject(MovableObject* obj);
 
         /** Detaches the named object from this node and returns a pointer to it. */
         virtual MovableObject* detachObject(const String& name);
@@ -193,7 +189,7 @@ namespace Ogre {
             This method returns the SceneManager which created this node.
             This can be useful for destroying this node.
         */
-        SceneManager* getCreator(void) const;
+        SceneManager* getCreator(void);
 
         /** This method removes and destroys the named child and all of its children.
         @remarks
@@ -244,37 +240,7 @@ namespace Ogre {
 			check this flag and then use _addBoundingBoxToQueue to add the bounding box
 			wireframe.
         */
-		virtual bool getShowBoundingBox() const;
-
-        /** Creates an unnamed new SceneNode as a child of this node.
-        @param
-            translate Initial translation offset of child relative to parent
-        @param
-            rotate Initial rotation relative to parent
-        */
-        virtual SceneNode* createChildSceneNode(
-            const Vector3& translate = Vector3::ZERO, 
-            const Quaternion& rotate = Quaternion::IDENTITY );
-
-        /** Creates a new named SceneNode as a child of this node.
-        @remarks
-            This creates a child node with a given name, which allows you to look the node up from 
-            the parent which holds this collection of nodes.
-            @param
-                translate Initial translation offset of child relative to parent
-            @param
-                rotate Initial rotation relative to parent
-        */
-        virtual SceneNode* createChildSceneNode(const String& name, const Vector3& translate = Vector3::ZERO, const Quaternion& rotate = Quaternion::IDENTITY);
-
-        /** Allows retrieval of the nearest lights to the centre of this SceneNode.
-        @remarks
-            This method allows a list of lights, ordered by proximity to the centre of
-            this SceneNode, to be retrieved. Multiple access to this method when neither 
-            the node nor the lights have moved will result in the same list being returned
-            without recalculation. Can be useful when implementing Renderable::getLights.
-        */
-        const LightList& getLights(void) const;
+		virtual bool getShowBoundingBox();
 
     };
 

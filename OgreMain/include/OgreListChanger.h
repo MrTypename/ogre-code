@@ -26,6 +26,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define _ListChanger_H__
 
 #include "OgrePrerequisites.h"
+#include "OgreResource.h"
+
 
 namespace Ogre {
 	typedef std::list<Resource*> ResourceList;
@@ -42,8 +44,8 @@ namespace Ogre {
 		virtual void setSelectedItem(Resource* r, bool on) = 0;
 		virtual ResourceListConstIterator getConstIterator() = 0;
 		virtual ResourceListConstIterator getConstEndIterator() = 0;
-		virtual Resource* popFront() = 0;
-		virtual size_t getListSize() const = 0;
+		virtual  Resource* popFront() = 0;
+		virtual  size_t getListSize() = 0;
     };
 
 } // namespace

@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreString.h"
 #include "OgreKeyEvent.h"
@@ -56,7 +55,7 @@ namespace Ogre {
 	 *
 	 * @return a string identifying the event and its attributes
 	 */
-	 String KeyEvent::paramString() const {
+	 String KeyEvent::paramString() {
 		String typeStr;
 		switch(mId) {
 		  case KE_KEY_PRESSED:

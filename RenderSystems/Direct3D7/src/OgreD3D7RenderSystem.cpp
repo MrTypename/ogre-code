@@ -42,6 +42,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreD3D7RenderWindow.h"
 #include "OgreCamera.h"
 
+#include <d3dx.h>
+#include "d3dutil.h"
 
 namespace Ogre {
     //-----------------------------------------------------------------------
@@ -58,6 +60,10 @@ namespace Ogre {
         mhInstance = hInstance;
         mHardwareBufferManager = NULL;
 
+        // Init light array
+        for (int i = 0; i < MAX_LIGHTS; ++i)
+            mLights[i] = 0;
+
         initConfigOptions();
 
         // Initialise D3DX library
@@ -73,7 +79,6 @@ namespace Ogre {
         }
 
         mForcedNormalisation = false;
-        mCurrentLights = 0;
 
         OgreUnguard();
     }
@@ -583,6 +588,8 @@ namespace Ogre {
             // Create my texture manager for use by others
             // Note this is a Singleton; pointer is held static by superclass
             mTextureManager = new D3DTextureManager(mlpD3DDevice);
+            LogManager::getSingleton().logMessage(
+                "The following capabilities are available:");
 
             // Check for hardware stencil support
             LPDIRECTDRAWSURFACE7 lpTarget;
@@ -593,14 +600,13 @@ namespace Ogre {
             ushort stencil =  pf.dwStencilBitDepth;
             if(stencil > 0)
             {
+                LogManager::getSingleton().logMessage("- Hardware Stencil Buffer");
                 mCapabilities->setCapability(RSC_HWSTENCIL);
                 mCapabilities->setStencilBufferBitDepth(stencil);
             }
 
             // Set the number of texture units based on details from current device
             mCapabilities->setNumTextureUnits(mD3DDeviceDesc.wMaxSimultaneousTextures);
-
-            mCapabilities->log(LogManager::getSingleton().getDefaultLog());
 
             firstWindow = false;
         }
@@ -618,22 +624,47 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     // Low-level overridden members
     //-----------------------------------------------------------------------
-	//---------------------------------------------------------------------
-    void D3DRenderSystem::_useLights(const LightList& lights, unsigned short limit)
+    void D3DRenderSystem::_addLight(Light *lt)
     {
-        LightList::const_iterator i, iend;
-        iend = lights.end();
-        unsigned short num = 0;
-        for (i = lights.begin(); i != iend && num < limit; ++i, ++num)
+
+        // Find first free slot
+        int i;
+        for (i =0; i < MAX_LIGHTS; ++i)
         {
-            setD3DLight(num, *i);
+            if (!mLights[i])
+            {
+                mLights[i] = lt;
+                break;
+            }
         }
-        // Disable extra lights
-        for (; num < mCurrentLights; ++num)
+        // No space in array?
+        if (i == MAX_LIGHTS)
+            Except(999, "No free light slots - cannot add light.", "D3DRenderSystem::addLight");
+
+        setD3DLight(i, lt);
+
+
+
+    }
+    //-----------------------------------------------------------------------
+    void D3DRenderSystem::_modifyLight(Light* lt)
+    {
+        // Locate light in list
+        int lightIndex;
+        for (int i = 0; i < MAX_LIGHTS; ++i)
         {
-            setD3DLight(num, NULL);
+            if (mLights[i] == lt)
+            {
+                lightIndex = i;
+                break;
+            }
         }
-        mCurrentLights = std::min(limit, static_cast<unsigned short>(lights.size()));
+
+        if (i == MAX_LIGHTS)
+            Except(Exception::ERR_INVALIDPARAMS, "Cannot locate light to modify.",
+            "D3DRenderSystem::_modifyLight");
+
+        setD3DLight(lightIndex, lt);
 
     }
     //-----------------------------------------------------------------------
@@ -643,13 +674,7 @@ namespace Ogre {
         HRESULT hr;
         D3DLIGHT7 d3dLight;
 
-        if (!lt)
-        {
-            hr = mlpD3DDevice->LightEnable(index, FALSE);
-            if (FAILED(hr))
-                Except(hr, "Unable to disable light.", "D3DRenderSystem::setD3DLight");
-        }
-        else
+        if (lt->isVisible())
         {
             switch (lt->getType())
             {
@@ -718,14 +743,63 @@ namespace Ogre {
 
             if (FAILED(hr))
                 Except(hr, "Unable to set light details", "D3DRenderSystem::setD3DLight");
-
-            hr = mlpD3DDevice->LightEnable(index, TRUE);
-            if (FAILED(hr))
-                Except(hr, "Unable to enable light.", "D3DRenderSystem::setD3DLight");
         }
 
+        hr = mlpD3DDevice->LightEnable(index, lt->isVisible());
+        if (FAILED(hr))
+            Except(hr, "Unable to enable light.", "D3DRenderSystem::setD3DLight");
+
+
+        lt->_clearModified();
 
     }
+    //-----------------------------------------------------------------------
+    void D3DRenderSystem::_removeLight(Light *lt)
+    {
+        // Remove & disable light
+        for (int i = 0; i < MAX_LIGHTS; ++i)
+        {
+            if (mLights[i] == lt)
+            {
+                mlpD3DDevice->LightEnable(i, FALSE);
+                mLights[i] = 0;
+                break;
+            }
+        }
+
+    }
+
+    //-----------------------------------------------------------------------
+    void D3DRenderSystem::_removeAllLights(void)
+    {
+        // Remove & disable all lights
+        for (int i = 0; i < MAX_LIGHTS; ++i)
+        {
+            if (mLights[i])
+            {
+                mlpD3DDevice->LightEnable(i, FALSE);
+                mLights[i] = 0;
+            }
+        }
+
+    }
+
+    //-----------------------------------------------------------------------
+    void D3DRenderSystem::_pushRenderState(void)
+    {
+        Except(Exception::UNIMPLEMENTED_FEATURE,
+            "Sorry, this feature is not yet available.",
+            "D3DRenderSystem::_pushRenderState");
+    }
+
+    //-----------------------------------------------------------------------
+    void D3DRenderSystem::_popRenderState(void)
+    {
+        Except(Exception::UNIMPLEMENTED_FEATURE,
+            "Sorry, this feature is not yet available.",
+            "D3DRenderSystem::_popRenderState");
+    }
+
     //-----------------------------------------------------------------------
     D3DMATRIX D3DRenderSystem::makeD3DMatrix(const Matrix4& mat)
     {
@@ -872,7 +946,7 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    void D3DRenderSystem::_setTexture(size_t stage, bool enabled, const String &texname)
+    void D3DRenderSystem::_setTexture(int stage, bool enabled, const String &texname)
     {
         HRESULT hr;
         D3DTexture* dt = static_cast< D3DTexture* >(TextureManager::getSingleton().getByName(texname));
@@ -907,7 +981,7 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    void D3DRenderSystem::_setTextureCoordCalculation(size_t stage, TexCoordCalcMethod m)
+    void D3DRenderSystem::_setTextureCoordCalculation(int stage, TexCoordCalcMethod m)
     {
         HRESULT hr = S_OK;
         // record the stage state
@@ -947,7 +1021,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void D3DRenderSystem::_setTextureMatrix(size_t stage, const Matrix4& xForm)
+    void D3DRenderSystem::_setTextureMatrix(int stage, const Matrix4& xForm)
     {
 		HRESULT hr;
 		D3DMATRIX d3dMat; // the matrix we'll maybe apply
@@ -1061,7 +1135,7 @@ namespace Ogre {
 		}
     }
 	//---------------------------------------------------------------------
-	void D3DRenderSystem::_setTextureCoordSet( size_t stage, size_t index )
+	void D3DRenderSystem::_setTextureCoordSet( int stage, int index )
 	{
 		HRESULT hr;
 		hr = __SetTextureStageState( stage, D3DTSS_TEXCOORDINDEX, index );
@@ -1071,7 +1145,7 @@ namespace Ogre {
         mTexStageDesc[stage].coordIndex = index;
 	}
     //-----------------------------------------------------------------------
-    void D3DRenderSystem::_setTextureBlendMode(size_t stage, const LayerBlendModeEx& bm)
+    void D3DRenderSystem::_setTextureBlendMode(int stage, const LayerBlendModeEx& bm)
     {
         HRESULT hr;
         D3DTEXTURESTAGESTATETYPE tss;
@@ -1195,20 +1269,20 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    void D3DRenderSystem::_setTextureAddressingMode(size_t stage, TextureUnitState::TextureAddressingMode tam)
+    void D3DRenderSystem::_setTextureAddressingMode(int stage, Material::TextureLayer::TextureAddressingMode tam)
     {
         HRESULT hr;
         D3DTEXTUREADDRESS d3dType;
 
         switch(tam)
         {
-        case TextureUnitState::TAM_WRAP:
+        case Material::TextureLayer::TAM_WRAP:
             d3dType = D3DTADDRESS_WRAP;
             break;
-        case TextureUnitState::TAM_MIRROR:
+        case Material::TextureLayer::TAM_MIRROR:
             d3dType = D3DTADDRESS_MIRROR;
             break;
-        case TextureUnitState::TAM_CLAMP:
+        case Material::TextureLayer::TAM_CLAMP:
             d3dType = D3DTADDRESS_CLAMP;
             break;
         }
@@ -2174,7 +2248,7 @@ namespace Ogre {
             Except(hr, "Error lighting status.", "D3DRenderSystem::setLightingEnabled");
     }
     //-----------------------------------------------------------------------
-    void D3DRenderSystem::_setFog(FogMode mode, const ColourValue& colour, Real density, Real start, Real end)
+    void D3DRenderSystem::_setFog(FogMode mode, ColourValue colour, Real density, Real start, Real end)
     {
         HRESULT hr;
 
@@ -2384,21 +2458,21 @@ namespace Ogre {
         return D3DSTENCILOP_KEEP;
     }
 
-    DWORD D3DRenderSystem::_getCurrentAnisotropy(size_t unit)
+    DWORD D3DRenderSystem::_getCurrentAnisotropy(int unit)
     {
         DWORD oldVal;
         mlpD3DDevice->GetTextureStageState(unit, D3DTSS_MAXANISOTROPY, &oldVal);
         return oldVal;
     }
 
-    void D3DRenderSystem::_setTextureLayerFiltering(size_t unit, const TextureFilterOptions texLayerFilterOps)
+    void D3DRenderSystem::_setTextureLayerFiltering(int unit, const TextureFilterOptions texLayerFilterOps)
     {
         __SetTextureStageState(unit,D3DTSS_MAGFILTER, _getMagFilter(texLayerFilterOps));
         __SetTextureStageState(unit,D3DTSS_MINFILTER, _getMinFilter(texLayerFilterOps));
         __SetTextureStageState(unit,D3DTSS_MIPFILTER, _getMipFilter(texLayerFilterOps));
     }
 
-    void D3DRenderSystem::_setTextureLayerAnisotropy(size_t unit, int maxAnisotropy)
+    void D3DRenderSystem::_setTextureLayerAnisotropy(int unit, int maxAnisotropy)
     {
         if ((DWORD)maxAnisotropy > mD3DDeviceDesc.dwMaxAnisotropy)
             maxAnisotropy = mD3DDeviceDesc.dwMaxAnisotropy;

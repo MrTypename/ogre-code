@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreWireBoundingBox.h"
 
 #include "OgreSimpleRenderable.h"
@@ -80,22 +79,11 @@ namespace Ogre {
 	}
 
 	// Override this method to prevent parent transforms (rotation,translation,scale)
-    void WireBoundingBox::getWorldTransforms( Matrix4* xform ) const
+    void WireBoundingBox::getWorldTransforms( Matrix4* xform )
     {
 		// return identity matrix to prevent parent transforms
         *xform = Matrix4::IDENTITY;
     }
-    //-----------------------------------------------------------------------
-    const Quaternion& WireBoundingBox::getWorldOrientation(void) const
-    {
-        return Quaternion::IDENTITY;
-    }
-    //-----------------------------------------------------------------------
-    const Vector3& WireBoundingBox::getWorldPosition(void) const
-    {
-        return Vector3::ZERO;
-    }
-
 
 	void WireBoundingBox::setupBoundingBoxVertices(AxisAlignedBox &aab) {
 

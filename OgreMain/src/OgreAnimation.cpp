@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreAnimation.h"
 #include "OgreKeyFrame.h"
 #include "OgreAnimationTrack.h"
@@ -105,7 +104,7 @@ namespace Ogre {
         mTrackList.clear();
     }
     //---------------------------------------------------------------------
-    const String& Animation::getName(void) const
+    String Animation::getName(void) const
     {
         return mName;
     }

@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreSceneNode.h"
 
 #include "OgreException.h"
@@ -37,20 +36,19 @@ http://www.gnu.org/copyleft/lesser.txt.
 namespace Ogre {
     //-----------------------------------------------------------------------
     SceneNode::SceneNode(SceneManager* creator) 
-    : Node(), mLightListDirty(true), mWireBoundingBox(0), mShowBoundingBox(false), mCreator(creator)
+    : Node(), mWireBoundingBox(0), mShowBoundingBox(false), mCreator(creator)
     {
         needUpdate();
     }
     //-----------------------------------------------------------------------
     SceneNode::SceneNode(SceneManager* creator, const String& name) 
-    : Node(name), mLightListDirty(true), mWireBoundingBox(0), mShowBoundingBox(false), mCreator(creator)
+    : Node(name), mWireBoundingBox(0), mShowBoundingBox(false), mCreator(creator)
     {
         needUpdate();
     }
     //-----------------------------------------------------------------------
     SceneNode::~SceneNode()
     {
-		detachAllObjects();
 		if (mWireBoundingBox) {
 			delete mWireBoundingBox;
 		}
@@ -60,7 +58,6 @@ namespace Ogre {
     {
         Node::_update(updateChildren, parentHasChanged);
         _updateBounds();
-        mLightListDirty = true;
 
     }
 
@@ -79,7 +76,7 @@ namespace Ogre {
         needUpdate();
     }
     //-----------------------------------------------------------------------
-    unsigned short SceneNode::numAttachedObjects(void) const
+    unsigned short SceneNode::numAttachedObjects(void)
     {
         return static_cast< unsigned short >( mObjectsByName.size() );
     }
@@ -162,25 +159,6 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void SceneNode::detachObject(MovableObject* obj)
-    {
-        ObjectMap::iterator i, iend;
-        iend = mObjectsByName.end();
-        for (i = mObjectsByName.begin(); i != iend; ++i)
-        {
-            if (i->second == obj)
-            {
-                mObjectsByName.erase(i);
-                break;
-            }
-        }
-        obj->_notifyAttached((SceneNode*)0);
-
-        // Make sure bounds get updated (must go right to the top)
-        needUpdate();
-
-    }
-    //-----------------------------------------------------------------------
     void SceneNode::attachCamera(Camera* cam)
     {
         attachObject(cam);
@@ -193,6 +171,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void SceneNode::detachAllObjects(void)
     {
+        mObjectsByName.clear();
 		ObjectMap::iterator itr;
 		MovableObject* ret;
 		for ( itr = mObjectsByName.begin(); itr != mObjectsByName.end(); itr++ )
@@ -200,7 +179,6 @@ namespace Ogre {
 		  ret = itr->second;
 		  ret->_notifyAttached((SceneNode*)0);
 		}
-        mObjectsByName.clear();
         // Make sure bounds get updated (must go right to the top)
         needUpdate();
     }
@@ -289,7 +267,7 @@ namespace Ogre {
 		mShowBoundingBox = bShow;
 	}
 
-	bool SceneNode::getShowBoundingBox() const {
+	bool SceneNode::getShowBoundingBox() {
 		return mShowBoundingBox;
 	}
 
@@ -315,7 +293,7 @@ namespace Ogre {
         return ObjectIterator(mObjectsByName.begin(), mObjectsByName.end());
     }
     //-----------------------------------------------------------------------
-    SceneManager* SceneNode::getCreator(void) const
+    SceneManager* SceneNode::getCreator(void)
     {
         return mCreator;
     }
@@ -351,30 +329,6 @@ namespace Ogre {
         }
 	    mChildren.clear();
         needUpdate();
-    }
-    //-----------------------------------------------------------------------
-	SceneNode* SceneNode::createChildSceneNode(const Vector3& translate, 
-        const Quaternion& rotate)
-	{
-		return static_cast<SceneNode*>(this->createChild(translate, rotate));
-	}
-    //-----------------------------------------------------------------------
-    SceneNode* SceneNode::createChildSceneNode(const String& name, const Vector3& translate, 
-		const Quaternion& rotate)
-	{
-		return static_cast<SceneNode*>(this->createChild(name, translate, rotate));
-	}
-    //-----------------------------------------------------------------------
-    const LightList& SceneNode::getLights(void) const
-    {
-        if (mLightListDirty)
-        {
-            // Use SceneManager to calculate
-            mCreator->_populateLightList(this->_getDerivedPosition(), mLightList);
-            mLightListDirty = false;
-        }
-        return mLightList;
-
     }
 
 

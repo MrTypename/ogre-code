@@ -22,7 +22,6 @@ along with this library; if not, write to the Free Software Foundation,
 Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA or go to
 http://www.gnu.org/copyleft/lesser.txt
 -------------------------------------------------------------------------*/
-#include "OgreStableHeaders.h"
 //---- ORIGINAL COPYRIGHT FOLLOWS -------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Copyright 2000, Paul Nettle. All rights reserved.
@@ -1434,7 +1433,7 @@ namespace Ogre
 
             // There isn't a way to determine the new handler, except through setting it. So we'll just set it to NULL, then
             // set it back again.
-            std::new_handler nh = std::set_new_handler(0);
+            new_handler nh = std::set_new_handler(0);
             std::set_new_handler(nh);
 
             // If there is an error handler, call it
@@ -1474,7 +1473,7 @@ namespace Ogre
 
             // There isn't a way to determine the new handler, except through setting it. So we'll just set it to NULL, then
             // set it back again.
-            std::new_handler    nh = std::set_new_handler(0);
+            new_handler    nh = std::set_new_handler(0);
             std::set_new_handler(nh);
 
             // If there is an error handler, call it
@@ -1520,7 +1519,7 @@ namespace Ogre
             // There isn't a way to determine the new handler, except through setting it. So we'll just set it to NULL, then
             // set it back again.
 
-            std::new_handler    nh = std::set_new_handler(0);
+            new_handler    nh = std::set_new_handler(0);
             std::set_new_handler(nh);
 
             // If there is an error handler, call it
@@ -1567,7 +1566,7 @@ namespace Ogre
 
             // There isn't a way to determine the new handler, except through 
             // setting it. So we'll just set it to NULL, then set it back again.
-            std::new_handler nh = std::set_new_handler(0);
+            new_handler nh = std::set_new_handler(0);
             std::set_new_handler(nh);
 
             // If there is an error handler, call it
@@ -1639,7 +1638,7 @@ namespace Ogre
         dumpLeakReport();    
     }
 
-    unsigned MemoryManager::_getProcessID()
+    FORCEINLINE unsigned MemoryManager::_getProcessID()
     {
         return ++m_uProcessIDs;
     }

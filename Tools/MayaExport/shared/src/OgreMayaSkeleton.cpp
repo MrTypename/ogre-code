@@ -1,25 +1,24 @@
 /*
-============================================================================
+===============================================================================
 This source file is part of the Ogre-Maya Tools.
 Distributed as part of Ogre (Object-oriented Graphics Rendering Engine).
-Copyright (C) 2003 Fifty1 Software Inc., Bytelords
 
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-or go to http://www.gnu.org/licenses/gpl.txt
-============================================================================
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+===============================================================================
 */
+
 #include "OgreMayaSkeleton.h"
 #include "OgreMayaOptions.h"
 
@@ -111,7 +110,7 @@ namespace OgreMaya {
 
         if(!_querySkeletonAnim())
             return false;
-        
+
         {
             ofstream out(OPTIONS.outSkelFile.c_str());
 
@@ -134,7 +133,9 @@ namespace OgreMaya {
             for(it=jointList.begin(), end=jointList.end(); it!=end; ++it) {
                 
                 SkeletonJoint& j = **it;
-                                
+
+                
+                cout << "\t" << j.name << " [" << j.parentName << "]\n";
                 /*
                 cout << "* worldMatrix:\n";
                 printMMatrix(j.worldMatrix);
@@ -239,51 +240,47 @@ namespace OgreMaya {
 	*/	
 	//	--------------------------------------------------------------------------
 
-	bool SkeletonGenerator::_querySkeleton() {
-
-        cout << "\nSkeletonGenerator::_querySkeleton\n";
+	bool SkeletonGenerator::_querySkeleton()	{
 		
         jointList.clear();
 
 
-	    MItDag    kDagIt(MItDag::kDepthFirst, MFn::kJoint);
+	    MItDag    kDagIt( MItDag::kDepthFirst, MFn::kJoint );
 	    MDagPath  kRootPath;
 
 	    MStatus   kStatus;
 
-        kDagIt.getPath(kRootPath);
+	    kDagIt.getPath( kRootPath );
 
-		// check if valid path
-		if(!kRootPath.isValid()) {
-			cout << "\tcan not find parent joint\n"; 
-            return false;
-		}
-        else {
-            cout << "\tfound parent joint \""<<kRootPath.partialPathName().asChar()<<"\"\n"; 
-        }
-
-        /*
-        // is this really necessary?
-	    // check for skeleton root joint
+	    //Get the parent transform for the skeleton
 	    {
 		    MFnIkJoint    kJointFn( kRootPath.node() );
+		    unsigned int  uiNumParents = kJointFn.parentCount();
+
+		    if( uiNumParents != 1 )
+			    return 0;
 
 		    MObject kParentObj = kJointFn.parent(0);
 
-		    // root joint can not have parent joint
-            if(!kParentObj.hasFn( MFn::kJoint)) {
-			    cout << "\tParent joint found: \"" << kJointFn.partialPathName().asChar() << "\"\n";
+		    // is the parent a transform node?
+		    //if( kParentObj.hasFn( MFn::kTransform ) ) {
+            if( !kParentObj.hasFn( MFn::kJoint ) ) {                            
+                /*
+			    MFnTransform kTransFn( kParentObj );
+			    MTransformationMatrix kTransMatrix = kTransFn.transformation();
+                */
+
+			    cout << "\tParent object found: \"" << kJointFn.partialPathName().asChar() << "\"\n";
 		    }
 		    else {
                 MFnDagNode kDagNodeFn(kParentObj);
 			    cout << "\troot joint can not have joint as parent, PATH:\""<<kDagNodeFn.partialPathName().asChar()<<"\"\n";
 			    return 0;
 		    }
-	    }
-        */
+	    }	
 
 	    //Setup skeleton
-        cout << "\tsetup skeleton\n";
+        cout << "\tSetup skeleton\n";
 	    int uiNumJoints = 0;
 
 	    for( ; !kDagIt.isDone(); kDagIt.next(), ++uiNumJoints ) {
@@ -304,7 +301,7 @@ namespace OgreMaya {
 
 		    // can only have one parent
 		    if( uiNumParents != 1 ) {
-			    cout << "\t[ERROR] joint has " << uiNumParents << " parents (only 1 allowed)" << '\n';
+			    cout << "ERROR: joint has " << uiNumParents << " parents (only 1 allowed)" << '\n';
 			    return 0;
 		    }
 
@@ -330,7 +327,7 @@ namespace OgreMaya {
 		    kStatus = kBindMatrixPlug.getValue(kBindMatrixObject);
 
 		    if( kStatus != MStatus::kSuccess ) {
-			    cout << "\t[ERROR] unable to get bind matrix plug object\n";
+			    cout << "ERROR: Unable to get bind matrix plug object\n";
 			    return 0;
 		    } 
 
@@ -339,7 +336,7 @@ namespace OgreMaya {
 		    MMatrix kBindMatrix = kMatrixDataFn.matrix( &kStatus );
 
 		    if( kStatus != MStatus::kSuccess ) {
-			    cout << "\t[ERROR] unable to get bind matrix data from plug object\n";
+			    cout << "ERROR: Unable to get bind matrix data from plug object\n";
 			    return 0;
 		    }
 
@@ -348,15 +345,15 @@ namespace OgreMaya {
 	    }
 
 
-        // if  numJoints == 0, we only have single root bone in skeleton
-        if(!uiNumJoints) {
-		    return true;            
-        }        
+	    if( !uiNumJoints )
+		    return true;
+        
 
 
 	    //Calculate relative position and rotation data
-        cout << "\tcalculate relative position and rotation data\n";
+        cout << "\tCalculate relative position and rotation data\n";
 	    
+
 		SkeletonJointList::iterator jointIt  = jointList.begin();
 		SkeletonJointList::iterator jointEnd = jointList.end();
 		  
@@ -397,8 +394,6 @@ namespace OgreMaya {
 
     bool SkeletonGenerator::_querySkeletonAnim() {
 
-        cout << "\nSkeletonGenerator::_querySkeletonAnim\n";
-
         animations.clear();
 
 	    MTime kTimeMin   = MAnimControl::minTime();
@@ -412,7 +407,7 @@ namespace OgreMaya {
 	    
 	    MAnimControl kAnimControl;
 
-	    cout << "\tanimation start: " << iTimeMin << " end: " << iTimeMax << '\n';
+	    cout << "SkeletonGenerator: Animation start: " << iTimeMin << " end: " << iTimeMax << '\n';
 
 	    if( iFrames <= 1 )
 		    return false;
@@ -430,7 +425,7 @@ namespace OgreMaya {
             int frameCount = to-from+1;
             
             if(from < iTimeMin || to > iTimeMax || !(frameCount>0)) {
-                cout << "\t[ERROR] Illegal Animation Range\n";
+                cout << "SkeletonGenerator: ERROR Illegal Animation Range\n";
                 continue;
             }
 

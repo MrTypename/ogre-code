@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreOverlayManager.h"
 #include "OgreStringVector.h"
@@ -521,17 +520,17 @@ namespace Ogre {
         
     }
     //---------------------------------------------------------------------
-    bool OverlayManager::hasViewportChanged(void) const
+    bool OverlayManager::hasViewportChanged(void)
     {
         return mViewportDimensionsChanged;
     }
     //---------------------------------------------------------------------
-    int OverlayManager::getViewportHeight(void) const
+    int OverlayManager::getViewportHeight(void)
     {
         return mLastViewportHeight;
     }
     //---------------------------------------------------------------------
-    int OverlayManager::getViewportWidth(void) const
+    int OverlayManager::getViewportWidth(void)
     {
         return mLastViewportWidth;
     }

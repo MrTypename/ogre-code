@@ -37,6 +37,11 @@ email                : kenny@sparksuit.com
 #define __EVENT_QUEUE_H__
 
 #include "OgrePrerequisites.h"
+#include "OgreResourceManager.h"
+#include "OgreSingleton.h"
+#include "OgreEventDispatcher.h"
+
+#include <queue>
 
 namespace Ogre {
 

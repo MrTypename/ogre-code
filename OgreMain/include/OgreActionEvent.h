@@ -52,6 +52,7 @@ email                : kenny@sparksuit.com
 #include "OgrePrerequisites.h"
 #include "OgreString.h"
 #include "OgreInputEvent.h"
+#include "OgreActionTarget.h"
 
 namespace Ogre {
 
@@ -143,7 +144,7 @@ namespace Ogre {
 		 * 
 		 * @return a string identifying the event and its associated command 
 		 */
-		String paramString() const;
+		String paramString();
 
     };
 

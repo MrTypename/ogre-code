@@ -30,7 +30,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreLog.h"
 #include "OgreSingleton.h"
-#include "OgreString.h"
 
 namespace Ogre {
 

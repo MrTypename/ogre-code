@@ -27,6 +27,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgrePrerequisites.h"
 
+#include "OgreFrameListener.h"
 #include "OgreSharedPtr.h"
 
 namespace Ogre {
@@ -140,9 +141,9 @@ namespace Ogre {
         virtual ~Controller();
 
         void setSource(SharedPtr<ControllerValue> src);
-        SharedPtr<ControllerValue> getSource(void) const;
+        SharedPtr<ControllerValue> getSource(void);
         void setDestination(SharedPtr<ControllerValue> dest);
-        SharedPtr<ControllerValue> getDestination(void) const;
+        SharedPtr<ControllerValue> getDestination(void);
 
         /// Returns true if this controller is currently enabled
         bool getEnabled(void) const;
@@ -156,7 +157,7 @@ namespace Ogre {
 
         /** Returns a pointer to the function object used by this controller.
         */
-        SharedPtr<ControllerFunction> getFunction(void) const;
+        SharedPtr<ControllerFunction> getFunction(void);
 
         void update(void);
     };

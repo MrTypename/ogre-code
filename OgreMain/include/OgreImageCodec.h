@@ -26,7 +26,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define _ImageCodec_H__
 
 #include "OgreCodec.h"
-#include "OgreCommon.h"
+#include "OgreImage.h"
 
 namespace Ogre {
 
@@ -37,8 +37,8 @@ namespace Ogre {
     */
     class _OgreExport ImageCodec : public Codec
     {
-	private:
-		static bool _is_initialised;
+	protected:
+		static bool _is_initialized;
 
     public:
         /** Codec return class for images. Has imformation about the size and the
@@ -52,21 +52,15 @@ namespace Ogre {
             PixelFormat format;
 
         public:
-            String dataType() const
+            String dataType()
             {
                 return "ImageData";
             }
         };
 
     public:
-        ImageCodec()
-        {
-            initialiseIL();
-        }
-        virtual ~ImageCodec() {}
-
         virtual void code( const DataChunk& input, DataChunk* output, ... ) const = 0;
-        virtual CodecData * decode( const DataChunk& input, DataChunk* output, ... ) const;
+        virtual CodecData * decode( const DataChunk& input, DataChunk* output, ... ) const = 0;
         /** Encodes data to a file.
         @param input Chunk containing data to write
         @param outFileName Filename to output to (extension implies type)
@@ -75,10 +69,6 @@ namespace Ogre {
         void codeToFile( const DataChunk& input, const String& outFileName, CodecData* pData) const;
 
         virtual String getType() const = 0;
-
-        virtual unsigned int getILType(void) const = 0;
-
-        void initialiseIL(void);
     };
 
 } // namespace

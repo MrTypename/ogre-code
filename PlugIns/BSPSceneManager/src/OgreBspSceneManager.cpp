@@ -39,8 +39,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreBspSceneNode.h"
 #include "OgreStringConverter.h"
 #include "OgreLogManager.h"
-#include "OgreTechnique.h"
-#include "OgrePass.h"
 
 
 #include <fstream>
@@ -165,16 +163,17 @@ namespace Ogre {
             if (mRenderOp.indexData->indexCount == 0)
                 continue;
 
-            Technique::PassIterator pit = thisMaterial->getTechnique(0)->getPassIterator();
+            int matLayersLeft = thisMaterial->getNumTextureLayers();
 
-            while (pit.hasMoreElements())
+            do
             {
-                setPass(pit.getNext());
+                // Set material - will return non-zero if multipass required so loop will continue, 0 otherwise
+                matLayersLeft = setMaterial(thisMaterial, matLayersLeft);
 
                 mDestRenderSystem->_render(mRenderOp);
 
 
-            } 
+            } while (matLayersLeft > 0);
 
 
         } // for each material
@@ -292,7 +291,7 @@ namespace Ogre {
             // Get Material pointer by handle
             pMat = getMaterial(faceGroup->materialHandle);
             // Check normal (manual culling)
-            ManualCullingMode cullMode = pMat->getTechnique(0)->getPass(0)->getManualCullingMode();
+            ManualCullingMode cullMode = pMat->getManualCullingMode();
             if (cullMode != MANUAL_CULL_NONE)
             {
                 Real dist = faceGroup->plane.getDistance(cam->getDerivedPosition());

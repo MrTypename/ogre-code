@@ -39,10 +39,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 #define OGRE_RELEASE_ASSERT 0
 
-/** If set to >0, OGRE will always 'think' that the graphics card only has the
-    number of texture units specified. Very useful for testing multipass fallback.
+/** If set to 1, OGRE will always 'think' that the graphics card only has one
+    texture unit. Very useful for testing multipass fallback.
 */
-#define OGRE_PRETEND_TEXTURE_UNITS 0
+#define OGRE_TEST_MULTIPASS 0
 
 /** If set to 1, Real is typedef'ed to double. Otherwise, Real is typedef'ed
     to float.
@@ -58,13 +58,9 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 #define OGRE_MAX_TEXTURE_COORD_SETS 6
 
-/** Define max number of texture layers allowed per pass. 
+/** Define max number of texture layers allowed per material. 
 */
 #define OGRE_MAX_TEXTURE_LAYERS 8
-
-/** Define max number of lights allowed per pass. 
-*/
-#define OGRE_MAX_SIMULTANEOUS_LIGHTS 8
 
 /** Define max number of blending weights allowed per vertex.
 */
@@ -82,7 +78,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 // configure options
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
 #endif

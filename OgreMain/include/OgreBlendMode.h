@@ -26,6 +26,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define __BLENDMODE_H__
 
 #include "OgrePrerequisites.h"
+#include "OgreVector3.h"
 #include "OgreColourValue.h"
 
 namespace Ogre {
@@ -38,7 +39,7 @@ namespace Ogre {
         LBT_ALPHA
     };
 
-    /** List of valid texture blending operations, for use with TextureUnitState::setColourOperation.
+    /** List of valid texture blending operations, for use with Material::TextureLayer::setColourOperation.
         @remarks
             This list is a more limited list than LayerBlendOperationEx because it only
             includes operations that are supportable in both multipass and multitexture
@@ -57,8 +58,8 @@ namespace Ogre {
 
     };
 
-    /** Expert list of valid texture blending operations, for use with TextureUnitState::setColourOperationEx
-        and TextureUnitState::setAlphaOperation, and internally in the LayerBlendModeEx class. It's worth
+    /** Expert list of valid texture blending operations, for use with Material::TextureLayer::setColourOperationEx
+        and Material::TextureLayer::setAlphaOperation, and internally in the LayerBlendModeEx class. It's worth
         noting that these operations are for blending <i>between texture layers</i> and not between rendered objects
         and the existing scene. Because all of these modes are only supported in multitexture hardware it may be
         required to set up a fallback operation where this hardware is not available.
@@ -95,7 +96,7 @@ namespace Ogre {
     };
 
     /** List of valid sources of values for blending operations used
-        in TextureUnitState::setColourOperation and TextureUnitState::setAlphaOperation,
+        in Material::TextureLayer::setColourOperation and Material::TextureLayer::setAlphaOperation,
         and internally in the LayerBlendModeEx class.
     */
     enum LayerBlendSource
@@ -113,11 +114,11 @@ namespace Ogre {
     };
     /** Class which manages blending of both colour and alpha components.
         @remarks
-            This class is a utility class used by both TextureUnitState and
+            This class is a utility class used by both Material::TextureLayer and
             RenderSystem to wrap up the details of a blending operation. This blending
             operation could be used for blending colour or alpha in a texture layer.
             This class is really only for use by OGRE, since apps can deal with
-            blending modes through the TextureUnitState class methods
+            blending modes through the Material::TextureLayer class methods
             setColourOperation and setAlphaOperation.
         @par
             It's worth noting that these operations are for blending <i>between texture

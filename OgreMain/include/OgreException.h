@@ -149,7 +149,7 @@ namespace Ogre {
 
         /** Gets the error code.
         */
-        int getNumber(void) const throw();
+        int getNumber(void) throw();
 
         /** Retrieves a pointer to the last exception created.
         */

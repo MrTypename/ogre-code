@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreZip.h"
 
 #include "OgreArchiveManager.h"
@@ -224,7 +223,6 @@ namespace Ogre {
             mArchive = unzOpen( mName.c_str() );
 
         LogManager::getSingleton().logMessage( "Zip Archive codec for " + mName + " created.");
-        mIsLoaded = true;
     };
 
     //-----------------------------------------------------------------------

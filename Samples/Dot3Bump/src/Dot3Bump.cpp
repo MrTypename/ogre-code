@@ -401,14 +401,6 @@ protected:
 
 	void createScene(void)
     {
-        // First check that dot3 is supported
-        if (!Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_DOT3))
-        {
-            Except(1, "Your card does not support the DOT3 blending operation, so cannot "
-                "run this demo. Sorry!", 
-                "Dot3Bump::createScene");
-        }
-
 		// Set default filtering/anisotropy
 		MaterialManager::getSingleton().setDefaultTextureFiltering(TFO_ANISOTROPIC);
         // Set ambient light and fog
@@ -442,7 +434,7 @@ protected:
 		mEnt3 = mSceneMgr->createEntity("head", "ogrehead.mesh");
 		mEnt4 = mSceneMgr->createEntity("ball", "ball.mesh");
         // Attach to child of root node
-        mMainNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+        mMainNode = static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild());
 		mMainNode->attachObject(mEnt1);
 		mMainNode->attachObject(mEnt2);
 		mMainNode->attachObject(mEnt3);

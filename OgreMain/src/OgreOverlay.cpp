@@ -22,15 +22,12 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreOverlay.h"
 #include "OgreRoot.h"
 #include "OgreSceneManager.h"
 #include "OgreGuiContainer.h"
 #include "OgreCamera.h"
-#include "OgreQuaternion.h"
-#include "OgreVector3.h"
 
 
 namespace Ogre {
@@ -134,12 +131,12 @@ namespace Ogre {
         mTransformOutOfDate = true;
     }
     //---------------------------------------------------------------------
-    Real Overlay::getScrollX(void) const
+    Real Overlay::getScrollX(void)
     {
         return mScrollX;
     }
     //---------------------------------------------------------------------
-    Real Overlay::getScrollY(void) const
+    Real Overlay::getScrollY(void)
     {
         return mScrollY;
     }
@@ -173,7 +170,7 @@ namespace Ogre {
         mTransformOutOfDate = true;
     }
     //---------------------------------------------------------------------
-    Real Overlay::getRotate(void) const
+    Real Overlay::getRotate(void)
     {
         return mRotate;
     }
@@ -190,17 +187,17 @@ namespace Ogre {
         mTransformOutOfDate = true;
     }
     //---------------------------------------------------------------------
-    Real Overlay::getScaleX(void) const
+    Real Overlay::getScaleX(void)
     {
         return mScaleX;
     }
     //---------------------------------------------------------------------
-    Real Overlay::getScaleY(void) const
+    Real Overlay::getScaleY(void)
     {
         return mScaleY;
     }
     //---------------------------------------------------------------------
-    void Overlay::_getWorldTransforms(Matrix4* xform) const
+    void Overlay::_getWorldTransforms(Matrix4* xform)
     {
         if (mTransformOutOfDate)
         {
@@ -208,18 +205,6 @@ namespace Ogre {
         }
         *xform = mTransform;
 
-    }
-    //-----------------------------------------------------------------------
-    const Quaternion& Overlay::getWorldOrientation(void) const
-    {
-        // n/a
-        return Quaternion::IDENTITY;
-    }
-    //-----------------------------------------------------------------------
-    const Vector3& Overlay::getWorldPosition(void) const
-    {
-        // n/a
-        return Vector3::ZERO;
     }
     //---------------------------------------------------------------------
     void Overlay::_findVisibleObjects(Camera* cam, RenderQueue* queue)
@@ -251,7 +236,7 @@ namespace Ogre {
        
     }
     //---------------------------------------------------------------------
-    void Overlay::updateTransform(void) const
+    void Overlay::updateTransform(void)
     {
         // Ordering:
         //    1. Scale

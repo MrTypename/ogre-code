@@ -29,6 +29,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgrePrerequisites.h"
 #include "OgreGuiElement.h"
 #include "OgreIteratorWrappers.h"
+#include "OgreEventDispatcher.h"
 
 
 namespace Ogre {
@@ -100,11 +101,11 @@ namespace Ogre {
         virtual void _updateRenderQueue(RenderQueue* queue);
 
         /** Overridden from GuiElement. */
-		inline bool isContainer() const
+		inline bool isContainer()
 		{ return true; }
 
 		/** Should this container pass events to their children */
-		virtual inline bool isChildrenProcessEvents() const
+		virtual inline bool isChildrenProcessEvents()
 		{ return true; }
 
 		/** Should this container pass events to their children */

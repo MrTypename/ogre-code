@@ -68,16 +68,16 @@ namespace Ogre {
 
 		void processEvent(InputEvent* e) ;
 
-		const String& getActionCommand() const;
+		String getActionCommand();
 		void setActionCommand(const String& action);
 
-		bool isPressed() const;
+		bool isPressed();
 		virtual void setPressed(bool b);
 
-		bool isEnabled() const;
+		bool isEnabled();
 		virtual void setEnabled(bool b);
 
-		bool isMouseWithin() const;
+		bool isMouseWithin();
 		virtual void setMouseWithin(bool b);
     };
 }

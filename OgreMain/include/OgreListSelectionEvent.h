@@ -87,7 +87,7 @@ namespace Ogre {
 		 * 
 		 * @return a string identifying the event and its associated command 
 		 */
-		String paramString() const;
+		String paramString();
 
     };
 

@@ -27,8 +27,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgrePrerequisites.h"
 #include "OgreMaterial.h"
-#include "OgreBlendMode.h"
-#include "OgreTextureUnitState.h"
 
 namespace Ogre {
     /** Class for serializing a Material to a material.script.*/
@@ -53,9 +51,7 @@ namespace Ogre {
 
     protected:
 		void writeMaterial(const Material *pMat);
-        void MaterialSerializer::writeTechnique(const Technique* pTech);
-        void MaterialSerializer::writePass(const Pass* pPass);
-		void writeTextureUnit(const TextureUnitState *pTex);
+		void writeTextureLayer(const Material::TextureLayer *pTex);
 
 		void writeSceneBlendFactor(const SceneBlendFactor sbf_src, const SceneBlendFactor sbf_dest);
 		void writeSceneBlendFactor(const SceneBlendFactor sbf);
@@ -64,44 +60,40 @@ namespace Ogre {
 		void writeLayerBlendOperationEx(const LayerBlendOperationEx op);
 		void writeLayerBlendSource(const LayerBlendSource lbs);
 		
-		typedef std::multimap<TextureUnitState::TextureEffectType, TextureUnitState::TextureEffect> EffectMap;
+		typedef std::multimap<Material::TextureLayer::TextureEffectType, Material::TextureLayer::TextureEffect> EffectMap;
 
-		void writeRotationEffect(const TextureUnitState::TextureEffect effect, const TextureUnitState *pTex);
-		void writeTransformEffect(const TextureUnitState::TextureEffect effect, const TextureUnitState *pTex);
-		void writeScrollEffect(const TextureUnitState::TextureEffect effect, const TextureUnitState *pTex);
-		void writeEnvironmentMapEffect(const TextureUnitState::TextureEffect effect, const TextureUnitState *pTex);
+		void writeRotationEffect(const Material::TextureLayer::TextureEffect effect, const Material::TextureLayer *pTex);
+		void writeTransformEffect(const Material::TextureLayer::TextureEffect effect, const Material::TextureLayer *pTex);
+		void writeScrollEffect(const Material::TextureLayer::TextureEffect effect, const Material::TextureLayer *pTex);
+		void writeEnvironmentMapEffect(const Material::TextureLayer::TextureEffect effect, const Material::TextureLayer *pTex);
 
 	private:
 		String mBuffer;
 		bool mDefaults;
 
-		void beginSection(unsigned short level)
+		void beginSection(void)
 		{
-			mBuffer += "\n";
-            for (unsigned short i = 0; i < level; ++i)
-            {
-                mBuffer += "\t";
-            }
-            mBuffer += "{";
-		}
-		void endSection(unsigned short level)
-		{
-			mBuffer += "\n";
-            for (unsigned short i = 0; i < level; ++i)
-            {
-                mBuffer += "\t";
-            }
-            mBuffer += "}";
+			mBuffer += "\n{";
 		}
 
-		void writeAttribute(unsigned short level, const String& att)
+		void endSection(void)
 		{
-			mBuffer += "\n";
-            for (unsigned short i = 0; i < level; ++i)
-            {
-                mBuffer += "\t";
-            }
-            mBuffer += att;
+			mBuffer += "\n}\n";
+		}
+
+		void beginSubSection(void)
+		{
+			mBuffer += "\n\t{";
+		}
+
+		void endSubSection(void)
+		{
+			mBuffer += "\n\t}";
+		}
+
+		void writeAttribute(const String& att)
+		{
+			mBuffer += ("\n\t" + att);
 		}
 
 		void writeValue(const String& val)
@@ -109,16 +101,20 @@ namespace Ogre {
 			mBuffer += (" " + val);
 		}
 
-		void writeComment(unsigned short level, const String& comment)
+		void writeSubAttribute(const String& att)
 		{
-			mBuffer += "\n";
-            for (unsigned short i = 0; i < level; ++i)
-            {
-                mBuffer += "\t";
-            }
-            mBuffer += "// " + comment;
+			mBuffer += ("\n\t\t" + att);
 		}
 
+		void writeComment(const String& comment)
+		{
+			mBuffer += ("\n\t//" + comment);
+		}
+
+		void writeSubComment(const String& comment)
+		{
+			mBuffer += ("\n\t\t//" + comment);
+		}
     };
 }
 #endif

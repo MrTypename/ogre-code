@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreViewport.h"
 
 #include "OgreLogManager.h"
@@ -106,12 +105,7 @@ namespace Ogre {
 
         mUpdated = true;
     }
-	//---------------------------------------------------------------------
-	int Viewport::getZOrder(void) const
-	{
-		return mZOrder;
-	}
-	//---------------------------------------------------------------------
+    //---------------------------------------------------------------------
     RenderTarget* Viewport::getTarget(void) const
     {
         return mTarget;
@@ -177,7 +171,7 @@ namespace Ogre {
         mCamera->_renderScene(this, mShowOverlays);
     }
     //---------------------------------------------------------------------
-    void Viewport::setBackgroundColour(const ColourValue& colour)
+    void Viewport::setBackgroundColour(ColourValue colour)
     {
         mBackColour = colour;
     }

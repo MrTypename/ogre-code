@@ -46,12 +46,6 @@ namespace __gnu_cxx
     {
         size_t operator()( const Ogre::_StringBase _stringBase ) const 
         { 
-            /* This is the PRO-STL way, but it seems to cause problems with VC7.1
-               and in some other cases (although I can't recreate it)
-            hash<const char*> H;
-            return H(_stringBase.c_str());
-            */
-            /** This is our custom way */
             register size_t ret = 0;
             for( Ogre::_StringBase::const_iterator it = _stringBase.begin(); it != _stringBase.end(); ++it )
                 ret = 5 * ret + *it;
@@ -72,12 +66,6 @@ namespace stdext
 {
     template<> size_t hash_compare< Ogre::_StringBase, std::less< Ogre::_StringBase > >::operator ()( const Ogre::_StringBase& _stringBase ) const
     {
-        /* This is the PRO-STL way, but it seems to cause problems with VC7.1
-            and in some other cases (although I can't recreate it)
-        hash<const char*> H;
-        return H(_stringBase.c_str());
-        */
-        /** This is our custom way */
         register size_t ret = 0;
         for( Ogre::_StringBase::const_iterator it = _stringBase.begin(); it != _stringBase.end(); ++it )
             ret = 5 * ret + *it;
@@ -180,8 +168,6 @@ namespace Ogre {
 
             return *this;
         }
-        /// Constant blank string, useful for returning by ref where local does not exist
-        static String BLANK;
     };
 
 #ifdef GCC_3_1

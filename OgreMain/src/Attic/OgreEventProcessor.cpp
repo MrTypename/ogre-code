@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreEventProcessor.h"
 #include "OgreOverlayManager.h"
@@ -52,7 +51,6 @@ namespace Ogre {
     {
 		mEventQueue = 0;
 		mInputDevice = 0;
-        mRegisteredAsFrameListener = false;
     }
 
 //-----------------------------------------------------------------------------
@@ -83,12 +81,7 @@ namespace Ogre {
 	{
 
 		mEventQueue->activateEventQueue(false);
-
-        if(mRegisteredAsFrameListener)
-        {
-		    Root::getSingleton().removeFrameListener(this);
-            mRegisteredAsFrameListener = false;
-        }
+		Root::getSingleton().removeFrameListener(this);
 
 	}
 
@@ -115,14 +108,9 @@ namespace Ogre {
 
 
 //-----------------------------------------------------------------------------
-	void EventProcessor::startProcessingEvents(bool registerListener)
+	void EventProcessor::startProcessingEvents()
 	{
-        if(registerListener)
-        {
-		    Root::getSingleton().addFrameListener(this);
-            mRegisteredAsFrameListener = true;
-        }
-
+		Root::getSingleton().addFrameListener(this);
 		mEventQueue->activateEventQueue(true);
 	}
 

@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgrePatchSurface.h"
 
@@ -139,22 +138,22 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    const AxisAlignedBox& PatchSurface::getBounds(void) const
+    const AxisAlignedBox& PatchSurface::getBounds(void)
     {
         return mAABB;
     }
     //-----------------------------------------------------------------------
-    Real PatchSurface::getBoundingSphereRadius(void) const
+    Real PatchSurface::getBoundingSphereRadius(void)
     {
         return mBoundingSphere;
     }
     //-----------------------------------------------------------------------
-    size_t PatchSurface::getRequiredVertexCount(void) const
+    size_t PatchSurface::getRequiredVertexCount(void)
     {
         return mRequiredVertexCount;
     }
     //-----------------------------------------------------------------------
-    size_t PatchSurface::getRequiredIndexCount(void) const
+    size_t PatchSurface::getRequiredIndexCount(void)
     {
         return mRequiredIndexCount;
     }
@@ -272,7 +271,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    size_t PatchSurface::getCurrentIndexCount(void) const
+    size_t PatchSurface::getCurrentIndexCount(void)
     {
         return mCurrIndexCount;
     }

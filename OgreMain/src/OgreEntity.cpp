@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreEntity.h"
 
 #include "OgreMesh.h"
@@ -153,7 +152,7 @@ namespace Ogre {
 		return getSubEntity(index);
     }
     //-----------------------------------------------------------------------
-    unsigned int Entity::getNumSubEntities(void) const
+    unsigned int Entity::getNumSubEntities(void)
     {
         return static_cast< unsigned int >( mSubEntityList.size() );
     }
@@ -272,7 +271,6 @@ namespace Ogre {
         iend = subEntList->end();
         for (i = subEntList->begin(); i != iend; ++i)
         {
-            (*i)->mpMaterial->touch();
             queue->addRenderable(*i, mRenderQueueID, RENDERABLE_DEFAULT_PRIORITY);
         }
 
@@ -454,7 +452,7 @@ namespace Ogre {
 	void Entity::attachObjectImpl(MovableObject *pObject, TagPoint *pAttachingPoint)
 	{
 		mChildObjectList[pObject->getName()] = pObject;
-		pObject->_notifyAttached(pAttachingPoint, true);
+		pObject->_notifyAttached(pAttachingPoint);
 	}
 
     //-----------------------------------------------------------------------

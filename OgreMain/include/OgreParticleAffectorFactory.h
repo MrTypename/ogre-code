@@ -28,6 +28,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgrePrerequisites.h"
 #include "OgreParticleAffector.h"
+#include "OgreString.h"
 
 namespace Ogre {
 
@@ -62,7 +63,7 @@ namespace Ogre {
         };
 
         /** Returns the name of the factory, the name which identifies the particle affector type this factory creates. */
-        virtual String getName() const = 0;
+        virtual String getName() = 0;
 
         /** Creates a new affector instance.
         @remarks

@@ -47,7 +47,6 @@ Description: Defines an example frame listener which responds to frame events.
 #include "OgreReferenceAppLayer.h"
 #include "OgreKeyEvent.h"
 #include "OgreEventListeners.h"
-#include "OgreException.h"
 
 using namespace Ogre;
 using namespace OgreRefApp;

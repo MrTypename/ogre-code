@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgrePatchMesh.h"
 #include "OgreSubMesh.h"
 #include "OgreHardwareBufferManager.h"
@@ -95,7 +94,6 @@ namespace Ogre {
         // Set bounds
         this->_setBounds(mSurface.getBounds());
         this->_setBoundingSphereRadius(mSurface.getBoundingSphereRadius());
-        mIsLoaded = true;
 
     }
 

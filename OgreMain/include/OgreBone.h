@@ -92,14 +92,14 @@ namespace Ogre
         void setManuallyControlled(bool manuallyControlled);
 
         /** Getter for mManuallyControlled Flag */
-        bool isManuallyControlled() const;
+        bool isManuallyControlled();
 
         
         /** Gets the inverse transform which takes bone space to origin from the binding pose. 
         @remarks
             Internal use only.
         */
-        const Matrix4& _getBindingPoseInverseTransform(void) const;
+        Matrix4 _getBindingPoseInverseTransform(void);
 
     protected:
         /// The numeric handle of this bone

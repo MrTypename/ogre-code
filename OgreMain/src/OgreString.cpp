@@ -22,14 +22,12 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreString.h"
 
 #include "OgreStringVector.h"
 
 namespace Ogre {
 
-    String String::BLANK = String("");
     //-----------------------------------------------------------------------
     void String::trim(bool left, bool right)
     {

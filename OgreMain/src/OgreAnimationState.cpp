@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreAnimationState.h"
 
@@ -49,7 +48,7 @@ namespace Ogre
         setLength(length);
     }
     //---------------------------------------------------------------------
-    const String& AnimationState::getAnimationName() const
+    String AnimationState::getAnimationName() const
     {
         return mAnimationName;
     }

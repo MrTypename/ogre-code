@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreGuiControl.h"	
 #include "OgreActionEvent.h"
@@ -79,7 +78,7 @@ namespace Ogre {
 	}
 
     //-----------------------------------------------------------------------
-	const String& GuiControl::getActionCommand() const
+	String GuiControl::getActionCommand()
 	{ 
 		return mActionCommand;
 	}
@@ -91,7 +90,7 @@ namespace Ogre {
 	}
 
     //-----------------------------------------------------------------------
-	bool GuiControl::isPressed() const
+	bool GuiControl::isPressed()
 	{ 
 		return mPressed;
 	}
@@ -103,7 +102,7 @@ namespace Ogre {
 	}
 
     //-----------------------------------------------------------------------
-	bool GuiControl::isEnabled() const
+	bool GuiControl::isEnabled()
 	{ 
 		return mEnabled;
 	}
@@ -125,7 +124,7 @@ namespace Ogre {
 	}
 
     //-----------------------------------------------------------------------
-	bool GuiControl::isMouseWithin() const
+	bool GuiControl::isMouseWithin()
 	{ 
 		return mMouseWithin;
 	}

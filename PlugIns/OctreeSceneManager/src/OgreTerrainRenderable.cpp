@@ -591,18 +591,10 @@ void TerrainRenderable::getRenderOperation( RenderOperation& op )
 
 }
 
-void TerrainRenderable::getWorldTransforms( Matrix4* xform ) const
+void TerrainRenderable::getWorldTransforms( Matrix4* xform )
 {
-    *xform = mParentNode->_getFullTransform();
-}
-
-const Quaternion& TerrainRenderable::getWorldOrientation(void) const
-{
-    return mParentNode->_getDerivedOrientation();
-}
-const Vector3& TerrainRenderable::getWorldPosition(void) const
-{
-    return mParentNode->_getDerivedPosition();
+    *xform = Matrix4::IDENTITY;
+    *xform = *xform * mParentNode->_getFullTransform();
 }
 
 bool TerrainRenderable::_checkSize( int n )
@@ -981,10 +973,5 @@ Real TerrainRenderable::getSquaredViewDepth(const Camera* cam) const
     return diff.squaredLength();
 }
 
-//-----------------------------------------------------------------------
-const LightList& TerrainRenderable::getLights(void) const
-{
-    return mParentNode->getLights();
-}
 
 } //namespace

@@ -28,6 +28,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreImage.h"
 #include "OgreLogManager.h"
 
+#include "d3dutil.h"
+#include "d3dxcore.h"
 #include "OgreRoot.h"
 
 namespace Ogre {

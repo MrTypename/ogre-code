@@ -35,7 +35,7 @@ namespace Ogre {
     class _OgreParticleFXExport LinearForceAffectorFactory : public ParticleAffectorFactory
     {
         /** See ParticleAffectorFactory */
-        String getName() const { return "LinearForce"; }
+        String getName() { return "LinearForce"; }
 
         /** See ParticleAffectorFactory */
         ParticleAffector* createAffector(void)

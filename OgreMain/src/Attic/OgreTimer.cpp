@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreTimer.h"
 
 namespace Ogre
@@ -47,16 +46,5 @@ namespace Ogre
 	{
 		clock_t newClock = clock();
 		return (unsigned long)((float)(newClock-zeroClock) / ((float)CLOCKS_PER_SEC/1000.0)) ;
-	}
-
-	unsigned long Timer::getMicroseconds()
-	{
-		return getMicrosecondsCPU();
-	}
-	
-	unsigned long Timer::getMicrosecondsCPU()
-	{
-		clock_t newClock = clock();
-		return (unsigned long)((float)(newClock-zeroClock) / ((float)CLOCKS_PER_SEC/1000000.0)) ;
 	}
 }

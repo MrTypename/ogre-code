@@ -49,8 +49,8 @@ protected:
         // Give the plane a texture
         planeEnt->setMaterialName("Examples/TextureEffect1");
 
-        SceneNode* node = 
-            mSceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(-250,-40,-100));
+        SceneNode* node = static_cast<SceneNode*>(
+            mSceneMgr->getRootSceneNode()->createChild(Vector3(-250,-40,-100)));
 
         node->attachObject(planeEnt);
     }
@@ -62,8 +62,8 @@ protected:
 
         ent->setMaterialName("Examples/TextureEffect2");
         // Add entity to the root scene node
-        SceneNode* node = 
-            mSceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(200,50,150));
+        SceneNode* node = static_cast<SceneNode*>(
+            mSceneMgr->getRootSceneNode()->createChild(Vector3(200,50,150)));
 
         node->attachObject(ent);
 
@@ -104,7 +104,7 @@ protected:
         // Perform no dynamic lighting on the sky
         skyMat->setLightingEnabled(false);
         // Use a cloudy sky
-        TextureUnitState* t = skyMat->getTechnique(0)->getPass(0)->createTextureUnitState("clouds.jpg");
+        Material::TextureLayer* t = skyMat->addTextureLayer("clouds.jpg");
         // Scroll the clouds
         t->setScrollAnimation(0.15, 0);
 

@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 // RenderSystem implementation
 // Note that most of this class is abstract since
 //  we cannot know how to implement the behaviour without
@@ -247,7 +246,7 @@ namespace Ogre {
         return mActiveViewport;
     }
     //-----------------------------------------------------------------------
-    void RenderSystem::_setTextureUnitSettings(size_t texUnit, TextureUnitState& tl)
+    void RenderSystem::_setTextureUnitSettings(int texUnit, Material::TextureLayer& tl)
     {
         // This method is only ever called to set a texture unit to valid details
         // The method _disableTextureUnit is called to turn a unit off
@@ -259,7 +258,7 @@ namespace Ogre {
         _setTextureCoordSet(texUnit, tl.getTextureCoordSet());
 
         // Set texture layer filtering
-        _setTextureLayerFiltering(texUnit, tl.getTextureFiltering());
+        _setTextureLayerFiltering(texUnit, tl.getTextureLayerFiltering());
 
         // Set texture layer filtering
         _setTextureLayerAnisotropy(texUnit, tl.getTextureAnisotropy());
@@ -272,39 +271,39 @@ namespace Ogre {
         _setTextureAddressingMode(texUnit, tl.getTextureAddressingMode() );
 
         // Set texture effects
-        TextureUnitState::EffectMap::iterator effi;
+        Material::TextureLayer::EffectMap::iterator effi;
         // Iterate over new effects
         bool anyCalcs = false;
         for (effi = tl.mEffects.begin(); effi != tl.mEffects.end(); ++effi)
         {
             switch (effi->second.type)
             {
-            case TextureUnitState::ET_ENVIRONMENT_MAP:
-                if (effi->second.subtype == TextureUnitState::ENV_CURVED)
+            case Material::TextureLayer::ET_ENVIRONMENT_MAP:
+                if (effi->second.subtype == Material::TextureLayer::ENV_CURVED)
                 {
                     _setTextureCoordCalculation(texUnit, TEXCALC_ENVIRONMENT_MAP);
                     anyCalcs = true;
                 }
-                else if (effi->second.subtype == TextureUnitState::ENV_PLANAR)
+                else if (effi->second.subtype == Material::TextureLayer::ENV_PLANAR)
                 {
                     _setTextureCoordCalculation(texUnit, TEXCALC_ENVIRONMENT_MAP_PLANAR);
                     anyCalcs = true;
                 }
-                else if (effi->second.subtype == TextureUnitState::ENV_REFLECTION)
+                else if (effi->second.subtype == Material::TextureLayer::ENV_REFLECTION)
                 {
                     _setTextureCoordCalculation(texUnit, TEXCALC_ENVIRONMENT_MAP_REFLECTION);
                     anyCalcs = true;
                 }
-                else if (effi->second.subtype == TextureUnitState::ENV_NORMAL)
+                else if (effi->second.subtype == Material::TextureLayer::ENV_NORMAL)
                 {
                     _setTextureCoordCalculation(texUnit, TEXCALC_ENVIRONMENT_MAP_NORMAL);
                     anyCalcs = true;
                 }
                 break;
-	    case TextureUnitState::ET_BUMP_MAP:
-	    case TextureUnitState::ET_SCROLL:
-	    case TextureUnitState::ET_ROTATE:
-	    case TextureUnitState::ET_TRANSFORM:
+	    case Material::TextureLayer::ET_BUMP_MAP:
+	    case Material::TextureLayer::ET_SCROLL:
+	    case Material::TextureLayer::ET_ROTATE:
+	    case Material::TextureLayer::ET_TRANSFORM:
 	      break;
             }
         }
@@ -324,39 +323,68 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void RenderSystem::_disableTextureUnit(size_t texUnit)
+    void RenderSystem::_disableTextureUnit(int texUnit)
     {
         _setTexture(texUnit, false, "");
-    }
-    //---------------------------------------------------------------------
-    void RenderSystem::_disableTextureUnitsFrom(size_t texUnit)
-    {
-        for (size_t i = texUnit; i < mCapabilities->getNumTextureUnits(); ++i)
-        {
-            _disableTextureUnit(i);
-        }
+        mTextureUnits[texUnit].setBlank();
+
+
     }
     //---------------------------------------------------------------------
  	void RenderSystem::_setAnisotropy(int maxAnisotropy)
  	{
- 		for (int n = 0; n < mCapabilities->getNumTextureUnits(); n++)
+ 		for (int n = 0; n < mCapabilities->numTextureUnits(); n++)
  			_setTextureLayerAnisotropy(n, maxAnisotropy);
  	}
     //-----------------------------------------------------------------------
     void RenderSystem::setTextureFiltering(TextureFilterOptions fo)
     {
-        int units = mCapabilities->getNumTextureUnits();
+        int units = mCapabilities->numTextureUnits();
         for (int i = 0; i < units; ++i)
 			_setTextureLayerFiltering(i, fo);
     }
 
     //-----------------------------------------------------------------------
-    CullingMode RenderSystem::_getCullingMode(void) const
+    /*
+    void RenderSystem::_setMaterial(Material &mat)
+    {
+
+        // Set surface properties
+        _setSurfaceParams(mat.ambient, mat.diffuse, mat.specular, mat.emmissive, mat.shininess);
+
+        // Set global blending
+        _setSceneBlending(mat.getSourceBlendFactor(), mat.getDestBlendFactor());
+
+        // Set textures
+        // Note that it is assumed caller has checked that there are
+        // enough texture units to support multitexturing all layers
+        // If not they should be calling _setTexture separately per multipass render
+        // If the texture layers exceed the number of supported texture
+        // units, the remaining textures will not be displayed
+        int matTexLayers = mat.getNumTextureLayers();
+        for (int texLayer = 0; texLayer < _getNumTextureUnits(); ++texLayer)
+        {
+            if (texLayer >= matTexLayers)
+            {
+                // Run out of material texture layers before h/w
+                // Turn off these units
+                _setTexture(texLayer, false, "");
+            }
+            else
+            {
+                Material::TextureLayer* tl = mat.getTextureLayer(texLayer);
+                _setTextureUnitSettings(texLayer, *tl);
+            }
+        }
+    }
+    */
+    //-----------------------------------------------------------------------
+    CullingMode RenderSystem::_getCullingMode(void)
     {
         return mCullingMode;
     }
     //-----------------------------------------------------------------------
-    bool RenderSystem::getWaitForVerticalBlank(void) const
+    bool RenderSystem::getWaitForVerticalBlank(void)
     {
         return mVSync;
     }

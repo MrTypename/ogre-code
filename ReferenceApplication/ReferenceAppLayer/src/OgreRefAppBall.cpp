@@ -45,7 +45,7 @@ namespace OgreRefApp
         // Create visual presence
         SceneManager* sm = World::getSingleton().getSceneManager();
         mEntity = sm->createEntity(name, "sphere.mesh");
-        mSceneNode = sm->getRootSceneNode()->createChildSceneNode(name);
+        mSceneNode = static_cast<SceneNode*>(sm->getRootSceneNode()->createChild(name));
         // Scale down, default size is 100
         Real scale = mRadius / 100.0f;
         mSceneNode->scale(scale, scale, scale);

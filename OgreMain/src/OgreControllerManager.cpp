@@ -22,11 +22,10 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreControllerManager.h"
 
+#include "OgreMaterial.h"
 #include "OgreLogManager.h"
-#include "OgreTextureUnitState.h"
 
 
 namespace Ogre {
@@ -54,7 +53,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ControllerManager::updateAllControllers(void)
     {
-        ControllerList::const_iterator ci;
+        ControllerList::iterator ci;
         for (ci = mControllers.begin(); ci != mControllers.end(); ++ci)
         {
             (*ci)->update();
@@ -71,12 +70,12 @@ namespace Ogre {
         mControllers.clear();
     }
     //-----------------------------------------------------------------------
-    SharedPtr<ControllerValue> ControllerManager::getFrameTimeSource(void) const
+    SharedPtr<ControllerValue> ControllerManager::getFrameTimeSource(void)
     {
         return mFrameTimeController;
     }
     //-----------------------------------------------------------------------
-    Controller* ControllerManager::createTextureAnimator(TextureUnitState* layer, Real sequenceTime)
+    Controller* ControllerManager::createTextureAnimator(Material::TextureLayer* layer, Real sequenceTime)
     {
         SharedPtr<ControllerValue> texVal(new TextureFrameControllerValue(layer));
         SharedPtr<ControllerFunction> animFunc(new AnimationControllerFunction(sequenceTime));
@@ -84,7 +83,7 @@ namespace Ogre {
         return createController(mFrameTimeController, texVal, animFunc);
     }
     //-----------------------------------------------------------------------
-    Controller* ControllerManager::createTextureScroller(TextureUnitState* layer, Real uSpeed, Real vSpeed)
+    Controller* ControllerManager::createTextureScroller(Material::TextureLayer* layer, Real uSpeed, Real vSpeed)
     {
         Controller* ret = 0;
 
@@ -124,7 +123,7 @@ namespace Ogre {
         return ret;
     }
     //-----------------------------------------------------------------------
-    Controller* ControllerManager::createTextureRotater(TextureUnitState* layer, Real speed)
+    Controller* ControllerManager::createTextureRotater(Material::TextureLayer* layer, Real speed)
     {
         SharedPtr<ControllerValue> val;
         SharedPtr<ControllerFunction> func;
@@ -139,31 +138,31 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    Controller* ControllerManager::createTextureWaveTransformer(TextureUnitState* layer,
-        TextureUnitState::TextureTransformType ttype, WaveformType waveType, Real base, Real frequency, Real phase, Real amplitude)
+    Controller* ControllerManager::createTextureWaveTransformer(Material::TextureLayer* layer,
+        Material::TextureLayer::TextureTransformType ttype, WaveformType waveType, Real base, Real frequency, Real phase, Real amplitude)
     {
         SharedPtr<ControllerValue> val;
         SharedPtr<ControllerFunction> func;
 
         switch (ttype)
         {
-        case TextureUnitState::TT_TRANSLATE_U:
+        case Material::TextureLayer::TT_TRANSLATE_U:
             // Target value is a u scroll
             val.bind(new TexCoordModifierControllerValue(layer, true));
             break;
-        case TextureUnitState::TT_TRANSLATE_V:
+        case Material::TextureLayer::TT_TRANSLATE_V:
             // Target value is a v scroll
             val.bind(new TexCoordModifierControllerValue(layer, false, true));
             break;
-        case TextureUnitState::TT_SCALE_U:
+        case Material::TextureLayer::TT_SCALE_U:
             // Target value is a u scale
             val.bind(new TexCoordModifierControllerValue(layer, false, false, true));
             break;
-        case TextureUnitState::TT_SCALE_V:
+        case Material::TextureLayer::TT_SCALE_V:
             // Target value is a v scale
             val.bind(new TexCoordModifierControllerValue(layer, false, false, false, true));
             break;
-        case TextureUnitState::TT_ROTATE:
+        case Material::TextureLayer::TT_ROTATE:
             // Target value is texture coord rotation
             val.bind(new TexCoordModifierControllerValue(layer, false, false, false, false, true));
             break;

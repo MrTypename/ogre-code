@@ -1,26 +1,3 @@
-/*
-============================================================================
-This source file is part of the Ogre-Maya Tools.
-Distributed as part of Ogre (Object-oriented Graphics Rendering Engine).
-Copyright (C) 2003 Fifty1 Software Inc.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-or go to http://www.gnu.org/licenses/gpl.txt
-============================================================================
-*/
-
 namespace -add "maya2ogre";
 namespace -set "maya2ogre";
 
@@ -31,29 +8,21 @@ global proc ExportToOgre()
 	saveFileInfo;
 	
 	// ===== Files and directories
-	string $sceneFile    = `file -query -sceneName`;
-	string $mayaFile     = basename($sceneFile, "");
-	string $sceneDir     = toNativePath(dirname($sceneFile));
-	string $baseFile     = basename($sceneFile, ".mb");
-	string $outputDir    = toNativePath(`textField -query -text OutputDirectory`);
-	string $meshFile     = toNativePath(`textField -query -text ExportMeshFilename`);
+	string $sceneFile = `file -query -sceneName`;
+	string $mayaFile = basename(`file -query -sceneName`, "");
+	string $sceneDir = toNativePath(dirname($sceneFile));
+	string $baseFile = basename($sceneFile, ".mb");
+	string $outputDir = toNativePath(`textField -query -text OutputDirectory`);
+	string $meshFile = toNativePath(`textField -query -text ExportMeshFilename`);
 	string $materialFile = toNativePath(`textField -query -text ExportMaterialFilename`);
 	string $skeletonFile = toNativePath(`textField -query -text ExportSkeletonFilename`);
 	
 
-	// ===== Make working copy of Maya file
-	// (Removes need to save before exporting)
-	string $mayaWorkingFile = `internalVar -userScriptDir` + "maya2ogre.mb";
-	file -rename $mayaWorkingFile;
-	file -save -force;
-	file -rename $mayaFile;
-
-	
 	// ===== Options
 	string $options = "";
 	
 	// --- Common params
-	$options += " -in \"" + $mayaWorkingFile + "\"";
+	$options += " -in " + $mayaFile;
 	string $materialPrefix = `textField -query -text MaterialPrefix`;
 	if ($materialPrefix != "") 
 	{
@@ -65,7 +34,7 @@ global proc ExportToOgre()
 	int $convertMesh = `checkBox -query -value ExportMeshBinary`;
 	if ($exportMesh)
 	{
-		$options += " -mesh \"" + $outputDir + $meshFile + "\"";
+		$options += " -mesh " + $outputDir + $meshFile;
 
 		if (`checkBox -query -value ExportMeshVBA`)
 		{
@@ -89,7 +58,7 @@ global proc ExportToOgre()
 	int $exportMaterial = `checkBox -query -value ExportMaterial`;
 	if ($exportMaterial)
 	{
-		$options += " -mat \"" + $outputDir + $materialFile + "\"";
+		$options += " -mat " + $outputDir + $materialFile;
 	}
 
 	// --- Skeleton/Animation export
@@ -97,7 +66,7 @@ global proc ExportToOgre()
 	int $convertSkeleton = `checkBox -query -value ExportSkeletonBinary`;
 	if ($exportSkeleton)
 	{
-		$options += " -skel \"" + $outputDir + $skeletonFile + "\"";
+		$options += " -skel " + $outputDir + $skeletonFile;
 		
 		if (`checkBox -query -value ExportAnim`)
 		{
@@ -161,12 +130,12 @@ global proc ExportToOgre()
 		$commands += "popd" + "\n";
 		$commands += "pause" + "\n";
 		
-		string $commandFile = `internalVar -userScriptDir` + "maya2ogre_mel.bat";
+		string $commandFile = `internalVar -userScriptDir` + "/maya2ogre_mel.bat";
 		$fileID = `fopen $commandFile "w"`;
 		fprint $fileID $commands;
 		fclose $fileID;
 
-		system("start \"" + `toNativePath $commandFile` + "\"");
+		system("start " + toNativePath($commandFile));
 	}
 	
 	// --- Linux

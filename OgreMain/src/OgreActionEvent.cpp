@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreString.h"
 #include "OgreActionEvent.h"
@@ -48,7 +47,7 @@ namespace Ogre {
 
 
     //-----------------------------------------------------------------------
-	String ActionEvent::paramString() const {
+	String ActionEvent::paramString() {
 		String typeStr;
 		switch(mId) {
 		  case AE_ACTION_PERFORMED:

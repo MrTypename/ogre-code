@@ -64,7 +64,7 @@ namespace Ogre
 
 	    void addBaseParameters(void);
 
-		inline bool isKeyEnabled() const
+		inline bool isKeyEnabled()
 		{ return true; }
 		
 		void processEvent(InputEvent* e) ;

@@ -69,7 +69,7 @@ Material *NaturePatchManager::createTerrainMaterial()
     // START TEST!!!
     Material *mMaterial = mSceneRoot->getCreator()->createMaterial("NatureQuadMaterial" + toString(count++));
 #if USE_TEXTURES
-    TextureUnitState *layer;
+    Material::TextureLayer *layer;
 
     layer = mMaterial->addTextureLayer("grass_1024.jpg", 0);
     layer->setColourOperation(LBO_REPLACE);
@@ -480,7 +480,7 @@ bool NaturePatchManager::loadPatch(int x, int y, int edge)
 		addToRenderQueue(mPatches[idx]);
 
 		String name = "NaturePatch["+toString(x)+","+toString(y)+"]";
-		SceneNode *sn = mSceneRoot->createChildSceneNode(name);
+		SceneNode *sn = static_cast<SceneNode*>(mSceneRoot->createChild(name));
 		sn->attachObject(mPatches[idx]);
 
 //		std::cout << "ADDING: " << name << std::endl;

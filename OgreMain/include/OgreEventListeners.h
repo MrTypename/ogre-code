@@ -62,7 +62,7 @@ namespace Ogre {
 		 * Returns whether or not the listener is a multicaster
 		 */
 	public:
-		virtual bool isMulticaster() const
+		virtual bool isMulticaster()
 		{ return false; }
 
 	};

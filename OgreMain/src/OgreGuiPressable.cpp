@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreGuiPressable.h"	
 #include "OgreActionEvent.h"
@@ -46,7 +45,7 @@ namespace Ogre {
 	}
 
     //-----------------------------------------------------------------------
-	const String& GuiPressable::getActionCommand() const
+	String GuiPressable::getActionCommand()
 	{ 
 		return mActionCommand;
 	}
@@ -58,7 +57,7 @@ namespace Ogre {
 	}
 
     //-----------------------------------------------------------------------
-	bool GuiPressable::isPressed() const
+	bool GuiPressable::isPressed()
 	{ 
 		return mPressed;
 	}

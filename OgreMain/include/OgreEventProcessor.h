@@ -64,6 +64,7 @@ email                : kenny@sparksuit.com
 #include "OgreSingleton.h"
 #include "OgreFrameListener.h"
 #include "OgreMouseTarget.h"
+#include "OgreActionTarget.h"
 #include "OgreKeyTarget.h"
 #include "OgreMouseMotionTarget.h"
 
@@ -98,16 +99,16 @@ namespace Ogre {
 		InputReader* mInputDevice;
 		typedef std::vector<EventDispatcher*> DispatcherList;
 		DispatcherList mDispatcherList;
-        bool mRegisteredAsFrameListener;
 
     public:
         EventProcessor();
         virtual ~EventProcessor();
 
 		/**
-		 * Registers FrameListener, and activates the queue
+		 * Removes this from being a FrameListener,
+		 * and deactivates the queue
 		 */
-		void startProcessingEvents(bool registerListener=true);
+		void startProcessingEvents();
 
 		/**
 		 * Removes this from being a FrameListener,
@@ -187,7 +188,7 @@ namespace Ogre {
         */
         static EventProcessor& getSingleton(void);
 
-		bool isKeyEnabled() const
+		bool isKeyEnabled() 
 		{ return true; }
 
 		inline InputReader* getInputReader()

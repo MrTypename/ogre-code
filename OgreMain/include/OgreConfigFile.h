@@ -53,9 +53,9 @@ namespace Ogre {
         void load(const String& filename, const String& separators = "\t:=", bool trimWhitespace = true);
 
         /** Gets the first setting from the file with the named key. */
-        String getSetting(const String& key) const;
+        String getSetting(const String& key);
         /** Gets all settings from the file with the named key. */
-        StringVector getMultiSetting(const String& key) const;
+        StringVector getMultiSetting(const String& key);
 
         typedef MapIterator< std::multimap<String, String> > SettingsIterator;
         /** Gets an iterator for stepping through all the keys / values in the file. */

@@ -29,7 +29,6 @@ http://www.gnu.org/copyleft/lesser.txt
 #include "OgreOverlayManager.h"
 #include "OgreHardwareBufferManager.h"
 #include "OgreHardwareVertexBuffer.h"
-#include "OgreException.h"
 
 namespace Ogre {
 
@@ -97,7 +96,7 @@ namespace Ogre {
 
     }
 
-    void TextAreaGuiElement::checkMemoryAllocation( size_t numChars )
+    void TextAreaGuiElement::checkMemoryAllocation( uint numChars )
     {
         if( mAllocSize < numChars)
         {
@@ -432,7 +431,7 @@ namespace Ogre {
         updateColours();
     }
     //---------------------------------------------------------------------
-    const ColourValue& TextAreaGuiElement::getColour(void) const
+    ColourValue TextAreaGuiElement::getColour(void) const
     {
         // Either one
         return mColourTop;
@@ -445,7 +444,7 @@ namespace Ogre {
         updateColours();
     }
     //---------------------------------------------------------------------
-    const ColourValue& TextAreaGuiElement::getColourBottom(void) const
+    ColourValue TextAreaGuiElement::getColourBottom(void)
     {
         return mColourBottom;
     }
@@ -457,7 +456,7 @@ namespace Ogre {
         updateColours();
     }
     //---------------------------------------------------------------------
-    const ColourValue& TextAreaGuiElement::getColourTop(void) const
+    ColourValue TextAreaGuiElement::getColourTop(void)
     {
         return mColourTop;
     }

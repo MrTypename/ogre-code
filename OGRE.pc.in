@@ -2,10 +2,9 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
-plugindir=@libdir@/@PACKAGE@
 
 Name: OGRE
 Description: Object-Oriented Graphics Rendering Engine
 Version: @VERSION@
 Libs: -L${libdir} -lOgreMain
-Cflags: -I${includedir}/@PACKAGE@ @OGRE_CFLAGS@
+Cflags: -I${includedir}/OGRE @OGRE_CFLAGS@
