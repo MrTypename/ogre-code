@@ -29,7 +29,6 @@ http://www.gnu.org/copyleft/lesser.txt
 #include "OgrePrerequisites.h"
 #include "OgreSingleton.h"
 #include "OgreResourceManager.h"
-#include "OgreFont.h"
 
 namespace Ogre
 {
@@ -38,11 +37,18 @@ namespace Ogre
     {
     public:
 
-		FontManager();
-		~FontManager();
+        /** Creates a new font. 
+        @remarks
+            Creates a new Font, but does not load it yet. You must populate all the
+            relevant fields and then call load() yourself.
+            See ResourceManager for more info. 
+        */
+        Resource * create(const String& name);
 
-        /** @copydoc ScriptLoader::parseScript */
-        void parseScript(DataStreamPtr& stream, const String& groupName);
+        /** Parse a .fontdef script passed in as a chunk. */
+        void parseScript( DataChunk& chunk );
+        /** Parses all .fontdef scripts available in all resource locations. */
+        void parseAllSources( const String& extension = ".fontdef" );
         /** Override standard Singleton retrieval.
         @remarks
         Why do we do this? Well, it's because the Singleton
@@ -79,13 +85,9 @@ namespace Ogre
     protected:
 
         /// Internal methods
-		Resource* createImpl(const String& name, ResourceHandle handle, 
-			const String& group, bool isManual, ManualResourceLoader* loader, 
-            const NameValuePairList* params);
-		void parseAttribute(const String& line, FontPtr& pFont);
+        void parseAttribute(const String& line, Font* pFont);
 
-        void logBadAttrib(const String& line, FontPtr& pFont);
-
+        void logBadAttrib(const String& line, Font* pFont);
 
     };
 }

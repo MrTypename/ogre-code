@@ -31,7 +31,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreSingleton.h"
 #include "OgreVector3.h"
 #include "OgreHardwareBuffer.h"
-#include "OgreMesh.h"
 #include "OgrePatchMesh.h"
 
 namespace Ogre {
@@ -43,17 +42,15 @@ namespace Ogre {
             the creation of resources (in this case mesh data),
             working within a fixed memory budget.
     */
-    class _OgreExport MeshManager: public ResourceManager, public Singleton<MeshManager>, 
-        public ManualResourceLoader
+    class _OgreExport MeshManager: public ResourceManager, public Singleton<MeshManager>
     {
     public:
         MeshManager();
-        ~MeshManager();
 
         /** Initialises the manager, only to be called by OGRE internally. */
         void _initialise(void);
 
-        /** Loads a mesh from a file, making it immediately available for use.
+        /** Loads a mesh from a file, making it available for use.
             @note
                 If the model has already been loaded, the existing instance
                 will be returned.
@@ -64,7 +61,6 @@ namespace Ogre {
                 control over pre-processed data (such as
                 collision boxes, LOD reductions etc).
 			@param filename The name of the .mesh file
-            @param groupName The name of the resource group to assign the mesh to 
 			@param vertexBufferUsage The usage flags with which the vertex buffer(s)
 				will be created
 			@param indexBufferUsage The usage flags with which the index buffer(s) created for 
@@ -75,11 +71,17 @@ namespace Ogre {
                 copies for faster read access
 			@param priority The priority of this mesh in the resource system
         */
-        MeshPtr load( const String& filename, const String& groupName,
+        Mesh* load( const String& filename, 
 			HardwareBuffer::Usage vertexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
 			HardwareBuffer::Usage indexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
-			bool vertexBufferShadowed = true, bool indexBufferShadowed = true);
+			bool vertexBufferShadowed = true, bool indexBufferShadowed = true,
+			int priority = 1);
 
+        /** Creates a Mesh resource.
+            @note
+                Mainly used internally.
+        */
+        Resource* create( const String& name);
 
         /** Creates a new Mesh specifically for manual definition rather
             than loading from an object file. 
@@ -88,20 +90,12 @@ namespace Ogre {
             Mesh::_setBoundingRadius in order to define the bounds of your mesh. In previous
             versions of OGRE you could call Mesh::_updateBounds, but OGRE's support of 
             write-only vertex buffers makes this no longer appropriate.
-        @param name The name to give the new mesh
-        @param groupName The name of the resource group to assign the mesh to 
-        @param loader ManualResourceLoader which will be called to load this mesh
-            when the time comes. It is recommended that you populate this field
-            in order that the mesh can be rebuilt should the need arise
         */
-        MeshPtr createManual( const String& name, const String& groupName, 
-            ManualResourceLoader* loader = 0);
+        Mesh* createManual( const String& name);
 
         /** Creates a basic plane, by default majoring on the x/y axes facing positive Z.
             @param
                 name The name to give the resulting mesh
-            @param 
-                groupName The name of the resource group to assign the mesh to 
             @param
                 plane The orientation of the plane and distance from the origin
             @param
@@ -136,8 +130,8 @@ namespace Ogre {
 				created with a system memory shadow buffer,
 				allowing you to read it back more efficiently than if it is in hardware
         */
-        MeshPtr createPlane(
-            const String& name, const String& groupName, const Plane& plane,
+        Mesh* createPlane(
+            const String& name, const Plane& plane,
             Real width, Real height,
             int xsegments = 1, int ysegments = 1,
             bool normals = true, int numTexCoordSets = 1,
@@ -151,8 +145,6 @@ namespace Ogre {
 			surface, useful for skies in a skybox. 
             @param
                 name The name to give the resulting mesh
-            @param 
-                groupName The name of the resource group to assign the mesh to 
             @param
                 plane The orientation of the plane and distance from the origin
             @param
@@ -197,8 +189,8 @@ namespace Ogre {
                 downwards to keep. -1 keeps all of them. This can save fillrate if
                 you cannot see much of the sky lower down.
         */
-		MeshPtr createCurvedIllusionPlane(
-            const String& name, const String& groupName, const Plane& plane,
+		Mesh* createCurvedIllusionPlane(
+            const String& name, const Plane& plane,
             Real width, Real height, Real curvature,
             int xsegments = 1, int ysegments = 1,
             bool normals = true, int numTexCoordSets = 1,
@@ -212,8 +204,6 @@ namespace Ogre {
 		/** Creates a genuinely curved plane, by default majoring on the x/y axes facing positive Z.
             @param
                 name The name to give the resulting mesh
-            @param 
-                groupName The name of the resource group to assign the mesh to 
             @param
                 plane The orientation of the plane and distance from the origin
             @param
@@ -250,8 +240,8 @@ namespace Ogre {
 				created with a system memory shadow buffer,
 				allowing you to read it back more efficiently than if it is in hardware
         */
-		MeshPtr createCurvedPlane( 
-			const String& name, const String& groupName, const Plane& plane, 
+		Mesh* createCurvedPlane( 
+			const String& name, const Plane& plane, 
 			Real width, Real height, Real bow = 0.5f, 
 			int xsegments = 1, int ysegments = 1,
 			bool normals = false, int numTexCoordSets = 1, 
@@ -263,8 +253,6 @@ namespace Ogre {
         /** Creates a Bezier patch based on an array of control vertices.
             @param
                 name The name to give the newly created mesh. 
-            @param 
-                groupName The name of the resource group to assign the mesh to 
             @param
                 controlPointBuffer A pointer to a buffer containing the vertex data which defines control points 
                 of the curves rather than actual vertices. Note that you are expected to provide not
@@ -294,8 +282,8 @@ namespace Ogre {
                 ibUseShadow Flag to determine if a shadow buffer is generated for the index buffer. See
                     HardwareBuffer for full details.
         */
-        PatchMeshPtr createBezierPatch(
-            const String& name, const String& groupName, void* controlPointBuffer, 
+        PatchMesh* createBezierPatch(
+            const String& name, void* controlPointBuffer, 
             VertexDeclaration *declaration, size_t width, size_t height,
             size_t uMaxSubdivisionLevel = PatchSurface::AUTO_LEVEL, 
             size_t vMaxSubdivisionLevel = PatchSurface::AUTO_LEVEL,
@@ -344,24 +332,18 @@ namespace Ogre {
         */
         static MeshManager* getSingletonPtr(void);
 
-	    /** Gets the factor by which the bounding box of an entity is padded.
-	        Default is 0.01
-	    */
-        Real getBoundsPaddingFactor(void);
+	/*
+	*Gets the factor by which the bounding box of an entity is padded
+	*Default is 0.01
+	*/
+        Real MeshManager::getBoundsPaddingFactor(void);
 	
-	    /** Sets the factor by which the bounding box of an entity is padded
-	    */
-        void setBoundsPaddingFactor(Real paddingFactor);
-
-        /** @see ManualResourceLoader::loadResource */
-        void loadResource(Resource* res);
+	/*
+	*Gets the factor by which the bounding box of an entity is padded
+	*/
+        void MeshManager::setBoundsPaddingFactor(Real paddingFactor);
 
     protected:
-        /// @copydoc ResourceManager::createImpl
-        Resource* createImpl(const String& name, ResourceHandle handle, 
-            const String& group, bool isManual, ManualResourceLoader* loader, 
-            const NameValuePairList* createParams);
-        
         /** Utility method for tesselating 2D meshes.
         */
         void tesselate2DMesh(SubMesh* pSub, int meshWidth, int meshHeight, 
@@ -370,46 +352,6 @@ namespace Ogre {
 			bool indexSysMem = false);
 
         void createPrefabPlane(void);
-    
-        /** Enum identifying the types of manual mesh built by this manager */
-        enum MeshBuildType
-        {
-            MBT_PLANE,
-            MBT_CURVED_ILLUSION_PLANE,
-            MBT_CURVED_PLANE
-        };
-        /** Saved parameters used to (re)build a manual mesh built by this class */
-        struct MeshBuildParams
-        {
-            MeshBuildType type;
-            Plane plane;
-            Real width;
-            Real height;
-            Real curvature;
-            int xsegments;
-            int ysegments;
-            bool normals;
-            int numTexCoordSets;
-            Real xTile;
-            Real yTile;
-            Vector3 upVector;
-            Quaternion orientation;
-            HardwareBuffer::Usage vertexBufferUsage;
-            HardwareBuffer::Usage indexBufferUsage;
-            bool vertexShadowBuffer;
-            bool indexShadowBuffer;
-            int ySegmentsToKeep;
-        };
-        /** Map from resource pointer to parameter set */
-        typedef std::map<Resource*, MeshBuildParams> MeshBuildParamsMap;
-        MeshBuildParamsMap mMeshBuildParams;
-
-        /** Utility method for manual loading a plane */
-        void loadManualPlane(Mesh* pMesh, MeshBuildParams& params);
-        /** Utility method for manual loading a curved plane */
-        void loadManualCurvedPlane(Mesh* pMesh, MeshBuildParams& params);
-        /** Utility method for manual loading a curved illusion plane */
-        void loadManualCurvedIllusionPlane(Mesh* pMesh, MeshBuildParams& params);
 
         bool mPrepAllMeshesForShadowVolumes;
 	

@@ -36,45 +36,44 @@ namespace Ogre
     {
         return ms_Singleton;
     }
-	//-----------------------------------------------------------------------
     DynLibManager& DynLibManager::getSingleton(void)
     {  
         assert( ms_Singleton );  return ( *ms_Singleton );  
     }
     //-----------------------------------------------------------------------
+
 	DynLibManager::DynLibManager()
 	{
 	}
-	//-----------------------------------------------------------------------
-    DynLib* DynLibManager::load( const String& filename)
+
+    DynLib* DynLibManager::load( const String& filename, int priority /* = 1 */ )
     {        
-        DynLib* pLib = new DynLib(filename);
-		pLib->load();        
-        mLibList[filename] = pLib;
+        DynLib* pLib = static_cast<DynLib *>( getByName( filename ) );
+
+        if( !pLib )
+        {
+            pLib = static_cast<DynLib *>( create( filename ) );
+            ResourceManager::load(pLib, priority);
+        }
+        
         return pLib;
     }
-	//-----------------------------------------------------------------------
-	void DynLibManager::unload(DynLib* lib)
-	{
-		DynLibList::iterator i = mLibList.find(lib->getName());
-		if (i != mLibList.end())
-		{
-			mLibList.erase(i);
-		}
-		lib->unload();
-		delete lib;
-	}
-	//-----------------------------------------------------------------------
+
+    Resource* DynLibManager::create( const String& name )
+    {
+        return new DynLib( name );
+    }
+
     DynLibManager::~DynLibManager()
     {
         // Unload & delete resources in turn
-        for( DynLibList::iterator it = mLibList.begin(); it != mLibList.end(); ++it )
+        for( ResourceMap::iterator it = mResources.begin(); it != mResources.end(); ++it )
         {
             it->second->unload();
             delete it->second;
         }
 
         // Empty the list
-        mLibList.clear();
+        mResources.clear();
     }
 }

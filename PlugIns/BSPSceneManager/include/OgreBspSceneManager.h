@@ -30,7 +30,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreSceneManager.h"
 #include "OgreStaticFaceGroup.h"
 #include "OgreRenderOperation.h"
-#include "OgreBspLevel.h"
 #include <set>
 
 
@@ -66,7 +65,7 @@ namespace Ogre {
         BspResourceManager* mBspResMgr;
 
         // World geometry
-        BspLevelPtr mLevel;
+        BspLevel* mLevel;
 
         // State variables for rendering WIP
         // Set of face groups (by index) already included
@@ -118,9 +117,6 @@ namespace Ogre {
         /** Specialised from SceneManager to support Quake3 bsp files. */
         void setWorldGeometry(const String& filename);
 
-        /** Specialised from SceneManager to support Quake3 bsp files. */
-        size_t estimateWorldGeometry(const String& filename);
-        
         /** Tells the manager whether to draw the axis-aligned boxes that surround
             nodes in the Bsp tree. For debugging purposes.
         */
@@ -129,7 +125,7 @@ namespace Ogre {
         /** Specialised to suggest viewpoints. */
         ViewPoint getSuggestedViewpoint(bool random = false);
 
-        const BspLevelPtr& getLevel(void) {return mLevel; }
+        BspLevel* getLevel(void) {return mLevel; }
 
         /** Overriden from SceneManager. */
         void _findVisibleObjects(Camera* cam, bool onlyShadowCasters);

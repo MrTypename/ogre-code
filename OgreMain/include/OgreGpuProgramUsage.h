@@ -64,7 +64,7 @@ namespace Ogre
     protected:
         GpuProgramType mType;
         // The program link
-        GpuProgramPtr mProgram;
+        GpuProgram* mProgram;
 
         /// program parameters
         GpuProgramParametersSharedPtr mParameters;
@@ -99,9 +99,9 @@ namespace Ogre
             new program being linked, so if you had previously set parameters
             you will have to set them again.
         */
-        void setProgram(GpuProgramPtr& prog);
+        void setProgram(GpuProgram* prog);
 		/** Gets the program being used. */
-        const GpuProgramPtr& getProgram() const { return mProgram; }
+        GpuProgram* getProgram() const { return mProgram; }
 		/** Gets the program being used. */
         const String& getProgramName(void) const { return mProgram->getName(); }
 

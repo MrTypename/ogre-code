@@ -34,16 +34,12 @@ namespace Ogre
 	class D3D9RenderWindow : public RenderWindow
 	{
 	public:
-		/** Constructor.
-		@param instance The application instance
-		@param driver The root driver
-		@param deviceIfSwapChain The existing D3D device to create an additional swap chain from, if this is not
-			the first window.
-		*/
-		D3D9RenderWindow(HINSTANCE instance, D3D9Driver *driver, LPDIRECT3DDEVICE9 deviceIfSwapChain = 0);
+		D3D9RenderWindow();
 		~D3D9RenderWindow();
-		void create(const String& name, unsigned int width, unsigned int height,
-	            bool fullScreen, const NameValuePairList *miscParams);
+
+		void create( const String& name, unsigned int width, unsigned int height, unsigned int colourDepth,
+			bool fullScreen, int left, int top, bool depthBuffer, void* miscParam, ... );
+
 		void destroy(void);
 		bool isActive() const { return mActive; }
 		bool isClosed() const { return mClosed; }
@@ -51,8 +47,9 @@ namespace Ogre
 		void resize( unsigned int width, unsigned int height );
 		void swapBuffers( bool waitForVSync = true );
 		HWND getWindowHandle() const { return mHWnd; }
+		HWND getParentWindowHandle() const { return mParentHWnd; }
 
-		D3D9Driver* getDirectD3DDriver() { return mDriver; }
+		D3D9Driver* getDirectD3DDriver() { return mpD3DDriver; }
 		LPDIRECT3DDEVICE9 getD3DDevice() { return mpD3DDevice; }
 
 		void getCustomAttribute( const String& name, void* pData );
@@ -63,28 +60,20 @@ namespace Ogre
 
 		// Method for dealing with resize / move & 3d library
 		virtual void WindowMovedOrResized(void);
+		// Method for passing a external window handle before creation ;)
+		void SetExternalWindowHandle(HWND externalHandle) {mExternalHandle = externalHandle;};
 
 		bool isReady() const { return mReady; }
 		void setReady(bool set) { mReady = set; }
 		void setActive(bool set) { mActive = set; }
-		/// Get the presentation parameters used with this window
-		D3DPRESENT_PARAMETERS* getPresentationParameters(void) 
-		{ return &md3dpp; }
-		/// @copydoc RenderTarget::update
-		void update(void);
 
-		/** Create (or recreate) the D3D device or SwapChain for this window.
-		*/
-		void createD3DResources(void);
-	
 	protected:
-		HINSTANCE mInstance;			// Process instance
-		D3D9Driver *mDriver;			// D3D9 driver
+		HWND	mExternalHandle;		// External Win32 window handle
 		HWND	mHWnd;					// Win32 Window handle
+		HWND	mParentHWnd;			// Parent Win32 window handle
 		bool	mActive;				// Is active i.e. visible
 		bool	mReady;					// Is ready i.e. available for update
 		bool	mClosed;
-		bool	mIsSwapChain;			// Is this a secondary window?
 
 		static LRESULT CALLBACK WndProc(
 			HWND hWnd,
@@ -96,20 +85,17 @@ namespace Ogre
 		// DirectX-specific
 		// -------------------------------------------------------
 
-		// Pointer to the 3D device - window 'owns' this if !mIsSwapChain
+		// Pointer to D3DDriver encapsulating Direct3D driver
+		D3D9Driver* mpD3DDriver;
+
+		// Pointer to the 3D device specific for this window
 		LPDIRECT3DDEVICE9	mpD3DDevice;
-		// Pointer to swap chain, only valid if mIsSwapChain
-		LPDIRECT3DSWAPCHAIN9 mpSwapChain;
 		D3DPRESENT_PARAMETERS md3dpp;
 		LPDIRECT3DSURFACE9 mpRenderSurface;
 		LPDIRECT3DSURFACE9 mpRenderZBuffer;
-		D3DMULTISAMPLE_TYPE mFSAAType;
-		DWORD mFSAAQuality;
-		bool mVSync;
 
 		// just check if the multisampling requested is supported by the device
 		bool _checkMultiSampleQuality(D3DMULTISAMPLE_TYPE type, DWORD *outQuality, D3DFORMAT format, UINT adapterNum, D3DDEVTYPE deviceType, BOOL fullScreen);
-
 	};
 }
 #endif

@@ -34,8 +34,7 @@ namespace Ogre {
     ScaleAffector::CmdScaleAdjust ScaleAffector::msScaleCmd;
 
     //-----------------------------------------------------------------------
-    ScaleAffector::ScaleAffector(ParticleSystem* psys)
-        :ParticleAffector(psys)
+    ScaleAffector::ScaleAffector()
     {
         mScaleAdj = 0;
         mType = "Scaler";

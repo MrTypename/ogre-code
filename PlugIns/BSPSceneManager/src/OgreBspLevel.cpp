@@ -40,64 +40,56 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreTechnique.h"
 #include "OgrePass.h"
 #include "OgreTextureUnitState.h"
-#include "OgreResourceGroupManager.h"
+
 
 namespace Ogre {
 
-    #define NUM_FACES_PER_PROGRESS_REPORT 100
-    #define NUM_NODES_PER_PROGRESS_REPORT 50
-    #define NUM_LEAVES_PER_PROGRESS_REPORT 50
-    #define NUM_BRUSHES_PER_PROGRESS_REPORT 50
 
     //-----------------------------------------------------------------------
-    BspLevel::BspLevel(ResourceManager* creator, const String& name, 
-        ResourceHandle handle, const String& group, bool isManual, 
-        ManualResourceLoader* loader)
-      : Resource(creator, name, handle, group, isManual, loader), 
-        mRootNode(0), 
-        mVertexData(0), 
-        mLeafFaceGroups(0),
-        mFaceGroups(0), 
-        mBrushes(0)
+    BspLevel::BspLevel(const String& name)
     {
+        mName = name;
+        mRootNode = 0;
+        mBrushes = 0;
+        mVertexData = 0;
+        mFaceGroups = 0;
+        mLeafFaceGroups = 0;
         mVisData.tableData = 0;
-
-        if (createParamDictionary("BspLevel"))
-        {
-            // nothing
-        }
     }
 
     //-----------------------------------------------------------------------
     BspLevel::~BspLevel()
     {
-        // have to call this here reather than in Resource destructor
-        // since calling virtual methods in base destructors causes crash
-        unload(); 
+        if (mIsLoaded)
+        {
+            unload();
+            mIsLoaded = false;
+        }
 
     }
 
     //-----------------------------------------------------------------------
-    void BspLevel::loadImpl()
+    void BspLevel::load()
     {
         // Use Quake3 file loader
         Quake3Level q3;
-        DataStreamPtr stream = 
-			ResourceGroupManager::getSingleton().openResource(mName, 
-				ResourceGroupManager::getSingleton().getWorldResourceGroupName());
+        DataChunk chunk;
+        BspResourceManager::getSingleton()._findResourceData(mName, chunk);
 
-        q3.loadFromStream(stream);
+        q3.loadFromChunk(chunk);
 
         loadQuake3Level(q3);
+
+        chunk.clear();
+        mIsLoaded = true;
 
     }
 
     //-----------------------------------------------------------------------
-    void BspLevel::unloadImpl()
+    void BspLevel::unload()
     {
         if (mVertexData)
             delete mVertexData;
-        mIndexes.setNull();
         if (mFaceGroups)
             delete [] mFaceGroups;
         if (mLeafFaceGroups)
@@ -115,69 +107,19 @@ namespace Ogre {
         mLeafFaceGroups = 0;
         mBrushes = 0;
         mVisData.tableData = 0;
-        for (PatchMap::iterator pi = mPatches.begin(); pi != mPatches.end(); ++pi)
-        {
-            delete pi->second;
-        }
-        mPatches.clear();
     }
-    //-----------------------------------------------------------------------
-    size_t BspLevel::calculateLoadingStages(const String& levelName)
-    {
-        Quake3Level q3;
-        DataStreamPtr stream = 
-            ResourceGroupManager::getSingleton().openResource(levelName, 
-            ResourceGroupManager::getSingleton().getWorldResourceGroupName());
 
-        // Load header only
-        q3.loadHeaderFromStream(stream);
-
-        // Ok, count up the things that we will report
-        size_t stages = 0;
-
-        // loadEntities (1 stage)
-        ++stages;
-        // extractLightmaps (external, 1 stage)
-        ++stages;
-        // initQuake3Patches
-        ++stages;
-        // vertex setup
-        ++stages;
-        // face setup
-        ++stages;
-        // patch building
-        ++stages;
-        // material setup
-        // this is not strictly based on load, since we only know the number
-        // of faces, not the number of materials
-        // raise one event for every 50 faces, plus one at the end
-        stages += (q3.mNumFaces / NUM_FACES_PER_PROGRESS_REPORT) + 1;
-        // node setup
-        stages += (q3.mNumNodes / NUM_NODES_PER_PROGRESS_REPORT) + 1;
-        // brush setup
-        stages += (q3.mNumBrushes / NUM_BRUSHES_PER_PROGRESS_REPORT) + 1;
-        // leaf setup
-        stages += (q3.mNumLeaves / NUM_LEAVES_PER_PROGRESS_REPORT) + 1;
-        // vis
-        ++stages;
-
-        return stages;
-
-    }
     //-----------------------------------------------------------------------
     void BspLevel::loadQuake3Level(const Quake3Level& q3lvl)
     {
-        MaterialManager& mm = MaterialManager::getSingleton();
-        ResourceGroupManager& rgm = ResourceGroupManager::getSingleton();
+        SceneManager* sm = SceneManagerEnumerator::getSingleton().getSceneManager(ST_INTERIOR);
 
-        rgm._notifyWorldGeometryStageStarted("Parsing entities");
         loadEntities(q3lvl);
-        rgm._notifyWorldGeometryStageEnded();
 
+        // Parse shaders
+        Quake3ShaderManager::getSingleton().parseAllSources(".shader");
         // Extract lightmaps into textures
-        rgm._notifyWorldGeometryStageStarted("Extracting lightmaps");
         q3lvl.extractLightmaps();
-        rgm._notifyWorldGeometryStageEnded();
 
         //-----------------------------------------------------------------------
         // Vertices
@@ -200,12 +142,9 @@ namespace Ogre {
 
         // Build initial patches - we need to know how big the vertex buffer needs to be
         // to accommodate the subdivision
-        rgm._notifyWorldGeometryStageStarted("Initialising patches");
         initQuake3Patches(q3lvl, decl);
-        rgm._notifyWorldGeometryStageEnded();
 
         /// Create the vertex buffer, allow space for patches
-        rgm._notifyWorldGeometryStageStarted("Setting up vertex data");
         HardwareVertexBufferSharedPtr vbuf = HardwareBufferManager::getSingleton()
             .createVertexBuffer(
                 sizeof(BspVertex), 
@@ -229,12 +168,10 @@ namespace Ogre {
         // Set other data
         mVertexData->vertexStart = 0;
         mVertexData->vertexCount = q3lvl.mNumVertices + mPatchVertexCount;
-        rgm._notifyWorldGeometryStageEnded();
 
         //-----------------------------------------------------------------------
         // Faces
         // --------
-        rgm._notifyWorldGeometryStageStarted("Setting up face data");
         mNumLeafFaceGroups = q3lvl.mNumLeafFaces;
         mLeafFaceGroups = new int[mNumLeafFaceGroups];
         memcpy(mLeafFaceGroups, q3lvl.mLeafFaces, sizeof(int)*mNumLeafFaceGroups);
@@ -245,18 +182,15 @@ namespace Ogre {
         // Copy the indexes into a software area for staging
         mNumIndexes = q3lvl.mNumElements + mPatchIndexCount;
         // Create an index buffer manually in system memory, allow space for patches
-        mIndexes.bind(new DefaultHardwareIndexBuffer(
+        mIndexes = new DefaultHardwareIndexBuffer(
             HardwareIndexBuffer::IT_32BIT, 
             mNumIndexes, 
-            HardwareBuffer::HBU_DYNAMIC));
+            HardwareBuffer::HBU_DYNAMIC);
         // Write main indexes
         mIndexes->writeData(0, sizeof(unsigned int) * q3lvl.mNumElements, q3lvl.mElements, true);
-        rgm._notifyWorldGeometryStageEnded();
 
         // now build patch information
-        rgm._notifyWorldGeometryStageStarted("Building patches");
         buildQuake3Patches(q3lvl.mNumVertices, q3lvl.mNumElements);
-        rgm._notifyWorldGeometryStageEnded();
 
         //-----------------------------------------------------------------------
         // Create materials for shaders
@@ -274,43 +208,24 @@ namespace Ogre {
         // To do this I actually need to parse the faces since they have the
         //  shader/lightmap combo (lightmap number is not in the shader since
         //  it can be used with multiple lightmaps)
-        String shaderName;
+        char shaderName[256];
         int face;
         face = q3lvl.mNumFaces;
         int matHandle;
         String meshName;
 
-        String resourceGroup = ResourceGroupManager::getSingleton().getWorldResourceGroupName();
-        size_t progressCountdown = NUM_FACES_PER_PROGRESS_REPORT;
-        size_t progressCount = 0;
-
         while(face--)
         {
-            // Progress reporting
-            if (progressCountdown == NUM_FACES_PER_PROGRESS_REPORT)
-            {
-                ++progressCount;
-                StringUtil::StrStreamType str;
-                str << "Loading materials (phase " << progressCount << ")"; 
-                rgm._notifyWorldGeometryStageStarted(str.str());
-            }
-            else if (progressCountdown == 0)
-            {
-                // stage report
-                rgm._notifyWorldGeometryStageEnded();
-                progressCountdown = NUM_FACES_PER_PROGRESS_REPORT + 1; 
-
-            }
 
             // Check to see if existing material
             // Format shader#lightmap
             int shadIdx = q3lvl.mFaces[face].shader;
-			StringUtil::StrStreamType tmp;
-			tmp << q3lvl.mShaders[shadIdx].name << "#" << q3lvl.mFaces[face].lm_texture;
-			shaderName = tmp.str();
+            sprintf(shaderName, "%s#%d",
+                q3lvl.mShaders[shadIdx].name,
+                q3lvl.mFaces[face].lm_texture);
 
-            MaterialPtr shadMat = MaterialManager::getSingleton().getByName(shaderName);
-            if (shadMat.isNull())
+            Material *shadMat = sm->getMaterial(shaderName);
+            if (shadMat == 0)
             {
                 // Build new material
 
@@ -318,40 +233,34 @@ namespace Ogre {
                 // NB no extension in Q3A(doh), have to try shader, .jpg, .tga
                 String tryName = q3lvl.mShaders[shadIdx].name;
                 // Try shader first
-                Quake3Shader* pShad = Quake3ShaderManager::getSingleton().getByName(tryName);
+                Quake3Shader* pShad = (Quake3Shader*)Quake3ShaderManager::getSingleton().getByName(tryName);
                 if (pShad)
                 {
-                    shadMat = pShad->createAsMaterial(q3lvl.mFaces[face].lm_texture);
+                    shadMat = pShad->createAsMaterial(sm, q3lvl.mFaces[face].lm_texture);
                 }
                 else
                 {
                     // No shader script, try default type texture
-                    shadMat = mm.create(shaderName, resourceGroup);
+                    shadMat = sm->createMaterial(shaderName);
                     Pass *shadPass = shadMat->getTechnique(0)->getPass(0);
                     // Try jpg
-                    TextureUnitState* tex = 0;
-                    if (ResourceGroupManager::getSingleton().resourceExists(resourceGroup, tryName + ".jpg"))
+                    TextureUnitState* tex = shadPass->createTextureUnitState(tryName + ".jpg");
+                    tex->_load();
+                    if (tex->isBlank())
                     {
-                        tex = shadPass->createTextureUnitState(tryName + ".jpg");
+                        // Try tga
+                        tex->setTextureName(tryName + ".tga");
                     }
-                    else if (ResourceGroupManager::getSingleton().resourceExists(resourceGroup, tryName + ".tga"))
-                    {
-                        tex = shadPass->createTextureUnitState(tryName + ".tga");
-                    }
-
-                    if (tex)
-                    {
-                        // Set replace on all first layer textures for now
-                        tex->setColourOperation(LBO_REPLACE);
-                        tex->setTextureAddressingMode(TextureUnitState::TAM_WRAP);
-                    }
+                    // Set replace on all first layer textures for now
+                    tex->setColourOperation(LBO_REPLACE);
+                    tex->setTextureAddressingMode(TextureUnitState::TAM_WRAP);
 
                     if (q3lvl.mFaces[face].lm_texture != -1)
                     {
                         // Add lightmap, additive blending
-						StringUtil::StrStreamType lightmapName;
-                        lightmapName << "@lightmap" << q3lvl.mFaces[face].lm_texture;
-                        tex = shadPass->createTextureUnitState(lightmapName.str());
+                        char lightmapName[16];
+                        sprintf(lightmapName, "@lightmap%d",q3lvl.mFaces[face].lm_texture);
+                        tex = shadPass->createTextureUnitState(lightmapName);
                         // Blend
                         tex->setColourOperation(LBO_MODULATE);
                         // Use 2nd texture co-ordinate set
@@ -440,12 +349,8 @@ namespace Ogre {
 				LogManager::getSingleton().logMessage("!!! Unknown Face Type !!!", LML_CRITICAL);
 			}
 
-            // progress reporting
-            --progressCountdown;
 
         }
-        // final stage report
-        rgm._notifyWorldGeometryStageEnded();
 
         //-----------------------------------------------------------------------
         // Nodes
@@ -458,27 +363,8 @@ namespace Ogre {
         int i;
         // Convert nodes
         // In our array, first q3lvl.mNumNodes are non-leaf, others are leaves
-        progressCountdown = NUM_NODES_PER_PROGRESS_REPORT;
-        progressCount = 0;
-
         for (i = 0; i < q3lvl.mNumNodes; ++i)
         {
-            // Progress reporting
-            if (progressCountdown == NUM_NODES_PER_PROGRESS_REPORT)
-            {
-                ++progressCount;
-                StringUtil::StrStreamType str;
-                str << "Loading nodes (phase " << progressCount << ")"; 
-                    rgm._notifyWorldGeometryStageStarted(str.str());
-            }
-            else if (progressCountdown == 0)
-            {
-                // stage report
-                rgm._notifyWorldGeometryStageEnded();
-                progressCountdown = NUM_NODES_PER_PROGRESS_REPORT + 1; 
-
-            }
-
             BspNode* node = &mRootNode[i];
             bsp_node_t* q3node = &q3lvl.mNodes[i];
 
@@ -519,38 +405,15 @@ namespace Ogre {
                 node->mFront = &mRootNode[q3node->front];
             }
 
-            --progressCountdown;
-
 
         }
-        // final stage report
-        rgm._notifyWorldGeometryStageEnded();
-
         //-----------------------------------------------------------------------
         // Brushes
         //-----------------------------------------------------------------------
         // Reserve enough memory for all brushes, solid or not (need to maintain indexes)
         mBrushes = new BspNode::Brush[q3lvl.mNumBrushes];
-        progressCountdown = NUM_BRUSHES_PER_PROGRESS_REPORT;
-        progressCount = 0;
-
         for (i = 0; i < q3lvl.mNumBrushes; ++i)
         {
-            // Progress reporting
-            if (progressCountdown == NUM_BRUSHES_PER_PROGRESS_REPORT)
-            {
-                ++progressCount;
-                StringUtil::StrStreamType str;
-                str << "Loading brushes (phase " << progressCount << ")"; 
-                    rgm._notifyWorldGeometryStageStarted(str.str());
-            }
-            else if (progressCountdown == 0)
-            {
-                // stage report
-                rgm._notifyWorldGeometryStageEnded();
-                progressCountdown = NUM_BRUSHES_PER_PROGRESS_REPORT + 1; 
-
-            }
             bsp_brush_t* q3brush = &q3lvl.mBrushes[i];
 
             // Create a new OGRE brush
@@ -573,36 +436,15 @@ namespace Ogre {
             pBrush->fragment.fragmentType = SceneQuery::WFT_PLANE_BOUNDED_REGION;
             pBrush->fragment.planes = &(pBrush->planes);
 
-            --progressCountdown;
-
         }
-        // final stage report
-        rgm._notifyWorldGeometryStageEnded();
 
 
 
         //-----------------------------------------------------------------------
         // Leaves
         //-----------------------------------------------------------------------
-        progressCountdown = NUM_LEAVES_PER_PROGRESS_REPORT;
-        progressCount = 0;
         for (i = 0; i < q3lvl.mNumLeaves; ++i)
         {
-            // Progress reporting
-            if (progressCountdown == NUM_LEAVES_PER_PROGRESS_REPORT)
-            {
-                ++progressCount;
-                StringUtil::StrStreamType str;
-                str << "Loading leaves (phase " << progressCount << ")"; 
-                    rgm._notifyWorldGeometryStageStarted(str.str());
-            }
-            else if (progressCountdown == 0)
-            {
-                // stage report
-                rgm._notifyWorldGeometryStageEnded();
-                progressCountdown = NUM_LEAVES_PER_PROGRESS_REPORT + 1; 
-
-            }
             BspNode* node = &mRootNode[i + mLeafStart];
             bsp_leaf_t* q3leaf = &q3lvl.mLeaves[i];
 
@@ -642,22 +484,15 @@ namespace Ogre {
                 ++brushIdx;
             }
 
-            --progressCountdown;
-
         }
-        // final stage report
-        rgm._notifyWorldGeometryStageEnded();
 
 
 
         // Vis - just copy
-        // final stage report
-        rgm._notifyWorldGeometryStageStarted("Copying Vis data");
         mVisData.numClusters = q3lvl.mVis->cluster_count;
         mVisData.rowLength = q3lvl.mVis->row_size;
         mVisData.tableData = new unsigned char[q3lvl.mVis->row_size * q3lvl.mVis->cluster_count];
         memcpy(mVisData.tableData, q3lvl.mVis->data, q3lvl.mVis->row_size * q3lvl.mVis->cluster_count);
-        rgm._notifyWorldGeometryStageEnded();
 
 
 
@@ -958,10 +793,5 @@ namespace Ogre {
         dest->texcoords[1]  = src->texture[1];
         dest->lightmap[0]  = src->lightmap[0];
         dest->lightmap[1]  = src->lightmap[1];
-    }
-    //-----------------------------------------------------------------------
-    size_t BspLevel::calculateSize(void) const
-    {
-        return 0; // TODO
     }
 }

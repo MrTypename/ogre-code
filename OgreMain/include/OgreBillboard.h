@@ -57,7 +57,6 @@ namespace Ogre {
     class _OgreExport Billboard
     {
         friend class BillboardSet;
-        friend class BillboardParticleRenderer;
     protected:
         bool mOwnDimensions;
         Real mWidth;

@@ -1,1 +1,1 @@
-noinst_HEADERS = ExampleApplication.h ExampleFrameListener.h ExampleLoadingBar.h
+noinst_HEADERS = ExampleApplication.h ExampleFrameListener.h

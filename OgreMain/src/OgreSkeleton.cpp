@@ -40,46 +40,65 @@ http://www.gnu.org/copyleft/lesser.txt.
 namespace Ogre {
 
     //---------------------------------------------------------------------
-	Skeleton::Skeleton()
-		: Resource(),
-		mNextAutoHandle(0), mBlendState(ANIMBLEND_AVERAGE)
-	{
-	}
-	//---------------------------------------------------------------------
-    Skeleton::Skeleton(ResourceManager* creator, const String& name, ResourceHandle handle,
-        const String& group, bool isManual, ManualResourceLoader* loader) 
-        : Resource(creator, name, handle, group, isManual, loader), 
-        mNextAutoHandle(0), mBlendState(ANIMBLEND_AVERAGE)
-        // set animation blending to weighted, not cumulative
+    Skeleton::Skeleton(const String& name) 
     {
-        if (createParamDictionary("Skeleton"))
-        {
-            // no custom params
-        }
+        mName = name;
+
+        // Start next handle
+        mNextAutoHandle = 0;
+
+		// set animation blending to weighted, not cumulative
+		mBlendState = ANIMBLEND_AVERAGE;
+
     }
     //---------------------------------------------------------------------
     Skeleton::~Skeleton()
     {
-        // have to call this here reather than in Resource destructor
-        // since calling virtual methods in base destructors causes crash
-        unload(); 
+        unload();
     }
     //---------------------------------------------------------------------
-    void Skeleton::loadImpl(void)
+    void Skeleton::load(void)
     {
+        // Load from specified 'name'
+        if (mIsLoaded)
+        {
+            unload();
+        }
+
         SkeletonSerializer serializer;
-		StringUtil::StrStreamType msg;
-		msg << "Skeleton: Loading " << mName;
-        LogManager::getSingleton().logMessage(msg.str());
+        char msg[100];
+        sprintf(msg, "Skeleton: Loading %s .", mName.c_str());
+        LogManager::getSingleton().logMessage(msg);
 
-        DataStreamPtr stream = 
-            ResourceGroupManager::getSingleton().openResource(mName, mGroup);
+        DataChunk chunk;
+        SkeletonManager::getSingleton()._findResourceData(mName, chunk);
 
-        serializer.importSkeleton(stream, this);
+        // Determine file type
+        std::vector<String> extVec = StringUtil::split(mName, ".");
+
+        String& ext = extVec[extVec.size() - 1];
+        StringUtil::toLowerCase(ext);
+
+        if (ext == "skeleton")
+        {
+            serializer.importSkeleton(chunk, this);
+        }
+        else
+        {
+            // Unsupported format
+            chunk.clear();
+            Except(999, "Unsupported skeleton file format.",
+                "Skeleton::load");
+        }
+
+        chunk.clear();
+
+        // Mark resource as loaded
+        mIsLoaded = true;
 
     }
     //---------------------------------------------------------------------
-    void Skeleton::unloadImpl(void)
+    void Skeleton::unload(void)
     {
         // destroy bones
         BoneList::iterator i;
@@ -99,6 +118,8 @@ namespace Ogre {
         }
         mAnimationsList.clear();
 
+        // Mark resource as not loaded
+        mIsLoaded = false;
     }
     //---------------------------------------------------------------------
     Bone* Skeleton::createBone(void)

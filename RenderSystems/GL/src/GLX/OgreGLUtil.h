@@ -26,7 +26,7 @@ http://www.gnu.org/copyleft/gpl.html.
 #ifndef INCL_OGRE_GLUTIL_H
 #define INCL_OGRE_GLUTIL_H
 
-#include "GLX/OgreGLXGLSupport.h"
+#include "OgreGLXGLSupport.h"
 
 namespace Ogre {
     

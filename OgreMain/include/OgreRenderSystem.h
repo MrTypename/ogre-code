@@ -89,7 +89,7 @@ namespace Ogre
         FBT_DEPTH   = 0x2,
         FBT_STENCIL = 0x4
     };
-    
+
     /** Defines the functionality of a 3D API
         @remarks
             The RenderSystem class provides a base interface
@@ -252,72 +252,27 @@ namespace Ogre
             @param
                 height The height of the new window.
             @param
+                colourDepth The colour depth in bits per pixel.
+                Only applicable if fullScreen = true
+            @param
                 fullScreen Specify true to make the window full screen
                 without borders, title bar or menu bar.
             @param
-                miscParams A NameValuePairList describing the other parameters for the new rendering window. 
-					Options are case sensitive. Unrecognised parameters will be ignored silently.
-					These values might be platform dependent, but these are present for all platorms unless
-					indicated otherwise:
-				**
-				Key: "title"
-				Description: The title of the window that will appear in the title bar
-				Values: string
-				Default: RenderTarget name
-				**
-				Key: "colourDepth"
-				Description: Colour depth of the resulting rendering window; only applies if fullScreen
-					is set.
-				Values: 16 or 32
-				Default: desktop depth
-				Notes: [W32 specific]
-				**
-				Key: "left"
-				Description: screen x coordinate from left
-				Values: positive integers
-				Default: 'center window on screen'
-				Notes: Ignored in case of full screen
-				**
-				Key: "top"
-				Description: screen y coordinate from top
-				Values: positive integers
-				Default: 'center window on screen'
-				Notes: Ignored in case of full screen
-				**
-				Key: "depthBuffer" [DX9 specific]
-				Description: Use depth buffer
-				Values: false or true
-				Default: true
-				**
-				Key: "externalWindowHandle" [API specific]
-				Description: External window handle, for embedding the OGRE context
-				Values: positive integer for W32 (HWND handle)
-				        posint:posint:posint for GLX (display:screen:windowHandle)
-				Default: 0 (None)
-				**
-				Key: "parentWindowHandle" [API specific]
-				Description: Parent window handle, for embedding the OGRE context
-				Values: positive integer for W32 (HWND handle)
-				        posint:posint:posint for GLX (display:screen:windowHandle)
-				Default: 0 (None)
-				**
-				Key: "FSAA"
-				Description: Full screen antialiasing factor
-				Values: 0,2,4,6,...
-				Default: 0 
-				**
-				Key: "displayFrequency"
-				Description: Display frequency rate, for fullscreen mode
-				Values: 60...?
-				Default: Desktop vsync rate
-				**
-				Key: "vsync"
-				Description: Synchronize buffer swaps to vsync
-				Values: true, false
-				Default: 0
+                left The x position of the new window. Only applicable
+                if fullScreen is false. Units are relative to the parent window
+                if applicable, otherwise they are in screen coordinates.
+            @param
+                top The y position of the new window.
+            @param
+                depthBuffer If true, a depth buffer will be assigned to this window.
+            @param
+                parentWindowHandle Should be null if this window is to be
+                stand-alone. Otherwise, specify a pointer to a RenderWindow
+                which represents the parent window.
         */
-		virtual RenderWindow* createRenderWindow(const String &name, unsigned int width, unsigned int height, 
-			bool fullScreen, const NameValuePairList *miscParams = 0) = 0;
+        virtual RenderWindow* createRenderWindow(const String &name, unsigned int width, unsigned int height, unsigned int colourDepth,
+            bool fullScreen, int left = 0, int top = 0, bool depthBuffer = true,
+            RenderWindow* parentWindowHandle = 0) = 0;
 
 		/** Creates and registers a render texture object.
 			@param name 
@@ -326,23 +281,6 @@ namespace Ogre
 				The requested width for the render texture. See Remarks for more info.
 			@param height
 				The requested width for the render texture. See Remarks for more info.
-			@param texType
-				The type of texture; defaults to TEX_TYPE_2D
-			@param internalFormat
-				The internal format of the texture; defaults to PF_X8R8G8B8
-			@param miscParams A NameValuePairList describing the other parameters for the new rendering window.
-					Unrecognised parameters will be ignored silently.
-					These values might be platform dependent, but these are present for all platorms unless
-					indicated otherwise:
-				**
-				Key: "FSAA"
-				Description: Full screen antialiasing factor
-				Values: 0,2,4,6,...
-				Default: 0
-				**
-				Key: "depth"
-				Description: Depth in case of render-to-texture TEX_3D
-				Values: positive integers
 			@returns
 				On succes, a pointer to a new platform-dependernt, RenderTexture-derived
 				class is returned. On failiure, NULL is returned.
@@ -350,12 +288,9 @@ namespace Ogre
 				Because a render texture is basically a wrapper around a texture object,
 				the width and height parameters of this method just hint the preferred
 				size for the texture. Depending on the hardware driver or the underlying
-				API, these values might change when the texture is created. The same applies
-				to the internalFormat parameter.
+				API, these values might change when the texture is created.
 		*/
-		virtual RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height,
-		 	TextureType texType = TEX_TYPE_2D, PixelFormat internalFormat = PF_X8R8G8B8, 
-			const NameValuePairList *miscParams = 0 ) = 0; 
+        virtual RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height ) = 0;
 
         /** Destroys a render window */
         virtual void destroyRenderWindow(const String& name);
@@ -457,16 +392,11 @@ namespace Ogre
             specular highlights will be, imitating a more highly polished surface.
             This value is not constrained to 0.0-1.0, in fact it is likely to
             be more (10.0 gives a modest sheen to an object).
-            @param tracking A bit field that describes which of the ambient, diffuse, specular
-            and emissive colours follow the vertex colour of the primitive. When a bit in this field is set
-            its ColourValue is ignored. This is a combination of TVC_AMBIENT, TVC_DIFFUSE, TVC_SPECULAR(note that the shininess value is still
-            taken from shininess) and TVC_EMISSIVE. TVC_NONE means that there will be no material property
-            tracking the vertex colours.
+
         */
         virtual void _setSurfaceParams(const ColourValue &ambient,
             const ColourValue &diffuse, const ColourValue &specular,
-            const ColourValue &emissive, Real shininess,
-            TrackVertexColourType tracking = TVC_NONE) = 0;
+            const ColourValue &emissive, Real shininess) = 0;
         /**
           Sets the status of a single texture stage.
 
@@ -678,7 +608,7 @@ namespace Ogre
         @param colour The colour to convert
         @param pDest Pointer to location to put the result.
         */
-        virtual void convertColourValue(const ColourValue& colour, uint32* pDest) = 0;
+        virtual void convertColourValue(const ColourValue& colour, unsigned long* pDest) = 0;
 
         /** Builds a perspective projection matrix suitable for this render system.
         @remarks

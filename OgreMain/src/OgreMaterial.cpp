@@ -36,41 +36,49 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 namespace Ogre {
 
+    Material* Material::mDefaultSettings = 0;
+
     //-----------------------------------------------------------------------
-	Material::Material(ResourceManager* creator, const String& name, ResourceHandle handle,
-		const String& group, bool isManual, ManualResourceLoader* loader)
-		:Resource(creator, name, handle, group, isManual, loader),
-		mCompilationRequired(true), mReceiveShadows(true), mTransparencyCastsShadows(false)
+    Material::Material()
     {
+	    static unsigned short num = 1;
+	    char name[14];
+
+	    sprintf(name, "Undefined%d", num++);
+	    mName = name;
+        mCompilationRequired = true;
+        mIsLoaded = false;
 		mLodDistances.push_back(0.0f);
+        mReceiveShadows = true;
+		mTransparencyCastsShadows = false;
+    }
+    //-----------------------------------------------------------------------
+    Material::Material( const String& name )
+    {
+	    applyDefaults();
 
-		applyDefaults();
+		// This gets set true unless it's cleared here - applyDefaults appears to do nowt??
+		mTransparencyCastsShadows = false;
 
-		/* For consistency with StringInterface, but we don't add any parameters here
-		That's because the Resource implementation of StringInterface is to
-		list all the options that need to be set before loading, of which 
-		we have none as such. Full details can be set through scripts.
-		*/ 
-		createParamDictionary("Material");
+	    // Assign name
+	    mName = name;
+        mCompilationRequired = true;
+        mIsLoaded = false;
+		
     }
     //-----------------------------------------------------------------------
     Material::~Material()
     {
         removeAllTechniques();
-        // have to call this here reather than in Resource destructor
-        // since calling virtual methods in base destructors causes crash
-        unload(); 
+        // parent Resource will call unload
     }
     //-----------------------------------------------------------------------
     Material& Material::operator=(const Material& rhs)
     {
 	    mName = rhs.mName;
-		mGroup = rhs.mGroup;
-		mCreator = rhs.mCreator;
-		mIsManual = rhs.mIsManual;
-		mLoader = rhs.mLoader;
 	    mHandle = rhs.mHandle;
         mSize = rhs.mSize;
+        mLastAccess = rhs.mLastAccess;
         mReceiveShadows = rhs.mReceiveShadows;
 
 
@@ -108,57 +116,55 @@ namespace Ogre {
 
 
     //-----------------------------------------------------------------------
-    void Material::loadImpl(void)
+    const String& Material::getName(void) const
     {
-		// compile if required
-        if (mCompilationRequired)
-            compile();
-
-        // Load all supported techniques
-        Techniques::iterator i, iend;
-        iend = mSupportedTechniques.end();
-        for (i = mSupportedTechniques.begin(); i != iend; ++i)
-        {
-            (*i)->_load();
-        }
-
+	    return mName;
     }
     //-----------------------------------------------------------------------
-    void Material::unloadImpl(void)
+    void Material::load(void)
     {
-        // Unload all supported techniques
-        Techniques::iterator i, iend;
-        iend = mSupportedTechniques.end();
-        for (i = mSupportedTechniques.begin(); i != iend; ++i)
+	    if (!mIsLoaded)
+	    {
+			// compile if required
+            if (mCompilationRequired)
+                compile();
+
+            // Load all supported techniques
+            Techniques::iterator i, iend;
+            iend = mSupportedTechniques.end();
+            for (i = mSupportedTechniques.begin(); i != iend; ++i)
+            {
+                (*i)->_load();
+            }
+
+            mIsLoaded = true;
+
+	    }
+    }
+    //-----------------------------------------------------------------------
+    void Material::unload(void)
+    {
+        if (mIsLoaded)
         {
-            (*i)->_unload();
+            // Unload all supported techniques
+            Techniques::iterator i, iend;
+            iend = mSupportedTechniques.end();
+            for (i = mSupportedTechniques.begin(); i != iend; ++i)
+            {
+                (*i)->_unload();
+            }
+            mIsLoaded = false;
         }
     }
     //-----------------------------------------------------------------------
-    MaterialPtr Material::clone(const String& newName, bool changeGroup, 
-		const String& newGroup) const
+    Material* Material::clone(const String& newName) const
     {
-		MaterialPtr newMat;
-		if (changeGroup)
-		{
-			newMat = MaterialManager::getSingleton().create(newName, newGroup);
-		}
-		else
-		{
-			newMat = MaterialManager::getSingleton().create(newName, mGroup);
-		}
-        
+        Material* newMat = (Material*)MaterialManager::getSingleton().create(newName);
 
         // Keep handle (see below, copy overrides everything)
         ResourceHandle newHandle = newMat->getHandle();
         // Assign values from this
         *newMat = *this;
-		// Restore new group if required, will have been overridden by operator
-		if (changeGroup)
-		{
-			newMat->mGroup = newGroup;
-		}
-		
 		newMat->mIsLoaded = this->mIsLoaded;
         // Correct the name & handle, they get copied too
         newMat->mName = newName;
@@ -170,37 +176,22 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void Material::copyDetailsTo(MaterialPtr& mat) const
+    void Material::copyDetailsTo(Material* mat) const
     {
         // Keep handle (see below, copy overrides everything)
         ResourceHandle savedHandle = mat->mHandle;
         String savedName = mat->mName;
-        String savedGroup = mat->mGroup;
         // Assign values from this
         *mat = *this;
         // Correct the name & handle, they get copied too
         mat->mName = savedName;
         mat->mHandle = savedHandle;
-        mat->mGroup = savedGroup;
 
     }
     //-----------------------------------------------------------------------
     void Material::applyDefaults(void)
     {
-		MaterialPtr defaults = MaterialManager::getSingleton().getDefaultSettings();
-
-		if (!defaults.isNull())
-		{
-            // save name & handle
-            String savedName = mName;
-            String savedGroup = mGroup;
-            ResourceHandle savedHandle = mHandle;
-			*this = *defaults;
-            // restore name & handle
-            mName = savedName;
-            mHandle = savedHandle;
-            mGroup = savedGroup;
-		}
+		*this = *mDefaultSettings;
         mCompilationRequired = true;
 
     }

@@ -356,12 +356,12 @@ namespace Ogre {
 			for (unsigned short v = 0; v < NUM_SHADOW_EXTRUDER_PROGRAMS; ++v)
 			{
 				// Create debug extruders
-				if (GpuProgramManager::getSingleton().getByName(
-					programNames[v]).isNull())
+				if (!GpuProgramManager::getSingleton().getByName(
+					programNames[v]))
 				{
-					GpuProgramPtr vp = 
+					GpuProgram* vp = 
 						GpuProgramManager::getSingleton().createProgramFromString(
-						programNames[v], ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+						programNames[v],
 						ShadowVolumeExtrudeProgram::getProgramSource(
 						vertexProgramLightTypes[v], syntax, 
 						vertexProgramFinite[v], vertexProgramDebug[v]),
@@ -371,19 +371,6 @@ namespace Ogre {
 			}
 			mInitialised = true;
 		}
-    }
-    //---------------------------------------------------------------------
-    void ShadowVolumeExtrudeProgram::shutdown(void)
-    {
-        if (mInitialised)
-        {
-            for (unsigned short v = 0; v < NUM_SHADOW_EXTRUDER_PROGRAMS; ++v)
-            {
-                // Destroy debug extruders
-                GpuProgramManager::getSingleton().remove(programNames[v]);
-            }
-            mInitialised = false;
-        }
     }
     //---------------------------------------------------------------------
     const String& ShadowVolumeExtrudeProgram::getProgramSource(

@@ -26,9 +26,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define _Image_H__
 
 #include "OgrePrerequisites.h"
+
 #include "OgreCommon.h"
-#include "OgrePixelFormat.h"
-#include "OgreDataStream.h"
 
 namespace Ogre {
 
@@ -52,8 +51,33 @@ namespace Ogre {
     class _OgreExport Image
     {
     public:
-    	typedef Ogre::Box Box;
-    	typedef Ogre::Rect Rect;
+        /** Structure used to define a rectangle in a 2-D integer space.
+        */
+        struct Rect
+        {
+            long left, top, right, bottom;
+
+            Rect()
+            {
+            }
+            Rect( long l, long t, long r, long b )
+            {
+                left = l;
+                top = t;   
+                right = r;
+                bottom = b;                
+            }
+            Rect& operator = ( const Rect& other )
+            {
+                left = other.left;
+                top = other.top;
+                right = other.right;
+                bottom = other.bottom;       
+
+                return *this;
+            }
+        };
+
     public:
         /** Standard constructor.
         */
@@ -107,6 +131,196 @@ namespace Ogre {
         */                 
         Image & flipAroundX();
 
+        /** @deprecated
+				Use getNumElemBytes instead.
+			@internal
+			@brief
+				Returns the pixel size  for a given PixelFormat
+            @param
+                eFormat the PixelFormat to get the pixel size for
+            @returns
+                the number of bytes per pixel of data
+        */
+        static uchar PF2PS( PixelFormat format )
+        {
+			return getNumElemBytes( format );
+        }
+
+		/** Returns the size in bytes of an element of the given pixel format.
+			@returns
+				The size in bytes of an element. See Remarks.
+			@remarks
+				Passing PF_UNKNOWN will result in returning a size of 0 bytes while
+				passing an unregistered pixel format will result in returning a size
+				of 256 bytes.
+		*/
+		inline static uchar getNumElemBytes( PixelFormat format )
+		{
+			switch( format )
+			{
+			case PF_UNKNOWN:
+				return 0;
+			case PF_L8:
+			case PF_A8:
+			case PF_A4L4:
+			case PF_L4A4:
+				return 1;
+			case PF_R5G6B5:
+			case PF_B5G6R5:
+			case PF_A4R4G4B4:
+			case PF_B4G4R4A4:
+				return 2;
+			case PF_R8G8B8:
+			case PF_B8G8R8:
+				return 3;
+			case PF_A8R8G8B8:
+			case PF_B8G8R8A8:
+			case PF_A2R10G10B10:
+			case PF_B10G10R10A2:
+				return 4;
+			default:
+				return 0xff;
+			}
+		}
+
+        /** @deprecated
+				Use getNumElemBits instead.
+			@internal
+			@brief
+				Returns the BPP for a given PixelFormat
+            @param
+                eFormat the PixelFormat to get the BPP for
+            @returns
+                the number of bits per pixel of data
+        */
+        static uchar PF2BPP( PixelFormat format )
+        {
+            return getNumElemBits( format );
+        }
+
+		/** Returns the size in bits of an element of the given pixel format.
+			@returns
+				The size in bits of an element. See Remarks.
+			@remarks
+				Passing PF_UNKNOWN will result in returning a size of 0 bits while
+				passing an unregistered pixel format will result in returning a size
+				of 256 bits.
+		*/
+		inline static uchar getNumElemBits( PixelFormat format )
+		{
+			switch( format )
+			{
+			case PF_UNKNOWN:
+				return 0;
+			case PF_L8:
+			case PF_A8:
+			case PF_A4L4:
+			case PF_L4A4:
+            case PF_DXT1:
+				return 8;
+			case PF_R5G6B5:
+			case PF_B5G6R5:
+			case PF_A4R4G4B4:
+			case PF_B4G4R4A4:
+            case PF_DXT2:
+            case PF_DXT3:
+            case PF_DXT4:
+            case PF_DXT5:
+				return 16;
+			case PF_R8G8B8:
+			case PF_B8G8R8:
+				return 24;
+			case PF_A8R8G8B8:
+			case PF_B8G8R8A8:
+			case PF_A2R10G10B10:
+			case PF_B10G10R10A2:
+				return 32;
+			default:
+				return 0xff;
+			}
+		}
+
+        /** Returns the existance of an alpha component given a pixel format.
+          @returns
+               True when there is an alpha.
+           @remarks
+               Passing one of the DXT_ formats will return false as it is unknown
+               from the format alone in that case.
+       */
+       inline static bool PFHasAlpha(PixelFormat format) 
+       {
+            switch(format) {
+                case PF_A8:
+                case PF_A4L4:
+                case PF_L4A4:
+                case PF_A4R4G4B4:
+                case PF_B4G4R4A4:
+                case PF_A8R8G8B8:
+                case PF_B8G8R8A8:
+                case PF_A2R10G10B10:
+                case PF_B10G10R10A2:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+		/** Decides wether converting from a pixel format to another requires 
+			endian-flipping.
+			@param srcformat
+				The source pixel format.
+			@param destformat
+				The destination pixel format.
+			@returns
+				true if the conversion requires flipping, false otherwise. See Remarks.
+			@remarks
+				If one of the two pixel formats is FMT_UNKNOWN or is not registered,
+				no assumption can be made for the returned value.
+		*/
+		inline static bool convReqsFlip( PixelFormat srcformat, PixelFormat destformat )
+		{
+			/* We increment the flag when the format is little endian. Then we check
+			   if the flag modulo 2 is zero. It it is, then we either haven't incremented
+			   at all (both formats big endian) or we have incremented twice (both formats
+			   little endian), so we need no flipping is needed. Otherwise, flipping is 
+			   required. */
+			uchar flag = 0;
+
+			switch( srcformat )
+			{
+			case PF_A4L4:
+			case PF_R5G6B5:
+			case PF_A4R4G4B4:
+			case PF_R8G8B8:
+			case PF_A8R8G8B8:
+			case PF_A2R10G10B10:
+				flag++;
+				break;
+
+			default:
+				break;
+			}
+
+			switch( destformat )
+			{
+			case PF_A4L4:
+			case PF_R5G6B5:
+			case PF_A4R4G4B4:
+			case PF_R8G8B8:
+			case PF_A8R8G8B8:
+			case PF_A2R10G10B10:
+				flag++;
+				break;
+
+			default:
+				break;
+			}
+
+			if( flag % 2 )
+				return true;
+			return false;
+		}
+
         /** Stores a pointer to raw data in memory. The pixel format has to be specified.
             @remarks
                 This method loads an image into memory held in the object. The 
@@ -119,76 +333,21 @@ namespace Ogre {
 				Width of image
             @param
 				Height of image
-			@param
-                Image Depth (in 3d images, numbers of layers, otherwhise 1)
-            @param
-				Pixel Format
-            @param
-                if memory associated with this buffer is to be destroyed
-                with the Image object.
-			@param
-				the number of faces the image data has inside (6 for cubemaps, 1 otherwise)
-            @param
-                the number of mipmaps the image data has inside
-            @note
-                 The memory associated with this buffer is NOT destroyed with the
-                 Image object, unless autoDelete is set to true.
-			@remarks 
-				The size of the buffer must be numFaces*PixelUtil::getMemorySize(width, height, depth, format)
-         */
-		Image& Image::loadDynamicImage( uchar* pData, size_t uWidth, size_t uHeight, 
-							size_t depth,
-							 PixelFormat eFormat, bool autoDelete = false, 
-							 size_t numFaces = 1, size_t numMipMaps = 0);
-		
-		/** Stores a pointer to raw data in memory. The pixel format has to be specified.
-            @remarks
-                This method loads an image into memory held in the object. The 
-                pixel format will be either greyscale or RGB with an optional
-                Alpha component.
-                The type can be determined by calling getFormat().             
-            @param
-                The data pointer
-            @param
-				Width of image
-            @param
-				Height of image
             @param
 				Pixel Format
             @note
-                 The memory associated with this buffer is NOT destroyed with the
-                 Image object.
-			@remarks This function is deprecated; one should really use the
-				Image::loadDynamicImage(pData, width, height, depth, format, ...) to be compatible
-				with future Ogre versions.
-         */
- 		Image& loadDynamicImage( uchar* pData, size_t uWidth,
-								 size_t uHeight, PixelFormat eFormat)
-		{
-			return loadDynamicImage(pData, uWidth, uHeight, 1, eFormat);
-		}
-		/** Loads raw data from a stream. See the function
-			loadDynamicImage for a description of the parameters.
-			@remarks 
-				The size of the buffer must be numFaces*PixelUtil::getMemorySize(width, height, depth, format)
+                The memory associated with this buffer is NOT destroyed with the
+                Image object.
+        */
+		Image& loadDynamicImage( uchar* pData, ushort uWidth, 
+								 ushort uHeight, PixelFormat eFormat );
+
+        /** Loads raw data from memory. The pixel format has to be specified.
         */
         Image & loadRawData( 
-            DataStreamPtr& stream, 
-            size_t uWidth, size_t uHeight, size_t uDepth,
-            PixelFormat eFormat,
-			size_t numFaces = 1, size_t numMipMaps = 0);
-        /** Loads raw data from a stream. The pixel format has to be specified. 
-			@remarks This function is deprecated; one should really use the
-				Image::loadRawData(stream, width, height, depth, format, ...) to be compatible
-				with future Ogre versions.
-        */
-        Image & loadRawData( 
-            DataStreamPtr& stream, 
-            size_t uWidth, size_t uHeight, 
-            PixelFormat eFormat )
-		{
-			return loadRawData(stream, uWidth, uHeight, 1, eFormat);
-		}
+            const DataChunk &pData, 
+            ushort uWidth, ushort uHeight, 
+            PixelFormat eFormat );
 
         /** Loads an image file.
             @remarks
@@ -198,29 +357,32 @@ namespace Ogre {
                 The type can be determined by calling getFormat().             
             @param
                 strFileName Name of a file file to load.
-            @param
-                groupName Name of the resource group to search for the image
             @note
                 The memory associated with this buffer is destroyed with the
                 Image object.
         */
-        Image & load( const String& strFileName, const String& groupName );
+        Image & load( const String& strFileName );
 
-        /** Loads an image file from a stream.
+        /** Loads an image file from a chunk of memory.
             @remarks
                 This method works in the same way as the filename-based load 
-                method except it loads the image from a DataStream object. 
-				This DataStream is expected to contain the 
+                method except it loads the image from a DataChunk object, ie 
+                a chunk of memory. This DataChunk is expected to contain the 
                 encoded data as it would be held in a file. 
+            @par
+                This method is here to support loading from compressed archives
+                where you decompress the data from the archive into memory 
+                first. This method will then decode the data and return a raw 
+                image data stream.
             @param
-                stream The source data.
+                chunk The source data.
             @param
                 type The type of the image. Used to decide what decompression
                 codec to use.
             @see
                 Image::load( const String& strFileName )
         */
-        Image & load(DataStreamPtr& stream, const String& type );
+        Image & load( const DataChunk& chunk, const String& type );
         
         /** Save the image as a file. */
         void save(const String& filename);
@@ -239,7 +401,7 @@ namespace Ogre {
 
         /** Returns the number of mipmaps contained in the image.
         */
-        size_t getNumMipmaps() const;
+        unsigned short getNumMipmaps() const;
 
         /** Returns true if the image has the appropriate flag set.
         */
@@ -247,20 +409,15 @@ namespace Ogre {
 
         /** Gets the width of the image in pixels.
         */
-        size_t getWidth(void) const;
+        ushort getWidth(void) const;
 
         /** Gets the height of the image in pixels.
         */
-        size_t getHeight(void) const;
+        ushort getHeight(void) const;
 
         /** Gets the depth of the image.
         */
-        size_t getDepth(void) const;
-		
-		/** Get the numer of faces of the image. This is usually 6 for a cubemap, and
-		    1 for a normal image.
-		*/
-		size_t getNumFaces(void) const;
+        ushort getDepth(void) const;
 
         /** Gets the physical width in bytes of each row of pixels.
         */
@@ -277,25 +434,15 @@ namespace Ogre {
         /** Returns true if the image has an alpha component.
         */
         bool getHasAlpha() const;
-		
-		/** Does gamma adjustment.
+
+        /** Does gamma adjustment.
             @note
                 Basic algo taken from Titan Engine, copyright (c) 2000 Ignacio 
                 Castano Iguado
         */
         static void applyGamma( uchar *buffer, Real gamma, size_t size, uchar bpp );
 
-        /**
-         * Get colour value from a certain location in the image. The z coordinate
-         * is only valid for cubemaps and volume textures. This uses the first (largest)
-         * mipmap.
-         */
-        ColourValue getColourAt(int x, int y, int z);
-        
-        /**
-         * Get a PixelBox encapsulating the image data of a mipmap
-         */
-        PixelBox getPixelBox(size_t face = 0, size_t mipmap = 0) const;
+        static bool formatHasAlpha(PixelFormat format);
 
 		enum Filter
 		{
@@ -306,30 +453,21 @@ namespace Ogre {
 			FILTER_TRIANGLE,
 			FILTER_BICUBIC
 		};
-		/** Scale a 1D, 2D or 3D image volume. 
-			@param 	src			PixelBox containing the source pointer, dimensions and format
-			@param 	dst			PixelBox containing the destination pointer, dimensions and format
-			@param 	filter		Which filter to use
-			@remarks 	This function can do pixel format conversion in the process.
-			@note	dst and src can point to the same PixelBox object without any problem
-		*/
-		static void scale(const PixelBox &src, const PixelBox &dst, Filter filter = FILTER_BILINEAR);
-		
 		/** Resize a 2D image, applying the appropriate filter. */
 		void resize(ushort width, ushort height, Filter filter = FILTER_BILINEAR);
 		
 
     private:
         // The width of the image in pixels
-        size_t m_uWidth;
+        ushort m_uWidth;
         // The height of the image in pixels
-        size_t m_uHeight;
+        ushort m_uHeight;
         // The depth of the image
-        size_t m_uDepth;
+        ushort m_uDepth;
         // The size of the image buffer
-        size_t m_uSize;
+        uint m_uSize;
         // The number of mipmaps the image contains
-        size_t m_uNumMipmaps;
+        ushort m_uNumMipmaps;
         // Image specific flags.
         int m_uFlags;
 

@@ -43,7 +43,6 @@ http://www.gnu.org/copyleft/lesser.txt.s
 #include "OgreGLATIFSInit.h"
 #include "OgreGLSLExtSupport.h"
 #include "OgreGLHardwareOcclusionQuery.h"
-#include "OgreGLContext.h"
 
 
 #ifdef HAVE_CONFIG_H
@@ -83,12 +82,7 @@ GL_CombinerInputNV_Func glCombinerInputNV_ptr;
 GL_CombinerOutputNV_Func glCombinerOutputNV_ptr;
 GL_FinalCombinerInputNV_Func glFinalCombinerInputNV_ptr;
 GL_TrackMatrixNV_Func glTrackMatrixNV_ptr;
-PFNGLCOMPRESSEDTEXIMAGE1DARBPROC glCompressedTexImage1DARB_ptr;
 PFNGLCOMPRESSEDTEXIMAGE2DARBPROC glCompressedTexImage2DARB_ptr;
-PFNGLCOMPRESSEDTEXIMAGE3DARBPROC glCompressedTexImage3DARB_ptr;
-PFNGLCOMPRESSEDTEXSUBIMAGE1DARBPROC glCompressedTexSubImage1DARB_ptr;
-PFNGLCOMPRESSEDTEXSUBIMAGE2DARBPROC glCompressedTexSubImage2DARB_ptr;
-PFNGLCOMPRESSEDTEXSUBIMAGE3DARBPROC glCompressedTexSubImage3DARB_ptr;
 GL_ActiveStencilFaceEXT_Func glActiveStencilFaceEXT_ptr;
 GL_GenOcclusionQueriesNV_Func glGenOcclusionQueriesNV_ptr;	
 GL_DeleteOcclusionQueriesNV_Func glDeleteOcclusionQueriesNV_ptr;
@@ -99,41 +93,20 @@ GL_GetOcclusionQueryuivNV_Func glGetOcclusionQueryuivNV_ptr;
 namespace Ogre {
 
     // Callback function used when registering GLGpuPrograms
-    GpuProgram* createGLArbGpuProgram(ResourceManager* creator, 
-        const String& name, ResourceHandle handle, 
-        const String& group, bool isManual, ManualResourceLoader* loader,
-        GpuProgramType gptype, const String& syntaxCode)
+    GpuProgram* createGLArbGpuProgram(const String& name, GpuProgramType gptype, const String& syntaxCode)
     {
-        GLArbGpuProgram* ret = new GLArbGpuProgram(
-            creator, name, handle, group, isManual, loader);
-        ret->setType(gptype);
-        ret->setSyntaxCode(syntaxCode);
-        return ret;
+        return new GLArbGpuProgram(name, gptype, syntaxCode);
     }
 
-    GpuProgram* createGLGpuNvparseProgram(ResourceManager* creator, 
-        const String& name, ResourceHandle handle, 
-        const String& group, bool isManual, ManualResourceLoader* loader,
-        GpuProgramType gptype, const String& syntaxCode)
+    GpuProgram* createGLGpuNvparseProgram(const String& name, GpuProgramType gptype, const String& syntaxCode)
     {
-        GLGpuNvparseProgram* ret = new GLGpuNvparseProgram(
-            creator, name, handle, group, isManual, loader);
-        ret->setType(gptype);
-        ret->setSyntaxCode(syntaxCode);
-        return ret;
+        return new GLGpuNvparseProgram(name, gptype, syntaxCode);
     }
 
-    GpuProgram* createGL_ATI_FS_GpuProgram(ResourceManager* creator, 
-        const String& name, ResourceHandle handle, 
-        const String& group, bool isManual, ManualResourceLoader* loader,
-        GpuProgramType gptype, const String& syntaxCode)
+	GpuProgram* createGL_ATI_FS_GpuProgram(const String& name, GpuProgramType gptype, const String& syntaxCode)
 	{
 
-        ATI_FS_GLGpuProgram* ret = new ATI_FS_GLGpuProgram(
-            creator, name, handle, group, isManual, loader);
-        ret->setType(gptype);
-        ret->setSyntaxCode(syntaxCode);
-        return ret;
+		return new ATI_FS_GLGpuProgram(name, gptype, syntaxCode);
 	}
 
     GLRenderSystem::GLRenderSystem()
@@ -169,9 +142,7 @@ namespace Ogre {
             mTextureTypes[i] = 0;
         }
 
-        mActiveRenderTarget = 0;
-        mCurrentContext = 0;
-        mMainContext = 0;
+        mActiveRenderTarget = NULL;
 
         mGLInitialized = false;
 
@@ -269,10 +240,9 @@ namespace Ogre {
 
     RenderWindow* GLRenderSystem::initialise(bool autoCreateWindow, const String& windowTitle)
     {
-        mGLSupport->start();
-        
-		RenderWindow* autoWindow = mGLSupport->createWindow(autoCreateWindow, this, windowTitle);
 
+        mGLSupport->start();
+		RenderWindow* autoWindow = mGLSupport->createWindow(autoCreateWindow, this, windowTitle);
 
         _setCullingMode( mCullingMode );
         
@@ -486,28 +456,24 @@ namespace Ogre {
             mCapabilities->setCapability(RSC_HWOCCLUSION);		
         }
 
+        // Check for FSAA
+        // Enable the extension if it was enabled by the GLSupport
+        if (mGLSupport->checkExtension("GL_ARB_multisample"))
+        {
+            int fsaa_active = false;
+            glGetIntegerv(GL_SAMPLE_BUFFERS_ARB,(GLint*)&fsaa_active);
+            if(fsaa_active)
+            {
+                glEnable(GL_MULTISAMPLE_ARB);
+                LogManager::getSingleton().logMessage("Using FSAA from GL_ARB_multisample extension.");
+            }            
+        }
+
 		// UBYTE4 always supported
 		mCapabilities->setCapability(RSC_VERTEX_FORMAT_UBYTE4);
 
         // Inifinite far plane always supported
         mCapabilities->setCapability(RSC_INFINITE_FAR_PLANE);
-
-        // Check for non-power-of-2 texture support
-		if(mGLSupport->checkExtension("GL_ARB_texture_non_power_of_two"))
-        {
-            mCapabilities->setCapability(RSC_NON_POWER_OF_2_TEXTURES);
-        }
-
-        // Check for Float textures
-        if(mGLSupport->checkExtension("GL_ATI_texture_float") ||
-//           mGLSupport->checkExtension("GL_NV_float_buffer") ||
-           mGLSupport->checkExtension("GL_ARB_texture_float"))
-        {
-            mCapabilities->setCapability(RSC_TEXTURE_FLOAT);
-        }
-
-		// Check for GLSupport specific extensions
-		mGLSupport->initialiseCapabilities(*mCapabilities);
 
         // Get extension function pointers
         glActiveTextureARB_ptr = 
@@ -567,18 +533,8 @@ namespace Ogre {
             (GL_FinalCombinerInputNV_Func)mGLSupport->getProcAddress("glFinalCombinerInputNV");
         glTrackMatrixNV_ptr = 
             (GL_TrackMatrixNV_Func)mGLSupport->getProcAddress("glTrackMatrixNV");
-		glCompressedTexImage1DARB_ptr =
-            (PFNGLCOMPRESSEDTEXIMAGE1DARBPROC)mGLSupport->getProcAddress("glCompressedTexImage1DARB");
         glCompressedTexImage2DARB_ptr =
             (PFNGLCOMPRESSEDTEXIMAGE2DARBPROC)mGLSupport->getProcAddress("glCompressedTexImage2DARB");
-		glCompressedTexImage3DARB_ptr =
-            (PFNGLCOMPRESSEDTEXIMAGE3DARBPROC)mGLSupport->getProcAddress("glCompressedTexImage3DARB");
-        glCompressedTexSubImage1DARB_ptr =
-            (PFNGLCOMPRESSEDTEXSUBIMAGE1DARBPROC)mGLSupport->getProcAddress("glCompressedTexSubImage1DARB");
-        glCompressedTexSubImage2DARB_ptr =
-            (PFNGLCOMPRESSEDTEXSUBIMAGE2DARBPROC)mGLSupport->getProcAddress("glCompressedTexSubImage2DARB");
-        glCompressedTexSubImage3DARB_ptr =
-            (PFNGLCOMPRESSEDTEXSUBIMAGE3DARBPROC)mGLSupport->getProcAddress("glCompressedTexSubImage3DARB");
         InitATIFragmentShaderExtensions(*mGLSupport);
 		InitGLShaderLanguageExtensions(*mGLSupport);
         glActiveStencilFaceEXT_ptr = 
@@ -645,9 +601,11 @@ namespace Ogre {
         }
     }
 
-	RenderWindow* GLRenderSystem::createRenderWindow(const String &name, 
-		unsigned int width, unsigned int height, bool fullScreen,
-		const NameValuePairList *miscParams)
+
+    RenderWindow* GLRenderSystem::createRenderWindow(
+            const String & name, unsigned int width, unsigned int height, 
+            unsigned int colourDepth, bool fullScreen, int left, int top, 
+            bool depthBuffer, RenderWindow* parentWindowHandle)
     {
         if (mRenderTargets.find(name) != mRenderTargets.end())
         {
@@ -656,74 +614,30 @@ namespace Ogre {
                 "Window with name '" + name + "' already exists",
                 "GLRenderSystem::createRenderWindow" );
         }
-		// Log a message
-		std::stringstream ss;
-		ss << "GLRenderSystem::createRenderWindow \"" << name << "\", " <<
-			width << "x" << height << " ";
-		if(fullScreen)
-			ss << "fullscreen ";
-		else
-			ss << "windowed ";
-		if(miscParams)
-		{
-			ss << " miscParams: ";
-			NameValuePairList::const_iterator it;
-			for(it=miscParams->begin(); it!=miscParams->end(); ++it)
-			{
-				ss << it->first << "=" << it->second << " ";
-			}
-			LogManager::getSingleton().logMessage(ss.str());
-		}
 
+		mGLSupport->setExternalWindowHandle(mExternalWindowHandle);
         // Create the window
         RenderWindow* win = mGLSupport->newWindow(name, width, height, 
-            fullScreen, miscParams);
+            colourDepth, fullScreen, left, top, depthBuffer, parentWindowHandle,
+            mVSync);
 
         attachRenderTarget( *win );
 
         if (!mGLInitialized) 
         {
-            // Initialise GL after the first window has been created
             initGL();
             mTextureManager = new GLTextureManager(*mGLSupport);
-            // Set main and current context
-            ContextMap::iterator i = mContextMap.find(win);
-            if(i != mContextMap.end()) {
-                mCurrentContext = i->second;
-                mMainContext =  i->second;
-                mCurrentContext->setCurrent();
-            }
-            // Initialise the main context
-            _oneTimeContextInitialization();
         }
-
 
         // XXX Do more?
 
         return win;
     }
 
-	RenderTexture * GLRenderSystem::createRenderTexture( const String & name, unsigned int width, unsigned int height,
-		TextureType texType, PixelFormat internalFormat, const NameValuePairList *miscParams ) 
+    RenderTexture * GLRenderSystem::createRenderTexture( const String & name, unsigned int width, unsigned int height )
     {
-		// Log a message
-		std::stringstream ss;
-		ss << "GLRenderSystem::createRenderTexture \"" << name << "\", " <<
-			width << "x" << height << " texType=" << texType <<
-			" internalFormat=" << PixelUtil::getFormatName(internalFormat) << " ";
-		if(miscParams)
-		{
-			ss << "miscParams: ";
-			NameValuePairList::const_iterator it;
-			for(it=miscParams->begin(); it!=miscParams->end(); ++it)
-			{
-				ss << it->first << "=" << it->second << " ";
-			}
-			LogManager::getSingleton().logMessage(ss.str());
-		}
-		// Pass on the create call
-        RenderTexture *rt = mGLSupport->createRenderTexture(name, width, height, texType, internalFormat, miscParams);
-        attachRenderTarget( *rt );
+        RenderTexture* rt = new GLRenderTexture(name, width, height);
+        attachRenderTarget(*rt);
         return rt;
     }
 
@@ -747,6 +661,7 @@ namespace Ogre {
 	//---------------------------------------------------------------------
     void GLRenderSystem::_useLights(const LightList& lights, unsigned short limit)
     {
+
         // Save previous modelview
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
@@ -891,8 +806,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     void GLRenderSystem::_setSurfaceParams(const ColourValue &ambient,
         const ColourValue &diffuse, const ColourValue &specular,
-        const ColourValue &emissive, Real shininess,
-        TrackVertexColourType tracking)
+        const ColourValue &emissive, Real shininess)
     {
         // XXX Cache previous values?
         // XXX Front or Front and Back?
@@ -915,64 +829,20 @@ namespace Ogre {
         f4val[3] = emissive.a;
         glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, f4val);
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
-        
-        // Track vertex colour
-        if(tracking != TVC_NONE) 
-        {
-            GLenum gt = GL_DIFFUSE;
-            // There are actually 15 different combinations for tracking, of which
-            // GL only supports the most used 5. This means that we have to do some
-            // magic to find the best match. NOTE: 
-            //  GL_AMBIENT_AND_DIFFUSE != GL_AMBIENT | GL__DIFFUSE
-            if(tracking & TVC_AMBIENT) 
-            {
-                if(tracking & TVC_DIFFUSE)
-                {
-                    gt = GL_AMBIENT_AND_DIFFUSE;
-                } 
-                else 
-                {
-                    gt = GL_AMBIENT;
-                }
-            }
-            else if(tracking & TVC_DIFFUSE) 
-            {
-                gt = GL_DIFFUSE;
-            }
-            else if(tracking & TVC_SPECULAR) 
-            {
-                gt = GL_SPECULAR;              
-            }
-            else if(tracking & TVC_EMISSIVE) 
-            {
-                gt = GL_EMISSION;
-            }
-            glColorMaterial(GL_FRONT_AND_BACK, gt);
-            
-            glEnable(GL_COLOR_MATERIAL);
-        } 
-        else 
-        {
-            glDisable(GL_COLOR_MATERIAL);          
-        }
     }
 
     //-----------------------------------------------------------------------------
     void GLRenderSystem::_setTexture(size_t stage, bool enabled, const String &texname)
     {
-        GLTexturePtr tex = TextureManager::getSingleton().getByName(texname);
+        GLTexture* tex = static_cast<GLTexture*>(TextureManager::getSingleton().getByName(texname));
 
         GLenum lastTextureType = mTextureTypes[stage];
 
 		glActiveTextureARB_ptr( GL_TEXTURE0 + stage );
 		if (enabled)
         {
-            if (!tex.isNull())
-            {
-                // note used
-                tex->touch();
-                mTextureTypes[stage] = tex->getGLTextureTarget();
-            }
+            if (tex)
+                mTextureTypes[stage] = tex->getGLTextureType();
             else
                 // assume 2D
                 mTextureTypes[stage] = GL_TEXTURE_2D;
@@ -983,15 +853,12 @@ namespace Ogre {
             }
 
 			glEnable( mTextureTypes[stage] );
-			if(!tex.isNull())
+			if(tex)
 				glBindTexture( mTextureTypes[stage], tex->getGLID() );
         }
         else
         {
-            if (lastTextureType != 0)
-            {
-                glDisable( mTextureTypes[stage] );
-            }
+			glDisable( mTextureTypes[stage] );
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         }
 
@@ -1166,13 +1033,8 @@ namespace Ogre {
         GLfloat mat[16];
         makeGLMatrix(mat, xform);
 
-		if(mTextureTypes[stage] != GL_TEXTURE_3D && 
-		   mTextureTypes[stage] != GL_TEXTURE_CUBE_MAP)
-		{
-			// Convert 3x3 rotation/translation matrix to 4x4
-			mat[12] = mat[8];
-			mat[13] = mat[9];
-		}
+        mat[12] = mat[8];
+        mat[13] = mat[9];
 //        mat[14] = mat[10];
 //        mat[15] = mat[11];
 
@@ -1256,13 +1118,22 @@ namespace Ogre {
         // Check if viewport is different
         if (vp != mActiveViewport || vp->_isUpdated())
         {
-            RenderTarget* target;
-            target = vp->getTarget();
-            _setRenderTarget(target);
-            mActiveViewport = vp;
-              
+		if(vp->getTarget() != mActiveRenderTarget) {
+			// Set new context
+			if(mActiveRenderTarget)
+				// Disable current context
+				mGLSupport->end_context();
+			mGLSupport->begin_context(vp->getTarget());
+		}
+
+              mActiveViewport = vp;
+              mActiveRenderTarget = vp->getTarget();
+              // XXX Rendering target stuff?
               GLsizei x, y, w, h;
- 
+  
+              RenderTarget* target;
+              target = vp->getTarget();
+  
               // Calculate the "lower-left" corner of the viewport
               w = vp->getActualWidth();
               h = vp->getActualHeight();
@@ -1434,14 +1305,10 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     void GLRenderSystem::setLightingEnabled(bool enabled)
     {
-        if (enabled) 
-        {      
+        if (enabled)
             glEnable(GL_LIGHTING);
-        } 
-        else 
-        {
+        else
             glDisable(GL_LIGHTING);
-        }
     }
     //-----------------------------------------------------------------------------
     void GLRenderSystem::_setFog(FogMode mode, const ColourValue& colour, Real density, Real start, Real end)
@@ -1475,13 +1342,13 @@ namespace Ogre {
         // XXX Hint here?
     }
 
-    void GLRenderSystem::convertColourValue(const ColourValue& colour, uint32* pDest)
+    void GLRenderSystem::convertColourValue(const ColourValue& colour, unsigned long* pDest)
     {
     #if OGRE_ENDIAN == ENDIAN_BIG
-        *pDest = colour.getAsRGBA();
+        *pDest = colour.getAsLongRGBA();
     #else
       // GL accesses by byte, so use ABGR so little-endian format will make it RGBA in byte mode
-        *pDest = colour.getAsABGR();
+        *pDest = colour.getAsLongABGR();
     #endif
     }
     
@@ -2468,69 +2335,7 @@ namespace Ogre {
         matrix[2][2] = c.z + 1.0F;
         matrix[2][3] = c.w; 
     }
-    //---------------------------------------------------------------------
-    void GLRenderSystem::_oneTimeContextInitialization()
-    {
-        // Set nicer lighting model -- d3d9 has this by default
-        glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
-        glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 1);        
-        // Check for FSAA
-        // Enable the extension if it was enabled by the GLSupport
-        if (mGLSupport->checkExtension("GL_ARB_multisample"))
-        {
-            int fsaa_active = false;
-            glGetIntegerv(GL_SAMPLE_BUFFERS_ARB,(GLint*)&fsaa_active);
-            if(fsaa_active)
-            {
-                glEnable(GL_MULTISAMPLE_ARB);
-                LogManager::getSingleton().logMessage("Using FSAA from GL_ARB_multisample extension.");
-            }            
-        }
-    }
-    //---------------------------------------------------------------------
-    void GLRenderSystem::_setRenderTarget(RenderTarget *target)
-    {
-        mActiveRenderTarget = target;
-        // Switch context if different from current one
-        ContextMap::iterator i = mContextMap.find(target);
-        if(i != mContextMap.end() && mCurrentContext != i->second) {
-            mCurrentContext->endCurrent();
-            mCurrentContext = i->second;
-            // Check if the context has already done one-time initialisation
-            if(!mCurrentContext->getInitialized()) {
-               _oneTimeContextInitialization();
-               mCurrentContext->setInitialized();
-            }
-            mCurrentContext->setCurrent();
-        }
-    }
-    //---------------------------------------------------------------------
-    void GLRenderSystem::_registerContext(RenderTarget *target, GLContext *context)
-    {
-        mContextMap[target] = context;
-    }
-    //---------------------------------------------------------------------
-    void GLRenderSystem::_unregisterContext(RenderTarget *target)
-    {
-        ContextMap::iterator i = mContextMap.find(target);
-        if(i != mContextMap.end() && mCurrentContext == i->second) {
-            // Change the context to something else so that a valid context
-            // remains active. When this is the main context being unregistered,
-            // we set the main context to 0.
-            if(mCurrentContext != mMainContext) {
-                mCurrentContext->endCurrent();
-                mCurrentContext = mMainContext;
-                mCurrentContext->setCurrent();
-            } else {
-                mMainContext = 0;
-            }
-        }
-        mContextMap.erase(target);
-    }
-    //---------------------------------------------------------------------
-    GLContext *GLRenderSystem::_getMainContext() {
-        return mMainContext;
-    }
+
     //---------------------------------------------------------------------
     Real GLRenderSystem::getMinimumDepthInputValue(void)
     {

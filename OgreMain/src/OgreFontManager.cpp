@@ -25,15 +25,16 @@ http://www.gnu.org/copyleft/lesser.txt
 #include "OgreStableHeaders.h"
 
 #include "OgreFontManager.h"
+#include "OgreFont.h"
+#include "OgreSDDataChunk.h"
 #include "OgreLogManager.h"
 #include "OgreStringConverter.h"
 #include "OgreStringVector.h"
 #include "OgreException.h"
-#include "OgreResourceGroupManager.h"
 
 namespace Ogre
 {
-    //---------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------
     template<> FontManager * Singleton< FontManager >::ms_Singleton = 0;
     FontManager* FontManager::getSingletonPtr(void)
     {
@@ -43,49 +44,31 @@ namespace Ogre
     {  
         assert( ms_Singleton );  return ( *ms_Singleton );  
     }
+    //---------------------------------------------------------------------------------------------
+
     //---------------------------------------------------------------------
-	FontManager::FontManager() : ResourceManager()
-	{
-        // Loading order
-        mLoadOrder = 200.0f;
-		// Scripting is supported by this manager
-		mScriptPatterns.push_back("*.fontdef");
-		// Register scripting with resource group manager
-		ResourceGroupManager::getSingleton()._registerScriptLoader(this);
+    Resource* FontManager::create(const String& name)
+    {
+	    // Check name not already used
+	    if (getByName(name) != 0)
+		    Except(Exception::ERR_DUPLICATE_ITEM, "Font " + name + " already exists.",
+			    "FontManager::create");
 
-		// Resource type
-		mResourceType = "Font";
+	    Font* f = new Font(name);
+        // Don't load yet, defer until used
 
-		// Register with resource group manager
-		ResourceGroupManager::getSingleton()._registerResourceManager(mResourceType, this);
-
-
-	}
-	//---------------------------------------------------------------------
-	FontManager::~FontManager()
-	{
-		// Unregister with resource group manager
-		ResourceGroupManager::getSingleton()._unregisterResourceManager(mResourceType);
-		// Unegister scripting with resource group manager
-		ResourceGroupManager::getSingleton()._unregisterScriptLoader(this);
-
-	}
-	//---------------------------------------------------------------------
-	Resource* FontManager::createImpl(const String& name, ResourceHandle handle, 
-		const String& group, bool isManual, ManualResourceLoader* loader,
-        const NameValuePairList* params)
-	{
-		return new Font(this, name, handle, group, isManual, loader);
-	}
-	//---------------------------------------------------------------------
-    void FontManager::parseScript(DataStreamPtr& stream, const String& groupName)
+        mResources.insert(ResourceMap::value_type(name, f));
+        return f;
+    }
+    //---------------------------------------------------------------------
+    void FontManager::parseScript( DataChunk& chunk )
     {
         String line;
-        FontPtr pFont;
+        Font *pFont = 0;
 
-        while( !stream->eof() )
+        while( !chunk.isEOF() )
         {
-            line = stream->getLine();
+            line = chunk.getLine();
             // Ignore blanks & comments
             if( !line.length() || line.substr( 0, 2 ) == "//" )
             {
@@ -93,14 +76,13 @@ namespace Ogre
             }
             else
             {
-			    if (pFont.isNull())
+			    if (pFont == 0)
 			    {
 				    // No current font
 				    // So first valid data should be font name
-				    pFont = create(line, groupName);
-					pFont->_notifyOrigin(stream->getName());
+				    pFont = (Font*)create(line);
 				    // Skip to and over next {
-                    stream->skipLine("{");
+                    chunk.skipUpTo("{");
 			    }
 			    else
 			    {
@@ -108,7 +90,7 @@ namespace Ogre
 				    if (line == "}")
 				    {
 					    // Finished 
-					    pFont.setNull();
+					    pFont = 0;
                         // NB font isn't loaded until required
 				    }
                     else
@@ -120,7 +102,36 @@ namespace Ogre
         }
     }
     //---------------------------------------------------------------------
-    void FontManager::parseAttribute(const String& line, FontPtr& pFont)
+    void FontManager::parseAllSources( const String& extension )
+    {
+        StringVector fontfiles;
+        SDDataChunk chunk;
+
+        std::vector< ArchiveEx * >::iterator i = mVFS.begin();
+
+        for( ; i < mVFS.end(); i++ )
+        {
+            fontfiles = (*i)->getAllNamesLike( "./", extension );
+            for( StringVector::iterator j = fontfiles.begin(); j != fontfiles.end(); j++ )
+            {
+                DataChunk *p = &chunk;
+                (*i)->fileRead( *j, &p );
+                parseScript( chunk );
+            }
+        }
+        for( i = mCommonVFS.begin(); i < mCommonVFS.end(); i++ )
+        {
+            fontfiles = (*i)->getAllNamesLike( "./", extension );
+            for( StringVector::iterator j = fontfiles.begin(); j != fontfiles.end(); j++ )
+            {
+                DataChunk *p = &chunk;
+                (*i)->fileRead( *j, &p );
+                parseScript( chunk );
+            }
+        }
+    }
+    //---------------------------------------------------------------------
+    void FontManager::parseAttribute(const String& line, Font* pFont)
     {
         std::vector<String> params = StringUtil::split(line);
         String& attrib = params[0];
@@ -212,7 +223,7 @@ namespace Ogre
 
     }
     //---------------------------------------------------------------------
-    void FontManager::logBadAttrib(const String& line, FontPtr& pFont)
+    void FontManager::logBadAttrib(const String& line, Font* pFont)
     {
         LogManager::getSingleton().logMessage("Bad attribute line: " + line +
             " in font " + pFont->getName());

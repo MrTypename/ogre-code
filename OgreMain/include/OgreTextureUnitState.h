@@ -182,7 +182,7 @@ namespace Ogre {
         @note
         Applies to both fixed-function and programmable pipeline.
         */
-        void setTextureName( const String& name, TextureType ttype = TEX_TYPE_2D, int mipmaps = -1 );
+        void setTextureName( const String& name, TextureType ttype = TEX_TYPE_2D );
 
         /** Sets this texture layer to use a combination of 6 texture maps, each one relating to a face of a cube.
         @remarks
@@ -760,6 +760,25 @@ namespace Ogre {
         void setTransformAnimation( const TextureTransformType ttype,
             const WaveformType waveType, Real base = 0, Real frequency = 1, Real phase = 0, Real amplitude = 1 );
 
+        /** Sets the way the layer will have use alpha to totally reject pixels from the pipeline.
+        @note
+        The default is CMPF_ALWAYS_PASS i.e. alpha is not used to reject pixels.
+        @param
+        func The comparison which must pass for the pixel to be written.
+        @param
+        value 1 byte value against which alpha values will be tested(0-255)
+        @note
+        This option applies in both the fixed function and the programmable pipeline.
+        */
+        void setAlphaRejectSettings( const CompareFunction func, unsigned char value );
+
+        /** Gets the alpha reject function. See setAlphaRejectSettings for more information.
+        */
+        CompareFunction getAlphaRejectFunction(void) const;
+
+        /** Gets the alpha reject value. See setAlphaRejectSettings for more information.
+        */
+        unsigned char getAlphaRejectValue(void) const;
 
         /** Enables or disables projective texturing on this texture unit.
         @remarks
@@ -876,9 +895,7 @@ protected:
         Real mAnimDuration;            
         Controller<Real>* mAnimController;
         bool mCubic; // is this a series of 6 2D textures to make up a cube?
-		
         TextureType mTextureType; 
-		int mTextureSrcMipmaps; // Request number of mipmaps
 
         unsigned int mTextureCoordSetIndex;
         TextureAddressingMode mAddressMode;                
@@ -895,6 +912,8 @@ protected:
         Real mUScale, mVScale;
         Radian mRotate;
         Matrix4 mTexModMatrix;
+        CompareFunction mAlphaRejectFunc;
+        unsigned char mAlphaRejectVal;
 
         // Animation, will be set up as Controllers
         Real mUScrollAnim, mVScrollAnim;

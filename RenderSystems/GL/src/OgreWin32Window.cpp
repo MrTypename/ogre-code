@@ -24,26 +24,22 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 
 #include "OgreWin32Window.h"
-#include "OgreRoot.h"
 #include "OgreLogManager.h"
 #include "OgreRenderSystem.h"
 #include "OgreImageCodec.h"
-#include "OgreStringConverter.h"
 #include "OgreException.h"
-#include "OgreWin32GLSupport.h"
-#include "OgreWin32Context.h"
+
 
 namespace Ogre {
 
-	Win32Window::Win32Window(Win32GLSupport &glsupport):
-		mGLSupport(glsupport),
-        mContext(0)
+    Win32Window::Win32Window()
     {
 		mIsFullScreen = false;
 		mHWnd = 0;
 		mActive = false;
 		mReady = false;
 		mClosed = false;
+		mExternalHandle = NULL;
     }
 
     Win32Window::~Win32Window()
@@ -51,63 +47,37 @@ namespace Ogre {
 		destroy();
     }
 
-	void Win32Window::create(const String& name, unsigned int width, unsigned int height,
-	            bool fullScreen, const NameValuePairList *miscParams)
+    void Win32Window::create(const String& name, unsigned int width, unsigned int height, unsigned int colourDepth,
+                           bool fullScreen, int left, int top, bool depthBuffer,
+                           void* miscParam, ...)
     {
-        HWND parentHWnd = 0;
-		HWND externalHandle = 0;
+        HWND parentHWnd;
 		HINSTANCE hInst = GetModuleHandle("RenderSystem_GL.dll");
 		long tempPtr;
-		bool vsync = false;
-		unsigned int displayFrequency = 0;
-		String title = name;
-		unsigned int colourDepth = 32;
-		unsigned int left = 0; // Defaults to screen center
-		unsigned int top = 0; // Defaults to screen center
-		bool depthBuffer = true;
 
-		if(miscParams)
-		{
-			// Get variable-length params
-			NameValuePairList::const_iterator opt;
-			// left (x)
-			opt = miscParams->find("left");
-			if(opt != miscParams->end())
-				left = StringConverter::parseUnsignedInt(opt->second);
-			// top (y)
-			opt = miscParams->find("top");
-			if(opt != miscParams->end())
-				top = StringConverter::parseUnsignedInt(opt->second);
-			// Window title
-			opt = miscParams->find("title");
-			if(opt != miscParams->end())
-				title = opt->second;
-			// externalWindowHandle		-> externalHandle
-			opt = miscParams->find("externalWindowHandle");
-			if(opt != miscParams->end())
-				externalHandle = (HWND)StringConverter::parseUnsignedInt(opt->second);
-			// parentWindowHandle -> parentHWnd
-			opt = miscParams->find("parentWindowHandle");
-			if(opt != miscParams->end()) 
-				parentHWnd = (HWND)StringConverter::parseUnsignedInt(opt->second);
-			// vsync	[parseBool]
-			opt = miscParams->find("vsync");
-			if(opt != miscParams->end())
-				vsync = StringConverter::parseBool(opt->second);
-			// displayFrequency
-			opt = miscParams->find("displayFrequency");
-			if(opt != miscParams->end())
-				displayFrequency = StringConverter::parseUnsignedInt(opt->second);
-			// colourDepth
-			opt = miscParams->find("colourDepth");
-			if(opt != miscParams->end())
-				colourDepth = StringConverter::parseUnsignedInt(opt->second);
-			// depthBuffer [parseBool]
-			opt = miscParams->find("depthBuffer");
-			if(opt != miscParams->end())
-				depthBuffer = StringConverter::parseBool(opt->second);
-		}
-		
+		// Get variable-length params
+		// miscParam[0] = parent HWND
+		// miscParam[1] = bool vsync
+		// miscParam[2] = int displayFrequency
+
+		va_list marker;
+		va_start( marker, depthBuffer );
+
+		tempPtr = va_arg( marker, long );
+		Win32Window* parentRW = reinterpret_cast<Win32Window*>(tempPtr);
+		if( parentRW == NULL )
+			parentHWnd = 0;
+		else
+			parentHWnd = parentRW->getWindowHandle();
+
+		tempPtr = va_arg( marker, long );
+		bool vsync = (tempPtr != 0);
+
+		tempPtr = va_arg( marker, long );
+		unsigned int displayFrequency = static_cast<unsigned int>(tempPtr);
+
+		va_end( marker );
+
 		// Destroy current window if any
 		if( mHWnd )
 			destroy();
@@ -122,7 +92,7 @@ namespace Ogre {
 			mColourDepth = GetDeviceCaps(GetDC(0), BITSPIXEL);
 		}
 
-		if (!externalHandle) {
+		if (!mExternalHandle) {
 			DWORD dwStyle = (fullScreen ? WS_POPUP : WS_OVERLAPPEDWINDOW) | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
 			RECT rc;
 
@@ -171,12 +141,12 @@ namespace Ogre {
 				LoadIcon( NULL, IDI_APPLICATION ),
 				LoadCursor( NULL, IDC_ARROW ),
 				(HBRUSH)GetStockObject( BLACK_BRUSH ), NULL,
-				TEXT(title.c_str()) };
+				TEXT(name.c_str()) };
 			RegisterClass( &wndClass );
 
 			// Create our main window
 			// Pass pointer to self
-			HWND hWnd = CreateWindowEx(fullScreen?WS_EX_TOPMOST:0, TEXT(title.c_str()), TEXT(title.c_str()),
+			HWND hWnd = CreateWindowEx(fullScreen?WS_EX_TOPMOST:0, TEXT(name.c_str()), TEXT(name.c_str()),
 				dwStyle, mLeft, mTop, mWidth, mHeight, 0L, 0L, hInst, this);
 			mHWnd = hWnd;
 
@@ -200,7 +170,7 @@ namespace Ogre {
 
 		}
 		else {
-			mHWnd = externalHandle;
+			mHWnd = mExternalHandle;
 			RECT rc;
 			GetClientRect(mHWnd, &rc);
 			mWidth = rc.right;
@@ -217,11 +187,9 @@ namespace Ogre {
 		
 		HDC hdc = GetDC(mHWnd);
 
-        StringUtil::StrStreamType str;
-        str << "Created Win32Window '"
-            << mName << "' : " << mWidth << "x" << mHeight
-            << ", " << mColourDepth << "bpp";
-        LogManager::getSingleton().logMessage(LML_NORMAL, str.str());
+		LogManager::getSingleton().logMessage(
+			LML_NORMAL, "Created Win32Window '%s' : %ix%i, %ibpp",
+			mName.c_str(), mWidth, mHeight, mColourDepth );
 
 		
         PIXELFORMATDESCRIPTOR pfd = {
@@ -265,21 +233,10 @@ namespace Ogre {
 			wglSwapIntervalEXT(0);
 
 		mReady = true;
-
-        // Create RenderSystem context
-        mContext = new Win32Context(mHDC, mGlrc);
-        // Register the context with the rendersystem and associate it with this window
-        GLRenderSystem *rs = static_cast<GLRenderSystem*>(Root::getSingleton().getRenderSystem());
-        rs->_registerContext(this, mContext);
     }
 
     void Win32Window::destroy(void)
     {
-        // Unregister and destroy OGRE GLContext
-        GLRenderSystem *rs = static_cast<GLRenderSystem*>(Root::getSingleton().getRenderSystem());
-        rs->_unregisterContext(this);
-        delete mContext;    
-
         wglSwapIntervalEXT(mOldSwapIntervall);
 		if (mGlrc) {
 			wglMakeCurrent(NULL, NULL);
@@ -342,11 +299,10 @@ namespace Ogre {
 
 	void Win32Window::writeContentsToFile(const String& filename)
 	{
-		ImageCodec::ImageData *imgData = new ImageCodec::ImageData();
-		imgData->width = mWidth;
-		imgData->height = mHeight;
-		imgData->depth = 1;
-		imgData->format = PF_BYTE_RGB;
+		ImageCodec::ImageData imgData;
+		imgData.width = mWidth;
+		imgData.height = mHeight;
+		imgData.format = PF_R8G8B8;
 
 		// Allocate buffer 
 		uchar* pBuffer = new uchar[mWidth * mHeight * 3];
@@ -355,15 +311,15 @@ namespace Ogre {
 		// I love GL: it does all the locking & colour conversion for us
 		glReadPixels(0,0, mWidth-1, mHeight-1, GL_RGB, GL_UNSIGNED_BYTE, pBuffer);
 
-		// Wrap buffer in a memory stream
-		DataStreamPtr stream(new MemoryDataStream(pBuffer, mWidth * mHeight * 3, false));
+		// Wrap buffer in a chunk
+		DataChunk chunk(pBuffer, mWidth * mHeight * 3);
 
 		// Need to flip the read data over in Y though
 		Image img;
-		img.loadRawData(stream, mWidth, mHeight, imgData->format );
+		img.loadRawData(chunk, mWidth, mHeight, PF_R8G8B8 );
 		img.flipAroundX();
 
-		MemoryDataStreamPtr streamFlipped(new MemoryDataStream(img.getData(), stream->size(), false));
+		DataChunk chunkFlipped(img.getData(), chunk.getSize());
 
 		// Get codec 
 		size_t pos = filename.find_last_of(".");
@@ -381,8 +337,7 @@ namespace Ogre {
 		Codec * pCodec = Codec::getCodec(extension);
 
 		// Write out
-		Codec::CodecDataPtr ptr(imgData);
-        pCodec->codeToFile(streamFlipped, filename, ptr);
+		pCodec->codeToFile(chunkFlipped, filename, &imgData);
 
 		delete [] pBuffer;
 	}
@@ -470,15 +425,4 @@ namespace Ogre {
 
 		return DefWindowProc( hWnd, uMsg, wParam, lParam );
 	}
-	
-	void Win32Window::getCustomAttribute( const String& name, void* pData )
-	{
-		if( name == "HWND" )
-		{
-			HWND *pHwnd = (HWND*)pData;
-			*pHwnd = getWindowHandle();
-			return;
-		}
-	}
-
 }

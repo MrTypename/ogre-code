@@ -67,7 +67,7 @@ namespace Ogre {
     {
     public:
         HardwareIndexBufferSharedPtr() : SharedPtr<HardwareIndexBuffer>() {}
-        explicit HardwareIndexBufferSharedPtr(HardwareIndexBuffer* buf);
+        HardwareIndexBufferSharedPtr(HardwareIndexBuffer* buf);
     };
 }
 #endif

@@ -73,7 +73,7 @@ namespace Ogre {
 	TerrainPageSource::TerrainPageSource() : mSceneManager(0), mAsyncLoading(false) {
 	}
 	//-------------------------------------------------------------------------
-	TerrainPage* TerrainPageSource::buildPage(Real* heightData, const MaterialPtr& pMaterial)
+	TerrainPage* TerrainPageSource::buildPage(Real* heightData, Material* pMaterial)
     {
         String name;
 
@@ -104,8 +104,6 @@ namespace Ogre {
 
                 SceneNode *c = page->pageSceneNode->createChildSceneNode( name );
                 TerrainRenderable *tile = new TerrainRenderable(name);
-				// set queue
-				tile->setRenderQueueGroup(mSceneManager->getWorldGeometryRenderQueue());
                 // Initialise the tile
                 tile->setMaterial(pMaterial);
                 tile->initialise(i, j, heightData);

@@ -27,20 +27,77 @@ http://www.gnu.org/copyleft/lesser.txt.
 #ifndef _DDSCodec_H__
 #define _DDSCodec_H__
 
-#include <list>
+#include "OgreILImageCodec.h"
 
 namespace Ogre 
 {
-    class ILImageCodec;
-    
+
     class ILCodecs {
     protected:
-       static std::list<ILImageCodec*> codeclist;
+    	static Codec* mPNGCodec, *mJPGCodec, *mJPEGCodec, 
+            *mTGACodec, *mDDSCodec, *mBMPCodec;
     public:
     	// Register all codecs provided by this module
-	   static void registerCodecs(void);
-	   // Delete all codecs provided by this module
-	   static void deleteCodecs(void);
+	static void registerCodecs(void);
+	// Delete all codecs provided by this module
+	static void deleteCodecs(void);
+    };
+
+    /** ImageCodec specialized in BMP images.
+     */
+    class _OgreExport BMPCodec : public ILImageCodec
+    {
+    public:
+        String getType() const { return "bmp"; }
+
+        unsigned int getILType(void) const;
+
+    };
+
+    /** ImageCodec specialized in Traga images.
+    */
+    class _OgreExport TGACodec : public ILImageCodec
+    {
+    public:
+        String getType() const { return "tga"; }
+
+        unsigned int getILType(void) const;
+    };
+
+    /** ImageCodec specialized in JPEG images.
+    */
+    class _OgreExport JPEGCodec : public ILImageCodec
+    {
+    public:
+        String getType() const { return "jpeg"; }
+
+        unsigned int getILType(void) const;
+    };
+
+    class _OgreExport JPGCodec : public JPEGCodec
+    {
+    public:
+        String getType() const { return "jpg"; }
+    };
+
+    /** ImageCodec specialized in DDS images.
+     */
+    class _OgreExport DDSCodec : public ILImageCodec
+    {
+    public:
+        String getType() const { return "dds"; }
+
+        unsigned int getILType(void) const;
+    };
+
+    /** ImageCodec specialized in Portable Network Graphics images.
+    */
+    class _OgreExport PNGCodec : public ILImageCodec
+    {
+    public:
+        String getType() const { return "png"; }
+
+        unsigned int getILType(void) const;
     };
 
 } // namespace Ogre

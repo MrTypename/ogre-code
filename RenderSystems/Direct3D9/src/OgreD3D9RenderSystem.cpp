@@ -80,8 +80,6 @@ namespace Ogre
         mTextureManager = NULL;
         mHardwareBufferManager = NULL;
 		mGpuProgramManager = NULL;
-		mPrimaryWindow = NULL;
-		mDeviceLost = false;
         //mHLSLProgramFactory = NULL;
 
 		// init lights
@@ -121,6 +119,11 @@ namespace Ogre
 		OgreGuard( "D3D9RenderSystem::~D3D9RenderSystem" );
         shutdown();
 
+		// Unbind any vertex streams to avoid memory leaks
+		for (unsigned int i = 0; i < mLastVertexSourceCount; ++i)
+		{
+            HRESULT hr = mpD3DDevice->SetStreamSource(i, NULL, 0, 0);
+		}
 		
 		
 		SAFE_DELETE( mDriverList );
@@ -171,7 +174,7 @@ namespace Ogre
 			return false;
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::initConfigOptions()
+	D3D9RenderSystem::initConfigOptions()
 	{
 		OgreGuard( "D3D9RenderSystem::initConfigOptions" );
 
@@ -183,7 +186,6 @@ namespace Ogre
 		ConfigOption optFullScreen;
 		ConfigOption optVSync;
 		ConfigOption optAA;
-		ConfigOption optFPUMode;
 
 		driverList = this->getDirect3DDrivers();
 
@@ -222,19 +224,11 @@ namespace Ogre
 		optAA.possibleValues.push_back( "None" );
 		optAA.currentValue = "None";
 
-		optFPUMode.name = "Floating-point mode";
-		optFPUMode.currentValue = "Fastest";
-		optFPUMode.possibleValues.clear();
-		optFPUMode.possibleValues.push_back("Fastest");
-		optFPUMode.possibleValues.push_back("Consistent");
-		optFPUMode.immutable = false;
-
 		mOptions[optDevice.name] = optDevice;
 		mOptions[optVideoMode.name] = optVideoMode;
 		mOptions[optFullScreen.name] = optFullScreen;
 		mOptions[optVSync.name] = optVSync;
 		mOptions[optAA.name] = optAA;
-		mOptions[optFPUMode.name] = optFPUMode;
 
 		refreshD3DSettings();
 
@@ -277,9 +271,9 @@ namespace Ogre
 	{
 		OgreGuard( "D3D9RenderSystem::setConfigOption" );
 
-        StringUtil::StrStreamType str;
-        str << "D3D9 : RenderSystem Option: " << name << " = " << value;
-		LogManager::getSingleton().logMessage(str.str());
+		char msg[128];
+		sprintf( msg, "D3D9 : RenderSystem Option: %s = %s", name.c_str(), value.c_str() );
+		LogManager::getSingleton().logMessage( msg );
 
 		// Find option
 		ConfigOptionMap::iterator it = mOptions.find( name );
@@ -289,9 +283,8 @@ namespace Ogre
 			it->second.currentValue = value;
 		else
 		{
-            str.clear();
-            str << "Option named '" << name << "' does not exist.";
-			Except( Exception::ERR_INVALIDPARAMS, str.str(), "D3D9RenderSystem::setConfigOption" );
+			sprintf( msg, "Option named '%s' does not exist.", name.c_str() );
+			Except( Exception::ERR_INVALIDPARAMS, msg, "D3D9RenderSystem::setConfigOption" );
 		}
 
 		// Refresh other options if D3DDriver changed
@@ -315,7 +308,7 @@ namespace Ogre
 				D3DMULTISAMPLE_TYPE fsaa = D3DMULTISAMPLE_NONE;
 				DWORD level = 0;
 
-				if (StringUtil::startsWith(value, "NonMaskable", false))
+				if (value.find_first_of("NonMaskable") != -1)
 				{
 					fsaa = D3DMULTISAMPLE_NONMASKABLE;
 					size_t pos = value.find_last_of(" ");
@@ -323,7 +316,7 @@ namespace Ogre
 					level = StringConverter::parseInt(sNum);
 					level -= 1;
 				}
-				else if (StringUtil::startsWith(value, "Level", false))
+				else if (value.find_first_of("Level") != -1)
 				{
 					size_t pos = value.find_last_of(" ");
 					String sNum = value.substr(pos + 1);
@@ -466,7 +459,7 @@ namespace Ogre
 			fullScreen = opt->second.currentValue == "Yes";
 
 			D3D9VideoMode* videoMode = NULL;
-			unsigned int width, height;
+			unsigned int width, height, colourDepth;
 			String temp;
 
 			opt = mOptions.find( "Video Mode" );
@@ -488,14 +481,9 @@ namespace Ogre
 
 			width = videoMode->getWidth();
 			height = videoMode->getHeight();
-			
-			NameValuePairList miscParams;
-			miscParams["colourDepth"] = StringConverter::toString(videoMode->getColourDepth());
-			miscParams["FSAA"] = StringConverter::toString(mFSAAType);
-			miscParams["FSAAQuality"] = StringConverter::toString(mFSAAQuality);
+			colourDepth = videoMode->getColourDepth();
 
-			autoWindow = this->createRenderWindow( windowTitle, width, height, 
-				fullScreen, &miscParams );
+			autoWindow = this->createRenderWindow( windowTitle, width, height, colourDepth, fullScreen );
 
             // If we have 16bit depth buffer enable w-buffering.
             assert( autoWindow );
@@ -539,61 +527,19 @@ namespace Ogre
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::shutdown()
 	{
-		// Set all texture units to nothing to release texture surfaces
-		_disableTextureUnitsFrom(0);
-		// Unbind any vertex streams to avoid memory leaks
-		for (unsigned int i = 0; i < mLastVertexSourceCount; ++i)
-		{
-			HRESULT hr = mpD3DDevice->SetStreamSource(i, NULL, 0, 0);
-		}
 		RenderSystem::shutdown();
 		SAFE_DELETE( mDriverList );
 		mActiveD3DDriver = NULL;
-		mpD3DDevice = NULL;
 		LogManager::getSingleton().logMessage("D3D9 : Shutting down cleanly.");
 	}
 	//---------------------------------------------------------------------
-	RenderWindow* D3D9RenderSystem::createRenderWindow(const String &name, 
-		unsigned int width, unsigned int height, bool fullScreen,
-		const NameValuePairList *miscParams)
+	RenderWindow* D3D9RenderSystem::createRenderWindow( const String &name, unsigned int width, unsigned int height, unsigned int colourDepth,
+		bool fullScreen, int left, int top, bool depthBuffer, RenderWindow* parentWindowHandle)
 	{
-
+		static bool firstWindow = true;
+		
 		OgreGuard( "D3D9RenderSystem::createRenderWindow" );
 
-		// Check we're not creating a secondary window when the primary
-		// was fullscreen
-		if (mPrimaryWindow && mPrimaryWindow->isFullScreen())
-		{
-			Except(Exception::ERR_INVALIDPARAMS, 
-				"Cannot create secondary windows when the primary is full screen",
-				"D3D9RenderSystem::createRenderWindow");
-		}
-		if (mPrimaryWindow && fullScreen)
-		{
-			Except(Exception::ERR_INVALIDPARAMS, 
-				"Cannot create full screen secondary windows",
-				"D3D9RenderSystem::createRenderWindow");
-		}
-		
-		// Log a message
-		std::stringstream ss;
-		ss << "D3D9RenderSystem::createRenderWindow \"" << name << "\", " <<
-			width << "x" << height << " ";
-		if(fullScreen)
-			ss << "fullscreen ";
-		else
-			ss << "windowed ";
-		if(miscParams)
-		{
-			ss << " miscParams: ";
-			NameValuePairList::const_iterator it;
-			for(it=miscParams->begin(); it!=miscParams->end(); ++it)
-			{
-				ss << it->first << "=" << it->second << " ";
-			}
-			LogManager::getSingleton().logMessage(ss.str());
-		}
-		
 		String msg;
 
 		// Make sure we don't already have a render target of the 
@@ -605,17 +551,22 @@ namespace Ogre
 			Except( Exception::ERR_INTERNAL_ERROR, msg, "D3D9RenderSystem::createRenderWindow" );
 		}
 
-		RenderWindow* win = new D3D9RenderWindow(mhInstance, mActiveD3DDriver, 
-			mPrimaryWindow ? mpD3DDevice : 0);
+		RenderWindow* win = new D3D9RenderWindow();
+		if (!fullScreen && mExternalHandle)
+		{
+			D3D9RenderWindow *pWin32Window = (D3D9RenderWindow *)win;
+	 		pWin32Window->SetExternalWindowHandle(mExternalHandle);
+		}
 
-		win->create( name, width, height, fullScreen, miscParams);
+		win->create( name, width, height, colourDepth, fullScreen, 
+				left, top, depthBuffer, &mhInstance, mActiveD3DDriver, 
+				parentWindowHandle, mFSAAType, mFSAAQuality, mVSync );
 
 		attachRenderTarget( *win );
 
 		// If this is the first window, get the D3D device and create the texture manager
-		if( !mPrimaryWindow )
+		if( firstWindow )
 		{
-			mPrimaryWindow = (D3D9RenderWindow *)win;
 			win->getCustomAttribute( "D3DDEVICE", &mpD3DDevice );
 
 			// Create the texture manager for use by others
@@ -634,10 +585,9 @@ namespace Ogre
             // Initialise the capabilities structures
             initCapabilities();
 
-		}
-		else
-		{
-			mSecondaryWindows.push_back(static_cast<D3D9RenderWindow *>(win));
+
+			firstWindow = false;
+			
 		}
 
 		OgreUnguardRet( win );
@@ -737,11 +687,7 @@ namespace Ogre
 			}
 			
 		}
-        // non-power-of-two texturs always supported
-        mCapabilities->setCapability(RSC_NON_POWER_OF_2_TEXTURES);
-
-		// We always support rendertextures bigger than the frame buffer
-        mCapabilities->setCapability(RSC_HWRENDER_TO_TEXTURE);
+				
 
         mCapabilities->log(LogManager::getSingleton().getDefaultLog());
     }
@@ -912,56 +858,27 @@ namespace Ogre
         }
     }
     //---------------------------------------------------------------------
-	RenderTexture * D3D9RenderSystem::createRenderTexture( const String & name, 
-		unsigned int width, unsigned int height,
-		TextureType texType, PixelFormat internalFormat, const NameValuePairList *miscParams )
+	RenderTexture * D3D9RenderSystem::createRenderTexture( const String & name, unsigned int width, unsigned int height )
 	{
-		// Log a message
-		std::stringstream ss;
-		ss << "D3D9RenderSystem::createRenderTexture \"" << name << "\", " <<
-			width << "x" << height << " texType=" << texType <<
-			" internalFormat=" << PixelUtil::getFormatName(internalFormat) << " ";
-		if(miscParams)
-		{
-			ss << "miscParams: ";
-			NameValuePairList::const_iterator it;
-			for(it=miscParams->begin(); it!=miscParams->end(); ++it)
-			{
-				ss << it->first << "=" << it->second << " ";
-			}
-			LogManager::getSingleton().logMessage(ss.str());
-		}
-		// Create render texture
-		D3D9RenderTexture *rt = new D3D9RenderTexture( name, width, height, texType, internalFormat, miscParams );
+		RenderTexture *rt = new D3D9RenderTexture( name, width, height );
 		attachRenderTarget( *rt );
 		return rt;
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::destroyRenderTarget(const String& name)
+	void D3D9RenderSystem::destroyRenderWindow( RenderWindow* pWin )
 	{
-		// Check in specialised lists
-		if (mPrimaryWindow->getName() == name)
+		// Find it to remove from list
+		RenderTargetMap::iterator i = mRenderTargets.begin();
+
+		while( i->second != pWin && i != mRenderTargets.end() )
 		{
-			// We're destroying the primary window, so reset device and window
-			mPrimaryWindow = 0;
-			mpD3DDevice = 0;
-		}
-		else
-		{
-			// Check secondary windows
-			SecondaryWindowList::iterator sw;
-			for (sw = mSecondaryWindows.begin(); sw != mSecondaryWindows.end(); ++sw)
+			if( i->second == pWin )
 			{
-				if ((*sw)->getName() == name)
-				{
-					mSecondaryWindows.erase(sw);
-					break;
-				}
+				mRenderTargets.erase(i);
+				delete pWin;
+				break;
 			}
 		}
-		// Do the real removal
-		RenderSystem::destroyRenderTarget(name);
-
 	}
 	//---------------------------------------------------------------------
 	String D3D9RenderSystem::getErrorDescription( long errorNumber ) const
@@ -970,9 +887,9 @@ namespace Ogre
 		return errMsg;
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::convertColourValue( const ColourValue& colour, uint32* pDest )
+	void D3D9RenderSystem::convertColourValue( const ColourValue& colour, unsigned long* pDest )
 	{
-		*pDest = colour.getAsARGB();
+		*pDest = colour.getAsLongARGB();
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_makeProjectionMatrix(const Radian& fovy, Real aspect, Real nearPlane, 
@@ -1046,7 +963,7 @@ namespace Ogre
         }
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::ResizeRepositionWindow(HWND wich)
+	D3D9RenderSystem::ResizeRepositionWindow(HWND wich)
 	{
 		for (RenderTargetMap::iterator it = mRenderTargets.begin(); it != mRenderTargets.end(); ++it)
 		{
@@ -1205,8 +1122,7 @@ namespace Ogre
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_setSurfaceParams( const ColourValue &ambient, const ColourValue &diffuse,
-		const ColourValue &specular, const ColourValue &emissive, Real shininess,
-        TrackVertexColourType tracking )
+		const ColourValue &specular, const ColourValue &emissive, Real shininess )
 	{
 		// Remember last call
 		static ColourValue lastAmbient = ColourValue::Black;
@@ -1214,12 +1130,11 @@ namespace Ogre
 		static ColourValue lastSpecular = ColourValue::Black;
 		static ColourValue lastEmissive = ColourValue::Black;
 		static Real lastShininess = 0.0;
-        static TrackVertexColourType lastTracking = -1;
 
 		// Only update if changed
 		if( ambient != lastAmbient || diffuse != lastDiffuse ||
 			specular != lastSpecular || emissive != lastEmissive ||
-			shininess != lastShininess)
+			shininess != lastShininess )
 		{
 			D3DMATERIAL9 material;
 			material.Diffuse = D3DXCOLOR( diffuse.r, diffuse.g, diffuse.b, diffuse.a );
@@ -1239,34 +1154,14 @@ namespace Ogre
 			lastEmissive = emissive;
 			lastShininess = shininess;
 		}
-        if(tracking != lastTracking) 
-        {
-            if(tracking != TVC_NONE) 
-            {
-                mpD3DDevice->SetRenderState(D3DRS_COLORVERTEX, TRUE);
-                mpD3DDevice->SetRenderState(D3DRS_AMBIENTMATERIALSOURCE, (tracking&TVC_AMBIENT)?D3DMCS_COLOR1:D3DMCS_MATERIAL);
-                mpD3DDevice->SetRenderState(D3DRS_DIFFUSEMATERIALSOURCE, (tracking&TVC_DIFFUSE)?D3DMCS_COLOR1:D3DMCS_MATERIAL);
-                mpD3DDevice->SetRenderState(D3DRS_SPECULARMATERIALSOURCE, (tracking&TVC_SPECULAR)?D3DMCS_COLOR1:D3DMCS_MATERIAL);
-                mpD3DDevice->SetRenderState(D3DRS_EMISSIVEMATERIALSOURCE, (tracking&TVC_EMISSIVE)?D3DMCS_COLOR1:D3DMCS_MATERIAL);
-            } 
-            else 
-            {
-                mpD3DDevice->SetRenderState(D3DRS_COLORVERTEX, FALSE);               
-            }
-            lastTracking = tracking;
-        }
-        
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_setTexture( size_t stage, bool enabled, const String &texname )
 	{
 		HRESULT hr;
-		D3D9TexturePtr dt = TextureManager::getSingleton().getByName(texname);
-		if (enabled && !dt.isNull())
+		D3D9Texture *dt = (D3D9Texture *)TextureManager::getSingleton().getByName(texname);
+		if (enabled && dt)
 		{
-            // note used
-            dt->touch();
-
 			IDirect3DBaseTexture9 *pTex = dt->getTexture();
 			if (mTexStageDesc[stage].pTex != pTex)
 			{
@@ -1693,7 +1588,7 @@ namespace Ogre
 			hr = __SetRenderState( fogTypeNot, D3DFOG_NONE );
 			hr = __SetRenderState( fogType, D3D9Mappings::get(mode) );
 
-			hr = __SetRenderState( D3DRS_FOGCOLOR, colour.getAsARGB() );
+			hr = __SetRenderState( D3DRS_FOGCOLOR, colour.getAsLongARGB() );
 			hr = __SetRenderState( D3DRS_FOGSTART, *((LPDWORD)(&start)) );
 			hr = __SetRenderState( D3DRS_FOGEND, *((LPDWORD)(&end)) );
 			hr = __SetRenderState( D3DRS_FOGDENSITY, *((LPDWORD)(&densitiy)) );
@@ -2015,10 +1910,17 @@ namespace Ogre
         D3D9VertexDeclaration* d3ddecl = 
             static_cast<D3D9VertexDeclaration*>(decl);
 
-        if (FAILED(hr = mpD3DDevice->SetVertexDeclaration(d3ddecl->getD3DVertexDeclaration())))
+        static VertexDeclaration* lastDecl = 0;
+
+        // attempt to detect duplicates
+        if (!lastDecl || !(*lastDecl == *decl))
         {
-            Except(hr, "Unable to set D3D9 vertex declaration", 
-                "D3D9RenderSystem::setVertexDeclaration");
+
+            if (FAILED(hr = mpD3DDevice->SetVertexDeclaration(d3ddecl->getD3DVertexDeclaration())))
+            {
+                Except(hr, "Unable to set D3D9 vertex declaration", 
+                    "D3D9RenderSystem::setVertexDeclaration");
+            }
         }
 
         // UnGuard
@@ -2432,7 +2334,7 @@ namespace Ogre
             0, 
             NULL, 
             flags,
-            colour.getAsARGB(), 
+            colour.getAsLongARGB(), 
             depth, 
             stencil ) ) )
         {
@@ -2568,63 +2470,4 @@ namespace Ogre
         // D3D inverts even identity view matrices, so maximum INPUT is -1.0
         return -1.0f;
     }
-	//---------------------------------------------------------------------
-	void D3D9RenderSystem::restoreLostDevice(void)
-	{
-		// Release all non-managed resources
-
-		// We have to deal with non-managed textures and vertex buffers
-		// GPU programs don't have to be restored
-		static_cast<D3D9TextureManager*>(mTextureManager)->releaseDefaultPoolResources();
-		static_cast<D3D9HardwareBufferManager*>(mHardwareBufferManager)
-			->releaseDefaultPoolResources();
-
-		// release additional swap chains (secondary windows)
-		SecondaryWindowList::iterator sw;
-		for (sw = mSecondaryWindows.begin(); sw != mSecondaryWindows.end(); ++sw)
-		{
-			(*sw)->destroy();
-		}
-
-		// Reset the device, using the primary window presentation params
-		HRESULT hr = mpD3DDevice->Reset(
-			mPrimaryWindow->getPresentationParameters());
-
-		if (hr == D3DERR_DEVICELOST)
-		{
-			// Don't continue
-			return;
-		}
-		else if (FAILED(hr))
-		{
-			Except(Exception::ERR_RENDERINGAPI_ERROR, 
-				"Cannot reset device! " + getErrorDescription(hr), 
-				"D3D9RenderWindow::restoreLostDevice" );
-		}
-
-		// recreate additional swap chains
-		for (sw = mSecondaryWindows.begin(); sw != mSecondaryWindows.end(); ++sw)
-		{
-			(*sw)->createD3DResources();
-		}
-
-		// Recreate all non-managed resources
-		static_cast<D3D9TextureManager*>(mTextureManager)
-			->recreateDefaultPoolResources();
-		static_cast<D3D9HardwareBufferManager*>(mHardwareBufferManager)
-			->recreateDefaultPoolResources();
-
-		mDeviceLost = false;
-	}
-	//---------------------------------------------------------------------
-	bool D3D9RenderSystem::isDeviceLost(void)
-	{
-		return mDeviceLost;
-	}
-	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_notifyDeviceLost(void)
-	{
-		mDeviceLost = true;
-	}
-
 }

@@ -36,7 +36,7 @@ namespace Ogre {
 
     Exception* Exception::last = NULL;
 
-    String Exception::msFunctionStack[ OGRE_CALL_STACK_DEPTH ];
+    OgreChar Exception::msFunctionStack[ OGRE_CALL_STACK_DEPTH ][ 256 ];
     ushort   Exception::msStackDepth = 0;
 
     Exception::Exception(int num, const String& desc, const String& src) :
@@ -85,24 +85,36 @@ namespace Ogre {
 
     String Exception::getFullDescription(void) const
     {
-		StringUtil::StrStreamType desc;
+        char strNum[12];
+        String desc;
 
-        desc <<  "An exception has been thrown!\n"
+        sprintf( strNum, "%d", number );
+        desc =  "An exception has been thrown!\n"
                 "\n"
                 "-----------------------------------\nDetails:\n-----------------------------------\n"
-                "Error #: " << number
-			<< "\nFunction: " << source
-			<< "\nDescription: " << description 
-			<< ". ";
+                "Error #: ";
+        desc += strNum;
+        desc += "\nFunction: ";
+        desc += source;
+        desc += "\nDescription: ";
+        desc += description;
+        desc += ". ";
 
         if( line > 0 )
         {
-            desc << "\nFile: " << file;
-            desc << "\nLine: " << line;
+            desc += "\nFile: ";
+            desc += file;
+
+            char szLine[20];
+
+            desc += "\nLine: ";
+            snprintf(szLine, 20, "%ld", line);
+
+            desc += szLine;
         }
 
 #ifdef OGRE_STACK_UNWINDING
-        desc << "\nStack unwinding: ";
+        String funcStack = "\nStack unwinding: ";
 
         /* Will cause an overflow, that's why we check that it's smaller.
            Also note that the call stack index may be greater than the actual call
@@ -111,14 +123,15 @@ namespace Ogre {
             ushort stackUnroll = stackDepth <= OGRE_CALL_STACK_DEPTH ? ( stackDepth - 1 ) : ( OGRE_CALL_STACK_DEPTH - 1 ); 
             stackUnroll < stackDepth; stackUnroll-- )
         {
-            desc << msFunctionStack[ stackUnroll ];
-            desc << "(..) <- ";
+            funcStack += msFunctionStack[ stackUnroll ];
+            funcStack += "(..) <- ";
         }
 
-        desc << "<<beginning of stack>>";
+        desc += funcStack;
+        desc += "<<beginning of stack>>";
 #endif
 
-        return desc.str();
+        return desc;
     }
 
     int Exception::getNumber(void) const throw()
@@ -135,7 +148,7 @@ namespace Ogre {
     void Exception::_pushFunction( const String& strFuncName ) throw()
     {
         if( msStackDepth < OGRE_CALL_STACK_DEPTH )
-            msFunctionStack[ msStackDepth ] = strFuncName;
+            strncpy( msFunctionStack[ msStackDepth ], strFuncName.c_str(), 255 );
         msStackDepth++;
     }
 

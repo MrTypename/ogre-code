@@ -219,7 +219,7 @@ protected:
 		
         {
             Viewport *v = rttTex->addViewport( mCamera );
-            MaterialPtr mat = MaterialManager::getSingleton().getByName("Examples/FresnelReflectionRefraction");
+            Material* mat = (Material*)MaterialManager::getSingleton().getByName("Examples/FresnelReflectionRefraction");
             mat->getTechnique(0)->getPass(0)->getTextureUnitState(2)->setTextureName("Refraction");
             v->setOverlaysEnabled(false);
             rttTex->addListener(&mRefractionListener);
@@ -229,7 +229,7 @@ protected:
         rttTex = mRoot->getRenderSystem()->createRenderTexture( "Reflection", 512, 512 );
         {
             Viewport *v = rttTex->addViewport( mCamera );
-            MaterialPtr mat = MaterialManager::getSingleton().getByName("Examples/FresnelReflectionRefraction");
+            Material* mat = (Material*)MaterialManager::getSingleton().getByName("Examples/FresnelReflectionRefraction");
             mat->getTechnique(0)->getPass(0)->getTextureUnitState(1)->setTextureName("Reflection");
             v->setOverlaysEnabled(false);
             rttTex->addListener(&mReflectionListener);
@@ -239,9 +239,7 @@ protected:
         // Define a floor plane mesh
         reflectionPlane.normal = Vector3::UNIT_Y;
         reflectionPlane.d = 0;
-        MeshManager::getSingleton().createPlane("ReflectPlane",
-            ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-            reflectionPlane,
+        MeshManager::getSingleton().createPlane("ReflectPlane",reflectionPlane,
             1500,1500,10,10,true,1,5,5,Vector3::UNIT_Z);
         pPlaneEnt = mSceneMgr->createEntity( "plane", "ReflectPlane" );
         pPlaneEnt->setMaterialName("Examples/FresnelReflectionRefraction");
@@ -355,7 +353,8 @@ int main(int argc, char **argv)
 #if OGRE_PLATFORM == PLATFORM_WIN32
         MessageBox( NULL, e.getFullDescription().c_str(), "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 #else
-        std::cerr << "An exception has occured: " << e.getFullDescription();
+        fprintf(stderr, "An exception has occured: %s\n",
+                e.getFullDescription().c_str());
 #endif
     }
 

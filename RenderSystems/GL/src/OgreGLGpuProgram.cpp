@@ -28,43 +28,16 @@ http://www.gnu.org/copyleft/gpl.html.
 
 using namespace Ogre;
 
-GLGpuProgram::GLGpuProgram(ResourceManager* creator, const String& name, 
-    ResourceHandle handle, const String& group, bool isManual, 
-    ManualResourceLoader* loader) 
-    : GpuProgram(creator, name, handle, group, isManual, loader)
+GLGpuProgram::GLGpuProgram(const String& name, GpuProgramType gptype, const String& syntaxCode) :
+    GpuProgram(name, gptype, syntaxCode)
 {
-    if (createParamDictionary("GLGpuProgram"))
-    {
-        setupBaseParamDictionary();
-    }
 }
 
-GLGpuProgram::~GLGpuProgram()
+GLArbGpuProgram::GLArbGpuProgram(const String& name, GpuProgramType gptype, const String& syntaxCode) :
+    GLGpuProgram(name, gptype, syntaxCode)
 {
-    // have to call this here reather than in Resource destructor
-    // since calling virtual methods in base destructors causes crash
-    unload(); 
-}
-
-GLArbGpuProgram::GLArbGpuProgram(ResourceManager* creator, const String& name, 
-    ResourceHandle handle, const String& group, bool isManual, 
-    ManualResourceLoader* loader) 
-    : GLGpuProgram(creator, name, handle, group, isManual, loader)
-{
+    mProgramType = (gptype == GPT_VERTEX_PROGRAM) ? GL_VERTEX_PROGRAM_ARB : GL_FRAGMENT_PROGRAM_ARB;
     glGenProgramsARB_ptr(1, &mProgramID);
-}
-
-GLArbGpuProgram::~GLArbGpuProgram()
-{
-    // have to call this here reather than in Resource destructor
-    // since calling virtual methods in base destructors causes crash
-    unload(); 
-}
-
-void GLArbGpuProgram::setType(GpuProgramType t)
-{
-    GLGpuProgram::setType(t);
-    mProgramType = (mType == GPT_VERTEX_PROGRAM) ? GL_VERTEX_PROGRAM_ARB : GL_FRAGMENT_PROGRAM_ARB;
 }
 
 void GLArbGpuProgram::bindProgram(void)
@@ -104,7 +77,7 @@ void GLArbGpuProgram::bindProgramParameters(GpuProgramParametersSharedPtr params
 
 }
 
-void GLArbGpuProgram::unloadImpl(void)
+void GLArbGpuProgram::unload(void)
 {
     glDeleteProgramsARB_ptr(1, &mProgramID);
 }

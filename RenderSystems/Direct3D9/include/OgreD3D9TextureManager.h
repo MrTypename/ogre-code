@@ -36,29 +36,27 @@ namespace Ogre
 {
 	class D3D9TextureManager : public TextureManager
 	{
-	protected:
+	private:
 		LPDIRECT3DDEVICE9 mpD3DDevice;
-        /// @copydoc ResourceManager::createImpl
-        Resource* createImpl(const String& name, ResourceHandle handle, 
-            const String& group, bool isManual, ManualResourceLoader* loader, 
-            const NameValuePairList* createParams);
 
 	public:
 		D3D9TextureManager( LPDIRECT3DDEVICE9 pD3DDevice );
 		~D3D9TextureManager();
 
-		/** Release all textures in the default memory pool. 
-		@remarks
-			Method for dealing with lost devices.
-		*/
-		void releaseDefaultPoolResources(void);
-		/** Recreate all textures in the default memory pool. 
-		@remarks
-			Method for dealing with lost devices.
-		*/
-		void recreateDefaultPoolResources(void);
+		/// Creates a D3D9Texture resource
+		virtual Texture *create( const String& name, TextureType texType );
+		virtual Texture *createAsRenderTarget( const String& name );
 
+		virtual Texture *createManual( 
+			const String & name,
+            TextureType texType,
+			uint width,
+			uint height,
+			uint num_mips,
+			PixelFormat format,
+			TextureUsage usage );
 
+		void unloadAndDestroyAll();
 	};
 }
 #endif

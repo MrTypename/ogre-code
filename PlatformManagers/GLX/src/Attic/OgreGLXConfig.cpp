@@ -75,7 +75,7 @@ class GLXConfigurator {
 
 public:
 	GLXConfigurator();
-	virtual ~GLXConfigurator();
+	~GLXConfigurator();
 
 	bool CreateWindow();
 	void Main();
@@ -330,23 +330,48 @@ Pixmap GLXConfigurator::CreateBackdrop(Window rootWindow, int depth) {
 
 	try {
 		Image img;
-		// Load backdrop image using OGRE
-		img.load(backdrop, ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-
-        if(img.getWidth() != mWidth || img.getHeight() != mHeight || img.getDepth() != 1) {
-            // Invalid image format or size
-            LogManager::getSingleton().logMessage("GLX backdrop: Invalid image "+backdrop+", size must be 400x300");
-            return 0;
-        }
-
-        PixelBox src = img.getPixelBox(0, 0);
-
+		/* Load backdrop image using OGRE */
+		img.load(backdrop);
+		if(img.getWidth() != mWidth || img.getHeight() != mHeight ||
+			img.getFormat() != PF_R8G8B8) {
+			// Invalid image format or size
+			LogManager::getSingleton().logMessage("GLX backdrop: Invalid image "+backdrop+", format must be R8G8B8");
+			return 0;
+		}
 		// Convert and copy image
+		unsigned char *imgdata = (unsigned char*)img.getData();
+		
+
 		data = (unsigned char*)malloc(mWidth * mHeight * bpl); // Must be allocated with malloc
-        
-        PixelBox dst(src, bpl == 2 ? PF_B5G6R5 : PF_A8R8G8B8, data );
-        
-        PixelUtil::bulkPixelConversion(src, dst);
+		int sptr = 0, dptr = 0;
+
+		switch(depth) {
+		case 16:
+			for(int y=0; y<mHeight; y++) {
+				for(int x=0; x<mWidth; x++) {
+					// 5/6/5
+					data[dptr + 0] = (imgdata[sptr + 0] & 0xF8) |
+							 (imgdata[sptr + 1] >> 5);
+					data[dptr + 1] = ((imgdata[sptr + 1] << 3) & 0xE0) | 
+							 (imgdata[sptr + 2] >> 3);
+					sptr += 3; dptr += 2;
+				}
+			}
+			break;
+		case 24:
+		case 32:
+			for(int y=0; y<mHeight; y++) {
+				for(int x=0; x<mWidth; x++) {
+					data[dptr + 0] = 0;
+					data[dptr + 1] = imgdata[sptr + 0];
+					data[dptr + 2] = imgdata[sptr + 1];
+					data[dptr + 3] = imgdata[sptr + 2];
+				
+					sptr += 3;dptr += 4;
+				}
+			}
+			break;
+		}
 	} catch(Exception &e) {
 		// Could not find image; never mind
 		LogManager::getSingleton().logMessage("GLX backdrop image not found: Warning");
@@ -360,11 +385,7 @@ Pixmap GLXConfigurator::CreateBackdrop(Window rootWindow, int depth) {
 		(char*)data,
 		mWidth, mHeight, 8,
 		mWidth*bpl);
-#if OGRE_ENDIAN == ENDIAN_BIG
 	image->byte_order = MSBFirst;
-#else
-    image->byte_order = LSBFirst;
-#endif
 
 	/* tell server to start managing my pixmap */
 	Pixmap rv = XCreatePixmap(mDisplay, rootWindow, mWidth,

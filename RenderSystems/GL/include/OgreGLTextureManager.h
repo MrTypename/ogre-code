@@ -39,12 +39,20 @@ namespace Ogre {
         GLTextureManager(GLSupport& support);
         virtual ~GLTextureManager();
 
-    protected:
-        /// @copydoc ResourceManager::createImpl
-        Resource* createImpl(const String& name, ResourceHandle handle, 
-            const String& group, bool isManual, ManualResourceLoader* loader, 
-            const NameValuePairList* createParams);
+        /** Creates a SDLTexture resource. 
+        */
+        virtual Texture* create( const String& name, TextureType texType);
+        /** Creates a render target surface.
+        */
+        virtual Texture * createAsRenderTarget( const String& name ) { return NULL; }
 
+        virtual Texture * createManual( const String& name, TextureType texType,
+            uint width, uint height, uint num_mips, PixelFormat format, 
+            TextureUsage usage );
+
+        /** Unloads & destroys textures. */
+        void unloadAndDestroyAll();
+    private:
         GLSupport& mGLSupport;
     };
 }

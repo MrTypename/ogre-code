@@ -20,7 +20,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\include;..\..\..\OgreMain\include;..\..\..\Dependencies\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OGRED3DENGINEDLL_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OGRED3DENGINEDLL_EXPORTS;"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -142,9 +142,6 @@
 				RelativePath="..\src\OgreD3D7EngineDll.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreD3D7HardwarePixelBuffer.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreD3D7RenderSystem.cpp">
 			</File>
 			<File
@@ -192,9 +189,6 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreD3D7HardwareBufferManager.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreD3D7HardwarePixelBuffer.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreD3D7Prerequisites.h">

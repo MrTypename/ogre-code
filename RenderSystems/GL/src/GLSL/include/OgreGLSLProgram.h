@@ -61,10 +61,8 @@ namespace Ogre {
             void doSet(void* target, const String& shaderNames);
         };
 
-        GLSLProgram(ResourceManager* creator, 
-            const String& name, ResourceHandle handle,
-            const String& group, bool isManual, ManualResourceLoader* loader);
-		~GLSLProgram();
+		GLSLProgram(const String& name, GpuProgramType gpType, const String& language);
+		~GLSLProgram() {}
 
 		const GLhandleARB getGLHandle() const { return mGLHandle; }
 		void attachToProgramObject( const GLhandleARB programObject );
@@ -86,7 +84,7 @@ namespace Ogre {
 		*/
 		void createLowLevelImpl(void);
         /// Internal unload implementation, must be implemented by subclasses
-        void unloadHighLevelImpl(void);
+        void unloadImpl(void);
         /// Populate the passed parameters with name->index map, must be overridden
         void populateParameterNames(GpuProgramParametersSharedPtr params);
 		/// compile source into shader object

@@ -54,6 +54,10 @@ namespace Ogre
 
         DDDriver* mParentDriver;
 
+        // Private functions
+        void createViewport(void);
+        void setViewportSize(void);
+
 
 
 
@@ -83,12 +87,22 @@ namespace Ogre
         void createDepthBuffer(LPDIRECTDRAWSURFACE7 renderTarget);
 
 
+        void setViewMatrix(D3DMATRIX *mat);
+        void setProjectionMatrix(D3DMATRIX *mat);
+        void setWorldMatrix(D3DMATRIX *mat);
+
+        void beginScene(void);
+        void endScene(void);
+        void setAmbientLight(float r, float g, float b);
+
+
+
         friend static HRESULT CALLBACK EnumZBuffersCallback(DDPIXELFORMAT* pddpf,
             VOID* pFormats);
 
 
         // Capability access
-        bool CanMipmap(void) const;
+        bool CanMipMap(void) const;
         bool CanBilinearFilter(void) const;
         bool CanTrilinearFilter(void) const;
         unsigned int RenderBitDepth(void) const;

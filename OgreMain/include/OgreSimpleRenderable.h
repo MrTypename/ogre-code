@@ -43,7 +43,7 @@ namespace Ogre {
         AxisAlignedBox mBox;
 
         String m_strMatName;
-        MaterialPtr m_pMaterial;
+        Material *m_pMaterial;
 
         /// The scene manager for the current frame.
         SceneManager *m_pParentSceneManager;
@@ -61,7 +61,7 @@ namespace Ogre {
         SimpleRenderable();
 
         void setMaterial( const String& matName );
-        virtual const MaterialPtr& getMaterial(void) const;
+        virtual Material* getMaterial(void) const;
 
         virtual void setRenderOperation( const RenderOperation& rend );
         virtual void getRenderOperation(RenderOperation& op);

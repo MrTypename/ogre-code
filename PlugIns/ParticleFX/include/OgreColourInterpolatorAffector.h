@@ -65,7 +65,7 @@ namespace Ogre {
 		};
 
         /** Default constructor. */
-        ColourInterpolatorAffector(ParticleSystem* psys);
+        ColourInterpolatorAffector();
 
         /** See ParticleAffector. */
         void _affectParticles(ParticleSystem* pSystem, Real timeElapsed);

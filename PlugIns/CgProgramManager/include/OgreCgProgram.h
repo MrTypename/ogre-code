@@ -27,7 +27,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreCgPrerequisites.h"
 #include "OgreHighLevelGpuProgram.h"
-#include "OgreStringVector.h"
 
 namespace Ogre {
     /** Specialisation of HighLevelGpuProgram to provide support for nVidia's CG language.
@@ -81,7 +80,7 @@ namespace Ogre {
         high-level program, must be implemented by subclasses. */
         void createLowLevelImpl(void);
         /// Internal unload implementation, must be implemented by subclasses
-        void unloadHighLevelImpl(void);
+        void unloadImpl(void);
         /// Populate the passed parameters with name->index map, must be overridden
         void populateParameterNames(GpuProgramParametersSharedPtr params);
 
@@ -103,8 +102,7 @@ namespace Ogre {
 
 
     public:
-        CgProgram(ResourceManager* creator, const String& name, ResourceHandle handle,
-            const String& group, bool isManual, ManualResourceLoader* loader, 
+        CgProgram(const String& name, GpuProgramType gpType, const String& language, 
             CGcontext context);
         ~CgProgram();
 

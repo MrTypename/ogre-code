@@ -24,25 +24,12 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 #include "OgreD3D9GpuProgramManager.h"
 #include "OgreD3D9GpuProgram.h"
-#include "OgreException.h"
 
 namespace Ogre {
     //-----------------------------------------------------------------------------
     D3D9GpuProgramManager::D3D9GpuProgramManager(LPDIRECT3DDEVICE9 device)
-        :GpuProgramManager(), mpDevice(device)
+        :mpDevice(device)
     {
-        // Superclass sets up members 
-
-        // Register with resource group manager
-        ResourceGroupManager::getSingleton()._registerResourceManager(mResourceType, this);
-
-    }
-    //-----------------------------------------------------------------------------
-    D3D9GpuProgramManager::~D3D9GpuProgramManager()
-    {
-        // Unregister with resource group manager
-        ResourceGroupManager::getSingleton()._unregisterResourceManager(mResourceType);
-
     }
     //-----------------------------------------------------------------------------
     GpuProgramParametersSharedPtr D3D9GpuProgramManager::createParameters(void)
@@ -50,44 +37,16 @@ namespace Ogre {
         return GpuProgramParametersSharedPtr(new GpuProgramParameters());
     }
     //-----------------------------------------------------------------------------
-    Resource* D3D9GpuProgramManager::createImpl(const String& name, ResourceHandle handle, 
-        const String& group, bool isManual, ManualResourceLoader* loader,
-        const NameValuePairList* params)
-    {
-        NameValuePairList::const_iterator paramIt;
-
-        if (!params || (paramIt = params->find("type")) == params->end())
-        {
-            Except(Exception::ERR_INVALIDPARAMS, 
-                "You must supply a 'type' parameter",
-                "D3D9GpuProgramManager::createImpl");
-        }
-
-        if (paramIt->second == "vertex_program")
-        {
-            return new D3D9GpuVertexProgram(this, name, handle, group, 
-                isManual, loader, mpDevice);
-        }
-        else
-        {
-            return new D3D9GpuFragmentProgram(this, name, handle, group, 
-                isManual, loader, mpDevice);
-        }
-    }
-    //-----------------------------------------------------------------------------
-    Resource* D3D9GpuProgramManager::createImpl(const String& name, ResourceHandle handle, 
-        const String& group, bool isManual, ManualResourceLoader* loader,
-        GpuProgramType gptype, const String& syntaxCode)
+    GpuProgram* D3D9GpuProgramManager::create(const String& name, GpuProgramType gptype, const String& syntaxCode)
     {
         if (gptype == GPT_VERTEX_PROGRAM)
         {
-            return new D3D9GpuVertexProgram(this, name, handle, group, 
-                isManual, loader, mpDevice);
+            return new D3D9GpuVertexProgram(name, syntaxCode, mpDevice);
         }
         else
         {
-            return new D3D9GpuFragmentProgram(this, name, handle, group, 
-                isManual, loader, mpDevice);
+            return new D3D9GpuFragmentProgram(name, syntaxCode, mpDevice);
         }
     }
+
 }

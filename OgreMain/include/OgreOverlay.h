@@ -30,6 +30,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreSceneNode.h"
 #include "OgreIteratorWrappers.h"
 #include "OgreMatrix4.h"
+#include "OgreResource.h"
 
 namespace Ogre {
 
@@ -58,19 +59,20 @@ namespace Ogre {
         don't want the overlay displayed in the smaller viewports. You turn this off for 
         a specific viewport by calling the Viewport::setDisplayOverlays method.
     */
-    class _OgreExport Overlay 
+    class _OgreExport Overlay : public Resource
     {
 
     public:
-              typedef std::list<OverlayContainer*> OverlayContainerList;
+              typedef std::list<GuiContainer*> GuiContainerList;
     protected:
-        String mName;
+        ulong mZOrder;
+        bool mVisible;
         /// Internal root node, used as parent for 3D objects
         SceneNode* mRootNode;
         // 2D elements
-        // OverlayContainers, linked list for easy sorting by zorder later
+        // GuiContainers, linked list for easy sorting by zorder later
         // Not a map because sort can be saved since changes infrequent (unlike render queue)
-        OverlayContainerList m2DElements;
+        GuiContainerList m2DElements;
 
         // Degrees of rotation around center
         Radian mRotate;
@@ -82,22 +84,20 @@ namespace Ogre {
         mutable Matrix4 mTransform;
         mutable bool mTransformOutOfDate;
         bool mTransformUpdated;
-        ulong mZOrder;
-        bool mVisible;
-		bool mInitialised;
-		String mOrigin;
         /** Internal lazy update method. */
         void updateTransform(void) const;
-		/** Internal method for initialising an overlay */
-		void initialise(void);
 
     public:
-        /// Constructor: do not call direct, use OverlayManager::create
+        /// Constructor: do not call direct, use SceneManager::createOverlay
         Overlay(const String& name);
         virtual ~Overlay();
 
+        /** Generic load - called by OverlayManager. */
+        virtual void load(void);
+        /** Generic unload - called by OverlayManager. */
+        virtual void unload(void);
 
-	    OverlayContainer* getChild(const String& name);
+	    GuiContainer* getChild(const String& name);
 
         /** Gets the name of this overlay. */
         const String& getName(void) const;
@@ -112,10 +112,7 @@ namespace Ogre {
         /** Gets whether the overlay is displayed or not. */
         bool isVisible(void) const;
 
-		/** Gets whether the overlay is initialised or not. */
-		bool isInitialised(void) const { return mInitialised; }
-
-		/** Shows the overlay if it was hidden. */
+        /** Shows the overlay if it was hidden. */
         void show(void);
 
         /** Hides the overlay if it was visible. */
@@ -123,22 +120,22 @@ namespace Ogre {
 
         /** Adds a 2D 'container' to the overlay.
         @remarks
-            Containers are created and managed using the OverlayManager. A container
+            Containers are created and managed using the GuiManager. A container
             could be as simple as a square panel, or something more complex like
             a grid or tree view. Containers group collections of other elements,
             giving them a relative coordinate space and a common z-order.
             If you want to attach a gui widget to an overlay, you have to do it via
             a container.
-        @param cont Pointer to a container to add, created using OverlayManager.
+        @param cont Pointer to a container to add, created using GuiManager.
         */
-        void add2D(OverlayContainer* cont);
+        void add2D(GuiContainer* cont);
 
 
         /** Removes a 2D container from the overlay. 
         @remarks
-            NOT FAST. Consider OverlayElement::hide.
+            NOT FAST. Consider GuiElement::hide.
         */
-        void remove2D(OverlayContainer* cont);
+        void remove2D(GuiContainer* cont);
 
         /** Adds a node capable of holding 3D objects to the overlay.
         @remarks    
@@ -245,30 +242,22 @@ namespace Ogre {
         /** Internal method to put the overlay contents onto the render queue. */
         void _findVisibleObjects(Camera* cam, RenderQueue* queue);
 
-        /** This returns a OverlayElement at position x,y. */
-		virtual OverlayElement* findElementAt(Real x, Real y);
+        /** This returns a GuiElement at position x,y. */
+		virtual GuiElement* findElementAt(Real x, Real y);
 
         /** Returns an iterator over all 2D elements in this manager.
         @remarks
             VectorIterator is actually a too generic name, since it also works for lists.
         */
-        typedef VectorIterator<OverlayContainerList> Overlay2DElementsIterator ;
+        typedef VectorIterator<GuiContainerList> Overlay2DElementsIterator ;
         Overlay2DElementsIterator get2DElementsIterator ()
         {
             return Overlay2DElementsIterator (m2DElements.begin(), m2DElements.end());
         }
-		/** Get the origin of this overlay, e.g. a script file name.
-		@remarks
-			This property will only contain something if the creator of
-			this overlay chose to populate it. Script loaders are advised
-			to populate it.
-		*/
-		const String& getOrigin(void) const { return mOrigin; }
-		/// Notify this overlay of it's origin
-		void _notifyOrigin(const String& origin) { mOrigin = origin; }
-
 
     };
+
+
 
 }
 

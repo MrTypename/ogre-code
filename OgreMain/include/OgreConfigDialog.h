@@ -43,8 +43,6 @@ namespace Ogre {
     class _OgreExport ConfigDialog
     {
     public:
-    	virtual ~ConfigDialog();
-    	
         /** Displays the dialog.
             @remarks
                 This method displays the dialog and from then on the dialog

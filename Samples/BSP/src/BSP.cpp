@@ -12,10 +12,6 @@ LGPL like the rest of the engine.
 -----------------------------------------------------------------------------
 */
 
-#include "Ogre.h"
-#include "ExampleApplication.h"
-#include "ExampleLoadingBar.h"
-
 /**
     \file 
         BSP.cpp
@@ -27,95 +23,8 @@ LGPL like the rest of the engine.
         in a large level.
 */
 
-class BspApplication : public ExampleApplication
-{
-public:
-	BspApplication()
-	{
-
-
-	}
-
-protected:
-
-	String mQuakePk3;
-	String mQuakeLevel;
-	ExampleLoadingBar mLoadingBar;
-
-	void loadResources(void)
-	{
-
-		mLoadingBar.start(mWindow, 1, 1, 0.75);
-
-		// Turn off rendering of everything except overlays
-		mSceneMgr->clearSpecialCaseRenderQueues();
-		mSceneMgr->addSpecialCaseRenderQueue(RENDER_QUEUE_OVERLAY);
-		mSceneMgr->setSpecialCaseRenderQueueMode(SceneManager::SCRQM_INCLUDE);
-
-		// Set up the world geometry link
-		ResourceGroupManager::getSingleton().linkWorldGeometryToResourceGroup(
-			ResourceGroupManager::getSingleton().getWorldResourceGroupName(), 
-			mQuakeLevel, mSceneMgr);
-
-		// Initialise the rest of the resource groups, parse scripts etc
-		ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
-		ResourceGroupManager::getSingleton().loadResourceGroup(
-			ResourceGroupManager::getSingleton().getWorldResourceGroupName(),
-			false, true);
-
-		// Back to full rendering
-		mSceneMgr->clearSpecialCaseRenderQueues();
-		mSceneMgr->setSpecialCaseRenderQueueMode(SceneManager::SCRQM_EXCLUDE);
-
-		mLoadingBar.finish();
-
-
-	}
-
-	// Override resource sources (include Quake3 archives)
-	void setupResources(void)
-	{
-
-		// Load Quake3 locations from a file
-		ConfigFile cf;
-
-		cf.load("quake3settings.cfg");
-
-		mQuakePk3 = cf.getSetting("Pak0Location");
-		mQuakeLevel = cf.getSetting("Map");
-
-		ExampleApplication::setupResources();
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			mQuakePk3, "Zip", ResourceGroupManager::getSingleton().getWorldResourceGroupName());
-
-	}
-	// Override scene manager (use indoor instead of generic)
-	void chooseSceneManager(void)
-	{
-		mSceneMgr = mRoot->getSceneManager(ST_INTERIOR);
-	}
-	// Scene creation
-	void createScene(void)
-	{
-
-		// modify camera for close work
-		mCamera->setNearClipDistance(4);
-		mCamera->setFarClipDistance(4000);
-
-		// Also change position, and set Quake-type orientation
-		// Get random player start point
-		ViewPoint vp = mSceneMgr->getSuggestedViewpoint(true);
-		mCamera->setPosition(vp.position);
-		mCamera->pitch(Degree(90)); // Quake uses X/Y horizon, Z up
-		mCamera->rotate(vp.orientation);
-		// Don't yaw along variable axis, causes leaning
-		mCamera->setFixedYawAxis(true, Vector3::UNIT_Z);
-
-
-	}
-
-};
-
+#include "Ogre.h"
+#include "BSP.h"
 
 #if OGRE_PLATFORM == PLATFORM_WIN32
 #define WIN32_LEAN_AND_MEAN

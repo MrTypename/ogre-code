@@ -64,10 +64,14 @@ namespace Ogre {
             }
         }
 #endif
-		D3D9HardwareVertexBuffer* vbuf = new D3D9HardwareVertexBuffer(
-			vertexSize, numVerts, usage, mlpD3DDevice, false, useShadowBuffer);
-		mVertexBuffers.insert(vbuf);
-        return HardwareVertexBufferSharedPtr(vbuf);
+        return HardwareVertexBufferSharedPtr(
+            new D3D9HardwareVertexBuffer(vertexSize, 
+            numVerts, usage, mlpD3DDevice, false, useShadowBuffer) );
+    }
+    //-----------------------------------------------------------------------
+	void D3D9HardwareBufferManager::destroyVertexBuffer(HardwareVertexBuffer* buf)
+    {
+        delete buf;
     }
     //-----------------------------------------------------------------------
     void D3D9HardwareBufferManager::destroyAllDeclarations(void)
@@ -102,11 +106,16 @@ namespace Ogre {
             }
         }
 #endif
-		D3D9HardwareIndexBuffer* idx = new D3D9HardwareIndexBuffer(
-			itype, numIndexes, usage, mlpD3DDevice, false, useShadowBuffer);
-		mIndexBuffers.insert(idx);
-		return HardwareIndexBufferSharedPtr(idx);
+        // NB no longer store the buffer in a local list since reference counted
+        return HardwareIndexBufferSharedPtr(
+                new D3D9HardwareIndexBuffer(itype, numIndexes, 
+                usage, mlpD3DDevice, false, useShadowBuffer) );
             
+    }
+    //-----------------------------------------------------------------------
+	void D3D9HardwareBufferManager::destroyIndexBuffer(HardwareIndexBuffer* buf)
+    {
+        delete buf;
     }
     //-----------------------------------------------------------------------
     VertexDeclaration* D3D9HardwareBufferManager::createVertexDeclaration(void)
@@ -122,53 +131,5 @@ namespace Ogre {
         mVertexDeclarations.remove(decl);
         delete decl;
     }
-	//-----------------------------------------------------------------------
-	void D3D9HardwareBufferManager::releaseDefaultPoolResources(void)
-	{
-		VertexBufferList::iterator v, vend;
-		vend = mVertexBuffers.end();
-		for (v = mVertexBuffers.begin(); v != vend; ++v)
-		{
-			D3D9HardwareVertexBuffer* vbuf = 
-				static_cast<D3D9HardwareVertexBuffer*>(*v);
-			vbuf->releaseIfDefaultPool();
-		}
-
-
-		IndexBufferList::iterator i, iend;
-		iend = mIndexBuffers.end();
-		for (i = mIndexBuffers.begin(); i != iend; ++i)
-		{
-			D3D9HardwareIndexBuffer* ibuf = 
-				static_cast<D3D9HardwareIndexBuffer*>(*i);
-			ibuf->releaseIfDefaultPool();
-
-		}
-
-	}
-	//-----------------------------------------------------------------------
-	void D3D9HardwareBufferManager::recreateDefaultPoolResources(void)
-	{
-		VertexBufferList::iterator v, vend;
-		vend = mVertexBuffers.end();
-		for (v = mVertexBuffers.begin(); v != vend; ++v)
-		{
-			D3D9HardwareVertexBuffer* vbuf = 
-				static_cast<D3D9HardwareVertexBuffer*>(*v);
-			vbuf->recreateIfDefaultPool(mlpD3DDevice);
-		}
-
-
-		IndexBufferList::iterator i, iend;
-		iend = mIndexBuffers.end();
-		for (i = mIndexBuffers.begin(); i != iend; ++i)
-		{
-			D3D9HardwareIndexBuffer* ibuf = 
-				static_cast<D3D9HardwareIndexBuffer*>(*i);
-			ibuf->recreateIfDefaultPool(mlpD3DDevice);
-
-		}
-	}
-	//-----------------------------------------------------------------------
 
 }

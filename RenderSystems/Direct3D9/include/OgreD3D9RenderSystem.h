@@ -132,17 +132,6 @@ namespace Ogre
         /// Saved last view matrix
         Matrix4 mViewMatrix;
 
-		// What follows is a set of duplicated lists just to make it
-		// easier to deal with lost devices
-		
-		/// Primary window, the one used to create the device
-		D3D9RenderWindow* mPrimaryWindow;
-
-		typedef std::vector<D3D9RenderWindow*> SecondaryWindowList;
-		// List of additional windows after the first (swap chains)
-		SecondaryWindowList mSecondaryWindows;
-
-		bool mDeviceLost;
 
 	public:
 		// constructor
@@ -150,9 +139,9 @@ namespace Ogre
 		// destructor
 		~D3D9RenderSystem();
 
-		virtual void initConfigOptions(void);
+		virtual initConfigOptions(void);
 		// method for resizing/repositing the render window
- 		virtual void ResizeRepositionWindow(HWND wich);
+ 		virtual ResizeRepositionWindow(HWND wich);
 		// method for setting external window hwnd
 		void SetExternalWindowHandle(HWND externalHandle){mExternalHandle = externalHandle;};
 
@@ -160,15 +149,8 @@ namespace Ogre
 		ConfigOptionMap& getConfigOptions(void);
 		String validateConfigOptions(void);
 		RenderWindow* initialise( bool autoCreateWindow, const String& windowTitle = "OGRE Render Window"  );
-		/// @copydoc RenderSystem::createRenderWindow
-		RenderWindow* createRenderWindow(const String &name, unsigned int width, unsigned int height, 
-			bool fullScreen, const NameValuePairList *miscParams = 0);
-
-		/// @copydoc RenderSystem::createRenderTexture
-		RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height,
-		 	TextureType texType = TEX_TYPE_2D, PixelFormat internalFormat = PF_X8R8G8B8, 
-			const NameValuePairList *miscParams = 0 ); 
-
+		RenderWindow* createRenderWindow(const String &name, unsigned int width, unsigned int height, unsigned int colourDepth, bool fullScreen, int left = 0, int top = 0, bool depthBuffer = true, RenderWindow* parentWindowHandle = 0);
+		RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height );
 		String getErrorDescription( long errorNumber ) const;
 		const String& getName(void) const;
 		// Low-level overridden members
@@ -178,8 +160,8 @@ namespace Ogre
 		void setAmbientLight( float r, float g, float b );
 		void setShadingType( ShadeOptions so );
 		void setLightingEnabled( bool enabled );
-		void destroyRenderTarget(const String& name);
-		void convertColourValue( const ColourValue& colour, uint32* pDest );
+		void destroyRenderWindow( RenderWindow* pWin );
+		void convertColourValue( const ColourValue& colour, unsigned long* pDest );
 		void setStencilCheckEnabled(bool enabled);
         void setStencilBufferParams(CompareFunction func = CMPF_ALWAYS_PASS, 
             ulong refValue = 0, ulong mask = 0xFFFFFFFF, 
@@ -194,7 +176,7 @@ namespace Ogre
 		void _setWorldMatrix( const Matrix4 &m );
 		void _setViewMatrix( const Matrix4 &m );
 		void _setProjectionMatrix( const Matrix4 &m );
-		void _setSurfaceParams( const ColourValue &ambient, const ColourValue &diffuse, const ColourValue &specular, const ColourValue &emissive, Real shininess, TrackVertexColourType tracking );
+		void _setSurfaceParams( const ColourValue &ambient, const ColourValue &diffuse, const ColourValue &specular, const ColourValue &emissive, Real shininess );
 		void _setTexture( size_t unit, bool enabled, const String &texname );
         void _setTextureCoordSet( size_t unit, size_t index );
         void _setTextureCoordCalculation(size_t unit, TexCoordCalcMethod m, 
@@ -248,15 +230,6 @@ namespace Ogre
         Real getVerticalTexelOffset(void);
         Real getMinimumDepthInputValue(void);
         Real getMaximumDepthInputValue(void);
-
-		/** D3D specific method to restore a lost device. */
-		void restoreLostDevice(void);
-		/** D3D specific method to return whether the device has been lost. */
-		bool isDeviceLost(void);
-		/** Notify that a device has been lost */
-		void _notifyDeviceLost(void);
-
-
 
 	};
 }

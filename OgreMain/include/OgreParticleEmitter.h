@@ -85,8 +85,6 @@ namespace Ogre {
         static EmitterCommands::CmdMaxRepeatDelay msMaxRepeatDelayCmd;
 
 
-        /// Parent particle system
-        ParticleSystem* mParent;
         /// Position relative to the center of the ParticleSystem
         Vector3 mPosition;
         /// Rate in particles per second at which this emitter wishes to emit particles
@@ -171,7 +169,7 @@ namespace Ogre {
 
 
     public:
-        ParticleEmitter(ParticleSystem* psys);
+        ParticleEmitter();
         /** Virtual destructor essential. */
         virtual ~ParticleEmitter();
 

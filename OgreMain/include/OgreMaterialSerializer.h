@@ -62,12 +62,11 @@ namespace Ogre {
     struct MaterialScriptContext 
     {
         MaterialScriptSection section;
-		String groupName;
-        MaterialPtr material;
+        Material* material;
         Technique* technique;
         Pass* pass;
         TextureUnitState* textureUnit;
-        GpuProgramPtr program; // used when referencing a program, not when defining it
+        GpuProgram* program; // used when referencing a program, not when defining it
         bool isProgramShadowCaster; // when referencing, are we in context of shadow caster
         bool isProgramShadowReceiver; // when referencing, are we in context of shadow caster
         GpuProgramParametersSharedPtr programParams;
@@ -121,7 +120,7 @@ namespace Ogre {
         /// Parsers for the program definition section of a script
         AttribParserList mProgramDefaultParamAttribParsers;
 
-        void writeMaterial(const MaterialPtr& pMat);
+        void writeMaterial(const Material *pMat);
         void writeTechnique(const Technique* pTech);
         void writePass(const Pass* pPass);
 		void writeTextureUnit(const TextureUnitState *pTex);
@@ -148,19 +147,22 @@ namespace Ogre {
 		virtual ~MaterialSerializer() {};
 
 		/** Queue an in-memory Material to the internal buffer for export.*/
-        void queueForExport(const MaterialPtr& pMat, bool clearQueued = false, bool exportDefaults = false);
+        void queueForExport(const Material *pMat, bool clearQueued = false, bool exportDefaults = false);
         /** Exports queued material(s) to a named material script file. */
 		void exportQueued(const String& filename);
         /** Exports an in-memory Material to the named material script file. */
-        void exportMaterial(const MaterialPtr& pMat, const String& filename, bool exportDefaults = false);
+        void exportMaterial(const Material *pMat, const String& filename, bool exportDefaults = false);
 		/** Returns a string representing the parsed material(s) */
 		const String &getQueuedAsString() const;
 		/** Clears the internal buffer */
 		void clearQueue();
 
-        /** Parses a Material script file passed as a stream.
+        /** Parses a Material script file passed as a chunk.
+        @remarks
+            The filename is optional, if specified it will appear in the log
+            of any errors which are reported.
         */
-        void parseScript(DataStreamPtr& stream, const String& groupName);
+        void parseScript(DataChunk& chunk, const String& filename = "");
 
 
 

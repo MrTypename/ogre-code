@@ -25,8 +25,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 /***************************************************************************
 OgreKeyTarget.h  -  
 	Handles the adding and removing of KeyListeners.
+	This is implemented through the use of a binary multicaster.
+	See EventMulticaster.
 
-	Components that process the Key Event should subclass this class 
+	GuiElements (or other components) that process the Key Event should subclass this class 
 	and call processKeyEvent when that event is identified.
 
 -------------------
@@ -46,15 +48,14 @@ namespace Ogre {
     class _OgreExport KeyTarget : public EventTarget
     {
     protected:
-        std::set<KeyListener*> mKeyListeners;
+		KeyListener* mKeyListener;
 
     public:
-		KeyTarget() { }
-        virtual ~KeyTarget() { }
+		KeyTarget();
 
-	    void processKeyEvent(KeyEvent* e) ;
-	    void addKeyListener(KeyListener* l) ;
-	    void removeKeyListener(KeyListener* l) ;
+	void processKeyEvent(KeyEvent* e) ;
+	void addKeyListener(KeyListener* l) ;
+	void removeKeyListener(KeyListener* l) ;
     };
 
 

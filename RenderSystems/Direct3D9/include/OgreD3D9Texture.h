@@ -30,7 +30,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreRenderTexture.h"
 #include "OgreImage.h"
 #include "OgreException.h"
-#include "OgreD3D9HardwarePixelBuffer.h"
 
 #include "OgreNoMemoryMacros.h"
 #include <d3d9.h>
@@ -41,7 +40,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 namespace Ogre {
 	class D3D9Texture : public Texture
 	{
-	protected:
+	private:
 		/// D3DDevice pointer
 		IDirect3DDevice9		*mpDev;		
 		/// D3D9 pointer
@@ -63,20 +62,11 @@ namespace Ogre {
 		D3DDEVICE_CREATION_PARAMETERS	mDevCreParams;
 		/// back buffer pixel format
 		D3DFORMAT						mBBPixelFormat;
-		/// The memory pool being used
-		D3DPOOL							mD3DPool;
 		/// device capabilities pointer
 		D3DCAPS9						mDevCaps;
         // Auto-generated mipmaps?
-        bool                            mAutoGenMipmaps;
-		// Dynamic textures?
-		bool                            mDynamicTextures;
-		/// Vector of pointers to subsurfaces
-		typedef std::vector<HardwarePixelBufferSharedPtr> SurfaceList;
-		SurfaceList						mSurfaceList;
+        bool                            mAutoGenMipMaps;
 	
-        /// Initialise the device and get formats
-        void _initDevice(void);
 		/// internal method, load a cube texture
 		void _loadCubeTex();
 		/// internal method, load a normal texture
@@ -84,62 +74,77 @@ namespace Ogre {
 		/// internal method, load a volume texture
 		void _loadVolumeTex();
 
+		/// internal method, create a blank texture
+		void _createTex();
 		/// internal method, create a blank normal 1D/2D texture
 		void _createNormTex();
 		/// internal method, create a blank cube texture
 		void _createCubeTex();
-		/// internal method, create a blank cube texture
-		void _createVolumeTex();
 
 		/// internal method, return a D3D pixel format for texture creation
 		D3DFORMAT _chooseD3DFormat();
+		/// internal method, return the color masks for a given format
+		void _getColorMasks(D3DFORMAT format, DWORD *pdwRed, DWORD *pdwGreen, DWORD *pdwBlue, DWORD *pdwAlpha, DWORD *pdwRGBBitCount);
+		/// internal method, copy a memory block to the given surface
+		void _copyMemoryToSurface( const unsigned char *pBuffer, IDirect3DSurface9 *pSurface );
+		/// internal method, blits a given image to normal textures
+		void _blitImageToNormTex(const Image &srcImage);
+		/// internal method, blits images to cube textures
+		void _blitImagesToCubeTex(const Image srcImages[]);
+
+		/// internal method, convert D3D9 pixel format to Ogre pixel format
+		static PixelFormat _getPF(D3DFORMAT d3dPF);
+		/// internal method, convert Ogre pixel format to D3D9 pixel format
+		static D3DFORMAT _getPF(PixelFormat ogrePF);
 
 		/// internal method, free D3D9 resources
 		void _freeResources();
+		/// internal method, initialize member vars
+		void _initMembers();
+		/// internal method, set the device and fillIn the device caps
+		void _setDevice(IDirect3DDevice9 *pDev);
+		/// internal method, construct full cube texture face names from a given string
+		void _constructCubeFaceNames(const String& name);
 		/// internal method, set Texture class source image protected attributes
 		void _setSrcAttributes(unsigned long width, unsigned long height, unsigned long depth, PixelFormat format);
 		/// internal method, set Texture class final texture protected attributes
 		void _setFinalAttributes(unsigned long width, unsigned long height, unsigned long depth, PixelFormat format);
 		/// internal method, return the best by hardware supported filter method
 		D3DTEXTUREFILTERTYPE _getBestFilterMethod();
-		/// internal method, return true if the device/texture combination can use dynamic textures
-		bool _canUseDynamicTextures(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat);
 		/// internal method, return true if the device/texture combination can auto gen. mip maps
-		bool _canAutoGenMipmaps(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat);
+		bool _canAutoGenMipMaps(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat);
 		/// internal method, create a depth stencil for the render target texture
 		void _createDepthStencil();
 
 		/// internal method, the cube map face name for the spec. face index
 		String _getCubeFaceName(unsigned char face) const
 		{ assert(face < 6); return mCubeFaceNames[face]; }
-		
-		/// internal method, create D3D9HardwarePixelBuffers for every face and
-		/// mipmap level. This method must be called after the D3D texture object was created
-		void _createSurfaceList(bool updateOldList=false);
+		/// internal method, return the BPP for the specified format
+		static unsigned short _getPFBpp(PixelFormat ogrePF)
+		{ return Image::getNumElemBits(ogrePF); }
 
-        /// overriden from Resource
-        void loadImpl();
-        /// overriden from Resource
-        void unloadImpl();
 	public:
-		/// constructor 
-        D3D9Texture(ResourceManager* creator, const String& name, ResourceHandle handle,
-            const String& group, bool isManual, ManualResourceLoader* loader, 
-            IDirect3DDevice9 *pD3DDevice);
+		/// constructor 1
+		D3D9Texture( const String& name, TextureType texType, IDirect3DDevice9 *pD3DDevice, TextureUsage usage );
+		/// constructor 2
+		D3D9Texture( const String& name, TextureType texType, IDirect3DDevice9 *pD3DDevice, uint width, uint height, uint numMips, PixelFormat format, TextureUsage usage );
 		/// destructor
 		~D3D9Texture();
 
 		/// overriden from Texture
-		void copyToTexture( TexturePtr& target );
+		void blitImage(const Image& src, const Image::Rect imgRect, const Image::Rect texRect );
+		/// overriden from Texture
+        void blitToTexture( const Image &src, unsigned uStartX, unsigned uStartY );
+		/// overriden from Texture
+		void copyToTexture( Texture * target );
 		/// overriden from Texture
 		void loadImage( const Image &img );
 
-        /// @copydoc Texture::createInternalResources
-        void createInternalResources(void);
+		/// overriden from Resource
+		void load();
+		/// overriden from Resource
+		void unload();
 
-		/// @copydoc Texture::getBuffer
-		HardwarePixelBufferSharedPtr getBuffer(size_t face, size_t mipmap);
-		
 		/// retrieves a pointer to the actual texture
 		IDirect3DBaseTexture9 *getTexture() 
 		{ assert(mpTex); return mpTex; }
@@ -152,101 +157,19 @@ namespace Ogre {
 		/// retrieves a pointer to the Depth stencil
 		IDirect3DSurface9 *getDepthStencil() 
 		{ assert(mpZBuff); return mpZBuff; }
-		
-		/// utility method, convert D3D9 pixel format to Ogre pixel format
-		static PixelFormat _getPF(D3DFORMAT d3dPF);
-		/// utility method, convert Ogre pixel format to D3D9 pixel format
-		static D3DFORMAT _getPF(PixelFormat ogrePF);
-		/// utility method, find closest Ogre pixel format that D3D9 can support
-		static PixelFormat _getClosestSupportedPF(PixelFormat ogrePF);
-
-		/// For dealing with lost devices - release the resource if in the default pool
-		void releaseIfDefaultPool(void);
-		/// For dealing with lost devices - recreate the resource if in the default pool
-		void recreateIfDefaultPool(LPDIRECT3DDEVICE9 pDev);
-
     };
 
-    /** Specialisation of SharedPtr to allow SharedPtr to be assigned to D3D9TexturePtr 
-    @note Has to be a subclass since we need operator=.
-    We could templatise this instead of repeating per Resource subclass, 
-    except to do so requires a form VC6 does not support i.e.
-    ResourceSubclassPtr<T> : public SharedPtr<T>
-    */
-    class D3D9TexturePtr : public SharedPtr<D3D9Texture> 
-    {
-    public:
-        D3D9TexturePtr() : SharedPtr<D3D9Texture>() {}
-        explicit D3D9TexturePtr(D3D9Texture* rep) : SharedPtr<D3D9Texture>(rep) {}
-        D3D9TexturePtr(const D3D9TexturePtr& r) : SharedPtr<D3D9Texture>(r) {} 
-        D3D9TexturePtr(const ResourcePtr& r) : SharedPtr<D3D9Texture>()
-        {
-			// lock & copy other mutex pointer
-			OGRE_LOCK_MUTEX(*r.OGRE_AUTO_MUTEX_NAME)
-			OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
-            pRep = static_cast<D3D9Texture*>(r.getPointer());
-            pUseCount = r.useCountPointer();
-            if (pUseCount)
-            {
-                ++(*pUseCount);
-            }
-        }
-
-        /// Operator used to convert a ResourcePtr to a D3D9TexturePtr
-        D3D9TexturePtr& operator=(const ResourcePtr& r)
-        {
-            if (pRep == static_cast<D3D9Texture*>(r.getPointer()))
-                return *this;
-            release();
-			// lock & copy other mutex pointer
-			OGRE_LOCK_MUTEX(*r.OGRE_AUTO_MUTEX_NAME)
-			OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
-            pRep = static_cast<D3D9Texture*>(r.getPointer());
-            pUseCount = r.useCountPointer();
-            if (pUseCount)
-            {
-                ++(*pUseCount);
-            }
-            return *this;
-        }
-        /// Operator used to convert a TexturePtr to a D3D9TexturePtr
-        D3D9TexturePtr& operator=(const TexturePtr& r)
-        {
-            if (pRep == static_cast<D3D9Texture*>(r.getPointer()))
-                return *this;
-            release();
-			// lock & copy other mutex pointer
-			OGRE_LOCK_MUTEX(*r.OGRE_AUTO_MUTEX_NAME)
-			OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
-            pRep = static_cast<D3D9Texture*>(r.getPointer());
-            pUseCount = r.useCountPointer();
-            if (pUseCount)
-            {
-                ++(*pUseCount);
-            }
-            return *this;
-        }
-    };
-
-
-    /// RenderTexture implementation for D3D9
     class D3D9RenderTexture : public RenderTexture
     {
     public:
-        D3D9RenderTexture( const String & name, 
-			unsigned int width, unsigned int height,
-			TextureType texType, PixelFormat internalFormat, 
-			const NameValuePairList *miscParams ) 
-			: RenderTexture( name, width, height, texType, internalFormat )
+        D3D9RenderTexture( const String & name, uint width, uint height, TextureType texType = TEX_TYPE_2D ) : RenderTexture( name, width, height, texType )
         {
-            mPrivateTex = TextureManager::getSingleton().createManual
-                (mName + "_PRIVATE##", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, 
-                texType, mWidth, mHeight, 0, internalFormat, TU_RENDERTARGET );
+            mPrivateTex = TextureManager::getSingleton().createManual( mName + "_PRIVATE##", texType, mWidth, mHeight, 0, PF_R8G8B8, TU_RENDERTARGET );
         }
 		
         ~D3D9RenderTexture()
         {
-			mPrivateTex->unload();
+			SAFE_DELETE(mPrivateTex);
         }
 
 		virtual void getCustomAttribute( const String& name, void *pData )
@@ -254,33 +177,32 @@ namespace Ogre {
 			if( name == "DDBACKBUFFER" )
             {
                 IDirect3DSurface9 ** pSurf = (IDirect3DSurface9 **)pData;
-				if (mPrivateTex->getTextureType() == TEX_TYPE_2D)
-					mPrivateTex->getNormTexture()->GetSurfaceLevel( 0, &(*pSurf) );
-				else if (mPrivateTex->getTextureType() == TEX_TYPE_CUBE_MAP)
-					mPrivateTex->getCubeTexture()->GetCubeMapSurface( (D3DCUBEMAP_FACES)0, 0, &(*pSurf) );
+				if (((D3D9Texture*)mPrivateTex)->getTextureType() == TEX_TYPE_2D)
+					((D3D9Texture*)mPrivateTex)->getNormTexture()->GetSurfaceLevel( 0, &(*pSurf) );
+				else if (((D3D9Texture*)mPrivateTex)->getTextureType() == TEX_TYPE_CUBE_MAP)
+					((D3D9Texture*)mPrivateTex)->getCubeTexture()->GetCubeMapSurface( (D3DCUBEMAP_FACES)0, 0, &(*pSurf) );
 				else
 				{
 					Except( Exception::UNIMPLEMENTED_FEATURE, 
 							"getCustomAttribute is implemented only for 2D and cube textures !!!", 
 							"D3D9RenderTexture::getCustomAttribute" );
 				}
-				// decrement reference count
                 (*pSurf)->Release();
                 return;
             }
             else if( name == "D3DZBUFFER" )
             {
                 IDirect3DSurface9 ** pSurf = (IDirect3DSurface9 **)pData;
-                *pSurf = mPrivateTex->getDepthStencil();
+                *pSurf = ((D3D9Texture*)mPrivateTex)->getDepthStencil();
                 return;
             }
             else if( name == "DDFRONTBUFFER" )
             {
                 IDirect3DSurface9 ** pSurf = (IDirect3DSurface9 **)pData;
-				if (mPrivateTex->getTextureType() == TEX_TYPE_2D)
-					mPrivateTex->getNormTexture()->GetSurfaceLevel( 0, &(*pSurf) );
-				else if (mPrivateTex->getTextureType() == TEX_TYPE_CUBE_MAP)
-					mPrivateTex->getCubeTexture()->GetCubeMapSurface( (D3DCUBEMAP_FACES)0, 0, &(*pSurf) );
+				if (((D3D9Texture*)mPrivateTex)->getTextureType() == TEX_TYPE_2D)
+					((D3D9Texture*)mPrivateTex)->getNormTexture()->GetSurfaceLevel( 0, &(*pSurf) );
+				else if (((D3D9Texture*)mPrivateTex)->getTextureType() == TEX_TYPE_CUBE_MAP)
+					((D3D9Texture*)mPrivateTex)->getCubeTexture()->GetCubeMapSurface( (D3DCUBEMAP_FACES)0, 0, &(*pSurf) );
 				else
 				{
 					Except( Exception::UNIMPLEMENTED_FEATURE, 
@@ -309,7 +231,7 @@ namespace Ogre {
 
     protected:
         /// The texture to which rendering takes place.
-        D3D9TexturePtr mPrivateTex;
+        Texture * mPrivateTex;
 		
         virtual void _copyToTexture()
         {

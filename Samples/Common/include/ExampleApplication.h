@@ -56,9 +56,6 @@ public:
             return;
 
         mRoot->startRendering();
-
-        // clean up
-        destroyScene();
     }
 
 protected:
@@ -84,14 +81,9 @@ protected:
         createViewports();
 
         // Set default mipmap level (NB some APIs ignore this)
-        TextureManager::getSingleton().setDefaultNumMipmaps(5);
+        TextureManager::getSingleton().setDefaultNumMipMaps(5);
 
-		// Create any resource listeners (for loading screens)
-		createResourceListener();
-		// Load resources
-		loadResources();
-
-		// Create the scene
+        // Create the scene
         createScene();
 
         createFrameListener();
@@ -144,8 +136,6 @@ protected:
 
     virtual void createScene(void) = 0;    // pure virtual - this has to be overridden
 
-    virtual void destroyScene(void){}    // Optional to override this
-
     virtual void createViewports(void)
     {
         // Create one viewport, entire window
@@ -164,39 +154,17 @@ protected:
         ConfigFile cf;
         cf.load("resources.cfg");
 
-        // Go through all sections & settings in the file
-        ConfigFile::SectionIterator seci = cf.getSectionIterator();
+        // Go through all settings in the file
+        ConfigFile::SettingsIterator i = cf.getSettingsIterator();
 
-        String secName, typeName, archName;
-        while (seci.hasMoreElements())
+        String typeName, archName;
+        while (i.hasMoreElements())
         {
-            secName = seci.peekNextKey();
-            ConfigFile::SettingsMultiMap *settings = seci.getNext();
-            ConfigFile::SettingsMultiMap::iterator i;
-            for (i = settings->begin(); i != settings->end(); ++i)
-            {
-                typeName = i->first;
-                archName = i->second;
-                ResourceGroupManager::getSingleton().addResourceLocation(
-                    archName, typeName, secName);
-            }
+            typeName = i.peekNextKey();
+            archName = i.getNext();
+            ResourceManager::addCommonArchiveEx( archName, typeName );
         }
     }
-
-	/// Optional override method where you can create resource listeners (e.g. for loading screens)
-	virtual void createResourceListener(void)
-	{
-
-	}
-
-	/// Optional override method where you can perform resource group loading
-	/// Must at least do ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
-	virtual void loadResources(void)
-	{
-		// Initialise, parse scripts etc
-		ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
-
-	}
 
 
 

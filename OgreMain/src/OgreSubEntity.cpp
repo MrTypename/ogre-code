@@ -39,7 +39,7 @@ namespace Ogre {
     SubEntity::SubEntity (Entity* parent, SubMesh* subMeshBasis)
         :mParentEntity(parent), mSubMesh(subMeshBasis)
     {
-        mpMaterial = MaterialManager::getSingleton().getByName("BaseWhite");
+        mpMaterial = static_cast<Material*>(MaterialManager::getSingleton().getByName("BaseWhite"));
         mMaterialLodIndex = 0;
         mRenderDetail = SDL_SOLID;
         mVisible = true;
@@ -73,16 +73,16 @@ namespace Ogre {
         mMaterialName = name;
         // Update SceneManager re material change
         //mParentEntity->mCreatorSceneManager->_notifyMaterialUsage(oldName, mMaterialName, this);
-        mpMaterial = MaterialManager::getSingleton().getByName(mMaterialName);
+        mpMaterial = (Material*)MaterialManager::getSingleton().getByName(mMaterialName);
 
-        if (mpMaterial.isNull())
+        if (!mpMaterial)
         {
             LogManager::getSingleton().logMessage("Can't assign material " + name + 
                 " to SubEntity of " + mParentEntity->getName() + " because this "
                 "Material does not exist. Have you forgotten to define it in a "
                 ".material script?");
-            mpMaterial = MaterialManager::getSingleton().getByName("BaseWhite");
-            if (mpMaterial.isNull())
+            mpMaterial = (Material*)MaterialManager::getSingleton().getByName("BaseWhite");
+            if (!mpMaterial)
             {
                 Except(Exception::ERR_INTERNAL_ERROR, "Can't assign default material "
                     "to SubEntity of " + mParentEntity->getName() + ". Did "
@@ -99,7 +99,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    const MaterialPtr& SubEntity::getMaterial(void) const
+    Material* SubEntity::getMaterial(void) const
     {
         return mpMaterial;
     }

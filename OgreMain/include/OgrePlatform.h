@@ -27,7 +27,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreConfig.h"
 
-namespace Ogre {
 /* Initial platform/compiler-related stuff to set.
 */
 #define PLATFORM_WIN32 1
@@ -49,7 +48,9 @@ namespace Ogre {
 
 #elif defined( __GNUC__ )
 #   define OGRE_COMPILER COMPILER_GNUC
-#   define OGRE_COMP_VER (((__GNUC__)*100)+__GNUC_MINOR__)
+#   define OGRE_COMP_VER (__GNUC__ * 10000 \
+                          + __GNUC_MINOR__ * 100 \
+                          +__GNUC_PATCHLEVEL__)
 
 #elif defined( __BORLANDC__ )
 #   define OGRE_COMPILER COMPILER_BORL
@@ -94,16 +95,12 @@ namespace Ogre {
 
 // If we're not including this from a client build, specify that the stuff
 // should get exported. Otherwise, import it.
-#	if defined( __MINGW32__ )
-		// Linux compilers don't have symbol import/export directives.
-#   	define _OgreExport
+#   if defined( OGRE_NONCLIENT_BUILD )
+#       define _OgreExport __declspec( dllexport )
 #   else
-#   	if defined( OGRE_NONCLIENT_BUILD )
-#       	define _OgreExport __declspec( dllexport )
-#   	else
-#       	define _OgreExport __declspec( dllimport )
-#   	endif
-#	endif
+#       define _OgreExport __declspec( dllimport )
+#   endif
+
 // Win32 compilers use _DEBUG for specifying debug builds.
 #   ifdef _DEBUG
 #       define OGRE_DEBUG_MODE 1
@@ -117,12 +114,6 @@ namespace Ogre {
 #else
     #define snprintf _snprintf
     #define vsnprintf _vsnprintf
-#endif
-
-#if OGRE_DEBUG_MODE
-    #define OGRE_PLATFORM_LIB "OgrePlatform_d.dll"
-#else
-    #define OGRE_PLATFORM_LIB "OgrePlatform.dll"
 #endif
 
 #endif
@@ -145,13 +136,6 @@ namespace Ogre {
 #   else
 #       define OGRE_DEBUG_MODE 0
 #   endif
-
-#if OGRE_PLATFORM == PLATFORM_APPLE
-    #define OGRE_PLATFORM_LIB "OgrePlatform.bundle"
-#else
-    //PLATFORM_LINUX
-    #define OGRE_PLATFORM_LIB "libOgrePlatform.so"
-#endif
 
 #endif
 
@@ -177,11 +161,5 @@ namespace Ogre {
 #    define OGRE_ENDIAN ENDIAN_LITTLE
 #endif
 
-// Integer formats of fixed bit width
-typedef unsigned int uint32;
-typedef unsigned short uint16;
-typedef unsigned char uint8;
-
-}
 
 #endif

@@ -67,7 +67,7 @@ namespace Ogre {
         };
 
 
-        AreaEmitter(ParticleSystem* psys) : ParticleEmitter(psys) {}
+        AreaEmitter() {}
 
 
         /** See ParticleEmitter. */

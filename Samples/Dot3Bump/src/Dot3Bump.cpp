@@ -117,9 +117,9 @@ SceneNode* mLightNodes[NUM_LIGHTS];
 // the light node pivots
 SceneNode* mLightPivots[NUM_LIGHTS];
 
-OverlayElement* mObjectInfo;
-OverlayElement* mMaterialInfo;
-OverlayElement* mInfo;
+GuiElement* mObjectInfo;
+GuiElement* mMaterialInfo;
+GuiElement* mInfo;
 
 #define KEY_PRESSED(_key,_timeDelay, _macro) \
 { \
@@ -233,9 +233,8 @@ protected:
 
         // Load the meshes with non-default HBU options
 		for(int mn = 0; mn < NUM_ENTITIES; mn++) {
-			MeshPtr pMesh = MeshManager::getSingleton().load(mEntityMeshes[mn],
-                ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,    
-                HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY, 
+			Mesh* pMesh = MeshManager::getSingleton().load(mEntityMeshes[mn],
+				HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY, 
 				HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
 				true, true); //so we can still read it
             // Build tangent vectors, all our meshes use only 1 texture coordset 
@@ -280,10 +279,10 @@ protected:
 		mCamera->moveRelative(Vector3(50, 0, 20));
 		mCamera->lookAt(0, 0, 0);
 		// show overlay
-		Overlay* pOver = OverlayManager::getSingleton().getByName("Example/DP3Overlay");    
-        mObjectInfo = OverlayManager::getSingleton().getOverlayElement("Example/DP3/ObjectInfo");
-        mMaterialInfo = OverlayManager::getSingleton().getOverlayElement("Example/DP3/MaterialInfo");
-        mInfo = OverlayManager::getSingleton().getOverlayElement("Example/DP3/Info");
+		Overlay *pOver = (Overlay *)OverlayManager::getSingleton().getByName("Example/DP3Overlay");    
+        mObjectInfo = GuiManager::getSingleton().getGuiElement("Example/DP3/ObjectInfo");
+        mMaterialInfo = GuiManager::getSingleton().getGuiElement("Example/DP3/MaterialInfo");
+        mInfo = GuiManager::getSingleton().getGuiElement("Example/DP3/Info");
 
         mObjectInfo->setCaption("Current: " + mEntityMeshes[mCurrentEntity]);
         mMaterialInfo->setCaption("Current: " + mMaterialNames[mCurrentEntity][mCurrentMaterial]);
@@ -317,7 +316,8 @@ int main(int argc, char **argv)
 #if OGRE_PLATFORM == PLATFORM_WIN32
         MessageBox( NULL, e.getFullDescription().c_str(), "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 #else
-        std::cerr << "An exception has occured: " << e.getFullDescription();
+        fprintf(stderr, "An exception has occured: %s\n",
+                e.getFullDescription().c_str());
 #endif
     }
 

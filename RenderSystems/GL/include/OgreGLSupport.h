@@ -33,16 +33,15 @@ public:
 
 	virtual ConfigOptionMap& getConfigOptions(void);
 
+    
 	virtual RenderWindow* createWindow(bool autoCreateWindow, GLRenderSystem* renderSystem, const String& windowTitle) = 0;
 
-	/// @copydoc RenderSystem::createRenderWindow
-	virtual RenderWindow* newWindow(const String &name, unsigned int width, unsigned int height, 
-		bool fullScreen, const NameValuePairList *miscParams = 0) = 0;
-
-	/// @copydoc RenderSystem::createRenderTexture
-	virtual RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height,
-		 	TextureType texType = TEX_TYPE_2D, PixelFormat internalFormat = PF_X8R8G8B8, 
-			const NameValuePairList *miscParams = 0 ); 
+	/**
+    * Create a specific instance of a render window
+    */
+    virtual RenderWindow* newWindow(const String& name, unsigned int width, unsigned int height, unsigned int colourDepth,
+            bool fullScreen, int left, int top, bool depthBuffer, RenderWindow* parentWindowHandle,
+			bool vsync) = 0;
 
     /**
     * Start anything special
@@ -52,6 +51,21 @@ public:
     * Stop anything special
     */
     virtual void stop() = 0;
+
+    /**
+    * Set the correct context (that of _target) as active.
+    * 0 means 'activate some context', for example in case of uploading
+    * textures. This obviously fails if there is no context yet.
+    */
+    virtual void begin_context(RenderTarget *_target = 0)
+    {
+    }
+
+    /**
+    * Stop the currrent context
+    */
+    virtual void end_context()
+    { }
 
     /**
     * get vendor information
@@ -83,15 +97,12 @@ public:
     */
     virtual void* getProcAddress(const String& procname) = 0;
 
+    virtual void setExternalWindowHandle(void* hwnd) { }
+
     /** Intialises GL extensions, must be done AFTER the GL context has been
         established.
     */
-    virtual void initialiseExtensions();
-
-	/**	GLsupport specific capabilities (hardware render-to-texture, being one of 
-	    them) are marked in caps.
-	*/
-	virtual void initialiseCapabilities(RenderSystemCapabilities &caps);
+    virtual void initialiseExtensions(void);
 
 	virtual void resizeRepositionWindow(void * window){m_windowToResize = window;};
 	virtual void resizeReposition(void*){;};  // should change to pure when it is implemented for all cases
@@ -102,9 +113,9 @@ protected:
 
 	void *m_windowToResize;
 
-	// This contains the complete list of supported extensions
-    std::set<String> extensionList;
 private:
+    // This contains the complete list of supported extensions
+    std::set<String> extensionList;
     String mVersion;
     String mVendor;
 

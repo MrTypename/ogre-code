@@ -25,6 +25,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #ifndef __CgPrerequisites_H__
 #define __CgPrerequisites_H__
 
+#include "Ogre.h"
 #include "OgreException.h"
 #include <Cg/cg.h>
 

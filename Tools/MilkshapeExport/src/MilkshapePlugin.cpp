@@ -31,7 +31,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreDefaultHardwareBufferManager.h"
 #include "OgreHardwareVertexBuffer.h"
 #include "OgreVertexIndexData.h"
-#include "OgreResourceGroupManager.h"
 
 
 //---------------------------------------------------------------------
@@ -288,8 +287,7 @@ void MilkshapePlugin::doExportMesh(msModel* pModel)
         return /*0*/;
 
     logMgr.logMessage("Creating Mesh object...");
-    Ogre::MeshPtr ogreMesh = Ogre::MeshManager::getSingleton().create("export", 
-        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+    Ogre::Mesh* ogreMesh = new Ogre::Mesh("export");
     logMgr.logMessage("Mesh object created.");
 
     bool foundBoneAssignment = false;
@@ -476,7 +474,7 @@ void MilkshapePlugin::doExportMesh(msModel* pModel)
 
     // Keep hold of a Skeleton pointer for deletion later
     // Mesh uses Skeleton pointer for skeleton name
-    Ogre::SkeletonPtr pSkel;
+    Ogre::Skeleton* pSkel = 0;
 
     if (exportSkeleton && foundBoneAssignment)
     {
@@ -526,12 +524,12 @@ void MilkshapePlugin::doExportMesh(msModel* pModel)
     Ogre::String msg;
 	msg  = "Exporting mesh data to file '" + Ogre::String(szFile) + "'";
     logMgr.logMessage(msg);
-    serializer.exportMesh(ogreMesh.getPointer(), szFile);
+    serializer.exportMesh(ogreMesh, szFile);
     logMgr.logMessage("Export successful");
 
-    Ogre::MeshManager::getSingleton().remove(ogreMesh->getHandle());
-    if (!pSkel.isNull())
-        Ogre::SkeletonManager::getSingleton().remove(pSkel->getHandle());
+    delete ogreMesh;
+    if (pSkel)
+        delete pSkel;
 
 	if (exportMaterials && msModel_GetMaterialCount(pModel) > 0)
 	{
@@ -540,7 +538,7 @@ void MilkshapePlugin::doExportMesh(msModel* pModel)
 }
 
 
-Ogre::SkeletonPtr MilkshapePlugin::doExportSkeleton(msModel* pModel, Ogre::MeshPtr& mesh)
+Ogre::Skeleton* MilkshapePlugin::doExportSkeleton(msModel* pModel, Ogre::Mesh* mesh)
 {
     Ogre::LogManager &logMgr = Ogre::LogManager::getSingleton();
     Ogre::String msg;
@@ -569,7 +567,7 @@ Ogre::SkeletonPtr MilkshapePlugin::doExportSkeleton(msModel* pModel, Ogre::MeshP
     ofn.lpstrTitle = "Export to OGRE Skeleton";
 
     if (!::GetSaveFileName (&ofn))
-        return Ogre::SkeletonPtr();
+        return 0;
 
     // Strip off the path
     Ogre::String skelName = szFile;
@@ -578,8 +576,7 @@ Ogre::SkeletonPtr MilkshapePlugin::doExportSkeleton(msModel* pModel, Ogre::MeshP
 
     // Set up
     logMgr.logMessage("Trying to create Skeleton object");
-    Ogre::SkeletonPtr ogreskel = Ogre::SkeletonManager::getSingleton().create(skelName, 
-        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+    Ogre::Skeleton *ogreskel = new Ogre::Skeleton(skelName);
     logMgr.logMessage("Skeleton object created");
 
     // Complete the details
@@ -674,7 +671,7 @@ Ogre::SkeletonPtr MilkshapePlugin::doExportSkeleton(msModel* pModel, Ogre::MeshP
     Ogre::SkeletonSerializer serializer;
     msg = "Exporting skeleton to " + Ogre::String(szFile);
     logMgr.logMessage(msg);
-    serializer.exportSkeleton(ogreskel.getPointer(), szFile);
+    serializer.exportSkeleton(ogreskel, szFile);
     logMgr.logMessage("Skeleton exported");
 
 
@@ -687,7 +684,7 @@ Ogre::SkeletonPtr MilkshapePlugin::doExportSkeleton(msModel* pModel, Ogre::MeshP
 
 }
 
-bool MilkshapePlugin::locateSkeleton(Ogre::MeshPtr& mesh)
+bool MilkshapePlugin::locateSkeleton(Ogre::Mesh* mesh)
 {
     //
     // choose filename
@@ -724,8 +721,7 @@ bool MilkshapePlugin::locateSkeleton(Ogre::MeshPtr& mesh)
     Ogre::LogManager::getSingleton().logMessage(msg);
 
     // Create a dummy skeleton for Mesh to link to (saves it trying to load it)
-    Ogre::SkeletonPtr pSkel = Ogre::SkeletonManager::getSingleton().create(skelName, 
-        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+    Ogre::Skeleton* pSkel = (Ogre::Skeleton*)Ogre::SkeletonManager::getSingleton().create(skelName);
     Ogre::LogManager::getSingleton().logMessage("Dummy Skeleton object created for link.");
 
     mesh->_notifySkeleton(pSkel);
@@ -744,7 +740,6 @@ struct SplitAnimationStruct
 void MilkshapePlugin::doExportMaterials(msModel* pModel)
 {
 	Ogre::LogManager& logMgr = Ogre::LogManager::getSingleton();
-    Ogre::ResourceGroupManager resGrpMgrSgl;
 	Ogre::MaterialManager matMgrSgl;
 	Ogre::String msg;
 
@@ -793,8 +788,7 @@ void MilkshapePlugin::doExportMaterials(msModel* pModel)
 
 		msg = "Creating material " + Ogre::String(mat->szName);
 		logMgr.logMessage(msg);
-        Ogre::MaterialPtr ogremat = matMgrSgl.create(mat->szName, 
-            Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+        Ogre::Material *ogremat = (Ogre::Material*)matMgrSgl.create(mat->szName);
 		logMgr.logMessage("Created.");
 
 		ogremat->setAmbient(msVec4ToColourValue(mat->Ambient));
@@ -828,7 +822,7 @@ Ogre::ColourValue MilkshapePlugin::msVec4ToColourValue(float prop[4])
 	return colour;
 }
 
-void MilkshapePlugin::doExportAnimations(msModel* pModel, Ogre::SkeletonPtr& ogreskel)
+void MilkshapePlugin::doExportAnimations(msModel* pModel, Ogre::Skeleton* ogreskel)
 {
 
     Ogre::LogManager& logMgr = Ogre::LogManager::getSingleton();

@@ -145,7 +145,7 @@ protected:
         ball->setDynamicsEnabled(true);
         ball->getEntity()->setMaterialName("Ogre/Eyes");
 
-		OgreRefApp::Box* box = mWorld->createBox("shelf", 75, 125, 5, Vector3(-150, 40, 30));
+        Box* box = mWorld->createBox("shelf", 75, 125, 5, Vector3(-150, 40, 30));
         box->getEntity()->setMaterialName("Examples/Rocky");
 
         static const Real BOX_SIZE = 15.0f;
@@ -171,8 +171,7 @@ protected:
 
         // Create the targeting sphere
         Entity* targetEnt = mSceneMgr->createEntity("testray", "sphere.mesh");
-        MaterialPtr mat = MaterialManager::getSingleton().create("targeter", 
-            ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+        Material* mat = (Material*)MaterialManager::getSingleton().create("targeter");
         Pass* pass = mat->getTechnique(0)->getPass(0);
         TextureUnitState* tex = pass->createTextureUnitState();
         tex->setColourOperationEx(LBX_SOURCE1, LBS_MANUAL, LBS_CURRENT, 
@@ -227,7 +226,8 @@ int main(int argc, char **argv)
 #if OGRE_PLATFORM == PLATFORM_WIN32
         MessageBox( NULL, e.getFullDescription().c_str(), "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 #else
-        std::cerr << "An exception has occured: " << e.getFullDescription();
+        fprintf(stderr, "An exception has occured: %s\n",
+                e.getFullDescription().c_str());
 #endif
     }
 

@@ -28,6 +28,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreTerrainPrerequisites.h"
 #include "OgreTerrainPageSource.h"
 #include "OgreImage.h"
+#include "OgreSDDataChunk.h"
 
 namespace Ogre {
 
@@ -47,7 +48,7 @@ namespace Ogre {
         /// Image containing the source heightmap if loaded from non-RAW
         Image mImage;
         /// Arbitrary data loaded from RAW
-        MemoryDataStreamPtr mRawData;
+        SDDataChunk mRawData;
         /// The (single) terrain page this source will provide
         TerrainPage* mPage;
         /// Source file name

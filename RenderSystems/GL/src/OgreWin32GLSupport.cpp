@@ -1,4 +1,3 @@
-#include "OgreRoot.h"
 #include "OgreException.h"
 #include "OgreLogManager.h"
 #include "OgreStringConverter.h"
@@ -6,19 +5,14 @@
 #include <algorithm>
 
 #include "OgreWin32GLSupport.h"
-#include "OgreGLTexture.h"
+
 #include "OgreWin32Window.h"
-
-#define HW_RTT
-
-#ifdef HW_RTT
-#include "OgreWin32RenderTexture.h"
-#endif
 
 using namespace Ogre;
 
 namespace Ogre {
-    Win32GLSupport::Win32GLSupport()
+    Win32GLSupport::Win32GLSupport():
+        mExternalWindowHandle(0)
     {
     } 
 
@@ -134,9 +128,9 @@ namespace Ogre {
 			it->second.currentValue = value;
 		else
 		{
-            StringUtil::StrStreamType str;
-            str << "Option named '" << name << "' does not exist.";
-			Except( Exception::ERR_INVALIDPARAMS, str.str(), "Win32GLSupport::setConfigOption" );
+			char msg[128];
+			sprintf( msg, "Option named '%s' does not exist.", name.c_str() );
+			Except( Exception::ERR_INVALIDPARAMS, msg, "Win32GLSupport::setConfigOption" );
 		}
 
 		if( name == "Video Mode" )
@@ -184,23 +178,18 @@ namespace Ogre {
 			unsigned int w = StringConverter::parseUnsignedInt(val.substr(0, pos));
             unsigned int h = StringConverter::parseUnsignedInt(val.substr(pos + 1));
 
-			// Parse optional parameters
-			NameValuePairList winOptions;
 			opt = mOptions.find("Colour Depth");
 			if (opt == mOptions.end())
 				Except(999, "Can't find Colour Depth options!", "Win32GLSupport::createWindow");
-			unsigned int colourDepth =
-				StringConverter::parseUnsignedInt(opt->second.currentValue);
-			winOptions["colourDepth"] = StringConverter::toString(colourDepth);
+			unsigned int colourDepth = StringConverter::parseUnsignedInt(opt->second.currentValue);
 
 			opt = mOptions.find("VSync");
 			if (opt == mOptions.end())
 				Except(999, "Can't find VSync options!", "Win32GLSupport::createWindow");
 			bool vsync = (opt->second.currentValue == "Yes");
-			winOptions["vsync"] = StringConverter::toString(vsync);
 			renderSystem->setWaitForVerticalBlank(vsync);
 
-            return renderSystem->createRenderWindow(windowTitle, w, h, fullscreen, &winOptions);
+            return renderSystem->createRenderWindow(windowTitle, w, h, colourDepth, fullscreen);
         }
         else
         {
@@ -209,16 +198,23 @@ namespace Ogre {
         }
 	}
 
-	RenderWindow* Win32GLSupport::newWindow(const String &name, unsigned int width, 
-		unsigned int height, bool fullScreen, const NameValuePairList *miscParams)
+	RenderWindow* Win32GLSupport::newWindow(const String& name, unsigned int width, unsigned int height, unsigned int colourDepth,
+            bool fullScreen, int left, int top, bool depthBuffer, RenderWindow* parentWindowHandle,
+			bool vsync)
 	{
 		ConfigOptionMap::iterator opt = mOptions.find("Display Frequency");
 		if (opt == mOptions.end())
 			Except(999, "Can't find Colour Depth options!", "Win32GLSupport::newWindow");
 		unsigned int displayFrequency = StringConverter::parseUnsignedInt(opt->second.currentValue);
 
-		Win32Window* window = new Win32Window(*this);
-		window->create(name, width, height, fullScreen, miscParams);
+		Win32Window* window = new Win32Window();
+		if (!fullScreen && mExternalWindowHandle) // ADD CONTROL IF WE HAVE A WINDOW)
+		{
+			Win32Window *pWin32Window = (Win32Window *)window;
+	 		pWin32Window->setExternalWindowHandle(mExternalWindowHandle);
+		}
+		window->create(name, width, height, colourDepth, fullScreen, left, top, depthBuffer,
+			parentWindowHandle, vsync, displayFrequency);
 		return window;
 	}
 
@@ -232,68 +228,17 @@ namespace Ogre {
 		LogManager::getSingleton().logMessage("*** Stopping Win32GL Subsystem ***");
 	}
 
-	void Win32GLSupport::initialiseExtensions() {
-		// First, initialise the normal extensions
-		GLSupport::initialiseExtensions();
-		// Welcome to the crazy world of W32 extension handling!
-		if(	!checkExtension("WGL_EXT_extensions_string") )
-			return;
-		// Check for W32 specific extensions probe function
-		PFNWGLGETEXTENSIONSSTRINGEXTPROC _wglGetExtensionsStringEXT = 
-			(PFNWGLGETEXTENSIONSSTRINGEXTPROC)wglGetProcAddress("wglGetExtensionsStringEXT");
-		if(!_wglGetExtensionsStringEXT)
-			return;
-		const char *wgl_extensions = _wglGetExtensionsStringEXT();
-        StringUtil::StrStreamType str;
-        str << "Supported WGL extensions: " << wgl_extensions;
-		LogManager::getSingleton().logMessage(
-			LML_NORMAL, str.str());
-		// Parse the, and add them to the main list
-		std::stringstream ext;
-        String instr;
-		ext << wgl_extensions;
-        while(ext >> instr)
-        {
-            extensionList.insert(instr);
-        }
-	}
-
-	void Win32GLSupport::initialiseCapabilities(RenderSystemCapabilities &caps) 
-	{
-		if(	checkExtension("WGL_ARB_pixel_format")) 
-		{
-			// If yes, add rendersystem flag RSC_HWRENDER_TO_TEXTURE	
-			caps.setCapability(RSC_HWRENDER_TO_TEXTURE);
-		}
-	}
-
 	void* Win32GLSupport::getProcAddress(const String& procname)
 	{
-        	return (void*)wglGetProcAddress( procname.c_str() );
+        return wglGetProcAddress( procname.c_str() );
 	}
 
 	void Win32GLSupport::resizeReposition(void* renderTarget)
 	{
 		Win32Window  *pWin32Window = (Win32Window *)renderTarget;
-		if (pWin32Window->getWindowHandle()== m_windowToResize)
-		{
-			pWin32Window->windowMovedOrResized();
+		if (pWin32Window->getWindowHandle()== m_windowToResize){
+					pWin32Window->windowMovedOrResized();
 		}
-	}
 
-	RenderTexture * Win32GLSupport::createRenderTexture( const String & name, 
-		unsigned int width, unsigned int height,
-		TextureType texType, PixelFormat internalFormat, 
-		const NameValuePairList *miscParams ) 
-	{
-#ifdef HW_RTT
-		bool useBind = checkExtension("WGL_ARB_render_texture");
-
-		if(Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_HWRENDER_TO_TEXTURE))
-			return new Win32RenderTexture(*this, name, width, height, texType, 
-				internalFormat, miscParams, useBind);
-		else
-#endif
-			return new GLRenderTexture(name, width, height, texType, internalFormat, miscParams);
 	}
 }

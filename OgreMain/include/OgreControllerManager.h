@@ -36,8 +36,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 namespace Ogre {
 
-    typedef SharedPtr< ControllerValue<Real> > ControllerValueRealPtr;
-    typedef SharedPtr< ControllerFunction<Real> > ControllerFunctionRealPtr;
 
     /** Class for managing Controller instances.
         @remarks
@@ -60,8 +58,8 @@ namespace Ogre {
 
         /** Creates a new controller and registers it with the manager.
         */
-        Controller<Real>* createController(ControllerValueRealPtr src, 
-			ControllerValueRealPtr dest, ControllerFunctionRealPtr func);
+        Controller<Real>* createController(SharedPtr< ControllerValue<Real> > src, 
+			SharedPtr< ControllerValue<Real> > dest, SharedPtr< ControllerFunction<Real> > func);
 
         /** Destroys all the controllers in existence.
         */
@@ -81,7 +79,7 @@ namespace Ogre {
             @see
                 RenderSystem::beginFrame
         */
-        ControllerValueRealPtr getFrameTimeSource(void) const;
+        SharedPtr< ControllerValue<Real> > getFrameTimeSource(void) const;
 
         /** Creates a texture layer animator controller.
             @remarks

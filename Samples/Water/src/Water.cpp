@@ -15,7 +15,6 @@ LGPL like the rest of the engine.
  * Started 29.05.2003, 20:54:37
  */
 #include "ExampleApplication.h"
-#include "OgreBillboardParticleRenderer.h"
 #include "WaterMesh.h"
 
 #include <iostream>
@@ -33,7 +32,7 @@ AnimationState* mAnimState;
 
 /* Some global variables */
 SceneNode *headNode ;
-Overlay* waterOverlay ;
+Overlay *waterOverlay ;
 ParticleSystem *particleSystem ;
 ParticleEmitter *particleEmitter ;
 SceneManager *sceneMgr ;
@@ -64,16 +63,14 @@ void prepareCircleMaterial()
 		}
 	}
 	
-	DataStreamPtr imgstream(new MemoryDataStream(bmap, 256 * 256 * 4));
+	SDDataChunk imgchunk(bmap, 256 * 256 * 4);
 	//~ Image img; 
-	//~ img.loadRawData( imgstream, 256, 256, PF_A8R8G8B8 );
+	//~ img.loadRawData( imgchunk, 256, 256, PF_A8R8G8B8 );
 	//~ TextureManager::getSingleton().loadImage( CIRCLES_MATERIAL , img );
 	TextureManager::getSingleton().loadRawData(CIRCLES_MATERIAL,
-        ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-		imgstream, 256, 256, PF_A8R8G8B8);
-	MaterialPtr material = 
-		MaterialManager::getSingleton().create( CIRCLES_MATERIAL, 
-        ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+		imgchunk, 256, 256, PF_A8R8G8B8);
+	Material *material = (Material*) 
+		MaterialManager::getSingleton().create( CIRCLES_MATERIAL );
 	TextureUnitState *texLayer = material->getTechnique(0)->getPass(0)->createTextureUnitState( CIRCLES_MATERIAL );
 	texLayer->setTextureAddressingMode( TextureUnitState::TAM_CLAMP );	
 	material->setSceneBlending( SBT_ADD );
@@ -92,7 +89,7 @@ class WaterCircle
 private:
 	String name ;
 	SceneNode *node ;
-	MeshPtr mesh ;
+	Mesh *mesh ;
 	SubMesh *subMesh ;
 	Entity *entity ;
 	Real tm ;
@@ -107,8 +104,7 @@ private:
 	{
 		int i,lvl ;
 		
-		mesh = MeshManager::getSingleton().createManual(name, 
-            ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME) ;
+		mesh= (Mesh*) MeshManager::getSingleton().createManual(name) ;
 		subMesh = mesh->createSubMesh();
 		subMesh->useSharedVertices=false;
 
@@ -220,7 +216,8 @@ public:
 	}
 	~WaterCircle()
 	{
-		MeshManager::getSingleton().remove(mesh->getHandle());
+		MeshManager::getSingleton().unload(mesh);
+		delete mesh ; // nice, I think I don't have to delete any buffers here ;)
 		sceneMgr->removeEntity(entity->getName());
 		static_cast<SceneNode*> (sceneMgr->getRootSceneNode())->removeChild(node->getName());
 	}
@@ -297,10 +294,10 @@ protected:
 		ParticleIterator pit = particleSystem->_getIterator() ;
 		while(!pit.end()) {
 			Particle *particle = pit.getNext();
-			Vector3 ppos = particle->position;
-			if (ppos.y<=0 && particle->timeToLive>0) { // hits the water!
+			Vector3 ppos = particle->getPosition();
+			if (ppos.y<=0 && particle->mTimeToLive>0) { // hits the water!
 				// delete particle
-				particle->timeToLive = 0.0f;
+				particle->mTimeToLive = 0.0f;
 				// push the water
 				float x = ppos.x / PLANE_SIZE * COMPLEXITY ;
 				float y = ppos.z / PLANE_SIZE * COMPLEXITY ;
@@ -346,27 +343,27 @@ protected:
 	// GUI updaters
 	void updateInfoParamC()
 	{
-		OverlayManager::getSingleton().getOverlayElement("Example/Water/Param_C") \
+		GuiManager::getSingleton().getGuiElement("Example/Water/Param_C") \
 			->setCaption("[1/2]Ripple speed: "+StringConverter::toString(waterMesh->PARAM_C));		
 	}
 	void updateInfoParamD()
 	{
-		OverlayManager::getSingleton().getOverlayElement("Example/Water/Param_D") \
+		GuiManager::getSingleton().getGuiElement("Example/Water/Param_D") \
 			->setCaption("[3/4]Distance: "+StringConverter::toString(waterMesh->PARAM_D));		
 	}
 	void updateInfoParamU()
 	{
-		OverlayManager::getSingleton().getOverlayElement("Example/Water/Param_U") \
+		GuiManager::getSingleton().getGuiElement("Example/Water/Param_U") \
 			->setCaption("[5/6]Viscosity: "+StringConverter::toString(waterMesh->PARAM_U));		
 	}
 	void updateInfoParamT()
 	{
-		OverlayManager::getSingleton().getOverlayElement("Example/Water/Param_T") \
+		GuiManager::getSingleton().getGuiElement("Example/Water/Param_T") \
 			->setCaption("[7/8]Frame time: "+StringConverter::toString(waterMesh->PARAM_T));		
 	}
 	void updateInfoNormals()
 	{
-		OverlayManager::getSingleton().getOverlayElement("Example/Water/Normals") \
+		GuiManager::getSingleton().getGuiElement("Example/Water/Normals") \
 			->setCaption(String("[N]Normals: ")+((waterMesh->useFakeNormals)?"fake":"real"));
 	}
 	void switchNormals()
@@ -376,35 +373,31 @@ protected:
 	}
 	void updateInfoHeadDepth()
 	{
-		OverlayManager::getSingleton().getOverlayElement("Example/Water/Depth") \
+		GuiManager::getSingleton().getGuiElement("Example/Water/Depth") \
 			->setCaption(String("[U/J]Head depth: ")+StringConverter::toString(headDepth));
 	}
 	void updateInfoSkyBox()
 	{
-		OverlayManager::getSingleton().getOverlayElement("Example/Water/SkyBox")
+		GuiManager::getSingleton().getGuiElement("Example/Water/SkyBox")
 			->setCaption(String("[B]SkyBox: ")+String((skyBoxOn)?"On":"Off") );
 	}
 	void updateMaterial()
 	{
 		String materialName = MATERIAL_PREFIX+StringConverter::toString(materialNumber);
-		MaterialPtr material = MaterialManager::getSingleton().getByName(materialName);
-		if (material.isNull())
-        {
-			if(materialNumber)
-            {
+		Material *material = static_cast<Material*> (MaterialManager::getSingleton().getByName(materialName));
+		if (!material){
+			if(materialNumber){
 				materialNumber = 0 ;
 				updateMaterial();
 				return ;
-			} 
-            else 
-            {
+			} else {
 				Except(Exception::ERR_INTERNAL_ERROR,
 					"Material "+materialName+"doesn't exist!",
 					"WaterListener::updateMaterial");
 			}
 		}
 		waterEntity->setMaterialName(materialName);
-		OverlayManager::getSingleton().getOverlayElement("Example/Water/Material") \
+		GuiManager::getSingleton().getGuiElement("Example/Water/Material") \
 			->setCaption(String("[M]Material: ")+materialName);
 	}
 
@@ -606,7 +599,7 @@ protected:
         //mSceneMgr->setFog(FOG_EXP, ColourValue::White, 0.0002);
 
 		// show overlay
-		waterOverlay = OverlayManager::getSingleton().getByName("Example/WaterOverlay");    
+		waterOverlay = (Overlay*)OverlayManager::getSingleton().getByName("Example/WaterOverlay");    
 		waterOverlay->show();
 		
         // Let there be rain
@@ -619,7 +612,7 @@ protected:
         // Fast-forward the rain so it looks more natural
         particleSystem->fastForward(20);
 		// It can't be set in .particle file, and we need it ;)
-		static_cast<BillboardParticleRenderer*>(particleSystem->getRenderer())->setBillboardOrigin(BBO_BOTTOM_CENTER);
+		particleSystem->setBillboardOrigin(BBO_BOTTOM_CENTER);
 		
 		prepareCircleMaterial();
 	}
@@ -656,7 +649,8 @@ int main(int argc, char **argv)
 #if OGRE_PLATFORM == PLATFORM_WIN32
         MessageBox( NULL, e.getFullDescription().c_str(), "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 #else
-        std::cerr << "An exception has occured: " << e.getFullDescription();
+        fprintf(stderr, "An exception has occured: %s\n",
+                e.getFullDescription().c_str());
 #endif
     }
 

@@ -703,11 +703,6 @@ namespace Ogre {
         return IlluminationPassIterator(mIlluminationPasses.begin(), 
             mIlluminationPasses.end());
     }
-    //-----------------------------------------------------------------------
-	const String& Technique::getResourceGroup(void) const
-	{
-		return mParent->getGroup();
-	}
 
 
 }

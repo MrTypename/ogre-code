@@ -309,7 +309,7 @@ public:
     */
     virtual void attachPage(ushort pageX, ushort pageZ, TerrainPage* page);
     /// Get a pointer to the material being used for the terrain
-    MaterialPtr& getTerrainMaterial(void);
+    Material* getTerrainMaterial(void);
     // Overridden from basic scene manager
     void _renderScene(Camera *cam, Viewport *vp, bool includeOverlays);
 
@@ -317,8 +317,6 @@ public:
     SceneNode* getTerrainRootNode(void) const { return mTerrainRoot; }
     /** Overridden from SceneManager */
     void clearScene(void);
-	/** Overridden from SceneManager */
-	void setWorldGeometryRenderQueue(RenderQueueGroupID qid);
 
 
 protected:

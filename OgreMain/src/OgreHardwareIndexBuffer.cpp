@@ -60,12 +60,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     HardwareIndexBuffer::~HardwareIndexBuffer()
     {
-		HardwareBufferManager* mgr = HardwareBufferManager::getSingletonPtr();
-		if (mgr)
-		{
-			mgr->_notifyIndexBufferDestroyed(this);
-		}
-
         if (mpShadowBuffer)
         {
             delete mpShadowBuffer;

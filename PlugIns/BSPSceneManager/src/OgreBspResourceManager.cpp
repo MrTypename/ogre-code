@@ -44,35 +44,30 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     BspResourceManager::BspResourceManager()
     {
-        mResourceType = "BspLevel";
         // Also create related shader manager (singleton managed)
         mShaderMgr = new Quake3ShaderManager();
-
-        ResourceGroupManager::getSingleton()._registerResourceManager(mResourceType, this);
     }
     //-----------------------------------------------------------------------
     BspResourceManager::~BspResourceManager()
     {
         delete mShaderMgr;
-        ResourceGroupManager::getSingleton()._unregisterResourceManager(mResourceType);
     }
     //-----------------------------------------------------------------------
-    ResourcePtr BspResourceManager::load(const String& name, 
-        const String& group, bool isManual, 
-        ManualResourceLoader* loader, const NameValuePairList* loadParams)
+    BspLevel* BspResourceManager::load( const String& filename, int priority)
     {
         // Only 1 BSP level allowed loaded at once
-        removeAll();
+        unloadAndDestroyAll();
 
-        return ResourceManager::load(name, group, isManual, loader, loadParams);
+        BspLevel* pBsp = (BspLevel*)create(filename);
+        ResourceManager::load(pBsp, priority);
+        return pBsp;
 
     }
     //-----------------------------------------------------------------------
-    Resource* BspResourceManager::createImpl(const String& name, ResourceHandle handle, 
-        const String& group, bool isManual, ManualResourceLoader* loader, 
-        const NameValuePairList* createParams)
+    Resource* BspResourceManager::create( const String& name)
     {
-        return new BspLevel(this, name, handle, group, isManual, loader);
+        return new BspLevel(name);
+
     }
 
 

@@ -34,7 +34,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreQuaternion.h"
 #include "OgreVector3.h"
 #include "OgreHardwareBufferManager.h"
-#include "OgreMesh.h"
 
 namespace Ogre {
     /** Defines an instance of a discrete, movable object based on a Mesh.
@@ -83,7 +82,7 @@ namespace Ogre {
         Entity();
         /** Private constructor - specify name (the usual constructor used).
         */
-        Entity( const String& name, MeshPtr& mesh, SceneManager* creator);
+        Entity( const String& name, Mesh* mesh, SceneManager* creator);
 
         /** Name of the entity; used for location in the scene.
         */
@@ -91,7 +90,7 @@ namespace Ogre {
 
         /** The Mesh that this Entity is based on.
         */
-        MeshPtr mMesh;
+        Mesh* mMesh;
 
         /** List of SubEntities (point to SubMeshes).
         */
@@ -195,7 +194,7 @@ namespace Ogre {
         SkeletonInstance* mSkeletonInstance;
 
 		/** Builds a list of SubEntities based on the SubMeshes contained in the Mesh. */
-		void buildSubEntityList(MeshPtr& mesh, SubEntityList* sublist);
+		void buildSubEntityList(Mesh* mesh, SubEntityList* sublist);
 
 		/// internal implementation of attaching a 'child' object to this entity and assign the parent node to the child entity
 		void attachObjectImpl(MovableObject *pMovable, TagPoint *pAttachingPoint);
@@ -266,7 +265,7 @@ namespace Ogre {
 
         /** Gets the Mesh that this Entity is based on.
         */
-        MeshPtr& getMesh(void);
+        Mesh* getMesh(void);
 
         /** Gets a pointer to a SubEntity, ie a part of an Entity.
         */

@@ -35,7 +35,6 @@ email                : pjcast@yahoo.com
 ***************************************************************************/
 #include "OgreSingleton.h"
 #include "OgreString.h"
-#include "OgreResourceGroupManager.h"
 #include "OgreExternalTextureSource.h"
 
 namespace Ogre
@@ -51,22 +50,19 @@ namespace Ogre
 		/** Destructor */
 		~ExternalTextureSourceManager();
 
-		/** Sets active plugin (ie. "video", "effect", "generic", etc..) */
-		void setCurrentPlugIn( const String& sTexturePlugInType );
+		/** ie. "video", "effect", "generic", etc.. */
+		void SetCurrentPlugIn( const String& sTexturePlugInType );
 
 		/** Returns currently selected plugin, may be null if none selected */
 		ExternalTextureSource* getCurrentPlugIn() { return mpCurrExternalTextureSource; }
 	
-		/** Calls the destroy method of all registered plugins... 
-		Only the owner plugin should perform the destroy action. */
-		void destroyAdvancedTexture( const String& sTextureName,
-			const String& groupName = ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+		/** Destroys a texture created by one of the registered controllers */
+		void DestroyAdvancedTexture( const String& sTextureName );
 
-		/** Returns the plugin which reistered itself with a specific name 
-		(eg. "video"), or null if specified plugin not found */
+		/** Returns the VideoSystem which reistered itself with a specific name ("wideo"), or null if none */
 		ExternalTextureSource* getExternalTextureSource( const String& sTexturePlugInType );
 
-		/** Called from plugin to register itself */
+		/** Called from VideoSystem plugin to register itself */
 		void setExternalTextureSource( const String& sTexturePlugInType, ExternalTextureSource* pTextureSystem );
 
         /** Override standard Singleton retrieval.
@@ -104,8 +100,8 @@ namespace Ogre
 	protected:
 		//The current texture controller selected
 		ExternalTextureSource* mpCurrExternalTextureSource;
-		
-        // Collection of loaded texture System PlugIns, keyed by registered type
+		//True if we are playing a movie via one of the two helper funcions
+        // Collection of loaded texture System PlugIns, keyed by Video System type
         typedef std::map< String, ExternalTextureSource*> TextureSystemList;
         TextureSystemList mTextureSystems;
     };

@@ -25,6 +25,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 
 #include "Ogre.h"
+#include "OgreDataChunk.h"
 #include "OldMaterialReader.h"
 #include "OgreMaterialManager.h"
 #include "OgreMaterialSerializer.h"
@@ -55,7 +56,6 @@ using namespace Ogre;
 //   instantiate the singletons used in the dlls
 LogManager* logMgr;
 Math* mth;
-ResourceGroupManager* resGrpMgr;
 MaterialManager* matMgr;
 
 int main(int numargs, char** args)
@@ -68,7 +68,6 @@ int main(int numargs, char** args)
 
     logMgr = new LogManager();
     mth = new Math();
-    resGrpMgr = new ResourceGroupManager();
     matMgr = new MaterialManager();
     matMgr->initialise();
 
@@ -79,6 +78,7 @@ int main(int numargs, char** args)
     // Load the material
     struct stat tagStat;
 
+    SDDataChunk chunk;
     FILE* pFile = fopen( source.c_str(), "r" );
     if (!pFile)
     {
@@ -86,15 +86,14 @@ int main(int numargs, char** args)
             "File " + source + " not found.", "OgreMaterialUpgrade");
     }
     stat( source.c_str(), &tagStat );
-    MemoryDataStream* memStream = new MemoryDataStream(source, tagStat.st_size, true);
-    fread( (void*)memStream->getPtr(), tagStat.st_size, 1, pFile );
+    chunk.allocate( tagStat.st_size );
+    fread( (void*)chunk.getPtr(), tagStat.st_size, 1, pFile );
     fclose( pFile );
 
     // Read script, note this will create potentially many Materials and load them
     // into the MaterialManager
     OldMaterialReader reader;
-    DataStreamPtr stream(memStream);
-    reader.parseScript(stream);
+    reader.parseScript(chunk);
 
     // Write out the converted mesh
     String dest;
@@ -112,7 +111,7 @@ int main(int numargs, char** args)
     ResourceManager::ResourceMapIterator it = matMgr->getResourceIterator();
     while (it.hasMoreElements())
     {
-        MaterialPtr m = it.getNext();
+        Material *m = static_cast<Material*>(it.getNext());
         // Skip builtin materials
         if (m->getName() == "BaseWhite" || m->getName() == "BaseWhiteNoLighting")
             continue;
@@ -121,7 +120,6 @@ int main(int numargs, char** args)
     serializer.exportQueued(dest);
     
     delete matMgr;
-    delete resGrpMgr;
     delete mth;
     delete logMgr;
 

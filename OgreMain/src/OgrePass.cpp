@@ -44,7 +44,6 @@ namespace Ogre {
 	    mAmbient = mDiffuse = ColourValue::White;
 	    mSpecular = mEmissive = ColourValue::Black;
 	    mShininess = 0;
-       mTracking = TVC_NONE;
         mHash = 0;
 
         // By default, don't override the scene's fog settings
@@ -64,8 +63,6 @@ namespace Ogre {
         mColourWrite = true;
 	    mDepthFunc = CMPF_LESS_EQUAL;
         mDepthBias = 0;
-		mAlphaRejectFunc = CMPF_ALWAYS_PASS;
-		mAlphaRejectVal = 0;
 	    mCullMode = CULL_CLOCKWISE;
 	    mManualCullMode = MANUAL_CULL_BACK;
 	    mLightingEnabled = true;
@@ -108,7 +105,6 @@ namespace Ogre {
 	    mSpecular = oth.mSpecular;
         mEmissive = oth.mEmissive;
 	    mShininess = oth.mShininess;
-       mTracking = oth.mTracking;
 
         // Copy fog parameters
         mFogOverride = oth.mFogOverride;
@@ -124,8 +120,6 @@ namespace Ogre {
 
 	    mDepthCheck = oth.mDepthCheck;
 	    mDepthWrite = oth.mDepthWrite;
-		mAlphaRejectFunc = oth.mAlphaRejectFunc;
-		mAlphaRejectVal = oth.mAlphaRejectVal;
         mColourWrite = oth.mColourWrite;
 	    mDepthFunc = oth.mDepthFunc;
         mDepthBias = oth.mDepthBias;
@@ -243,11 +237,6 @@ namespace Ogre {
 	    mEmissive = selfIllum;
     }
     //-----------------------------------------------------------------------
-    void Pass::setVertexColourTracking(TrackVertexColourType tracking)
-    {
-        mTracking = tracking;
-    }
-    //-----------------------------------------------------------------------
     const ColourValue& Pass::getAmbient(void) const
     {
 	    return mAmbient;
@@ -271,11 +260,6 @@ namespace Ogre {
     Real Pass::getShininess(void) const
     {
 	    return mShininess;
-    }
-    //-----------------------------------------------------------------------
-    TrackVertexColourType Pass::getVertexColourTracking(void) const
-    {
-        return mTracking;
     }
     //-----------------------------------------------------------------------
     TextureUnitState* Pass::createTextureUnitState(void)
@@ -426,22 +410,6 @@ namespace Ogre {
     {
 	    return mDepthFunc;
     }
-	//-----------------------------------------------------------------------
-	void Pass::setAlphaRejectSettings(CompareFunction func, unsigned char value)
-	{
-		mAlphaRejectFunc = func;
-		mAlphaRejectVal = value;
-	}
-	//-----------------------------------------------------------------------
-	void Pass::setAlphaRejectFunction(CompareFunction func)
-	{
-		mAlphaRejectFunc = func;
-	}
-	//-----------------------------------------------------------------------
-	void Pass::setAlphaRejectValue(unsigned char val)
-	{
-		mAlphaRejectVal = val;
-	}
     //-----------------------------------------------------------------------
 	void Pass::setColourWriteEnabled(bool enabled)
 	{
@@ -742,7 +710,7 @@ namespace Ogre {
 		return mVertexProgramUsage->getParameters();
 	}
 	//-----------------------------------------------------------------------
-	const GpuProgramPtr& Pass::getVertexProgram(void)
+	GpuProgram* Pass::getVertexProgram(void)
 	{
 		return mVertexProgramUsage->getProgram();
 	}
@@ -757,7 +725,7 @@ namespace Ogre {
 		return mFragmentProgramUsage->getParameters();
 	}
 	//-----------------------------------------------------------------------
-	const GpuProgramPtr& Pass::getFragmentProgram(void)
+	GpuProgram* Pass::getFragmentProgram(void)
 	{
 		return mFragmentProgramUsage->getProgram();
 	}
@@ -971,7 +939,7 @@ namespace Ogre {
         return mShadowCasterVertexProgramUsage->getParameters();
     }
     //-----------------------------------------------------------------------
-    const GpuProgramPtr& Pass::getShadowCasterVertexProgram(void)
+    GpuProgram* Pass::getShadowCasterVertexProgram(void)
     {
         return mShadowCasterVertexProgramUsage->getProgram();
     }
@@ -1026,14 +994,9 @@ namespace Ogre {
         return mShadowReceiverVertexProgramUsage->getParameters();
     }
     //-----------------------------------------------------------------------
-    const GpuProgramPtr& Pass::getShadowReceiverVertexProgram(void)
+    GpuProgram* Pass::getShadowReceiverVertexProgram(void)
     {
         return mShadowReceiverVertexProgramUsage->getProgram();
     }
-    //-----------------------------------------------------------------------
-	const String& Pass::getResourceGroup(void) const
-	{
-		return mParent->getResourceGroup();
-	}
 
 }

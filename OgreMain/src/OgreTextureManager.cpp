@@ -37,89 +37,91 @@ namespace Ogre {
     {  
         assert( ms_Singleton );  return ( *ms_Singleton );  
     }
-    TextureManager::TextureManager(bool enable32Bit)
-         : mIs32Bit(enable32Bit), mDefaultNumMipmaps(MIP_UNLIMITED)
-    {
-        mResourceType = "Texture";
-        mLoadOrder = 75.0f;
-
-        // Subclasses should register (when this is fully constructed)
-    }
     //-----------------------------------------------------------------------
-    TextureManager::~TextureManager()
-    {
-        // subclasses should unregister with resource group manager
-
-    }
+    TextureManager::~TextureManager(){}
     //-----------------------------------------------------------------------
-    TexturePtr TextureManager::load(const String &name, const String& group,
-        TextureType texType, int numMipmaps, Real gamma)
+    Texture * TextureManager::load(
+        const String &name, TextureType texType, int numMipMaps, 
+        Real gamma, int priority )
     {
-        TexturePtr tex = getByName(name);
+        Texture* tex = (Texture*)getByName( name );
 
-        if(tex.isNull())
+        if( tex == NULL )
         {
-            tex = create(name, group);
-            tex->setTextureType(texType);
-            tex->setNumMipmaps((numMipmaps == -1)? mDefaultNumMipmaps :
-				static_cast<size_t>(numMipmaps));
-            tex->setGamma(gamma);
-            tex->enable32Bit(mIs32Bit);
-            tex->load();
+            tex = (Texture*)create( name, texType );
+
+            if (numMipMaps == -1)
+                tex->setNumMipMaps(mDefaultNumMipMaps);
+            else
+                tex->setNumMipMaps(numMipMaps);
+
+            tex->setGamma( gamma );
+            tex->enable32Bit( mIs32Bit );
+
+            ResourceManager::load( tex, priority );
         }
 
         return tex;
     }
 
     //-----------------------------------------------------------------------
-    TexturePtr TextureManager::loadImage( const String &name, const String& group,
-        const Image &img, TextureType texType, int numMipmaps, Real gamma)
+    Texture * TextureManager::loadImage( 
+        const String &name, const Image &img, TextureType texType,
+        int iNumMipMaps /* = -1 */, Real gamma /* = 1.0f  */, int priority /* = 1 */ )
     {
-        TexturePtr tex = create(name, group);
+        Texture *tex = (Texture*)create( name, texType );
 
-        tex->setTextureType(texType);
-        tex->setNumMipmaps((numMipmaps == -1)? mDefaultNumMipmaps :
-			static_cast<size_t>(numMipmaps));
-        tex->setGamma(gamma);
-        tex->enable32Bit(mIs32Bit);
-        tex->loadImage(img);
+        if( iNumMipMaps == -1 )
+            tex->setNumMipMaps( mDefaultNumMipMaps );
+        else
+            tex->setNumMipMaps( iNumMipMaps );
+
+        tex->setGamma( gamma );        
+        tex->loadImage( img );
+
+		std::pair<ResourceMap::iterator, bool> res = mResources.insert(
+			ResourceMap::value_type( tex->getName(), tex));
+		if (!res.second)
+		{
+			// Key was already used
+			Except(Exception::ERR_DUPLICATE_ITEM, "A texture with the name " + tex->getName() + 
+				" was already loaded.", "TextureManager::loadImage");
+		}
 
         return tex;
     }
     //-----------------------------------------------------------------------
-    TexturePtr TextureManager::loadRawData(const String &name, const String& group,
-        DataStreamPtr& stream, ushort uWidth, ushort uHeight, 
-        PixelFormat format, TextureType texType, 
-        int numMipmaps, Real gamma)
+	Texture * TextureManager::loadRawData( 
+		const String &name, const DataChunk &pData, 
+		ushort uWidth, ushort uHeight, PixelFormat eFormat,
+		TextureType texType,
+		int iNumMipMaps, Real gamma, int priority )
 	{
-        TexturePtr tex = create(name, group);
+		Texture *tex = (Texture*)create( name, texType );
+        if( iNumMipMaps == -1 )
+            tex->setNumMipMaps( mDefaultNumMipMaps );
+        else
+            tex->setNumMipMaps( iNumMipMaps );
 
-        tex->setTextureType(texType);
-        tex->setNumMipmaps((numMipmaps == -1)? mDefaultNumMipmaps :
-			static_cast<size_t>(numMipmaps));
-        tex->setGamma(gamma);
-        tex->enable32Bit(mIs32Bit);
-		tex->loadRawData(stream, uWidth, uHeight, format);
+        tex->setGamma( gamma );        
+		tex->loadRawData( pData, uWidth, uHeight, eFormat);
 		
+		std::pair<ResourceMap::iterator, bool> res = mResources.insert(
+			ResourceMap::value_type( tex->getName(), tex));
+		if (!res.second)
+		{
+			// Key was already used
+			Except(Exception::ERR_DUPLICATE_ITEM, "A texture with the name " + tex->getName() + 
+				" was already loaded.", "TextureManager::loadRawData");
+		}
+
         return tex;
 	}
     //-----------------------------------------------------------------------
-    TexturePtr TextureManager::createManual(const String & name, const String& group,
-        TextureType texType, uint width, uint height, uint depth, int numMipmaps,
-        PixelFormat format, int usage, ManualResourceLoader* loader)
+    void TextureManager::unload( const String& filename )
     {
-        TexturePtr ret = create(name, group, true, loader);
-        ret->setTextureType(texType);
-        ret->setWidth(width);
-        ret->setHeight(height);
-		ret->setDepth(depth);
-        ret->setNumMipmaps((numMipmaps == -1)? mDefaultNumMipmaps :
-			static_cast<size_t>(numMipmaps));
-        ret->setFormat(format);
-        ret->setUsage(usage);
-        ret->enable32Bit(mIs32Bit);
-        ret->createInternalResources();
-        return ret;
+        Resource* res = getByName( filename );
+        ResourceManager::unload( res );
     }
     //-----------------------------------------------------------------------
     void TextureManager::enable32BitTextures( bool setting )
@@ -127,15 +129,15 @@ namespace Ogre {
         // Reload all textures
         for( ResourceMap::iterator it = mResources.begin(); it != mResources.end(); ++it )
         {
-            ((TexturePtr)it->second)->unload();
-            ((TexturePtr)it->second)->enable32Bit(setting);
-            ((TexturePtr)it->second)->load();
+            ((Texture*)it->second)->unload();
+            ((Texture*)it->second)->enable32Bit(setting);
+            ((Texture*)it->second)->load();
             mIs32Bit = setting;
         }
     }
     //-----------------------------------------------------------------------
-    void TextureManager::setDefaultNumMipmaps( size_t num )
+    void TextureManager::setDefaultNumMipMaps( int num )
     {
-        mDefaultNumMipmaps = num;
+        mDefaultNumMipMaps = num;
     }
 }

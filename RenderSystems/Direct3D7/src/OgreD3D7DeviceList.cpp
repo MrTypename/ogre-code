@@ -123,6 +123,7 @@ namespace Ogre
 
     D3DDevice* D3DDeviceList::getBest(unsigned int minColourDepth)
     {
+        char msg[255];
 
         std::vector<D3DDevice>::iterator p = mDeviceList.begin();
         std::vector<D3DDevice>::iterator bestDevice = mDeviceList.end();
@@ -167,7 +168,8 @@ namespace Ogre
 
         }
 
-        LogManager::getSingleton().logMessage("Best 3D Device is: " + bestDevice->DeviceDescription());
+        sprintf(msg, "Best 3D Device is: %s", bestDevice->DeviceDescription().c_str());
+        LogManager::getSingleton().logMessage(msg);
 
         savedBest = &(*bestDevice);
         return savedBest;

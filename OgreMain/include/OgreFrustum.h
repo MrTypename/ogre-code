@@ -116,7 +116,7 @@ namespace Ogre
         mutable AxisAlignedBox mBoundingBox;
         mutable VertexData mVertexData;
 
-        MaterialPtr mMaterial;
+        Material* mMaterial;
         mutable Vector3 mWorldSpaceCorners[8];
 
         /// Is this frustum to act as a reflection of itself?
@@ -320,7 +320,7 @@ namespace Ogre
         void _notifyCurrentCamera(Camera* cam);
 
         /** Overridden from Renderable */
-        const MaterialPtr& getMaterial(void) const;
+        Material* getMaterial(void) const;
 
         /** Overridden from Renderable */
         void getRenderOperation(RenderOperation& op);

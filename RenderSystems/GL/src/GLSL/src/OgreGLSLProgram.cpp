@@ -40,27 +40,9 @@ namespace Ogre {
     GLSLProgram::CmdAttach GLSLProgram::msCmdAttach;
     //-----------------------------------------------------------------------
     //---------------------------------------------------------------------------
-    GLSLProgram::~GLSLProgram()
-    {
-        // have to call this here reather than in Resource destructor
-        // since calling virtual methods in base destructors causes crash
-        unload(); 
-    }
-    //-----------------------------------------------------------------------
     void GLSLProgram::loadFromSource(void)
     {
-        // only create a shader object if glsl is supported
-        if (isSupported())
-        {
-            checkForGLSLError( "GLSLProgram::GLSLProgram", "GL Errors before creating shader object", 0 );
-            // create shader object
-            mGLHandle = glCreateShaderObjectARB_ptr(
-                (mType == GPT_VERTEX_PROGRAM) ? GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB );
-
-            checkForGLSLError( "GLSLProgram::GLSLProgram", "Error creating GLSL shader Object", 0 );
-        }
-
-        const char* SLSource = mSource.c_str();
+		const char* SLSource = mSource.c_str();
 		glShaderSourceARB_ptr(mGLHandle, 1, &SLSource, NULL);
 		// check for load errors
 		checkForGLSLError( "GLSLProgram::loadFromSource", "Cannot load GLSL high-level shader source : " + mName, 0 );
@@ -92,11 +74,11 @@ namespace Ogre {
 	//-----------------------------------------------------------------------
 	void GLSLProgram::createLowLevelImpl(void)
 	{
-		mAssemblerProgram = GpuProgramPtr(new GLSLGpuProgram( this ));
+		mAssemblerProgram = new GLSLGpuProgram( this );
 	}
 
 	//-----------------------------------------------------------------------
-    void GLSLProgram::unloadHighLevelImpl(void)
+    void GLSLProgram::unloadImpl(void)
     {
 		if (isSupported())
 		{
@@ -104,7 +86,8 @@ namespace Ogre {
 		}
 
 		// should we do this here?
-		mAssemblerProgram.setNull();
+		delete mAssemblerProgram;
+		mAssemblerProgram = NULL;
 
     }
 
@@ -118,26 +101,32 @@ namespace Ogre {
     }
 
 	//-----------------------------------------------------------------------
-    GLSLProgram::GLSLProgram(ResourceManager* creator, 
-        const String& name, ResourceHandle handle,
-        const String& group, bool isManual, ManualResourceLoader* loader)
-        : HighLevelGpuProgram(creator, name, handle, group, isManual, loader)
+    GLSLProgram::GLSLProgram(const String& name, GpuProgramType gpType, 
+        const String& language)
+        : HighLevelGpuProgram(name, gpType, language)
     {
 		// add parameter command "attach" to the material serializer dictionary
         if (createParamDictionary("GLSLProgram"))
         {
-            setupBaseParamDictionary();
             ParamDictionary* dict = getParamDictionary();
 
             dict->addParameter(ParameterDef("attach", 
                 "name of another GLSL program needed by this program",
                 PT_STRING),&msCmdAttach);
         }
-        // Manually assign language now since we use it immediately
-        mSyntaxCode = "glsl";
 
 		// want scenemanager to pass on surface and light states to the rendersystem
 		mPassSurfaceAndLightStates = true;
+		// only create a shader object if glsl is supported
+		if (isSupported())
+		{
+			checkForGLSLError( "GLSLProgram::GLSLProgram", "GL Errors before creating shader object", 0 );
+			// create shader object
+			mGLHandle = glCreateShaderObjectARB_ptr(
+				(gpType == GPT_VERTEX_PROGRAM) ? GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB );
+
+			checkForGLSLError( "GLSLProgram::GLSLProgram", "Error creating GLSL shader Object", 0 );
+		}
 
         
     }
@@ -165,8 +154,8 @@ namespace Ogre {
 	{
 		// is the name valid and already loaded?
 		// check with the high level program manager to see if it was loaded
-		HighLevelGpuProgramPtr hlProgram = HighLevelGpuProgramManager::getSingleton().getByName(name);
-		if (!hlProgram.isNull())
+		HighLevelGpuProgram* hlProgram = static_cast<HighLevelGpuProgram*> (HighLevelGpuProgramManager::getSingleton().getByName(name));
+		if (hlProgram)
 		{
 			if (hlProgram->getSyntaxCode() == "glsl")
 			{
@@ -174,7 +163,7 @@ namespace Ogre {
 				// don't need a low level implementation for attached shader objects
 				// loadHighLevelImpl will only load the source and compile once
 				// so don't worry about calling it several times
-				GLSLProgram* childShader = static_cast<GLSLProgram*>(hlProgram.getPointer());
+				GLSLProgram* childShader = static_cast<GLSLProgram*>(hlProgram);
 				// load the source and attach the child shader only if supported
 				if (isSupported())
 				{

@@ -27,11 +27,14 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgrePrerequisites.h"
 
+#include "OgreResource.h"
+
 #if OGRE_PLATFORM == PLATFORM_WIN32
 #    define DYNLIB_HANDLE hInstance
 #    define DYNLIB_LOAD( a ) LoadLibrary( a )
 #    define DYNLIB_GETSYM( a, b ) GetProcAddress( a, b )
 #    define DYNLIB_UNLOAD( a ) !FreeLibrary( a )
+#    define DYNLIB_ERROR( )  "Unknown Error"
 
 struct HINSTANCE__;
 typedef struct HINSTANCE__* hInstance;
@@ -41,12 +44,14 @@ typedef struct HINSTANCE__* hInstance;
 #    define DYNLIB_LOAD( a ) dlopen( a, RTLD_LAZY )
 #    define DYNLIB_GETSYM( a, b ) dlsym( a, b )
 #    define DYNLIB_UNLOAD( a ) dlclose( a )
+#    define DYNLIB_ERROR( ) dlerror( )
 
 #elif OGRE_PLATFORM == PLATFORM_APPLE
 #    define DYNLIB_HANDLE CFBundleRef
 #    define DYNLIB_LOAD( a ) mac_loadExeBundle( a )
 #    define DYNLIB_GETSYM( a, b ) mac_getBundleSym( a, b )
 #    define DYNLIB_UNLOAD( a ) mac_unloadExeBundle( a )
+#    define DYNLIB_ERROR( ) mac_errorBundle()
 #endif
 
 namespace Ogre {
@@ -62,12 +67,8 @@ namespace Ogre {
         @see
             Resource
     */
-    class _OgreExport DynLib
+    class _OgreExport DynLib : public Resource
     {
-	protected:
-		String mName;
-        /// Gets the last loading error
-        String dynlibError(void);
     public:
         /** Default constructor - used by DynLibManager.
             @warning
@@ -79,17 +80,19 @@ namespace Ogre {
         */
         ~DynLib();
 
-        /** Load the library
+        /** Generic load - called by DynLibManager.
+            @see
+                Resource::load
         */
-        void load();
-        /** Unload the library
+        virtual void load();
+        /** Generic unload - called by DynLibManager.
+            @see
+                Resource::unload
         */
-        void unload();
-		/// Get the name of the library
-		const String& getName(void) const { return mName; }
+        virtual void unload();
 
         /**
-            Returns the address of the given symbol from the loaded library.
+            Returns the adress of the given symbol from the loaded library.
             @param
                 strName The name of the symbol to search for
             @returns
@@ -99,7 +102,7 @@ namespace Ogre {
                 If the function fails, the returned value is <b>NULL</b>.
 
         */
-        void* getSymbol( const String& strName ) const throw();
+        virtual void* getSymbol( const String& strName ) const throw();
 
     protected:
 

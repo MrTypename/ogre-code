@@ -66,13 +66,9 @@ namespace Ogre {
             The subclass must have called it's own createParamDictionary before calling this method.
         */
         void addBaseParameters(void) { /* actually do nothing - for future possible use */ }
-
-        ParticleSystem* mParent;
     public:
-        ParticleAffector(ParticleSystem* parent): mParent(parent) {}
-
         /** Virtual destructor essential. */
-        virtual ~ParticleAffector();
+        virtual ~ParticleAffector() {};
 
         /** Method called to allow the affector to initialize all newly created particles in the system.
         @remarks
@@ -102,6 +98,8 @@ namespace Ogre {
             can be created.
         */
         String getType(void) const { return mType; }
+
+
 
     };
 

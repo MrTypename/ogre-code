@@ -27,29 +27,29 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgrePrerequisites.h"
 
+#include "OgreBillboardSet.h"
 #include "OgreVector3.h"
 #include "OgreString.h"
 #include "OgreParticleIterator.h"
 #include "OgreStringInterface.h"
-#include "OgreMovableObject.h"
 
 namespace Ogre {
 
     /** Class defining particle system based special effects.
     @remarks
-        Particle systems are special effects generators which are based on a 
-        number of moving points to create the impression of things like like 
-        sparkles, smoke, blood spurts, dust etc.
+        Particle systems are special effects generators which are based on a number of moving points
+        which are rendered perhaps using billboards (quads which always face the camera) to create
+        the impression of things like like sparkles, smoke, blood spurts, dust etc.
     @par
-        This class simply manages a single collection of particles in world space
-        with a shared local origin for emission. The visual aspect of the 
-        particles is handled by a ParticleSystemRenderer instance.
+        This class simply manages a single collection of particles with a shared local center point
+        and a bounding box. The visual aspect of the particles is handled by the base BillboardSet class
+        which the ParticleSystem manages automatically.
     @par
-        Particle systems are created using the ParticleSystemManager methods, never directly.
+        Particle systems are created using the ParticleSystemManager::createParticleSystem method, never directly.
         In addition, like all subclasses of MovableObject, the ParticleSystem will only be considered for
         rendering once it has been attached to a SceneNode. 
     */
-    class _OgreExport ParticleSystem : public StringInterface, public MovableObject
+    class _OgreExport ParticleSystem : public BillboardSet
     {
     public:
 
@@ -88,8 +88,15 @@ namespace Ogre {
             String doGet(const void* target) const;
             void doSet(void* target, const String& val);
         };
-        /** Command object for renderer (see ParamCommand).*/
-        class CmdRenderer : public ParamCommand
+        /** Command object for billboard type (see ParamCommand).*/
+        class CmdBillboardType : public ParamCommand
+        {
+        public:
+            String doGet(const void* target) const;
+            void doSet(void* target, const String& val);
+        };
+        /** Command object for common direction (see ParamCommand).*/
+        class CmdCommonDirection : public ParamCommand
         {
         public:
             String doGet(const void* target) const;
@@ -103,25 +110,9 @@ namespace Ogre {
             You should use the ParticleSystemManager to create particle systems rather than creating
             them directly.
         */
-        ParticleSystem(const String& name, const String& resourceGroupName);
+        ParticleSystem(const String& name);
 
         virtual ~ParticleSystem();
-
-        /** Sets the ParticleRenderer to be used to render this particle system.
-        @remarks
-            The main ParticleSystem just manages the creation and movement of 
-            particles; they are rendered using functions in ParticleRenderer
-            and the ParticleVisual instances they create.
-		@param typeName String identifying the type of renderer to use; a new 
-			instance of this type will be created; a factory must have been registered
-			with ParticleSystemManager.
-        */
-        void setRenderer(const String& typeName);
-
-        /** Gets the ParticleRenderer to be used to render this particle system. */
-        ParticleSystemRenderer* getRenderer(void) const;
-        /** Gets the name of the ParticleRenderer to be used to render this particle system. */
-        const String& getRendererName(void) const;
 
         /** Adds an emitter to this particle system.
         @remarks
@@ -200,10 +191,6 @@ namespace Ogre {
         /** Removes all the affectors from this system. */
         void removeAllAffectors(void);
 
-        /** Empties this set of all particles.
-        */
-        void clear();
-
         /** Gets the number of individual particles in the system right now.
         @remarks
             The number of particles active in a system at a point in time depends on 
@@ -211,34 +198,13 @@ namespace Ogre {
             given on emission (and whether any affectors modify that TTL) and the maximum
             number of particles allowed in this system at once (particle quota).
         */
-        size_t getNumParticles(void) const;
-
-		/** Manually add a particle to the system. 
-		@remarks
-			Instead of using an emitter, you can manually add a particle to the system.
-			You must initialise the returned particle instance immediately with the
-			'emission' state.
-		@note
-			There is no corresponding 'destroyParticle' method - if you want to dispose of a
-			particle manually (say, if you've used setSpeedFactor(0) to make particles live forever)
-			you should use getParticle() and modify it's timeToLive to zero, meaning that it will
-			get cleaned up in the next update.
-		*/
-		Particle* createParticle(void);
-
-		/** Retrieve a particle from the system for manual tweaking.
-		@remarks
-			Normally you use an affector to alter particles in flight, but
-			for small manually controlled particle systems you might want to use
-			this method.
-		*/
-		Particle* getParticle(size_t index);
+        unsigned int getNumParticles(void) const;
 
         /** Returns the maximum number of particles this system is allowed to have active at once.
         @remarks
             See ParticleSystem::setParticleQuota for more info.
         */
-        size_t getParticleQuota(void) const;
+        unsigned int getParticleQuota(void) const;
 
         /** Sets the maximum number of particles this system is allowed to have active at once.
         @remarks
@@ -250,7 +216,7 @@ namespace Ogre {
             equally across all emitters to be as consistent to the origina particle system style as possible.
         @param quota The maximum number of particles this system is allowed to have.
         */
-        void setParticleQuota(size_t quota);
+        void setParticleQuota(unsigned int quota);
 
 
         /** Assignment operator for copying.
@@ -276,49 +242,19 @@ namespace Ogre {
         */
         ParticleIterator _getIterator(void);
 
-        /** Sets the name of the material to be used for this billboard set.
-            @param
-                name The new name of the material to use for this set.
-        */
-        virtual void setMaterialName(const String& name);
-
-        /** Sets the name of the material to be used for this billboard set.
-            @returns The name of the material that is used for this set.
-        */
-        virtual const String& getMaterialName(void) const;
-
         /** Overridden from MovableObject
             @see
                 MovableObject
         */
-        virtual void _notifyCurrentCamera(Camera* cam);
+        void getWorldTransforms(Matrix4* xform) const;
+        /** @copydoc Renderable::getWorldOrientation */
+        const Quaternion& getWorldOrientation(void) const;
+        /** @copydoc Renderable::getWorldPosition */
+        const Vector3& getWorldPosition(void) const;
 
-        /** Overridden from MovableObject
-        @see
-        MovableObject
+        /** Overridden from BillboardSet
         */
-        void _notifyAttached(Node* parent, bool isTagPoint = false);
-
-        /** Overridden from MovableObject
-            @see
-                MovableObject
-        */
-        virtual const AxisAlignedBox& getBoundingBox(void) const { return mAABB; }
-
-        /** Overridden from MovableObject
-            @see
-                MovableObject
-        */
-        virtual Real getBoundingRadius(void) const { return mBoundingRadius; }
-
-        /** Overridden from MovableObject
-            @see
-                MovableObject
-        */
-        virtual void _updateRenderQueue(RenderQueue* queue);
-
-        /** Overridden from MovableObject */
-        const String& getName(void) const { return mName; }
+        void _updateBounds(void);
 
         /** Fast-forwards this system by the required number of seconds.
         @remarks
@@ -334,86 +270,8 @@ namespace Ogre {
         */
         void fastForward(Real time, Real interval = 0.1);
 
-		/** Sets a 'speed factor' on this particle system, which means it scales the elapsed
-			real time which has passed by this factor before passing it to the emitters, affectors,
-			and the particle life calculation.
-		@remarks
-			An interesting side effect - if you want to create a completely manual particle system
-			where you control the emission and life of particles yourself, you can set the speed
-			factor to 0.0f, thus disabling normal particle emission, alteration, and death.
-		*/
-		void setSpeedFactor(Real speedFactor) { mSpeedFactor = speedFactor; }
-
-		/** Gets the 'speed factor' on this particle system.
-		*/
-		Real getSpeedFactor(void) const { return mSpeedFactor; }
-
-
         /** Overridden from MovableObject */
-        const String& getMovableType(void) const;
-
-        /** Internal callback used by Particles to notify their parent that they have been resized.
-        */
-        virtual void _notifyParticleResized(void);
-
-        /** Internal callback used by Particles to notify their parent that they have been rotated.
-        */
-        virtual void _notifyParticleRotated(void);
-
-        /** Sets the default dimensions of the particles in this set.
-            @remarks
-                All particles in a set are created with these default dimensions. The set will render most efficiently if
-                all the particles in the set are the default size. It is possible to alter the size of individual
-                particles at the expense of extra calculation. See the Particle class for more info.
-            @param width
-                The new default width for the particles in this set.
-            @param height
-                The new default height for the particles in this set.
-        */
-        virtual void setDefaultDimensions(Real width, Real height);
-
-        /** See setDefaultDimensions - this sets 1 component individually. */
-        virtual void setDefaultWidth(Real width);
-        /** See setDefaultDimensions - this gets 1 component individually. */
-        virtual Real getDefaultWidth(void) const;
-        /** See setDefaultDimensions - this sets 1 component individually. */
-        virtual void setDefaultHeight(Real height);
-        /** See setDefaultDimensions - this gets 1 component individually. */
-        virtual Real getDefaultHeight(void) const;
-        /** Returns whether or not particles in this are tested individually for culling. */
-        virtual bool getCullIndividually(void) const;
-        /** Sets whether culling tests particles in this individually as well as in a group.
-        @remarks
-            Particle sets are always culled as a whole group, based on a bounding box which 
-            encloses all particles in the set. For fairly localised sets, this is enough. However, you
-            can optionally tell the set to also cull individual particles in the set, i.e. to test
-            each individual particle before rendering. The default is not to do this.
-        @par
-            This is useful when you have a large, fairly distributed set of particles, like maybe 
-            trees on a landscape. You probably still want to group them into more than one
-            set (maybe one set per section of landscape), which will be culled coarsely, but you also
-            want to cull the particles individually because they are spread out. Whilst you could have
-            lots of single-tree sets which are culled separately, this would be inefficient to render
-            because each tree would be issued as it's own rendering operation.
-        @par
-            By calling this method with a parameter of true, you can have large particle sets which 
-            are spaced out and so get the benefit of batch rendering and coarse culling, but also have
-            fine-grained culling so unnecessary rendering is avoided.
-        @param cullIndividual If true, each particle is tested before being sent to the pipeline as well 
-            as the whole set having to pass the coarse group bounding test.
-        */
-        virtual void setCullIndividually(bool cullIndividual);
-        /// Return the resource group to be used to load dependent resources
-        virtual const String& getResourceGroupName(void) const { return mResourceGroupName; }
-		/** Get the origin of this particle system, e.g. a script file name.
-		@remarks
-			This property will only contain something if the creator of
-			this particle system chose to populate it. Script loaders are advised
-			to populate it.
-		*/
-		const String& getOrigin(void) const { return mOrigin; }
-		/// Notify this particle system of it's origin
-		void _notifyOrigin(const String& origin) { mOrigin = origin; }
+        virtual const String& getMovableType(void) const;
 
     protected:
 
@@ -423,64 +281,9 @@ namespace Ogre {
         static CmdMaterial msMaterialCmd;
         static CmdQuota msQuotaCmd;
         static CmdWidth msWidthCmd;
-        static CmdRenderer msRendererCmd;
+        static CmdBillboardType msBillboardTypeCmd;
+        static CmdCommonDirection msCommonDirectionCmd;
 
-
-        AxisAlignedBox mAABB;
-        Real mBoundingRadius;
-        bool mBoundsAutoUpdate;
-        Real mBoundsUpdateTime;
-
-        /// World AABB, only used to compare world-space positions to calc bounds
-        AxisAlignedBox mWorldAABB;
-
-        /// Name of the system; used for location in the scene.
-        String mName;
-        /// Name of the resource group to use to load materials
-        String mResourceGroupName;
-        /// Name of the material to use
-        String mMaterialName;
-        /// Have we set the material etc on the renderer?
-        bool mIsRendererConfigured;
-        /// Pointer to the material to use
-        MaterialPtr mpMaterial;
-        /// Default width of each particle
-        Real mDefaultWidth;
-        /// Default height of each particle
-        Real mDefaultHeight;
-		/// Speed factor
-		Real mSpeedFactor;
-
-        typedef std::list<Particle*> ActiveParticleList;
-        typedef std::deque<Particle*> FreeParticleQueue;
-        typedef std::vector<Particle*> ParticlePool;
-
-        /** Active particle list.
-            @remarks
-                This is a linked list of pointers to particles in the particle pool.
-            @par
-                This allows very fast instertions and deletions from anywhere in 
-                the list to activate / deactivate particles as well as resuse of 
-                Particle instances in the pool without construction & destruction 
-                which avoids memory thrashing.
-        */
-        ActiveParticleList mActiveParticles;
-
-        /** Free particle queue.
-            @remarks
-                This contains a list of the particles free for use as new instances
-                as required by the set. Particle instances are preconstructed up 
-                to the estimated size in the mParticlePool vector and are 
-                referenced on this deque at startup. As they get used this deque
-                reduces, as they get released back to to the set they get added back to the deque.
-        */
-        FreeParticleQueue mFreeParticles;
-
-        /** Pool of particle instances for use and reuse in the active particle list.
-            @remarks
-                This vector will be preallocated with the estimated size of the set,and will extend as required.
-        */
-        ParticlePool mParticlePool;
 
         typedef std::vector<ParticleEmitter*> ParticleEmitterList;
         typedef std::vector<ParticleAffector*> ParticleAffectorList;
@@ -489,22 +292,6 @@ namespace Ogre {
         ParticleEmitterList mEmitters;
         /// List of particle affectors, ie modifiers of particles
         ParticleAffectorList mAffectors;
-
-        /// The renderer used to render this particle system
-        ParticleSystemRenderer* mRenderer;
-
-        /// Do we cull each particle individually?
-        bool mCullIndividual;
-
-        /// The name of the type of renderer used to render this system
-        String mRendererType;
-        
-        /// The number of particles in the pool.
-        size_t mPoolSize;
-
-		/// Optional origin of this particle system (eg script name)
-		String mOrigin;
-
 
         /** Internal method used to expire dead particles. */
         void _expire(Real timeElapsed);
@@ -518,66 +305,22 @@ namespace Ogre {
         /** Applies the effects of affectors. */
         void _triggerAffectors(Real timeElapsed);
 
-        /** Resize the internal pool of particles. */
-        void increasePool(size_t size);
+        /** Overridden from BillboardSet to create Particle instead of Billboard */
+        void increasePool(unsigned int size);
+
+        /** Internal method for adding a new active particle.*/
+        Particle* addParticle(void);
+
+        /** Overidden from BillboardSet
+            @see
+                BillboardSet
+        */
+        void genBillboardAxes(const Camera& cam, Vector3* pX, Vector3 *pY, const Billboard* pBill = 0);
 
         /** Internal method for initialising string interface. */
         void initParameters(void);
 
-        /** Internal method to configure the renderer. */
-        void configureRenderer(void);
-
-		/// Internal method for creating ParticleVisualData instances for the pool
-		void createVisualParticles(size_t poolstart, size_t poolend);
-		/// Internal method for destroying ParticleVisualData instances for the pool
-		void destroyVisualParticles(size_t poolstart, size_t poolend);
-
-        /** Set the (initial) bounds of the particle system manually. 
-        @remarks
-            If you can, set the bounds of a particle system up-front and 
-            call setBoundsUpdatePeriod(0); this is the most efficient way to
-            organise it. Otherwise, set an initial bounds and let the bounds increase
-            for a little while (the default is 5 seconds), after which time the 
-            AABB is fixed to save time.
-        @param aabb Bounds in local space.
-        */
-        void setBounds(const AxisAlignedBox& aabb);
-
-        /** Sets whether the bounds will be automatically updated
-            for the life of the particle system
-        @remarks
-            If you have a stationary particle system, it would be a good idea to
-            call this method and set the value to 'false', since the maximum
-            bounds of the particle system will eventually be static. If you do
-            this, you can either set the bounds manually using the setBounds()
-            method, or set the second parameter of this method to a positive
-            number of seconds, so that the bounds are calculated for a few
-            seconds and then frozen.
-        @param autoUpdate If true (the default), the particle system will
-            update it's bounds every frame. If false, the bounds update will 
-            cease after the 'stopIn' number of seconds have passed.
-        @param stopIn Only applicable if the first parameter is true, this is the
-            number of seconds after which the automatic update will cease.
-        */
-        void setBoundsAutoUpdated(bool autoUpdate, Real stopIn = 0.0f);
-
-        /** Internal method for updating the bounds of the particle system.
-        @remarks
-            This is called automatically for a period of time after the system's
-            creation (5 seconds by default, settable by setBoundsUpdatePeriod) 
-            to increase (and only increase) the bounds of the system according 
-            to the emitted and affected particles. After this period, the 
-            system is assumed to achieved its maximum size, and the bounds are
-            no longer computed for efficiency. You can tweak the behaviour by 
-            either setting the bounds manually (setBounds, preferred), or 
-            changing the time over which the bounds are updated (performance cost).
-            You can also call this method manually if you need to update the 
-            bounds on an ad-hoc basis.
-        */
-        void _updateBounds(void);
-
     };
-
 }
 
 #endif

@@ -28,13 +28,11 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgrePrerequisites.h"
 
 #include "OgreString.h"
-#include "OgreSharedPtr.h"
 
 
 namespace Ogre {
 
     typedef std::vector<String> StringVector;
-    typedef SharedPtr<StringVector> StringVectorPtr;
 
 }
 

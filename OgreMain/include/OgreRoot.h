@@ -31,7 +31,11 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreSingleton.h"
 #include "OgreString.h"
 #include "OgreSceneManagerEnumerator.h"
-#include "OgreResourceGroupManager.h"
+#include "OgreMeshManager.h"
+#include "OgreTextureManager.h"
+#include "OgreDynLibManager.h"
+#include "OgrePlatformManager.h"
+#include "OgreArchiveManager.h"
 
 #include <exception>
 
@@ -84,15 +88,10 @@ namespace Ogre
         MeshManager* mMeshManager;
         ParticleSystemManager* mParticleManager;
         SkeletonManager* mSkeletonManager;
-        OverlayElementFactory* mPanelFactory;
-        OverlayElementFactory* mBorderPanelFactory;
-        OverlayElementFactory* mTextAreaFactory;
+        GuiManager* mGuiManager;
         OverlayManager* mOverlayManager;
         FontManager* mFontManager;
         ArchiveFactory *mZipArchiveFactory;
-        ArchiveFactory *mFileSystemArchiveFactory;
-		ResourceGroupManager* mResourceGroupManager;
-		ResourceBackgroundQueue* mResourceBackgroundQueue;
 
         Timer* mTimer;
         RenderWindow* mAutoWindow;
@@ -390,28 +389,28 @@ namespace Ogre
         /** Adds a location to the list of searchable locations for a
             Resource type.
             @remarks
-                Resource files (textures, models etc) need to be loaded from
-                specific locations. By calling this method, you add another 
-				search location to the list. Locations added first are preferred
-				over locations added later.
+                Resource files (textures, models etc) can be loaded from
+                locations other than the current application folder. By
+                calling this method, you add another search location to the
+                list. Locations added first are preferred over locations
+                added later, with the current application folder always being
+                the most preferred (and already set up for you).
             @par
                 Locations can be folders, compressed archives, even perhaps
                 remote locations. Facilities for loading from different
                 locations are provided by plugins which provide
-                implementations of the Archive class.
+                implementations of the ArchiveEx class.
+            @par
                 All the application user has to do is specify a 'loctype'
                 string in order to indicate the type of location, which
                 should map onto one of the provided plugins. Ogre comes
                 configured with the 'FileSystem' (folders) and 'Zip' (archive
                 compressed with the pkzip / WinZip etc utilities) types.
-            @par
-				You can also supply the name of a resource group which should
-				have this location applied to it. The 
-				ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME group is the
-				default, and one resource group which will always exist. You
-				should consider defining resource groups for your more specific
-				resources (e.g. per level) so that you can control loading /
-				unloading better.
+            @note
+                <br>Because of dependencies on certain initialisation tasks,
+                you should not call this method for any Resource type other
+                than 'RESTYPE_ALL' unless you have already called the
+                'Root::initialise' method.
             @param
                 name The name of the location, e.g. './data' or
                 '/compressed/gamedata.zip'
@@ -421,30 +420,14 @@ namespace Ogre
                 registered plugin which deals with this type (FileSystem and
                 Zip should always be available)
             @param
-                groupName Type of name of the resource group which this location
-				should apply to; defaults to the General group which applies to
-				all non-specific resources.
-			@param
-				recursive If the resource location has a concept of recursive
-				directory traversal, enabling this option will mean you can load
-				resources in subdirectories using only their unqualified name.
-				The default is to disable this so that resources in subdirectories
-				with the same name are still unique.
+                resType Type of resource which will be searched for in this
+                location. Defaults to all resources, but you can specify that
+                textures are loaded from one location, models from another
+                etc. if you like.
             @see
-                Archive
+                ArchiveEx
         */
-        void addResourceLocation(const String& name, const String& locType, 
-			const String& groupName = ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, 
-			bool recursive = false);
-
-		/** Removes a resource location from the list.
-		@see addResourceLocation
-		@param name The name of the resource location as specified in addResourceLocation
-		@param groupName The name of the resource group to which this location 
-			was assigned.
-		*/
-		void removeResourceLocation(const String& name, 
-			const String& groupName = ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+        void addResourceLocation(const String& name, const String& locType, ResourceType resType = RESTYPE_ALL);
 
         /** Generates a packed data version of the passed in ColourValue suitable for
             use with the current RenderSystem.
@@ -454,7 +437,7 @@ namespace Ogre
         @param colour The colour to convert
         @param pDest Pointer to location to put the result.
         */
-        void convertColourValue(const ColourValue& colour, uint32* pDest);
+        void convertColourValue(const ColourValue& colour, unsigned long* pDest);
 
         /** Retrieves a pointer to the window that was created automatically
             @remarks
@@ -466,10 +449,45 @@ namespace Ogre
         */
         RenderWindow* getAutoCreatedWindow(void);
 
-        /** @copydoc RenderSystem::createRenderWindow
+        /** Creates a new rendering window.
+            @remarks
+                This method creates a new rendering window as specified
+                by the paramteters. The rendering system could be
+                responible for only a single window (e.g. in the case
+                of a game), or could be in charge of multiple ones (in the
+                case of a level editor). The option to create the window
+                as a child of another is therefore given.
+                This method will create an appropriate subclass of
+                RenderWindow depending on the API and platform implementation.
+            @param
+                name The name of the window. Used in other methods
+                later like setRenderTarget and getRenderWindow.
+            @param
+                width The width of the new window.
+            @param
+                height The height of the new window.
+            @param
+                colourDepth The colour depth in bits per pixel.
+                Only applicable if fullScreen = true
+            @param
+                fullScreen Specify true to make the window full screen
+                without borders, title bar or menu bar.
+            @param
+                left The x position of the new window. Only applicable
+                if fullScreen is false. Units are relative to the parent window
+                if applicable, otherwise they are in screen coordinates.
+            @param
+                top The y position of the new window.
+            @param
+                depthBuffer If true, a depth buffer will be assigned to this window.
+            @param
+                parentWindowHandle Should be null if this window is to be
+                stand-alone. Otherwise, specify a pointer to a RenderWindow
+                which represents the parent window.
         */
-		RenderWindow* createRenderWindow(const String &name, unsigned int width, unsigned int height, 
-			bool fullScreen, const NameValuePairList *miscParams = 0) ;
+        RenderWindow* createRenderWindow(const String &name, unsigned int width, unsigned int height, unsigned int colourDepth,
+            bool fullScreen, int left = 0, int top = 0, bool depthBuffer = true,
+            RenderWindow* parentWindowHandle = 0);
 
         /** Destroys a rendering window.
         */

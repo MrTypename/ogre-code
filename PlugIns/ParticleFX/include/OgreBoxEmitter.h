@@ -42,7 +42,7 @@ namespace Ogre {
     {
     public:
 
-        BoxEmitter(ParticleSystem* psys);
+        BoxEmitter();
 
         /** See ParticleEmitter. */
         void _initParticle(Particle* pParticle);

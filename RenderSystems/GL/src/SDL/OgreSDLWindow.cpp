@@ -29,7 +29,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreImageCodec.h"
 #include "OgreException.h"
 #include "OgreLogManager.h"
-#include "OgreStringConverter.h"
 
 #if OGRE_PLATFORM == PLATFORM_WIN32
 #   include <windows.h>
@@ -62,44 +61,17 @@ namespace Ogre {
 
     }
 
-	void SDLWindow::create(const String& name, unsigned int width, unsigned int height,
-	            bool fullScreen, const NameValuePairList *miscParams)
+    void SDLWindow::create(const String& name, unsigned int width, unsigned int height, unsigned int colourDepth,
+                           bool fullScreen, int left, int top, bool depthBuffer,
+                           void* miscParam, ...)
     {
-		int colourDepth = 32;
-		String title = name;
-		if(miscParams)
-		{
-			// Parse miscellenous parameters
-			NameValuePairList::const_iterator opt;
-			// Bit depth
-			opt = miscParams->find("colourDepth");
-			if(opt != miscParams->end()) //check for FSAA parameter, if not ignore it...
-				colourDepth = StringConverter::parseUnsignedInt(opt->second);
-			// Full screen antialiasing
-			opt = miscParams->find("FSAA");
-			if(opt != miscParams->end()) //check for FSAA parameter, if not ignore it...
-			{
-				size_t fsaa_x_samples = StringConverter::parseUnsignedInt(opt->second);
-				if(fsaa_x_samples>1) {
-					// If FSAA is enabled in the parameters, enable the MULTISAMPLEBUFFERS
-					// and set the number of samples before the render window is created.
-					SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS,1);
-					SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES,fsaa_x_samples);
-				}
-			}
-			// Window title
-			opt = miscParams->find("title");
-			if(opt != miscParams->end()) //check for FSAA parameter, if not ignore it...
-				title = opt->second;
-		}   
-	
         LogManager::getSingleton().logMessage("SDLWindow::create", LML_TRIVIAL);
         SDL_Surface* screen;
         int flags = SDL_OPENGL | SDL_HWPALETTE;
 		
         SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
         // request good stencil size if 32-bit colour
-        if (colourDepth == 32)
+        if (colourDepth == 32 && depthBuffer)
         {
             SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 8);
         }
@@ -111,8 +83,7 @@ namespace Ogre {
         screen = SDL_SetVideoMode(width, height, colourDepth, flags);
         if (!screen)
         {
-            LogManager::getSingleton().logMessage(LML_CRITICAL, 
-                String("Could not make screen: ") + SDL_GetError());
+            LogManager::getSingleton().logMessage(LML_CRITICAL, "Could not make screen: %s.", SDL_GetError());
             exit(1);
         }
         LogManager::getSingleton().logMessage("screen is valid", LML_TRIVIAL);
@@ -126,7 +97,7 @@ namespace Ogre {
         mActive = true;
 
         if (!fullScreen)
-            SDL_WM_SetCaption(title.c_str(), 0);
+            SDL_WM_SetCaption(name.c_str(), 0);
 
     }
 
@@ -171,10 +142,10 @@ namespace Ogre {
 
 	void SDLWindow::writeContentsToFile(const String& filename)
 	{
-		ImageCodec::ImageData* imgData = new ImageCodec::ImageData;
-		imgData->width = mWidth;
-		imgData->height = mHeight;
-		imgData->format = PF_BYTE_RGB;
+		ImageCodec::ImageData imgData;
+		imgData.width = mWidth;
+		imgData.height = mHeight;
+		imgData.format = PF_R8G8B8;
 
 		// Allocate buffer 
 		uchar* pBuffer = new uchar[mWidth * mHeight * 3];
@@ -183,15 +154,15 @@ namespace Ogre {
 		// I love GL: it does all the locking & colour conversion for us
 		glReadPixels(0,0, mWidth-1, mHeight-1, GL_RGB, GL_UNSIGNED_BYTE, pBuffer);
 
-		// Wrap buffer in a memory stream
-        DataStreamPtr stream(new MemoryDataStream(pBuffer, mWidth * mHeight * 3, false));
+		// Wrap buffer in a chunk
+		DataChunk chunk(pBuffer, mWidth * mHeight * 3);
 
 		// Need to flip the read data over in Y though
 		Image img;
-		img.loadRawData(stream, mWidth, mHeight, imgData->format );
+		img.loadRawData(chunk, mWidth, mHeight, PF_R8G8B8 );
 		img.flipAroundX();
 
-        MemoryDataStreamPtr streamFlipped(new MemoryDataStream(img.getData(), stream->size(), false));
+		DataChunk chunkFlipped(img.getData(), chunk.getSize());
 
 		// Get codec 
 		size_t pos = filename.find_last_of(".");
@@ -209,8 +180,7 @@ namespace Ogre {
 		Codec * pCodec = Codec::getCodec(extension);
 
 		// Write out
-		Codec::CodecDataPtr codecDataPtr(imgData);
-		pCodec->codeToFile(streamFlipped, filename, codecDataPtr);
+		pCodec->codeToFile(chunkFlipped, filename, &imgData);
 
 		delete [] pBuffer;
 

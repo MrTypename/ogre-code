@@ -54,10 +54,10 @@ private:
         static String tris = "Triangle Count: ";
 
         // update stats when necessary
-        OverlayElement* guiAvg = OverlayManager::getSingleton().getOverlayElement("Core/AverageFps");
-        OverlayElement* guiCurr = OverlayManager::getSingleton().getOverlayElement("Core/CurrFps");
-        OverlayElement* guiBest = OverlayManager::getSingleton().getOverlayElement("Core/BestFps");
-        OverlayElement* guiWorst = OverlayManager::getSingleton().getOverlayElement("Core/WorstFps");
+        GuiElement* guiAvg = GuiManager::getSingleton().getGuiElement("Core/AverageFps");
+        GuiElement* guiCurr = GuiManager::getSingleton().getGuiElement("Core/CurrFps");
+        GuiElement* guiBest = GuiManager::getSingleton().getGuiElement("Core/BestFps");
+        GuiElement* guiWorst = GuiManager::getSingleton().getGuiElement("Core/WorstFps");
         
         guiAvg->setCaption(avgFps + StringConverter::toString(mWindow->getAverageFPS()));
         guiCurr->setCaption(currFps + StringConverter::toString(mWindow->getLastFPS()));
@@ -66,10 +66,10 @@ private:
         guiWorst->setCaption(worstFps + StringConverter::toString(mWindow->getWorstFPS())
             +" "+StringConverter::toString(mWindow->getWorstFrameTime())+" ms");
             
-        OverlayElement* guiTris = OverlayManager::getSingleton().getOverlayElement("Core/NumTris");
+        GuiElement* guiTris = GuiManager::getSingleton().getGuiElement("Core/NumTris");
         guiTris->setCaption(tris + StringConverter::toString(mWindow->getTriangleCount()));
 
-        OverlayElement* guiDbg = OverlayManager::getSingleton().getOverlayElement("Core/DebugText");
+        GuiElement* guiDbg = GuiManager::getSingleton().getGuiElement("Core/DebugText");
         guiDbg->setCaption(mWindow->getDebugText());
     }
     
@@ -85,6 +85,7 @@ public:
 		{
             mEventProcessor = new EventProcessor();
 			mEventProcessor->initialise(win);
+            OverlayManager::getSingleton().createCursorOverlay();
 			mEventProcessor->startProcessingEvents();
 			mEventProcessor->addKeyListener(this);
 			mInputDevice = mEventProcessor->getInputReader();
@@ -202,11 +203,11 @@ public:
 
         if (mInputDevice->isKeyDown(KC_SYSRQ) && mTimeUntilNextToggle <= 0)
         {
-			StringUtil::StrStreamType tmp;
-			tmp << "screenshot_" << ++mNumScreenShots << ".png";
-            mWindow->writeContentsToFile(tmp.str());
+			char tmp[20];
+			sprintf(tmp, "screenshot_%d.png", ++mNumScreenShots);
+            mWindow->writeContentsToFile(tmp);
             mTimeUntilNextToggle = 0.5;
-			mWindow->setDebugText(String("Wrote ") + tmp.str());
+			mWindow->setDebugText(String("Wrote ") + tmp);
         }
 
 
@@ -250,7 +251,7 @@ public:
 
     void showDebugOverlay(bool show)
     {   
-        Overlay* o = OverlayManager::getSingleton().getByName("Core/DebugOverlay");
+        Overlay* o = (Overlay*)OverlayManager::getSingleton().getByName("Core/DebugOverlay");
         if (!o)
             Except( Exception::ERR_ITEM_NOT_FOUND, "Could not find overlay Core/DebugOverlay",
                 "showDebugOverlay" );

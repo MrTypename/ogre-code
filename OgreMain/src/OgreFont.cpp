@@ -27,8 +27,8 @@ http://www.gnu.org/copyleft/lesser.txt
 #include "OgreFont.h"
 #include "OgreMaterialManager.h"
 #include "OgreTextureManager.h"
-#include "OgreTexture.h"
-#include "OgreResourceGroupManager.h"
+#include "OgreFontManager.h"
+#include "OgreSDDataChunk.h"
 #include "OgreLogManager.h"
 #include "OgreStringConverter.h"
 #include "OgreRenderWindow.h"
@@ -47,42 +47,25 @@ http://www.gnu.org/copyleft/lesser.txt
 namespace Ogre
 {
     //---------------------------------------------------------------------
-	Font::CmdType Font::msTypeCmd;
-	Font::CmdSource Font::msSourceCmd;
-	Font::CmdSize Font::msSizeCmd;
-	Font::CmdResolution Font::msResolutionCmd;
-
+    
     //---------------------------------------------------------------------
-	Font::Font(ResourceManager* creator, const String& name, ResourceHandle handle,
-		const String& group, bool isManual, ManualResourceLoader* loader)
-		:Resource (creator, name, handle, group, isManual, loader),
-		mType(FT_TRUETYPE), mTtfSize(0), mTtfResolution(0), mAntialiasColour(false)
+    Font::Font( const String& name)
     {
+        mName = name;
+        mType = FT_TRUETYPE;
+        mpMaterial = NULL;
+        mSource = "";
+        mTtfSize = 0;
+        mTtfResolution = 0;
+        mAntialiasColour = false;
 
-		if (createParamDictionary("Font"))
-		{
-			ParamDictionary* dict = getParamDictionary();
-			dict->addParameter(
-				ParameterDef("type", "'truetype' or 'image' based font", PT_STRING),
-				&msTypeCmd);
-			dict->addParameter(
-				ParameterDef("source", "Filename of the source of the font.", PT_STRING),
-				&msSourceCmd);
-			dict->addParameter(
-				ParameterDef("size", "True type size", PT_REAL),
-				&msSizeCmd);
-			dict->addParameter(
-				ParameterDef("resolution", "True type resolution", PT_UNSIGNED_INT),
-				&msResolutionCmd);
-		}
+
 
     }
     //---------------------------------------------------------------------
     Font::~Font()
     {
-        // have to call this here reather than in Resource destructor
-        // since calling virtual methods in base destructors causes crash
-        unload(); 
+
     }
     //---------------------------------------------------------------------
     void Font::setType(FontType ftype)
@@ -153,81 +136,60 @@ namespace Ogre
         return ret;
     }
     //---------------------------------------------------------------------
-    void Font::loadImpl()
+    void Font::load()
     {
-        // Create a new material
-        mpMaterial =  MaterialManager::getSingleton().create(
-			"Fonts/" + mName,  mGroup);
+        if (!mIsLoaded)
+        {
+            // Create a new material
+            if( !( mpMaterial = reinterpret_cast< Material * >( 
+                MaterialManager::getSingleton().create( "Fonts/" + mName ) ) ) )
+            {
+                Except(Exception::ERR_INTERNAL_ERROR, 
+                    "Error creating new material!", "Font::load" );
+            }
 
-		if (mpMaterial.isNull())
-        {
-            Except(Exception::ERR_INTERNAL_ERROR, 
-                "Error creating new material!", "Font::load" );
-        }
+            TextureUnitState *texLayer;
+            bool blendByAlpha = true;
+            if (mType == FT_TRUETYPE)
+            {
+                createTextureFromFont();
+                texLayer = mpMaterial->getTechnique(0)->getPass(0)->getTextureUnitState(0);
+                // Always blend by alpha
+                blendByAlpha = true;
+            }
+            else
+            {
+                texLayer = mpMaterial->getTechnique(0)->getPass(0)->createTextureUnitState(mSource);
+                Texture* tex = (Texture*)TextureManager::getSingleton().load(mSource);
+				if (!tex)
+				    Except( Exception::ERR_ITEM_NOT_FOUND, "Could not find texture " + mSource,
+					    "Font::load" );
+                blendByAlpha = tex->hasAlpha();
+            }
+            // Clamp to avoid fuzzy edges
+            texLayer->setTextureAddressingMode( TextureUnitState::TAM_CLAMP );
 
-        TextureUnitState *texLayer;
-        bool blendByAlpha = true;
-        if (mType == FT_TRUETYPE)
-        {
-            createTextureFromFont();
-            texLayer = mpMaterial->getTechnique(0)->getPass(0)->getTextureUnitState(0);
-            // Always blend by alpha
-            blendByAlpha = true;
+            // Set up blending
+            if (blendByAlpha)
+            {
+                mpMaterial->setSceneBlending( SBT_TRANSPARENT_ALPHA );
+            }
+            else
+            {
+                // Use add if no alpha (assume black background)
+                mpMaterial->setSceneBlending(SBT_ADD);
+            }
         }
-        else
-        {
-            texLayer = mpMaterial->getTechnique(0)->getPass(0)->createTextureUnitState(mSource);
-			if (!texLayer)
-				Except( Exception::ERR_ITEM_NOT_FOUND, "Could not find texture " + mSource,
-					"Font::load" );
-			// Manually load since we need to load to get alpha
-			TexturePtr tex = TextureManager::getSingleton().getByName(mSource);
-			tex->load();
-            blendByAlpha = tex->hasAlpha();
-        }
-        // Clamp to avoid fuzzy edges
-        texLayer->setTextureAddressingMode( TextureUnitState::TAM_CLAMP );
-
-        // Set up blending
-        if (blendByAlpha)
-        {
-            mpMaterial->setSceneBlending( SBT_TRANSPARENT_ALPHA );
-        }
-        else
-        {
-            // Use add if no alpha (assume black background)
-            mpMaterial->setSceneBlending(SBT_ADD);
-        }
+        mIsLoaded = true;
     }
     //---------------------------------------------------------------------
-    void Font::unloadImpl()
+    void Font::unload()
     {
-		// Cascade to the texture we created
-        mTexture->unload();
+        mIsLoaded = false;
     }
     //---------------------------------------------------------------------
     void Font::createTextureFromFont(void)
     {
-
-		// Just create the texture here, and point it at ourselves for when
-		// it wants to (re)load for real
-		String texName = mName + "Texture";
-		// Create, setting isManual to true and passing self as loader
-		mTexture = TextureManager::getSingleton().create( 
-			texName, mGroup, true, this);
-		mTexture->setTextureType(TEX_TYPE_2D);
-		mTexture->setNumMipmaps(0);
-		mTexture->load();
-
-		TextureUnitState* t = mpMaterial->getTechnique(0)->getPass(0)->createTextureUnitState( texName );
-		// Allow min/mag filter, but no mip
-		t->setTextureFiltering(FO_LINEAR, FO_LINEAR, FO_NONE);
-
-	}
-	//---------------------------------------------------------------------
-	void Font::loadResource(Resource* res)
-	{
-		// ManualResourceLoader implementation - load the texture
 		FT_Library ftLibrary;
 		// Init freetype
         if( FT_Init_FreeType( &ftLibrary ) )
@@ -242,14 +204,11 @@ namespace Ogre
         // prevents nasty artefacts when letters are too close together
         uint char_spacer = 5;
 
-        // Locate ttf file, load it pre-buffered into memory by wrapping the
-		// original DataStream in a MemoryDataStream
-		DataStreamPtr dataStreamPtr =
-			ResourceGroupManager::getSingleton().openResource(mSource, mGroup);
-		MemoryDataStream ttfchunk(dataStreamPtr);
-		
+        // Locate ttf file
+        SDDataChunk ttfchunk;
+        FontManager::getSingleton()._findResourceData(mSource, ttfchunk);
         // Load font
-        if( FT_New_Memory_Face( ftLibrary, ttfchunk.getPtr(), (FT_Long)ttfchunk.size() , 0, &face ) )
+        if( FT_New_Memory_Face( ftLibrary, ttfchunk.getPtr(), (FT_Long)ttfchunk.getSize() , 0, &face ) )
             Except( Exception::ERR_INTERNAL_ERROR, 
             "Could not open font face!", "Font::createTextureFromFont" );
 
@@ -295,18 +254,19 @@ namespace Ogre
 			roundUpSize = 1 << i;
 		
 		tex_side = roundUpSize;
-		const size_t pixel_bytes = 2;
-		size_t data_width = tex_side * pixel_bytes;
+		size_t data_width = tex_side * 4;
 
 		LogManager::getSingleton().logMessage("Font " + mName + "using texture size " +
 			StringConverter::toString(tex_side) + "x" + StringConverter::toString(tex_side)); 
 
-        uchar* imageData = new uchar[tex_side * tex_side * pixel_bytes];
+        uchar* imageData = new uchar[tex_side * tex_side * 4];
 		// Reset content (White, transparent)
-        for (i = 0; i < tex_side * tex_side * pixel_bytes; i += pixel_bytes)
+        for (i = 0; i < tex_side * tex_side * 4; i += 4)
         {
-            imageData[i + 0] = 0xFF; // luminance
-            imageData[i + 1] = 0x00; // alpha
+            imageData[i + 0] = 0xFF; // red
+            imageData[i + 1] = 0xFF; // green
+            imageData[i + 2] = 0xFF; // blue
+            imageData[i + 3] = 0x00; // alpha
         } 
 
         for( i = startGlyph, l = 0, m = 0, n = 0; i < endGlyph; i++ )
@@ -340,18 +300,22 @@ namespace Ogre
             for( j = 0; j < face->glyph->bitmap.rows; j++ )
             {
                 int row = j + m + y_bearnig;
-                uchar* pDest = &imageData[(row * data_width) + l * pixel_bytes];   
+                uchar* pDest = &imageData[(row * data_width) + l * 4];   
                 for( k = 0; k < face->glyph->bitmap.width; k++ )
                 {
                     if (mAntialiasColour)
                     {
                         // Use the same greyscale pixel for all components RGBA
                         *pDest++= *buffer;
+                        *pDest++= *buffer;
+                        *pDest++= *buffer;
                     }
                     else
                     {
                         // Always white whether 'on' or 'off' pixel, since alpha
                         // will turn off
+                        *pDest++= 0xFF;
+                        *pDest++= 0xFF;
                         *pDest++= 0xFF;
                     }
                     // Always use the greyscale value for alpha
@@ -376,77 +340,22 @@ namespace Ogre
             }
         }
 
-        DataStreamPtr memStream(
-			new MemoryDataStream(imageData, tex_side * tex_side * pixel_bytes, true));
+        SDDataChunk imgchunk(imageData, tex_side * tex_side * 4);
 
         Image img; 
-		img.loadRawData( memStream, tex_side, tex_side, PF_BYTE_LA );
+		img.loadRawData( imgchunk, tex_side, tex_side, PF_A8R8G8B8 );
 
-		Texture* tex = static_cast<Texture*>(res);
-		tex->loadImage(img);
 
-		
+        String texName = mName + "Texture";
+		// Load texture with no mipmaps
+        TextureManager::getSingleton().loadImage( texName , img, TEX_TYPE_2D, 0  );
+        TextureUnitState* t = mpMaterial->getTechnique(0)->getPass(0)->createTextureUnitState( texName );
+		// Allow min/mag filter, but no mip
+		t->setTextureFiltering(FO_LINEAR, FO_LINEAR, FO_NONE);
+        // SDDatachunk will delete imageData
+
 		FT_Done_FreeType(ftLibrary);
     }
-	//-----------------------------------------------------------------------
-	//-----------------------------------------------------------------------
-	String Font::CmdType::doGet(const void* target) const
-	{
-		const Font* f = static_cast<const Font*>(target);
-		if (f->getType() == FT_TRUETYPE)
-		{
-			return "truetype";
-		}
-		else
-		{
-			return "image";
-		}
-	}
-	void Font::CmdType::doSet(void* target, const String& val)
-	{
-		Font* f = static_cast<Font*>(target);
-		if (val == "truetype")
-		{
-			f->setType(FT_TRUETYPE);
-		}
-		else
-		{
-			f->setType(FT_IMAGE);
-		}
-	}
-	//-----------------------------------------------------------------------
-	String Font::CmdSource::doGet(const void* target) const
-	{
-		const Font* f = static_cast<const Font*>(target);
-		return f->getSource();
-	}
-	void Font::CmdSource::doSet(void* target, const String& val)
-	{
-		Font* f = static_cast<Font*>(target);
-		f->setSource(val);
-	}
-	//-----------------------------------------------------------------------
-	String Font::CmdSize::doGet(const void* target) const
-	{
-		const Font* f = static_cast<const Font*>(target);
-		return StringConverter::toString(f->getTrueTypeSize());
-	}
-	void Font::CmdSize::doSet(void* target, const String& val)
-	{
-		Font* f = static_cast<Font*>(target);
-		f->setTrueTypeSize(StringConverter::parseReal(val));
-	}
-	//-----------------------------------------------------------------------
-	String Font::CmdResolution::doGet(const void* target) const
-	{
-		const Font* f = static_cast<const Font*>(target);
-		return StringConverter::toString(f->getTrueTypeResolution());
-	}
-	void Font::CmdResolution::doSet(void* target, const String& val)
-	{
-		Font* f = static_cast<Font*>(target);
-		f->setTrueTypeResolution(StringConverter::parseUnsignedInt(val));
-	}
 
 
 }

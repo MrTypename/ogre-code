@@ -25,8 +25,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 /***************************************************************************
 OgreMouseMotionTarget.h  -  
 	Handles the adding and removing of MouseMotionListeners.
+	This is implemented through the use of a binary multicaster.
+	See EventMulticaster.
 
-	Components that process the Mouse Motion Event should subclass this class 
+	GuiElements (or other components) that process the Mouse Motion Event should subclass this class 
 	and call processMouseMotionEvent when that event is identified.
 
 -------------------
@@ -46,22 +48,26 @@ namespace Ogre {
 
     /** Handles the adding and removing of MouseMotionListeners.
 	@remarks
-	Components that process the Mouse Motion Event should subclass this class 
+	This is implemented through the use of a binary multicaster.
+	See EventMulticaster.
+	GuiElements (or other components) that process the Mouse Motion Event should subclass this class 
 	and call processMouseMotionEvent when that event is identified.
 	*/
-	class _OgreExport MouseMotionTarget : public PositionTarget
+	class _OgreExport MouseMotionTarget : PositionTarget
     {
     protected:
-        std::set<MouseMotionListener*> mMouseMotionListeners;
+		MouseMotionListener* mMouseMotionListener;
 
     public:
-		MouseMotionTarget() { }
-        virtual ~MouseMotionTarget() {}
+		MouseMotionTarget();
 
-	    void processMouseMotionEvent(MouseEvent* e);
-	    void addMouseMotionListener(MouseMotionListener* l);
-	    void removeMouseMotionListener(MouseMotionListener* l);
+	void processMouseMotionEvent(MouseEvent* e) ;
+	void addMouseMotionListener(MouseMotionListener* l) ;
+	void removeMouseMotionListener(MouseMotionListener* l) ;
     };
+
+
+
 }
 
 

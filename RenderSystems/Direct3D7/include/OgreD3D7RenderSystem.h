@@ -197,17 +197,16 @@ namespace Ogre {
           RenderSystem
          */
         void setLightingEnabled(bool enabled);
-        
-		/// @copydoc RenderSystem::createRenderWindow
-		RenderWindow* createRenderWindow(const String &name, unsigned int width, unsigned int height, 
-			bool fullScreen, const NameValuePairList *miscParams = 0);
+        /** See
+          RenderSystem
+         */
+        RenderWindow* createRenderWindow(const String &name, unsigned int width, unsigned int height, unsigned int colourDepth,
+            bool fullScreen, int left = 0, int top = 0, bool depthBuffer = true,
+            RenderWindow* parentWindowHandle = 0);
 
-		/// @copydoc RenderSystem::createRenderTexture
-		RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height,
-		 	TextureType texType = TEX_TYPE_2D, PixelFormat internalFormat = PF_X8R8G8B8, 
-			const NameValuePairList *miscParams = 0 ); 
+        RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height );
 
-		/** See
+        /** See
           RenderSystem
          */
         void destroyRenderWindow(RenderWindow* pWin);
@@ -220,7 +219,7 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void convertColourValue(const ColourValue& colour, uint32* pDest);
+        void convertColourValue(const ColourValue& colour, unsigned long* pDest);
 
         // -----------------------------
         // Low-level overridden members
@@ -246,7 +245,7 @@ namespace Ogre {
          */
         void _setSurfaceParams(const ColourValue &ambient,
             const ColourValue &diffuse, const ColourValue &specular,
-            const ColourValue &emissive, Real shininess, TrackVertexColourType tracking);
+            const ColourValue &emissive, Real shininess);
         /** See
           RenderSystem
          */

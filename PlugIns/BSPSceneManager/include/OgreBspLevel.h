@@ -55,9 +55,13 @@ namespace Ogre {
         friend class BspSceneManager;
     public:
         /** Default constructor - used by BspResourceManager (do not call directly) */
-        BspLevel(ResourceManager* creator, const String& name, ResourceHandle handle,
-            const String& group, bool isManual = false, ManualResourceLoader* loader = 0);
+        BspLevel(const String& name);
         ~BspLevel();
+
+        /** Generic load - called by BspResourceManager. */
+        virtual void load(void);
+        /** Generic unload - called by BspResourceManager. */
+        virtual void unload(void);
 
         /** Determines if one leaf node is visible from another. */
         bool isLeafVisible(const BspNode* from, const BspNode* to) const;
@@ -82,17 +86,8 @@ namespace Ogre {
         /** Gets the number of leaf nodes */
         int getNumLeaves(void) const { return mNumLeaves; }
 
-        /** Calculate the number of loading stages required for a given level */
-        static size_t calculateLoadingStages(const String& levelName);
-
         /** Utility class just to enable queueing of patches */
     protected:
-        /** @copydoc Resource::loadImpl. */
-        void loadImpl(void);
-        /** @copydoc Resource::unloadImpl. */
-        void unloadImpl(void);
-        /** @copydoc Resource::calculateSize. */
-        size_t calculateSize(void) const;
         /** Pointer to the root node of the BSP tree;
             This pointer actually has a dual purpose; to avoid allocating lots of small chunks of
             memory, the BspLevel actually allocates all nodes required through this pointer. So this
@@ -147,7 +142,7 @@ namespace Ogre {
         /// indexes for the whole level, will be copied to the real indexdata per frame
         size_t mNumIndexes;
         // system-memory buffer
-        HardwareIndexBufferSharedPtr mIndexes;
+        DefaultHardwareIndexBuffer* mIndexes;
 
         /// Brushes as used for collision, main memory is here
         BspNode::Brush *mBrushes;
@@ -205,49 +200,9 @@ namespace Ogre {
         void quakeVertexToBspVertex(const bsp_vertex_t* src, BspVertex* dest);
 
 
-    };
-    /** Specialisation of SharedPtr to allow SharedPtr to be assigned to BspLevelPtr 
-    @note Has to be a subclass since we need operator=.
-    We could templatise this instead of repeating per Resource subclass, 
-    except to do so requires a form VC6 does not support i.e.
-    ResourceSubclassPtr<T> : public SharedPtr<T>
-    */
-    class BspLevelPtr : public SharedPtr<BspLevel> 
-    {
-    public:
-        BspLevelPtr() : SharedPtr<BspLevel>() {}
-        explicit BspLevelPtr(BspLevel* rep) : SharedPtr<BspLevel>(rep) {}
-        BspLevelPtr(const BspLevelPtr& r) : SharedPtr<BspLevel>(r) {} 
-        BspLevelPtr(const ResourcePtr& r) : SharedPtr<BspLevel>()
-        {
-			// lock & copy other mutex pointer
-			OGRE_LOCK_MUTEX(*r.OGRE_AUTO_MUTEX_NAME)
-			OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
-            pRep = static_cast<BspLevel*>(r.getPointer());
-            pUseCount = r.useCountPointer();
-            if (pUseCount)
-            {
-                ++(*pUseCount);
-            }
-        }
 
-        /// Operator used to convert a ResourcePtr to a BspLevelPtr
-        BspLevelPtr& operator=(const ResourcePtr& r)
-        {
-            if (pRep == static_cast<BspLevel*>(r.getPointer()))
-                return *this;
-            release();
-			// lock & copy other mutex pointer
-			OGRE_LOCK_MUTEX(*r.OGRE_AUTO_MUTEX_NAME)
-			OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
-            pRep = static_cast<BspLevel*>(r.getPointer());
-            pUseCount = r.useCountPointer();
-            if (pUseCount)
-            {
-                ++(*pUseCount);
-            }
-            return *this;
-        }
+
+
     };
 
 }

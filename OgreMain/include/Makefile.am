@@ -1,21 +1,19 @@
 pkginclude_HEADERS = Ogre.h \
-OgreArchive.h \
 OgreActionEvent.h \
 OgreActionTarget.h \
 OgreAnimation.h \
 OgreAnimationState.h \
 OgreAnimationTrack.h \
+OgreArchiveEx.h \
 OgreArchiveFactory.h \
 OgreArchiveManager.h \
 OgreAutoParamDataSource.h \
 OgreAxisAlignedBox.h \
 OgreBillboard.h \
-OgreBillboardParticleRenderer.h \
 OgreBillboardSet.h \
 OgreBitwise.h \
 OgreBlendMode.h \
 OgreBone.h \
-OgreBorderPanelOverlayElement.h \
 OgreCamera.h \
 OgreCodec.h \
 OgreColourValue.h \
@@ -27,7 +25,7 @@ OgreConfigOptionMap.h \
 OgreController.h \
 OgreControllerManager.h \
 OgreCursor.h \
-OgreDataStream.h \
+OgreDataChunk.h \
 OgreDefaultHardwareBufferManager.h \
 OgreDynLib.h \
 OgreDynLibManager.h \
@@ -36,6 +34,7 @@ OgreEntity.h \
 OgreErrorDialog.h \
 OgreEventDispatcher.h \
 OgreEventListeners.h \
+OgreEventMulticaster.h \
 OgreEventProcessor.h \
 OgreEventQueue.h \
 OgreEventTarget.h \
@@ -43,11 +42,17 @@ OgreException.h \
 OgreExternalTextureSource.h \
 OgreExternalTextureSourceManager.h \
 OgreFactoryObj.h \
-OgreFileSystem.h \
 OgreFont.h \
 OgreFontManager.h \
 OgreFrameListener.h \
 OgreFrustum.h \
+OgreGuiContainer.h \
+OgreGuiControl.h \
+OgreGuiElement.h \
+OgreGuiElementCommands.h \
+OgreGuiElementFactory.h \
+OgreGuiManager.h \
+OgreGuiPressable.h \
 OgreGpuProgram.h \
 OgreGpuProgramManager.h \
 OgreGpuProgramUsage.h \
@@ -55,7 +60,6 @@ OgreHardwareBuffer.h \
 OgreHardwareBufferManager.h \
 OgreHardwareIndexBuffer.h \
 OgreHardwareOcclusionQuery.h \
-OgreHardwarePixelBuffer.h \
 OgreHardwareVertexBuffer.h \
 OgreHighLevelGpuProgram.h \
 OgreHighLevelGpuProgramManager.h \
@@ -70,6 +74,9 @@ OgreKeyEvent.h \
 OgreKeyFrame.h \
 OgreKeyTarget.h \
 OgreLight.h \
+OgreListChanger.h \
+OgreListSelectionEvent.h \
+OgreListSelectionTarget.h \
 OgreLog.h \
 OgreLogManager.h \
 OgreMaterial.h \
@@ -93,12 +100,7 @@ OgreMovablePlane.h \
 OgreNoMemoryMacros.h \
 OgreNode.h \
 OgreOverlay.h \
-OgreOverlayContainer.h \
-OgreOverlayElement.h \
-OgreOverlayElementCommands.h \
-OgreOverlayElementFactory.h \
 OgreOverlayManager.h \
-OgrePanelOverlayElement.h \
 OgreParticle.h \
 OgreParticleAffector.h \
 OgreParticleAffectorFactory.h \
@@ -111,7 +113,6 @@ OgreParticleSystemManager.h \
 OgrePass.h \
 OgrePatchMesh.h \
 OgrePatchSurface.h \
-OgrePixelFormat.h \
 OgrePlane.h \
 OgrePlaneBoundedVolume.h \
 OgrePlatform.h \
@@ -138,19 +139,16 @@ OgreRenderTexture.h \
 OgreRenderWindow.h \
 OgreRenderable.h \
 OgreResource.h \
-OgreResourceBackgroundQueue.h \
-OgreResourceGroupManager.h \
 OgreResourceManager.h \
 OgreRoot.h \
 OgreRotationalSpline.h \
+OgreSDDataChunk.h \
 OgreSceneManager.h \
 OgreSceneManagerEnumerator.h \
 OgreSceneNode.h \
 OgreSceneQuery.h \
-OgreScriptLoader.h \
 OgreScrollEvent.h \
 OgreScrollTarget.h \
-OgreSearchOps.h \
 OgreSerializer.h \
 OgreShadowCaster.h \
 OgreShadowVolumeExtrudeProgram.h \
@@ -171,19 +169,18 @@ OgreStdHeaders.h \
 OgreString.h \
 OgreStringConverter.h \
 OgreStringInterface.h \
+OgreStringResource.h \
 OgreStringVector.h \
 OgreSubEntity.h \
 OgreSubMesh.h \
 OgreTagPoint.h \
 OgreTargetManager.h \
 OgreTechnique.h \
-OgreTextAreaOverlayElement.h \
 OgreTextureUnitState.h \
 OgreTexture.h \
 OgreTextureManager.h \
 OgreTimer.h \
 OgreUserDefinedObject.h \
-OgreVector2.h \
 OgreVector3.h \
 OgreVector4.h \
 OgreVertexBoneAssignment.h \
@@ -191,4 +188,6 @@ OgreVertexIndexData.h \
 OgreViewport.h \
 OgreWireBoundingBox.h \
 OgreZip.h \
-asm_math.h
+OgreZipArchiveFactory.h \
+asm_math.h \
+unzip.h

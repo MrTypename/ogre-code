@@ -25,7 +25,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreStableHeaders.h"
 
 #include "OgreEventProcessor.h"
-#include "OgreEventDispatcher.h"
+#include "OgreOverlayManager.h"
 #include "OgreEventQueue.h"
 #include "OgreRoot.h"
 #include "OgreMouseEvent.h"
@@ -33,7 +33,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreActionEvent.h"
 #include "OgreInput.h"
 #include "OgreCursor.h"
-#include "OgrePlatformManager.h"
 
 
 namespace Ogre {

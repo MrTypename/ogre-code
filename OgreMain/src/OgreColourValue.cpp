@@ -34,83 +34,83 @@ namespace Ogre {
     ColourValue ColourValue::Blue = ColourValue(0.0,0.0,1.0);
 
     //---------------------------------------------------------------------
-    RGBA ColourValue::getAsRGBA(void) const
+    unsigned long ColourValue::getAsLongRGBA(void) const
     {
-        uint8 val8;
-        uint32 val32 = 0;
+        unsigned char val8;
+        unsigned long val32 = 0;
 
         // Convert to 32bit pattern
         // (RGBA = 8888)
 
         // Red
-        val8 = static_cast<uint8>(r * 255);
+        val8 = (unsigned char)(r * 255);
         val32 = val8 << 24;
 
         // Green
-        val8 = static_cast<uint8>(g * 255);
+        val8 = (unsigned char)(g * 255);
         val32 += val8 << 16;
 
         // Blue
-        val8 = static_cast<uint8>(b * 255);
+        val8 = (unsigned char)(b * 255);
         val32 += val8 << 8;
 
         // Alpha
-        val8 = static_cast<uint8>(a * 255);
+        val8 = (unsigned char)(a * 255);
         val32 += val8;
 
         return val32;
     }
     //---------------------------------------------------------------------
-    ARGB ColourValue::getAsARGB(void) const
+    unsigned long ColourValue::getAsLongARGB(void) const
     {
-        uint8 val8;
-        uint32 val32 = 0;
+        unsigned char val8;
+        unsigned long val32 = 0;
 
         // Convert to 32bit pattern
         // (ARGB = 8888)
 
         // Alpha
-        val8 = static_cast<uint8>(a * 255);
+        val8 = (unsigned char)(a * 255);
         val32 = val8 << 24;
 
         // Red
-        val8 = static_cast<uint8>(r * 255);
+        val8 = (unsigned char)(r * 255);
         val32 += val8 << 16;
 
         // Green
-        val8 = static_cast<uint8>(g * 255);
+        val8 = (unsigned char)(g * 255);
         val32 += val8 << 8;
 
         // Blue
-        val8 = static_cast<uint8>(b * 255);
+        val8 = (unsigned char)(b * 255);
         val32 += val8;
 
 
         return val32;
     }
     //---------------------------------------------------------------------
-    ABGR ColourValue::getAsABGR(void) const
+    ABGR ColourValue::getAsLongABGR(void) const
     {
-        uint8 val8;
-        uint32 val32 = 0;
+        unsigned char val8;
+        unsigned long val32 = 0;
 
         // Convert to 32bit pattern
         // (ABRG = 8888)
 
         // Alpha
-        val8 = static_cast<uint8>(a * 255);
+        val8 = (unsigned char)(a * 255);
         val32 = val8 << 24;
 
         // Blue
-        val8 = static_cast<uint8>(b * 255);
+        val8 = (unsigned char)(b * 255);
         val32 += val8 << 16;
 
         // Green
-        val8 = static_cast<uint8>(g * 255);
+        val8 = (unsigned char)(g * 255);
         val32 += val8 << 8;
 
         // Red
-        val8 = static_cast<uint8>(r * 255);
+        val8 = (unsigned char)(r * 255);
         val32 += val8;
 
 

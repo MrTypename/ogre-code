@@ -350,11 +350,6 @@ namespace Ogre {
     {
         return ObjectIterator(mObjectsByName.begin(), mObjectsByName.end());
     }
-	//-----------------------------------------------------------------------
-	SceneNode::ConstObjectIterator SceneNode::getAttachedObjectIterator(void) const
-	{
-		return ConstObjectIterator(mObjectsByName.begin(), mObjectsByName.end());
-	}
     //-----------------------------------------------------------------------
     SceneManager* SceneNode::getCreator(void) const
     {
@@ -523,17 +518,17 @@ namespace Ogre {
 
         if (relativeTo == TS_LOCAL || !mParent)
         {
-            setOrientation(targetOrientation);
+            mOrientation = targetOrientation;
         }
         else
         {
             if (relativeTo == TS_PARENT)
             {
-                setOrientation(targetOrientation * mParent->getOrientation().Inverse());
+                mOrientation = targetOrientation * mParent->getOrientation().Inverse();
             }
             else if (relativeTo == TS_WORLD)
             {
-                setOrientation(targetOrientation * mParent->_getDerivedOrientation().Inverse());
+                mOrientation = targetOrientation * mParent->_getDerivedOrientation().Inverse();
             }
         }
 

@@ -1,5 +1,4 @@
 %start WholeEnchilada
-%name-prefix="ps10_"
 %{
 
 /*

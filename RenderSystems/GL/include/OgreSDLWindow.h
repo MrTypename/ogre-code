@@ -43,8 +43,8 @@ namespace Ogre {
         SDLWindow();
         ~SDLWindow();
 
-		void create(const String& name, unsigned int width, unsigned int height,
-	            bool fullScreen, const NameValuePairList *miscParams);
+        void create(const String& name, unsigned int width, unsigned int height, unsigned int colourDepth,
+            bool fullScreen, int left, int top, bool depthBuffer, void* miscParam, ...);
         /** Overridden - see RenderWindow */
         void destroy(void);
         /** Overridden - see RenderWindow */

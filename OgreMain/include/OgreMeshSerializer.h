@@ -71,14 +71,14 @@ namespace Ogre {
         */
         void exportMesh(const Mesh* pMesh, const String& filename);
 
-        /** Imports Mesh and (optionally) Material data from a .mesh file DataStream.
+        /** Imports Mesh and (optionally) Material data from a .mesh file DataChunk.
         @remarks
-            This method imports data from a DataStream opened from a .mesh file and places it's
+            This method imports data from a DataChunk opened from a .mesh file and places it's
             contents into the Mesh object which is passed in. 
-        @param stream The DataStream holding the .mesh data. Must be initialised (pos at the start of the buffer).
+        @param chunk The DataChunk holding the .mesh data. Must be initialised (pos at the start of the buffer).
         @param pDest Pointer to the Mesh object which will receive the data. Should be blank already.
         */
-        void importMesh(DataStreamPtr& stream, Mesh* pDest);
+        void importMesh(DataChunk& chunk, Mesh* pDest);
     protected:
         static String msCurrentVersion;
 

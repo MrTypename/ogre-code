@@ -31,133 +31,62 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreRenderTexture.h"
 #include "OgreTexture.h"
 #include "OgreGLSupport.h"
-#include "OgreHardwarePixelBuffer.h"
 
 namespace Ogre {
 
     class GLTexture : public Texture
     {
     public:
-        // Constructor
-        GLTexture(ResourceManager* creator, const String& name, ResourceHandle handle,
-            const String& group, bool isManual, ManualResourceLoader* loader, 
-            GLSupport& support);
+        // Constructor, called from SDLTextureManager
+        GLTexture( const String& name, GLSupport& support, 
+                   TextureType texType = TEX_TYPE_2D );
+        GLTexture( const String& name, GLSupport& support, TextureType texType, 
+                   uint width, uint height, uint num_mips, PixelFormat format,
+                   TextureUsage usage );
 
-        virtual ~GLTexture();      
+        virtual ~GLTexture();        
+        
+        void load();
+        void loadImage( const Image &img );
+        void loadImages( const std::vector<Image>& images );
 
-        /// @copydoc Texture::createInternalResources
-        void createInternalResources(void);
-		void loadImage( const Image& img );
+        void unload();
+
         void createRenderTexture();
-			
-		/// @copydoc Texture::getBuffer
-		HardwarePixelBufferSharedPtr getBuffer(size_t face, size_t mipmap);
 
-        // Takes the OGRE texture type (1d/2d/3d/cube) and returns the appropriate GL one
-        GLenum getGLTextureTarget(void) const;
+        void blitToTexture( const Image& src, 
+            unsigned uStartX, unsigned uStartY );
+
+        // Takes the ogre texture type and returns the appropriate GL one
+        GLenum getGLTextureType(void) const;
+
+        // Takes the ogre texture format and returns the appropriate GL one
+        GLenum getGLTextureFormat(void) const;
 
         GLuint getGLID() const
         { return mTextureID; }
 
     protected:
-        /// @copydoc Resource::loadImpl
-        void loadImpl(void);
-        /// @copydoc Resource::unloadImpl
-        void unloadImpl(void);
-
-		/** internal method, create GLHardwarePixelBuffers for every face and
-			 mipmap level. This method must be called after the GL texture object was created,
-			the number of mipmaps was set (GL_TEXTURE_MAX_LEVEL) and glTexImageXD was called to
-			actually allocate the buffer
-		*/
-		void _createSurfaceList();
+        void generateMipMaps( const uchar *data, bool useSoftware, bool isCompressed,
+            size_t faceNumber );
+        uchar* rescaleNPower2( const Image& src );
     private:
         GLuint mTextureID;
         GLSupport& mGLSupport;
-		
-		/// Vector of pointers to subsurfaces
-		typedef std::vector<HardwarePixelBufferSharedPtr> SurfaceList;
-		SurfaceList	mSurfaceList;
     };
 
-    /** Specialisation of SharedPtr to allow SharedPtr to be assigned to GLTexturePtr 
-    @note Has to be a subclass since we need operator=.
-    We could templatise this instead of repeating per Resource subclass, 
-    except to do so requires a form VC6 does not support i.e.
-    ResourceSubclassPtr<T> : public SharedPtr<T>
-    */
-    class GLTexturePtr : public SharedPtr<GLTexture> 
-    {
-    public:
-        GLTexturePtr() : SharedPtr<GLTexture>() {}
-        explicit GLTexturePtr(GLTexture* rep) : SharedPtr<GLTexture>(rep) {}
-        GLTexturePtr(const GLTexturePtr& r) : SharedPtr<GLTexture>(r) {} 
-        GLTexturePtr(const ResourcePtr& r) : SharedPtr<GLTexture>()
-        {
-			// lock & copy other mutex pointer
-			OGRE_LOCK_MUTEX(*r.OGRE_AUTO_MUTEX_NAME)
-			OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
-            pRep = static_cast<GLTexture*>(r.getPointer());
-            pUseCount = r.useCountPointer();
-            if (pUseCount)
-            {
-                ++(*pUseCount);
-            }
-        }
-
-        /// Operator used to convert a ResourcePtr to a GLTexturePtr
-        GLTexturePtr& operator=(const ResourcePtr& r)
-        {
-            if (pRep == static_cast<GLTexture*>(r.getPointer()))
-                return *this;
-            release();
-			// lock & copy other mutex pointer
-			OGRE_LOCK_MUTEX(*r.OGRE_AUTO_MUTEX_NAME)
-			OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
-            pRep = static_cast<GLTexture*>(r.getPointer());
-            pUseCount = r.useCountPointer();
-            if (pUseCount)
-            {
-                ++(*pUseCount);
-            }
-            return *this;
-        }
-        /// Operator used to convert a TexturePtr to a GLTexturePtr
-        GLTexturePtr& operator=(const TexturePtr& r)
-        {
-            if (pRep == static_cast<GLTexture*>(r.getPointer()))
-                return *this;
-            release();
-			// lock & copy other mutex pointer
-			OGRE_LOCK_MUTEX(*r.OGRE_AUTO_MUTEX_NAME)
-			OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
-            pRep = static_cast<GLTexture*>(r.getPointer());
-            pUseCount = r.useCountPointer();
-            if (pUseCount)
-            {
-                ++(*pUseCount);
-            }
-            return *this;
-        }
-    };
-
-    /// GL implementation of RenderTexture
     class GLRenderTexture : public RenderTexture
     {
     public:
-        GLRenderTexture(const String& name, uint width, uint height, TextureType texType, PixelFormat format,
-			const NameValuePairList *miscParams) 
-            : RenderTexture(name, width, height, texType, format) 
+        GLRenderTexture(const String& name, uint width, uint height) 
+            : RenderTexture(name, width, height) 
         {
-            mGLTexture = mTexture;
         }
 
         void _copyToTexture(void);
 
         bool requiresTextureFlipping() const { return true; }
-        virtual void writeContentsToFile( const String & filename );
-    protected:
-        GLTexturePtr mGLTexture;
+        virtual void writeContentsToFile( const String & filename ) {}
     };
 }
 

@@ -26,11 +26,9 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreLogManager.h"
 #include "OgreViewport.h"
 #include "OgreException.h"
-#include "OgreD3D9RenderSystem.h"
 #include "OgreRenderSystem.h"
 #include "OgreBitwise.h"
 #include "OgreImageCodec.h"
-#include "OgreStringConverter.h"
 
 #include "OgreNoMemoryMacros.h"
 #include <d3d9.h>
@@ -141,27 +139,28 @@ namespace Ogre
 		return DefWindowProc( hWnd, uMsg, wParam, lParam );
 	}
 
-	D3D9RenderWindow::D3D9RenderWindow(HINSTANCE instance, D3D9Driver *driver, LPDIRECT3DDEVICE9 deviceIfSwapChain):
-		mInstance(instance),
-		mDriver(driver)
+	D3D9RenderWindow::D3D9RenderWindow()
 	{
 		mIsFullScreen = false;
-		mpD3DDevice = deviceIfSwapChain;
-		mIsSwapChain = deviceIfSwapChain != NULL;
+		mpD3DDriver= NULL;
+		mpD3DDevice = NULL;
 		mHWnd = 0;
 		mActive = false;
 		mReady = false;
 		mClosed = false;
+		mExternalHandle = NULL;
 	}
 
 	D3D9RenderWindow::~D3D9RenderWindow()
 	{
+		SAFE_RELEASE( mpRenderSurface );
+		SAFE_RELEASE( mpRenderZBuffer );
 		SAFE_RELEASE( mpD3DDevice );
 	}
 
 	bool D3D9RenderWindow::_checkMultiSampleQuality(D3DMULTISAMPLE_TYPE type, DWORD *outQuality, D3DFORMAT format, UINT adapterNum, D3DDEVTYPE deviceType, BOOL fullScreen)
 	{
-		LPDIRECT3D9 pD3D = mDriver->getD3D();
+		LPDIRECT3D9 pD3D = mpD3DDriver->getD3D();
 
 		if (SUCCEEDED(pD3D->CheckDeviceMultiSampleType(
 				adapterNum, 
@@ -172,76 +171,59 @@ namespace Ogre
 			return false;
 	}
 
-	void D3D9RenderWindow::create(const String& name, unsigned int width, unsigned int height,
-	            bool fullScreen, const NameValuePairList *miscParams)
+	void D3D9RenderWindow::create( const String& name, unsigned int width, unsigned int height, unsigned int colourDepth, 
+		bool fullScreen, int left, int top, bool depthBuffer, void* miscParam, ... )
 	{
-		HINSTANCE hInst = mInstance;
-		D3D9Driver* driver = mDriver;
+		HWND parentHWnd;
+		HINSTANCE hInst;
+		D3D9Driver* driver;
+		long tempPtr;
 		
-		HWND parentHWnd = 0;
-		HWND externalHandle = 0;
-		mFSAAType = D3DMULTISAMPLE_NONE;
-		mFSAAQuality = 0;
-		mVSync = false;
-		unsigned int displayFrequency = 0;
-		String title = name;
-		unsigned int colourDepth = 32;
-		unsigned int left = 0; // Defaults to screen center
-		unsigned int top = 0; // Defaults to screen center
-		bool depthBuffer = true;
-		
-		if(miscParams)
-		{
-			// Get variable-length params
-			NameValuePairList::const_iterator opt;
-			// left (x)
-			opt = miscParams->find("left");
-			if(opt != miscParams->end())
-				left = StringConverter::parseUnsignedInt(opt->second);
-			// top (y)
-			opt = miscParams->find("top");
-			if(opt != miscParams->end())
-				top = StringConverter::parseUnsignedInt(opt->second);
-			// Window title
-			opt = miscParams->find("title");
-			if(opt != miscParams->end())
-				title = opt->second;
-			// externalWindowHandle		-> externalHandle
-			opt = miscParams->find("externalWindowHandle");
-			if(opt != miscParams->end())
-				externalHandle = (HWND)StringConverter::parseUnsignedInt(opt->second);
-			// vsync	[parseBool]
-			opt = miscParams->find("vsync");
-			if(opt != miscParams->end())
-				mVSync = StringConverter::parseBool(opt->second);
-			// displayFrequency
-			opt = miscParams->find("displayFrequency");
-			if(opt != miscParams->end())
-				displayFrequency = StringConverter::parseUnsignedInt(opt->second);
-			// colourDepth
-			opt = miscParams->find("colourDepth");
-			if(opt != miscParams->end())
-				colourDepth = StringConverter::parseUnsignedInt(opt->second);
-			// depthBuffer [parseBool]
-			opt = miscParams->find("depthBuffer");
-			if(opt != miscParams->end())
-				depthBuffer = StringConverter::parseBool(opt->second);
-			// FSAA type
-			opt = miscParams->find("FSAA");
-			if(opt != miscParams->end())
-				mFSAAType = (D3DMULTISAMPLE_TYPE)StringConverter::parseUnsignedInt(opt->second);
-			// FSAA quality
-			opt = miscParams->find("FSAAQuality");
-			if(opt != miscParams->end())
-				mFSAAQuality = StringConverter::parseUnsignedInt(opt->second);
-		}
-		
+		D3DMULTISAMPLE_TYPE mFSAAType = D3DMULTISAMPLE_NONE;
+		DWORD mFSAAQuality = 0;
+		// Get variable-length params
+		// miscParam[0] = HINSTANCE
+		// miscParam[1] = D3D9Driver
+		// miscParam[2] = parent HWND
+		// miscParam[3] = multisample type
+		// miscParam[4] = multisample quality
+		// miscParam[5] = vsync
+
+		va_list marker;
+		va_start( marker, depthBuffer );
+
+		tempPtr = va_arg( marker, long );
+		hInst = *(HINSTANCE*)tempPtr;
+
+		tempPtr = va_arg( marker, long );
+		driver = (D3D9Driver*)tempPtr;
+
+		tempPtr = va_arg( marker, long );
+		D3D9RenderWindow* parentRW = (D3D9RenderWindow*)tempPtr;
+		if( parentRW == NULL )
+			parentHWnd = 0;
+		else
+			parentHWnd = parentRW->getWindowHandle();
+
+		tempPtr = va_arg( marker, long );
+		mFSAAType = (D3DMULTISAMPLE_TYPE)tempPtr;
+
+		tempPtr = va_arg( marker, long );
+		mFSAAQuality = (DWORD)tempPtr;
+
+		tempPtr = va_arg( marker, long );
+		bool vsync = tempPtr ? true : false;
+
+		va_end( marker );
+
 		// Destroy current window if any
 		if( mHWnd )
 			destroy();
 
+		// track the parent window handle
+		mParentHWnd = parentHWnd;
 
-		if (!externalHandle)
+		if (!mExternalHandle)
 		{
 			DWORD dwStyle = (fullScreen ? WS_POPUP : WS_OVERLAPPEDWINDOW) | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
 			RECT rc;
@@ -281,13 +263,13 @@ namespace Ogre
 				LoadIcon( NULL, IDI_APPLICATION ),
 				LoadCursor( NULL, IDC_ARROW ),
 				(HBRUSH)GetStockObject( BLACK_BRUSH ), NULL,
-				TEXT(title.c_str()) };
+				TEXT(name.c_str()) };
 			RegisterClass( &wndClass );
 
 			// Create our main window
 			// Pass pointer to self
-			HWND hWnd = CreateWindow(TEXT(title.c_str()),
-									 TEXT(title.c_str()),
+			HWND hWnd = CreateWindow(TEXT(name.c_str()),
+									 TEXT(name.c_str()),
 									 dwStyle, mLeft, mTop,
 									 mWidth, mHeight, 0L, 0L, hInst, this);
 			GetClientRect(hWnd,&rc);
@@ -305,7 +287,7 @@ namespace Ogre
 		}
 		else
 		{
-			mHWnd = externalHandle;
+			mHWnd = mExternalHandle;
 			ShowWindow(mHWnd, SW_SHOWNORMAL);
 			UpdateWindow(mHWnd);
 			RECT rc;
@@ -322,166 +304,123 @@ namespace Ogre
 		// track colour depth
 		mColourDepth = colourDepth;
 
-        StringUtil::StrStreamType str;
-        str << "D3D9 : Created D3D9 Rendering Window '"
-            << mName << "' : " << mWidth << "x" << mHeight 
-       		<< ", " << mColourDepth << "bpp";
 		LogManager::getSingleton().logMessage(
-			LML_NORMAL, str.str());
+			LML_NORMAL, "D3D9 : Created D3D9 Rendering Window '%s' : %ix%i, %ibpp",
+			mName.c_str(), mWidth, mHeight, mColourDepth );
 
-		createD3DResources();
+		if( driver && mParentHWnd == NULL )
+		{
+			mpD3DDriver = driver;
+			HRESULT hr;
+			LPDIRECT3D9 pD3D = mpD3DDriver->getD3D();
+			D3DDEVTYPE devType = D3DDEVTYPE_HAL;
+
+			ZeroMemory( &md3dpp, sizeof(D3DPRESENT_PARAMETERS) );
+			md3dpp.Windowed					= !fullScreen;
+			md3dpp.SwapEffect				= D3DSWAPEFFECT_DISCARD;
+			md3dpp.BackBufferCount			= 1;
+			md3dpp.EnableAutoDepthStencil	= depthBuffer;
+			md3dpp.hDeviceWindow			= mHWnd;
+			md3dpp.BackBufferWidth			= mWidth;
+			md3dpp.BackBufferHeight			= mHeight;
+
+			if (vsync)
+				md3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
+			else
+				md3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
+
+			md3dpp.BackBufferFormat		= D3DFMT_R5G6B5;
+			if( mColourDepth > 16 )
+				md3dpp.BackBufferFormat = D3DFMT_X8R8G8B8;
+
+			if (mColourDepth > 16 )
+			{
+				// Try to create a 32-bit depth, 8-bit stencil
+				if( FAILED( pD3D->CheckDeviceFormat(mpD3DDriver->getAdapterNumber(),
+					devType,  md3dpp.BackBufferFormat,  D3DUSAGE_DEPTHSTENCIL, 
+					D3DRTYPE_SURFACE, D3DFMT_D24S8 )))
+				{
+					// Bugger, no 8-bit hardware stencil, just try 32-bit zbuffer 
+					if( FAILED( pD3D->CheckDeviceFormat(mpD3DDriver->getAdapterNumber(),
+						devType,  md3dpp.BackBufferFormat,  D3DUSAGE_DEPTHSTENCIL, 
+						D3DRTYPE_SURFACE, D3DFMT_D32 )))
+					{
+						// Jeez, what a naff card. Fall back on 16-bit depth buffering
+						md3dpp.AutoDepthStencilFormat = D3DFMT_D16;
+					}
+					else
+						md3dpp.AutoDepthStencilFormat = D3DFMT_D32;
+				}
+				else
+				{
+					// Woohoo!
+					if( SUCCEEDED( pD3D->CheckDepthStencilMatch( mpD3DDriver->getAdapterNumber(), devType,
+						md3dpp.BackBufferFormat, md3dpp.BackBufferFormat, D3DFMT_D24S8 ) ) )
+					{
+						md3dpp.AutoDepthStencilFormat = D3DFMT_D24S8; 
+					} 
+					else 
+						md3dpp.AutoDepthStencilFormat = D3DFMT_D24X8; 
+				}
+			}
+			else
+				// 16-bit depth, software stencil
+				md3dpp.AutoDepthStencilFormat	= D3DFMT_D16;
+
+			md3dpp.MultiSampleType = mFSAAType;
+			md3dpp.MultiSampleQuality = (mFSAAQuality == 0) ? NULL : mFSAAQuality;
+
+			hr = pD3D->CreateDevice( mpD3DDriver->getAdapterNumber(), devType, mHWnd,
+				D3DCREATE_HARDWARE_VERTEXPROCESSING, &md3dpp, &mpD3DDevice );
+			if( SUCCEEDED( hr ) )
+			{
+				mpD3DDevice->GetRenderTarget( 0, &mpRenderSurface );
+				mpD3DDevice->GetDepthStencilSurface( &mpRenderZBuffer );
+			}
+			else
+			{
+				hr = pD3D->CreateDevice( mpD3DDriver->getAdapterNumber(), devType, mHWnd,
+					D3DCREATE_MIXED_VERTEXPROCESSING, &md3dpp, &mpD3DDevice );
+				if( SUCCEEDED( hr ) )
+				{
+					mpD3DDevice->GetRenderTarget( 0, &mpRenderSurface );
+					mpD3DDevice->GetDepthStencilSurface( &mpRenderZBuffer );
+				}
+				else
+				{
+					hr = pD3D->CreateDevice( mpD3DDriver->getAdapterNumber(), devType, mHWnd,
+						D3DCREATE_SOFTWARE_VERTEXPROCESSING, &md3dpp, &mpD3DDevice );
+					if( SUCCEEDED( hr ) )
+					{
+						mpD3DDevice->GetRenderTarget( 0, &mpRenderSurface );
+						mpD3DDevice->GetDepthStencilSurface( &mpRenderZBuffer );
+					}
+				}
+			}
+
+			// TODO: make this a bit better e.g. go from pure vertex processing to software
+			if( FAILED( hr ) )
+            {
+                destroy();
+                Except( hr, "Failed to create Direct3D9 Device: " + 
+                    Root::getSingleton().getErrorDescription(hr), 
+                    "D3D9RenderWindow::create" );
+            }
+		}
+		else
+			mpD3DDevice = NULL;
 
 		mReady = true;
 	}
 
-	void D3D9RenderWindow::createD3DResources(void)
-	{
-		if (mIsSwapChain && !mpD3DDevice)
-		{
-			Except(Exception::ERR_INTERNAL_ERROR, 
-				"Secondary window has not been given the device from the primary!",
-				"D3D9RenderWindow::createD3DResources");
-		}
-
-		// Set up the presentation parameters
-		HRESULT hr;
-		LPDIRECT3D9 pD3D = mDriver->getD3D();
-		D3DDEVTYPE devType = D3DDEVTYPE_HAL;
-
-		ZeroMemory( &md3dpp, sizeof(D3DPRESENT_PARAMETERS) );
-		md3dpp.Windowed					= !mIsFullScreen;
-		md3dpp.SwapEffect				= D3DSWAPEFFECT_DISCARD;
-		md3dpp.BackBufferCount			= 1;
-		md3dpp.EnableAutoDepthStencil	= mIsDepthBuffered;
-		md3dpp.hDeviceWindow			= mHWnd;
-		md3dpp.BackBufferWidth			= mWidth;
-		md3dpp.BackBufferHeight			= mHeight;
-
-		if (mVSync)
-			md3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
-		else
-			md3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
-
-		md3dpp.BackBufferFormat		= D3DFMT_R5G6B5;
-		if( mColourDepth > 16 )
-			md3dpp.BackBufferFormat = D3DFMT_X8R8G8B8;
-
-		if (mColourDepth > 16 )
-		{
-			// Try to create a 32-bit depth, 8-bit stencil
-			if( FAILED( pD3D->CheckDeviceFormat(mDriver->getAdapterNumber(),
-				devType,  md3dpp.BackBufferFormat,  D3DUSAGE_DEPTHSTENCIL, 
-				D3DRTYPE_SURFACE, D3DFMT_D24S8 )))
-			{
-				// Bugger, no 8-bit hardware stencil, just try 32-bit zbuffer 
-				if( FAILED( pD3D->CheckDeviceFormat(mDriver->getAdapterNumber(),
-					devType,  md3dpp.BackBufferFormat,  D3DUSAGE_DEPTHSTENCIL, 
-					D3DRTYPE_SURFACE, D3DFMT_D32 )))
-				{
-					// Jeez, what a naff card. Fall back on 16-bit depth buffering
-					md3dpp.AutoDepthStencilFormat = D3DFMT_D16;
-				}
-				else
-					md3dpp.AutoDepthStencilFormat = D3DFMT_D32;
-			}
-			else
-			{
-				// Woohoo!
-				if( SUCCEEDED( pD3D->CheckDepthStencilMatch( mDriver->getAdapterNumber(), devType,
-					md3dpp.BackBufferFormat, md3dpp.BackBufferFormat, D3DFMT_D24S8 ) ) )
-				{
-					md3dpp.AutoDepthStencilFormat = D3DFMT_D24S8; 
-				} 
-				else 
-					md3dpp.AutoDepthStencilFormat = D3DFMT_D24X8; 
-			}
-		}
-		else
-			// 16-bit depth, software stencil
-			md3dpp.AutoDepthStencilFormat	= D3DFMT_D16;
-
-		md3dpp.MultiSampleType = mFSAAType;
-		md3dpp.MultiSampleQuality = (mFSAAQuality == 0) ? 0 : mFSAAQuality;
-
-
-		if (mIsSwapChain)
-		{
-			// Create swap chain
-			hr = mpD3DDevice->CreateAdditionalSwapChain(
-				&md3dpp, &mpSwapChain);
-			if (FAILED(hr))
-			{
-				Except(Exception::ERR_RENDERINGAPI_ERROR, 
-					"Unable to create an additional swap chain",
-					"D3D9RenderWindow::createD3DResources");
-
-			}
-			// Store references to buffers for convenience
-			mpSwapChain->GetBackBuffer( 0, D3DBACKBUFFER_TYPE_MONO, &mpRenderSurface );
-			mpD3DDevice->GetDepthStencilSurface( &mpRenderZBuffer );
-			// release immediately so we don't hog them
-			mpRenderSurface->Release();
-			mpRenderZBuffer->Release();
-		}
-		else
-		{
-			if (!mpD3DDevice)
-			{
-				// We haven't created the device yet, this must be the first time
-
-				// Do we want to preserve the FPU mode? Might be useful for scientific apps
-				DWORD extraFlags = 0;
-				ConfigOptionMap& options = Root::getSingleton().getRenderSystem()->getConfigOptions();
-				ConfigOptionMap::iterator opti = options.find("Floating-point mode");
-				if (opti != options.end() && opti->second.currentValue == "Consistent")
-					extraFlags |= D3DCREATE_FPU_PRESERVE;
-
-				hr = pD3D->CreateDevice( mDriver->getAdapterNumber(), devType, mHWnd,
-					D3DCREATE_HARDWARE_VERTEXPROCESSING | extraFlags, &md3dpp, &mpD3DDevice );
-				if( FAILED( hr ) )
-				{
-					hr = pD3D->CreateDevice( mDriver->getAdapterNumber(), devType, mHWnd,
-						D3DCREATE_MIXED_VERTEXPROCESSING | extraFlags, &md3dpp, &mpD3DDevice );
-					if( FAILED( hr ) )
-					{
-						hr = pD3D->CreateDevice( mDriver->getAdapterNumber(), devType, mHWnd,
-							D3DCREATE_SOFTWARE_VERTEXPROCESSING | extraFlags, &md3dpp, &mpD3DDevice );
-					}
-				}
-				// TODO: make this a bit better e.g. go from pure vertex processing to software
-				if( FAILED( hr ) )
-				{
-					destroy();
-					Except( hr, "Failed to create Direct3D9 Device: " + 
-						Root::getSingleton().getErrorDescription(hr), 
-						"D3D9RenderWindow::createD3DResources" );
-				}
-			}
-			// Store references to buffers for convenience
-			mpD3DDevice->GetRenderTarget( 0, &mpRenderSurface );
-			mpD3DDevice->GetDepthStencilSurface( &mpRenderZBuffer );
-			// release immediately so we don't hog them
-			mpRenderSurface->Release();
-			mpRenderZBuffer->Release();
-		}
-
-	}
-
-	
 	void D3D9RenderWindow::destroy()
 	{
-		mpRenderSurface = 0;
-		mpRenderZBuffer = 0;
-		if (mIsSwapChain)
-		{
-			SAFE_RELEASE(mpSwapChain);
-		}
-		else
-		{
-			SAFE_RELEASE(mpD3DDevice);
-		}
+		SAFE_RELEASE( mpRenderSurface );
+		SAFE_RELEASE( mpRenderZBuffer );
+		SAFE_RELEASE( mpD3DDevice );
+		SAFE_RELEASE(mpRenderSurface);
+		SAFE_RELEASE(mpRenderZBuffer);
 		DestroyWindow( mHWnd );
-		mHWnd = 0;
 	}
 
 	void D3D9RenderWindow::resize( unsigned int width, unsigned int height )
@@ -500,22 +439,11 @@ namespace Ogre
 	{
 		if( mpD3DDevice )
 		{
-			HRESULT hr;
-			if (mIsSwapChain)
-			{
-				hr = mpSwapChain->Present(NULL, NULL, NULL, NULL, 0);
-			}
-			else
-			{
-				hr = mpD3DDevice->Present( NULL, NULL, 0, NULL );
-			}
+			HRESULT hr = mpD3DDevice->Present( NULL, NULL, 0, NULL );
 			if( D3DERR_DEVICELOST == hr )
-			{
-				static_cast<D3D9RenderSystem*>(
-					Root::getSingleton().getRenderSystem())->_notifyDeviceLost();
-				Sleep(500);
-
-			}
+				// TODO: Restore surfaces
+				// restoreD3DSurfaces();
+				Except( hr, "Device lost and not restored", "D3D9RenderWindow::swapBuffers" );
 			else if( FAILED(hr) )
 				Except( hr, "Error Presenting surfaces", "D3D9RenderWindow::swapBuffers" );
 		}
@@ -648,10 +576,10 @@ namespace Ogre
 			Except(hr, "can't lock rect!", "D3D9RenderWindow::writeContentsToFile");
 		} 
 
-        ImageCodec::ImageData *imgData = new ImageCodec::ImageData();
-        imgData->width = desc.Width;
-        imgData->height = desc.Height;
-        imgData->format = PF_BYTE_RGB;
+		ImageCodec::ImageData imgData;
+		imgData.width = desc.Width;
+		imgData.height = desc.Height;
+		imgData.format = PF_R8G8B8;
 
 		// Allocate contiguous buffer (surfaces aren't necessarily contiguous)
 		uchar* pBuffer = new uchar[desc.Width * desc.Height * 3];
@@ -703,7 +631,7 @@ namespace Ogre
 		}
 
 		// Wrap buffer in a chunk
-		MemoryDataStreamPtr stream(new MemoryDataStream(pBuffer, desc.Width * desc.Height * 3, false));
+		DataChunk chunk(pBuffer, desc.Width * desc.Height * 3);
 
 		// Get codec 
 		size_t pos = filename.find_last_of(".");
@@ -721,58 +649,11 @@ namespace Ogre
 		Codec * pCodec = Codec::getCodec(extension);
 
 		// Write out
-		{
-			Codec::CodecDataPtr ptr(imgData);
-        	pCodec->codeToFile(stream, filename, ptr);
-		}
+		pCodec->codeToFile(chunk, filename, &imgData);
 
 		delete [] pBuffer;
 
 		SAFE_RELEASE(pTempSurf);
 		SAFE_RELEASE(pSurf);
-	}
-	//-----------------------------------------------------------------------------
-	void D3D9RenderWindow::update(void)
-	{
-		D3D9RenderSystem* rs = static_cast<D3D9RenderSystem*>(
-			Root::getSingleton().getRenderSystem());
-		if (rs->isDeviceLost())
-		{
-			// Test the cooperative mode first
-			HRESULT hr = mpD3DDevice->TestCooperativeLevel();
-			if (hr == D3DERR_DEVICELOST)
-			{
-				// device lost, and we can't reset
-				// can't do anything about it here, wait until we get 
-				// D3DERR_DEVICENOTRESET; rendering calls will silently fail until 
-				// then (except Present, but we ignore device lost there too)
-				mpRenderSurface = 0;
-				mpRenderZBuffer = 0;
-				Sleep(500);
-				return;
-			}
-			else if (hr == D3DERR_DEVICENOTRESET)
-			{
-				// device lost, and we can reset
-				rs->restoreLostDevice();
-
-				// Still lost?
-				if (rs->isDeviceLost())
-				{
-					// Wait a while
-					Sleep(500);
-					return;
-				}
-			
-				// re-qeuery buffers
-				mpD3DDevice->GetRenderTarget( 0, &mpRenderSurface );
-				mpD3DDevice->GetDepthStencilSurface( &mpRenderZBuffer );
-				// release immediately so we don't hog them
-				mpRenderSurface->Release();
-				mpRenderZBuffer->Release();
-			}
-
-		}
-		RenderWindow::update();
 	}
 }

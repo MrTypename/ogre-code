@@ -35,6 +35,7 @@ http://www.gnu.org/copyleft/lesser.txt
 #include "OgreColourValue.h"
 #include "OgreCommon.h"
 #include "OgreRenderQueue.h"
+#include "OgreDataChunk.h"
 #include "OgreAnimationState.h"
 #include "OgreSceneQuery.h"
 #include "OgreAutoParamDataSource.h"
@@ -112,17 +113,6 @@ namespace Ogre {
             IRS_RENDER_MODULATIVE_PASS
         };
 
-		/** Enumeration of the possible modes allowed for processing the special case
-		render queue list.
-		@see SceneManager::setSpecialCaseRenderQueueMode
-		*/
-		enum SpecialCaseRenderQueueMode
-		{
-			/// Render only the queues in the special case list
-			SCRQM_INCLUDE,
-			/// Render all except the queues in the special case list
-			SCRQM_EXCLUDE
-		};
     protected:
 
         /// Queue of objects for rendering
@@ -209,11 +199,6 @@ namespace Ogre {
         Real mFogEnd;
         Real mFogDensity;
 
-		typedef std::set<RenderQueueGroupID> SpecialCaseRenderQueueList;
-		SpecialCaseRenderQueueList mSpecialCaseQueueList;
-		SpecialCaseRenderQueueMode mSpecialCaseQueueMode;
-		RenderQueueGroupID mWorldGeometryRenderQueue;
-
         /** Internal method for initialising the render queue.
         @remarks
             Subclasses can use this to install their own RenderQueue implementation.
@@ -281,20 +266,18 @@ namespace Ogre {
 
         /* Internal utility method for creating the planes of a skybox.
         */
-        MeshPtr createSkyboxPlane(
+        Mesh* createSkyboxPlane(
             BoxPlane bp,
             Real distance,
-            const Quaternion& orientation,
-            const String& groupName);
+            const Quaternion& orientation);
 
         /* Internal utility method for creating the planes of a skydome.
         */
-        MeshPtr createSkydomePlane(
+        Mesh* createSkydomePlane(
             BoxPlane bp,
             Real curvature, Real tiling, Real distance,
             const Quaternion& orientation,
-            int xsegments, int ysegments, int ySegmentsToKeep, 
-            const String& groupName);
+            int xsegments = 16, int ysegments = 16, int ySegmentsToKeep = -1);
 
         // Flag indicating whether SceneNodes will be rendered as a set of 3 axes
         bool mDisplayNodes;
@@ -408,7 +391,6 @@ namespace Ogre {
         class _OgreExport ShadowCasterSceneQueryListener : public SceneQueryListener
         {
         protected:
-			SceneManager* mSceneMgr;
             ShadowCasterList* mCasterList;
             bool mIsLightInFrustum;
             const PlaneBoundedVolumeList* mLightClipVolumeList;
@@ -416,8 +398,8 @@ namespace Ogre {
             const Light* mLight;
             Real mFarDistSquared;
         public:
-            ShadowCasterSceneQueryListener(SceneManager* sm) : mSceneMgr(sm),
-				mCasterList(0), mIsLightInFrustum(false), mLightClipVolumeList(0), 
+            ShadowCasterSceneQueryListener() : mCasterList(0), 
+                mIsLightInFrustum(false), mLightClipVolumeList(0), 
                 mCamera(0) {}
             // Prepare the listener for use with a set of parameters  
             void prepare(bool lightInFrustum, 
@@ -436,7 +418,7 @@ namespace Ogre {
             bool queryResult(SceneQuery::WorldFragment* fragment);
         };
 
-        ShadowCasterSceneQueryListener* mShadowCasterQueryListener;
+        ShadowCasterSceneQueryListener mShadowCasterQueryListener;
 
         /** Internal method for locating a list of shadow casters which 
             could be affecting the frustum for a given light. 
@@ -570,6 +552,54 @@ namespace Ogre {
         */
         virtual void _populateLightList(const Vector3& position, Real radius, LightList& destList);
 
+        /** Creates a new material with default settings with the specified name.
+        @see SceneManager::getDefaultMaterialSettings
+        */
+        virtual Material* createMaterial(const String& name);
+
+        /** Returns a pointer to the default Material settings.
+            @remarks
+                Ogre comes configured with a set of defaults for newly created
+                materials. If you wish to have a different set of defaults,
+                simply call this method and change the returned Material's
+                settings. All materials created from then on will be configured
+                with the new defaults you have specified.
+            @par
+                The default settings begin as a single Technique with a single, non-programmable Pass:
+                <ul>
+                <li>ambient = ColourValue::White</li>
+                <li>diffuse = ColourValue::White</li>
+                <li>specular = ColourValue::Black</li>
+                <li>emmissive = ColourValue::Black</li>
+                <li>shininess = 0</li>
+                <li>No texture unit settings (& hence no textures)</li>
+                <li>SourceBlendFactor = SBF_ONE</li>
+                <li>DestBlendFactor = SBF_ZERO (no blend, replace with new
+                  colour)</li>
+                <li>Depth buffer checking on</li>
+                <li>Depth buffer writing on</li>
+                <li>Depth buffer comparison function = CMPF_LESS_EQUAL</li>
+                <li>Colour buffer writing on for all channels</li>
+                <li>Culling mode = CULL_CLOCKWISE</li>
+                <li>Ambient lighting = ColourValue(0.5, 0.5, 0.5) (mid-grey)</li>
+                <li>Dynamic lighting enabled</li>
+                <li>Gourad shading mode</li>
+                <li>Bilinear texture filtering</li>
+                </ul>
+        */
+        virtual Material* getDefaultMaterialSettings(void);
+
+        /** Gets a reference to a named Material.
+        */
+        virtual Material* getMaterial(const String& name);
+
+        /** Gets a reference to a material by it's numerical handle.
+            @remarks
+                Numerical handles are assigned on creation of a material, or
+                when a copy is registered with the SceneManager using the
+                addMaterial method.
+        */
+        virtual Material* getMaterial(int handle);
 
         /** Creates an instance of a SceneNode.
             @remarks
@@ -740,20 +770,6 @@ namespace Ogre {
         */
         virtual void setWorldGeometry(const String& filename);
 
-        /** Estimate the number of loading stages required to load the named
-            world geometry. 
-        @remarks
-            This method should be overridden by SceneManagers that provide
-            custom world geometry that can take some time to load. They should
-            return from this method a count of the number of stages of progress
-            they can report on whilst loading. During real loading (setWorldGeomtry),
-            they should call ResourceGroupManager::_notifyWorldGeometryProgress exactly
-            that number of times when loading the geometry for real.
-        @note 
-            The default is to return 0, ie to not report progress. 
-        */
-        virtual size_t estimateWorldGeometry(const String& filename) { return 0; }
-
         /** Asks the SceneManager to provide a suggested viewpoint from which the scene should be viewed.
             @remarks
                 Typically this method returns the origin unless a) world geometry has been loaded using
@@ -822,9 +838,9 @@ namespace Ogre {
             @return
                 On success (the option exists), true is returned.
             @par
-                On failure, false is returned.
+                On failiure, false is returned.
         */
-        virtual bool getOptionValues( const String& strKey, StringVector& refValueList ) { return false; }
+        virtual bool getOptionValues( const String& strKey, std::list<SDDataChunk>& refValueList ) { return false; }
 
         /** Method for getting all the implementation-specific options of the scene manager.
             @param
@@ -832,7 +848,7 @@ namespace Ogre {
             @return
                 On success, true is returned. On failiure, false is returned.
         */
-        virtual bool getOptionKeys( StringVector& refKeys ) { return false; }
+        virtual bool getOptionKeys( std::list<String>& refKeys ) { return false; }
 
         /** Internal method for updating the scene graph ie the tree of SceneNode instances managed by this class.
             @remarks
@@ -948,15 +964,12 @@ namespace Ogre {
                 Determines the number of segments the plane will have to it. This
                 is most important when you are bowing the plane, but may also be useful
                 if you need tesselation on the plane to perform per-vertex effects.
-            @param groupName
-                The name of the resource group to which to assign the plane mesh.
         */
         virtual void setSkyPlane(
             bool enable,
             const Plane& plane, const String& materialName, Real scale = 1000,
             Real tiling = 10, bool drawFirst = true, Real bow = 0, 
-            int xsegments = 1, int ysegments = 1, 
-            const String& groupName = ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+            int xsegments = 1, int ysegments = 1);
 
         /** Enables / disables a 'sky box' i.e. a 6-sided box at constant
             distance from the camera representing the sky.
@@ -996,13 +1009,10 @@ namespace Ogre {
                 of the box. By default the 'top' of the box is deemed to be
                 in the +y direction, and the 'front' at the -z direction.
                 You can use this parameter to rotate the sky if you want.
-            @param groupName
-                The name of the resource group to which to assign the plane mesh.
         */
         virtual void setSkyBox(
             bool enable, const String& materialName, Real distance = 5000,
-            bool drawFirst = true, const Quaternion& orientation = Quaternion::IDENTITY,
-            const String& groupName = ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+            bool drawFirst = true, const Quaternion& orientation = Quaternion::IDENTITY );
 
         /** Enables / disables a 'sky dome' i.e. an illusion of a curved sky.
             @remarks
@@ -1056,15 +1066,12 @@ namespace Ogre {
                 of the dome. By default the 'top' of the dome is deemed to
                 be in the +y direction, and the 'front' at the -z direction.
                 You can use this parameter to rotate the sky if you want.
-            @param groupName
-                The name of the resource group to which to assign the plane mesh.
         */
         virtual void setSkyDome(
             bool enable, const String& materialName, Real curvature = 10,
             Real tiling = 8, Real distance = 4000, bool drawFirst = true,
             const Quaternion& orientation = Quaternion::IDENTITY,
-            int xsegments = 16, int ysegments = 16, int ysegments_keep = -1,
-            const String& groupName = ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+            int xsegments = 16, int ysegments = 16, int ysegments_keep = -1);
 
         /** Sets the fogging mode applied to the scene.
             @remarks
@@ -1274,6 +1281,30 @@ namespace Ogre {
             const Matrix4& worldMatrix, const Matrix4& viewMatrix, const Matrix4& projMatrix, 
             bool doBeginEndFrame = false) ;
 
+        /** Creates a new Overlay.
+        @remarks
+            Overlays can be used to render heads-up-displays (HUDs), menu systems,
+            cockpits and any other 2D or 3D object you need to appear above the
+            rest of the scene. See the Overlay class for more information.
+        @par
+            NOTE: after creation, the Overlay is initially hidden. You can create
+            as many overlays as you like ready to be displayed whenever. Just call
+            Overlay::show to display the overlay.
+        @param name The name to give the overlay, must be unique.
+        @param zorder The zorder of the overlay relative to it's peers, higher zorders
+            appear on top of lower ones.
+        */
+        virtual Overlay* createOverlay(const String& name, ushort zorder = 100); 
+
+        /** Gets a pointer to the named Overlay, previously created using createOverlay. */
+        virtual Overlay* getOverlay(const String& name);
+
+        /** Destroys the named Overlay. */
+        virtual void destroyOverlay(const String& name);
+        
+        /** Destroys all the overlays. */
+        virtual void destroyAllOverlays(void);
+
         /** Registers a new RenderQueueListener which will be notified when render queues
             are processed.
         */
@@ -1282,81 +1313,14 @@ namespace Ogre {
         /** Removes a listener previously added with addRenderQueueListener. */
         virtual void removeRenderQueueListener(RenderQueueListener* delListener);
 
-		/** Adds an item to the 'special case' render queue list.
-		@remarks
-			Normally all render queues are rendered, in their usual sequence, 
-			only varying if a RenderQueueListener nominates for the queue to be 
-			repeated or skipped. This method allows you to add a render queue to 
-			a 'special case' list, which varies the behaviour. The effect of this
-			list depends on the 'mode' in which this list is in, which might be
-			to exclude these render queues, or to include them alone (excluding
-			all other queues). This allows you to perform broad selective
-			rendering without requiring a RenderQueueListener.
-		@param qid The identifier of the queue which should be added to the
-			special case list. Nothing happens if the queue is already in the list.
-		*/
-		virtual void addSpecialCaseRenderQueue(RenderQueueGroupID qid);
-		/** Removes an item to the 'special case' render queue list.
-		@see SceneManager::addSpecialCaseRenderQueue
-		@param qid The identifier of the queue which should be removed from the
-			special case list. Nothing happens if the queue is not in the list.
-		*/
-		virtual void removeSpecialCaseRenderQueue(RenderQueueGroupID qid);
-		/** Clears the 'special case' render queue list.
-		@see SceneManager::addSpecialCaseRenderQueue
-		*/
-		virtual void clearSpecialCaseRenderQueues(void);
-		/** Sets the way the special case render queue list is processed.
-		@see SceneManager::addSpecialCaseRenderQueue
-		@param mode The mode of processing
-		*/
-		virtual void setSpecialCaseRenderQueueMode(SpecialCaseRenderQueueMode mode);
-		/** Gets the way the special case render queue list is processed. */
-		virtual SpecialCaseRenderQueueMode getSpecialCaseRenderQueueMode(void);
-		/** Returns whether or not the named queue will be rendered based on the
-			current 'special case' render queue list and mode.
-		@see SceneManager::addSpecialCaseRenderQueue
-		@param qid The identifier of the queue which should be tested
-		@returns true if the queue will be rendered, false otherwise
-		*/
-		virtual bool isRenderQueueToBeProcessed(RenderQueueGroupID qid);
-
-		/** Sets the render queue that the world geometry (if any) this SceneManager
-			renders will be associated with.
-		@remarks
-			SceneManagers which provide 'world geometry' should place it in a 
-			specialised render queue in order to make it possible to enable / 
-			disable it easily using the addSpecialCaseRenderQueue method. Even 
-			if the SceneManager does not use the render queues to render the 
-			world geometry, it should still pick a queue to represent it's manual
-			rendering, and check isRenderQueueToBeProcessed before rendering.
-		@note
-			Setting this may not affect the actual ordering of rendering the
-			world geometry, if the world geometry is being rendered manually
-			by the SceneManager. If the SceneManager feeds world geometry into
-			the queues, however, the ordering will be affected. 
-		*/
-		virtual void setWorldGeometryRenderQueue(RenderQueueGroupID qid);
-		/** Gets the render queue that the world geometry (if any) this SceneManager
-			renders will be associated with.
-		@remarks
-			SceneManagers which provide 'world geometry' should place it in a 
-			specialised render queue in order to make it possible to enable / 
-			disable it easily using the addSpecialCaseRenderQueue method. Even 
-			if the SceneManager does not use the render queues to render the 
-			world geometry, it should still pick a queue to represent it's manual
-			rendering, and check isRenderQueueToBeProcessed before rendering.
-		*/
-		virtual RenderQueueGroupID getWorldGeometryRenderQueue(void);
-
 		/** Allows all bounding boxes of scene nodes to be displayed. */
-		virtual void showBoundingBoxes(bool bShow);
+		void showBoundingBoxes(bool bShow);
 
 		/** Returns if all bounding boxes of scene nodes are to be displayed */
-		virtual bool getShowBoundingBoxes() const;
+		bool getShowBoundingBoxes() const;
 
         /** Internal method for notifying the manager that a SceneNode is autotracking. */
-        virtual void _notifyAutotrackingSceneNode(SceneNode* node, bool autoTrack);
+        void _notifyAutotrackingSceneNode(SceneNode* node, bool autoTrack);
 
         
         /** Creates an AxisAlignedBoxSceneQuery for this scene manager. 

@@ -38,9 +38,9 @@ namespace Ogre {
         String getName() const { return "Scaler"; }
 
         /** See ParticleAffectorFactory */
-        ParticleAffector* createAffector(ParticleSystem* psys)
+        ParticleAffector* createAffector(void)
         {
-            ParticleAffector* p = new ScaleAffector(psys);
+            ParticleAffector* p = new ScaleAffector();
             mAffectors.push_back(p);
             return p;
         }

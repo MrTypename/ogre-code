@@ -29,7 +29,7 @@ using namespace Ogre ;
 class WaterMesh
 {
 private:
-	MeshPtr mesh ;
+	Mesh *mesh ;
 	SubMesh *subMesh ; 
 	Real *vertexBuffers[3] ; // we need 3 vertex buffers
 	int currentBuffNumber ;

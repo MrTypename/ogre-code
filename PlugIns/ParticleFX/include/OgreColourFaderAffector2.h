@@ -115,7 +115,7 @@ namespace Ogre {
 
 
         /** Default constructor. */
-        ColourFaderAffector2(ParticleSystem* psys);
+        ColourFaderAffector2();
 
         /** See ParticleAffector. */
         void _affectParticles(ParticleSystem* pSystem, Real timeElapsed);
