@@ -34,7 +34,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="OgreMain_d.lib ode.lib"
+				AdditionalDependencies="OgreMain.lib ode.lib"
 				OutputFile="$(OutDir)/ReferenceAppLayer.dll"
 				Version="0.99"
 				LinkIncremental="2"

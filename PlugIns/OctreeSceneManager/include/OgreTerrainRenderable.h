@@ -107,10 +107,10 @@ public:
 
 };
 
-#define STITCH_NORTH  0x00000001
-#define STITCH_SOUTH  0x00000002
-#define STITCH_WEST   0x00000004
-#define STITCH_EAST   0x00000008
+#define TILE_NORTH  0x00000001
+#define TILE_SOUTH  0x00000002
+#define TILE_WEST   0x00000004
+#define TILE_EAST   0x00000008
 
 /**
    Represents a terrain tile.
@@ -124,7 +124,7 @@ class TerrainRenderable : public Renderable, public MovableObject
 {
 public:
 
-    TerrainRenderable(const String& name);
+    TerrainRenderable();
     ~TerrainRenderable();
 
     void deleteGeometry();
@@ -253,6 +253,8 @@ public:
     void _generateVertexLighting( const Vector3 &sun, ColourValue ambient );
 
 
+    static size_t mRenderedTris;
+
     /** Overridden, see Renderable */
     Real getSquaredViewDepth(const Camera* cam) const;
 
@@ -261,8 +263,6 @@ public:
 
     /** @copydoc Renderable::getLights */
     const LightList& getLights(void) const;
-    /** Sets whether or not terrain tiles should be stripified */
-    static void _setUseTriStrips(bool useStrips) { msUseTriStrips = useStrips; }
 
 
 
@@ -277,7 +277,17 @@ protected:
     /** Returns the  vertex coord for the given coordinates */
     inline float _vertex( int x, int z, int n )
     {
-        return mPositionBuffer[x * 3 + z * mSize * 3 + n];
+        HardwareVertexBufferSharedPtr vbuf = 
+            mTerrain->vertexBufferBinding->getBuffer(0);
+
+        Real vertex = 0.0;
+
+        vbuf->readData((x * 3 + z * mSize * 3 + n) * sizeof(Real), sizeof(Real), &vertex);
+
+        return vertex;
+      /* 
+        return mTerrain.pVertices[ x * 3 + z * mSize * 3 + n ];
+        */
     };
 
 
@@ -347,10 +357,6 @@ protected:
     int mMaxPixelError;
     int mVertResolution;
     Real mTopCoord;
-    /// The buffer with all the renderable geometry in it
-    HardwareVertexBufferSharedPtr mMainBuffer;
-    /// System-memory buffer with just positions in it, for CPU operations
-    Real* mPositionBuffer;
 
     Real old_L;
 
@@ -360,13 +366,6 @@ protected:
     bool mLit;
 
     int mForcedRenderLevel;
-    static bool msUseTriStrips;
-    /// Gets the index data for this tile based on current settings
-    IndexData* getIndexData(void);
-    /// Internal method for generating stripified terrain indexes
-    IndexData* generateTriStripIndexes(int stitchFlags);
-    /// Internal method for generating triangle list terrain indexes
-    IndexData* generateTriListIndexes(int stitchFlags);
 
 };
 

@@ -138,7 +138,6 @@ namespace OgreMaya {
 
 	protected:
         SkeletonJointList jointList;
-		SkeletonJoint* root;
         AnimationMap animations;
 	};
 

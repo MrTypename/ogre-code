@@ -46,6 +46,9 @@ public:
 
     void setWorldGeometry( const String& filename );
 
+    /** Updates all the TerrainRenderables LOD. */
+    virtual void _updateSceneGraph( Camera * cam );
+
     /** Aligns TerrainRenderable neighbors, and renders them. */
     virtual void _renderVisibleObjects( void );
 
@@ -54,11 +57,6 @@ public:
 
 
     bool intersectSegment( const Vector3 & start, const Vector3 & end, Vector3 * result );
-    /** Sets whether the terrain should use triangle strips or not.
-    @remarks
-        The default is not, in which case it uses triangle lists. 
-    */
-    void setUseTriStrips(bool useStrips);
 
 
     /** Returns the normal at the given terrain coordinates. */
@@ -103,8 +101,6 @@ protected:
     SceneNode * mTerrainRoot;
 
     Terrain2D mTiles;
-
-    TerrainOptions mOptions;
 
 };
 
