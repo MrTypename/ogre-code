@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreSceneNode.h"
 
 #include "OgreException.h"
@@ -172,6 +171,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void SceneNode::detachAllObjects(void)
     {
+        mObjectsByName.clear();
 		ObjectMap::iterator itr;
 		MovableObject* ret;
 		for ( itr = mObjectsByName.begin(); itr != mObjectsByName.end(); itr++ )
@@ -179,7 +179,6 @@ namespace Ogre {
 		  ret = itr->second;
 		  ret->_notifyAttached((SceneNode*)0);
 		}
-        mObjectsByName.clear();
         // Make sure bounds get updated (must go right to the top)
         needUpdate();
     }

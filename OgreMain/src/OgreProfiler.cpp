@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 /*
 
     Although the code is original, many of the ideas for the profiler were borrowed from 
@@ -375,7 +374,7 @@ namespace Ogre {
         // we do this at the very end of the function to get the most
         // accurate timing results
         p.name = profileName;
-        p.currTime = mTimer->getMicroseconds();
+        p.currTime = mTimer->getMilliseconds();
         p.accum = 0;
         p.hierarchicalLvl = (uint) mProfiles.size();
         mProfiles.push_back(p);
@@ -397,7 +396,7 @@ namespace Ogre {
         // get the end time of this profile
         // we do this as close the beginning of this function as possible
         // to get more accurate timing results
-        ulong endTime = mTimer->getMicroseconds();
+        ulong endTime = mTimer->getMilliseconds();
 
         // empty string is reserved for designating an empty parent
         assert ((profileName != "") && ("Profile name can't be an empty string"));

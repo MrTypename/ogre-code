@@ -105,7 +105,6 @@
         static GuiElementCommands::CmdMetricsMode msMetricsModeCmd;
         static GuiElementCommands::CmdHorizontalAlign msHorizontalAlignCmd;
         static GuiElementCommands::CmdVerticalAlign msVerticalAlignCmd;
-        static GuiElementCommands::CmdVisible msVisibleCmd;
 
 
         String mName;

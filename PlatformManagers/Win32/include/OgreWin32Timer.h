@@ -40,7 +40,6 @@ namespace Ogre {
         // overrides standard methods
         virtual void reset();
         virtual unsigned long getMilliseconds();
-        virtual unsigned long getMicroseconds();
     };
 } 
 

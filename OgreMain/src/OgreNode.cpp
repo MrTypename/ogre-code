@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreNode.h"
 
 #include "OgreException.h"
@@ -175,6 +174,8 @@ namespace Ogre {
             {
                 // Scale own position by parent scale
                 Vector3 parentScale = mParent->_getDerivedScale();
+                mDerivedPosition = mDerivedPosition * parentScale;
+
                 // Set own scale, NB just combine as equivalent axes, no shearing
                 mDerivedScale = mScale * parentScale;
 

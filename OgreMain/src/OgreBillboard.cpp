@@ -23,7 +23,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreBillboard.h"
 
@@ -37,8 +36,7 @@ namespace Ogre {
 		mPosition(Vector3::ZERO),
         mDirection(Vector3::ZERO),        
         mParentSet(0),
-        mColour(ColourValue::White),
-		mRotation(0)
+        mColour(ColourValue::White)
     {
     }
     //-----------------------------------------------------------------------
@@ -54,18 +52,6 @@ namespace Ogre {
         mColour = colour;
     }
     //-----------------------------------------------------------------------
-	Real Billboard::getRotation(void) const
-	{
-		return mRotation * Math::fRad2Deg;
-    }
-    //-----------------------------------------------------------------------
-    void Billboard::setRotation(Real rotation)
-    {
-		mRotation = rotation * Math::fDeg2Rad;
-        if (mRotation != 0)
-            mParentSet->_notifyBillboardTextureCoordsModified();
-    }
-	//-----------------------------------------------------------------------
     void Billboard::setPosition(const Vector3& position)
     {
         mPosition = position;

@@ -341,7 +341,7 @@ namespace Ogre {
                 mTextureType == TEX_TYPE_CUBE_MAP ? 
                     GL_TEXTURE_CUBE_MAP_POSITIVE_X + faceNumber : 
                     getGLTextureType(), 
-                mHasAlpha ? GL_RGBA8 : GL_RGB8, mSrcWidth, mSrcHeight, 
+                getGLTextureFormat(), mSrcWidth, mSrcHeight, 
                 getGLTextureFormat(), GL_UNSIGNED_BYTE, data);
         }
         else
@@ -350,10 +350,9 @@ namespace Ogre {
                 mTextureType == TEX_TYPE_CUBE_MAP ? 
                     GL_TEXTURE_CUBE_MAP_POSITIVE_X + faceNumber : 
                     getGLTextureType(), 0, 
-                mHasAlpha ? GL_RGBA8 : GL_RGB8, mSrcWidth, mSrcHeight, 0, 
+                getGLTextureFormat(), mSrcWidth, mSrcHeight, 0, 
                 getGLTextureFormat(), GL_UNSIGNED_BYTE, data );
         }
-
         mGLSupport.end_context();
     }
 

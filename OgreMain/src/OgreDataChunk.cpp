@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreDataChunk.h"
 #include "OgreException.h"
 
@@ -176,11 +175,6 @@ namespace Ogre {
             ret.trim();
         return ret;
 
-    }
-    //-----------------------------------------------------------------------
-    String DataChunk::getAsString(void)
-    {
-        return String((const char*)mData);
     }
 
 }

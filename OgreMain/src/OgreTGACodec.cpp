@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreTGACodec.h"
 #include "OgreImage.h"
 #include "OgreException.h"
@@ -93,9 +92,20 @@ namespace Ogre {
 			ilEnable(IL_ORIGIN_SET);
 			ilSetInteger(IL_ORIGIN_MODE, IL_ORIGIN_UPPER_LEFT);
 		}
+		//check to see whether the pixels are reversed
+		if( Imagformat==IL_BGR || Imagformat==IL_BGRA)
+		{
+			//if so (probably) reverse the b and the r, this is slower but at least it works
+			ILint newIF = Imagformat==IL_BGR ? IL_RGB : IL_RGBA;
+			ilCopyPixels(0, 0, 0, ret_data->width , ret_data->height, 1, newIF, IL_UNSIGNED_BYTE, output->getPtr());
+            Imagformat = newIF;
+		}
+		else
+        {
+			memcpy( output->getPtr(), ilGetData(), ImageSize );
+        }
 
 		ret_data->format = ilFormat2OgreFormat( Imagformat, BytesPerPixel );
-		memcpy( output->getPtr(), ilGetData(), ImageSize );
 
 		ilDeleteImages( 1, &ImageName );
 

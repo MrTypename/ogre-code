@@ -41,20 +41,11 @@ namespace Ogre {
         // Current direction: now derived
         /// Time to live, number of seconds left of particles natural life
         Real mTimeToLive;
-        /// Total Time to live, number of seconds of particles natural life
-        Real mTotalTimeToLive;
-		/// Speed of rotation in radians
-		Real mRotationSpeed;
-
 
         Particle()
-        : mTimeToLive(10), mTotalTimeToLive(10), mRotationSpeed(0)
+        : mTimeToLive(10)
         {
         }
-
-		Real getRotationSpeed(void) const { return mRotationSpeed; }
-		void setRotationSpeed(Real rotation) { mRotationSpeed = rotation; } 
-
 
 
         

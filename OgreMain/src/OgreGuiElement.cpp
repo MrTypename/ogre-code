@@ -23,7 +23,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreGuiElement.h"
 #include "OgreMaterialManager.h"
@@ -48,7 +47,6 @@ namespace Ogre {
     GuiElementCommands::CmdMetricsMode GuiElement::msMetricsModeCmd;
     GuiElementCommands::CmdHorizontalAlign GuiElement::msHorizontalAlignCmd;
     GuiElementCommands::CmdVerticalAlign GuiElement::msVerticalAlignCmd;
-    GuiElementCommands::CmdVisible GuiElement::msVisibleCmd;
     //---------------------------------------------------------------------
     GuiElement::GuiElement(const String& name)
         : MouseTarget(),
@@ -145,14 +143,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     Real GuiElement::getWidth(void) const
     {
-        if (mMetricsMode == GMM_PIXELS)
-        {
-			return (Real)mPixelWidth;
-		}
-		else
-		{
-        	return mWidth;
-		}
+        return mWidth;
     }
     //---------------------------------------------------------------------
     void GuiElement::setHeight(Real height)
@@ -170,14 +161,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     Real GuiElement::getHeight(void) const
     {
-        if (mMetricsMode == GMM_PIXELS)
-        {
-			return (Real)mPixelHeight;
-		}
-		else
-		{
-			return mHeight;
-		}
+        return mHeight;
     }
     //---------------------------------------------------------------------
     void GuiElement::setLeft(Real left)
@@ -196,14 +180,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     Real GuiElement::getLeft(void) const
     {
-        if (mMetricsMode == GMM_PIXELS)
-        {
-			return (Real)mPixelLeft;
-		}
-		else
-		{
-        	return mLeft;
-		}
+        return mLeft;
     }
     //---------------------------------------------------------------------
     void GuiElement::setTop(Real top)
@@ -223,14 +200,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     Real GuiElement::getTop(void) const
     {
-        if (mMetricsMode == GMM_PIXELS)
-        {
-			return (Real)mPixelTop;
-		}
-		else
-		{
-	        return mTop;
-		}
+        return mTop;
     }
     //---------------------------------------------------------------------
     const String& GuiElement::getMaterialName(void) const
@@ -443,10 +413,6 @@ namespace Ogre {
             "The vertical alignment, 'top', 'bottom' or 'center'."
             , PT_STRING),
             &msVerticalAlignCmd);
-        dict->addParameter(ParameterDef("visible", 
-            "Initial visibility of element, either 'true' or 'false' (default true)."
-            , PT_STRING),
-            &msVisibleCmd);
     }
     //-----------------------------------------------------------------------
     void GuiElement::setCaption( const String& caption )

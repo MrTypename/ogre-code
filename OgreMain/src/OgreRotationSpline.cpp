@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreRotationalSpline.h"
 
 
@@ -47,7 +46,7 @@ namespace Ogre {
         }
     }
     //---------------------------------------------------------------------
-    Quaternion RotationalSpline::interpolate(Real t, bool useShortestPath)
+    Quaternion RotationalSpline::interpolate(Real t)
     {
         // Work out which segment this is in
         Real fSeg = t * mPoints.size();
@@ -55,12 +54,11 @@ namespace Ogre {
         // Apportion t 
         t = fSeg - segIdx;
 
-        return interpolate(segIdx, t, useShortestPath);
+        return interpolate(segIdx, t);
 
     }
     //---------------------------------------------------------------------
-    Quaternion RotationalSpline::interpolate(unsigned int fromIndex, Real t,
-		bool useShortestPath)
+    Quaternion RotationalSpline::interpolate(unsigned int fromIndex, Real t)
     {
         // Bounds check
         assert (fromIndex >= 0 && fromIndex < mPoints.size() &&
@@ -91,7 +89,7 @@ namespace Ogre {
         Quaternion &b = mTangents[fromIndex+1];
 
         // NB interpolate to nearest rotation
-        return Quaternion::Squad(t, p, a, b, q, useShortestPath);
+        return Quaternion::Squad(t, p, a, b, q, true);
 
     }
     //---------------------------------------------------------------------
