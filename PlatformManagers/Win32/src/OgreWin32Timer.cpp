@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -46,20 +46,5 @@ namespace Ogre {
         newTicks /= mFrequency.QuadPart;
 
         return (unsigned long)newTicks;
-	}
-    //-------------------------------------------------------------------------
-	unsigned long Win32Timer::getMicroseconds()
-	{
-		LARGE_INTEGER curTime;
-		LONGLONG newTicks;
-
-		QueryPerformanceCounter(&curTime);
-
-		newTicks = (curTime.QuadPart - mStartTime.QuadPart);
-		// Scale by 1000000 in order to get microsecond precision
-		newTicks *= (Real)1000000.0/(Real)mFrequency.QuadPart;
-
-		return (unsigned long)newTicks;
-	}
-
+    }
 } 

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -145,43 +145,43 @@ namespace Ogre {
 		/**
 		 * Returns the modifiers flag for this event.
 		 */
-		int getModifiers() const;
+		int getModifiers();
 		
 		/**
 		 * Returns the timestamp of when this event occurred. Not implemented yet
 		 */
-		Real getWhen() const;
+		Real getWhen();
 
 		/**
 		 * Returns whether or not the Alt modifier is down on this event.
 		 */
-		bool isAltDown() const;
+		bool isAltDown();
 
 		/**
 		 * Returns whether or not this event has been consumed.
 		 * @see #consume
 		 */
-		bool isConsumed() const;
+		bool isConsumed();
 
 		/**
 		 * Returns whether or not the Control modifier is down on this event.
 		 */
-		bool isControlDown() const;
+		bool isControlDown();
 
 		/**
 		 * Returns whether or not the Meta modifier is down on this event.
 		 */
-		bool isMetaDown() const;
+		bool isMetaDown();
 
 		/**
 		 * Returns whether or not the Shift modifier is down on this event.
 		 */
-		bool isShiftDown() const;
+		bool isShiftDown();
 
-		bool isEventBetween(int start, int end) const;
-		int getID() const;
+		bool isEventBetween(int start, int end);
+		int getID();
 
-		EventTarget* getSource() const;
+		EventTarget* getSource();
     };
 }
 

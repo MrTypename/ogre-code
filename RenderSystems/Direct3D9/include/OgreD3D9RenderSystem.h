@@ -98,6 +98,9 @@ namespace Ogre
 
 		inline bool compareDecls( D3DVERTEXELEMENT9* pDecl1, D3DVERTEXELEMENT9* pDecl2, int size );
 
+		// Matrix conversion
+		D3DXMATRIX makeD3DXMatrix( const Matrix4& mat );
+		Matrix4 convertD3DXMatrix( const D3DXMATRIX& mat );
 
 		void initInputDevices(void);
 		void processInputDevices(void);
@@ -109,29 +112,17 @@ namespace Ogre
 		HRESULT __SetTextureStageState(DWORD stage, D3DTEXTURESTAGESTATETYPE type, DWORD value);
 
 		/// return anisotropy level
-		DWORD _getCurrentAnisotropy(size_t unit);
+		DWORD _getCurrentAnisotropy(int unit);
 		/// check if a FSAA is supported
 		bool _checkMultiSampleQuality(D3DMULTISAMPLE_TYPE type, DWORD *outQuality, D3DFORMAT format, UINT adapterNum, D3DDEVTYPE deviceType, BOOL fullScreen);
 		/// set FSAA
 		void _setFSAA(D3DMULTISAMPLE_TYPE type, DWORD qualityLevel);
 		
 		D3D9HardwareBufferManager* mHardwareBufferManager;
-		D3D9GpuProgramManager* mGpuProgramManager;
-        D3D9HLSLProgramFactory* mHLSLProgramFactory;
-
 		size_t mLastVertexSourceCount;
 
         /// Flag to indicate normal normalisation is forced
         bool mForcedNormalisation;
-
-        /// Internal method for populating the capabilities structure
-        void initCapabilities(void);
-
-        void convertVertexShaderCaps(void);
-        void convertPixelShaderCaps(void);
-
-        unsigned short mCurrentLights;
-
 
 	public:
 		// constructor
@@ -157,6 +148,7 @@ namespace Ogre
 		void setConfigOption( const String &name, const String &value );
 		void reinitialise();
 		void shutdown();
+		void startRendering();
 		void setAmbientLight( float r, float g, float b );
 		void setShadingType( ShadeOptions so );
 		void setLightingEnabled( bool enabled );
@@ -172,17 +164,22 @@ namespace Ogre
         void setNormaliseNormals(bool normalise);
 
 		// Low-level overridden members, mainly for internal use
-        void _useLights(const LightList& lights, unsigned short limit);
+		void _addLight( Light* lt );
+		void _removeLight( Light* lt );
+		void _modifyLight( Light* lt );
+		void _removeAllLights(void);
+		void _pushRenderState(void);
+		void _popRenderState(void);
 		void _setWorldMatrix( const Matrix4 &m );
 		void _setViewMatrix( const Matrix4 &m );
 		void _setProjectionMatrix( const Matrix4 &m );
 		void _setSurfaceParams( const ColourValue &ambient, const ColourValue &diffuse, const ColourValue &specular, const ColourValue &emissive, Real shininess );
-		void _setTexture( size_t unit, bool enabled, const String &texname );
-        void _setTextureCoordSet( size_t unit, size_t index );
-        void _setTextureCoordCalculation(size_t unit, TexCoordCalcMethod m);
-		void _setTextureBlendMode( size_t unit, const LayerBlendModeEx& bm );
-		void _setTextureAddressingMode( size_t unit, TextureUnitState::TextureAddressingMode tam );
-		void _setTextureMatrix( size_t unit, const Matrix4 &xform );
+		void _setTexture( int unit, bool enabled, const String &texname );
+        void _setTextureCoordSet( int stage, int index );
+        void _setTextureCoordCalculation(int unit, TexCoordCalcMethod m);
+		void _setTextureBlendMode( int stage, const LayerBlendModeEx& bm );
+		void _setTextureAddressingMode( int stage, Material::TextureLayer::TextureAddressingMode tam );
+		void _setTextureMatrix( int stage, const Matrix4 &xform );
 		void _setSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor );
 		void _setAlphaRejectSettings( CompareFunction func, unsigned char value );
 		void _setViewport( Viewport *vp );
@@ -191,22 +188,17 @@ namespace Ogre
 		void _setCullingMode( CullingMode mode );
 		void _setDepthBufferParams( bool depthTest = true, bool depthWrite = true, CompareFunction depthFunction = CMPF_LESS_EQUAL );
 		void _setDepthBufferCheckEnabled( bool enabled = true );
-		void _setColourBufferWriteEnabled(bool red, bool green, bool blue, bool alpha);
 		void _setDepthBufferWriteEnabled(bool enabled = true);
 		void _setDepthBufferFunction( CompareFunction func = CMPF_LESS_EQUAL );
 		void _setDepthBias(ushort bias);
-		void _setFog( FogMode mode = FOG_NONE, const ColourValue& colour = ColourValue::White, Real expDensity = 1.0, Real linearStart = 0.0, Real linearEnd = 1.0 );
-		void _makeProjectionMatrix(Real fovy, Real aspect, Real nearPlane, Real farPlane, 
-            Matrix4& dest, bool forGpuProgram = false);
+		void _setFog( FogMode mode = FOG_NONE, ColourValue colour = ColourValue::White, Real expDensity = 1.0, Real linearStart = 0.0, Real linearEnd = 1.0 );
+		void _makeProjectionMatrix(Real fovy, Real aspect, Real nearPlane, Real farPlane, Matrix4& dest);
 		void _setRasterisationMode(SceneDetailLevel level);
-        void _setTextureUnitFiltering(size_t unit, FilterType ftype, FilterOptions filter);
-		void _setTextureLayerAnisotropy(size_t unit, int maxAnisotropy);
+		void _setTextureLayerFiltering(int unit, const TextureFilterOptions texLayerFilterOps);
+		void _setTextureLayerAnisotropy(int unit, int maxAnisotropy);
 		void setVertexDeclaration(VertexDeclaration* decl);
 		void setVertexBufferBinding(VertexBufferBinding* binding);
         void _render(const RenderOperation& op);
-        void bindGpuProgram(GpuProgram* prg);
-        void unbindGpuProgram(GpuProgramType gptype);
-        void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params);
 
 	};
 }

@@ -9,7 +9,6 @@ void Lwo2MeshWriter::createSingletons()
 { 
    pLogMgr = new LogManager(); 
    pMatMgr = new MaterialManager(); 
-   pMatMgr->initialise();
    pSkelMgr = new SkeletonManager(); 
 } 
 #pragma auto_inline( on ) 

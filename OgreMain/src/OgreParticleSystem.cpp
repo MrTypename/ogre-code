@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreParticleSystem.h"
 #include "OgreParticleSystemManager.h"
@@ -265,18 +264,17 @@ namespace Ogre {
             requested.resize( mEmitters.size() );
 
         size_t totalRequested, emitterCount, i, emissionAllowed;
-        ParticleEmitterList::iterator	itEmit, iEmitEnd;
-        ParticleAffectorList::iterator	itAff, itAffEnd;
-			    
+        ParticleEmitterList::iterator it, iEmitEnd;
+        
         iEmitEnd = mEmitters.end();
         emitterCount = mEmitters.size();
         emissionAllowed = getParticleQuota() - mActiveBillboards.size();
         totalRequested = 0;
 
         // Count up total requested emissions
-        for (itEmit = mEmitters.begin(), i = 0; itEmit != iEmitEnd; ++itEmit, ++i)
+        for (it = mEmitters.begin(), i = 0; it != iEmitEnd; ++it, ++i)
         {
-            requested[i] = (*itEmit)->_getEmissionCount(timeElapsed);
+            requested[i] = (*it)->_getEmissionCount(timeElapsed);
             totalRequested += requested[i];
         }
 
@@ -296,7 +294,7 @@ namespace Ogre {
 		// For each emission, apply a subset of the motion for the frame
 		// this ensures an even distribution of particles when many are
 		// emitted in a single frame
-        for (itEmit = mEmitters.begin(), i = 0; itEmit != iEmitEnd; ++itEmit, ++i)
+        for (it = mEmitters.begin(), i = 0; it != iEmitEnd; ++it, ++i)
         {
 			Real timePoint = 0.0f;
 			Real timeInc = timeElapsed / requested[i];
@@ -304,23 +302,18 @@ namespace Ogre {
             {
                 // Create a new particle & init using emitter
                 Particle* p = addParticle();
-                (*itEmit)->_initParticle(p);
-
-				// Translate position & direction into world space
+                (*it)->_initParticle(p);
+                // Translate position & direction into world space
                 // Maybe make emitter do this?
-                p->mPosition  = (mParentNode->_getDerivedOrientation() * p->mPosition) + mParentNode->_getDerivedPosition();
-                p->mDirection = (mParentNode->_getDerivedOrientation() * p->mDirection);
+                p->mPosition =  (mParentNode->_getDerivedOrientation() * p->mPosition) + mParentNode->_getDerivedPosition();
+                p->mDirection = mParentNode->_getDerivedOrientation() * p->mDirection;
 
 				// apply partial frame motion to this particle
             	p->mPosition += (p->mDirection * timePoint);
 
-				// apply particle initialization by the affectors
-				itAffEnd = mAffectors.end();
-				for (itAff = mAffectors.begin(); itAff != itAffEnd; ++itAff)
-					(*itAff)->_initParticle(p);
-
 				// Increment time fragment
 				timePoint += timeInc;
+
             }
         }
 
@@ -422,21 +415,11 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void ParticleSystem::getWorldTransforms(Matrix4* xform) const
+    void ParticleSystem::getWorldTransforms(Matrix4* xform)
     {
         // Particles are already in world space
         *xform = Matrix4::IDENTITY;
 
-    }
-    //-----------------------------------------------------------------------
-    const Quaternion& ParticleSystem::getWorldOrientation(void) const
-    {
-        return mParentNode->_getDerivedOrientation();
-    }
-    //-----------------------------------------------------------------------
-    const Vector3& ParticleSystem::getWorldPosition(void) const
-    {
-        return mParentNode->_getDerivedPosition();
     }
     //-----------------------------------------------------------------------
     void ParticleSystem::initParameters(void)

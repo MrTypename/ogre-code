@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 /*
 
     Although the code is original, many of the ideas for the profiler were borrowed from 
@@ -215,7 +214,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    bool Profiler::getEnabled() const {
+    bool Profiler::getEnabled() {
 
         return mEnabled;
 
@@ -375,7 +374,7 @@ namespace Ogre {
         // we do this at the very end of the function to get the most
         // accurate timing results
         p.name = profileName;
-        p.currTime = mTimer->getMicroseconds();
+        p.currTime = mTimer->getMilliseconds();
         p.accum = 0;
         p.hierarchicalLvl = (uint) mProfiles.size();
         mProfiles.push_back(p);
@@ -397,7 +396,7 @@ namespace Ogre {
         // get the end time of this profile
         // we do this as close the beginning of this function as possible
         // to get more accurate timing results
-        ulong endTime = mTimer->getMicroseconds();
+        ulong endTime = mTimer->getMilliseconds();
 
         // empty string is reserved for designating an empty parent
         assert ((profileName != "") && ("Profile name can't be an empty string"));
@@ -720,8 +719,8 @@ namespace Ogre {
         ProfileHistoryList::iterator iter;
         for (iter = mProfileHistory.begin(); iter != mProfileHistory.end(); ++iter) {
         
-            (*iter).currentTime = (*iter).maxTime = (*iter).totalTime = 0;
-            (*iter).numCallsThisFrame = (*iter).totalCalls = 0;
+            (*iter).currentTime = (*iter).maxTime = (*iter).numCallsThisFrame =
+                (*iter).totalTime = (*iter).totalCalls = 0;
 
             (*iter).minTime = 1;
 
@@ -735,7 +734,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    uint Profiler::getUpdateDisplayFrequency() const {
+    uint Profiler::getUpdateDisplayFrequency() {
 
         return mUpdateDisplayFrequency;
 

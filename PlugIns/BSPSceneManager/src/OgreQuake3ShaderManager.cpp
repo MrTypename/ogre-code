@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -25,7 +25,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreQuake3ShaderManager.h"
 #include "OgreQuake3Shader.h"
 #include "OgreStringVector.h"
-#include "OgreException.h"
 
 namespace Ogre {
 
@@ -130,21 +129,7 @@ namespace Ogre {
     Resource* Quake3ShaderManager::create( const String& name)
     {
         Quake3Shader* s = new Quake3Shader(name);
-        try {
-            // Gah, Q3A shader scripts include some duplicates - grr
-            this->add(s);
-        }
-        catch (Exception& e)
-        {
-            if (e.getNumber() == Exception::ERR_DUPLICATE_ITEM)
-            {
-                // deliberately ignore, will get parsed again but will not be used
-            }
-            else
-            {
-                throw;
-            }
-        }
+        load(s,1);
         return s;
     }
     //-----------------------------------------------------------------------
@@ -173,7 +158,7 @@ namespace Ogre {
         pShader->pass[passIdx].tcModTurb[0] = pShader->pass[passIdx].tcModTurb[1] =
             pShader->pass[passIdx].tcModTurb[2] = pShader->pass[passIdx].tcModTurb[3] = 0;
         pShader->pass[passIdx].texGen = TEXGEN_BASE;
-        pShader->pass[passIdx].addressMode = TextureUnitState::TAM_WRAP;
+        pShader->pass[passIdx].addressMode = Material::TextureLayer::TAM_WRAP;
         pShader->pass[passIdx].customBlend = false;
         pShader->pass[passIdx].alphaVal = 0;
         pShader->pass[passIdx].alphaFunc = CMPF_ALWAYS_PASS;
@@ -281,7 +266,7 @@ namespace Ogre {
             pPass->textureName = params[1];
             if (params[1].toLowerCase() == "$lightmap")
                 pPass->texGen = TEXGEN_LIGHTMAP;
-            pPass->addressMode = TextureUnitState::TAM_CLAMP;
+            pPass->addressMode = Material::TextureLayer::TAM_CLAMP;
         }
         // ANIMMAP
         else if (params[0] == "animmap")

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -25,8 +25,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgrePanelGuiElement.h"
 #include "OgreMaterial.h"
-#include "OgreTechnique.h"
-#include "OgrePass.h"
 #include "OgreStringConverter.h"
 #include "OgreHardwareBufferManager.h"
 
@@ -127,7 +125,7 @@ namespace Ogre {
         return mTransparent;
     }
     //---------------------------------------------------------------------
-    const String& PanelGuiElement::getTypeName(void) const
+    const String& PanelGuiElement::getTypeName(void)
     {
         return msTypeName;
     }
@@ -148,7 +146,7 @@ namespace Ogre {
         if (mVisible)
         {
 
-            if (!mTransparent && mpMaterial)
+            if (!mTransparent)
             {
                 GuiElement::_updateRenderQueue(queue);
             }
@@ -216,15 +214,14 @@ namespace Ogre {
         // Generate for as many texture layers as there are in material
         if (mpMaterial)
         {
-            // Assume one technique and pass for the moment
-            size_t numLayers = mpMaterial->getTechnique(0)->getPass(0)->getNumTextureUnitStates();
+            ushort numLayers = mpMaterial->getNumTextureLayers();
 
             VertexDeclaration* decl = mRenderOp.vertexData->vertexDeclaration;
             // Check the number of texcoords we have in our buffer now
             if (mNumTexCoordsInBuffer > numLayers)
             {
                 // remove extras
-                for (size_t i = mNumTexCoordsInBuffer; i > numLayers; --i)
+                for (unsigned short i = mNumTexCoordsInBuffer; i > numLayers; --i)
                 {
                     decl->removeElement(VES_TEXTURE_COORDINATES, i);
                 }
@@ -233,7 +230,7 @@ namespace Ogre {
             {
                 // Add extra texcoord elements
                 size_t offset = VertexElement::getTypeSize(VET_FLOAT2) * mNumTexCoordsInBuffer;
-                for (size_t i = mNumTexCoordsInBuffer; i < numLayers; ++i)
+                for (unsigned short i = mNumTexCoordsInBuffer; i < numLayers; ++i)
                 {
                     decl->addElement(TEXCOORD_BINDING,
                         offset, VET_FLOAT2, VES_TEXTURE_COORDINATES, i);
@@ -282,19 +279,19 @@ namespace Ogre {
                 Real* pTex = pVBStart + (i * uvSize);
 
                 pTex[0] = 0.0f;
-                pTex[1] = 0.0f;
+                pTex[1] = upperY;
 
                 pTex += vertexSize; // jump by 1 vertex stride
                 pTex[0] = 0.0f;
-                pTex[1] = upperY;
-
-                pTex += vertexSize;
-                pTex[0] = upperX;
                 pTex[1] = 0.0f;
 
                 pTex += vertexSize;
                 pTex[0] = upperX;
                 pTex[1] = upperY;
+
+                pTex += vertexSize;
+                pTex[0] = upperX;
+                pTex[1] = 0.0f;
             }
 			vbuf->unlock();
         }

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -62,7 +62,7 @@ namespace Ogre {
         virtual ~Animation();
 
         /** Gets the name of this animation. */
-        const String& getName(void) const;
+        String getName(void) const;
 
         /** Gets the total length of the animation. */
         Real getLength(void) const;

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -45,7 +45,6 @@ namespace Ogre {
     protected:
         /// node to which this object is attached
         Node* mParentNode;
-        bool mParentIsTagPoint;
         /// Is this object visible?
         bool mVisible;
         /// User defined object which is linked to this object
@@ -65,7 +64,7 @@ namespace Ogre {
 
         /** Virtual destructor - read Scott Meyers if you don't know why this is needed.
         */
-        virtual ~MovableObject();
+        virtual ~MovableObject() {}
 
         /** Returns the name of this object. */
         virtual const String& getName(void) const = 0;
@@ -83,7 +82,7 @@ namespace Ogre {
 
         /** Internal method called to notify the object that it has been attached to a node.
         */
-        virtual void _notifyAttached(Node* parent, bool isTagPoint = false);
+        virtual void _notifyAttached(Node* parent);
 
         /** Returns true if this object is attached to a SceneNode or TagPoint. */
         virtual bool isAttached(void) const;
@@ -149,7 +148,7 @@ namespace Ogre {
         virtual void setRenderQueueGroup(RenderQueueGroupID queueID);
 
         /** Gets the queue group for this entity, see setRenderQueueGroup for full details. */
-        virtual RenderQueueGroupID getRenderQueueGroup(void) const;
+        virtual RenderQueueGroupID getRenderQueueGroup(void);
 
 		/// return the full transformation of the parent sceneNode or the attachingPoint node
 		virtual Matrix4 _getParentNodeFullTransform(void) const;

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -380,7 +380,7 @@ namespace Ogre {
 
         /** Gets a matrix whose columns are the local axes based on
             the nodes orientation relative to it's parent. */
-        virtual Matrix3 getLocalAxes(void) const;
+        virtual Matrix3 getLocalAxes(void);
 
         /** Creates an unnamed new Node as a child of this node.
         @param
@@ -510,11 +510,7 @@ namespace Ogre {
             for SceneNodes at SceneManager::setDisplaySceneNodes, and for entities based on skeletal 
             models using Entity::setDisplaySkeleton()
         */
-        void getWorldTransforms(Matrix4* xform) const;
-        /** @copydoc Renderable::getWorldOrientation */
-        const Quaternion& getWorldOrientation(void) const;
-        /** @copydoc Renderable::getWorldPosition */
-        const Vector3& getWorldPosition(void) const;
+        void getWorldTransforms(Matrix4* xform);
 
         /** Sets the current transform of this node to be the 'initial state' ie that
             position / orientation / scale to be used as a basis for delta values used
@@ -568,13 +564,6 @@ namespace Ogre {
         /** Called by children to notify their parent that they no longer need an update. */
         virtual void cancelUpdate(Node* child);
 
-        /** @copydoc Renderable::getLights */
-        const LightList& getLights(void) const
-        {
-            // Nodes should not be lit by the scene, this will not get called
-            static LightList ll;
-            return ll;
-        }
 
 
 

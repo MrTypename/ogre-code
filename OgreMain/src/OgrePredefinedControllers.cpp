@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,13 +22,11 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgrePredefinedControllers.h"
 
 #include "OgreRoot.h"
 #include "OgreMath.h"
 #include "OgreLogManager.h"
-#include "OgreTextureUnitState.h"
 
 namespace Ogre
 {
@@ -76,7 +74,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     // TextureFrameControllerValue
     //-----------------------------------------------------------------------
-    TextureFrameControllerValue::TextureFrameControllerValue(TextureUnitState* t)
+    TextureFrameControllerValue::TextureFrameControllerValue(Material::TextureLayer* t)
     {
         mTextureLayer = t;
     }
@@ -95,7 +93,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     // TexCoordModifierControllerValue
     //-----------------------------------------------------------------------
-    TexCoordModifierControllerValue::TexCoordModifierControllerValue(TextureUnitState* t,
+    TexCoordModifierControllerValue::TexCoordModifierControllerValue(Material::TextureLayer* t,
         bool translateU, bool translateV, bool scaleU, bool scaleV, bool rotate )
     {
         mTextureLayer = t;

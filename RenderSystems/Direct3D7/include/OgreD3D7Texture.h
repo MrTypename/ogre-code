@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -30,6 +30,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreRenderTarget.h"
 #include "OgreRenderTexture.h"
 #include "OgreRenderTargetListener.h"
+#include <ddraw.h>
+#include <d3d.h>
 
 namespace Ogre {
 
@@ -107,7 +109,7 @@ namespace Ogre {
 			delete mPrivateTex;
 		}
 
-		bool requiresTextureFlipping() const { return false; }
+		bool requiresTextureFlipping() const { return true; }
 
         virtual void getCustomAttribute( const String& name, void* pData )
         {

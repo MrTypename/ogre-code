@@ -2,7 +2,7 @@
 This source file is a part of OGRE
 (Object-oriented Graphics Rendering Engine)
 
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,15 +22,11 @@ along with this library; if not, write to the Free Software Foundation,
 Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA or go to
 http://www.gnu.org/copyleft/lesser.txt
 -------------------------------------------------------------------------*/
-#include "OgreStableHeaders.h"
 
 #include "OgreFontManager.h"
-#include "OgreFont.h"
 #include "OgreSDDataChunk.h"
 #include "OgreLogManager.h"
 #include "OgreStringConverter.h"
-#include "OgreStringVector.h"
-#include "OgreException.h"
 
 namespace Ogre
 {
@@ -123,7 +119,7 @@ namespace Ogre
         }
     }
     //---------------------------------------------------------------------
-    void FontManager::parseAttribute(const String& line, Font* pFont)
+    void FontManager::parseAttribute(String& line, Font* pFont)
     {
         std::vector<String> params = line.split();
         String attrib = params[0].toLowerCase();

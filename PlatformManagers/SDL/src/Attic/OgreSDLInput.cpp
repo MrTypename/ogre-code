@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -30,11 +30,11 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 namespace Ogre {
     
-    SDLInput::SDLInput() 
-        : InputReader(), mMouseX(0), mMouseY(0), mMouseCenterX(0), 
-          mMouseCenterY(0), mScale(0.002), _visible(true)
+    SDLInput::SDLInput() : InputReader()
     {
         mEventQueue = 0;
+        mScale = 0.002;
+        _visible = true;
 
         _key_map.insert(InputKeyMap::value_type(SDLK_ESCAPE,KC_ESCAPE));
         _key_map.insert(InputKeyMap::value_type(SDLK_1, KC_1));
@@ -159,8 +159,8 @@ namespace Ogre {
         int width, height, depth, left, top;
         pWindow->getMetrics(width, height, depth, left, top);
 
-        mMouseX = mMouseCenterX = width / 2;
-        mMouseY = mMouseCenterY = height / 2;
+        mMouseCenterX = width / 2;
+        mMouseCenterY = height / 2;
 
         if(warpMouse)
           SDL_WarpMouse(mMouseCenterX, mMouseCenterY);

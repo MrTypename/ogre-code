@@ -23,8 +23,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
 // Ogre includes
-#include "OgreStableHeaders.h"
-
 #include "OgreRoot.h"
 
 #include "OgreRenderSystem.h"
@@ -45,25 +43,19 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreOverlayManager.h"
 #include "OgreZipArchiveFactory.h"
 #include "OgreProfiler.h"
-#include "OgreErrorDialog.h"
-#include "OgreConfigDialog.h"
 
 #include "OgrePNGCodec.h"
-#include "OgreBMPCodec.h"
 #include "OgreJPEGCodec.h"
 #include "OgreTGACodec.h"
-#include "OgreDDSCodec.h"
 
 #include "OgreFontManager.h"
 
 #include "OgreOverlay.h"
-#include "OgreHighLevelGpuProgramManager.h"
 
 #if OGRE_PLATFORM == PLATFORM_WIN32
 
 #   define WIN32_LEAN_AND_MEAN
 #   include <direct.h>
-#   include <windows.h>
 
 #endif
 
@@ -104,7 +96,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     template<> Root* Singleton<Root>::ms_Singleton = 0;
     //-----------------------------------------------------------------------
-    Root::Root(const String& pluginFileName, const String& configFileName, const String& logFileName)
+    Root::Root(const String& pluginFileName)
     {
         // First create new exception handler
         SET_TERM_HANDLER;
@@ -114,12 +106,11 @@ namespace Ogre {
 
         // Init
         mActiveRenderer = 0;
-        mVersion = "0.13.0";
-		mConfigFileName = configFileName;
+        mVersion = "0.12.3";
 
         // Create log manager and default log file
         mLogManager = new LogManager();
-        mLogManager->createLog(logFileName, true, true);
+        mLogManager->createLog("Ogre.log", true, true);
 
         // Dynamic library manager
         mDynLibManager = new DynLibManager();
@@ -166,33 +157,30 @@ namespace Ogre {
         Codec::registerCodec( mPNGCodec );
         mJPEGCodec = new JPEGCodec;
         Codec::registerCodec( mJPEGCodec );
-#if OGRE_PLATFORM != PLATFORM_APPLE
         mTGACodec = new TGACodec;
         Codec::registerCodec( mTGACodec );
-        mDDSCodec = new DDSCodec;
-        Codec::registerCodec( mDDSCodec );
-#endif
         mJPGCodec = new JPGCodec;
         Codec::registerCodec( mJPGCodec );
-        mBMPCodec = new BMPCodec;
-        Codec::registerCodec( mBMPCodec );
-
-        mHighLevelGpuProgramManager = new HighLevelGpuProgramManager();
 
         // Auto window
         mAutoWindow = 0;
 
         // Load plugins
-        if (!pluginFileName.empty())
-            loadPlugins(pluginFileName);        
+        loadPlugins(pluginFileName);        
 
         mLogManager->logMessage("*-*-* OGRE Initialising");
         msg = "*-*-* Version " + mVersion;
         mLogManager->logMessage(msg);
 
-        // Can't create managers until initialised
+        // Create new Math object (will be managed by singleton)
+        mMath = new Math();
+
+
+        // Can't create controller manager until initialised
         mControllerManager = 0;
 
+        // Always add the local folder as first resource search path for all resources
+        addResourceLocation("./", "FileSystem");
 
         // Seed random number generator for future use
         srand((unsigned)time(0));
@@ -227,12 +215,7 @@ namespace Ogre {
         shutdown();
         delete mSceneManagerEnum;
 
-
-#if OGRE_PLATFORM != PLATFORM_APPLE
-        delete mBMPCodec;
-        delete mDDSCodec;
         delete mTGACodec;
-#endif
         delete mJPGCodec;
         delete mJPEGCodec;
         delete mPNGCodec;
@@ -247,9 +230,8 @@ namespace Ogre {
         delete mSkeletonManager;
         delete mMeshManager;
         delete mMaterialManager;        
+        delete mMath;
         delete mParticleManager;
-        if (mHighLevelGpuProgramManager)
-            delete mHighLevelGpuProgramManager;
         if( mControllerManager )
             delete mControllerManager;
 
@@ -267,7 +249,7 @@ namespace Ogre {
         ::FILE *fp;
         char rec[100];
 
-        fp = fopen(mConfigFileName, "w");
+        fp = fopen("ogre.cfg", "w");
         if (!fp)
             Except(Exception::ERR_CANNOT_WRITE_TO_FILE, "Cannot create settings file.",
             "Root::saveConfig");
@@ -307,7 +289,7 @@ namespace Ogre {
 
         try {
             // Don't trim whitespace
-            cfg.load(mConfigFileName, "\t:=", false);
+            cfg.load("ogre.cfg", "\t:=", false);
         }
         catch (Exception& e)
         {
@@ -438,6 +420,11 @@ namespace Ogre {
 
         mControllerManager = new ControllerManager();
 
+        // Parse all material scripts
+        mMaterialManager->parseAllSources();
+
+
+
         mAutoWindow =  mActiveRenderer->initialise(autoCreateWindow);
 
         if (autoCreateWindow)
@@ -480,128 +467,22 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void Root::addFrameListener(FrameListener* newListener)
     {
-        // Insert, unique only (set)
-        mFrameListeners.insert(newListener);
+        assert(mActiveRenderer != 0);
+        mActiveRenderer->addFrameListener(newListener);
 
     }
 
     //-----------------------------------------------------------------------
     void Root::removeFrameListener(FrameListener* oldListener)
     {
-        // Remove, 1 only (set)
-        mFrameListeners.erase(oldListener);
-    }
-    //-----------------------------------------------------------------------
-    bool Root::_fireFrameStarted(FrameEvent& evt)
-    {
-        // Tell all listeners
-        std::set<FrameListener*>::iterator i;
-        for (i= mFrameListeners.begin(); i != mFrameListeners.end(); ++i)
-        {
-            if (!(*i)->frameStarted(evt))
-                return false;
-        }
-
-        return true;
-
-    }
-    //-----------------------------------------------------------------------
-    bool Root::_fireFrameEnded(FrameEvent& evt)
-    {
-        // Tell all listeners
-        std::set<FrameListener*>::iterator i;
-        for (i= mFrameListeners.begin(); i != mFrameListeners.end(); ++i)
-        {
-            if (!(*i)->frameEnded(evt))
-                return false;
-        }
-        return true;
-    }
-    //-----------------------------------------------------------------------
-    bool Root::_fireFrameStarted()
-    {
-        unsigned long now = mTimer->getMilliseconds();
-        FrameEvent evt;
-        evt.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
-        evt.timeSinceLastFrame = calculateEventTime(now, FETT_STARTED);
-
-        return _fireFrameStarted(evt);
-    }
-    //-----------------------------------------------------------------------
-    bool Root::_fireFrameEnded()
-    {
-        unsigned long now = mTimer->getMilliseconds();
-        FrameEvent evt;
-        evt.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
-        evt.timeSinceLastFrame = calculateEventTime(now, FETT_ENDED);
-
-        return _fireFrameEnded(evt);
-    }
-    //-----------------------------------------------------------------------
-    Real Root::calculateEventTime(unsigned long now, FrameEventTimeType type)
-    {
-        // Calculate the average time passed between events of the given type
-        // during the last 0.1 seconds.
-
-        std::deque<unsigned long>& times = mEventTimes[type];
-        times.push_back(now);
-
-        if(times.size() == 1)
-            return 0;
-
-        // Times up to 0.1 seconds old should be kept
-        unsigned long discardLimit = now - 100;
-
-        // Find the oldest time to keep
-        std::deque<unsigned long>::iterator it = times.begin(),
-            end = times.end()-2; // We need at least two times
-        while(it != end)
-        {
-            if(*it < discardLimit)
-                ++it;
-            else
-                break;
-        }
-
-        // Remove old times
-        times.erase(times.begin(), it);
-
-        return Real(times.back() - times.front()) / ((times.size()-1) * 1000);
+        assert(mActiveRenderer != 0);
+        mActiveRenderer->removeFrameListener(oldListener);
     }
     //-----------------------------------------------------------------------
     void Root::startRendering(void)
     {
         assert(mActiveRenderer != 0);
-
-        mActiveRenderer->_initRenderTargets();
-
-        // Clear event times
-        for(int i=0; i!=3; ++i)
-            mEventTimes[i].clear();
-
-        // Infinite loop, until broken out of by frame listeners
-		while( true )
-		{
-#if OGRE_PLATFORM == PLATFORM_WIN32
-            // Pump events on Win32
-    		MSG  msg;
-			while( PeekMessage( &msg, NULL, 0U, 0U, PM_REMOVE ) )
-			{
-				TranslateMessage( &msg );
-				DispatchMessage( &msg );
-			}
-#endif
-
-			if(!_fireFrameStarted())
-				break;
-
-            mActiveRenderer->_updateAllRenderTargets();
-
-			if(!_fireFrameEnded())
-				break;
-		}
-
-
+        mActiveRenderer->startRendering();
     }
     //-----------------------------------------------------------------------
     void Root::shutdown(void)
@@ -640,7 +521,7 @@ namespace Ogre {
 			return;
 		}
 
-        pluginDir = cfg.getSetting("PluginFolder"); // Ignored on Mac OS X, uses Resources/ directory
+        pluginDir = cfg.getSetting("PluginFolder");
         pluginList = cfg.getMultiSetting("Plugin");
 
         char last_char = pluginDir[pluginDir.length()-1];
@@ -648,7 +529,7 @@ namespace Ogre {
         {
 #if OGRE_PLATFORM == PLATFORM_WIN32
             pluginDir += "\\";
-#elif OGRE_PLATFORM == PLATFORM_LINUX
+#else
             pluginDir += "/";
 #endif
         }
@@ -830,8 +711,6 @@ namespace Ogre {
         static bool firsttime = true;
         if (firsttime)
         {
-			// Initialise material manager
-			mMaterialManager->initialise();
             // Init particle systems manager
             mParticleManager->_initialise();
             // parse all font scripts

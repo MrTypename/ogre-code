@@ -2,7 +2,7 @@
 This source file is a part of OGRE
 (Object-oriented Graphics Rendering Engine)
 
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -35,10 +35,11 @@ http://www.gnu.org/copyleft/lesser.txt
 #include "OgreColourValue.h"
 #include "OgreCommon.h"
 #include "OgreRenderQueue.h"
+#include "OgreRenderable.h"
 #include "OgreDataChunk.h"
+#include "OgreBillboardSet.h"
 #include "OgreAnimationState.h"
 #include "OgreSceneQuery.h"
-#include "OgreAutoParamDataSource.h"
 
 namespace Ogre {
 
@@ -83,11 +84,6 @@ namespace Ogre {
         {
             _OgreExport bool operator()(const Material* x, const Material* y) const;
         };
-        /// Comparator for sorting lights relative to a point
-        struct lightLess
-        {
-            _OgreExport bool operator()(const Light* a, const Light* b) const;
-        };
 
     protected:
 
@@ -106,11 +102,11 @@ namespace Ogre {
         */
         CameraList mCameras;
 
-        typedef std::map<std::string, Light*, std::less<std::string> > SceneLightList;
+        typedef std::map<std::string, Light*, std::less<std::string> > LightList;
 
         /** Central list of lights - for easy memory management and lookup.
         */
-        SceneLightList mLights;
+        LightList mLights;
 
 
         typedef std::map<std::string, Entity*, std::less<std::string> > EntityList;
@@ -169,11 +165,25 @@ namespace Ogre {
         Real mFogEnd;
         Real mFogDensity;
 
-        /** Internal method for setting up the renderstate for a rendering pass.
+        /** Internal method for setting a material for subsequent rendering.
+            @remarks
+                If this method returns a non-zero value, it means that not all
+                the remaining texture layers can be rendered in one pass, and a
+                subset of them have been set up in the RenderSystem for the first
+                pass - the caller should render the geometry then call this
+                method again to set the remaining texture layers and re-render
+                the geometry again.
             @param
-                pass The Pass details to set.
+                mat The Material to set.
+            @param
+                numLayers The top 'n' number of layers to be processed,
+                will only be less than total layers if a previous call
+                resulted in a multipass render being required.
+            @returns
+                The number of layers unprocessed because of insufficient
+                available texture units in the hardware.
         */
-        void setPass(Pass* pass);
+        int setMaterial(Material* mat, int numLayers);
 
         enum BoxPlane
         {
@@ -227,15 +237,6 @@ namespace Ogre {
 
 		/** Flag that indicates if all of the scene node's bounding boxes should be shown as a wireframe. */
 		bool mShowBoundingBoxes;       
-
-        /** Internal utility method for rendering a single object. 
-        @remarks
-            Assumes that the pass has already bee set up.
-        */
-        virtual void renderSingleObject(Renderable* rend, Pass* pass);
-
-        /// Utility class for calculating automatic parameters for gpu programs
-        AutoParamDataSource mAutoParamDataSource;
 
     public:
         /** Default constructor.
@@ -311,28 +312,7 @@ namespace Ogre {
         */
         virtual void removeAllLights(void);
 
-        /** Populate a light list with an ordered set of the lights which are closest
-        to the position specified.
-        @remarks
-            Note that since directional lights have no position, they are always considered
-            closer than any point lights and as such will always take precedence. 
-        @par
-            Subclasses of the default SceneManager may wish to take into account other issues
-            such as possible visibility of the light if that information is included in their
-            data structures. This basic scenemanager simply orders by distance, eliminating 
-            those lights which are out of range.
-        @par
-            The number of items in the list max exceed the maximum number of lights supported
-            by the renderer, but the extraneous ones will never be used. In fact the limit will
-            be imposed by Pass::getMaxSimultaneousLights.
-        @param position The position at which to evaluate the list of lights
-        @param destList List to be populated with ordered set of lights; will be cleared by 
-            this method before population.
-        */
-        virtual void _populateLightList(const Vector3& position, LightList& destList);
-
-        /** Creates a new material with default settings with the specified name.
-        @see SceneManager::getDefaultMaterialSettings
+        /** Creates a new (blank) material with the specified name.
         */
         virtual Material* createMaterial(const String& name);
 
@@ -344,29 +324,35 @@ namespace Ogre {
                 settings. All materials created from then on will be configured
                 with the new defaults you have specified.
             @par
-                The default settings begin as a single Technique with a single, non-programmable Pass:
-                <ul>
-                <li>ambient = ColourValue::White</li>
-                <li>diffuse = ColourValue::White</li>
-                <li>specular = ColourValue::Black</li>
-                <li>emmissive = ColourValue::Black</li>
-                <li>shininess = 0</li>
-                <li>No texture unit settings (& hence no textures)</li>
-                <li>SourceBlendFactor = SBF_ONE</li>
-                <li>DestBlendFactor = SBF_ZERO (no blend, replace with new
-                  colour)</li>
-                <li>Depth buffer checking on</li>
-                <li>Depth buffer writing on</li>
-                <li>Depth buffer comparison function = CMPF_LESS_EQUAL</li>
-                <li>Colour buffer writing on for all channels</li>
-                <li>Culling mode = CULL_CLOCKWISE</li>
-                <li>Ambient lighting = ColourValue(0.5, 0.5, 0.5) (mid-grey)</li>
-                <li>Dynamic lighting enabled</li>
-                <li>Gourad shading mode</li>
-                <li>Bilinear texture filtering</li>
-                </ul>
+                The default settings begin as:
+                - ambient = ColourValue::White
+                - diffuse = ColourValue::White
+                - specular = ColourValue::Black
+                - emmissive = ColourValue::Black
+                - shininess = 0
+                - No texture layers (& hence no textures)
+                - SourceBlendFactor = SBF_ONE
+                - DestBlendFactor = SBF_ZERO (no blend, replace with new
+                  colour)
+                - Depth buffer checking on
+                - Depth buffer writing on
+                - Depth buffer comparison function = CMPF_LESS_EQUAL
+                - Culling mode = CULL_CLOCKWISE
+                - Ambient lighting = ColourValue(0.5, 0.5, 0.5) (mid-grey)
+                - Dynamic lighting enabled
+                - Gourad shading mode
+                - Bilinear texture filtering
         */
         virtual Material* getDefaultMaterialSettings(void);
+
+        /** Adds a material created outside the SceneManager to it's internal
+            list.
+            @remarks
+                Note that SceneManager copies the Material so there are no memory
+                management issues. However note that the Material's internal
+                handle will be regenerated to ensure uniqueness.
+        */
+        virtual void addMaterial(const Material& mat);
 
         /** Gets a reference to a named Material.
         */
@@ -523,11 +509,11 @@ namespace Ogre {
                 means that any objects rendered with a Material which has lighting enabled (see Material::setLightingEnabled)
                 will not be visible unless you have some dynamic lights in your scene.
         */
-        void setAmbientLight(const ColourValue& colour);
+        void setAmbientLight(ColourValue colour);
 
         /** Returns the ambient light level to be used for the scene.
         */
-        const ColourValue& getAmbientLight(void) const;
+        ColourValue getAmbientLight(void);
 
         /** Sets the source of the 'world' geometry, i.e. the large, mainly static geometry
             making up the world e.g. rooms, landscape etc.
@@ -601,7 +587,7 @@ namespace Ogre {
             @remarks
                 If it does not, false is returned.
         */
-        virtual bool hasOption( const String& strKey ) const { return false; }
+        virtual bool hasOption( const String& strKey ) { return false; }
         /** Method for getting all possible values for a specific option. When this list is too large
             (i.e. the option expects, for example, a float), the return value will be true, but the
             list will contain just one element whose size will be set to 0.
@@ -681,6 +667,10 @@ namespace Ogre {
 
 
 
+        /** Sends any updates to the dynamic lights in the world to the renderer.
+        */
+        virtual void _updateDynamicLights(void);
+
         /** Notifies the scene manager of its destination render system
             @remarks
                 Called automatically by RenderSystem::addSceneManager
@@ -703,7 +693,7 @@ namespace Ogre {
                 any camera using this scene manager).
             @note
                 To apply scaling, scrolls etc to the sky texture(s) you
-                should use the TextureUnitState class methods.
+                should use the Material::TextureLayer class methods.
             @param
                 enable True to enable the plane, false to disable it
             @param
@@ -719,7 +709,7 @@ namespace Ogre {
             @param
                 tiling How many times to tile the texture across the sky.
                 Applies to all texture layers. If you need finer control use
-                the TextureUnitState texture coordinate transformation methods.
+                the TextureLayer texture coordinate transformation methods.
             @param
                 drawFirst If true, the plane is drawn before all other
                 geometry in the scene, without updating the depth buffer.
@@ -756,7 +746,7 @@ namespace Ogre {
                 The material you use for the skybox can either contain layers
                 which are single textures, or they can be cubic textures, i.e.
                 made up of 6 images, one for each plane of the cube. See the
-                TextureUnitState class for more information.
+                Material::TextureLayer class for more information.
             @param
                 enable True to enable the skybox, false to disable it
             @param
@@ -868,7 +858,7 @@ namespace Ogre {
                 FOG_LINEAR.
         */
         void setFog(
-            FogMode mode = FOG_NONE, const ColourValue& colour = ColourValue::White,
+            FogMode mode = FOG_NONE, ColourValue colour = ColourValue::White,
             Real expDensity = 0.001, Real linearStart = 0.0, Real linearEnd = 1.0);
 
         /** Returns the fog mode for the scene.
@@ -1021,19 +1011,24 @@ namespace Ogre {
             let it do. However, there are times where it may be useful to have this manual interface,
             for example overlaying something on top of the scene rendered by OGRE.
         @par
+            Why use this instead of calling RenderSystem direct? Well, because SceneManagers cache
+            state information about the last requested operations in RenderSystem in order to minimise
+            render state changes, and you need to maintain this by ensuring calls go through the 
+            SceneManager. The other reason is that it's simpler: 1 call instead of many.
+        @par
             Because this is an instant rendering method, timing is important. The best 
             time to call it is from a RenderTargetListener event handler.
         @par
             Don't call this method a lot, it's designed for rare (1 or 2 times per frame) use. 
             Calling it regularly per frame will cause frame rate drops!
         @param rend A RenderOperation object describing the rendering op
-        @param pass The Pass to use for this render
+        @param mat The material to use
         @param vp Pointer to the viewport to render to
         @param worldMatrix The transform to apply from object to world space
         @param viewMatrix The transform to apply from world to view space
         @param projMatrix The transform to apply from view to screen space
         */
-        virtual void manualRender(RenderOperation* rend, Pass* pass, Viewport* vp, 
+        virtual void manualRender(RenderOperation* rend, Material* mat, Viewport* vp, 
             const Matrix4& worldMatrix, const Matrix4& viewMatrix, const Matrix4& projMatrix) ;
 
         /** Creates a new Overlay.
@@ -1072,7 +1067,7 @@ namespace Ogre {
 		void showBoundingBoxes(bool bShow);
 
 		/** Returns if all bounding boxes of scene nodes are to be displayed */
-		bool getShowBoundingBoxes() const;
+		bool getShowBoundingBoxes();
 
         
         /** Creates an AxisAlignedBoxSceneQuery for this scene manager. 
@@ -1135,7 +1130,7 @@ namespace Ogre {
         /** Destroys a scene query of any type. */
         virtual void destroyQuery(SceneQuery* query);
 
-        typedef MapIterator<SceneLightList> LightIterator;
+        typedef MapIterator<LightList> LightIterator;
         typedef MapIterator<EntityList> EntityIterator;
         typedef MapIterator<CameraList> CameraIterator;
         typedef MapIterator<BillboardSetList> BillboardSetIterator;

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -73,7 +73,7 @@ namespace Ogre {
 		void changeChild(GuiElement* e, Real add);
 
 	public :
-		const String& getTypeName(void) const;
+		const String& getTypeName(void);
 	    void addBaseParameters(void);
 
 		ButtonGuiElement(const String& name);

@@ -23,7 +23,6 @@ http://www.gnu.org/copyleft/lesser.txt.s
 -----------------------------------------------------------------------------
 */
 
-
 #include "OgreGLRenderSystem.h"
 #include "OgreRenderSystem.h"
 #include "OgreLogManager.h"
@@ -34,11 +33,6 @@ http://www.gnu.org/copyleft/lesser.txt.s
 #include "OgreGLHardwareIndexBuffer.h"
 #include "OgreGLDefaultHardwareBufferManager.h"
 #include "OgreGLUtil.h"
-#include "OgreGLGpuProgram.h"
-#include "OgreGLGpuNvparseProgram.h"
-#include "OgreGLGpuProgramManager.h"
-#include "OgreException.h"
-
 
 #ifdef HAVE_CONFIG_H
 #   include "config.h"
@@ -59,38 +53,12 @@ GL_UnmapBufferARB_Func glUnmapBufferARB_ptr;
 GL_BufferDataARB_Func glBufferDataARB_ptr;
 GL_BufferSubDataARB_Func glBufferSubDataARB_ptr;
 GL_GetBufferSubDataARB_Func glGetBufferSubDataARB_ptr;
-GL_GenProgramsARB_Func glGenProgramsARB_ptr;
-GL_DeleteProgramsARB_Func glDeleteProgramsARB_ptr;
-GL_BindProgramARB_Func glBindProgramARB_ptr;
-GL_ProgramStringARB_Func glProgramStringARB_ptr;
-GL_ProgramLocalParameter4fvARB_Func glProgramLocalParameter4fvARB_ptr;
-GL_ProgramParameter4fvNV_Func glProgramParameter4fvNV_ptr;
-GL_CombinerStageParameterfvNV_Func glCombinerStageParameterfvNV_ptr;
-GL_CombinerParameterfvNV_Func glCombinerParameterfvNV_ptr;
-GL_CombinerParameteriNV_Func glCombinerParameteriNV_ptr;
-GL_GetProgramivARB_Func glGetProgramivARB_ptr;
-GL_LoadProgramNV_Func glLoadProgramNV_ptr;
-GL_CombinerInputNV_Func glCombinerInputNV_ptr;
-GL_CombinerOutputNV_Func glCombinerOutputNV_ptr;
-GL_FinalCombinerInputNV_Func glFinalCombinerInputNV_ptr;
-GL_TrackMatrixNV_Func glTrackMatrixNV_ptr;
 
 namespace Ogre {
 
-    // Callback function used when registering GLGpuPrograms
-    GpuProgram* createGLArbGpuProgram(const String& name, GpuProgramType gptype, const String& syntaxCode)
-    {
-        return new GLArbGpuProgram(name, gptype, syntaxCode);
-    }
-
-    GpuProgram* createGLGpuNvparseProgram(const String& name, GpuProgramType gptype, const String& syntaxCode)
-    {
-        return new GLGpuNvparseProgram(name, gptype, syntaxCode);
-    }
-
-
     GLRenderSystem::GLRenderSystem()
-      : mDepthWrite(true), mHardwareBufferManager(0), mGpuProgramManager(0)
+      : mDepthWrite(false), 
+        mHardwareBufferManager(0)
     {
         int i;
 
@@ -114,8 +82,6 @@ namespace Ogre {
         mStencilRef = 0;
         mStencilMask = 0xffffffff;
 
-        mColourWrite[0] = mColourWrite[1] = mColourWrite[2] = mColourWrite[3] = true;
-
         for (i = 0; i < OGRE_MAX_TEXTURE_COORD_SETS; i++)
         {
             mTextureCoordIndex[i] = 0;
@@ -125,8 +91,6 @@ namespace Ogre {
         {
             mTextureTypes[i] = 0;
         }
-
-        mActiveRenderTarget = NULL;
 
         glActiveTextureARB_ptr = 0;
         glClientActiveTextureARB_ptr = 0;
@@ -139,27 +103,6 @@ namespace Ogre {
         glBufferDataARB_ptr = 0;
         glBufferSubDataARB_ptr = 0;
         glGetBufferSubDataARB_ptr = 0;
-        glGenProgramsARB_ptr = 0;
-        glDeleteProgramsARB_ptr = 0;
-        glBindProgramARB_ptr = 0;
-        glProgramStringARB_ptr = 0;
-        glProgramLocalParameter4fvARB_ptr = 0;
-        glProgramParameter4fvNV_ptr = 0;
-        glCombinerStageParameterfvNV_ptr = 0;
-        glCombinerParameterfvNV_ptr = 0;
-        glCombinerParameteriNV_ptr = 0;
-        glGetProgramivARB_ptr = 0;
-        glLoadProgramNV_ptr = 0;
-        glCombinerInputNV_ptr = 0;
-        glCombinerOutputNV_ptr = 0;
-        glFinalCombinerInputNV_ptr = 0;
-        glTrackMatrixNV_ptr = 0;
-
-        mCurrentLights = 0;
-        mMinFilter = FO_LINEAR;
-        mMipFilter = FO_POINT;
-        mCurrentVertexProgram = 0;
-        mCurrentFragmentProgram = 0;
 
         OgreUnguard();
     }
@@ -179,8 +122,7 @@ namespace Ogre {
 
         if (mHardwareBufferManager)
             delete mHardwareBufferManager;
-		if (mGpuProgramManager)
-        	delete mGpuProgramManager;
+
         delete mCapabilities;
         delete mGLSupport;
     }
@@ -234,6 +176,8 @@ namespace Ogre {
             "*** GL Renderer Started ***\n"
             "***************************");
 
+		LogManager::getSingleton().logMessage(
+            "The following extensions are available:");
 
         // Check for hardware mipmapping support.
         // Note: This is disabled for ATI cards until they fix their drivers
@@ -241,6 +185,7 @@ namespace Ogre {
             (mGLSupport->checkMinGLVersion("1.4.0") || 
              mGLSupport->checkExtension("GL_SGIS_generate_mipmap")))
         {
+            LogManager::getSingleton().logMessage("- Hardware Mipmapping");
             mCapabilities->setCapability(RSC_AUTOMIPMAP);
         }
 
@@ -249,6 +194,7 @@ namespace Ogre {
             mGLSupport->checkExtension("GL_ARB_texture_env_combine") || 
             mGLSupport->checkExtension("GL_EXT_texture_env_combine"))
         {
+            LogManager::getSingleton().logMessage("- Blending");
             mCapabilities->setCapability(RSC_BLENDING);
         }
 
@@ -259,6 +205,7 @@ namespace Ogre {
             GLint units;
             glGetIntegerv( GL_MAX_TEXTURE_UNITS, &units );
 
+            LogManager::getSingleton().logMessage("- Multitexturing");
             mCapabilities->setNumTextureUnits(units);
         }
         else
@@ -270,6 +217,7 @@ namespace Ogre {
         // Check for Anisotropy support
         if(mGLSupport->checkExtension("GL_EXT_texture_filter_anisotropic"))
         {
+            LogManager::getSingleton().logMessage("- Texture Anisotropy");
             mCapabilities->setCapability(RSC_ANISOTROPY);
         }
 
@@ -278,6 +226,7 @@ namespace Ogre {
             mGLSupport->checkExtension("GL_ARB_texture_env_dot3") ||
             mGLSupport->checkExtension("GL_EXT_texture_env_dot3"))
         {
+            LogManager::getSingleton().logMessage("- DOT3");
             mCapabilities->setCapability(RSC_DOT3);
         }
 
@@ -286,6 +235,7 @@ namespace Ogre {
             mGLSupport->checkExtension("GL_ARB_texture_cube_map") || 
             mGLSupport->checkExtension("GL_EXT_texture_cube_map"))
         {
+            LogManager::getSingleton().logMessage("- Cube Mapping");
             mCapabilities->setCapability(RSC_CUBEMAPPING);
         }
         
@@ -295,6 +245,7 @@ namespace Ogre {
 
         if(stencil)
         {
+            LogManager::getSingleton().logMessage("- Hardware Stencil Buffer");
             mCapabilities->setCapability(RSC_HWSTENCIL);
             mCapabilities->setStencilBufferBitDepth(stencil);
         }
@@ -302,6 +253,7 @@ namespace Ogre {
         // Check for VBO support
         if(mGLSupport->checkExtension("GL_ARB_vertex_buffer_object"))
         {
+            LogManager::getSingleton().logMessage("- Vertex Buffer Object\n");
             mCapabilities->setCapability(RSC_VBO);
 
             mHardwareBufferManager = new GLHardwareBufferManager;
@@ -309,49 +261,6 @@ namespace Ogre {
         else
         {
             mHardwareBufferManager = new GLDefaultHardwareBufferManager;
-        }
-
-        // XXX Need to check for nv2 support and make a program manager for it
-        // XXX Probably nv1 as well for older cards
-        // GPU Program Manager setup
-        mGpuProgramManager = new GLGpuProgramManager();
-        if(mGLSupport->checkExtension("GL_ARB_vertex_program"))
-        {
-            mCapabilities->setCapability(RSC_VERTEX_PROGRAM);
-
-            // Vertex Program Properties
-            mCapabilities->setMaxVertexProgramVersion("arbvp1");
-            mCapabilities->setVertexProgramConstantBoolCount(0);
-            mCapabilities->setVertexProgramConstantIntCount(0);
-            mCapabilities->setVertexProgramConstantFloatCount(
-                GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB);
-
-            mGpuProgramManager->_pushSyntaxCode("arbvp1");
-            mGpuProgramManager->registerProgramFactory("arbvp1", createGLArbGpuProgram);
-        }
-
-        if (mGLSupport->checkExtension("GL_NV_register_combiners2") &&
-            mGLSupport->checkExtension("GL_NV_texture_shader"))
-        {
-            mCapabilities->setCapability(RSC_FRAGMENT_PROGRAM);
-            mCapabilities->setMaxFragmentProgramVersion("fp20");
-
-            mGpuProgramManager->_pushSyntaxCode("fp20");
-            mGpuProgramManager->registerProgramFactory("fp20", createGLGpuNvparseProgram);
-        }
-
-        if (mGLSupport->checkExtension("GL_ARB_fragment_program"))
-        {
-            mCapabilities->setCapability(RSC_FRAGMENT_PROGRAM);
-            // Fragment Program Properties
-            mCapabilities->setMaxFragmentProgramVersion("arbfp1");
-            mCapabilities->setFragmentProgramConstantBoolCount(0);
-            mCapabilities->setFragmentProgramConstantIntCount(0);
-            mCapabilities->setFragmentProgramConstantFloatCount(
-                GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB);
-
-            mGpuProgramManager->_pushSyntaxCode("arbfp1");
-            mGpuProgramManager->registerProgramFactory("arbfp1", createGLArbGpuProgram);
         }
 
         // Get extension function pointers
@@ -377,37 +286,6 @@ namespace Ogre {
             (GL_BufferSubDataARB_Func)mGLSupport->getProcAddress("glBufferSubDataARB");
         glGetBufferSubDataARB_ptr = 
             (GL_GetBufferSubDataARB_Func)mGLSupport->getProcAddress("glGetBufferSubDataARB");
-        glGenProgramsARB_ptr =
-            (GL_GenProgramsARB_Func)mGLSupport->getProcAddress("glGenProgramsARB");
-        glDeleteProgramsARB_ptr =
-            (GL_DeleteProgramsARB_Func)mGLSupport->getProcAddress("glDeleteProgramsARB");
-        glBindProgramARB_ptr =
-            (GL_BindProgramARB_Func)mGLSupport->getProcAddress("glBindProgramARB");
-        glProgramStringARB_ptr =
-            (GL_ProgramStringARB_Func)mGLSupport->getProcAddress("glProgramStringARB");
-        glProgramLocalParameter4fvARB_ptr =
-            (GL_ProgramLocalParameter4fvARB_Func)mGLSupport->getProcAddress("glProgramLocalParameter4fvARB");
-         glProgramParameter4fvNV_ptr =
-            (GL_ProgramParameter4fvNV_Func)mGLSupport->getProcAddress("glProgramParameter4fvNV");
-        glCombinerStageParameterfvNV_ptr =
-            (GL_CombinerStageParameterfvNV_Func)mGLSupport->getProcAddress("glCombinerStageParameterfvNV");
-        glCombinerParameterfvNV_ptr = 
-            (GL_CombinerParameterfvNV_Func)mGLSupport->getProcAddress("glCombinerParameterfvNV");
-         glCombinerParameteriNV_ptr = (GL_CombinerParameteriNV_Func)mGLSupport->getProcAddress("glCombinerParameteriNV");
-        glGetProgramivARB_ptr = 
-            (GL_GetProgramivARB_Func)mGLSupport->getProcAddress("glGetProgramivARB");
-        glLoadProgramNV_ptr = 
-            (GL_LoadProgramNV_Func)mGLSupport->getProcAddress("glLoadProgramNV");
-        glCombinerInputNV_ptr =
-            (GL_CombinerInputNV_Func)mGLSupport->getProcAddress("glCombinerInputNV");
-        glCombinerOutputNV_ptr =
-            (GL_CombinerOutputNV_Func)mGLSupport->getProcAddress("glCombinerOutputNV");
-        glFinalCombinerInputNV_ptr = 
-            (GL_FinalCombinerInputNV_Func)mGLSupport->getProcAddress("glFinalCombinerInputNV");
-        glTrackMatrixNV_ptr = 
-            (GL_TrackMatrixNV_Func)mGLSupport->getProcAddress("glTrackMatrixNV");
-
-        mCapabilities->log(LogManager::getSingleton().getDefaultLog());
     }
 
     void GLRenderSystem::reinitialise(void)
@@ -422,6 +300,51 @@ namespace Ogre {
 
         mGLSupport->stop();
         mStopRendering = true;
+    }
+
+    void GLRenderSystem::startRendering(void)
+    {
+        OgreGuard("GLRenderSystem::startRendering");
+
+        RenderTargetMap::iterator i;
+
+        RenderSystem::startRendering();
+        
+        mStopRendering = false;
+        while( mRenderTargets.size() && !mStopRendering )
+        {
+#if OGRE_PLATFORM == PLATFORM_WIN32
+			MSG msg;
+			if( PeekMessage( &msg, NULL, 0U, 0U, PM_REMOVE ) )
+			{
+				TranslateMessage( &msg );
+				DispatchMessage( &msg );
+			}
+			else
+			{
+#endif
+				if(!fireFrameStarted())
+					return;
+			 
+				// Render a frame during idle time (no messages are waiting)
+				RenderTargetPriorityMap::iterator itarg, itargend;
+				itargend = mPrioritisedRenderTargets.end();
+				for( itarg = mPrioritisedRenderTargets.begin(); itarg != itargend; ++itarg )
+				{
+					if( itarg->second->isActive() )
+					{
+						itarg->second->update();
+					}
+				}
+
+				if(!fireFrameEnded())
+					return;
+#if OGRE_PLATFORM == PLATFORM_WIN32
+			}
+#endif
+        }
+
+        OgreUnguard();
     }
 
     void GLRenderSystem::setAmbientLight(float r, float g, float b)
@@ -500,37 +423,57 @@ namespace Ogre {
         }
     }
 
-	//---------------------------------------------------------------------
-    void GLRenderSystem::_useLights(const LightList& lights, unsigned short limit)
+    void GLRenderSystem::_addLight(Light *lt)
     {
-        LightList::const_iterator i, iend;
-        iend = lights.end();
-        unsigned short num = 0;
-        for (i = lights.begin(); i != iend && num < limit; ++i, ++num)
+        // Find first free slot
+        int i;
+        for (i =0; i < MAX_LIGHTS; ++i)
         {
-            setGLLight(num, *i);
-            mLights[num] = *i;
+            if (!mLights[i])
+            {
+                mLights[i] = lt;
+                break;
+            }
         }
-        // Disable extra lights
-        for (; num < mCurrentLights; ++num)
-        {
-            setGLLight(num, NULL);
-            mLights[num] = NULL;
-        }
-        mCurrentLights = std::min(limit, static_cast<unsigned short>(lights.size()));
+        // No space in array?
 
+        if (i == MAX_LIGHTS)
+            Except(
+                999, 
+                "No free light slots - cannot add light.", 
+                "GLRenderSystem::addLight" );
+
+        setGLLight(i, lt);
+    }
+
+    void GLRenderSystem::_modifyLight(Light *lt)
+    {
+        // Locate light in list
+        int lightIndex;
+        int i;
+        for (i = 0; i < MAX_LIGHTS; ++i)
+        {
+            if (mLights[i] == lt)
+            {
+                lightIndex = i;
+                break;
+            }
+        }
+
+        if (i == MAX_LIGHTS)
+            Except(
+                Exception::ERR_INVALIDPARAMS, 
+                "Cannot locate light to modify.",
+                "GLRenderSystem::_modifyLight" );
+
+        setGLLight(lightIndex, lt);
     }
 
     void GLRenderSystem::setGLLight(int index, Light* lt)
     {
         GLint gl_index = GL_LIGHT0 + index;
 
-        if (!lt)
-        {
-            // Disable in the scene
-            glDisable(gl_index);
-        }
-        else
+        if (lt->isVisible())
         {
             switch (lt->getType())
             {
@@ -571,7 +514,57 @@ namespace Ogre {
             glEnable(gl_index);
 
         }
+        else
+        {
+            // Disable in the scene
+            glDisable(gl_index);
+        }
 
+        lt->_clearModified();
+    }
+
+    void GLRenderSystem::_removeLight(Light *lt)
+    {
+        // Remove & disable light
+        for (int i = 0; i < MAX_LIGHTS; ++i)
+        {
+            if (mLights[i] == lt)
+            {
+                glDisable(GL_LIGHT0 + i);
+                mLights[i] = NULL;
+                return;
+            }
+        }
+    }
+
+    //-----------------------------------------------------------------------------
+    void GLRenderSystem::_removeAllLights(void)
+    {
+        // Remove & disable all lights
+        for (int i = 0; i < MAX_LIGHTS; ++i)
+        {
+            if (mLights[i])
+            {
+                glDisable(GL_LIGHT0 + i);
+                mLights[i] = NULL;
+            }
+        }
+    }
+
+    //-----------------------------------------------------------------------------
+    void GLRenderSystem::_pushRenderState(void)
+    {
+        Except(Exception::UNIMPLEMENTED_FEATURE,
+            "Sorry, this feature is not yet available.",
+            "GLRenderSystem::_pushRenderState");
+    }
+
+    //-----------------------------------------------------------------------------
+    void GLRenderSystem::_popRenderState(void)
+    {
+        Except(Exception::UNIMPLEMENTED_FEATURE,
+            "Sorry, this feature is not yet available.",
+            "GLRenderSystem::_popRenderState");
     }
 
     //-----------------------------------------------------------------------------
@@ -620,11 +613,6 @@ namespace Ogre {
     {
         GLfloat mat[16];
         makeGLMatrix(mat, m);
-        if (mActiveRenderTarget->requiresTextureFlipping())
-        {
-            // Invert y
-            mat[5] = -mat[5];
-        }
         glMatrixMode(GL_PROJECTION);
         glLoadMatrixf(mat);
         glMatrixMode(GL_MODELVIEW);
@@ -658,7 +646,7 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------------
-    void GLRenderSystem::_setTexture(size_t stage, bool enabled, const String &texname)
+    void GLRenderSystem::_setTexture(int stage, bool enabled, const String &texname)
     {
         GLTexture* tex = static_cast<GLTexture*>(TextureManager::getSingleton().getByName(texname));
 
@@ -685,12 +673,12 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------------
-    void GLRenderSystem::_setTextureCoordSet(size_t stage, size_t index)
+    void GLRenderSystem::_setTextureCoordSet(int stage, int index)
     {
         mTextureCoordIndex[stage] = index;
     }
     //-----------------------------------------------------------------------------
-    void GLRenderSystem::_setTextureCoordCalculation(size_t stage, TexCoordCalcMethod m)
+    void GLRenderSystem::_setTextureCoordCalculation(int stage, TexCoordCalcMethod m)
     {
         GLfloat M[16];
         // Default to no extra auto texture matrix
@@ -781,18 +769,18 @@ namespace Ogre {
         glActiveTextureARB_ptr( GL_TEXTURE0 );
     }
     //-----------------------------------------------------------------------------
-    void GLRenderSystem::_setTextureAddressingMode(size_t stage, TextureUnitState::TextureAddressingMode tam)
+    void GLRenderSystem::_setTextureAddressingMode(int stage, Material::TextureLayer::TextureAddressingMode tam)
     {
         GLint type;
         switch(tam)
         {
-        case TextureUnitState::TAM_WRAP:
+        case Material::TextureLayer::TAM_WRAP:
             type = GL_REPEAT;
             break;
-        case TextureUnitState::TAM_MIRROR:
+        case Material::TextureLayer::TAM_MIRROR:
             type = GL_MIRRORED_REPEAT;
             break;
-        case TextureUnitState::TAM_CLAMP:
+        case Material::TextureLayer::TAM_CLAMP:
             type = GL_CLAMP_TO_EDGE;
             break;
         }
@@ -804,7 +792,7 @@ namespace Ogre {
         glActiveTextureARB_ptr( GL_TEXTURE0 );
     }
     //-----------------------------------------------------------------------------
-    void GLRenderSystem::_setTextureMatrix(size_t stage, const Matrix4& xform)
+    void GLRenderSystem::_setTextureMatrix(int stage, const Matrix4& xform)
     {
         GLfloat mat[16];
         makeGLMatrix(mat, xform);
@@ -895,7 +883,7 @@ namespace Ogre {
         if (vp != mActiveViewport || vp->_isUpdated())
         {
               mActiveViewport = vp;
-              mActiveRenderTarget = vp->getTarget();
+  
               // XXX Rendering target stuff?
               GLsizei x, y, w, h;
   
@@ -947,18 +935,12 @@ namespace Ogre {
             ColourValue col = mActiveViewport->getBackgroundColour();
             
             glClearColor(col.r, col.g, col.b, col.a);
-            // Enable depth & colour buffer for writing if it isn't
+            // Enable depth buffer for writing if it isn't
          
             if (!mDepthWrite)
             {
               glDepthMask( GL_TRUE );
             }
-			bool colourMask = !mColourWrite[0] || !mColourWrite[1] 
-				|| !mColourWrite[2] || mColourWrite[3]; 
-			if (colourMask)
-			{
-				glColorMask(true, true, true, true);
-			}
             // Clear buffers
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             // Reset depth write state if appropriate
@@ -967,10 +949,6 @@ namespace Ogre {
             {
               glDepthMask( GL_FALSE );
             }
-			if (colourMask)
-			{
-				glColorMask(mColourWrite[0], mColourWrite[1], mColourWrite[2], mColourWrite[3]);
-			}
 
         }        
 
@@ -996,24 +974,10 @@ namespace Ogre {
             glDisable( GL_CULL_FACE );
             return;
         case CULL_CLOCKWISE:
-            if (mActiveRenderTarget && mActiveRenderTarget->requiresTextureFlipping())
-            {
-                cullMode = GL_CW;
-            }
-            else
-            {
-                cullMode = GL_CCW;
-            }
+            cullMode = GL_CCW;
             break;
         case CULL_ANTICLOCKWISE:
-            if (mActiveRenderTarget && mActiveRenderTarget->requiresTextureFlipping())
-            {
-                cullMode = GL_CCW;
-            }
-            else
-            {
-                cullMode = GL_CW;
-            }
+            cullMode = GL_CW;
             break;
         }
 
@@ -1071,17 +1035,7 @@ namespace Ogre {
             glDisable(GL_POLYGON_OFFSET_LINE);
         }
     }
-	//-----------------------------------------------------------------------------
-	void GLRenderSystem::_setColourBufferWriteEnabled(bool red, bool green, bool blue, bool alpha)
-	{
-		glColorMask(red, green, blue, alpha);
-		// record this
-		mColourWrite[0] = red;
-		mColourWrite[1] = blue;
-		mColourWrite[2] = green;
-		mColourWrite[3] = alpha;
-	}
-	//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
     String GLRenderSystem::getErrorDescription(long errCode)
     {
         // XXX FIXME
@@ -1096,7 +1050,7 @@ namespace Ogre {
             glDisable(GL_LIGHTING);
     }
     //-----------------------------------------------------------------------------
-    void GLRenderSystem::_setFog(FogMode mode, const ColourValue& colour, Real density, Real start, Real end)
+    void GLRenderSystem::_setFog(FogMode mode, ColourValue colour, Real density, Real start, Real end)
     {
 
         GLint fogMode;
@@ -1129,16 +1083,12 @@ namespace Ogre {
 
     void GLRenderSystem::convertColourValue(const ColourValue& colour, unsigned long* pDest)
     {
-    #if OGRE_ENDIAN == ENDIAN_BIG
-        *pDest = colour.getAsLongRGBA();
-    #else
-      // GL accesses by byte, so use ABGR so little-endian format will make it RGBA in byte mode
+        // GL accesses by byte, so use ABGR so little-endian format will make it RGBA in byte mode
         *pDest = colour.getAsLongABGR();
-    #endif
     }
     
     void GLRenderSystem::_makeProjectionMatrix(Real fovy, Real aspect, Real nearPlane, 
-        Real farPlane, Matrix4& dest, bool forGpuProgram)
+        Real farPlane, Matrix4& dest)
     {
         Real thetaY = Math::AngleUnitsToRadians(fovy / 2.0f);
         Real tanThetaY = Math::Tan(thetaY);
@@ -1311,98 +1261,60 @@ namespace Ogre {
         glStencilOp(mStencilFail, mStencilZFail, mStencilPass);
     }
 	//---------------------------------------------------------------------
-    GLuint GLRenderSystem::getCombinedMinMipFilter(void)
-    {
-        switch(mMinFilter)
-        {
-        case FO_ANISOTROPIC:
-        case FO_LINEAR:
-            switch(mMipFilter)
-            {
-            case FO_ANISOTROPIC:
-            case FO_LINEAR:
-                // linear min, linear mip
-                return GL_LINEAR_MIPMAP_LINEAR;
-                break;
-            case FO_POINT:
-                // linear min, point mip
-                return GL_LINEAR_MIPMAP_NEAREST;
-                break;
-            case FO_NONE:
-                // linear min, no mip
-                return GL_LINEAR;
-                break;
-            }
-            break;
-        case FO_POINT:
-        case FO_NONE:
-            switch(mMipFilter)
-            {
-            case FO_ANISOTROPIC:
-            case FO_LINEAR:
-                // nearest min, linear mip
-                return GL_NEAREST_MIPMAP_LINEAR;
-                break;
-            case FO_POINT:
-                // nearest min, point mip
-                return GL_NEAREST_MIPMAP_NEAREST;
-                break;
-            case FO_NONE:
-                // nearest min, no mip
-                return GL_NEAREST;
-                break;
-            }
-            break;
-        }
-
-        // should never get here
-        return 0;
-
-    }
-	//---------------------------------------------------------------------
-    void GLRenderSystem::_setTextureUnitFiltering(size_t unit, 
-        FilterType ftype, FilterOptions fo)
+	void GLRenderSystem::_setTextureLayerFiltering(int unit, const TextureFilterOptions texLayerFilterOps)
 	{
-        OgreGuard( "GLRenderSystem::_setTextureUnitFiltering" );        
+        OgreGuard( "GLRenderSystem::_setTextureLayerFiltering" );        
 
 		glActiveTextureARB_ptr( GL_TEXTURE0 + unit );
-        switch(ftype)
-        {
-        case FT_MIN:
-            mMinFilter = fo;
-            // Combine with existing mip filter
+		switch( texLayerFilterOps )
+		{
+		case TFO_ANISOTROPIC:
 			glTexParameteri(
                 mTextureTypes[unit],
-				GL_TEXTURE_MIN_FILTER, 
-				getCombinedMinMipFilter());
-            break;
-        case FT_MAG:
-            switch (fo)
-            {
-            case FO_ANISOTROPIC: // GL treats linear and aniso the same
-            case FO_LINEAR:
-			    glTexParameteri(
-                    mTextureTypes[unit],
-				    GL_TEXTURE_MAG_FILTER, 
-				    GL_LINEAR);
-                break;
-            case FO_POINT:
-            case FO_NONE:
-			    glTexParameteri(
-                    mTextureTypes[unit],
-				    GL_TEXTURE_MAG_FILTER, 
-				    GL_NEAREST);
-                break;
-            }
-            break;
-        case FT_MIP:
-            mMipFilter = fo;
-            // Combine with existing min filter
+				GL_TEXTURE_MAG_FILTER, 
+				GL_LINEAR);
+
 			glTexParameteri(
-                mTextureTypes[unit],
-				GL_TEXTURE_MIN_FILTER, 
-				getCombinedMinMipFilter());
-            break;
+				mTextureTypes[unit], 
+				GL_TEXTURE_MIN_FILTER,
+				GL_LINEAR_MIPMAP_LINEAR);
+			break;
+
+		case TFO_TRILINEAR:
+			glTexParameteri(
+				mTextureTypes[unit], 
+				GL_TEXTURE_MAG_FILTER, 
+				GL_LINEAR);
+
+			glTexParameteri(
+				mTextureTypes[unit], 
+				GL_TEXTURE_MIN_FILTER,
+				GL_LINEAR_MIPMAP_LINEAR);
+			break;
+
+		case TFO_BILINEAR:
+			glTexParameteri(
+				mTextureTypes[unit], 
+				GL_TEXTURE_MAG_FILTER, 
+				GL_LINEAR);
+
+			glTexParameteri(
+				mTextureTypes[unit], 
+				GL_TEXTURE_MIN_FILTER,
+				GL_LINEAR_MIPMAP_NEAREST);
+			break;
+
+		case TFO_NONE:
+			glTexParameteri(
+				mTextureTypes[unit], 
+				GL_TEXTURE_MAG_FILTER, 
+				GL_NEAREST);
+
+			glTexParameteri(
+				mTextureTypes[unit], 
+				GL_TEXTURE_MIN_FILTER,
+				GL_NEAREST);
+			break;
 		}
 
         glActiveTextureARB_ptr( GL_TEXTURE0 );
@@ -1410,7 +1322,7 @@ namespace Ogre {
 		OgreUnguard();
 	}
 	//---------------------------------------------------------------------
-	GLfloat GLRenderSystem::_getCurrentAnisotropy(size_t unit)
+	GLfloat GLRenderSystem::_getCurrentAnisotropy(int unit)
 	{
 		GLfloat curAniso = 0;
 		glGetTexParameterfv(mTextureTypes[unit], 
@@ -1418,7 +1330,7 @@ namespace Ogre {
 		return curAniso ? curAniso : 1;
 	}
 	//---------------------------------------------------------------------
-	void GLRenderSystem::_setTextureLayerAnisotropy(size_t unit, int maxAnisotropy)
+	void GLRenderSystem::_setTextureLayerAnisotropy(int unit, int maxAnisotropy)
 	{
        if (!mCapabilities->hasCapability(RSC_ANISOTROPY))
 			return;
@@ -1430,8 +1342,17 @@ namespace Ogre {
 		if (_getCurrentAnisotropy(unit) != maxAnisotropy)
 			glTexParameterf(mTextureTypes[unit], GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
 	}
+    //---------------------------------------------------------------------
+    void GLRenderSystem::_setAnisotropy(int maxAnisotropy)
+    {
+        if (!mCapabilities->hasCapability(RSC_ANISOTROPY))
+            return;
+
+        for (int n = 0; n < mCapabilities->numTextureUnits(); n++)
+            _setTextureLayerAnisotropy(n, maxAnisotropy);
+    }
 	//-----------------------------------------------------------------------------
-    void GLRenderSystem::_setTextureBlendMode(size_t stage, const LayerBlendModeEx& bm)
+    void GLRenderSystem::_setTextureBlendMode(int stage, const LayerBlendModeEx& bm)
     {       
         // Check to see if blending is supported
         if(!mCapabilities->hasCapability(RSC_BLENDING))
@@ -1731,18 +1652,24 @@ namespace Ogre {
                 break;
             case VES_TEXTURE_COORDINATES:
 
-                for (i = 0; i < mCapabilities->getNumTextureUnits(); i++)
+                for (i = 0; i < mCapabilities->numTextureUnits(); i++)
                 {
 					// Only set this texture unit's texcoord pointer if it
 					// is supposed to be using this element's index
 					if (mTextureCoordIndex[i] == elem->getIndex())
 					{
 						glClientActiveTextureARB_ptr(GL_TEXTURE0 + i);
-						glTexCoordPointer(
-							VertexElement::getTypeCount(elem->getType()), 
-							GLHardwareBufferManager::getGLType(elem->getType()),
-                            static_cast<GLsizei>(vertexBuffer->getVertexSize()), 
+						if (glIsEnabled(GL_TEXTURE_2D))
+						{
+							//int texCoordIndex =
+							//    (mTextureCoordIndex[i] < op.numTextureCoordSets) ?
+							//    mTextureCoordIndex[i] : 0;
+							glTexCoordPointer(
+								VertexElement::getTypeCount(elem->getType()), 
+								GLHardwareBufferManager::getGLType(elem->getType()),
+								static_cast<GLsizei>(vertexBuffer->getVertexSize()), 
                                 pBufferData);
+						}
 						glEnableClientState( GL_TEXTURE_COORD_ARRAY );
 					}
                 }
@@ -1798,7 +1725,6 @@ namespace Ogre {
             }
 
             GLenum indexType = (op.indexData->indexBuffer->getType() == HardwareIndexBuffer::IT_16BIT) ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
-
             glDrawRangeElements(primType, op.indexData->indexStart, 
                 op.indexData->indexStart + op.indexData->indexCount - 1,
                 op.indexData->indexCount, indexType, pBufferData);
@@ -1829,50 +1755,4 @@ namespace Ogre {
             glDisable(GL_NORMALIZE);
 
     }
-	//---------------------------------------------------------------------
-    void GLRenderSystem::bindGpuProgram(GpuProgram* prg)
-    {
-        GLGpuProgram* glprg = static_cast<GLGpuProgram*>(prg);
-        glprg->bindProgram();
-        if (glprg->getType() == GPT_VERTEX_PROGRAM)
-        {
-            mCurrentVertexProgram = glprg;
-        }
-        else
-        {
-            mCurrentFragmentProgram = glprg;
-        }
-    }
-	//---------------------------------------------------------------------
-    void GLRenderSystem::unbindGpuProgram(GpuProgramType gptype)
-    {
-        GLuint glProgType = (gptype == GPT_VERTEX_PROGRAM) ? 
-            GL_VERTEX_PROGRAM_ARB : GL_FRAGMENT_PROGRAM_ARB;
-
-        if (gptype == GPT_VERTEX_PROGRAM)
-        {
-            mCurrentVertexProgram->unbindProgram();
-            mCurrentVertexProgram = 0;
-        }
-        else
-        {
-            mCurrentFragmentProgram->unbindProgram();
-            mCurrentFragmentProgram = 0;
-        }
-
-
-    }
-	//---------------------------------------------------------------------
-    void GLRenderSystem::bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params)
-    {
-        if (gptype == GPT_VERTEX_PROGRAM)
-        {
-            mCurrentVertexProgram->bindProgramParameters(params);
-        }
-        else
-        {
-            mCurrentFragmentProgram->bindProgramParameters(params);
-        }
-    }
-
 }

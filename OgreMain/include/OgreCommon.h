@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -25,8 +25,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #ifndef __Common_H__
 #define __Common_H__
 // Common stuff
-
-#include <utility>
 
 namespace Ogre {
 
@@ -54,43 +52,15 @@ namespace Ogre {
         CMPF_GREATER
     };
 
-    /** High-level filtering options providing shortcuts to settings the
-        minification, magnification and mip filters. */
+    /** Texture filtering defining the different minification and magnification 
+		supersampling modes. */
     enum TextureFilterOptions
     {
-        /// Equal to: min=FO_POINT, mag=FO_POINT, mip=FO_NONE
         TFO_NONE,
-        /// Equal to: min=FO_LINEAR, mag=FO_LINEAR, mip=FO_POINT
         TFO_BILINEAR,
-        /// Equal to: min=FO_LINEAR, mag=FO_LINEAR, mip=FO_LINEAR
         TFO_TRILINEAR,
-        /// Equal to: min=FO_ANISOTROPIC, max=FO_ANISOTROPIC, mip=FO_LINEAR
 		TFO_ANISOTROPIC
     };
-
-    enum FilterType
-    {
-        /// The filter used when shrinking a texture
-        FT_MIN,
-        /// The filter used when magnifiying a texture
-        FT_MAG,
-        /// The filter used when determining the mipmap
-        FT_MIP
-    };
-    /** Filtering options for textures / mipmaps. */
-    enum FilterOptions
-    {
-        /// No filtering, used for FILT_MIP to turn off mipmapping
-        FO_NONE,
-        /// Use the closest pixel
-        FO_POINT,
-        /// Average of a 2x2 pixel area, denotes bilinear for MIN and MAG, trilinear for MIP
-        FO_LINEAR,
-        /// Similar to FO_LINEAR, but compensates for the angle of the texture plane
-        FO_ANISOTROPIC
-    };
-
-
 
     /** Light shading modes. */
     enum ShadeOptions
@@ -203,8 +173,6 @@ namespace Ogre {
 
 	PixelFormat ilFormat2OgreFormat( int ImageFormat, int BytesPerPixel );
 	std::pair< int, int > OgreFormat2ilFormat( PixelFormat format );
-
-    typedef std::vector<Light*> LightList;
 }
 
 #endif

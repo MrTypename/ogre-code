@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE 
 	(Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -250,11 +250,7 @@ namespace Ogre {
             @see
                 MovableObject
         */
-        void getWorldTransforms(Matrix4* xform) const;
-        /** @copydoc Renderable::getWorldOrientation */
-        const Quaternion& getWorldOrientation(void) const;
-        /** @copydoc Renderable::getWorldPosition */
-        const Vector3& getWorldPosition(void) const;
+        void getWorldTransforms(Matrix4* xform);
 
         /** Overridden from BillboardSet
         */

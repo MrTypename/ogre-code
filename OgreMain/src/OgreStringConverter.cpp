@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreStringConverter.h"
 #include "OgreVector3.h"
 #include "OgreMatrix3.h"
@@ -90,28 +89,13 @@ namespace Ogre {
         return stream.str();
     }
     //-----------------------------------------------------------------------
-    String StringConverter::toString(bool val, bool yesNo)
+    String StringConverter::toString(bool val)
     {
         if (val)
-        {
-            if (yesNo)
-            {
-                return "yes";
-            }
-            else
-            {
-                return "true";
-            }
-        }
+            return "true";
         else
-            if (yesNo)
-            {
-                return "no";
-            }
-            else
-            {
-                return "false";
-            }
+            return "false";
+
     }
     //-----------------------------------------------------------------------
     String StringConverter::toString(const Matrix4& val)
@@ -147,22 +131,6 @@ namespace Ogre {
     {
         String::StrStreamType stream;
         stream << val.r << " " << val.g << " " << val.b << " " << val.a;
-        return stream.str();
-    }
-    //-----------------------------------------------------------------------
-    String StringConverter::toString(const StringVector& val)
-    {
-        String::StrStreamType stream;
-        StringVector::const_iterator i, iend, ibegin;
-        ibegin = val.begin();
-        iend = val.end();
-        for (i = ibegin; i != iend; ++i)
-        {
-            if (i != ibegin)
-                stream << " ";
-
-            stream << *i; 
-        }
         return stream.str();
     }
     //-----------------------------------------------------------------------
@@ -282,11 +250,6 @@ namespace Ogre {
         {
             return ColourValue::Black;
         }
-    }
-    //-----------------------------------------------------------------------
-    StringVector StringConverter::parseStringVector(const String& val)
-    {
-        return val.split();
     }
 }
 

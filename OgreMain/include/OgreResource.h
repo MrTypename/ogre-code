@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -31,8 +31,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 namespace Ogre {
 
-    typedef unsigned long ResourceHandle;
-
     /** Abstract class reprensenting a loadable resource (e.g. textures, sounds etc)
         @remarks
             Resources are generally passive constructs, handled through the
@@ -51,10 +49,8 @@ namespace Ogre {
     */
     class _OgreExport Resource 
     {
-        friend class ResourceManager;
     protected:
         String mName;
-        ResourceHandle mHandle;
         bool   mIsLoaded;
         time_t mLastAccess;
         size_t mSize;
@@ -62,7 +58,7 @@ namespace Ogre {
     public:
         /** Basic constructor. 
             @warn
-                Subclasses must init mName, mHandle and mSize!
+                Subclasses must init mName and mSize!
         */
         Resource() 
             : mIsLoaded( false ), mSize( 0 )
@@ -90,17 +86,16 @@ namespace Ogre {
 
         /** Retrieves info about the size of the resource.
         */
-        virtual size_t getSize(void) const
+        virtual size_t getSize(void) 
         { 
             return mSize; 
         }
 
         /** 'Touches' the resource to indicate it has been used.
         */
-        virtual void touch(void) 
+        void touch(void) 
         { 
             mLastAccess = time(NULL); 
-            if (!mIsLoaded) load();
         }
 
         /** Gets the last time the resource was 'touched'.
@@ -115,11 +110,6 @@ namespace Ogre {
         const String& getName(void) const 
         { 
             return mName; 
-        }
-
-        ResourceHandle getHandle(void) const
-        {
-            return mHandle;
         }
 
         /** Returns true if the Resource has been loaded, false otherwise.

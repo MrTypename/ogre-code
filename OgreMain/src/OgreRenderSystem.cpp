@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 // RenderSystem implementation
 // Note that most of this class is abstract since
 //  we cannot know how to implement the behaviour without
@@ -55,6 +54,9 @@ namespace Ogre {
         // This makes it the same as OpenGL and other right-handed systems
         mCullingMode = CULL_CLOCKWISE;
 
+		// get a Timer
+        mTimer = Root::getSingleton().getTimer();
+
         // instanciate RenderSystemCapabilities
         mCapabilities = new RenderSystemCapabilities();
     }
@@ -65,7 +67,96 @@ namespace Ogre {
         shutdown();
     }
     //-----------------------------------------------------------------------
-    void RenderSystem::_initRenderTargets(void)
+    void RenderSystem::addFrameListener(FrameListener* newListener)
+    {
+        // Insert, unique only (set)
+        mFrameListeners.insert(newListener);
+    }
+    //-----------------------------------------------------------------------
+    void RenderSystem::removeFrameListener(FrameListener* oldListener)
+    {
+        // Remove, 1 only (set)
+        mFrameListeners.erase(oldListener);
+    }
+    //-----------------------------------------------------------------------
+    bool RenderSystem::fireFrameStarted(FrameEvent& evt)
+    {
+        // Tell all listeners
+        std::set<FrameListener*>::iterator i;
+        for (i= mFrameListeners.begin(); i != mFrameListeners.end(); ++i)
+        {
+            if (!(*i)->frameStarted(evt))
+                return false;
+        }
+
+        return true;
+
+    }
+    //-----------------------------------------------------------------------
+    bool RenderSystem::fireFrameEnded(FrameEvent& evt)
+    {
+        // Tell all listeners
+        std::set<FrameListener*>::iterator i;
+        for (i= mFrameListeners.begin(); i != mFrameListeners.end(); ++i)
+        {
+            if (!(*i)->frameEnded(evt))
+                return false;
+        }
+        return true;
+    }
+    //-----------------------------------------------------------------------
+    bool RenderSystem::fireFrameStarted()
+    {
+        unsigned long now = mTimer->getMilliseconds();
+        FrameEvent evt;
+        evt.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
+        evt.timeSinceLastFrame = calculateEventTime(now, FETT_STARTED);
+
+        return fireFrameStarted(evt);
+    }
+    //-----------------------------------------------------------------------
+    bool RenderSystem::fireFrameEnded()
+    {
+        unsigned long now = mTimer->getMilliseconds();
+        FrameEvent evt;
+        evt.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
+        evt.timeSinceLastFrame = calculateEventTime(now, FETT_ENDED);
+
+        return fireFrameEnded(evt);
+    }
+    //-----------------------------------------------------------------------
+    Real RenderSystem::calculateEventTime(unsigned long now, FrameEventTimeType type)
+    {
+        // Calculate the average time passed between events of the given type
+        // during the last 0.1 seconds.
+
+        std::deque<unsigned long>& times = mEventTimes[type];
+        times.push_back(now);
+
+        if(times.size() == 1)
+            return 0;
+
+        // Times up to 0.1 seconds old should be kept
+        unsigned long discardLimit = now - 100;
+
+        // Find the oldest time to keep
+        std::deque<unsigned long>::iterator it = times.begin(),
+            end = times.end()-2; // We need at least two times
+        while(it != end)
+        {
+            if(*it < discardLimit)
+                ++it;
+            else
+                break;
+        }
+
+        // Remove old times
+        times.erase(times.begin(), it);
+
+        return Real(times.back() - times.front()) / ((times.size()-1) * 1000);
+    }
+    //-----------------------------------------------------------------------
+    void RenderSystem::startRendering(void)
     {
 
         // Init stats
@@ -77,19 +168,9 @@ namespace Ogre {
             it->second->resetStatistics();
         }
 
-    }
-    //-----------------------------------------------------------------------
-    void RenderSystem::_updateAllRenderTargets(void)
-    {
-        // Update all in order of priority
-        // This ensures render-to-texture targets get updated before render windows
-		RenderTargetPriorityMap::iterator itarg, itargend;
-		itargend = mPrioritisedRenderTargets.end();
-		for( itarg = mPrioritisedRenderTargets.begin(); itarg != itargend; ++itarg )
-		{
-			if( itarg->second->isActive() )
-				itarg->second->update();
-		}
+        // Clear event times
+        for(int i=0; i!=3; ++i)
+            mEventTimes[i].clear();
     }
     //-----------------------------------------------------------------------
     RenderWindow* RenderSystem::initialise(bool autoCreateWindow)
@@ -165,7 +246,7 @@ namespace Ogre {
         return mActiveViewport;
     }
     //-----------------------------------------------------------------------
-    void RenderSystem::_setTextureUnitSettings(size_t texUnit, TextureUnitState& tl)
+    void RenderSystem::_setTextureUnitSettings(int texUnit, Material::TextureLayer& tl)
     {
         // This method is only ever called to set a texture unit to valid details
         // The method _disableTextureUnit is called to turn a unit off
@@ -177,10 +258,7 @@ namespace Ogre {
         _setTextureCoordSet(texUnit, tl.getTextureCoordSet());
 
         // Set texture layer filtering
-        _setTextureUnitFiltering(texUnit, 
-            tl.getTextureFiltering(FT_MIN), 
-            tl.getTextureFiltering(FT_MAG), 
-            tl.getTextureFiltering(FT_MIP));
+        _setTextureLayerFiltering(texUnit, tl.getTextureLayerFiltering());
 
         // Set texture layer filtering
         _setTextureLayerAnisotropy(texUnit, tl.getTextureAnisotropy());
@@ -193,38 +271,39 @@ namespace Ogre {
         _setTextureAddressingMode(texUnit, tl.getTextureAddressingMode() );
 
         // Set texture effects
-        TextureUnitState::EffectMap::iterator effi;
+        Material::TextureLayer::EffectMap::iterator effi;
         // Iterate over new effects
         bool anyCalcs = false;
         for (effi = tl.mEffects.begin(); effi != tl.mEffects.end(); ++effi)
         {
             switch (effi->second.type)
             {
-            case TextureUnitState::ET_ENVIRONMENT_MAP:
-                if (effi->second.subtype == TextureUnitState::ENV_CURVED)
+            case Material::TextureLayer::ET_ENVIRONMENT_MAP:
+                if (effi->second.subtype == Material::TextureLayer::ENV_CURVED)
                 {
                     _setTextureCoordCalculation(texUnit, TEXCALC_ENVIRONMENT_MAP);
                     anyCalcs = true;
                 }
-                else if (effi->second.subtype == TextureUnitState::ENV_PLANAR)
+                else if (effi->second.subtype == Material::TextureLayer::ENV_PLANAR)
                 {
                     _setTextureCoordCalculation(texUnit, TEXCALC_ENVIRONMENT_MAP_PLANAR);
                     anyCalcs = true;
                 }
-                else if (effi->second.subtype == TextureUnitState::ENV_REFLECTION)
+                else if (effi->second.subtype == Material::TextureLayer::ENV_REFLECTION)
                 {
                     _setTextureCoordCalculation(texUnit, TEXCALC_ENVIRONMENT_MAP_REFLECTION);
                     anyCalcs = true;
                 }
-                else if (effi->second.subtype == TextureUnitState::ENV_NORMAL)
+                else if (effi->second.subtype == Material::TextureLayer::ENV_NORMAL)
                 {
                     _setTextureCoordCalculation(texUnit, TEXCALC_ENVIRONMENT_MAP_NORMAL);
                     anyCalcs = true;
                 }
                 break;
-	    case TextureUnitState::ET_SCROLL:
-	    case TextureUnitState::ET_ROTATE:
-	    case TextureUnitState::ET_TRANSFORM:
+	    case Material::TextureLayer::ET_BUMP_MAP:
+	    case Material::TextureLayer::ET_SCROLL:
+	    case Material::TextureLayer::ET_ROTATE:
+	    case Material::TextureLayer::ET_TRANSFORM:
 	      break;
             }
         }
@@ -244,33 +323,68 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void RenderSystem::_disableTextureUnit(size_t texUnit)
+    void RenderSystem::_disableTextureUnit(int texUnit)
     {
         _setTexture(texUnit, false, "");
+        mTextureUnits[texUnit].setBlank();
+
+
     }
     //---------------------------------------------------------------------
-    void RenderSystem::_disableTextureUnitsFrom(size_t texUnit)
+ 	void RenderSystem::_setAnisotropy(int maxAnisotropy)
+ 	{
+ 		for (int n = 0; n < mCapabilities->numTextureUnits(); n++)
+ 			_setTextureLayerAnisotropy(n, maxAnisotropy);
+ 	}
+    //-----------------------------------------------------------------------
+    void RenderSystem::setTextureFiltering(TextureFilterOptions fo)
     {
-        for (size_t i = texUnit; i < mCapabilities->getNumTextureUnits(); ++i)
+        int units = mCapabilities->numTextureUnits();
+        for (int i = 0; i < units; ++i)
+			_setTextureLayerFiltering(i, fo);
+    }
+
+    //-----------------------------------------------------------------------
+    /*
+    void RenderSystem::_setMaterial(Material &mat)
+    {
+
+        // Set surface properties
+        _setSurfaceParams(mat.ambient, mat.diffuse, mat.specular, mat.emmissive, mat.shininess);
+
+        // Set global blending
+        _setSceneBlending(mat.getSourceBlendFactor(), mat.getDestBlendFactor());
+
+        // Set textures
+        // Note that it is assumed caller has checked that there are
+        // enough texture units to support multitexturing all layers
+        // If not they should be calling _setTexture separately per multipass render
+        // If the texture layers exceed the number of supported texture
+        // units, the remaining textures will not be displayed
+        int matTexLayers = mat.getNumTextureLayers();
+        for (int texLayer = 0; texLayer < _getNumTextureUnits(); ++texLayer)
         {
-            _disableTextureUnit(i);
+            if (texLayer >= matTexLayers)
+            {
+                // Run out of material texture layers before h/w
+                // Turn off these units
+                _setTexture(texLayer, false, "");
+            }
+            else
+            {
+                Material::TextureLayer* tl = mat.getTextureLayer(texLayer);
+                _setTextureUnitSettings(texLayer, *tl);
+            }
         }
     }
+    */
     //-----------------------------------------------------------------------
-    void RenderSystem::_setTextureUnitFiltering(size_t unit, FilterOptions minFilter,
-            FilterOptions magFilter, FilterOptions mipFilter)
-    {
-        _setTextureUnitFiltering(unit, FT_MIN, minFilter);
-        _setTextureUnitFiltering(unit, FT_MAG, magFilter);
-        _setTextureUnitFiltering(unit, FT_MIP, mipFilter);
-    }
-    //-----------------------------------------------------------------------
-    CullingMode RenderSystem::_getCullingMode(void) const
+    CullingMode RenderSystem::_getCullingMode(void)
     {
         return mCullingMode;
     }
     //-----------------------------------------------------------------------
-    bool RenderSystem::getWaitForVerticalBlank(void) const
+    bool RenderSystem::getWaitForVerticalBlank(void)
     {
         return mVSync;
     }
@@ -298,12 +412,12 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    unsigned int RenderSystem::_getFaceCount(void) const
+    unsigned int RenderSystem::_getFaceCount(void)
     {
         return static_cast< unsigned int >( mFaceCount );
     }
     //-----------------------------------------------------------------------
-    unsigned int RenderSystem::_getVertexCount(void) const
+    unsigned int RenderSystem::_getVertexCount(void)
     {
         return static_cast< unsigned int >( mVertexCount );
     }

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright Š 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -35,14 +35,12 @@ namespace Ogre {
     class SDLTimer : public Timer
     {
 	private:
-    		struct timeval start;    
-
+		unsigned long zeroTicks ;
 		
     public:
 		// overrides standard methods
 		virtual void reset();
 		virtual unsigned long getMilliseconds();
-		virtual unsigned long getMicroseconds();
     };
 }
 

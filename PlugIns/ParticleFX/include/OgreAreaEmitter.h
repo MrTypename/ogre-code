@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright ) 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -104,15 +104,15 @@ namespace Ogre {
         /** Sets the width (local x size) of the emitter. */
         void setWidth(Real width);
         /** Gets the width (local x size) of the emitter. */
-        Real getWidth(void) const;
+        Real getWidth(void);
         /** Sets the height (local y size) of the emitter. */
         void setHeight(Real Height);
         /** Gets the height (local y size) of the emitter. */
-        Real getHeight(void) const;
+        Real getHeight(void);
         /** Sets the depth (local y size) of the emitter. */
         void setDepth(Real Depth);
         /** Gets the depth (local y size) of the emitter. */
-        Real getDepth(void) const;
+        Real getDepth(void);
 
     protected:
         /// Size of the area

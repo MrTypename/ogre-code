@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -28,13 +28,13 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgrePrerequisites.h"
 
 #if OGRE_PLATFORM == PLATFORM_WIN32
-#   define NOMINMAX // required to stop windows.h messing up std::min
 #   include <windows.h>
 #   include <wingdi.h>
-#   include <GL/gl.h>
+#   include "gl.h"
 #   define GL_GLEXT_PROTOTYPES
 #   include "glprocs.h"
 #   include <GL/glu.h>
+#   include "glext.h"
 // Windows library does not include glSecondaryColorPointer even though it's standard now
 #   define glSecondaryColorPointer glSecondaryColorPointerEXT
 #elif OGRE_PLATFORM == PLATFORM_LINUX
@@ -44,15 +44,13 @@ http://www.gnu.org/copyleft/lesser.txt.
 #   include <GL/gl.h>
 #   include <GL/glu.h>
 #   define GL_GLEXT_PROTOTYPES
+#   include "glext.h"
 #elif OGRE_PLATFORM == PLATFORM_APPLE
-#   define GL_GLEXT_PROTOTYPES
-#   ifndef APIENTRY
-#       define APIENTRY
-#   endif
 #   include <OpenGL/gl.h>
+#   define GL_EXT_texture_env_combine 1
+#   include <OpenGL/glext.h>
 #   include <OpenGL/glu.h>
 #endif
-#include <GL/glext.h>
 
 extern "C" {
 // Pointer to glActiveTextureARB function
@@ -99,67 +97,6 @@ extern GL_BufferDataARB_Func glBufferDataARB_ptr;
 typedef void (APIENTRY *GL_GetBufferSubDataARB_Func)(GLenum, GLintptrARB, GLsizeiptrARB, GLvoid*);
 extern GL_GetBufferSubDataARB_Func glGetBufferSubDataARB_ptr;
 
-// Pointer to glGenProgramsARB function
-typedef void (APIENTRY *GL_GenProgramsARB_Func)(GLsizei, GLuint*);
-extern GL_GenProgramsARB_Func glGenProgramsARB_ptr;
-
-// Pointer to glDeleteProgramsARB function
-typedef void (APIENTRY *GL_DeleteProgramsARB_Func)(GLsizei, const GLuint*);
-extern GL_DeleteProgramsARB_Func glDeleteProgramsARB_ptr;
-
-// Pointer to glBindProgramARB function
-typedef void (APIENTRY *GL_BindProgramARB_Func)(GLenum, GLuint);
-extern GL_BindProgramARB_Func glBindProgramARB_ptr;
-
-// Pointer to glProgramStringARB function
-typedef void (APIENTRY *GL_ProgramStringARB_Func)(GLenum, GLenum, GLsizei, const GLvoid*);
-extern GL_ProgramStringARB_Func glProgramStringARB_ptr;
-
-// Pointer to glProgramLocalParameter4fvARB function
-typedef void (APIENTRY *GL_ProgramLocalParameter4fvARB_Func)(GLenum, GLuint, const GLfloat *);
-extern GL_ProgramLocalParameter4fvARB_Func glProgramLocalParameter4fvARB_ptr;
-
-// Pointer to glProgramParameter4fvNV function
-typedef void (APIENTRY *GL_ProgramParameter4fvNV_Func)(GLenum, GLuint, const GLfloat *);
-extern GL_ProgramParameter4fvNV_Func glProgramParameter4fvNV_ptr;
-
-// Pointer to glCombinerStageParameterfvNV function
-typedef void (APIENTRY *GL_CombinerStageParameterfvNV_Func)(GLenum, GLenum, const GLfloat *);
-extern GL_CombinerStageParameterfvNV_Func glCombinerStageParameterfvNV_ptr;
-
-// Pointer to glCombinerParameterfvNV function
-typedef void (APIENTRY *GL_CombinerParameterfvNV_Func)(GLenum, const GLfloat *);
-extern GL_CombinerParameterfvNV_Func glCombinerParameterfvNV_ptr;
-
-// Pointer to glCombinerParameteriNV function
-typedef void (APIENTRY *GL_CombinerParameteriNV_Func)(GLenum, GLint);
-extern GL_CombinerParameteriNV_Func glCombinerParameteriNV_ptr;
-
-// Pointer to glCombinerInputNV function
-typedef void (APIENTRY *GL_CombinerInputNV_Func)(GLenum, GLenum, GLenum, GLenum, GLenum, GLenum);
-extern GL_CombinerInputNV_Func glCombinerInputNV_ptr;
-
-// Pointer to glCombinerOutputNV function
-typedef void (APIENTRY *GL_CombinerOutputNV_Func)(GLenum, GLenum, GLenum, GLenum, GLenum, GLenum, GLenum, GLboolean, GLboolean, GLboolean);
-
-extern GL_CombinerOutputNV_Func glCombinerOutputNV_ptr;
-
-// Pointer to glFinalCombinerInputNV function
-typedef void (APIENTRY *GL_FinalCombinerInputNV_Func)(GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage);
-
-extern GL_FinalCombinerInputNV_Func glFinalCombinerInputNV_ptr;
-
-// Pointer to glGetProgramivARB function
-typedef void (APIENTRY *GL_GetProgramivARB_Func)(GLenum, GLenum, GLint *);
-extern GL_GetProgramivARB_Func glGetProgramivARB_ptr;
-
-// Pointer to glLoadProgramNV function
-typedef void (APIENTRY *GL_LoadProgramNV_Func)(GLenum, GLuint, GLsizei, const GLubyte *);
-extern GL_LoadProgramNV_Func glLoadProgramNV_ptr;
-
-// Pointer to glTrackMatrixNV function
-typedef void (APIENTRY *GL_TrackMatrixNV_Func)(GLenum, GLuint, GLenum, GLenum);
-extern GL_TrackMatrixNV_Func glTrackMatrixNV_ptr;
 };
 
 namespace Ogre {
@@ -168,7 +105,6 @@ namespace Ogre {
     class GLRenderSystem;
     class GLTexture;
     class GLTextureManager;
-    class GLGpuProgram;
 
 }
 

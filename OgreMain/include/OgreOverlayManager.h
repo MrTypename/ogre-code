@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -25,11 +25,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 #ifndef __OverlayManager_H__
 #define __OverlayManager_H__
 
-#include <set>
 #include "OgrePrerequisites.h"
-#include "OgreEventDispatcher.h"
 #include "OgreEventListeners.h"
-#include "OgreEventTarget.h"
 #include "OgreResourceManager.h"
 #include "OgreSingleton.h"
 #include "OgreStringVector.h"
@@ -41,16 +38,15 @@ namespace Ogre {
     /** Manages Overlay objects, parsing them from .overlay files and
         storing a lookup library of them.
     */
-    class _OgreExport OverlayManager : public ResourceManager, public Singleton<OverlayManager>, public TargetManager, public EventTarget
+    class _OgreExport OverlayManager : public ResourceManager, public Singleton<OverlayManager>, public TargetManager, public MouseMotionListener
     {
     protected:
-        typedef std::list<MouseMotionListener*> MouseMotionListenerList;
-        EventDispatcher mEventDispatcher;
-		Overlay* mCursorLevelOverlay;
-        bool mCursorGuiInitialised;
 		GuiContainer* mCursorGuiRegistered;
 		MouseMotionListener* mCursorListener;
-        MouseMotionListenerList mMouseMotionListenerList;
+		Overlay* mCursorLevelOverlay;
+        bool mCursorGuiInitialised;
+        Real mMouseX;
+        Real mMouseY;
 
         void parseNewElement( DataChunk& chunk, String& elemType, String& elemName, 
             bool isContainer, Overlay* pOverlay, bool isTemplate, String templateName = String(""), GuiContainer* container = 0);
@@ -91,13 +87,13 @@ namespace Ogre {
         @remarks This is used by pixel-based GuiElements to work out if they need to
             reclaculate their sizes.
         */
-        bool hasViewportChanged(void) const;
+        bool hasViewportChanged(void);
 
         /** Gets the height of the destination viewport in pixels. */
-        int getViewportHeight(void) const;
+        int getViewportHeight(void);
         
         /** Gets the width of the destination viewport in pixels. */
-        int getViewportWidth(void) const;
+        int getViewportWidth(void);
 
         /** Override standard Singleton retrieval.
             Why do we do this? Well, it's because the Singleton implementation is in a .h file,
@@ -112,20 +108,18 @@ namespace Ogre {
 
 
         /** This returns a PositionTarget at position x,y. */
-        PositionTarget* getPositionTargetAt(Real x, Real y);
+		PositionTarget* getPositionTargetAt(Real x, Real y);
 
-        void processEvent(InputEvent* e);
+		/** register the default cursor GUI implementation with the manager */
+		void setDefaultCursorGui(GuiContainer* cursor, MouseMotionListener* cursorListener);
+		/** register the cursor GUI implementation with the manager */
+		void setCursorGui(GuiContainer* cursor, MouseMotionListener* cursorListener);
+		void mouseMoved(MouseEvent* e);
+		void mouseDragged(MouseEvent* e);
+        Real getMouseX() { return mMouseX; }
+        Real getMouseY() { return mMouseY; }
 
-        /** register the default cursor GUI implementation with the manager */
-        void setDefaultCursorGui(GuiContainer* cursor, MouseMotionListener*);
-        /** register the cursor GUI implementation with the manager */
-        void setCursorGui(GuiContainer* cursor);
-        void addMouseMotionListener(MouseMotionListener* l);
-        void removeMouseMotionListener(MouseMotionListener* l);
-        Real getMouseX() { return mEventDispatcher.getMouseX(); }
-        Real getMouseY() { return mEventDispatcher.getMouseY(); }
-        void setDragDrop(bool dragDropOn) { mEventDispatcher.setDragDrop(dragDropOn); }
-        /** returns the registered cursor GUI */
+		/** returns the registered cursor GUI */
 		GuiContainer* getCursorGui();
 
 		/** create the high cursor level overlay and add the registered Cursor GUI implementation to it */

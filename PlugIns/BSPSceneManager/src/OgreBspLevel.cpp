@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -27,7 +27,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreException.h"
 #include "OgreMaterial.h"
 #include "OgreMaterialManager.h"
-#include "OgreMovableObject.h"
 #include "OgreSceneManager.h"
 #include "OgrePatchSurface.h"
 #include "OgreQuake3ShaderManager.h"
@@ -36,10 +35,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreStringVector.h"
 #include "OgreStringConverter.h"
 #include "OgreLogManager.h"
-#include "OgreSceneManagerEnumerator.h"
-#include "OgreTechnique.h"
-#include "OgrePass.h"
-#include "OgreTextureUnitState.h"
 
 
 namespace Ogre {
@@ -51,10 +46,6 @@ namespace Ogre {
         mName = name;
         mRootNode = 0;
         mBrushes = 0;
-        mVertexData = 0;
-        mFaceGroups = 0;
-        mLeafFaceGroups = 0;
-        mVisData.tableData = 0;
     }
 
     //-----------------------------------------------------------------------
@@ -81,32 +72,23 @@ namespace Ogre {
         loadQuake3Level(q3);
 
         chunk.clear();
-        mIsLoaded = true;
 
     }
 
     //-----------------------------------------------------------------------
     void BspLevel::unload()
     {
-        if (mVertexData)
-            delete mVertexData;
-        if (mFaceGroups)
-            delete [] mFaceGroups;
-        if (mLeafFaceGroups)
-            delete [] mLeafFaceGroups;
-        if (mRootNode)
-            delete [] mRootNode;
-        if (mVisData.tableData)
-            delete [] mVisData.tableData;
-        if (mBrushes)
-            delete [] mBrushes;
+        delete mVertexData;
+        delete [] mFaceGroups;
+        delete [] mLeafFaceGroups;
+        delete [] mRootNode;
+        delete [] mVisData.tableData;
+        delete [] mBrushes;
 
-        mVertexData = 0;
         mRootNode = 0;
         mFaceGroups = 0;
         mLeafFaceGroups = 0;
         mBrushes = 0;
-        mVisData.tableData = 0;
     }
 
     //-----------------------------------------------------------------------
@@ -228,6 +210,7 @@ namespace Ogre {
             if (shadMat == 0)
             {
                 // Build new material
+                Material mat(shaderName);
 
                 // Colour layer
                 // NB no extension in Q3A(doh), have to try shader, .jpg, .tga
@@ -237,15 +220,13 @@ namespace Ogre {
                 if (pShad)
                 {
                     shadMat = pShad->createAsMaterial(sm, q3lvl.mFaces[face].lm_texture);
+                    matHandle = shadMat->getHandle();
                 }
                 else
                 {
                     // No shader script, try default type texture
-                    shadMat = sm->createMaterial(shaderName);
-                    Pass *shadPass = shadMat->getTechnique(0)->getPass(0);
                     // Try jpg
-                    TextureUnitState* tex = shadPass->createTextureUnitState(tryName + ".jpg");
-                    tex->_load();
+                    Material::TextureLayer* tex = mat.addTextureLayer(tryName + ".jpg");
                     if (tex->isBlank())
                     {
                         // Try tga
@@ -253,31 +234,36 @@ namespace Ogre {
                     }
                     // Set replace on all first layer textures for now
                     tex->setColourOperation(LBO_REPLACE);
-                    tex->setTextureAddressingMode(TextureUnitState::TAM_WRAP);
+                    tex->setTextureAddressingMode(Material::TextureLayer::TAM_WRAP);
 
                     if (q3lvl.mFaces[face].lm_texture != -1)
                     {
                         // Add lightmap, additive blending
                         char lightmapName[16];
                         sprintf(lightmapName, "@lightmap%d",q3lvl.mFaces[face].lm_texture);
-                        tex = shadPass->createTextureUnitState(lightmapName);
+                        tex = mat.addTextureLayer(lightmapName);
                         // Blend
                         tex->setColourOperation(LBO_MODULATE);
                         // Use 2nd texture co-ordinate set
                         tex->setTextureCoordSet(1);
                         // Clamp
-                        tex->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
+                        tex->setTextureAddressingMode(Material::TextureLayer::TAM_CLAMP);
 
                     }
                     // Set culling mode to none
-                    shadMat->setCullingMode(CULL_NONE);
+                    mat.setCullingMode(CULL_NONE);
                     // No dynamic lighting
-                    shadMat->setLightingEnabled(false);
+                    mat.setLightingEnabled(false);
 
+                    // Register material
+                    shadMat = MaterialManager::getSingleton().add(mat);
+                    matHandle = shadMat->getHandle();
                 }
             }
-            matHandle = shadMat->getHandle();
-            shadMat->load();
+            else
+            {
+                matHandle = shadMat->getHandle();
+            }
 
             // Copy face data
             StaticFaceGroup* dest = &mFaceGroups[face];
@@ -679,7 +665,7 @@ namespace Ogre {
                         // Save player start
                         ViewPoint vp;
                         vp.position = origin;
-                        vp.orientation.FromAngleAxis(Math::DegreesToRadians(angle), Vector3::UNIT_Z);
+                        vp.orientation.FromAngleAxis(Math::getSingleton().DegreesToRadians(angle), Vector3::UNIT_Z);
                         mPlayerStarts.push_back(vp);
                     }
                     isPlayerStart = false;
@@ -778,9 +764,12 @@ namespace Ogre {
         memcpy(dest->position, src->point, sizeof(Real) * 3);
         memcpy(dest->normal, src->normal,  sizeof(Real) * 3);
         dest->colour = src->color;
+        // Correct texture coords
+        // Coords are flipped in Y axis!
+        // ---WHY???---
         dest->texcoords[0]  = src->texture[0];
-        dest->texcoords[1]  = src->texture[1];
+        dest->texcoords[1]  = 1 - src->texture[1];
         dest->lightmap[0]  = src->lightmap[0];
-        dest->lightmap[1]  = src->lightmap[1];
+        dest->lightmap[1]  = 1 - src->lightmap[1];
     }
 }

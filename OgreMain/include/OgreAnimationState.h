@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -53,7 +53,7 @@ namespace Ogre {
         /// Normal constructor with all params supplied
         AnimationState(const String& animName, Real timePos, Real length, Real weight = 1.0, bool enabled = false);
         /// Gets the name of the animation to which this state applies
-        const String& getAnimationName() const;
+        String getAnimationName() const;
         /// Sets the name of the animation to which this state applies
         void setAnimationName(const String& name);
         /// Gets the time position for this animation

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE 
 	(Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreGuiElementCommands.h"
 #include "OgreGuiElement.h"
 #include "OgreStringConverter.h"
@@ -187,35 +186,6 @@ namespace Ogre {
             else
             {
                 static_cast<GuiElement*>(target)->setVerticalAlignment(GVA_CENTER);
-            }
-        }
-        //-----------------------------------------------------------------------
-        //-----------------------------------------------------------------------
-        //-----------------------------------------------------------------------
-        //-----------------------------------------------------------------------
-        String CmdVisible::doGet(void* target)
-        {
-            bool visible = 
-                static_cast<GuiElement*>(target)->isVisible();
-            switch(visible)
-            {
-            case true:
-                return "true";
-            case false:
-                return "false";
-            }
-            // To keep compiler happy
-            return "true";
-        }
-        void CmdVisible::doSet(void* target, const String& val)
-        {
-            if (val == "true")
-            {
-                static_cast<GuiElement*>(target)->show();
-            }
-            else if (val == "false")
-            {
-                static_cast<GuiElement*>(target)->hide();
             }
         }
         //-----------------------------------------------------------------------

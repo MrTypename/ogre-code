@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreMovableObject.h"
 #include "OgreSceneNode.h"
@@ -39,22 +38,11 @@ namespace Ogre {
         mRenderQueueID = RENDER_QUEUE_MAIN;
         mQueryFlags = 0xFFFFFFFF;
         mWorldAABB.setNull();
-        mParentIsTagPoint = false;
     }
     //-----------------------------------------------------------------------
-    MovableObject::~MovableObject()
-    {
-        if (mParentNode && !mParentIsTagPoint)
-        {
-            // detach from parent
-            static_cast<SceneNode*>(mParentNode)->detachObject(this);
-        }
-    }
-    //-----------------------------------------------------------------------
-    void MovableObject::_notifyAttached(Node* parent, bool isTagPoint)
+    void MovableObject::_notifyAttached(Node* parent)
     {
         mParentNode = parent;
-        mParentIsTagPoint = isTagPoint;
     }
     //-----------------------------------------------------------------------
     Node* MovableObject::getParentNode(void) const
@@ -84,7 +72,7 @@ namespace Ogre {
         mRenderQueueID = queueID;
     }
     //-----------------------------------------------------------------------
-    RenderQueueGroupID MovableObject::getRenderQueueGroup(void) const
+    RenderQueueGroupID MovableObject::getRenderQueueGroup(void)
     {
         return mRenderQueueID;
     }

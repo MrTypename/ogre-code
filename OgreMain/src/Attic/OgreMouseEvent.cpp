@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreString.h"
 #include "OgreMouseEvent.h"
@@ -70,7 +69,7 @@ namespace Ogre {
 	 * @return x  an integer indicating horizontal position relative to
 	 *            the GuiElement
 	 */
-	 Real MouseEvent::getX() const {
+	 Real MouseEvent::getX() {
 		return mX;
 	}
 	/**
@@ -80,7 +79,7 @@ namespace Ogre {
 	 * @return y  an integer indicating vertical position relative to
 	 *            the GuiElement
 	 */
-	 Real MouseEvent::getY() const {
+	 Real MouseEvent::getY() {
 		return mY;
 	}
 
@@ -91,10 +90,10 @@ namespace Ogre {
 	 * @return y  an integer indicating vertical position relative to
 	 *            the GuiElement
 	 */
-	 Real MouseEvent::getZ() const {
+	 Real MouseEvent::getZ() {
 		return mZ;
 	}
-	 int MouseEvent::getButtonID() const
+	 int MouseEvent::getButtonID()
 	 {
 		 return mButtonID;
 
@@ -106,7 +105,7 @@ namespace Ogre {
 	 *
 	 * @return a string identifying the event and its attributes
 	 */
-	 String MouseEvent::paramString() const {
+	 String MouseEvent::paramString() {
 		String typeStr;
 		switch(mId) {
 		  case ME_MOUSE_PRESSED:
@@ -129,18 +128,6 @@ namespace Ogre {
 			  break;
 		  case ME_MOUSE_DRAGGED:
 			  typeStr = "MOUSE_DRAGGED";
-			  break;
-		  case ME_MOUSE_DRAGENTERED:
-			  typeStr = "MOUSE_DRAGENTERED";
-			  break;
-		  case ME_MOUSE_DRAGEXITED:
-			  typeStr = "MOUSE_DRAGEXITED";
-			  break;
-		  case ME_MOUSE_DRAGDROPPED:
-			  typeStr = "MOUSE_DRAGDROPPED";
-			  break;
-		  case ME_MOUSE_DRAGMOVED:
-			  typeStr = "MOUSE_DRAGMOVED";
 			  break;
 		  default:
 			  typeStr = "unknown type";

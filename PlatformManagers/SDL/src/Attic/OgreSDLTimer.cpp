@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright Š 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -24,27 +24,19 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 
 #include "OgreSDLTimer.h"
-#include <sys/time.h>
 
 namespace Ogre {
     
 	void SDLTimer::reset()
 	{
-	    Timer::reset();
-		gettimeofday(&start, NULL);
-	}
-
+		Timer::reset();
+		zeroTicks = SDL_GetTicks();
+    }
+	
 	unsigned long SDLTimer::getMilliseconds()
 	{
-	    struct timeval now;
-		gettimeofday(&now, NULL);
-	    return (now.tv_sec-start.tv_sec)*1000+(now.tv_usec-start.tv_usec)/1000;
+		unsigned long newTicks = SDL_GetTicks();
+		return newTicks - zeroTicks ;
 	}
 
-	unsigned long SDLTimer::getMicroseconds()
-	{
-	    struct timeval now;
-		gettimeofday(&now, NULL);
-	    return (now.tv_sec-start.tv_sec)*1000000+(now.tv_usec-start.tv_usec);
-	}	
 }

@@ -2,7 +2,7 @@
 This source file is a part of OGRE
 (Object-oriented Graphics Rendering Engine)
 
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -637,7 +637,7 @@ namespace Ogre {
        delete mRenderOp.vertexData;
     }
     //---------------------------------------------------------------------
-    const String& TTYGuiElement::getTypeName(void) const
+    const String& TTYGuiElement::getTypeName(void)
     {
         return msTypeName;
     }
@@ -707,7 +707,7 @@ namespace Ogre {
         mBottomColour = mTopColour;
     }
     //---------------------------------------------------------------------
-    const ColourValue& TTYGuiElement::getColour(void) const
+    ColourValue TTYGuiElement::getColour(void) const
     {
         // Either one
         return mColourTop;
@@ -719,7 +719,7 @@ namespace Ogre {
         Root::getSingleton().convertColourValue(mColourBottom, &mBottomColour);
     }
     //---------------------------------------------------------------------
-    const ColourValue& TTYGuiElement::getColourBottom(void) const
+    ColourValue TTYGuiElement::getColourBottom(void)
     {
         return mColourBottom;
     }
@@ -730,7 +730,7 @@ namespace Ogre {
         Root::getSingleton().convertColourValue(mColourTop, &mTopColour);
     }
     //---------------------------------------------------------------------
-    const ColourValue& TTYGuiElement::getColourTop(void) const
+    ColourValue TTYGuiElement::getColourTop(void)
     {
         return mColourTop;
     }

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -73,12 +73,6 @@ namespace Ogre {
         void FromAxes (const Vector3& xAxis, const Vector3& yAxis, const Vector3& zAxis);
         void ToAxes (Vector3* akAxis) const;
         void ToAxes (Vector3& xAxis, Vector3& yAxis, Vector3& zAxis) const;
-        /// Get the local x-axis
-        Vector3 xAxis(void);
-        /// Get the local y-axis
-        Vector3 yAxis(void);
-        /// Get the local z-axis
-        Vector3 zAxis(void);
 
         inline Quaternion& operator= (const Quaternion& rkQ)
 		{

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -62,7 +62,7 @@ namespace Ogre {
 		 * Returns whether or not the listener is a multicaster
 		 */
 	public:
-		virtual bool isMulticaster() const
+		virtual bool isMulticaster()
 		{ return false; }
 
 	};
@@ -99,10 +99,6 @@ namespace Ogre {
 		 */
 		virtual void mouseReleased(MouseEvent* e) = 0;
 
-        virtual void mouseDragEntered(MouseEvent* e) {};
-        virtual void mouseDragExited(MouseEvent* e) {};
-        virtual void mouseDragDropped(MouseEvent* e) {};
-
     };
 
 
@@ -123,14 +119,6 @@ namespace Ogre {
 		 * Invoked when a key button has been released on a component.
 		 */
 		virtual void keyReleased(KeyEvent* e) = 0;
-		/**
-		 * Invoked when the target receives the keyboard focus
-		 */
-        virtual void keyFocusIn(KeyEvent* e) {}
-		/**
-		 * Invoked when the target loses the keyboard focus
-		 */
-        virtual void keyFocusOut(KeyEvent* e) {}
 
     };
 
@@ -148,10 +136,6 @@ namespace Ogre {
 		 * Invoked when the mouse dragged
 		 */
 		virtual void mouseDragged(MouseEvent* e) = 0;
-        /**
-         * sent to target
-         */
-        virtual void mouseDragMoved(MouseEvent* e) {};
     };
 
 	/** Specialised EventListener for receiving component-specific ActionEvent events.*/

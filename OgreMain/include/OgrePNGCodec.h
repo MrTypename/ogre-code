@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -25,20 +25,20 @@ http://www.gnu.org/copyleft/lesser.txt.
 #ifndef _PNGCodec_H__
 #define _PNGCodec_H__
 
-#include "OgreILImageCodec.h"
+#include "OgreImageCodec.h"
+#include "OgreSDDataChunk.h"
 
 namespace Ogre {
 
     /** ImageCodec specialized in Portable Network Graphics images.
     */
-    class _OgreExport PNGCodec : public ILImageCodec
+    class _OgreExport PNGCodec : public ImageCodec
     {
     public:
         void code( const DataChunk& input, DataChunk* output, ... ) const;
+        CodecData * decode( const DataChunk& input, DataChunk* output, ... ) const;
 
         String getType() const { return "png"; }
-
-        unsigned int getILType(void) const;
     };
 
 } // namespace

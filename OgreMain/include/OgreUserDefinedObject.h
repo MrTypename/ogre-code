@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2003 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -64,7 +64,7 @@ namespace Ogre {
             that version is a litle more friendly and easier to scope, but obviously 
             slightly less efficient. You choose which you prefer.
         */
-        virtual long getTypeID(void) const;
+        virtual long getTypeID(void);
 
         /** Return a string identifying the type of user defined object.
         @remarks
@@ -76,7 +76,7 @@ namespace Ogre {
             that version is a litle more efficient, but obviously 
             slightly less easy to read. You choose which you prefer.
         */
-        virtual const String& getTypeName(void) const;
+        virtual const String& getTypeName(void);
         
     };
     

@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreRenderTarget.h"
 #include "OgreGuiElement.h"
 #include "OgreGuiManager.h"
@@ -65,7 +64,7 @@ namespace Ogre {
 
     }
 
-    const String& RenderTarget::getName(void) const
+    String RenderTarget::getName(void)
     {
         return mName;
     }
@@ -78,15 +77,15 @@ namespace Ogre {
         colourDepth = mColourDepth;
     }
 
-    int RenderTarget::getWidth(void) const
+    int RenderTarget::getWidth(void)
     {
         return mWidth;
     }
-    int RenderTarget::getHeight(void) const
+    int RenderTarget::getHeight(void)
     {
         return mHeight;
     }
-    int RenderTarget::getColourDepth(void) const
+    int RenderTarget::getColourDepth(void)
     {
         return mColourDepth;
     }
@@ -204,7 +203,6 @@ namespace Ogre {
     {
         return mStats.worstFPS;
     }
-
     size_t RenderTarget::getTriangleCount(void) const
     {
         return mStats.triangleCount;
@@ -337,7 +335,7 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    unsigned short RenderTarget::getNumViewports(void) const
+    unsigned short RenderTarget::getNumViewports(void)
     {
         return (unsigned short)mViewportList.size();
 

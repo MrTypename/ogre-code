@@ -2,7 +2,7 @@
 This source file is a part of OGRE
 (Object-oriented Graphics Rendering Engine)
 
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -27,7 +27,10 @@ http://www.gnu.org/copyleft/lesser.txt
 #define _Font_H__
 
 #include "OgrePrerequisites.h"
-#include "OgreResource.h"
+#include "OgreTextureManager.h"
+#include "OgreMaterial.h"
+#include "OgreMaterialManager.h"
+
 
 namespace Ogre
 {
@@ -113,7 +116,7 @@ namespace Ogre
         void setType(FontType ftype);
 
         /** Gets the type of font. */
-        FontType getType(void) const;
+        FontType getType(void);
 
         /** Sets the source of the font.
         @remarks
@@ -132,7 +135,7 @@ namespace Ogre
 
         /** Gets the source this font (either an image or a truetype font).
         */
-        const String& getSource(void) const;
+        const String& getSource(void);
 
         /** Sets the size of a truetype font (only required for FT_TRUETYPE). 
         @param ttfSize The size of the font in points. Note that the
@@ -152,12 +155,12 @@ namespace Ogre
             Note that the size of the font does not affect how big it is on the screen, 
             just how large it is in the texture and thus how detailed it is.            
         */
-        Real getTrueTypeSize(void) const;
+        Real getTrueTypeSize(void);
         /** Gets the resolution (dpi) of the font used to generate the texture.
         @remarks
             Only applicable for FT_TRUETYPE Font objects.
         */
-        uint getTrueTypeResolution(void) const;
+        uint getTrueTypeResolution(void);
 
         /** Returns the size in pixels of a box that could contain the whole string.
         */
@@ -195,7 +198,7 @@ namespace Ogre
             mTexCoords_v1[ idx ] = v1;
             mTexCoords_u2[ idx ] = u2;
             mTexCoords_v2[ idx ] = v2;
-            mAspectRatio[ idx ] = ( u2 - u1 ) / ( v2 - v1 );
+            mAspectRatio[ idx ] = ( u2 - u1 ) / ( v1 - v2 );
         }
         /** Gets the aspect ratio (width / height) of this character. */
         inline Real getGlyphAspectRatio( OgreChar id ) const
@@ -245,7 +248,7 @@ namespace Ogre
         	mAntialiasColour = enabled;
         }
 
-        inline bool getAntialiasColour(void) const
+        inline bool getAntialiasColour(void)
         {
             return mAntialiasColour;
         }

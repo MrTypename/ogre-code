@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -377,7 +377,9 @@ void MilkshapePlugin::doExportMesh(msModel* pModel)
             }
 
             *pTex++ = uv[0];
-            *pTex++ = uv[1];
+            // Invert the 'v' texture coordinate, Milkshape appears to treat 0 as the TOP of the texture
+            //   like D3D, OGRE uses the reverse
+            *pTex++ = 1 - uv[1];
 
             int boneIdx = msVertex_GetBoneIndex(pVertex);
             if (boneIdx != -1)

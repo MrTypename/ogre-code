@@ -30,8 +30,8 @@
 				BufferSecurityCheck="TRUE"
 				EnableFunctionLevelLinking="TRUE"
 				DisableLanguageExtensions="FALSE"
-				UsePrecompiledHeader="3"
-				PrecompiledHeaderThrough="OgreStableHeaders.h"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="OgrePrerequisites.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="4"/>
@@ -39,7 +39,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib zlib.lib freetype.lib user32.lib $(NOINHERIT)"
+				AdditionalDependencies="kernel32.lib zlib.lib freetype.lib $(NOINHERIT)"
 				OutputFile="$(OutDir)/OgreMain.dll"
 				Version="0.99"
 				LinkIncremental="2"
@@ -57,9 +57,7 @@
 				Name="VCMIDLTool"/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\Samples\Common\bin\$(ConfigurationName)
-copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
-"/>
+				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\Samples\Common\bin\$(ConfigurationName)"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -97,8 +95,8 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				BufferSecurityCheck="FALSE"
 				EnableFunctionLevelLinking="TRUE"
 				DisableLanguageExtensions="FALSE"
-				UsePrecompiledHeader="3"
-				PrecompiledHeaderThrough="OgreStableHeaders.h"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="OgrePrerequisites.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="3"/>
@@ -106,7 +104,7 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib zlib.lib freetype.lib user32.lib $(NOINHERIT)"
+				AdditionalDependencies="kernel32.lib zlib.lib freetype.lib $(NOINHERIT)"
 				OutputFile="$(OutDir)/OgreMain.dll"
 				Version="0.99"
 				LinkIncremental="1"
@@ -125,9 +123,7 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				Name="VCMIDLTool"/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\Samples\Common\bin\$(ConfigurationName)
-copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
-"/>
+				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\Samples\Common\bin\$(ConfigurationName)"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -166,13 +162,7 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreArchiveManager.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreAutoParamDataSource.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreAxisAlignedBox.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreBMPCodec.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreBillboard.cpp">
@@ -214,9 +204,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreCursor.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreDDSCodec.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreDataChunk.cpp">
 			</File>
 			<File
@@ -253,15 +240,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreFontManager.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreGpuProgram.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreGpuProgramManager.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreGpuProgramUsage.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreGuiContainer.cpp">
 			</File>
 			<File
@@ -289,16 +267,10 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreHardwareVertexBuffer.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreHighLevelGpuProgram.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreHighLevelGpuProgramManager.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreILImageCodec.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreImage.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreImageCodec.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreInput.cpp">
@@ -403,9 +375,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreParticleSystemManager.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgrePass.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgrePatchMesh.cpp">
 			</File>
 			<File
@@ -416,23 +385,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgrePlatformManager.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgrePrecompiledHeaders.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-						PrecompiledHeaderThrough="OgreStableHeaders.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-						PrecompiledHeaderThrough="OgreStableHeaders.h"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\OgrePredefinedControllers.cpp">
@@ -466,6 +418,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreResourceManager.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreResourceMap.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreRoot.cpp">
@@ -540,16 +495,13 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreTagPoint.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreTechnique.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreTexture.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreTextureManager.cpp">
+				RelativePath="..\src\OgreTextureLayer.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreTextureUnitState.cpp">
+				RelativePath="..\src\OgreTextureManager.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreTimer.cpp">
@@ -577,20 +529,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\unzip.c">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-						PrecompiledHeaderThrough=""/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-						PrecompiledHeaderThrough=""/>
-				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
@@ -624,13 +562,7 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreArchiveManager.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreAutoParamDataSource.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreAxisAlignedBox.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreBMPCodec.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreBillboard.h">
@@ -682,9 +614,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreCursor.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreDDSCodec.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreDataChunk.h">
@@ -744,13 +673,7 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreFrameListener.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreGpuProgram.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreGpuProgramManager.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreGpuProgramUsage.h">
+				RelativePath="..\include\OgreGeometryData.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreGuiContainer.h">
@@ -784,15 +707,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreHardwareVertexBuffer.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreHighLevelGpuProgram.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreHighLevelGpuProgramManager.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreILImageCodec.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreImage.h">
@@ -936,9 +850,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreParticleSystemManager.h">
 			</File>
 			<File
-				RelativePath="..\include\OgrePass.h">
-			</File>
-			<File
 				RelativePath="..\include\OgrePatchMesh.h">
 			</File>
 			<File
@@ -1011,6 +922,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreResourceManager.h">
 			</File>
 			<File
+				RelativePath="..\include\OgreResourceMap.h">
+			</File>
+			<File
 				RelativePath="..\include\OgreRoot.h">
 			</File>
 			<File
@@ -1068,9 +982,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreSphere.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreStableHeaders.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreStaticFaceGroup.h">
 			</File>
 			<File
@@ -1107,16 +1018,10 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreTargetManager.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreTechnique.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreTexture.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreTextureManager.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreTextureUnitState.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreTimer.h">

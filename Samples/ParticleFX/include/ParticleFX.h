@@ -2,13 +2,24 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright © 2000-2003 The OGRE Team
+Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
 
-You may use this sample code for anything you like, it is not covered by the
-LGPL like the rest of the engine.
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
 /*
@@ -68,23 +79,23 @@ protected:
         Entity *ent = mSceneMgr->createEntity("head", "ogrehead.mesh");
 
         // Add entity to the root scene node
-        mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
+        static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild())->attachObject(ent);
 
 
         // Green nimbus around Ogre
         ParticleSystem* pSys1 = ParticleSystemManager::getSingleton().createSystem("Nimbus", 
             "Examples/GreenyNimbus");
-        mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pSys1);
+        static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild())->attachObject(pSys1);
 
 
         // Create shared node for 2 fountains
-        mFountainNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+        mFountainNode = static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild());
 
         // fountain 1
         ParticleSystem* pSys2 = ParticleSystemManager::getSingleton().createSystem("fountain1", 
             "Examples/PurpleFountain");
         // Point the fountain at an angle
-        SceneNode* fNode = mFountainNode->createChildSceneNode();
+        SceneNode* fNode = static_cast<SceneNode*>(mFountainNode->createChild());
         fNode->translate(200,-100,0);
         fNode->rotate(Vector3::UNIT_Z, 20);
         fNode->attachObject(pSys2);
@@ -93,7 +104,7 @@ protected:
         ParticleSystem* pSys3 = ParticleSystemManager::getSingleton().createSystem("fountain2", 
             "Examples/PurpleFountain");
         // Point the fountain at an angle
-        fNode = mFountainNode->createChildSceneNode();
+        fNode = static_cast<SceneNode*>(mFountainNode->createChild());
         fNode->translate(-200,-100,0);
         fNode->rotate(Vector3::UNIT_Z, -20);
         fNode->attachObject(pSys3);
@@ -104,7 +115,7 @@ protected:
         // Create a rainstorm 
         ParticleSystem* pSys4 = ParticleSystemManager::getSingleton().createSystem("rain", 
             "Examples/Rain");
-        SceneNode* rNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+        SceneNode* rNode = static_cast<SceneNode*>(mSceneMgr->getRootSceneNode()->createChild());
         rNode->translate(0,1000,0);
         rNode->attachObject(pSys4);
         // Fast-forward the rain so it looks more natural

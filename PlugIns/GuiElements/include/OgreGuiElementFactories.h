@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -55,7 +55,7 @@ namespace Ogre {
             return new CursorGuiElement(instanceName);
         }
         /** See GuiElementFactory */
-        const String& getTypeName(void) const
+        const String& getTypeName(void)
         {
             static String name = "Cursor";
             return name;
@@ -72,7 +72,7 @@ namespace Ogre {
             return new PanelGuiElement(instanceName);
         }
         /** See GuiElementFactory */
-        const String& getTypeName(void) const
+        const String& getTypeName(void)
         {
             static String name = "Panel";
             return name;
@@ -89,7 +89,7 @@ namespace Ogre {
             return new BorderPanelGuiElement(instanceName);
         }
         /** See GuiElementFactory */
-        const String& getTypeName(void) const
+        const String& getTypeName(void)
         {
             static String name = "BorderPanel";
             return name;
@@ -106,7 +106,7 @@ namespace Ogre {
             return new TextAreaGuiElement(instanceName);
         }
         /** See GuiElementFactory */
-        const String& getTypeName(void) const
+        const String& getTypeName(void)
         {
             static String name = "TextArea";
             return name;
@@ -123,7 +123,7 @@ namespace Ogre {
             return new TextBoxGuiElement(instanceName);
         }
         /** See GuiElementFactory */
-        const String& getTypeName(void) const
+        const String& getTypeName(void)
         {
             static String name = "TextBox";
             return name;
@@ -141,7 +141,7 @@ namespace Ogre {
             return new ButtonGuiElement(instanceName);
         }
         /** See GuiElementFactory */
-        const String& getTypeName(void) const
+        const String& getTypeName(void)
         {
             static String name = "Button";
             return name;
@@ -158,7 +158,7 @@ namespace Ogre {
             return new BorderButtonGuiElement(instanceName);
         }
         /** See GuiElementFactory */
-        const String& getTypeName(void) const
+        const String& getTypeName(void)
         {
             static String name = "BorderButton";
             return name;
@@ -175,7 +175,7 @@ namespace Ogre {
             return new ListGuiElement(instanceName);
         }
         /** See GuiElementFactory */
-        const String& getTypeName(void) const
+        const String& getTypeName(void)
         {
             static String name = "List";
             return name;
@@ -193,7 +193,7 @@ namespace Ogre {
             return new ScrollBarGuiElement(instanceName);
         }
         /** See GuiElementFactory */
-        const String& getTypeName(void) const
+        const String& getTypeName(void)
         {
             static String name = "ScrollBar";
             return name;
@@ -209,7 +209,7 @@ namespace Ogre {
             return new PopupMenuGuiElement(instanceName);
         }
         /** See GuiElementFactory */
-        const String& getTypeName(void) const
+        const String& getTypeName(void)
         {
             static String name = "PopupMenu";
             return name;
@@ -225,7 +225,7 @@ namespace Ogre {
             return new TTYGuiElement(instanceName);
         }
         /** See GuiElementFactory */
-        const String& getTypeName(void) const
+        const String& getTypeName(void)
         {
             static String name = "TTY";
             return name;

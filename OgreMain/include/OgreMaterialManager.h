@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -31,10 +31,13 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreResourceManager.h"
 #include "OgreMaterial.h"
 #include "OgreStringVector.h"
-#include "OgreMaterialSerializer.h"
 
 namespace Ogre {
 
+    /// Function def for material attribute parser.
+    typedef void (*MATERIAL_ATTRIB_PARSER)(StringVector::iterator&, int, Material*);
+    /// Function def for texture layer attribute parser.
+    typedef void (*TEXLAYER_ATTRIB_PARSER)(StringVector::iterator&, int, Material*, Material::TextureLayer*);
 
     /** Class for managing Material settings for Ogre.
         @remarks
@@ -54,20 +57,29 @@ namespace Ogre {
     class _OgreExport MaterialManager : public ResourceManager, public Singleton<MaterialManager>
     {
     protected:
+        void parseNewTextureLayer( DataChunk& chunk, Material* pMat );
+        void parseAttrib( const String& line, Material* pMat);
+        void parseLayerAttrib( const String& line, Material* pMat, Material::TextureLayer* pLayer );
+
+        /// Keyword-mapped attribute parsers.
+        //typedef std::map<String, MATERIAL_ATTRIB_PARSER> MatAttribParserList;
+        typedef std::map<String, MATERIAL_ATTRIB_PARSER> MatAttribParserList;
+        MatAttribParserList mMatAttribParsers;
+        /// Keyword-mapped attribute parsers.
+        typedef std::map<String, TEXLAYER_ATTRIB_PARSER> LayerAttribParserList;
+        //typedef HashMap<String, TEXLAYER_ATTRIB_PARSER, std::hash<String>> LayerAttribParserList;
+        LayerAttribParserList mLayerAttribParsers;
 
         typedef HashMap<int, Material*> MaterialHandleList;
 
-        /// Default Texture filtering - minification
-        FilterOptions mDefaultMinFilter;
-        /// Default Texture filtering - magnification
-        FilterOptions mDefaultMagFilter;
-        /// Default Texture filtering - mipmapping
-        FilterOptions mDefaultMipFilter;
-        /// Default Texture anisotropy
-        int mDefaultMaxAniso;
+        /// Materials by handle.
+        MaterialHandleList mHandles;
 
-        /// Serializer
-        MaterialSerializer mSerializer;
+		/// default texture filtering
+		TextureFilterOptions mDefTextureFiltering;
+
+		/// default maxAnisotropy
+		int mDefAniso;
 
     public:
         /** Default constructor.
@@ -78,11 +90,27 @@ namespace Ogre {
         */
         virtual ~MaterialManager();
 
-		/** Intialises the material manager, which also triggers it to 
-		 * parse all available .program and .material scripts. */
-		void initialise(void);
-        
-		/** Parses a Material script file passed as a chunk.
+        /** Adds a copy of a material created outside the MaterialManager to the master Material list.
+            @note
+                MaterialManager copies the Material so there are no memory management issues.
+                However note that the Material's internal handle will be regenerated to ensure uniqueness.
+            @par
+                Note it is usually better to just use the create() method instead.
+            @param mat A reference to a manually created Material
+            @returns A pointer to the newly created Material based on the one passed in
+        */
+        Material* add(const Material& mat);
+
+
+        /** Gets a pointer to a Material by it's numerical handle.
+            @remarks
+                Numerical handles are assigned on creation of a material, or when a copy is registered
+                with the MaterialManager using the add method. Retreiving materials by handle is more
+                efficient than doing so by name.
+        */
+        Material* getByHandle(int handle);
+
+        /** Parses a Material script file passed as a chunk.
         */
         void parseScript(DataChunk& chunk);
 
@@ -91,11 +119,13 @@ namespace Ogre {
         void parseAllSources(const String& extension = ".material");
 
         /** Create implementation required by ResourceManager.
-        @remarks
-            All Materials created by this method are deferred-load, ie none of
-            the textures referenced by the TextureUnitState are loaded, and 
         */
         Resource* create( const String& name );
+
+        /** Create implementation that creates a deferred-load Material, ie one that does not load any resources
+            like texture files etc, and does not register itself with SceneManagers until it is actually used.
+        */
+        Material* createDeferred( const String& name );
 
         /** Sets the default texture filtering to be used for loaded textures, for when textures are
             loaded automatically (e.g. by Material class) or when 'load' is called with the default
@@ -104,19 +134,8 @@ namespace Ogre {
                 The default value is TFO_BILINEAR.
         */
         virtual void setDefaultTextureFiltering(TextureFilterOptions fo);
-        /** Sets the default texture filtering to be used for loaded textures, for when textures are
-            loaded automatically (e.g. by Material class) or when 'load' is called with the default
-            parameters by the application.
-        */
-        virtual void setDefaultTextureFiltering(FilterType ftype, FilterOptions opts);
-        /** Sets the default texture filtering to be used for loaded textures, for when textures are
-            loaded automatically (e.g. by Material class) or when 'load' is called with the default
-            parameters by the application.
-        */
-        virtual void setDefaultTextureFiltering(FilterOptions minFilter, FilterOptions magFilter, FilterOptions mipFilter);
-
 		/// get the default texture filtering
-        virtual FilterOptions getDefaultTextureFiltering(FilterType ftype) const;
+        virtual TextureFilterOptions getDefaultTextureFiltering();
 
         /** Sets the default anisotropy level to be used for loaded textures, for when textures are
             loaded automatically (e.g. by Material class) or when 'load' is called with the default
@@ -126,7 +145,7 @@ namespace Ogre {
         */
 		void setDefaultAnisotropy(int maxAniso);
 		/// get the default maxAnisotropy
-		int getDefaultAnisotropy() const;
+		int getDefaultAnisotropy();
 
 		/** Override standard Singleton retrieval.
             @remarks

@@ -2,7 +2,7 @@
 This source file is a part of OGRE
 (Object-oriented Graphics Rendering Engine)
 
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -29,7 +29,6 @@ http://www.gnu.org/copyleft/lesser.txt
 #include "OgreOverlayManager.h"
 #include "OgreHardwareBufferManager.h"
 #include "OgreHardwareVertexBuffer.h"
-#include "OgreException.h"
 
 namespace Ogre {
 
@@ -97,7 +96,7 @@ namespace Ogre {
 
     }
 
-    void TextAreaGuiElement::checkMemoryAllocation( size_t numChars )
+    void TextAreaGuiElement::checkMemoryAllocation( uint numChars )
     {
         if( mAllocSize < numChars)
         {
@@ -370,7 +369,7 @@ namespace Ogre {
         delete mRenderOp.vertexData;
     }
     //---------------------------------------------------------------------
-    const String& TextAreaGuiElement::getTypeName(void) const
+    const String& TextAreaGuiElement::getTypeName(void)
     {
         return msTypeName;
     }
@@ -434,7 +433,7 @@ namespace Ogre {
         updateColours();
     }
     //---------------------------------------------------------------------
-    const ColourValue& TextAreaGuiElement::getColour(void) const
+    ColourValue TextAreaGuiElement::getColour(void) const
     {
         // Either one
         return mColourTop;
@@ -447,7 +446,7 @@ namespace Ogre {
         updateColours();
     }
     //---------------------------------------------------------------------
-    const ColourValue& TextAreaGuiElement::getColourBottom(void) const
+    ColourValue TextAreaGuiElement::getColourBottom(void)
     {
         return mColourBottom;
     }
@@ -459,7 +458,7 @@ namespace Ogre {
         updateColours();
     }
     //---------------------------------------------------------------------
-    const ColourValue& TextAreaGuiElement::getColourTop(void) const
+    ColourValue TextAreaGuiElement::getColourTop(void)
     {
         return mColourTop;
     }

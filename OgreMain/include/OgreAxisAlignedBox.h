@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -359,14 +359,14 @@ namespace Ogre {
 			return Math::intersects(p, *this);
 		}
         /** Tests whether the vector point is within this box. */
-        bool intersects(const Vector3& v) const
+        bool intersects(const Vector3& v)
         {
 			return(v.x >= mMinimum.x  &&  v.x <= mMaximum.x  && 
 			    v.y >= mMinimum.y  &&  v.y <= mMaximum.y  && 
     			v.z >= mMinimum.z  &&  v.z <= mMaximum.z);
         }
 		/// Gets the centre of the box
-		Vector3 getCenter(void) const
+		Vector3 getCenter(void)
 		{
 			return Vector3((mMaximum + mMinimum) * 0.5);
 		}

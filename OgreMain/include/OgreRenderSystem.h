@@ -30,7 +30,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreString.h"
 
-#include "OgreTextureUnitState.h"
+#include "OgreMaterial.h"
 #include "OgreCommon.h"
 
 #include "OgreRenderOperation.h"
@@ -39,7 +39,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreRenderTexture.h"
 #include "OgreFrameListener.h"
 #include "OgreConfigOptionMap.h"
-#include "OgreGpuProgram.h"
 
 namespace Ogre
 {
@@ -190,6 +189,47 @@ namespace Ogre
         */
         virtual void shutdown(void);
 
+        /** Registers a FrameListener which will be called back every frame.
+            @remarks
+                A FrameListener is a class which implements methods which
+                will be called during Ogre's automatic rendering loop (started
+                with RenderSystem::startRendering).
+            @par
+                See the FrameListener class for more details on the specifics.
+                It is imperitive that the instance passed to this method is
+                not destroyed before iether the rendering loop ends, or the
+                class is removed from the listening list using removeFrameListener.
+            @see
+                FrameListener
+        */
+        virtual void addFrameListener(FrameListener* newListener);
+
+        /** Removes a FrameListener from the list of listening classes.
+        */
+        virtual void removeFrameListener(FrameListener* oldListener);
+
+        /** Starts / restarts the automatic rendering cycle.
+            @remarks
+                This method begins the automatic rendering of the scene.
+                This method will NOT RETURN until the rendering
+                cycle is halted.
+            @par
+                During rendering, any FrameListener classes registered using
+                addFrameListener will be called back for each frame that is to be rendered,
+                These classes can tell OGRE to halt the rendering if required,
+                which will cause this method to return.
+            @par
+                Note - users of the OGRE library do not have to use this
+                automatic rendering loop. It is there as a convenience and is most
+                useful for high frame rate applications e.g. games. For applications that
+                don't need to constantly refresh the rendering targets (e.g. an editor
+                utility), it is better to manually refresh each render target only when
+                required by calling RenderTarget::update.
+            @par
+                This frees up the CPU to do other things in between refreshes, since in
+                this case frame rate is less important.
+         */
+        virtual void startRendering(void);
 
         /** Sets the colour & strength of the ambient (global directionless) light in the world.
         */
@@ -198,6 +238,17 @@ namespace Ogre
         /** Sets the type of light shading required (default = Gouraud).
         */
         virtual void setShadingType(ShadeOptions so) = 0;
+
+        /** Sets the type of texture filtering used when rendering
+            @remarks
+                This method sets the kind of texture filtering applied when rendering textures onto
+                primitives. Filtering covers how the effects of minification and magnification are
+                disguised by resampling.
+            @param
+                fo The type of filtering to apply. The options are described in
+                TextureFilterOptions
+         */
+        virtual void setTextureFiltering(TextureFilterOptions fo);
 
         /** Sets whether or not dynamic lighting is enabled.
             @param
@@ -300,7 +351,7 @@ namespace Ogre
 
         /** Returns true if the system is synchronising frames with the monitor vertical blank.
         */
-        bool getWaitForVerticalBlank(void) const;
+        bool getWaitForVerticalBlank(void);
 
         // ------------------------------------------------------------------------
         //                     Internal Rendering Access
@@ -309,10 +360,50 @@ namespace Ogre
         // ------------------------------------------------------------------------
 
 
-        /** Tells the rendersystem to use the attached set of lights (and no others) 
-        up to the number specified (this allows the same list to be used with different
-        count limits) */
-        virtual void _useLights(const LightList& lights, unsigned short limit) = 0;
+        /**
+          Adds a light to the renderers list of active lights
+
+          This method should not be called directly by user
+          processes - this is adding a light at the rendering
+          level. User processes should add lights using the
+          SceneNode attachLight method
+         */
+        virtual void _addLight(Light *lt) = 0;
+        /**
+          Removes a light from the renderers list.
+
+          As with RenderSystem::_addLight
+          this method is for use internally, not by user processes.
+          See SceneNode for user-level light maintenance.
+         */
+        virtual void _removeLight(Light *lt) = 0;
+        /** Modifies a light in the renderer.
+            Modifies a light which has already been added using _addLight.
+        */
+        virtual void _modifyLight(Light* lt) = 0;
+        /**
+          Clears all the lights from the renderer
+
+          As with RenderSystem::_addLight
+          this method is for use internally, not by user processes.
+          See SceneManager for user-level light maintenance.
+         */
+        virtual void _removeAllLights(void) = 0;
+
+        /**
+          Saves the current rendering state
+
+          Stores the current rendering state on the
+          render state stack. The state may then be altered
+          and restored back to it's previous state using
+          RenderSystem::_popRenderState. Used internally by Ogre
+          to manage changes like model/view matrices, active
+          materials/textures without having to repecify them
+          every time.
+         */
+        virtual void _pushRenderState(void) = 0;
+        /** Restores the render state to a previous state. */
+        virtual void _popRenderState(void) = 0;
         /** Sets the world transform matrix. */
         virtual void _setWorldMatrix(const Matrix4 &m) = 0;
         /** Sets multiple world matrices (vertex blending). */
@@ -326,11 +417,9 @@ namespace Ogre
             only sets those settings which are different from the current settings for this
             unit, thus minimising render state changes.
         */
-        virtual void _setTextureUnitSettings(size_t texUnit, TextureUnitState& tl);
+        virtual void _setTextureUnitSettings(int texUnit, Material::TextureLayer& tl);
         /** Turns off a texture unit. */
-        virtual void _disableTextureUnit(size_t texUnit);
-        /** Disables all texture units from the given unit upwards */
-        virtual void _disableTextureUnitsFrom(size_t texUnit);
+        virtual void _disableTextureUnit(int texUnit);
         /** Sets the surface properties to be used for future rendering.
 
             This method sets the the properties of the surfaces of objects
@@ -379,18 +468,18 @@ namespace Ogre
           @param texname The name of the texture to use - this should have
               already been loaded with TextureManager::load.
          */
-        virtual void _setTexture(size_t unit, bool enabled, const String &texname) = 0;
+        virtual void _setTexture(int unit, bool enabled, const String &texname) = 0;
 
         /**
           Sets the texture coordinate set to use for a texture unit.
 
-          Meant for use internally - not generally used directly by apps - the Material and TextureUnitState
+          Meant for use internally - not generally used directly by apps - the Material and TextureLayer
           classes let you manage textures far more easily.
 
           @param unit Texture unit as above
           @param index The index of the texture coordinate set to use.
          */
-        virtual void _setTextureCoordSet(size_t unit, size_t index) = 0;
+        virtual void _setTextureCoordSet(int unit, int index) = 0;
 
         /**
           Sets a method for automatically calculating texture coordinates for a stage.
@@ -398,43 +487,33 @@ namespace Ogre
           @param unit Texture unit as above
           @param m Calculation method to use
          */
-        virtual void _setTextureCoordCalculation(size_t unit, TexCoordCalcMethod m) = 0;
+        virtual void _setTextureCoordCalculation(int unit, TexCoordCalcMethod m) = 0;
 
-        /** Sets the texture blend modes from a TextureUnitState record.
+        /** Sets the texture blend modes from a TextureLayer record.
             Meant for use internally only - apps should use the Material
-            and TextureUnitState classes.
+            and TextureLayer classes.
             @param unit Texture unit as above
             @param bm Details of the blending mode
         */
-        virtual void _setTextureBlendMode(size_t unit, const LayerBlendModeEx& bm) = 0;
+        virtual void _setTextureBlendMode(int unit, const LayerBlendModeEx& bm) = 0;
 
-        /** Sets the filtering options for a given texture unit.
-        @param unit The texture unit to set the filtering options for
-        @param minFilter The filter used when a texture is reduced in size
-        @param magFilter The filter used when a texture is magnified
-        @param mipFilter The filter used between mipmap levels, FO_NONE disables mipmapping
-        */
-        virtual void _setTextureUnitFiltering(size_t unit, FilterOptions minFilter,
-            FilterOptions magFilter, FilterOptions mipFilter);
-
-        /** Sets a single filter for a given texture unit.
-        @param unit The texture unit to set the filtering options for
-        @param ftype The filter type
-        @param filter The filter to be used
-        */
-        virtual void _setTextureUnitFiltering(size_t unit, FilterType ftype, FilterOptions filter) = 0;
+		/** Sets the texture filtering type for a texture unit.*/
+		virtual void _setTextureLayerFiltering(int unit, const TextureFilterOptions texLayerFilterOps) = 0;
 
 		/** Sets the maximal anisotropy for the specified texture unit.*/
-		virtual void _setTextureLayerAnisotropy(size_t unit, int maxAnisotropy) = 0;
+		virtual void _setTextureLayerAnisotropy(int unit, int maxAnisotropy) = 0;
+
+		/** Sets the maximal anisotropy.*/
+		virtual void _setAnisotropy(int maxAnisotropy);
 
 		/** Sets the texture addressing mode for a texture unit.*/
-        virtual void _setTextureAddressingMode(size_t unit, TextureUnitState::TextureAddressingMode tam) = 0;
+        virtual void _setTextureAddressingMode(int unit, Material::TextureLayer::TextureAddressingMode tam) = 0;
 
         /** Sets the texture coordinate transformation matrix for a texture unit.
             @param unit Texture unit to affect
             @param xform The 4x4 matrix
         */
-        virtual void _setTextureMatrix(size_t unit, const Matrix4& xform) = 0;
+        virtual void _setTextureMatrix(int unit, const Matrix4& xform) = 0;
 
         /** Sets the global blending factors for combining subsequent renders with the existing frame contents.
             The result of the blending operation is:</p>
@@ -487,7 +566,7 @@ namespace Ogre
         */
         virtual void _setCullingMode(CullingMode mode) = 0;
 
-        virtual CullingMode _getCullingMode(void) const;
+        virtual CullingMode _getCullingMode(void);
 
         /** Sets the mode of operation for depth buffer tests from this point onwards.
             Sometimes you may wish to alter the behaviour of the depth buffer to achieve
@@ -522,14 +601,6 @@ namespace Ogre
              for the new pixel to be written.
         */
         virtual void _setDepthBufferFunction(CompareFunction func = CMPF_LESS_EQUAL) = 0;
-		/** Sets whether or not colour buffer writing is enabled, and for which channels. 
-		@remarks
-			For some advanced effects, you may wish to turn off the writing of certain colour
-			channels, or even all of the colour channels so that only the depth buffer is updated
-			in a rendering pass. However, the chances are that you really want to use this option
-			through the Material class.
-		@param red, green, blue, alpha Whether writing is enabled for each of the 4 colour channels. */
-		virtual void _setColourBufferWriteEnabled(bool red, bool green, bool blue, bool alpha) = 0;
         /** Sets the depth bias, NB you should use the Material version of this. 
         @remarks
             When polygons are coplanar, you can get problems with 'depth fighting' where
@@ -554,15 +625,15 @@ namespace Ogre
             @param linearEnd Distance at which linear fog becomes completely opaque.The distance must be passed
                 as a parametric value between 0 and 1, with 0 being the near clipping plane, and 1 being the far clipping plane. Only applicable if mode is FOG_LINEAR.
         */
-        virtual void _setFog(FogMode mode = FOG_NONE, const ColourValue& colour = ColourValue::White, Real expDensity = 1.0, Real linearStart = 0.0, Real linearEnd = 1.0) = 0;
+        virtual void _setFog(FogMode mode = FOG_NONE, ColourValue colour = ColourValue::White, Real expDensity = 1.0, Real linearStart = 0.0, Real linearEnd = 1.0) = 0;
 
 
         /** The RenderSystem will keep a count of tris rendered, this resets the count. */
         virtual void _beginGeometryCount(void);
         /** Reports the number of tris rendered since the last _beginGeometryCount call. */
-        virtual unsigned int _getFaceCount(void) const;
+        virtual unsigned int _getFaceCount(void);
         /** Reports the number of vertices passed to the renderer since the last _beginGeometryCount call. */
-        virtual unsigned int _getVertexCount(void) const;
+        virtual unsigned int _getVertexCount(void);
 
         /** Generates a packed data version of the passed in ColourValue suitable for
             use as with this RenderSystem.
@@ -580,8 +651,7 @@ namespace Ogre
             projection matrix, this method allows each to implement their own correctly and pass
             back a generic OGRE matrix for storage in the engine.
         */
-        virtual void _makeProjectionMatrix(Real fovy, Real aspect, Real nearPlane, Real farPlane, 
-            Matrix4& dest, bool forGpuProgram = false) = 0;
+        virtual void _makeProjectionMatrix(Real fovy, Real aspect, Real nearPlane, Real farPlane, Matrix4& dest) = 0;
 
         /** Sets how to rasterise triangles, as points, wireframe or solid polys. */
         virtual void _setRasterisationMode(SceneDetailLevel level) = 0;
@@ -717,29 +787,35 @@ namespace Ogre
         virtual void _render(const RenderOperation& op);
 
 		/** Gets the capabilities of the render system. */
-		const RenderSystemCapabilities* getCapabilities(void) const { return mCapabilities; }
+		const RenderSystemCapabilities* getCapabilities(void) { return mCapabilities; }
 
-        /** Binds a given GpuProgram (but not the parameters). 
-        @remarks Only one GpuProgram of each type can be bound at once, binding another
-        one will simply replace the exsiting one.
-        */
-        virtual void bindGpuProgram(GpuProgram* prg) = 0;
-
-        /** Bind Gpu program parameters. */
-        virtual void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params) = 0;
-        /** Unbinds GpuPrograms of a given GpuProgramType.
-        @remarks
-            This returns the pipeline to fixed-function processing for this type.
-        */
-        virtual void unbindGpuProgram(GpuProgramType gptype) = 0;
-
-        /** Utility method for initialising all render targets attached to this rendering system. */
-        virtual void _initRenderTargets(void);
-
-        /** Internal method for updating all render targets attached to this rendering system. */
-        virtual void _updateAllRenderTargets(void);
     protected:
 
+        /** Set of registered frame listeners */
+        std::set<FrameListener*> mFrameListeners;
+
+        /** Internal method for raising frame started events. */
+        bool fireFrameStarted(FrameEvent& evt);
+        /** Internal method for raising frame ended events. */
+        bool fireFrameEnded(FrameEvent& evt);
+
+		/** Internal timer */
+		Timer *mTimer ;
+        /** Internal method for raising frame started events. */
+        bool fireFrameStarted();
+        /** Internal method for raising frame ended events. */
+        bool fireFrameEnded();
+
+        /** Indicates the type of event to be considered by calculateEventTime(). */
+        enum FrameEventTimeType {
+            FETT_ANY, FETT_STARTED, FETT_ENDED
+        };
+
+        /** Internal method for calculating the average time between recently fired events.
+        @param now The current time in ms.
+        @param type The type of event to be considered.
+        */
+        Real calculateEventTime(unsigned long now, FrameEventTimeType type);
 
         /** The render targets. */
         RenderTargetMap mRenderTargets;
@@ -764,12 +840,17 @@ namespace Ogre
 
         bool mVSync;
 
+        // Store record of texture unit settings for efficient alterations
+        Material::TextureLayer mTextureUnits[OGRE_MAX_TEXTURE_LAYERS];
+
         size_t mFaceCount;
         size_t mVertexCount;
 
         /// Saved set of world matrices
         Matrix4 mWorldMatrices[256];
 
+        /// Contains the times of recently fired events
+        std::deque<unsigned long> mEventTimes[3];
     };
 }
 

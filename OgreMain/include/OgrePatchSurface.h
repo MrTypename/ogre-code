@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -104,27 +104,27 @@ namespace Ogre {
             @remarks This is useful when you wish to build the patch into external vertex / index buffers.
 
         */
-        size_t getRequiredVertexCount(void) const;
+        size_t getRequiredVertexCount(void);
         /** Based on a previous call to defineSurface, establishes the number of indexes required
             to hold this patch at the maximum detail level. 
             @remarks This is useful when you wish to build the patch into external vertex / index buffers.
 
         */
-        size_t getRequiredIndexCount(void) const;
+        size_t getRequiredIndexCount(void);
 
         /** Gets the current index count based on the current subdivision level. */
-        size_t getCurrentIndexCount(void) const;
+        size_t getCurrentIndexCount(void);
         /// Returns the index offset used by this buffer to write data into the buffer
-        size_t getIndexOffset(void) const { return mIndexOffset; }
+        size_t getIndexOffset(void) { return mIndexOffset; }
         /// Returns the vertex offset used by this buffer to write data into the buffer
-        size_t getVertexOffset(void) const { return mVertexOffset; }
+        size_t getVertexOffset(void) { return mVertexOffset; }
 
 
         /** Gets the bounds of this patch, only valid after calling defineSurface. */
-        const AxisAlignedBox& getBounds(void) const;
+        const AxisAlignedBox& getBounds(void);
         /** Gets the radius of the bounding sphere for this patch, only valid after defineSurface 
         has been called. */
-        Real getBoundingSphereRadius(void) const;
+        Real getBoundingSphereRadius(void);
         /** Tells the system to build the mesh relating to the surface into externally created
             buffers.
             @remarks
@@ -154,9 +154,9 @@ namespace Ogre {
         void setSubdivisionFactor(Real factor);
 
         /** Gets the current level of subdivision. */
-        Real getSubdivisionFactor(void) const;
+        Real getSubdivisionFactor(void);
 
-        void* getControlPointBuffer(void) const
+        void* getControlPointBuffer(void)
         {
             return mControlPointBuffer;
         }

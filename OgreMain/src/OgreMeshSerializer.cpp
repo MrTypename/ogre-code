@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreMeshSerializer.h"
 #include "OgreMeshFileFormat.h"
@@ -33,9 +32,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreLogManager.h"
 #include "OgreSkeleton.h"
 
+
 namespace Ogre {
 
-    String MeshSerializer::msCurrentVersion = "[MeshSerializer_v1.20]";
+    String MeshSerializer::msCurrentVersion = "[MeshSerializer_v1.10]";
     const unsigned short HEADER_CHUNK_ID = 0x1000;
     //---------------------------------------------------------------------
     MeshSerializer::MeshSerializer()
@@ -47,12 +47,6 @@ namespace Ogre {
 
         mImplementations.insert(
             MeshSerializerImplMap::value_type("[MeshSerializer_v1.10]", 
-            new MeshSerializerImpl_v1_1() ) );
-
-        // Format has not changed, but we need to tag because 'v' texture coordinate
-        // has been inverted
-        mImplementations.insert(
-            MeshSerializerImplMap::value_type(msCurrentVersion, 
             new MeshSerializerImpl() ) );
     }
     //---------------------------------------------------------------------
@@ -105,16 +99,8 @@ namespace Ogre {
             Except(Exception::ERR_INTERNAL_ERROR, "Cannot find serializer implementation for "
                 "current version " + ver, "MeshSerializer::importMesh");
         }
-
         // Call implementation
         impl->second->importMesh(chunk, pDest);
-        // Warn on old version of mesh
-        if (ver != msCurrentVersion)
-        {
-            LogManager::getSingleton().logMessage("WARNING: " + pDest->getName() + 
-                " is an older format (" + ver + "); you should upgrade it as soon as possible" +
-                " using the OgreMeshUpgrade tool.");
-        }
 
     }
     //---------------------------------------------------------------------

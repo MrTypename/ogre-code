@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE 
 	(Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreParticleEmitter.h"
 
@@ -82,7 +81,7 @@ namespace Ogre {
         mPosition = pos; 
     }
     //-----------------------------------------------------------------------
-    const Vector3& ParticleEmitter::getPosition(void) const 
+    Vector3 ParticleEmitter::getPosition(void) 
     { 
         return mPosition; 
     }
@@ -96,7 +95,7 @@ namespace Ogre {
         mUp.normalise();
     }
     //-----------------------------------------------------------------------
-    const Vector3& ParticleEmitter::getDirection(void) const
+    Vector3& ParticleEmitter::getDirection(void) 
     { 
         return mDirection; 
     }
@@ -107,7 +106,7 @@ namespace Ogre {
         mAngle = Math::AngleUnitsToRadians(angleunits);
     }
     //-----------------------------------------------------------------------
-    Real ParticleEmitter::getAngle(void) const
+    Real ParticleEmitter::getAngle(void)
     {
         return Math::RadiansToAngleUnits(mAngle);
     }
@@ -128,7 +127,7 @@ namespace Ogre {
         mEmissionRate = particlesPerSecond; 
     }
     //-----------------------------------------------------------------------
-    Real ParticleEmitter::getEmissionRate(void) const 
+    Real ParticleEmitter::getEmissionRate(void) 
     { 
         return mEmissionRate; 
     }
@@ -352,17 +351,17 @@ namespace Ogre {
             &msMaxRepeatDelayCmd);
     }
     //-----------------------------------------------------------------------
-    Real ParticleEmitter::getParticleVelocity(void) const
+    Real ParticleEmitter::getParticleVelocity(void)
     {
         return mMinSpeed;
     }
     //-----------------------------------------------------------------------
-    Real ParticleEmitter::getMinParticleVelocity(void) const
+    Real ParticleEmitter::getMinParticleVelocity(void)
     {
         return mMinSpeed;
     }
     //-----------------------------------------------------------------------
-    Real ParticleEmitter::getMaxParticleVelocity(void) const
+    Real ParticleEmitter::getMaxParticleVelocity(void)
     {
         return mMaxSpeed;
     }
@@ -377,17 +376,17 @@ namespace Ogre {
         mMaxSpeed = max;
     }
     //-----------------------------------------------------------------------
-    Real ParticleEmitter::getTimeToLive(void) const
+    Real ParticleEmitter::getTimeToLive(void)
     {
         return mMinTTL;
     }
     //-----------------------------------------------------------------------
-    Real ParticleEmitter::getMinTimeToLive(void) const
+    Real ParticleEmitter::getMinTimeToLive(void)
     {
         return mMinTTL;
     }
     //-----------------------------------------------------------------------
-    Real ParticleEmitter::getMaxTimeToLive(void) const
+    Real ParticleEmitter::getMaxTimeToLive(void)
     {
         return mMaxTTL;
     }
@@ -402,17 +401,17 @@ namespace Ogre {
         mMaxTTL = max;
     }
     //-----------------------------------------------------------------------
-    const ColourValue& ParticleEmitter::getColour(void) const
+    ColourValue ParticleEmitter::getColour(void)
     {
         return mColourRangeStart;
     }
     //-----------------------------------------------------------------------
-    const ColourValue& ParticleEmitter::getColourRangeStart(void) const
+    ColourValue ParticleEmitter::getColourRangeStart(void)
     {
         return mColourRangeStart;
     }
     //-----------------------------------------------------------------------
-    const ColourValue& ParticleEmitter::getColourRangeEnd(void) const
+    ColourValue ParticleEmitter::getColourRangeEnd(void)
     {
         return mColourRangeEnd;
     }
@@ -434,7 +433,7 @@ namespace Ogre {
         initDurationRepeat();
     }
     //-----------------------------------------------------------------------
-    bool ParticleEmitter::getEnabled(void) const
+    bool ParticleEmitter::getEnabled(void)
     {
         return mEnabled;
     }
@@ -445,7 +444,7 @@ namespace Ogre {
         mStartTime = startTime;
     }
     //-----------------------------------------------------------------------
-    Real ParticleEmitter::getStartTime(void) const
+    Real ParticleEmitter::getStartTime(void)
     {
         return mStartTime;
     }
@@ -455,7 +454,7 @@ namespace Ogre {
         setDuration(duration, duration);
     }
     //-----------------------------------------------------------------------
-    Real ParticleEmitter::getDuration(void) const
+    Real ParticleEmitter::getDuration(void)
     {
         return mDurationMin;
     }
@@ -512,7 +511,7 @@ namespace Ogre {
         setRepeatDelay(delay, delay);
     }
     //-----------------------------------------------------------------------
-    Real ParticleEmitter::getRepeatDelay(void) const
+    Real ParticleEmitter::getRepeatDelay(void)
     {
         return mRepeatDelayMin;
     }
@@ -536,22 +535,22 @@ namespace Ogre {
         initDurationRepeat();
     }
     //-----------------------------------------------------------------------
-    Real ParticleEmitter::getMinDuration(void) const
+    Real ParticleEmitter::getMinDuration(void)
     {
         return mDurationMin;
     }
     //-----------------------------------------------------------------------
-    Real ParticleEmitter::getMaxDuration(void) const
+    Real ParticleEmitter::getMaxDuration(void)
     {
         return mDurationMax;
     }
     //-----------------------------------------------------------------------
-    Real ParticleEmitter::getMinRepeatDelay(void) const
+    Real ParticleEmitter::getMinRepeatDelay(void)
     {
         return mRepeatDelayMin;    
     }
     //-----------------------------------------------------------------------
-    Real ParticleEmitter::getMaxRepeatDelay(void) const
+    Real ParticleEmitter::getMaxRepeatDelay(void)
     {
         return mRepeatDelayMax;    
     }

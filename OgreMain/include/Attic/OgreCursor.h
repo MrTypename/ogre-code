@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -44,6 +44,7 @@ email                : kenny@sparksuit.com
 #define __Cursor_H__
 
 #include "OgrePrerequisites.h"
+#include "OgreEventListeners.h"
 #include "OgreMouseMotionTarget.h"
 #include "OgreMouseTarget.h"
 
@@ -123,11 +124,11 @@ namespace Ogre {
 		/** The parent of the cursor is NULL as it's position is absolute in the window */
 		PositionTarget* getPositionTargetParent();
 
-		inline virtual bool isKeyEnabled() const
+		inline virtual bool isKeyEnabled() 
 		{ return false; }
 
 		/** Gets the current cursor movement scaling factor. */
-		Real getScale(void) const { return mScale; }
+		Real getScale(void) { return mScale; }
 		/** Sets the current cursor movement scaling factor. */
 		void setScale(Real scale) { mScale = scale; }
 		

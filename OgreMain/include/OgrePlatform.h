@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -82,10 +82,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #if defined( __WIN32__ ) || defined( _WIN32 )
 #   define OGRE_PLATFORM PLATFORM_WIN32
-
 #elif defined( __APPLE_CC__)
 #   define OGRE_PLATFORM PLATFORM_APPLE
-
 #else
 #   define OGRE_PLATFORM PLATFORM_LINUX
 #endif
@@ -142,16 +140,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #   endif
 
 #endif
-
-//For apple, we always have a custom config.h file
-#if OGRE_PLATFORM == PLATFORM_APPLE
-#    include "config.h"
-//SDL_main must be included in the file that contains
-//the application's main() function.
-#   include <SDL/SDL_main.h>
-
-#endif
-
 //----------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------

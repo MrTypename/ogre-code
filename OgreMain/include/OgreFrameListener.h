@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -65,7 +65,7 @@ namespace Ogre {
             There is no limit to the number of frame listeners you can register,
             allowing you to register multiple listeners for different purposes.
             Frame events only occur when Ogre is in continuous rendering mode,
-            ie. after Root::startRendering is called. If the application is
+            ie. after RenderSystem::startRendering is called. If the application is
             doing ad-hoc rendering without entering a rendering loop, frame
             events are not generated. Note that a frame event occurs once for
             all rendering targets, not once per target.

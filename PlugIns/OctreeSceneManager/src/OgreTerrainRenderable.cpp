@@ -216,10 +216,10 @@ void TerrainRenderable::init( TerrainOptions &options )
             *pPos++ = ( Real ) j * options.scalez; //z
 
             *pTex++ = ( Real ) i / ( Real ) options.world_size ;
-            *pTex++ = ( Real ) ( Real ) j / ( Real ) options.world_size;
+            *pTex++ = ( Real ) 1.0 - ( Real ) j / ( Real ) options.world_size;
 
             *pTex++ = ( ( Real ) i / ( Real ) mSize ) * options.detail_tile;
-            *pTex++ = ( ( Real ) ( Real ) j / ( Real ) mSize ) * options.detail_tile;
+            *pTex++ = ( ( Real ) 1.0 - ( Real ) j / ( Real ) mSize ) * options.detail_tile;
 
             if ( height < min )
                 min = ( Real ) height;
@@ -244,7 +244,6 @@ void TerrainRenderable::init( TerrainOptions &options )
     Real C = _calculateCFactor();
 
     _calculateMinLevelDist2( C );
-    _calculateNormals();
 
 }
 
@@ -592,18 +591,10 @@ void TerrainRenderable::getRenderOperation( RenderOperation& op )
 
 }
 
-void TerrainRenderable::getWorldTransforms( Matrix4* xform ) const
+void TerrainRenderable::getWorldTransforms( Matrix4* xform )
 {
-    *xform = mParentNode->_getFullTransform();
-}
-
-const Quaternion& TerrainRenderable::getWorldOrientation(void) const
-{
-    return mParentNode->_getDerivedOrientation();
-}
-const Vector3& TerrainRenderable::getWorldPosition(void) const
-{
-    return mParentNode->_getDerivedPosition();
+    *xform = Matrix4::IDENTITY;
+    *xform = *xform * mParentNode->_getFullTransform();
 }
 
 bool TerrainRenderable::_checkSize( int n )
@@ -982,10 +973,5 @@ Real TerrainRenderable::getSquaredViewDepth(const Camera* cam) const
     return diff.squaredLength();
 }
 
-//-----------------------------------------------------------------------
-const LightList& TerrainRenderable::getLights(void) const
-{
-    return mParentNode->getLights();
-}
 
 } //namespace

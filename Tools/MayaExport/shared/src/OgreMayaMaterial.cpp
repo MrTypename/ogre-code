@@ -1,25 +1,24 @@
 /*
-============================================================================
+===============================================================================
 This source file is part of the Ogre-Maya Tools.
 Distributed as part of Ogre (Object-oriented Graphics Rendering Engine).
-Copyright (C) 2003 Fifty1 Software Inc., Bytelords
 
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-or go to http://www.gnu.org/licenses/gpl.txt
-============================================================================
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+===============================================================================
 */
+
 #include "OgreMayaMaterial.h"
 #include "OgreMayaOptions.h"
 
@@ -63,9 +62,6 @@ namespace OgreMaya {
 	*/	
 	//	--------------------------------------------------------------------------
 	bool MatGenerator::exportAll() {
-
-        cout << "\nMatGenerator::exportAll\n";
-
 		MStatus status;
 		bool bStatus = true;
 
@@ -86,8 +82,8 @@ namespace OgreMaya {
                 
                 Material& mat = **it;
 
-                list<TextureUnitState>::iterator tlIt  = mat.textureLayers.begin();
-                list<TextureUnitState>::iterator tlEnd = mat.textureLayers.end();
+                list<TextureLayer>::iterator tlIt  = mat.textureLayers.begin();
+                list<TextureLayer>::iterator tlEnd = mat.textureLayers.end();
                 
                 out << mat.name << '\n';
                 out << "{\n";                
@@ -120,7 +116,7 @@ namespace OgreMaya {
                     << mat.selfIllumination.a << "\n\n";
 
                 for(;tlIt!=tlEnd; ++tlIt) {
-                    TextureUnitState& layer = *tlIt;
+                    TextureLayer& layer = *tlIt;
                     out << "\t{\n";
                     out << "\t\ttexture " << layer.textureName << '\n';
                     out << "\t\ttex_coord_set " << layer.uvSet << '\n';
@@ -204,7 +200,7 @@ namespace OgreMaya {
 			}
 			else {
 				MFnDependencyNode FnShader(ShaderNode);
-				cout << "\tunable to create Ogre material for shader " << FnShader.name().asChar() << '\n';
+				cout << "MatGenerator: Unable to create Ogre material for shader " << FnShader.name().asChar() << '\n';
 			}
 
 			// Check for duplicates
@@ -215,7 +211,6 @@ namespace OgreMaya {
 					if ((*iterMat)->name == mat->name) {
 						delete mat;
 						mat = NULL;
-						break;
 					}
 				}
 			}
@@ -245,7 +240,7 @@ namespace OgreMaya {
                         textureFile = textureFile.substring(substrI+1, textureFile.length()-1);
 
 		    		mat->textureLayers.push_back(
-                        TextureUnitState(textureFile.asChar(), iTexCoordSet)
+                        TextureLayer(textureFile.asChar(), iTexCoordSet)
                     );
 			          
                     ItShaderGraph.next();
@@ -286,7 +281,7 @@ namespace OgreMaya {
 		
 		mat->shininess = FnShader.cosPower();
 			
-		cout << "\tCreated phong material " << mat->name << '\n';
+		cout << "MatGenerator: Created phong material " << mat->name << '\n';
 		return mat;
 	}
 
@@ -353,7 +348,7 @@ namespace OgreMaya {
 		
 		mat->shininess = 0;
 			
-		cout << "\tCreated lambert material " << mat->name << '\n';
+		cout << "MatGenerator: Created lambert material " << mat->name << '\n';
 		return mat;
 	}
 

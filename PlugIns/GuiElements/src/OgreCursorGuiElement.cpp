@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -52,7 +52,7 @@ namespace Ogre {
 		setHeight(0.01);
 	}
     //---------------------------------------------------------------------
-    const String& CursorGuiElement::getTypeName(void) const
+    const String& CursorGuiElement::getTypeName(void)
     {
         return msTypeName;
     }
@@ -63,18 +63,8 @@ namespace Ogre {
             OverlayManager &om = OverlayManager::getSingleton();
        		setLeft(om.getMouseX() - mOffsetX);
 	    	setTop(om.getMouseY() - mOffsetY);
-            om.addMouseMotionListener(this);
         }
         PanelGuiElement::show();
-    }
-    //---------------------------------------------------------------------
-    void CursorGuiElement::hide(void)
-    {
-        if (mVisible) {
-            OverlayManager &om = OverlayManager::getSingleton();
-            om.removeMouseMotionListener(this);
-        }
-        PanelGuiElement::hide();
     }
     //---------------------------------------------------------------------
 	void CursorGuiElement::setOffsetX(Real x)

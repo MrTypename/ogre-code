@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 #include "OgreAnimationTrack.h"
 #include "OgreAnimation.h"
 #include "OgreKeyFrame.h"
@@ -43,7 +42,6 @@ namespace Ogre {
         mTargetNode = 0;
         mMaxKeyFrameTime = -1;
         mSplineBuildNeeded = false;
-		mUseShortestRotationPath = true ;
     }
     //---------------------------------------------------------------------
     AnimationTrack::AnimationTrack(Animation* parent, Node* targetNode) 
@@ -51,7 +49,6 @@ namespace Ogre {
     {
         mMaxKeyFrameTime = -1;
         mSplineBuildNeeded = false;
-		mUseShortestRotationPath = true ;
     }
     //---------------------------------------------------------------------
     AnimationTrack::~AnimationTrack()
@@ -225,9 +222,8 @@ namespace Ogre {
             case Animation::IM_LINEAR:
                 // Interpolate linearly
                 // Rotation
-                // Interpolate to nearest rotation if mUseShortestRotationPath set
-                kret.setRotation( Quaternion::Slerp(t, k1->getRotation(), 
-					k2->getRotation(), mUseShortestRotationPath) );
+                // Interpolate to nearest rotation
+                kret.setRotation( Quaternion::Slerp(t, k1->getRotation(), k2->getRotation(), true) );
 
                 // Translation
                 base = k1->getTranslate();
@@ -247,9 +243,8 @@ namespace Ogre {
                     buildInterpolationSplines();
                 }
 
-                // Rotation, take mUseShortestRotationPath into account
-                kret.setRotation( mRotationSpline.interpolate(firstKeyIndex, t, 
-					mUseShortestRotationPath) );
+                // Rotation
+                kret.setRotation( mRotationSpline.interpolate(firstKeyIndex, t) );
 
                 // Translation
                 kret.setTranslate( mPositionSpline.interpolate(firstKeyIndex, t) );
@@ -353,18 +348,6 @@ namespace Ogre {
 
         mSplineBuildNeeded = false;
     }
-	
-    //---------------------------------------------------------------------
-	void AnimationTrack::setUseShortestRotationPath(bool useShortestPath)
-	{
-		mUseShortestRotationPath = useShortestPath ;
-	}
-	
-    //---------------------------------------------------------------------
-	bool AnimationTrack::getUseShortestRotationPath() const
-	{
-		return mUseShortestRotationPath ;
-	}
-	
+
 }
 

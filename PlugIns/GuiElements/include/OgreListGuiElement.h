@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -110,14 +110,14 @@ namespace Ogre {
 
 
 
-		virtual void setItemTemplateName(const String& val);
-		virtual void addListItem(Resource* r);
-		virtual void removeListItem(Resource* r);
-		virtual String getItemTemplateName();
-		virtual String getVSpacing();
-		virtual String getHSpacing();
-		virtual void setVSpacing(const String& val);
-		virtual void setHSpacing(const String& val);
+		void setItemTemplateName(const String& val);
+		void addListItem(Resource* r);
+		void removeListItem(Resource* r);
+		String getItemTemplateName();
+		String getVSpacing();
+		String getHSpacing();
+		void setVSpacing(const String& val);
+		void setHSpacing(const String& val);
 
 		void mouseClicked(MouseEvent* e) {};
 		void mouseEntered(MouseEvent* e)  {};
@@ -128,32 +128,32 @@ namespace Ogre {
 		void mouseMoved(MouseEvent* e) ;
 		void setSelectedIndex(size_t index);
 
-		virtual String getItemPanelMaterial();
-		virtual String getItemPanelMaterialSelected();
-		virtual void setItemPanelMaterial(const String& val);
-		virtual void setItemPanelMaterialSelected(const String& val);
+		String getItemPanelMaterial();
+		String getItemPanelMaterialSelected();
+		void setItemPanelMaterial(const String& val);
+		void setItemPanelMaterialSelected(const String& val);
 
-		virtual void setScrollBarName(const String& val);
-		virtual String getScrollBarName();
+		void setScrollBarName(const String& val);
+		String getScrollBarName();
 
 		void scrollPerformed(ScrollEvent* se);
 
-		virtual void setSelectedItem(Resource* r, bool on);
-		virtual void setSelectedItem(Resource* r);
+		void setSelectedItem(Resource* r, bool on);
+		void setSelectedItem(Resource* r);
 
 
-		virtual Resource* getSelectedItem();
-		virtual int getSelectedIndex();
+		Resource* getSelectedItem();
+		int getSelectedIndex();
 
-		virtual ResourceListConstIterator getConstIterator();
-		virtual ResourceListConstIterator getConstEndIterator();
+		ResourceListConstIterator getConstIterator();
+		ResourceListConstIterator getConstEndIterator();
 
-		virtual Resource* popFront() ;
-		virtual size_t getListSize() const;
+		Resource* popFront() ;
+		size_t getListSize() ;
 
     protected:
-		virtual void setSelectedItem(GuiElement* item, bool on);
-		virtual void setSelectedItem(GuiElement* item);
+		void setSelectedItem(GuiElement* item, bool on);
+		void setSelectedItem(GuiElement* item);
 
 	    void addBaseParameters(void);
 		String getListItemName(Resource* r);
@@ -167,7 +167,7 @@ namespace Ogre {
         static CmdItemPanelMaterialSelected msCmdItemPanelMaterialSelected;
         static String msTypeName;
 
-		virtual void layoutItems();
+		void layoutItems();
 		size_t mFirstVisibleItem, mVisibleRange;
 		Real mVSpacing;
 		Real mHSpacing;

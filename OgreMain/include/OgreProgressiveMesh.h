@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -135,8 +135,8 @@ namespace Ogre {
             void setDetails(size_t index, PMFaceVertex *v0, PMFaceVertex *v1, PMFaceVertex *v2);
 	        void computeNormal(void);
 	        void replaceVertex(PMFaceVertex *vold, PMFaceVertex *vnew);
-	        bool hasCommonVertex(PMVertex *v) const;
-	        bool hasFaceVertex(PMFaceVertex *v) const;
+	        bool  hasCommonVertex(PMVertex *v);
+	        bool  hasFaceVertex(PMFaceVertex *v);
 			PMFaceVertex* getFaceVertexFromCommon(PMVertex* commonVert);
 	        void notifyRemoved(void);
 

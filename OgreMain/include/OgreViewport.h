@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -103,9 +103,7 @@ namespace Ogre {
         /** Sets the camera to use for rendering to this viewport. */
         void setCamera(Camera* cam);
 
-        /** Gets the Z-Order of this viewport. */
-		int getZOrder(void) const;
-		/** Gets one of the relative dimensions of the viewport,
+        /** Gets one of the relative dimensions of the viewport,
             a value between 0.0 and 1.0.
         */
         float getLeft(void) const;
@@ -162,7 +160,7 @@ namespace Ogre {
         /** Sets the initial background colour of the viewport (before
             rendering).
         */
-        void setBackgroundColour(const ColourValue& colour);
+        void setBackgroundColour(ColourValue colour);
 
         /** Gets the background colour.
         */
@@ -207,7 +205,7 @@ namespace Ogre {
 
         /** Returns whether or not Overlay objects (created in the SceneManager) are displayed in this
             viewport. */
-        bool getOverlaysEnabled(void) const;
+        bool getOverlaysEnabled(void);
 
 
     protected:

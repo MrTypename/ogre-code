@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -26,12 +26,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreQuake3Shader.h"
 #include "OgreSceneManager.h"
 #include "OgreMaterial.h"
-#include "OgreTechnique.h"
-#include "OgrePass.h"
-#include "OgreTextureUnitState.h"
 #include "OgreMath.h"
 #include "OgreLogManager.h"
-#include "OgreTextureManager.h"
 
 namespace Ogre {
 
@@ -75,13 +71,13 @@ namespace Ogre {
         LogManager::getSingleton().logMessage(msg, LML_CRITICAL);
         for (int p = 0; p < numPasses; ++p)
         {
-            TextureUnitState* t;
+            Material::TextureLayer* t;
             // Create basic texture
             if (pass[p].textureName == "$lightmap")
             {
                 char lightmapName[16];
                 sprintf(lightmapName, "@lightmap%d", lightmapNumber);
-                t = mat->getTechnique(0)->getPass(0)->createTextureUnitState(lightmapName);
+                t = mat->addTextureLayer(lightmapName);
             }
             // Animated texture support
             else if (pass[p].animNumFrames > 0)
@@ -112,29 +108,26 @@ namespace Ogre {
 
                 }
 
-                t = mat->getTechnique(0)->getPass(0)->createTextureUnitState("");
+                t = mat->addTextureLayer("");
                 t->setAnimatedTextureName(pass[p].frames, pass[p].animNumFrames, sequenceTime);
+                if (t->isBlank())
+                {
+                    String altNames[32];
+                    for (unsigned int alt = 0; alt < pass[p].animNumFrames; ++alt)
+                        pass[p].frames[alt] = getAlternateName(pass[p].frames[alt]);
+                    t->setAnimatedTextureName(pass[p].frames, pass[p].animNumFrames, sequenceTime);
+                }
 
             }
             else
             {
+                t = mat->addTextureLayer(pass[p].textureName);
                 // Quake3 can still include alternate extension filenames e.g. jpg instead of tga
                 // Pain in the arse - have to check for failure
-                try {
-                    TextureManager::getSingleton().load(pass[p].textureName);
-                }
-                catch (...)
+                if (t->isBlank())
                 {
-                    // Try alternate extension
-                    pass[p].textureName = getAlternateName(pass[p].textureName);
-                    try {
-                        TextureManager::getSingleton().load(pass[p].textureName);
-                    }
-                    catch (...)
-                    { // stuffed - no texture
-                    }
+                    t->setTextureName(getAlternateName(pass[p].textureName));
                 }
-                t = mat->getTechnique(0)->getPass(0)->createTextureUnitState(pass[p].textureName);
             }
             // Blending
             if (p == 0)
@@ -171,7 +164,7 @@ namespace Ogre {
             }
             else if (pass[p].texGen == TEXGEN_ENVIRONMENT)
             {
-                t->setEnvironmentMap(true, TextureUnitState::ENV_PLANAR);
+                t->setEnvironmentMap(true, Material::TextureLayer::ENV_PLANAR);
             }
             // Tex mod
             // Scale
@@ -193,12 +186,12 @@ namespace Ogre {
                         // Turbulent scroll
                         if (pass[p].tcModScroll[0])
                         {
-                            t->setTransformAnimation(TextureUnitState::TT_TRANSLATE_U, WFT_SINE,
+                            t->setTransformAnimation(Material::TextureLayer::TT_TRANSLATE_U, WFT_SINE,
                                 pass[p].tcModTurb[0], pass[p].tcModTurb[3], pass[p].tcModTurb[2], pass[p].tcModTurb[1]);
                         }
                         if (pass[p].tcModScroll[1])
                         {
-                            t->setTransformAnimation(TextureUnitState::TT_TRANSLATE_V, WFT_SINE,
+                            t->setTransformAnimation(Material::TextureLayer::TT_TRANSLATE_V, WFT_SINE,
                                 pass[p].tcModTurb[0], pass[p].tcModTurb[3], pass[p].tcModTurb[2], pass[p].tcModTurb[1]);
                         }
                     }
@@ -231,9 +224,9 @@ namespace Ogre {
 
                     }
                     // Create wave-based stretcher
-                    t->setTransformAnimation(TextureUnitState::TT_SCALE_U, wft, pass[p].tcModStretchParams[3],
+                    t->setTransformAnimation(Material::TextureLayer::TT_SCALE_U, wft, pass[p].tcModStretchParams[3],
                         pass[p].tcModStretchParams[0], pass[p].tcModStretchParams[2], pass[p].tcModStretchParams[1]);
-                    t->setTransformAnimation(TextureUnitState::TT_SCALE_V, wft, pass[p].tcModStretchParams[3],
+                    t->setTransformAnimation(Material::TextureLayer::TT_SCALE_V, wft, pass[p].tcModStretchParams[3],
                         pass[p].tcModStretchParams[0], pass[p].tcModStretchParams[2], pass[p].tcModStretchParams[1]);
                 }
             }
@@ -242,7 +235,7 @@ namespace Ogre {
             // Alpha mode
             t->setAlphaRejectSettings(pass[p].alphaFunc, pass[p].alphaVal);
 
-            //assert(!t->isBlank());
+            assert(!t->isBlank());
 
 
         }
@@ -263,7 +256,6 @@ namespace Ogre {
         mat->setCullingMode(CULL_NONE);
         mat->setManualCullingMode(cullMode);
         mat->setLightingEnabled(false);
-        mat->load();
         return mat;
     }
     String Quake3Shader::getAlternateName(const String& texName)

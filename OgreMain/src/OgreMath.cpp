@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,8 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
-
 #include "OgreMath.h"
 #include "asm_math.h"
 #include "OgreVector3.h"
@@ -35,6 +33,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 namespace Ogre
 {
+    template<> Math* Singleton<Math>::ms_Singleton = 0;
 
     const Real Math::POS_INFINITY = std::numeric_limits<Real>::infinity();
     const Real Math::NEG_INFINITY = -std::numeric_limits<Real>::infinity();
@@ -260,6 +259,11 @@ namespace Ogre
             return false;
     }
 
+    //-----------------------------------------------------------------------
+    Math& Math::getSingleton(void)
+    {
+        return Singleton<Math>::getSingleton();
+    }
     //-----------------------------------------------------------------------
     std::pair<bool, Real> Math::intersects(const Ray& ray, const Plane& plane)
     {
@@ -524,42 +528,5 @@ namespace Ogre
             <= sphere.getRadius() );
     }
     //-----------------------------------------------------------------------
-    Vector3 Math::calculateTangentSpaceVector(
-        const Vector3& position1, const Vector3& position2, const Vector3& position3,
-        Real u1, Real v1, Real u2, Real v2, Real u3, Real v3)
-    {
-	    //side0 is the vector along one side of the triangle of vertices passed in, 
-	    //and side1 is the vector along another side. Taking the cross product of these returns the normal.
-	    Vector3 side0 = position1 - position2;
-	    Vector3 side1 = position3 - position1;
-	    //Calculate face normal
-	    Vector3 normal = side1.crossProduct(side0);
-	    normal.normalise();
-	    //Now we use a formula to calculate the tangent. 
-	    Real deltaV0 = v1 - v2;
-	    Real deltaV1 = v3 - v1;
-	    Vector3 tangent = deltaV1 * side0 - deltaV0 * side1;
-	    tangent.normalise();
-	    //Calculate binormal
-	    Real deltaU0 = u1 - u2;
-	    Real deltaU1 = u3 - u1;
-	    Vector3 binormal = deltaU1 * side0 - deltaU0 * side1;
-	    binormal.normalise();
-	    //Now, we take the cross product of the tangents to get a vector which 
-	    //should point in the same direction as our normal calculated above. 
-	    //If it points in the opposite direction (the dot product between the normals is less than zero), 
-	    //then we need to reverse the s and t tangents. 
-	    //This is because the triangle has been mirrored when going from tangent space to object space.
-	    //reverse tangents if necessary
-	    Vector3 tangentCross = tangent.crossProduct(binormal);
-	    if (tangentCross.dotProduct(normal) < 0.0f)
-	    {
-		    tangent = -tangent;
-		    binormal = -binormal;
-	    }
 
-        return tangent;
-
-    }
-    //-----------------------------------------------------------------------
 }

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -62,12 +62,7 @@ namespace Ogre {
 	    bool operator==(const ColourValue& rhs) const;
 	    bool operator!=(const ColourValue& rhs) const;
 
-        union {
-            struct {
-	            Real r,g,b,a;
-            };
-            Real val[4];
-        };
+	    Real r,g,b,a;
 
 	    /** Retrieves colour as RGBA.
 	    */

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -81,19 +81,19 @@ namespace Ogre {
         virtual ~RenderTarget();
 
         /// Retrieve target's name.
-        virtual const String& getName(void) const;
+        virtual String getName(void);
 
         /// Retrieve information about the render target.
         virtual void getMetrics(int &width, int &height, int &colourDepth);
 
-        virtual int getWidth(void) const;
-        virtual int getHeight(void) const;
-        virtual int getColourDepth(void) const;
+        virtual int getWidth(void);
+        virtual int getHeight(void);
+        virtual int getColourDepth(void);
 
         /** Tells the target to update it's contents.
             @remarks
                 If OGRE is not running in an automatic rendering loop
-                (started using Root::startRendering),
+                (started using RenderSystem::startRendering),
                 the user of the library is responsible for asking each render
                 target to refresh. This is the method used to do this. It automatically
                 re-renders the contents of the target using whatever cameras have been
@@ -132,7 +132,7 @@ namespace Ogre {
             float width = 1.0f, float height = 1.0f);
 
         /** Returns the number of viewports attached to this target.*/
-        virtual unsigned short getNumViewports(void) const;
+        virtual unsigned short getNumViewports(void);
 
         /** Retrieves a pointer to the viewport with the given index. */
         virtual Viewport* getViewport(unsigned short index);
@@ -169,7 +169,7 @@ namespace Ogre {
                 @param
                     avgFPS Pointer to a float to receive the FPS rating based on an average of all
                     the frames rendered since rendering began (the call to
-                    Root::startRendering).
+                    RenderSystem::startRendering).
                 @param
                     bestFPS Pointer to a float to receive the best FPS rating that has been achieved
                     since rendering began.
@@ -185,15 +185,15 @@ namespace Ogre {
         */
         virtual float getLastFPS() const;
 
-        /** Individual stats access - gets the average frames per second (FPS) since call to Root::startRendering.
+        /** Individual stats access - gets the average frames per second (FPS) since call to RenderSystem::startRendering.
         */
         virtual float getAverageFPS() const;
 
-        /** Individual stats access - gets the best frames per second (FPS) since call to Root::startRendering.
+        /** Individual stats access - gets the best frames per second (FPS) since call to RenderSystem::startRendering.
         */
         virtual float getBestFPS() const;
 
-        /** Individual stats access - gets the worst frames per second (FPS) since call to Root::startRendering.
+        /** Individual stats access - gets the worst frames per second (FPS) since call to RenderSystem::startRendering.
         */
         virtual float getWorstFPS() const;
 
@@ -228,7 +228,7 @@ namespace Ogre {
         virtual void setDebugText(const String& text);
 
 		/** Returns the debug text. */
-		const String& getDebugText() const;
+		const String& RenderTarget::getDebugText() const;
 
         /** Add a listener to this RenderTarget which will be called back before & after rendering.
         @remarks

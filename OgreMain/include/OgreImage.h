@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -27,7 +27,9 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgrePrerequisites.h"
 
+#include "OgreString.h"
 #include "OgreCommon.h"
+#include "OgreDataChunk.h"
 
 namespace Ogre {
 
@@ -368,7 +370,7 @@ namespace Ogre {
                 Basic algo taken from Titan Engine, copyright (c) 2000 Ignacio 
                 Castano Iguado
         */
-        static void applyGamma( uchar *buffer, Real gamma, size_t size, uchar bpp );
+        static void applyGamma( uchar *byffer, Real gamma, size_t size, uchar bpp );
 
         static bool formatHasAlpha(PixelFormat format);
 

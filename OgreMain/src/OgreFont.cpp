@@ -2,7 +2,7 @@
 This source file is a part of OGRE
 (Object-oriented Graphics Rendering Engine)
 
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ along with this library; if not, write to the Free Software Foundation,
 Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA or go to
 http://www.gnu.org/copyleft/lesser.txt
 -------------------------------------------------------------------------*/
-#include "OgreStableHeaders.h"
 
 #include "OgreFont.h"
 #include "OgreMaterialManager.h"
@@ -31,13 +30,6 @@ http://www.gnu.org/copyleft/lesser.txt
 #include "OgreSDDataChunk.h"
 #include "OgreLogManager.h"
 #include "OgreStringConverter.h"
-#include "OgreRenderWindow.h"
-#include "OgreException.h"
-#include "OgreBlendMode.h"
-#include "OgreTextureUnitState.h"
-#include "OgreTechnique.h"
-#include "OgrePass.h"
-#include "OgreMaterial.h"
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
@@ -73,7 +65,7 @@ namespace Ogre
         mType = ftype;
     }
     //---------------------------------------------------------------------
-    FontType Font::getType(void) const
+    FontType Font::getType(void)
     {
         return mType;
     }
@@ -93,17 +85,17 @@ namespace Ogre
         mTtfResolution = ttfResolution;
     }
     //---------------------------------------------------------------------
-    const String& Font::getSource(void) const
+    const String& Font::getSource(void)
     {
         return mSource;
     }
     //---------------------------------------------------------------------
-    Real Font::getTrueTypeSize(void) const
+    Real Font::getTrueTypeSize(void)
     {
         return mTtfSize;
     }
     //---------------------------------------------------------------------
-    uint Font::getTrueTypeResolution(void) const
+    uint Font::getTrueTypeResolution(void)
     {
         return mTtfResolution;
     }
@@ -147,26 +139,26 @@ namespace Ogre
                     "Error creating new material!", "Font::load" );
             }
 
-            TextureUnitState *texLayer;
+            Material::TextureLayer *texLayer;
             bool blendByAlpha = true;
             if (mType == FT_TRUETYPE)
             {
                 createTextureFromFont();
-                texLayer = mpMaterial->getTechnique(0)->getPass(0)->getTextureUnitState(0);
+                texLayer = mpMaterial->getTextureLayer(0);
                 // Always blend by alpha
                 blendByAlpha = true;
             }
             else
             {
-                texLayer = mpMaterial->getTechnique(0)->getPass(0)->createTextureUnitState(mSource);
-                Texture* tex = (Texture*)TextureManager::getSingleton().load(mSource);
+                texLayer = mpMaterial->addTextureLayer(mSource);
+                Texture* tex = (Texture*)TextureManager::getSingleton().getByName(mSource);
 				if (!tex)
 				    Except( Exception::ERR_ITEM_NOT_FOUND, "Could not find texture " + mSource,
 					    "Font::load" );
                 blendByAlpha = tex->hasAlpha();
             }
             // Clamp to avoid fuzzy edges
-            texLayer->setTextureAddressingMode( TextureUnitState::TAM_CLAMP );
+            texLayer->setTextureAddressingMode( Material::TextureLayer::TAM_CLAMP );
 
             // Set up blending
             if (blendByAlpha)
@@ -199,9 +191,17 @@ namespace Ogre
         int j, k;
 
         FT_Face face;
+        uint tex_side = 1024;
+        uint data_width = tex_side * 4;
         // Add a gap between letters vert and horz
         // prevents nasty artefacts when letters are too close together
         uint char_spacer = 5;
+
+        uchar* imageData = new uchar[tex_side * tex_side * 4];
+		// Reset content
+		memset(imageData, 0, tex_side * tex_side * 4);
+
+
 
         // Locate ttf file
         SDDataChunk ttfchunk;
@@ -228,7 +228,9 @@ namespace Ogre
         // Calculate maximum width, height and bearing
         for( i = startGlyph, l = 0, m = 0, n = 0; i < endGlyph; i++ )
         {
-            FT_Load_Char( face, i, FT_LOAD_RENDER );
+            FT_Int glyph_index = FT_Get_Char_Index( face, i );
+            FT_Load_Glyph( face, glyph_index, FT_LOAD_RENDER );
+            FT_Render_Glyph( face->glyph, ft_render_mode_normal );
 
             if( ( 2 * ( face->glyph->bitmap.rows << 6 ) - face->glyph->metrics.horiBearingY ) > max_height )
                 max_height = ( 2 * ( face->glyph->bitmap.rows << 6 ) - face->glyph->metrics.horiBearingY );
@@ -239,52 +241,38 @@ namespace Ogre
                 max_width = (face->glyph->advance.x >> 6 ) + ( face->glyph->metrics.horiBearingX >> 6 );
         }
 
-		// Now work out how big our texture needs to be
-		size_t rawSize = (max_width + char_spacer) * 
-							((max_height >> 6) + char_spacer) * 
-							(endGlyph - startGlyph + 1);
-
-		size_t tex_side = Math::Sqrt(rawSize);
-		// just in case the size might chop a glyph in half, add another glyph width/height
-		tex_side += std::max(max_width, (max_height>>6));
-		// Now round up to nearest power of two, max out at 4096
-		size_t roundUpSize = 0;
-		for (i = 0; i < 12 && roundUpSize < tex_side; ++i)
-			roundUpSize = 1 << i;
-		
-		tex_side = roundUpSize;
-		size_t data_width = tex_side * 4;
-
-		LogManager::getSingleton().logMessage("Font " + mName + "using texture size " +
-			StringConverter::toString(tex_side) + "x" + StringConverter::toString(tex_side)); 
-
-        uchar* imageData = new uchar[tex_side * tex_side * 4];
-		// Reset content
-		memset(imageData, 0, tex_side * tex_side * 4);
-
         for( i = startGlyph, l = 0, m = 0, n = 0; i < endGlyph; i++ )
         {
             FT_Error ftResult;
 
-            // Load & render glyph
-            ftResult = FT_Load_Char( face, i, FT_LOAD_RENDER );
+            FT_Int glyph_index = FT_Get_Char_Index( face, i );
+            // Load glyph
+            ftResult = FT_Load_Glyph( face, glyph_index, FT_LOAD_RENDER );
             if (ftResult)
             {
                 // problem loading this glyph, continue
-                LogManager::getSingleton().logMessage("Info: cannot load character " +
-                    StringConverter::toString(i) + " in font " + mName);
+                LogManager::getSingleton().logMessage("Info: cannot load glyph " +
+                    StringConverter::toString(glyph_index) + " in font " + mName);
+                continue;
+            }
+            ftResult = FT_Render_Glyph( face->glyph, ft_render_mode_normal );
+            if (ftResult)
+            {
+                // problem rendering this glyph, continue
+                LogManager::getSingleton().logMessage("Info: cannot render glyph " +
+                    StringConverter::toString(glyph_index) + " in font " + mName);
                 continue;
             }
 
-			FT_Int advance = (face->glyph->advance.x >> 6 ) + ( face->glyph->metrics.horiBearingX >> 6 );
+            FT_Int advance = (face->glyph->advance.x >> 6 ) + ( face->glyph->metrics.horiBearingX >> 6 );
 
             unsigned char* buffer = face->glyph->bitmap.buffer;
 
             if (!buffer)
             {
                 // Yuck, FT didn't detect this but generated a null pointer!
-                LogManager::getSingleton().logMessage("Info: Freetype returned null for character " +
-                    StringConverter::toString(i) + " in font " + mName);
+                LogManager::getSingleton().logMessage("Info: Freetype returned null for glyph " +
+                    StringConverter::toString(glyph_index) + " in font " + mName);
                 continue;
             }
 
@@ -327,9 +315,9 @@ namespace Ogre
 
             this->setGlyphTexCoords( i, 
                 (Real)l / (Real)tex_side,  // u1
-                (Real)m / (Real)tex_side,  // v1
+                1.0 - (Real)m / (Real)tex_side,  // v1
                 (Real)( l + ( face->glyph->advance.x >> 6 ) ) / (Real)tex_side, // u2
-                ( m + ( max_height >> 6 ) ) / (Real)tex_side // v2
+                1.0 - ( ( m + ( max_height >> 6 ) ) / (Real)tex_side ) // v2
                 );
 
             // Advance a column
@@ -350,11 +338,9 @@ namespace Ogre
 
 
         String texName = mName + "Texture";
-		// Load texture with no mipmaps
-        TextureManager::getSingleton().loadImage( texName , img, TEX_TYPE_2D, 0  );
-        TextureUnitState* t = mpMaterial->getTechnique(0)->getPass(0)->createTextureUnitState( texName );
-		// Allow min/mag filter, but no mip
-		t->setTextureFiltering(FO_LINEAR, FO_LINEAR, FO_NONE);
+        TextureManager::getSingleton().loadImage( texName , img );
+        mpMaterial->addTextureLayer( texName );
+        
         // SDDatachunk will delete imageData
 
 		FT_Done_FreeType(ftLibrary);

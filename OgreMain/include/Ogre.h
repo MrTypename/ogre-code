@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -27,7 +27,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 // This file includes all the other files which you will need to build a client application
 #include "OgrePrerequisites.h"
 
-#include "OgreException.h"
 #include "OgreRoot.h"
 #include "OgreTextureManager.h"
 #include "OgreSceneManager.h"
@@ -37,9 +36,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreRenderWindow.h"
 #include "OgreRenderSystem.h"
 #include "OgreMaterial.h"
-#include "OgreTechnique.h"
-#include "OgrePass.h"
-#include "OgreTextureUnitState.h"
 #include "OgreLight.h"
 #include "OgreEntity.h"
 #include "OgreSubEntity.h"
@@ -90,10 +86,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreString.h"
 #include "OgreStringConverter.h"
 #include "OgreProfiler.h"
-#include "OgreGpuProgramManager.h"
-#include "OgreGpuProgram.h"
-#include "OgreHighLevelGpuProgramManager.h"
-#include "OgreHighLevelGpuProgram.h"
 
 // .... more to come
 

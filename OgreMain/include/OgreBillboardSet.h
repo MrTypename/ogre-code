@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -30,6 +30,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreMovableObject.h"
 #include "OgreRenderable.h"
+#include "OgreAxisAlignedBox.h"
+#include "OgreBillboard.h"
+#include "OgreString.h"
+#include "OgreColourValue.h"
 #include "OgreStringInterface.h"
 
 namespace Ogre {
@@ -111,8 +115,6 @@ namespace Ogre {
 
         /// Flag indicating whether to autoextend pool
         bool mAutoExtendPool;
-
-        bool mFixedTextureCoords;
 
         typedef std::list<Billboard*> ActiveBillboardList;
         typedef std::deque<Billboard*> FreeBillboardQueue;
@@ -200,7 +202,7 @@ namespace Ogre {
         @param pBillboard Pointer to billboard
         @returns new vertex index
         */
-        inline void genVertices(Real **pPos, RGBA** pCol, Real **pTex, const Vector3* offsets, const Billboard* pBillboard);
+        inline void genVertices(Real **pPos, RGBA** pCol, const Vector3* offsets, const Billboard* pBillboard);
 
         /** Internal method generates vertex offsets.
         @remarks
@@ -389,11 +391,11 @@ namespace Ogre {
         /** See setDefaultDimensions - this sets 1 component individually. */
         virtual void setDefaultWidth(Real width);
         /** See setDefaultDimensions - this gets 1 component individually. */
-        virtual Real getDefaultWidth(void) const;
+        virtual Real getDefaultWidth(void);
         /** See setDefaultDimensions - this sets 1 component individually. */
         virtual void setDefaultHeight(Real height);
         /** See setDefaultDimensions - this gets 1 component individually. */
-        virtual Real getDefaultHeight(void) const;
+        virtual Real getDefaultHeight(void);
 
         /** Sets the name of the material to be used for this billboard set.
             @param
@@ -445,23 +447,14 @@ namespace Ogre {
             @see
                 MovableObject
         */
-        virtual void getWorldTransforms(Matrix4* xform) const;
+        virtual void getWorldTransforms(Matrix4* xform);
 
-        /** @copydoc Renderable::getWorldOrientation */
-        const Quaternion& getWorldOrientation(void) const;
-        /** @copydoc Renderable::getWorldPosition */
-        const Vector3& getWorldPosition(void) const;
         /** Internal callback used by Billboards to notify their parent that they have been resized.
         */
         virtual void _notifyBillboardResized(void);
 
-        /** Notifies the billboardset that texture coordinates will be modified
-            for this set. */
-        virtual void _notifyBillboardTextureCoordsModified(void) {
-            mFixedTextureCoords = false; }
-
         /** Returns whether or not billbards in this are tested individually for culling. */
-        virtual bool getCullIndividually(void) const;
+        virtual bool getCullIndividually(void);
         /** Sets whether culling tests billboards in this individually as well as in a group.
         @remarks
             Billboard sets are always culled as a whole group, based on a bounding box which 
@@ -497,7 +490,7 @@ namespace Ogre {
         virtual void setBillboardType(BillboardType bbt);
 
         /** Returns the billboard type in use. */
-        virtual BillboardType getBillboardType(void) const;
+        virtual BillboardType getBillboardType(void);
 
         /** Use this to specify the common direction given to billboards of type BBT_ORIENTED_COMMON.
         @remarks
@@ -509,7 +502,7 @@ namespace Ogre {
         virtual void setCommonDirection(const Vector3& vec);
 
         /** Gets the common direction for all billboards (BBT_ORIENTED_COMMON) */
-        virtual const Vector3& getCommonDirection(void) const;
+        virtual Vector3 getCommonDirection(void);
 
         /** Overridden from MovableObject */
         virtual const String& getName(void) const;
@@ -522,8 +515,6 @@ namespace Ogre {
 
         /** Update the bounds of the billboardset */
         virtual void _updateBounds(void);
-        /** @copydoc Renderable::getLights */
-        const LightList& getLights(void) const;
 
     };
 

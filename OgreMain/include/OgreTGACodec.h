@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -25,13 +25,14 @@ http://www.gnu.org/copyleft/lesser.txt.
 #ifndef _TGACodec_H__
 #define _TGACodec_H__
 
-#include "OgreILImageCodec.h"
+#include "OgreImageCodec.h"
+#include "OgreSDDataChunk.h"
 
 namespace Ogre {
 
     /** ImageCodec specialized in Traga images.
     */
-    class _OgreExport TGACodec : public ILImageCodec
+    class _OgreExport TGACodec : public ImageCodec
     {
     protected:
 
@@ -57,8 +58,6 @@ namespace Ogre {
         CodecData * decode( const DataChunk& input, DataChunk* output, ... ) const;
 
         String getType() const { return "tga"; }
-
-        unsigned int getILType(void) const;
     };
 
 }

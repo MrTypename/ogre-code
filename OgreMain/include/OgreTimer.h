@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2003 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -58,13 +58,6 @@ namespace Ogre
 		*/	
 		virtual unsigned long getMillisecondsCPU();
 		
-		/** Returns microseconds since initialisation or last reset
-		*/
-		virtual unsigned long getMicroseconds() ;
-		
-		/** Returns microseconds since initialisation or last reset, only CPU time measured
-		*/	
-		virtual unsigned long getMicrosecondsCPU();
 	} ;
 }
 #endif

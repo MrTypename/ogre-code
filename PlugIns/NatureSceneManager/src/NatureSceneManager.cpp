@@ -50,7 +50,7 @@ void NatureSceneManager::setWorldGeometry (const String &filename)
 
 	if (!mNatureRoot)
     {
-	    mNatureRoot = getRootSceneNode()->createChildSceneNode("NaturePluginRoot");
+	    mNatureRoot = static_cast<SceneNode*>(getRootSceneNode()->createChild("NaturePluginRoot"));
     }
 
     // create an instance of a patchloader

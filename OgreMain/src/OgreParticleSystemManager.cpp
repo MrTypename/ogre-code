@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
-#include "OgreStableHeaders.h"
 
 #include "OgreParticleSystemManager.h"
 #include "OgreParticleEmitterFactory.h"
@@ -471,7 +470,7 @@ namespace Ogre {
 
     }
 	//-----------------------------------------------------------------------
-	Real ParticleSystemManager::getTimeFactor(void) const {
+	Real ParticleSystemManager::getTimeFactor(void) {
 		return mTimeFactor;
 	}
 	//-----------------------------------------------------------------------

@@ -14,18 +14,12 @@ using namespace std;
 int main(int argc, char** argv)
 {
     int size;
-    std::string datName, newName, fontName, imageName, genGlyph;
+    std::string datName, newName;
 
-		cout << "Enter unique font name: ";
-		cin >> fontName;
-		cout << "Enter font image name: ";
-		cin >> imageName;
-		cout << "Enter size of texture(Example: 256): ";
+    cout << "Enter size of (square) texture: ";
     cin >> size;
     cout << "Enter name of file containing binary widths: ";
     cin >> datName;
-		cout << "Generate all glyph statements(Not Recommended)(Y/N): ";
-		cin >> genGlyph;
     cout << "Enter name of new text file to create: ";
     cin >> newName;
 
@@ -35,13 +29,8 @@ int main(int argc, char** argv)
 
     ofstream o(newName.c_str());
 
-		o << fontName << endl;
-		o << "{" << "\n\n";
-		o << "\ttype\timage" << endl;
-		o << "\tsource\t" << imageName << "\n\n\n";
-
     int posx = 0;
-    int posy = 0; 
+    int posy = size; // work backwards so same as uv
     int colcount = 0;
     for (int c = 0; c < 256; c++, colcount++)
     {
@@ -49,7 +38,7 @@ int main(int argc, char** argv)
         {
             colcount = 0;
             posx = 0;
-            posy += charSize;
+            posy -= charSize;
         }
 
         int width = fgetc(fp);
@@ -60,27 +49,21 @@ int main(int argc, char** argv)
         u1 = thisx_start / (float)(size) ;
         u2 = thisx_end / (float)(size);
         v1 = (float)posy / (float)(size);
-        v2 = (float)(posy + charSize) / (float)(size);
+        v2 = (float)(posy - charSize) / (float)(size);
 
-				if((genGlyph.at(0) == 'N' || genGlyph.at(0) == 'n') && c >= '!' && c <= '~')
-				{
-					std::string s = " ";
-					s.at(0) = c;
-					o << "\tglyph " << s << " " << u1 << " " << v1 << " " << u2 << " " << v2 << std::endl;
-				}
-				
-				if((genGlyph.at(0) != 'N' && genGlyph.at(0) != 'n'))
-				{
-					std::string s = " ";
-					s.at(0) = c;
-					o << "\tglyph " << s << " " << u1 << " " << v1 << " " << u2 << " " << v2 << std::endl;
-				}
-				posx += charSize;
+        std::string s = " ";
+        s.at(0) = c;
+        o << "glyph " << s << " " << u1 << " " << v1 << " " << u2 << " " << v2 << std::endl;
+
+        posx += charSize;
+
 
     }
-		o << endl;
-		o << "}" << endl;
+
     fclose(fp);
+    
+
+
 
     return 0;
 }

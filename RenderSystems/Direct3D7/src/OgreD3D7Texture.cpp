@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -28,6 +28,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreImage.h"
 #include "OgreLogManager.h"
 
+#include "d3dutil.h"
+#include "d3dxcore.h"
 #include "OgreRoot.h"
 
 namespace Ogre {
@@ -218,7 +220,6 @@ namespace Ogre {
 		mName = name;
 		mTextureType = texType;
 		mUsage = usage;
-        mDepth = 1; // D3D7 does not support volume textures
 
         // Default to 16-bit texture
         enable32Bit( false );
@@ -380,12 +381,20 @@ namespace Ogre {
         finalRect.left   = Real( imgRect.left )   * fWidthFactor;
         finalRect.right  = Real( imgRect.right )  * fWidthFactor;
 
+        /* We have to use a mirror up/down (around the X axis) effect since in DirectX the
+           positive Y is downward, which is different from OGRE's way. */
+        DDBLTFX  ddbltfx;
+        ZeroMemory(&ddbltfx, sizeof(ddbltfx));
+
+        ddbltfx.dwSize = sizeof(ddbltfx);
+        ddbltfx.dwDDFX = DDBLTFX_MIRRORUPDOWN;
+
         if( FAILED( hr = mSurface->Blt(
             (RECT*)&texRect,
             pddsTempSurface, 
             (RECT*)&finalRect,
-            DDBLT_WAIT,
-            NULL ) ) )
+            DDBLT_WAIT | DDBLT_DDFX,
+            &ddbltfx ) ) )
         {
             pddsTempSurface->Release();
             Except( hr, "Error during blit operation.", "D3DTexture::blitImage" );

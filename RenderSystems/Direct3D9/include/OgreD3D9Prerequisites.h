@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -37,7 +37,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 
 #include "OgreNoMemoryMacros.h"
-#define NOMINMAX // required to stop windows.h screwing up std::min definition
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <dxerr9.h>
@@ -54,12 +53,8 @@ namespace Ogre
 	class D3D9DriverList;
 	class D3D9VideoMode;
 	class D3D9VideoModeList;
-	class D3D9GpuProgram;
-	class D3D9GpuProgramManager;
     class D3D9HardwareBufferManager;
     class D3D9HardwareIndexBuffer;
-    class D3D9HLSLProgramFactory;
-    class D3D9HLSLProgram;
     class D3D9VertexDeclaration;
 
 	//-------------------------------------------

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+For the latest info, see http://ogre.sourceforge.net/
 
 Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
@@ -28,6 +28,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgrePrerequisites.h"
 
 #include "OgreBone.h"
+#include "OgreQuaternion.h"
+#include "OgreVector3.h"
 #include "OgreMatrix4.h"
 
 namespace Ogre	{
@@ -75,9 +77,6 @@ namespace Ogre	{
 
         /** Overridden from Node in order to include parent Entity transform. */
         void _updateFromParent(void) const;
-        /** @copydoc Renderable::getLights */
-        const LightList& getLights(void) const;
-
 
 	private:
 		Entity *mParentEntity;
