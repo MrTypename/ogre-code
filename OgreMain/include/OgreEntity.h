@@ -72,7 +72,7 @@ namespace Ogre {
         // Allow SceneManager full access
         friend class SceneManager;
         friend class SubEntity;
-    protected:
+    private:
 
         /** Private constructor (instances cannot be created directly).
         */
@@ -162,33 +162,7 @@ namespace Ogre {
 
         bool mNormaliseNormals;
 
-        bool mCastShadows;
-        ShadowRenderableList mShadowRenderables;
 
-        /** Nested class to allow entity shadows. */
-        class _OgreExport EntityShadowRenderable : public ShadowRenderable
-        {
-        protected:
-            Entity* mParent;
-            // Shared link to position buffer
-            HardwareVertexBufferSharedPtr mPositionBuffer;
-            // Shared link to w-coord buffer (optional)
-            HardwareVertexBufferSharedPtr mWBuffer;
-
-        public:
-            EntityShadowRenderable(Entity* parent, 
-                HardwareIndexBufferSharedPtr* indexBuffer, const VertexData* vertexData);
-            ~EntityShadowRenderable();
-            /// Overridden from ShadowRenderable
-            void getWorldTransforms(Matrix4* xform) const;
-            /// Overridden from ShadowRenderable
-            const Quaternion& getWorldOrientation(void) const;
-            /// Overridden from ShadowRenderable
-            const Vector3& getWorldPosition(void) const;
-            HardwareVertexBufferSharedPtr getPositionBuffer(void) { return mPositionBuffer; }
-            HardwareVertexBufferSharedPtr getWBuffer(void) { return mWBuffer; }
-
-        };
     public:
         /** Default destructor.
         */
@@ -364,34 +338,6 @@ namespace Ogre {
 
         /** Returns true if this entity has auto-normalisation of normals set. */
         bool getNormaliseNormals(void) const {return mNormaliseNormals; }
-
-        /** Sets whether or not this entity will cast shadows.
-        @remarks
-            This setting simply allows you to turn off shadows for a given entity. 
-            An entity will not cast shadows unless the scene supports it in any case
-            (see SceneManager::setShadowTechnique), and by default all entities cast
-            shadows if the scene-level feature is enabled. If, however, for some reason
-            you wish to disable this for a single entity then you can do so using this
-            method.
-        */
-        void setCastShadows(bool enabled) { mCastShadows = enabled; }
-        /** Returns whether shadow casting is enabled for this entity (overridden from ShadowCaster). */
-        bool getCastShadows(void) const { return mCastShadows; }
-
-        /** Overridden member from ShadowCaster. */
-        EdgeData* getEdgeList(void);
-        /** Overridden member from ShadowCaster. */
-        ShadowRenderableListIterator getShadowVolumeRenderableIterator(
-            ShadowTechnique shadowTechnique, const Light* light, 
-            HardwareIndexBufferSharedPtr* indexBuffer, 
-            bool extrudeVertices, unsigned long flags = 0 );
-
-
-
-		/** Internal method for retrieving bone matrix information. */
-		const Matrix4* _getBoneMatrices(void) { return mBoneMatrices;}
-		/** Internal method for retrieving bone matrix information. */
-        unsigned short _getNumBoneMatrices(void) { return mNumBoneMatrices; }
 
 
     };

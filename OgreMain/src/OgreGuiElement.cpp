@@ -73,7 +73,6 @@ namespace Ogre {
         mVertAlign = GVA_TOP;
         mGeomPositionsOutOfDate = true;       
 		mEnabled = true;
-    mSourceTemplate = NULL ;
     }
     //---------------------------------------------------------------------
     GuiElement::~GuiElement()
@@ -591,7 +590,6 @@ namespace Ogre {
     void GuiElement::copyFromTemplate(GuiElement* templateGui)
 	{
 		templateGui->copyParametersTo(this);
-    mSourceTemplate = templateGui ;
 		return;
 	}
 

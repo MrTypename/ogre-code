@@ -146,7 +146,7 @@ namespace Ogre
 		// Overridden RenderSystem functions
 		ConfigOptionMap& getConfigOptions(void);
 		String validateConfigOptions(void);
-		RenderWindow* initialise( bool autoCreateWindow, const String& windowTitle = "OGRE Render Window"  );
+		RenderWindow* initialise( bool autoCreateWindow );
 		RenderWindow* createRenderWindow(const String &name, unsigned int width, unsigned int height, unsigned int colourDepth, bool fullScreen, int left = 0, int top = 0, bool depthBuffer = true, RenderWindow* parentWindowHandle = 0);
 		RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height );
 		String getErrorDescription( long errorNumber );
@@ -161,12 +161,12 @@ namespace Ogre
 		void destroyRenderWindow( RenderWindow* pWin );
 		void convertColourValue( const ColourValue& colour, unsigned long* pDest );
 		void setStencilCheckEnabled(bool enabled);
-        void setStencilBufferParams(CompareFunction func = CMPF_ALWAYS_PASS, 
-            ulong refValue = 0, ulong mask = 0xFFFFFFFF, 
-            StencilOperation stencilFailOp = SOP_KEEP, 
-            StencilOperation depthFailOp = SOP_KEEP,
-            StencilOperation passOp = SOP_KEEP, 
-            bool twoSidedOperation = false);
+		void setStencilBufferFunction(CompareFunction func);
+		void setStencilBufferReferenceValue(ulong refValue);
+		void setStencilBufferMask(ulong mask);
+		void setStencilBufferFailOperation(StencilOperation op);
+		void setStencilBufferDepthFailOperation(StencilOperation op);
+		void setStencilBufferPassOperation(StencilOperation op);
         void setNormaliseNormals(bool normalise);
 
 		// Low-level overridden members, mainly for internal use
@@ -196,8 +196,6 @@ namespace Ogre
 		void _setFog( FogMode mode = FOG_NONE, const ColourValue& colour = ColourValue::White, Real expDensity = 1.0, Real linearStart = 0.0, Real linearEnd = 1.0 );
 		void _makeProjectionMatrix(Real fovy, Real aspect, Real nearPlane, Real farPlane, 
             Matrix4& dest, bool forGpuProgram = false);
-		void _makeProjectionMatrix(Real left, Real right, Real bottom, Real top, Real nearPlane, 
-            Real farPlane, Matrix4& dest, bool forGpuProgram = false);
 		void _setRasterisationMode(SceneDetailLevel level);
         void _setTextureUnitFiltering(size_t unit, FilterType ftype, FilterOptions filter);
 		void _setTextureLayerAnisotropy(size_t unit, unsigned int maxAnisotropy);
@@ -207,13 +205,7 @@ namespace Ogre
         void bindGpuProgram(GpuProgram* prg);
         void unbindGpuProgram(GpuProgramType gptype);
         void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params);
-        void setScissorTest(bool enabled, size_t left = 0, size_t top = 0, size_t right = 800, size_t bottom = 600);
-        void clearFrameBuffer(unsigned int buffers, 
-            const ColourValue& colour = ColourValue::Black, 
-            Real depth = 1.0f, unsigned short stencil = 0);
-		void setClipPlane (ushort index, Real A, Real B, Real C, Real D);
-		void enableClipPlane (ushort index, bool enable);
-        HardwareOcclusionQuery* createHardwareOcclusionQuery(void);
+
 	};
 }
 #endif

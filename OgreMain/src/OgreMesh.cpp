@@ -59,16 +59,13 @@ namespace Ogre {
 
 		mVertexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY;
 		mIndexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY;
-		mVertexBufferShadowBuffer = true;
-		mIndexBufferShadowBuffer = true;
+		mVertexBufferShadowBuffer = false;
+		mIndexBufferShadowBuffer = false;
 
         mBoundRadius = 0.0f;
 
         // Always use software blending for now
         mUseSoftwareBlending = true;
-        mPreparedForShadowVolumes = false;
-
-        mEdgeData = 0;
 
     }
 
@@ -180,8 +177,6 @@ namespace Ogre {
             delete sharedVertexData;
             sharedVertexData = NULL;
         }
-
-        OGRE_DELETE(mEdgeData);
 		// Clear SubMesh lists
 		mSubMeshList.clear();
 		mSubMeshNameMap.clear();
@@ -601,12 +596,12 @@ namespace Ogre {
 		if (!shareBindIndex) 
             bindIndex = targetVertexData->vertexBufferBinding->getNextIndex();
 		// Add declarations for weights and indices
-		const VertexElement& pWeightElem = decl->addElement(
+		decl->addElement(
 			bindIndex, 
 			0, 
 			VertexElement::multiplyTypeCount(VET_FLOAT1, numBlendWeightsPerVertex),
 			VES_BLEND_WEIGHTS);
-		const VertexElement& pIdxElem = decl->addElement(
+		decl->addElement(
 			bindIndex, 
 			sizeof(float) * numBlendWeightsPerVertex, 
 			VertexElement::multiplyTypeCount(VET_SHORT1, numBlendWeightsPerVertex),
@@ -623,16 +618,16 @@ namespace Ogre {
         size_t v;
         VertexBoneAssignmentList::const_iterator i;
         i = boneAssignments.begin();
-		unsigned char *pBase = static_cast<unsigned char*>(
+		Real *pWeight = static_cast<Real*>(
 			mBlendingVB->lock(HardwareBuffer::HBL_DISCARD)); 
         // Iterate by vertex
-		Real *pWeight;
-		unsigned short *pIndex;
         for (v = 0; v < targetVertexData->vertexCount; ++v)
         {
-			/// Convert to specific pointers
-			pWeightElem.baseVertexPointerToElement(pBase, &pWeight);
-			pIdxElem.baseVertexPointerToElement(pBase, &pIndex);
+			/// Convert to index pointer, via void*
+			unsigned short *pIndex = static_cast<unsigned short*>(
+				static_cast<void*>(
+					pWeight + numBlendWeightsPerVertex)
+					);
             for (unsigned short bone = 0; bone < numBlendWeightsPerVertex; ++bone)
 			{
                 // Do we still have data for this vertex?
@@ -650,7 +645,6 @@ namespace Ogre {
                     *pIndex++ = 0;
                 }
             }
-			pBase += mBlendingVB->getVertexSize();
         }
 
 		mBlendingVB->unlock();
@@ -1023,74 +1017,6 @@ namespace Ogre {
 		    buffVPos->unlock();
 	    }
         
-    }
-
-    //---------------------------------------------------------------------
-    void Mesh::buildEdgeList(void)
-    {
-        // Delete any existing edge information
-        OGRE_DELETE(mEdgeData);
-
-        EdgeListBuilder eb;
-        size_t vertexSetCount = 0;
-
-        if (sharedVertexData)
-        {
-            eb.addVertexData(sharedVertexData);
-            vertexSetCount++;
-        }
-
-        // Prepare the builder using the submesh information
-        SubMeshList::iterator i, iend;
-        iend = mSubMeshList.end();
-        for (i = mSubMeshList.begin(); i != iend; ++i)
-        {
-            SubMesh* s = *i;
-            if (s->useSharedVertices)
-            {
-                // Use shared vertex data, index as set 0
-                eb.addIndexData(s->indexData, 0);
-            }
-            else
-            {
-                // own vertex data, add it and reference it directly
-                eb.addVertexData(s->vertexData);
-                eb.addIndexData(s->indexData, vertexSetCount++);
-            }
-        }
-
-        mEdgeData = eb.build();
-
-    }
-    //---------------------------------------------------------------------
-    void Mesh::prepareForShadowVolume(void)
-    {
-        if (sharedVertexData)
-        {
-            sharedVertexData->prepareForShadowVolume();
-        }
-
-        SubMeshList::iterator i, iend;
-        iend = mSubMeshList.end();
-        for (i = mSubMeshList.begin(); i != iend; ++i)
-        {
-            SubMesh* s = *i;
-            if (!s->useSharedVertices)
-            {
-                s->vertexData->prepareForShadowVolume();
-            }
-        }
-        mPreparedForShadowVolumes = true;
-
-    }
-    //---------------------------------------------------------------------
-    EdgeData* Mesh::getEdgeList(void)
-    {
-        if (!mEdgeData)
-        {
-            buildEdgeList();
-        }
-        return mEdgeData;
     }
 
 }

@@ -67,8 +67,7 @@ String GTKGLSupport::validateConfig()
 }
 
 RenderWindow* GTKGLSupport::createWindow(bool autoCreateWindow, 
-                                         GLRenderSystem* renderSystem, 
-										 const String& windowTitle)
+                                         GLRenderSystem* renderSystem)
 {
     if (autoCreateWindow)
     {
@@ -88,7 +87,7 @@ RenderWindow* GTKGLSupport::createWindow(bool autoCreateWindow,
         unsigned int w = StringConverter::parseUnsignedInt(val.substr(0, pos));
         unsigned int h = StringConverter::parseUnsignedInt(val.substr(pos + 1));
  
-        return renderSystem->createRenderWindow(windowTitle, w, h, 32,
+        return renderSystem->createRenderWindow("OGRE Render Window", w, h, 32,
 fullscreen);
     }
     else

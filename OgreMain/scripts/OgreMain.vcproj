@@ -229,9 +229,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreDynLibManager.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreEdgeListBuilder.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreEntity.cpp">
 			</File>
 			<File
@@ -290,9 +287,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreHardwareIndexBuffer.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreHardwareOcclusionQuery.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreHardwareVertexBuffer.cpp">
@@ -507,9 +501,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreSerializer.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreShadowCaster.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreSimpleRenderable.cpp">
 			</File>
 			<File
@@ -714,9 +705,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreDynLibManager.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreEdgeListBuilder.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreEntity.h">
 			</File>
 			<File
@@ -799,9 +787,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreHardwareIndexBuffer.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreHardwareOcclusionQuery.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreHardwareVertexBuffer.h">
@@ -969,9 +954,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgrePlane.h">
 			</File>
 			<File
-				RelativePath="..\include\OgrePlaneBoundedVolume.h">
-			</File>
-			<File
 				RelativePath="..\include\OgrePlatform.h">
 			</File>
 			<File
@@ -1063,9 +1045,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreSerializer.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreShadowCaster.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreSharedPtr.h">

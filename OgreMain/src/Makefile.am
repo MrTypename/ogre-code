@@ -30,7 +30,6 @@ libOgreMain_la_SOURCES = OgreActionEvent.cpp \
                          OgreDDSCodec.cpp \
                          OgreDynLib.cpp \
                          OgreDynLibManager.cpp \
-                         OgreEdgeListBuilder.cpp \
                          OgreEntity.cpp \
                          OgreEventDispatcher.cpp \
                          OgreEventMulticaster.cpp \
@@ -51,7 +50,6 @@ libOgreMain_la_SOURCES = OgreActionEvent.cpp \
 						 OgreGuiPressable.cpp \
 						 OgreHardwareBufferManager.cpp \
 						 OgreHardwareIndexBuffer.cpp \
-						 OgreHardwareOcclusionQuery.cpp \
 						 OgreHardwareVertexBuffer.cpp \
 						 OgreHighLevelGpuProgram.cpp \
 						 OgreHighLevelGpuProgramManager.cpp \
@@ -117,7 +115,6 @@ libOgreMain_la_SOURCES = OgreActionEvent.cpp \
                          OgreSceneNode.cpp \
                          OgreSceneQuery.cpp \
                          OgreSerializer.cpp \
-						 OgreShadowCaster.cpp \
                          OgreSimpleRenderable.cpp \
                          OgreSimpleSpline.cpp \
                          OgreSingleton.cpp \

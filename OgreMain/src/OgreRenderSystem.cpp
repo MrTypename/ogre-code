@@ -93,7 +93,7 @@ namespace Ogre {
 		}
     }
     //-----------------------------------------------------------------------
-    RenderWindow* RenderSystem::initialise(bool autoCreateWindow, const String& windowTitle)
+    RenderWindow* RenderSystem::initialise(bool autoCreateWindow)
     {
         // Have I been registered by call to Root::setRenderSystem?
 		/** Don't do this anymore, just allow via Root
@@ -469,6 +469,18 @@ namespace Ogre {
         }
         // TODO: implement vertex blending support in DX8 & possibly GL_ARB_VERTEX_BLEND (in subclasses)
     }
+    //---------------------------------------------------------------------
+    void RenderSystem::setStencilBufferParams(CompareFunction func, ulong refValue, 
+        ulong mask, StencilOperation stencilFailOp, 
+        StencilOperation depthFailOp, StencilOperation passOp)
+    {
+        setStencilBufferFunction(func);
+        setStencilBufferReferenceValue(refValue);
+        setStencilBufferMask(mask);
+        setStencilBufferFailOperation(stencilFailOp);
+        setStencilBufferDepthFailOperation(depthFailOp);
+        setStencilBufferPassOperation(passOp);
+    }
     //-----------------------------------------------------------------------
     void RenderSystem::_render(const RenderOperation& op)
     {
@@ -508,10 +520,6 @@ namespace Ogre {
     {
         mInvertVertexWinding = invert;
     }
-    //-----------------------------------------------------------------------
-    void RenderSystem::setClipPlane (ushort index, const Plane &p)
-    {
-        setClipPlane (index, p.normal.x, p.normal.y, p.normal.z, p.d);
-    }
+
 }
 

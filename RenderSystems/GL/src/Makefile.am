@@ -20,7 +20,6 @@ RenderSystem_GL_so_SOURCES = OgreGLATIFSInit.cpp \
                              OgreGLTextureManager.cpp \
 							 OgreGLHardwareBufferManager.cpp \
 							 OgreGLHardwareIndexBuffer.cpp \
-							 OgreGLHardwareOcclusionQuery.cpp \
 							 OgreGLHardwareVertexBuffer.cpp \
                              OgreGLDefaultHardwareBufferManager.cpp
 

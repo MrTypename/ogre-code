@@ -39,7 +39,6 @@ http://www.gnu.org/copyleft/lesser.txt
 #include "OgreAnimationState.h"
 #include "OgreSceneQuery.h"
 #include "OgreAutoParamDataSource.h"
-#include "OgreAnimationState.h"
 
 namespace Ogre {
 
@@ -142,10 +141,6 @@ namespace Ogre {
         /// Root scene node
         SceneNode* mSceneRoot;
 
-        /// Autotracking scene nodes
-        typedef std::set<SceneNode*> AutoTrackingSceneNodes;
-        AutoTrackingSceneNodes mAutoTrackingSceneNodes;
-
         // Sky params
         // Sky plane
         Entity* mSkyPlaneEntity;
@@ -241,43 +236,6 @@ namespace Ogre {
 
         /// Utility class for calculating automatic parameters for gpu programs
         AutoParamDataSource mAutoParamDataSource;
-
-        ShadowTechnique mShadowTechnique;
-        bool mDebugShadows;
-        LightList mLightsAffectingFrustum;
-        HardwareIndexBufferSharedPtr mShadowIndexBuffer;
-        /** Internal method for locating a list of lights which could be affecting the frustum. 
-        @remarks
-            Custom scene managers are encouraged to override this method to make use of their
-            scene partitioning scheme to more efficiently locate lights, and to eliminate lights
-            which may be occluded by word geometry.
-        */
-        virtual void findLightsAffectingFrustum(const Camera* camera);
-
-        typedef std::vector<ShadowCaster*> ShadowCasterList;
-        ShadowCasterList mShadowCasterList;
-
-        /// Inner class to use as callback for shadow caster scene query
-        class ShadowCasterSceneQueryListener : public SceneQueryListener
-        {
-        protected:
-            ShadowCasterList* mCasterList;
-        public:
-            ShadowCasterSceneQueryListener(ShadowCasterList* casterList) : mCasterList(casterList){}
-            bool queryResult(MovableObject* object);
-            bool queryResult(SceneQuery::WorldFragment* fragment);
-        };
-
-        /** Internal method for locating a list of shadow casters which 
-            could be affecting the frustum for a given light. 
-        @remarks
-            Custom scene managers are encouraged to override this method to add optimisations, 
-            and to add their own custom shadow casters (perhaps for world geometry)
-        */
-        virtual const ShadowCasterList& findShadowCastersForLight(const Light* light, 
-            const Camera* camera);
-        /** Internal method for adding post-render modulative stencil shadows. */
-        virtual void renderModulativeStencilShadows(const Camera* camera);
 
     public:
         /** Default constructor.
@@ -1116,9 +1074,6 @@ namespace Ogre {
 		/** Returns if all bounding boxes of scene nodes are to be displayed */
 		bool getShowBoundingBoxes() const;
 
-        /** Internal method for notifying the manager that a SceneNode is autotracking. */
-        void _notifyAutotrackingSceneNode(SceneNode* node, bool autoTrack);
-
         
         /** Creates an AxisAlignedBoxSceneQuery for this scene manager. 
         @remarks
@@ -1184,7 +1139,6 @@ namespace Ogre {
         typedef MapIterator<EntityList> EntityIterator;
         typedef MapIterator<CameraList> CameraIterator;
         typedef MapIterator<BillboardSetList> BillboardSetIterator;
-        typedef MapIterator<AnimationList> AnimationIterator;
 
         /** Returns a specialised MapIterator over all lights in the scene. */
         LightIterator getLightIterator(void) {
@@ -1198,55 +1152,10 @@ namespace Ogre {
         CameraIterator getCameraIterator(void) {
             return CameraIterator(mCameras.begin(), mCameras.end());
         }
-        /** Returns a specialised MapIterator over all BillboardSets in the scene. */
+        /** Returns a specialised MapIterator over all cameras in the scene. */
         BillboardSetIterator getBillboardSetIterator(void) {
             return BillboardSetIterator(mBillboardSets.begin(), mBillboardSets.end());
         }
-        /** Returns a specialised MapIterator over all animations in the scene. */
-        AnimationIterator getAnimationIterator(void) {
-            return AnimationIterator(mAnimationsList.begin(), mAnimationsList.end());
-        }
-        /** Returns a specialised MapIterator over all animation states in the scene. */
-        AnimationStateIterator getAnimationStateIterator(void) {
-            return AnimationStateIterator(mAnimationStates.begin(), mAnimationStates.end());
-        }
-
-        /** Sets the general shadow technique to be used in this scene.
-        @remarks   
-            There are multiple ways to generate shadows in a scene, and each has 
-            strengths and weaknesses. 
-            <ul><li>Stencil-based approaches can be used to 
-            draw very long, extreme shadows without loss of precision and the 'additive'
-            version can correctly show the shadowing of complex effects like bump mapping
-            because they physically exclude the light from those areas. However, the edges
-            are very sharp and stencils cannot handle transparency, and they involve a 
-            fair amount of CPU work in order to calculate the shadow volumes, especially
-            when animated objects are involved.</li>
-            <li>Texture-based approaches are good for handling transparency (they can, for
-            example, correctly shadow a mesh which uses alpha to represent holes), and they
-            require little CPU overhead, and can happily shadow geometry which is deformed
-            by a vertex program, unlike stencil shadows. However, they have a fixed precision 
-            which can introduce 'jaggies' at long range and have fillrate issues of their own.</li>
-            </ul>
-        @par
-            We support 2 kinds of stencil shadows, and 2 kinds of texture-based shadows, and one
-            simple decal approach. The 2 stencil approaches differ in the amount of multipass work 
-            that is required - the modulative approach simply 'darkens' areas in shadow after the 
-            main render, which is the least expensive, whilst the additive approach has to perform 
-            a render per light and adds the cumulative effect, whcih is more expensive but more 
-            accurate. The texture based shadows both work in roughly the same way, the only difference is
-            that the shadowmap approach is slightly more accurate, but requires a more recent
-            graphics card.
-        @par
-            Note that because mixing many shadow techniques can cause problems, only one technique
-            is supported at once.
-        @param technique The shadowing technique to use for the scene.
-        @param debug Adds additional debugging information to the scene, such
-            as rendering shadow volumes
-        */
-        virtual void setShadowTechnique(ShadowTechnique technique, 
-            bool debug = false);
-
 
 
 

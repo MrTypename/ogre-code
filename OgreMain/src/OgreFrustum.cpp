@@ -86,7 +86,7 @@ namespace Ogre {
     void Frustum::setFOVy(Real fov)
     {
         mFOVy = fov;
-        invalidateFrustum();
+        mRecalcFrustum = true;
     }
 
     //-----------------------------------------------------------------------
@@ -100,7 +100,7 @@ namespace Ogre {
     void Frustum::setFarClipDistance(Real farPlane)
     {
         mFarDist = farPlane;
-        invalidateFrustum();
+        mRecalcFrustum = true;
     }
 
     //-----------------------------------------------------------------------
@@ -116,7 +116,7 @@ namespace Ogre {
             Except(Exception::ERR_INVALIDPARAMS, "Near clip distance must be greater than zero.",
                 "Frustum::setNearClipDistance");
         mNearDist = nearPlane;
-        invalidateFrustum();
+        mRecalcFrustum = true;
     }
 
     //-----------------------------------------------------------------------
@@ -151,7 +151,7 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    const Plane& Frustum::getFrustumPlane(FrustumPlane plane) const
+    const Plane& Frustum::getFrustumPlane(FrustumPlane plane)
     {
         // Make any pending updates to the calculated frustum
         updateView();
@@ -161,7 +161,7 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    bool Frustum::isVisible(const AxisAlignedBox& bound, FrustumPlane* culledBy) const
+    bool Frustum::isVisible(const AxisAlignedBox& bound, FrustumPlane* culledBy)
     {
         // Null boxes always invisible
         if (bound.isNull()) return false;
@@ -198,7 +198,7 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    bool Frustum::isVisible(const Vector3& vert, FrustumPlane* culledBy) const
+    bool Frustum::isVisible(const Vector3& vert, FrustumPlane* culledBy)
     {
         // Make any pending updates to the calculated frustum
         updateView();
@@ -221,7 +221,7 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    bool Frustum::isVisible(const Sphere& sphere, FrustumPlane* culledBy) const
+    bool Frustum::isVisible(const Sphere& sphere, FrustumPlane* culledBy)
     {
         // Make any pending updates to the calculated frustum
         updateView();
@@ -503,7 +503,7 @@ namespace Ogre {
     void Frustum::setAspectRatio(Real r)
     {
         mAspect = r;
-        invalidateFrustum();
+        mRecalcFrustum = true;
     }
 
     //-----------------------------------------------------------------------
@@ -591,18 +591,6 @@ namespace Ogre {
     {
         // NA
     }
-
-    // -------------------------------------------------------------------
-    void Frustum::invalidateFrustum()
-    {
-        mRecalcFrustum = true;
-    }
-    // -------------------------------------------------------------------
-    void Frustum::invalidateView()
-    {
-        mRecalcView = true;
-    }
-
 
 
 } // namespace Ogre

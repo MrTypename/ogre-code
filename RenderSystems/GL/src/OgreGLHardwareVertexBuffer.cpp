@@ -25,7 +25,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreGLHardwareBufferManager.h"
 #include "OgreGLHardwareVertexBuffer.h"
 #include "OgreException.h"
-#include "OgreLogManager.h"
 
 namespace Ogre {
 
@@ -84,9 +83,9 @@ namespace Ogre {
         {
             if(mUsage & HBU_WRITE_ONLY)
             {
-                LogManager::getSingleton().logMessage(
-                    "GLHardwareVertexBuffer: Locking a write-only vertex "
-                    "buffer for reading, performance warning.");
+                Except(Exception::ERR_INTERNAL_ERROR, 
+                    "Invalid attempt to lock a write-only vertex buffer as read-only",
+                    "GLHardwareVertexBuffer::lock");
             }
             access = GL_READ_ONLY_ARB;
         }

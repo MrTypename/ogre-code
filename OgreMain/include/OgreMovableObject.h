@@ -31,7 +31,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreRenderQueue.h"
 #include "OgreAxisAlignedBox.h"
 #include "OgreSphere.h"
-#include "OgreShadowCaster.h"
 
 namespace Ogre {
 
@@ -41,7 +40,7 @@ namespace Ogre {
             Instances of this class are discrete, relatively small, movable objects
             which are attached to SceneNode objects to define their position.
     */
-    class _OgreExport MovableObject : public ShadowCaster
+    class _OgreExport MovableObject
     {
     protected:
         /// node to which this object is attached
@@ -175,19 +174,7 @@ namespace Ogre {
         /// Returns the query flags relevant for this object
         virtual unsigned long getQueryFlags(void) const { return mQueryFlags; }
 
-        /// Define a default implementation of method from ShadowCaster which implements no shadows
-        bool getCastShadows(void) const { return false; }
-        /// Define a default implementation of method from ShadowCaster which implements no shadows
-        EdgeData* getEdgeList(void) { return NULL; }
-        /// Define a default implementation of method from ShadowCaster which implements no shadows
-        ShadowRenderableListIterator getShadowVolumeRenderableIterator(
-            ShadowTechnique shadowTechnique, const Light* light, 
-            HardwareIndexBufferSharedPtr* indexBuffer, 
-            bool extrudeVertices, unsigned long flags = 0 )
-        {
-            static ShadowRenderableList dummyList;
-            return ShadowRenderableListIterator(dummyList.begin(), dummyList.end());
-        }
+
 
 
 

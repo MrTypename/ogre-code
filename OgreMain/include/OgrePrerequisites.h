@@ -79,10 +79,6 @@ http://www.gnu.org/copyleft/lesser.txt
 // define the real number values to be used
 // default to use 'float' unless precompiler option set
 namespace Ogre {
-    // Define ogre version
-    #define OGRE_VERSION_MAJOR 0
-    #define OGRE_VERSION_MINOR 14
-    #define OGRE_VERSION_PATCH 0
 
     #if OGRE_DOUBLE_PRECISION == 1
         typedef double Real;
@@ -120,11 +116,6 @@ namespace Ogre {
     typedef unsigned int uint;  
     typedef unsigned long ulong;
 
-    /// Useful macros
-    #define OGRE_DELETE(p)       { if(p) { delete (p);     (p)=NULL; } }
-    #define OGRE_DELETE_ARRAY(p) { if(p) { delete[] (p);   (p)=NULL; } }
-
-
 // Pre-declare classes
 // Allows use of pointers in header files without including individual .h
 // so decreases dependencies between files
@@ -155,8 +146,6 @@ namespace Ogre {
     class DataChunk;
     class DynLib;
     class DynLibManager;
-    class EdgeData;
-    class EdgeListBuilder;
     class Entity;
     class ErrorDialog;
 	class EventDispatcher;
@@ -177,7 +166,6 @@ namespace Ogre {
     class GuiElementFactory;
     class GuiManager;
     class HardwareIndexBuffer;
-    class HardwareOcclusionQuery;
     class HardwareVertexBuffer;
 	class HighLevelGpuProgram;
 	class HighLevelGpuProgramManager;
@@ -227,7 +215,6 @@ namespace Ogre {
     class PatchMesh;
     class PlatformManager;
     class Plane;
-    class PlaneBoundedVolume;
 	class PositionTarget;
     class ProgressiveMesh;
     class Profile;
@@ -250,7 +237,6 @@ namespace Ogre {
     class RenderOperation;
     class Resource;
     class ResourceManager;
-	class Root;
     class SceneManager;
     class SceneManagerEnumerator;
     class SceneNode;
@@ -261,8 +247,6 @@ namespace Ogre {
 	class ScrollTarget;
     class SDDataChunk;
     class Serializer;
-    class ShadowCaster;
-    class ShadowRenderable;
     class SimpleRenderable;
     class SimpleSpline;
     class Skeleton;
