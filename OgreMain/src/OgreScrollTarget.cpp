@@ -29,27 +29,30 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreScrollEvent.h"
 #include "OgreEventListeners.h"
+#include "OgreEventMulticaster.h"	
 
 
 namespace Ogre {
+
+	ScrollTarget::ScrollTarget() 
+	{
+		mScrollListener = 0;
+	}
+
+
     //-----------------------------------------------------------------------
+
 	void ScrollTarget::processScrollEvent(ScrollEvent* e) 
 	{
-        // Tell all listeners
-        std::set<ScrollListener*>::iterator i;
-        for (i= mScrollListeners.begin(); i != mScrollListeners.end();
- ++i)
-        {
-		    ScrollListener* listener = *i;
-		    if (listener != 0) 
-		    {
-			    int id = e->getID();
-			    switch(id) 
-			    {
-			    case ScrollEvent::SE_SCROLL_PERFORMED:
-				    listener->scrollPerformed(e);
-				    break;
-                }
+		ScrollListener* listener = mScrollListener;
+		if (listener != NULL) 
+		{
+			int id = e->getID();
+			switch(id) 
+			{
+			case ScrollEvent::SE_SCROLL_PERFORMED:
+				listener->scrollPerformed(e);
+				break;
 			}
 		}
 	}
@@ -57,13 +60,21 @@ namespace Ogre {
     //-----------------------------------------------------------------------
 	void ScrollTarget::addScrollListener(ScrollListener* l) 
 	{
-		mScrollListeners.insert(l);
+		if (l == NULL) 
+		{
+			return;
+		}
+		mScrollListener = EventMulticaster::add(mScrollListener,l);
 	}
 
     //-----------------------------------------------------------------------
 	void ScrollTarget::removeScrollListener(ScrollListener* l) 
 	{
-		mScrollListeners.erase(l);
+		if (l == NULL) 
+		{
+			return;
+		}
+		mScrollListener = EventMulticaster::remove(mScrollListener,l);
 	}
     //-----------------------------------------------------------------------
 }

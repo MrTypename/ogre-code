@@ -1,4 +1,3 @@
-#include "OgreRoot.h"
 #include "OgreException.h"
 #include "OgreLogManager.h"
 #include "OgreStringConverter.h"
@@ -6,14 +5,8 @@
 #include <algorithm>
 
 #include "OgreWin32GLSupport.h"
-#include "OgreGLTexture.h"
+
 #include "OgreWin32Window.h"
-
-#define HW_RTT
-
-#ifdef HW_RTT
-#include "OgreWin32RenderTexture.h"
-#endif
 
 using namespace Ogre;
 
@@ -214,7 +207,7 @@ namespace Ogre {
 			Except(999, "Can't find Colour Depth options!", "Win32GLSupport::newWindow");
 		unsigned int displayFrequency = StringConverter::parseUnsignedInt(opt->second.currentValue);
 
-		Win32Window* window = new Win32Window(*this);
+		Win32Window* window = new Win32Window();
 		if (!fullScreen && mExternalWindowHandle) // ADD CONTROL IF WE HAVE A WINDOW)
 		{
 			Win32Window *pWin32Window = (Win32Window *)window;
@@ -235,44 +228,9 @@ namespace Ogre {
 		LogManager::getSingleton().logMessage("*** Stopping Win32GL Subsystem ***");
 	}
 
-	void Win32GLSupport::initialiseExtensions() {
-		// First, initialise the normal extensions
-		GLSupport::initialiseExtensions();
-		// Welcome to the crazy world of W32 extension handling!
-		if(	!checkExtension("WGL_EXT_extensions_string") )
-			return;
-		// Check for W32 specific extensions probe function
-		PFNWGLGETEXTENSIONSSTRINGEXTPROC _wglGetExtensionsStringEXT = 
-			(PFNWGLGETEXTENSIONSSTRINGEXTPROC)wglGetProcAddress("wglGetExtensionsStringEXT");
-		if(!_wglGetExtensionsStringEXT)
-			return;
-		const char *wgl_extensions = _wglGetExtensionsStringEXT();
-		LogManager::getSingleton().logMessage(
-			LML_NORMAL,
-			"Supported WGL extensions: %s", wgl_extensions);
-		// Parse the, and add them to the main list
-		std::stringstream ext;
-        String str;
-		ext << wgl_extensions;
-        while(ext >> str)
-        {
-            extensionList.insert(str);
-        }
-	}
-
-	void Win32GLSupport::initialiseCapabilities(RenderSystemCapabilities &caps) {
-		
-
-		if(	checkExtension("WGL_ARB_pixel_format") &&
-			checkExtension("WGL_ARB_render_texture")) {
-			// If yes, add rendersystem flag RSC_HWRENDER_TO_TEXTURE	
-			caps.setCapability(RSC_HWRENDER_TO_TEXTURE);
-		}
-	}
-
 	void* Win32GLSupport::getProcAddress(const String& procname)
 	{
-        	return (void*)wglGetProcAddress( procname.c_str() );
+        return wglGetProcAddress( procname.c_str() );
 	}
 
 	void Win32GLSupport::resizeReposition(void* renderTarget)
@@ -282,15 +240,5 @@ namespace Ogre {
 					pWin32Window->windowMovedOrResized();
 		}
 
-	}
-
-	RenderTexture * Win32GLSupport::createRenderTexture( const String & name, unsigned int width, unsigned int height, TextureType texType,  PixelFormat format ) 
-	{
-#ifdef HW_RTT
-		if(Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_HWRENDER_TO_TEXTURE))
-			return new Win32RenderTexture(*this, name, width, height, texType, format);
-		else
-#endif
-			return new GLRenderTexture(name, width, height, texType, format);
 	}
 }

@@ -42,7 +42,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreParticleSystemManager.h"
 #include "OgreSkeletonManager.h"
 #include "OgreGuiManager.h"
-#include "OgreOverlayElementFactory.h"
 #include "OgreOverlayManager.h"
 #include "OgreZipArchiveFactory.h"
 #include "OgreProfiler.h"
@@ -131,11 +130,9 @@ namespace Ogre {
             "(" + OGRE_VERSION_NAME + ")";
 		mConfigFileName = configFileName;
 
-        // Create log manager and default log file if there is no log manager yet
-        if(LogManager::getSingletonPtr() == 0) {
-            mLogManager = new LogManager();
-            mLogManager->createLog(logFileName, true, true);
-        }
+        // Create log manager and default log file
+        mLogManager = new LogManager();
+        mLogManager->createLog(logFileName, true, true);
 
         // Dynamic library manager
         mDynLibManager = new DynLibManager();
@@ -168,15 +165,6 @@ namespace Ogre {
         mOverlayManager = new OverlayManager();
         // Gui Manager
         mGuiManager = new GuiManager();
-
-        mPanelFactory = new PanelOverlayElementFactory();
-        mGuiManager->addOverlayElementFactory(mPanelFactory);
-
-        mBorderPanelFactory = new BorderPanelOverlayElementFactory();
-        mGuiManager->addOverlayElementFactory(mBorderPanelFactory);
-
-        mTextAreaFactory = new TextAreaOverlayElementFactory();
-        mGuiManager->addOverlayElementFactory(mTextAreaFactory);
         // Font manager
         mFontManager = new FontManager();
 
@@ -245,9 +233,6 @@ namespace Ogre {
         if (mHighLevelGpuProgramManager)
             delete mHighLevelGpuProgramManager;
 
-        delete mTextAreaFactory;
-        delete mBorderPanelFactory;
-        delete mPanelFactory;
 
         unloadPlugins();
 

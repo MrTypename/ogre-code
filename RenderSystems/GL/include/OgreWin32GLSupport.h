@@ -5,6 +5,8 @@
 #include "OgreGLSupport.h"
 #include "OgreGLRenderSystem.h"
 
+using std::vector;
+
 namespace Ogre
 {
     
@@ -54,19 +56,9 @@ namespace Ogre
 		};
 
 		virtual void resizeReposition(void*);
-		virtual RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height, TextureType texType,  PixelFormat format );
-
-		/**
-		 * Initialise extensions
-		 */
-		virtual void initialiseExtensions();
-		/**
-		 * Initialise support specific capabilities
-		 */
-		virtual void initialiseCapabilities(RenderSystemCapabilities &caps);
 	private:
 		// Allowed video modes
-		std::vector<DEVMODE> mDevModes;
+		vector<DEVMODE> mDevModes;
 
 		void refreshConfig();
 

@@ -25,9 +25,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreStableHeaders.h"
 
 #include "OgreOverlayManager.h"
+#include "OgreStringVector.h"
 #include "OgreOverlay.h"
 #include "OgreGuiManager.h"
-#include "OgreOverlayContainer.h"
+#include "OgreGuiContainer.h"
 #include "OgreStringConverter.h"
 #include "OgreLogManager.h"
 #include "OgreSceneManagerEnumerator.h"
@@ -35,6 +36,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreSceneNode.h"
 #include "OgreEntity.h"
 #include "OgrePositionTarget.h"
+#include "OgreEventProcessor.h"
 #include "OgreException.h"
 #include "OgreViewport.h"
 #include "OgreSDDataChunk.h"
@@ -52,11 +54,13 @@ namespace Ogre {
         assert( ms_Singleton );  return ( *ms_Singleton );  
     }
     //---------------------------------------------------------------------
-    OverlayManager::OverlayManager() 
-      : mLastViewportWidth(0), 
-        mLastViewportHeight(0), 
+    OverlayManager::OverlayManager() :
+        mEventDispatcher(this), mCursorGuiInitialised(false), 
+        mLastViewportWidth(0), mLastViewportHeight(0), 
         mViewportDimensionsChanged(false)
     {
+		mCursorGuiRegistered = 0;
+		mCursorLevelOverlay = 0;
     }
     //---------------------------------------------------------------------
     OverlayManager::~OverlayManager()
@@ -272,13 +276,13 @@ namespace Ogre {
     }
     //---------------------------------------------------------------------
     void OverlayManager::parseNewElement( DataChunk& chunk, String& elemType, String& elemName, 
-            bool isContainer, Overlay* pOverlay, bool isTemplate, String templateName, OverlayContainer* container)
+            bool isContainer, Overlay* pOverlay, bool isTemplate, String templateName, GuiContainer* container)
     {
         String line;
 
-		OverlayElement* newElement = NULL;
+		GuiElement* newElement = NULL;
 		newElement = 
-				GuiManager::getSingleton().createOverlayElementFromTemplate(templateName, elemType, elemName, isTemplate);
+				GuiManager::getSingleton().createGuiElementFromTemplate(templateName, elemType, elemName, isTemplate);
 
 			// do not add a template to an overlay
 
@@ -291,7 +295,7 @@ namespace Ogre {
 		// do not add a template to the overlay. For templates overlay = 0
 		else if (pOverlay)	
 		{
-			pOverlay->add2D((OverlayContainer*)newElement);
+			pOverlay->add2D((GuiContainer*)newElement);
 		}
 
         while(!chunk.isEOF())
@@ -307,7 +311,7 @@ namespace Ogre {
                 }
                 else
                 {
-                    if (isContainer && parseChildren(chunk,line, pOverlay, isTemplate, static_cast<OverlayContainer*>(newElement)))
+                    if (isContainer && parseChildren(chunk,line, pOverlay, isTemplate, static_cast<GuiContainer*>(newElement)))
                     {
 					    // nested children... don't reparse it
                     }
@@ -323,7 +327,7 @@ namespace Ogre {
 
     //---------------------------------------------------------------------
     bool OverlayManager::parseChildren( DataChunk& chunk, const String& line,
-            Overlay* pOverlay, bool isTemplate, OverlayContainer* parent)
+            Overlay* pOverlay, bool isTemplate, GuiContainer* parent)
 	{
 		bool ret = false;
 		std::vector<String> params;
@@ -382,7 +386,7 @@ namespace Ogre {
 			}
        
 			skipToNextOpenBrace(chunk);
-			parseNewElement(chunk, params[1+skipParam], params[2+skipParam], true, pOverlay, isTemplate, templateName, (OverlayContainer*)parent);
+			parseNewElement(chunk, params[1+skipParam], params[2+skipParam], true, pOverlay, isTemplate, templateName, (GuiContainer*)parent);
 
 		}
 
@@ -411,7 +415,7 @@ namespace Ogre {
         }
     }
     //---------------------------------------------------------------------
-    void OverlayManager::parseElementAttrib( const String& line, Overlay* pOverlay, OverlayElement* pElement )
+    void OverlayManager::parseElementAttrib( const String& line, Overlay* pOverlay, GuiElement* pElement )
     {
         std::vector<String> vecparams;
 
@@ -541,5 +545,135 @@ namespace Ogre {
         return (Real)mLastViewportHeight / (Real)mLastViewportWidth;
     }
     //---------------------------------------------------------------------
+
+	//-----------------------------------------------------------------------------
+
+	PositionTarget* OverlayManager::getPositionTargetAt(Real x, Real y)
+	{
+		PositionTarget* ret = NULL;
+		int currZ = -1;
+        ResourceMap::iterator i, iend;
+        iend = mResources.end();
+        for (i = mResources.begin(); i != iend; ++i)
+        {
+            Overlay* o = (Overlay*)i->second;
+			int z = o->getZOrder();
+			if (z > currZ && o->isVisible())
+			{
+				PositionTarget* elementFound = static_cast<MouseTarget*>(o->findElementAt(x,y));	// GuiElements are MouseTargets and MouseMotionTargets,
+																									// you need to choose one to static cast
+				if (elementFound)
+				{
+					currZ = z;
+					ret = elementFound;
+				}
+			}
+        }
+
+		return ret;
+	}
+
+	//-----------------------------------------------------------------------------
+    void OverlayManager::processEvent(InputEvent* e)
+    {
+        MouseMotionListenerList::iterator i, iEnd;
+
+        mEventDispatcher.dispatchEvent(e);
+
+            // process for cursor listeners
+        switch (e->getID())
+        {
+        case MouseEvent::ME_MOUSE_MOVED :
+            iEnd = mMouseMotionListenerList.end();
+            for (i = mMouseMotionListenerList.begin(); i != iEnd; ++i)
+                (*i)->mouseMoved(static_cast<MouseEvent*>(e));
+            break;
+
+        case MouseEvent::ME_MOUSE_DRAGGED :
+            iEnd = mMouseMotionListenerList.end();
+            for (i = mMouseMotionListenerList.begin(); i != iEnd; ++i)
+                (*i)->mouseDragged(static_cast<MouseEvent*>(e));
+            break;
+        }
+    }
+
+	//-----------------------------------------------------------------------------
+	void OverlayManager::setDefaultCursorGui(GuiContainer* cursor, MouseMotionListener* cursorListener)
+	{
+		mCursorGuiRegistered = cursor;
+		//mCursorListener = cursorListener;
+        mCursorGuiInitialised = false;
+       
+        //if (mCursorListener != 0)
+        //    addMouseMotionListener(mCursorListener);
+	}
+
+	//-----------------------------------------------------------------------------
+	void OverlayManager::setCursorGui(GuiContainer* cursor)
+	{
+            // remove old cursor and listener, if any
+        if (mCursorGuiRegistered != 0)
+            mCursorGuiRegistered->hide();
+        //if (mCursorListener != 0)
+        //    removeMouseMotionListener(mCursorListener);
+
+		mCursorGuiRegistered  = cursor;
+		//mCursorListener       = cursorListener;
+        mCursorGuiInitialised = true;
+
+            // add new cursor, if any
+        if (mCursorGuiRegistered != 0)
+            mCursorGuiRegistered->show();            
+        //if (mCursorListener != 0)
+        //    addMouseMotionListener(mCursorListener);
+	}
+
+	//-----------------------------------------------------------------------------
+	GuiContainer* OverlayManager::getCursorGui()
+	{
+        if(!mCursorGuiInitialised)
+        {
+            mCursorGuiRegistered->initialise();
+            mCursorGuiInitialised = true;
+        }
+		return mCursorGuiRegistered;
+	}
+
+    //-----------------------------------------------------------------------------
+    void OverlayManager::addMouseMotionListener(MouseMotionListener* l)
+    {
+        mMouseMotionListenerList.push_back(l);
+    }
+
+    //-----------------------------------------------------------------------------
+    void OverlayManager::removeMouseMotionListener(MouseMotionListener* l)
+    {
+        MouseMotionListenerList::iterator i, iEnd;
+
+        iEnd = mMouseMotionListenerList.end();
+        for (i = mMouseMotionListenerList.begin(); i != iEnd; ++i)
+            if (*i == l)
+            {
+                mMouseMotionListenerList.erase(i);
+                break;
+            }
+    }
+
+	//-----------------------------------------------------------------------------
+	void OverlayManager::createCursorOverlay()
+	{
+		mCursorLevelOverlay = static_cast<Overlay* > (create("CursorLevelOverlay"));
+		mCursorLevelOverlay->setZOrder(600);
+		mCursorLevelOverlay->show();
+		EventProcessor::getSingleton().addEventTarget(this);
+
+		// register the new cursor and display it
+		if (mCursorGuiRegistered/* && mCursorListener*/)	
+		{
+			mCursorLevelOverlay->add2D(mCursorGuiRegistered);
+            mCursorGuiRegistered->show();
+		}
+	}
+
 }
 

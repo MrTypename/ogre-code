@@ -25,7 +25,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreGLXWindow.h"
 #include "OgreRoot.h"
-#include "OgreGLRenderSystem.h"
+#include "OgreRenderSystem.h"
 #include "OgreImageCodec.h"
 #include "OgreException.h"
 #include "OgreLogManager.h"
@@ -54,8 +54,7 @@ GLXWindow::GLXWindow(Display *display) :
 		mDisplay(display),
 		mWindow(0),
 		mGlxContext(0),
-        mActive(false), mClosed(false),mFullScreen(false), mOldMode(-1),
-        mContext(0) {}
+mActive(false), mClosed(false),mFullScreen(false), mOldMode(-1) {}
 
 GLXWindow::~GLXWindow() {
 	if(mGlxContext)
@@ -490,21 +489,9 @@ void GLXWindow::create(const String& name, unsigned int width, unsigned int heig
 	mWidth = width;
 	mHeight = height;
 	mFullScreen = fullScreen;
-
-    // Create OGRE GL context
-    mContext = new GLXContext(mDisplay, mWindow, mGlxContext);
-    // Register the context with the rendersystem and associate it with this window
-    GLRenderSystem *rs = static_cast<GLRenderSystem*>(Root::getSingleton().getRenderSystem());
-    rs->_registerContext(this, mContext);
 }
 
 void GLXWindow::destroy(void) {
-    // Unregister and destroy OGRE GLContext
-    GLRenderSystem *rs = static_cast<GLRenderSystem*>(Root::getSingleton().getRenderSystem());
-    rs->_unregisterContext(this);
-    delete mContext;    
-
-    // Destroy GL context    
 	if(mGlxContext)
 		glXDestroyContext(mDisplay, mGlxContext);
 	if(mWindow)
@@ -595,8 +582,6 @@ void GLXWindow::getCustomAttribute( const String& name, void* pData ) {
 	}
 	RenderWindow::getCustomAttribute(name, pData);
 }
-
-
 
 void GLXWindow::writeContentsToFile(const String& filename) {
 

@@ -83,10 +83,10 @@ http://www.gnu.org/copyleft/lesser.txt
 // default to use 'float' unless precompiler option set
 namespace Ogre {
     // Define ogre version
-    #define OGRE_VERSION_MAJOR 1
-    #define OGRE_VERSION_MINOR 0
+    #define OGRE_VERSION_MAJOR 0
+    #define OGRE_VERSION_MINOR 15
     #define OGRE_VERSION_PATCH 0
-    #define OGRE_VERSION_NAME "Azathoth"
+    #define OGRE_VERSION_NAME "Hastur"
 
     #if OGRE_DOUBLE_PRECISION == 1
         typedef double Real;
@@ -173,6 +173,7 @@ namespace Ogre {
     class Entity;
     class ErrorDialog;
 	class EventDispatcher;
+	class EventMulticaster;
 	class EventProcessor;
 	class EventQueue;
 	class EventTarget;
@@ -183,9 +184,12 @@ namespace Ogre {
     struct FrameEvent;
     class FrameListener;
     class Frustum;
+    class GuiContainer;
     class GpuProgram;
     class GpuProgramManager;
 	class GpuProgramUsage;
+    class GuiElement;
+    class GuiElementFactory;
     class GuiManager;
     class HardwareIndexBuffer;
     class HardwareOcclusionQuery;
@@ -204,6 +208,9 @@ namespace Ogre {
 	class KeyListener;
 	class KeyTarget;
     class Light;
+	class ListSelectionEvent;
+	class ListSelectionListener;
+	class ListSelectionTarget;
     class Log;
     class LogManager;
     class Material;
@@ -223,9 +230,6 @@ namespace Ogre {
 	class MouseTarget;
     class Node;
     class Overlay;
-    class OverlayContainer;
-    class OverlayElement;
-    class OverlayElementFactory;
     class OverlayManager;
     class Particle;
     class ParticleAffector;
@@ -296,7 +300,6 @@ namespace Ogre {
     class TextureManager;
 	class Timer;
     class UserDefinedObject;
-    class Vector2;
     class Vector3;
     class Vector4;
     class Viewport;  

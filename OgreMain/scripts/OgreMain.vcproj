@@ -184,9 +184,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreBone.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreBorderPanelOverlayElement.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreCamera.cpp">
 			</File>
 			<File
@@ -235,6 +232,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreEventDispatcher.cpp">
 			</File>
 			<File
+				RelativePath="..\src\OgreEventMulticaster.cpp">
+			</File>
+			<File
 				RelativePath="..\src\OgreEventProcessor.cpp">
 			</File>
 			<File
@@ -268,7 +268,22 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreGpuProgramUsage.cpp">
 			</File>
 			<File
+				RelativePath="..\src\OgreGuiContainer.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreGuiControl.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreGuiElement.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreGuiElementCommands.cpp">
+			</File>
+			<File
 				RelativePath="..\src\OgreGuiManager.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreGuiPressable.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreHardwareBufferManager.cpp">
@@ -314,6 +329,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreLight.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreListSelectionTarget.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreLog.cpp">
@@ -376,19 +394,7 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreOverlay.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreOverlayContainer.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreOverlayElement.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreOverlayElementCommands.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreOverlayManager.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgrePanelOverlayElement.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreParticleEmitter.cpp">
@@ -478,12 +484,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreRoot.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="/Zm200"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\OgreRotationSpline.cpp">
@@ -564,9 +564,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreTechnique.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreTextAreaOverlayElement.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreTexture.cpp">
 			</File>
 			<File
@@ -580,9 +577,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreUserDefinedObject.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreVector2.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreVector3.cpp">
@@ -672,9 +666,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreBone.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreBorderPanelOverlayElement.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreCamera.h">
 			</File>
 			<File
@@ -744,6 +735,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreEventListeners.h">
 			</File>
 			<File
+				RelativePath="..\include\OgreEventMulticaster.h">
+			</File>
+			<File
 				RelativePath="..\include\OgreEventProcessor.h">
 			</File>
 			<File
@@ -786,7 +780,25 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreGpuProgramUsage.h">
 			</File>
 			<File
+				RelativePath="..\include\OgreGuiContainer.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreGuiControl.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreGuiElement.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreGuiElementCommands.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreGuiElementFactory.h">
+			</File>
+			<File
 				RelativePath="..\include\OgreGuiManager.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreGuiPressable.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreHardwareBuffer.h">
@@ -841,6 +853,15 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreLight.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreListChanger.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreListSelectionEvent.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreListSelectionTarget.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreLog.h">
@@ -912,22 +933,7 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreOverlay.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreOverlayContainer.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreOverlayElement.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreOverlayElementCommands.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreOverlayElementFactory.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreOverlayManager.h">
-			</File>
-			<File
-				RelativePath="..\include\OgrePanelOverlayElement.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreParticle.h">
@@ -1149,9 +1155,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreTechnique.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreTextAreaOverlayElement.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreTexture.h">
 			</File>
 			<File
@@ -1165,9 +1168,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreUserDefinedObject.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreVector2.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreVector3.h">

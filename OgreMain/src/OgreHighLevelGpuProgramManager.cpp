@@ -74,8 +74,4 @@ namespace Ogre {
         add(ret);
         return ret;
     }
-    //---------------------------------------------------------------------------
-    HighLevelGpuProgramFactory::~HighLevelGpuProgramFactory() 
-    {
-    }
 }

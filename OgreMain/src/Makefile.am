@@ -13,9 +13,8 @@ libOgreMain_la_SOURCES = OgreActionEvent.cpp \
                          OgreAxisAlignedBox.cpp \
                          OgreBillboard.cpp \
                          OgreBillboardSet.cpp \
-                         OgreBitwise.cpp \
                          OgreBone.cpp \
-                         OgreBorderPanelOverlayElement.cpp \
+                         OgreBitwise.cpp \
                          OgreCamera.cpp \
                          OgreCodec.cpp \
                          OgreColourValue.cpp \
@@ -32,6 +31,7 @@ libOgreMain_la_SOURCES = OgreActionEvent.cpp \
                          OgreEdgeListBuilder.cpp \
                          OgreEntity.cpp \
                          OgreEventDispatcher.cpp \
+                         OgreEventMulticaster.cpp \
                          OgreEventProcessor.cpp \
                          OgreEventQueue.cpp \
                          OgreException.cpp \
@@ -43,7 +43,12 @@ libOgreMain_la_SOURCES = OgreActionEvent.cpp \
                          OgreGpuProgram.cpp \
                          OgreGpuProgramManager.cpp \
                          OgreGpuProgramUsage.cpp \
+                         OgreGuiContainer.cpp \
+                         OgreGuiControl.cpp \
+						 OgreGuiElement.cpp \
+                         OgreGuiElementCommands.cpp \
                          OgreGuiManager.cpp \
+						 OgreGuiPressable.cpp \
 						 OgreHardwareBufferManager.cpp \
 						 OgreHardwareIndexBuffer.cpp \
 						 OgreHardwareOcclusionQuery.cpp \
@@ -59,6 +64,7 @@ libOgreMain_la_SOURCES = OgreActionEvent.cpp \
                          OgreKeyFrame.cpp \
 						 OgreKeyTarget.cpp \
                          OgreLight.cpp \
+                         OgreListSelectionTarget.cpp \
                          OgreLog.cpp \
                          OgreLogManager.cpp \
                          OgreMaterial.cpp \
@@ -79,11 +85,7 @@ libOgreMain_la_SOURCES = OgreActionEvent.cpp \
 						 OgreMovablePlane.cpp \
                          OgreNode.cpp \
                          OgreOverlay.cpp \
-                         OgreOverlayContainer.cpp \
-						 OgreOverlayElement.cpp \
-                         OgreOverlayElementCommands.cpp \
                          OgreOverlayManager.cpp \
-                         OgrePanelOverlayElement.cpp \
                          OgreParticleEmitter.cpp \
                          OgreParticleEmitterCommands.cpp \
                          OgreParticleIterator.cpp \
@@ -134,13 +136,11 @@ libOgreMain_la_SOURCES = OgreActionEvent.cpp \
                          OgreSubMesh.cpp \
                          OgreTagPoint.cpp \
                          OgreTechnique.cpp \
-                         OgreTextAreaOverlayElement.cpp \
                          OgreTexture.cpp \
                          OgreTextureManager.cpp \
                          OgreTextureUnitState.cpp \
 						 OgreTimer.cpp \
                          OgreUserDefinedObject.cpp \
-                         OgreVector2.cpp \
                          OgreVector3.cpp \
                          OgreVertexIndexData.cpp \
                          OgreViewport.cpp \

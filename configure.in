@@ -46,21 +46,21 @@ AC_CHECK_LIB(IL, ilInit,,AC_MSG_ERROR([
 ****************************************************************]))
 AC_CHECK_LIB(ILU, iluFlipImage)
 AC_CHECK_LIB(pthread, pthread_create)
+AC_CHECK_LIB(Cg, cgCreateProgram,,AC_MSG_ERROR([
+****************************************************************
+* You do not have the nVidia Cg libraries installed.           *
+* Go to http://developer.nvidia.com/object/cg_toolkit.html     *
+* (Click on Cg_Linux.tar.gz).                                  *
+****************************************************************]))
 AC_CHECK_FUNC(snprintf, AC_DEFINE(HAVE_SNPRINTF,,snprintf))
 AC_CHECK_FUNC(vsnprintf, AC_DEFINE(HAVE_VSNPRINTF,,vsnprintf))
-
-#PKG_CHECK_MODULES(CEGUI, CEGUI-OGRE)
-#AC_SUBST(CEGUI_CFLAGS)
-#AC_SUBST(CEGUI_LIBS)
 
 OGRE_GET_CONFIG_TOOLKIT
 OGRE_GET_PLATFORM
 OGRE_GET_GLSUPPORT
 
 dnl Find the optional components we should build
-OGRE_CHECK_CG
 OGRE_BUILD_PYTHON_LINK
-OGRE_CHECK_OPENEXR
 
 dnl This needs to be figured out later (MingW)
 OGRE_SETUP_FOR_HOST
@@ -105,6 +105,9 @@ AC_CONFIG_FILES([Makefile \
     PlugIns/FileSystem/Makefile \
     PlugIns/FileSystem/src/Makefile \
     PlugIns/FileSystem/include/Makefile \
+    PlugIns/GuiElements/Makefile \
+    PlugIns/GuiElements/src/Makefile \
+    PlugIns/GuiElements/include/Makefile \
     PlugIns/NatureSceneManager/Makefile \
     PlugIns/NatureSceneManager/src/Makefile \
     PlugIns/NatureSceneManager/include/Makefile \

@@ -24,19 +24,15 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 
 #include "OgreWin32Window.h"
-#include "OgreRoot.h"
 #include "OgreLogManager.h"
 #include "OgreRenderSystem.h"
 #include "OgreImageCodec.h"
 #include "OgreException.h"
-#include "OgreWin32GLSupport.h"
-#include "OgreWin32Context.h"
+
 
 namespace Ogre {
 
-	Win32Window::Win32Window(Win32GLSupport &glsupport):
-		mGLSupport(glsupport),
-        mContext(0)
+    Win32Window::Win32Window()
     {
 		mIsFullScreen = false;
 		mHWnd = 0;
@@ -223,21 +219,10 @@ namespace Ogre {
 			wglSwapIntervalEXT(0);
 
 		mReady = true;
-
-        // Create RenderSystem context
-        mContext = new Win32Context(mHDC, mGlrc);
-        // Register the context with the rendersystem and associate it with this window
-        GLRenderSystem *rs = static_cast<GLRenderSystem*>(Root::getSingleton().getRenderSystem());
-        rs->_registerContext(this, mContext);
     }
 
     void Win32Window::destroy(void)
     {
-        // Unregister and destroy OGRE GLContext
-        GLRenderSystem *rs = static_cast<GLRenderSystem*>(Root::getSingleton().getRenderSystem());
-        rs->_unregisterContext(this);
-        delete mContext;    
-
         wglSwapIntervalEXT(mOldSwapIntervall);
 		if (mGlrc) {
 			wglMakeCurrent(NULL, NULL);
@@ -426,5 +411,4 @@ namespace Ogre {
 
 		return DefWindowProc( hWnd, uMsg, wParam, lParam );
 	}
-
 }

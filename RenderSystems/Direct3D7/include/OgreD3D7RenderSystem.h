@@ -204,7 +204,7 @@ namespace Ogre {
             bool fullScreen, int left = 0, int top = 0, bool depthBuffer = true,
             RenderWindow* parentWindowHandle = 0);
 
-        RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height, TextureType texType, PixelFormat format );
+        RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height );
 
         /** See
           RenderSystem
@@ -245,7 +245,7 @@ namespace Ogre {
          */
         void _setSurfaceParams(const ColourValue &ambient,
             const ColourValue &diffuse, const ColourValue &specular,
-            const ColourValue &emissive, Real shininess, TrackVertexColourType tracking);
+            const ColourValue &emissive, Real shininess);
         /** See
           RenderSystem
          */

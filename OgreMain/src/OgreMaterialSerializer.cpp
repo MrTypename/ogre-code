@@ -103,74 +103,48 @@ namespace Ogre
     bool parseAmbient(String& params, MaterialScriptContext& context)
     {
         StringVector vecparams = StringUtil::split(params, " \t");
-        // Must be 1, 3 or 4 parameters 
-        if (vecparams.size() == 1) {
-            if(vecparams[0] == "vertexcolour") {
-               context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() | TVC_AMBIENT);
-            } else {
-                logParseError(
-                    "Bad ambient attribute, single parameter flag must be 'vertexcolour'", 
-                    context);
-            }
-        } 
-        else if (vecparams.size() == 3 || vecparams.size() == 4)
-        {
-            context.pass->setAmbient( _parseColourValue(vecparams) );
-            context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() & ~TVC_AMBIENT);
-        }
-        else 
+        // Must be 3 or 4 parameters 
+        if (vecparams.size() != 3 && vecparams.size() != 4)
         {
             logParseError(
-                "Bad ambient attribute, wrong number of parameters (expected 1, 3 or 4)", 
+                "Bad ambient attribute, wrong number of parameters (expected 3 or 4)", 
                 context);
-        }
-        return false;
-    }
-   //-----------------------------------------------------------------------
-    bool parseDiffuse(String& params, MaterialScriptContext& context)
-    {
-        StringVector vecparams = StringUtil::split(params, " \t");
-        // Must be 1, 3 or 4 parameters 
-        if (vecparams.size() == 1) {
-            if(vecparams[0] == "vertexcolour") {
-               context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() | TVC_DIFFUSE);
-            } else {
-                logParseError(
-                    "Bad diffuse attribute, single parameter flag must be 'vertexcolour'", 
-                    context);
-            }
-        }
-        else if (vecparams.size() == 3 || vecparams.size() == 4)
-        {
-            context.pass->setDiffuse( _parseColourValue(vecparams) );
-            context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() & ~TVC_DIFFUSE);
         }
         else
         {
+            context.pass->setAmbient( _parseColourValue(vecparams) );
+        }
+        return false;
+    }
+    //-----------------------------------------------------------------------
+    bool parseDiffuse(String& params, MaterialScriptContext& context)
+    {
+        StringVector vecparams = StringUtil::split(params, " \t");
+        // Must be 3 or 4 parameters 
+        if (vecparams.size() != 3 && vecparams.size() != 4)
+        {
             logParseError(
-                "Bad diffuse attribute, wrong number of parameters (expected 1, 3 or 4)", 
+                "Bad diffuse attribute, wrong number of parameters (expected 3 or 4)", 
                 context);
-        }        return false;
+        }
+        else
+        {
+            context.pass->setDiffuse( _parseColourValue(vecparams) );
+        }
+        return false;
     }
     //-----------------------------------------------------------------------
     bool parseSpecular(String& params, MaterialScriptContext& context)
     {
         StringVector vecparams = StringUtil::split(params, " \t");
-        // Must be 2, 4 or 5 parameters 
-        if(vecparams.size() == 2) 
-        {   
-            if(vecparams[0] == "vertexcolour") {
-                context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() | TVC_SPECULAR);
-                context.pass->setShininess(StringConverter::parseReal(vecparams[1]) );
-            }
-            else
-            {
-                logParseError(
-                    "Bad specular attribute, double parameter statement must be 'vertexcolour <shininess>'", 
-                    context);
-            }
-        } 
-        else if(vecparams.size() == 4 || vecparams.size() == 5) 
+        // Must be 4 or 5 parameters 
+        if (vecparams.size() != 4 && vecparams.size() != 5)
+        {
+            logParseError(
+                "Bad specular attribute, wrong number of parameters (expected 4 or 5)",
+                context);
+        }
+        else
         {
             context.pass->setSpecular(
                 StringConverter::parseReal(vecparams[0]), 
@@ -178,15 +152,8 @@ namespace Ogre
                 StringConverter::parseReal(vecparams[2]), 
                 vecparams.size() == 5? 
                     StringConverter::parseReal(vecparams[3]) : 1.0f);
-            context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() & ~TVC_SPECULAR);
             context.pass->setShininess(
                 StringConverter::parseReal(vecparams[vecparams.size() - 1]) );
-        }
-        else 
-        {
-            logParseError(
-                "Bad specular attribute, wrong number of parameters (expected 2, 4 or 5)",
-                context);
         }
         return false;
     }
@@ -194,26 +161,16 @@ namespace Ogre
     bool parseEmissive(String& params, MaterialScriptContext& context)
     {
         StringVector vecparams = StringUtil::split(params, " \t");
-        // Must be 1, 3 or 4 parameters 
-        if (vecparams.size() == 1) {
-            if(vecparams[0] == "vertexcolour") {
-               context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() | TVC_EMISSIVE);
-            } else {
-                logParseError(
-                    "Bad emissive attribute, single parameter flag must be 'vertexcolour'", 
-                    context);
-            }
-        }
-        else if (vecparams.size() == 3 || vecparams.size() == 4)
+        // Must be 3 or 4 parameters 
+        if (vecparams.size() != 3 && vecparams.size() != 4)
         {
-            context.pass->setSelfIllumination( _parseColourValue(vecparams) );
-            context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() & ~TVC_EMISSIVE);
+            logParseError(
+                "Bad emissive attribute, wrong number of parameters (expected 3 or 4)", 
+                context);
         }
         else
         {
-            logParseError(
-                "Bad emissive attribute, wrong number of parameters (expected 1, 3 or 4)", 
-                context);
+            context.pass->setSelfIllumination( _parseColourValue(vecparams) );
         }
         return false;
     }
@@ -622,7 +579,7 @@ namespace Ogre
             else if (vecparams[1] == "cubic")
             {
                 tt = TEX_TYPE_CUBE_MAP;
-            } 
+            }
         }
         context.textureUnit->setTextureName(vecparams[0], tt);
         return false;

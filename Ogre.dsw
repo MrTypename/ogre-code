@@ -33,6 +33,9 @@ Package=<4>
     Project_Dep_Name Plugin_OctreeSceneManager
     End Project Dependency
     Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
+    End Project Dependency
+    Begin Project Dependency
     Project_Dep_Name RenderSystem_Direct3D8
     End Project Dependency
     Begin Project Dependency
@@ -70,6 +73,9 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name Plugin_OctreeSceneManager
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name RenderSystem_Direct3D8
@@ -115,6 +121,9 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name Plugin_FileSystem
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name Plugin_OctreeSceneManager
@@ -201,6 +210,9 @@ Package=<4>
     Project_Dep_Name Plugin_OctreeSceneManager
     End Project Dependency
     Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
+    End Project Dependency
+    Begin Project Dependency
     Project_Dep_Name RenderSystem_Direct3D8
     End Project Dependency
     Begin Project Dependency
@@ -220,6 +232,36 @@ Package=<4>
 {{{
     Begin Project Dependency
     Project_Dep_Name OgreMain
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "Demo_Gui"=.\Samples\Gui\scripts\Demo_Gui.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name OgreMain
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name PlatformManager_Win32
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Plugin_FileSystem
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Plugin_OctreeSceneManager
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name RenderSystem_Direct3D8
     End Project Dependency
 }}}
 
@@ -255,6 +297,9 @@ Package=<4>
     Project_Dep_Name Plugin_OctreeSceneManager
     End Project Dependency
     Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
+    End Project Dependency
+    Begin Project Dependency
     Project_Dep_Name RenderSystem_Direct3D8
     End Project Dependency
     Begin Project Dependency
@@ -283,6 +328,9 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name Plugin_FileSystem
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name Plugin_NatureSceneManager
@@ -333,6 +381,9 @@ Package=<4>
     Project_Dep_Name Plugin_OctreeSceneManager
     End Project Dependency
     Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
+    End Project Dependency
+    Begin Project Dependency
     Project_Dep_Name RenderSystem_Direct3D8
     End Project Dependency
     Begin Project Dependency
@@ -364,6 +415,9 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name Plugin_FileSystem
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name Plugin_NatureSceneManager
@@ -417,6 +471,9 @@ Package=<4>
     Project_Dep_Name Plugin_OctreeSceneManager
     End Project Dependency
     Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
+    End Project Dependency
+    Begin Project Dependency
     Project_Dep_Name RenderSystem_Direct3D8
     End Project Dependency
     Begin Project Dependency
@@ -454,6 +511,9 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name Plugin_OctreeSceneManager
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name RenderSystem_Direct3D8
@@ -495,6 +555,9 @@ Package=<4>
     Project_Dep_Name Plugin_OctreeSceneManager
     End Project Dependency
     Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
+    End Project Dependency
+    Begin Project Dependency
     Project_Dep_Name RenderSystem_Direct3D8
     End Project Dependency
     Begin Project Dependency
@@ -532,6 +595,9 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name Plugin_OctreeSceneManager
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name RenderSystem_Direct3D8
@@ -574,6 +640,9 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name Plugin_FileSystem
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name Plugin_OctreeSceneManager
@@ -624,6 +693,9 @@ Package=<4>
     Project_Dep_Name Plugin_OctreeSceneManager
     End Project Dependency
     Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
+    End Project Dependency
+    Begin Project Dependency
     Project_Dep_Name RenderSystem_Direct3D8
     End Project Dependency
     Begin Project Dependency
@@ -661,6 +733,9 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name Plugin_OctreeSceneManager
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name RenderSystem_Direct3D8
@@ -798,6 +873,30 @@ Package=<4>
 
 ###############################################################################
 
+Project: "Plugin_GuiElements"=.\PlugIns\GuiElements\scripts\Plugin_GuiElements.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "Plugin_NatureSceneManager"=.\PlugIns\NatureSceneManager\scripts\Plugin_NatureSceneManager.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
 Project: "Plugin_OctreeSceneManager"=.\PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.dsp - Package Owner=<4>
 
 Package=<5>
@@ -847,6 +946,9 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name Plugin_FileSystem
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Plugin_GuiElements
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name Plugin_NatureSceneManager

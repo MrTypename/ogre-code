@@ -63,16 +63,16 @@ namespace Ogre {
     {
 
     public:
-              typedef std::list<OverlayContainer*> OverlayContainerList;
+              typedef std::list<GuiContainer*> GuiContainerList;
     protected:
         ulong mZOrder;
         bool mVisible;
         /// Internal root node, used as parent for 3D objects
         SceneNode* mRootNode;
         // 2D elements
-        // OverlayContainers, linked list for easy sorting by zorder later
+        // GuiContainers, linked list for easy sorting by zorder later
         // Not a map because sort can be saved since changes infrequent (unlike render queue)
-        OverlayContainerList m2DElements;
+        GuiContainerList m2DElements;
 
         // Degrees of rotation around center
         Radian mRotate;
@@ -97,7 +97,7 @@ namespace Ogre {
         /** Generic unload - called by OverlayManager. */
         virtual void unload(void);
 
-	    OverlayContainer* getChild(const String& name);
+	    GuiContainer* getChild(const String& name);
 
         /** Gets the name of this overlay. */
         const String& getName(void) const;
@@ -128,14 +128,14 @@ namespace Ogre {
             a container.
         @param cont Pointer to a container to add, created using GuiManager.
         */
-        void add2D(OverlayContainer* cont);
+        void add2D(GuiContainer* cont);
 
 
         /** Removes a 2D container from the overlay. 
         @remarks
-            NOT FAST. Consider OverlayElement::hide.
+            NOT FAST. Consider GuiElement::hide.
         */
-        void remove2D(OverlayContainer* cont);
+        void remove2D(GuiContainer* cont);
 
         /** Adds a node capable of holding 3D objects to the overlay.
         @remarks    
@@ -242,14 +242,14 @@ namespace Ogre {
         /** Internal method to put the overlay contents onto the render queue. */
         void _findVisibleObjects(Camera* cam, RenderQueue* queue);
 
-        /** This returns a OverlayElement at position x,y. */
-		virtual OverlayElement* findElementAt(Real x, Real y);
+        /** This returns a GuiElement at position x,y. */
+		virtual GuiElement* findElementAt(Real x, Real y);
 
         /** Returns an iterator over all 2D elements in this manager.
         @remarks
             VectorIterator is actually a too generic name, since it also works for lists.
         */
-        typedef VectorIterator<OverlayContainerList> Overlay2DElementsIterator ;
+        typedef VectorIterator<GuiContainerList> Overlay2DElementsIterator ;
         Overlay2DElementsIterator get2DElementsIterator ()
         {
             return Overlay2DElementsIterator (m2DElements.begin(), m2DElements.end());

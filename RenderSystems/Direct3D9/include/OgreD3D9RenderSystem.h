@@ -139,9 +139,9 @@ namespace Ogre
 		// destructor
 		~D3D9RenderSystem();
 
-		virtual void initConfigOptions(void);
+		virtual initConfigOptions(void);
 		// method for resizing/repositing the render window
- 		virtual void ResizeRepositionWindow(HWND wich);
+ 		virtual ResizeRepositionWindow(HWND wich);
 		// method for setting external window hwnd
 		void SetExternalWindowHandle(HWND externalHandle){mExternalHandle = externalHandle;};
 
@@ -150,7 +150,7 @@ namespace Ogre
 		String validateConfigOptions(void);
 		RenderWindow* initialise( bool autoCreateWindow, const String& windowTitle = "OGRE Render Window"  );
 		RenderWindow* createRenderWindow(const String &name, unsigned int width, unsigned int height, unsigned int colourDepth, bool fullScreen, int left = 0, int top = 0, bool depthBuffer = true, RenderWindow* parentWindowHandle = 0);
-		RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height, TextureType texType, PixelFormat format );
+		RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height );
 		String getErrorDescription( long errorNumber ) const;
 		const String& getName(void) const;
 		// Low-level overridden members
@@ -176,7 +176,7 @@ namespace Ogre
 		void _setWorldMatrix( const Matrix4 &m );
 		void _setViewMatrix( const Matrix4 &m );
 		void _setProjectionMatrix( const Matrix4 &m );
-		void _setSurfaceParams( const ColourValue &ambient, const ColourValue &diffuse, const ColourValue &specular, const ColourValue &emissive, Real shininess, TrackVertexColourType tracking );
+		void _setSurfaceParams( const ColourValue &ambient, const ColourValue &diffuse, const ColourValue &specular, const ColourValue &emissive, Real shininess );
 		void _setTexture( size_t unit, bool enabled, const String &texname );
         void _setTextureCoordSet( size_t unit, size_t index );
         void _setTextureCoordCalculation(size_t unit, TexCoordCalcMethod m, 

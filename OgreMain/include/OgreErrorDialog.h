@@ -36,8 +36,6 @@ namespace Ogre {
     class _OgreExport ErrorDialog
     {
     public:
-    	virtual ~ErrorDialog();
-    	
         /** Displays the error dialog.
             @param
                 errorMessage The error message which has caused the failure.
