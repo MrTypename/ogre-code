@@ -1,12 +1,7 @@
-noinst_HEADERS = \
-		OgreHeightmapTerrainPageSource.h \
-		OgreOctreeCamera.h \
-        OgreOctreeNode.h \
-        OgreOctree.h \
-		OgreOctreeSceneManager.h \
-		OgreTerrainPage.h \
-		OgreTerrainPageSource.h \
-		OgreTerrainPrerequisites.h \
-		OgreTerrainRenderable.h \
-		OgreTerrainSceneManager.h \
-		OgreTerrainVertexProgram.h 
+noinst_HEADERS = OgreOctreeCamera.h \
+                 OgreOctreeNode.h \
+                 OgreOctree.h \
+                 OgreOctreeSceneManager.h \
+		 OgreTerrainRenderable.h \
+		 OgreTerrainSceneManager.h \
+		 OgreTerrainVertexProgram.h 

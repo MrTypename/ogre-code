@@ -43,7 +43,7 @@ namespace Ogre {
         mSettings.clear();
 
         // Open and parse entire file
-        fp = fopen(filename.c_str(), "r");
+        fp = fopen(filename, "r");
         if( !fp )
             Except(
                 Exception::ERR_FILE_NOT_FOUND, "'" + filename + "' file not found!", "ConfigFile::load" );
@@ -52,12 +52,12 @@ namespace Ogre {
         while (ret != NULL)
         {
             String tst = rec;
-            StringUtil::trim(tst);
+            tst.trim();
             // Ignore comments & blanks
             if (tst.length() > 0 && tst.at(0) != '#' && tst.at(0) != '@' && tst.at(0) != '\n')
             {
                 // Tokenise on tab
-                char* pName = strtok(rec, separators.c_str());
+                char* pName = strtok(rec, separators);
                 char* pVal = strtok(NULL, "\n");
                 if (pName && pVal)
                 {
@@ -65,8 +65,8 @@ namespace Ogre {
                     String optVal = pVal;
                     if (trimWhitespace)
                     {
-                        StringUtil::trim(optVal);
-                        StringUtil::trim(optName);
+                        optVal.trim();
+                        optName.trim();
                     }
                     mSettings.insert(std::multimap<String, String>::value_type(optName, optVal));
                 }

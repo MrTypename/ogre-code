@@ -60,6 +60,7 @@ namespace Ogre {
         /** Overridden - see RenderWindow */
         void swapBuffers(bool waitForVSync);
 
+        void outputText(int x, int y, const String& text);
         /** Overridden - see RenderTarget.
         */
         void writeContentsToFile(const String& filename);

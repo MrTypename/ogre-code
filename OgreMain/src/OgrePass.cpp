@@ -183,12 +183,11 @@ namespace Ogre {
 	    mAmbient = ambient;
     }
     //-----------------------------------------------------------------------
-    void Pass::setDiffuse(Real red, Real green, Real blue, Real alpha)
+    void Pass::setDiffuse(Real red, Real green, Real blue)
     {
 	    mDiffuse.r = red;
 	    mDiffuse.g = green;
 	    mDiffuse.b = blue;
-		mDiffuse.a = alpha;
     }
     //-----------------------------------------------------------------------
     void Pass::setDiffuse(const ColourValue& diffuse)
@@ -196,12 +195,11 @@ namespace Ogre {
 	    mDiffuse = diffuse;
     }
     //-----------------------------------------------------------------------
-    void Pass::setSpecular(Real red, Real green, Real blue, Real alpha)
+    void Pass::setSpecular(Real red, Real green, Real blue)
     {
 	    mSpecular.r = red;
 	    mSpecular.g = green;
 	    mSpecular.b = blue;
-		mSpecular.a = alpha;
     }
     //-----------------------------------------------------------------------
     void Pass::setSpecular(const ColourValue& specular)
@@ -684,7 +682,7 @@ namespace Ogre {
 	const String& Pass::getVertexProgramName(void) const
 	{
         if (!mVertexProgramUsage)
-            return StringUtil::BLANK;
+            return String::BLANK;
         else
 		    return mVertexProgramUsage->getProgramName();
 	}
@@ -913,7 +911,7 @@ namespace Ogre {
     const String& Pass::getShadowCasterVertexProgramName(void) const
     {
         if (!mShadowCasterVertexProgramUsage)
-            return StringUtil::BLANK;
+            return String::BLANK;
         else
             return mShadowCasterVertexProgramUsage->getProgramName();
     }
@@ -968,7 +966,7 @@ namespace Ogre {
     const String& Pass::getShadowReceiverVertexProgramName(void) const
     {
         if (!mShadowReceiverVertexProgramUsage)
-            return StringUtil::BLANK;
+            return String::BLANK;
         else
             return mShadowReceiverVertexProgramUsage->getProgramName();
     }

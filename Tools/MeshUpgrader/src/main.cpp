@@ -96,7 +96,7 @@ int main(int numargs, char** args)
         Except(Exception::ERR_FILE_NOT_FOUND, 
             "File " + source + " not found.", "OgreMeshUpgrade");
     }
-    stat( source.c_str(), &tagStat );
+    stat( source, &tagStat );
     chunk.allocate( tagStat.st_size );
     fread( (void*)chunk.getPtr(), tagStat.st_size, 1, pFile );
     fclose( pFile );
@@ -127,16 +127,15 @@ int main(int numargs, char** args)
         while (response == "")
         {
             cin >> response;
-			StringUtil::toLowerCase(response);
-            if (response == "u")
+            if (response.toLowerCase() == "u")
             {
                 // Do nothing
             }
-            else if (response == "d")
+            else if (response.toLowerCase() == "d")
             {
                 mesh.removeLodLevels();
             }
-            else if (response == "r")
+            else if (response.toLowerCase() == "r")
             {
                 genLod = true;
             }
@@ -152,12 +151,11 @@ int main(int numargs, char** args)
         while (response == "")
         {
             cin >> response;
-			StringUtil::toLowerCase(response);
-            if (response == "n")
+            if (response.toLowerCase() == "n")
             {
                 // Do nothing
             }
-            else if (response == "y")
+            else if (response.toLowerCase() == "y")
             {
                 genLod = true;
             }
@@ -176,8 +174,7 @@ int main(int numargs, char** args)
         cout << "\nWhat unit of reduction would you like to use:"
             "\n(f)ixed or (p)roportional?";
         cin >> response;
-		StringUtil::toLowerCase(response);
-        if (response == "f")
+        if (response.toLowerCase() == "f")
         {
             quota = ProgressiveMesh::VRQ_CONSTANT;
             cout << "\nHow many vertices should be removed at each LOD?";

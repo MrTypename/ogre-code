@@ -358,9 +358,6 @@ namespace Ogre {
                 Image::load( const String& strFileName )
         */
         Image & load( const DataChunk& chunk, const String& type );
-        
-        /** Save the image as a file. */
-        void save(const String& filename);
 
         /** Returns a pointer to the internal image buffer.
         */
@@ -380,7 +377,7 @@ namespace Ogre {
 
         /** Returns true if the image has the appropriate flag set.
         */
-        bool hasFlag(const ImageFlags imgFlag) const;
+        bool hasFlag(const ImageFlags imgFlag);
 
         /** Gets the width of the image in pixels.
         */

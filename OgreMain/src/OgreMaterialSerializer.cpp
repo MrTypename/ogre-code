@@ -38,7 +38,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 namespace Ogre 
 {
-
     //-----------------------------------------------------------------------
     // Internal parser methods
     //-----------------------------------------------------------------------
@@ -102,7 +101,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseAmbient(String& params, MaterialScriptContext& context)
     {
-        StringVector vecparams = StringUtil::split(params, " \t");
+        StringVector vecparams = params.split(" \t");
         // Must be 3 or 4 parameters 
         if (vecparams.size() != 3 && vecparams.size() != 4)
         {
@@ -119,7 +118,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseDiffuse(String& params, MaterialScriptContext& context)
     {
-        StringVector vecparams = StringUtil::split(params, " \t");
+        StringVector vecparams = params.split(" \t");
         // Must be 3 or 4 parameters 
         if (vecparams.size() != 3 && vecparams.size() != 4)
         {
@@ -136,7 +135,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseSpecular(String& params, MaterialScriptContext& context)
     {
-        StringVector vecparams = StringUtil::split(params, " \t");
+        StringVector vecparams = params.split(" \t");
         // Must be 4 or 5 parameters 
         if (vecparams.size() != 4 && vecparams.size() != 5)
         {
@@ -149,9 +148,7 @@ namespace Ogre
             context.pass->setSpecular(
                 StringConverter::parseReal(vecparams[0]), 
                 StringConverter::parseReal(vecparams[1]), 
-                StringConverter::parseReal(vecparams[2]), 
-                vecparams.size() == 5? 
-                    StringConverter::parseReal(vecparams[3]) : 1.0f);
+                StringConverter::parseReal(vecparams[2]));
             context.pass->setShininess(
                 StringConverter::parseReal(vecparams[vecparams.size() - 1]) );
         }
@@ -160,7 +157,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseEmissive(String& params, MaterialScriptContext& context)
     {
-        StringVector vecparams = StringUtil::split(params, " \t");
+        StringVector vecparams = params.split(" \t");
         // Must be 3 or 4 parameters 
         if (vecparams.size() != 3 && vecparams.size() != 4)
         {
@@ -207,8 +204,8 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseSceneBlend(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
-        StringVector vecparams = StringUtil::split(params, " \t");
+        params.toLowerCase();
+        StringVector vecparams = params.split(" \t");
         // Should be 1 or 2 params 
         if (vecparams.size() == 1)
         {
@@ -282,7 +279,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseDepthCheck(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
+        params.toLowerCase();
         if (params == "on")
             context.pass->setDepthCheckEnabled(true);
         else if (params == "off")
@@ -297,7 +294,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseDepthWrite(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
+        params.toLowerCase();
         if (params == "on")
             context.pass->setDepthWriteEnabled(true);
         else if (params == "off")
@@ -312,7 +309,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseDepthFunc(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
+        params.toLowerCase();
         try {
             CompareFunction func = convertCompareFunction(params);
             context.pass->setDepthFunction(func);
@@ -327,7 +324,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseColourWrite(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
+        params.toLowerCase();
         if (params == "on")
             context.pass->setColourWriteEnabled(true);
         else if (params == "off")
@@ -342,7 +339,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseCullHardware(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
+        params.toLowerCase();
         if (params=="none")
             context.pass->setCullingMode(CULL_NONE);
         else if (params=="anticlockwise")
@@ -358,7 +355,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseCullSoftware(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
+        params.toLowerCase();
         if (params=="none")
             context.pass->setManualCullingMode(MANUAL_CULL_NONE);
         else if (params=="back")
@@ -374,7 +371,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseLighting(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
+        params.toLowerCase();
         if (params=="on")
             context.pass->setLightingEnabled(true);
         else if (params=="off")
@@ -393,8 +390,8 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseIteration(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
-        StringVector vecparams = StringUtil::split(params, " \t");
+        params.toLowerCase();
+        StringVector vecparams = params.split(" \t");
         if (vecparams.size() != 1 && vecparams.size() != 2)
         {
             logParseError("Bad iteration attribute, expected 1 or 2 parameters.", context);
@@ -440,8 +437,8 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseFogging(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
-        StringVector vecparams = StringUtil::split(params, " \t");
+        params.toLowerCase();
+        StringVector vecparams = params.split(" \t");
         if (vecparams[0]=="true")
         {
             // if true, we need to see if they supplied all arguments, or just the 1... if just the one,
@@ -494,7 +491,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseShading(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
+        params.toLowerCase();
         if (params=="flat")
             context.pass->setShadingMode(SO_FLAT);
         else if (params=="gouraud")
@@ -510,8 +507,8 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseFiltering(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
-        StringVector vecparams = StringUtil::split(params, " \t");
+        params.toLowerCase();
+        StringVector vecparams = params.split(" \t");
         // Must be 1 or 3 parameters 
         if (vecparams.size() == 1)
         {
@@ -554,7 +551,7 @@ namespace Ogre
     // Texture layer attributes
     bool parseTexture(String& params, MaterialScriptContext& context)
     {
-        StringVector vecparams = StringUtil::split(params, " \t");
+        StringVector vecparams = params.split(" \t");
         if (vecparams.size() > 2)
         {
             logParseError("Invalid texture attribute - expected only 1 or 2 parameters.", 
@@ -563,7 +560,7 @@ namespace Ogre
         TextureType tt = TEX_TYPE_2D;
         if (vecparams.size() == 2)
         {
-            StringUtil::toLowerCase(vecparams[1]);
+            vecparams[1].toLowerCase();
             if (vecparams[1] == "1d")
             {
                 tt = TEX_TYPE_1D;
@@ -587,7 +584,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseAnimTexture(String& params, MaterialScriptContext& context)
     {
-        StringVector vecparams = StringUtil::split(params, " \t");
+        StringVector vecparams = params.split(" \t");
         size_t numParams = vecparams.size();
         // Determine which form it is
         // Must have at least 3 params though
@@ -620,13 +617,12 @@ namespace Ogre
     bool parseCubicTexture(String& params, MaterialScriptContext& context)
     {
 
-        StringVector vecparams = StringUtil::split(params, " \t");
+        StringVector vecparams = params.split(" \t");
         size_t numParams = vecparams.size();
 
         // Get final param
         bool useUVW;
-        String& uvOpt = vecparams[numParams-1];
-		StringUtil::toLowerCase(uvOpt);
+        String uvOpt = vecparams[numParams-1].toLowerCase();
         if (uvOpt == "combineduvw")
             useUVW = true;
         else if (uvOpt == "separateuv")
@@ -670,7 +666,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseTexAddressMode(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
+        params.toLowerCase();
         if (params=="wrap")
             context.textureUnit->setTextureAddressingMode(TextureUnitState::TAM_WRAP);
         else if (params=="mirror")
@@ -686,7 +682,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseColourOp(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
+        params.toLowerCase();
         if (params=="replace")
             context.textureUnit->setColourOperation(LBO_REPLACE);
         else if (params=="add")
@@ -704,8 +700,8 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseAlphaRejection(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
-        StringVector vecparams = StringUtil::split(params, " \t");
+        params.toLowerCase();
+        StringVector vecparams = params.split(" \t");
         if (vecparams.size() != 2)
         {
             logParseError(
@@ -781,8 +777,8 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseColourOpEx(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
-        StringVector vecparams = StringUtil::split(params, " \t");
+        params.toLowerCase();
+        StringVector vecparams = params.split(" \t");
         size_t numParams = vecparams.size();
 
         if (numParams < 3 || numParams > 10)
@@ -864,8 +860,8 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseColourOpFallback(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
-        StringVector vecparams = StringUtil::split(params, " \t");
+        params.toLowerCase();
+        StringVector vecparams = params.split(" \t");
         if (vecparams.size() != 2)
         {
             logParseError("Bad colour_op_multipass_fallback attribute, wrong number "
@@ -891,8 +887,8 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseAlphaOpEx(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
-        StringVector vecparams = StringUtil::split(params, " \t");
+        params.toLowerCase();
+        StringVector vecparams = params.split(" \t");
         size_t numParams = vecparams.size();
         if (numParams < 3 || numParams > 6)
         {
@@ -967,7 +963,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseEnvMap(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
+        params.toLowerCase();
         if (params=="off")
             context.textureUnit->setEnvironmentMap(false);
         else if (params=="spherical")
@@ -987,7 +983,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseScroll(String& params, MaterialScriptContext& context)
     {
-        StringVector vecparams = StringUtil::split(params, " \t");
+        StringVector vecparams = params.split(" \t");
         if (vecparams.size() != 2)
         {
             logParseError("Bad scroll attribute, wrong number of parameters (expected 2)", context);
@@ -1003,7 +999,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseScrollAnim(String& params, MaterialScriptContext& context)
     {
-        StringVector vecparams = StringUtil::split(params, " \t");
+        StringVector vecparams = params.split(" \t");
         if (vecparams.size() != 2)
         {
             logParseError("Bad scroll_anim attribute, wrong number of "
@@ -1035,7 +1031,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseScale(String& params, MaterialScriptContext& context)
     {
-        StringVector vecparams = StringUtil::split(params, " \t");
+        StringVector vecparams = params.split(" \t");
         if (vecparams.size() != 2)
         {
             logParseError("Bad scale attribute, wrong number of parameters (expected 2)", context);
@@ -1050,8 +1046,8 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseWaveXform(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
-        StringVector vecparams = StringUtil::split(params, " \t");
+        params.toLowerCase();
+        StringVector vecparams = params.split(" \t");
 
         if (vecparams.size() != 6)
         {
@@ -1125,7 +1121,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseLodDistances(String& params, MaterialScriptContext& context)
     {
-        StringVector vecparams = StringUtil::split(params, " \t");
+        StringVector vecparams = params.split(" \t");
 
         // iterate over the parameters and parse distances out of them
         Material::LodDistanceList lodList;
@@ -1154,10 +1150,10 @@ namespace Ogre
         // the index or the parameter name, which we ignore
 
         // Determine type
-        size_t start, dims, roundedDims, i;
+        size_t start, dims, i;
         bool isReal;
 
-        StringUtil::toLowerCase(vecparams[1]);
+        vecparams[1].toLowerCase();
 
         if (vecparams[1] == "matrix4x4")
         {
@@ -1168,30 +1164,14 @@ namespace Ogre
         {
             // find the dimensionality
             start = vecparams[1].find_first_not_of("float");
-            // Assume 1 if not specified
-            if (start == String::npos)
-            {
-                dims = 1;
-            }
-            else
-            {
-                dims = StringConverter::parseInt(vecparams[1].substr(start));
-            }
+            dims = StringConverter::parseInt(vecparams[1].substr(start));
             isReal = true;
         }
         else if ((start = vecparams[1].find("int")) != String::npos)
         {
             // find the dimensionality
             start = vecparams[1].find_first_not_of("int");
-            // Assume 1 if not specified
-            if (start == String::npos)
-            {
-                dims = 1;
-            }
-            else
-            {
-                dims = StringConverter::parseInt(vecparams[1].substr(start));
-            }
+            dims = StringConverter::parseInt(vecparams[1].substr(start));
             isReal = false;
         }
         else
@@ -1208,49 +1188,33 @@ namespace Ogre
                 "type " + vecparams[1], context);
         }
 
-        // Round dims to multiple of 4
-        if (dims %4 != 0)
+        if (dims % 4 != 0)
         {
-            roundedDims = dims + 4 - (dims % 4);
-        }
-        else
-        {
-            roundedDims = dims;
+            logParseError("Invalid " + commandname + " attribute; parameter type must "
+                "have a cardinality which is a multiple of 4", context);
         }
 
         // Now parse all the values
         if (isReal)
         {
-            Real* realBuffer = new Real[roundedDims];
-            // Do specified values
+            Real* realBuffer = new Real[dims];
             for (i = 0; i < dims; ++i)
             {
                 realBuffer[i] = StringConverter::parseReal(vecparams[i+2]);
             }
-            // Fill up to multiple of 4 with zero
-            for (; i < roundedDims; ++i)
-            {
-                realBuffer[i] = 0.0f;
-            }
             // Set
-            context.programParams->setConstant(index, realBuffer, roundedDims * 0.25);
+            context.programParams->setConstant(index, realBuffer, dims * 0.25);
             delete [] realBuffer;
         }
         else
         {
-            int* intBuffer = new int[roundedDims];
-            // Do specified values
+            int* intBuffer = new int[dims];
             for (i = 0; i < dims; ++i)
             {
                 intBuffer[i] = StringConverter::parseInt(vecparams[i+2]);
             }
-            // Fill to multiple of 4 with 0
-            for (; i < roundedDims; ++i)
-            {
-                intBuffer[i] = 0;
-            }
             // Set
-            context.programParams->setConstant(index, intBuffer, roundedDims * 0.25);
+            context.programParams->setConstant(index, intBuffer, dims * 0.25);
             delete [] intBuffer;
         }
     }
@@ -1264,7 +1228,7 @@ namespace Ogre
         bool extras = false;
         GpuProgramParameters::AutoConstantType acType;
 
-        StringUtil::toLowerCase(vecparams[1]);
+        vecparams[1].toLowerCase();
 
         if (vecparams[1] == "world_matrix")
         {
@@ -1386,8 +1350,8 @@ namespace Ogre
             return false;
         }
 
-        StringUtil::toLowerCase(params);
-        StringVector vecparams = StringUtil::split(params, " \t");
+        params.toLowerCase();
+        StringVector vecparams = params.split(" \t");
         if (vecparams.size() < 3)
         {
             logParseError("Invalid param_indexed attribute - expected at least 3 parameters.", 
@@ -1411,8 +1375,8 @@ namespace Ogre
             return false;
         }
 
-        StringUtil::toLowerCase(params);
-        StringVector vecparams = StringUtil::split(params, " \t");
+        params.toLowerCase();
+        StringVector vecparams = params.split(" \t");
         if (vecparams.size() != 2 && vecparams.size() != 3)
         {
             logParseError("Invalid param_indexed_auto attribute - expected 2 or 3 parameters.", 
@@ -1436,7 +1400,7 @@ namespace Ogre
             return false;
         }
 
-        StringVector vecparams = StringUtil::split(params, " \t");
+        StringVector vecparams = params.split(" \t");
         if (vecparams.size() < 3)
         {
             logParseError("Invalid param_named attribute - expected at least 3 parameters.", 
@@ -1473,7 +1437,7 @@ namespace Ogre
             return false;
         }
 
-        StringVector vecparams = StringUtil::split(params, " \t");
+        StringVector vecparams = params.split(" \t");
         if (vecparams.size() != 2 && vecparams.size() != 3)
         {
             logParseError("Invalid param_indexed_auto attribute - expected 2 or 3 parameters.", 
@@ -1689,7 +1653,7 @@ namespace Ogre
         context.programDef->supportsSkeletalAnimation = false;
 
 		// Get name and language code
-		StringVector vecparams = StringUtil::split(params, " \t");
+		StringVector vecparams = params.split(" \t");
 		if (vecparams.size() != 2)
 		{
             logParseError("Invalid vertex_program entry - expected "
@@ -1699,8 +1663,7 @@ namespace Ogre
 		// Name, preserve case
 		context.programDef->name = vecparams[0];
 		// language code, make lower case
-		context.programDef->language = vecparams[1];
-		StringUtil::toLowerCase(context.programDef->language);
+		context.programDef->language = vecparams[1].toLowerCase();
 
         // Return TRUE because this must be followed by a {
         return true;
@@ -1717,7 +1680,7 @@ namespace Ogre
 		context.programDef->supportsSkeletalAnimation = false;
 
 		// Get name and language code
-		StringVector vecparams = StringUtil::split(params, " \t");
+		StringVector vecparams = params.split(" \t");
 		if (vecparams.size() != 2)
 		{
             logParseError("Invalid fragment_program entry - expected "
@@ -1727,8 +1690,7 @@ namespace Ogre
 		// Name, preserve case
 		context.programDef->name = vecparams[0];
 		// language code, make lower case
-		context.programDef->language = vecparams[1];
-		StringUtil::toLowerCase(context.programDef->language);
+		context.programDef->language = vecparams[1].toLowerCase();
 
 		// Return TRUE because this must be followed by a {
         return true;
@@ -1765,7 +1727,7 @@ namespace Ogre
 		// This params object does not have the command stripped
 		// Lower case the command, but not the value incase it's relevant
 		// Split only up to first delimiter, program deals with the rest
-		StringVector vecparams = StringUtil::split(params, " \t", 1);
+		StringVector vecparams = params.split(" \t", 1);
 		if (vecparams.size() != 2)
 		{
             logParseError("Invalid custom program parameter entry; "
@@ -1782,8 +1744,8 @@ namespace Ogre
 	//-----------------------------------------------------------------------
     bool parseTextureSource(String& params, MaterialScriptContext& context)
     {
-		StringUtil::toLowerCase(params);
-        StringVector vecparams = StringUtil::split(params, " \t");
+		params.toLowerCase();
+        StringVector vecparams = params.split(" \t");
         if (vecparams.size() != 1)
 			logParseError("Invalid texture source attribute - expected 1 parameter.",                 context);
         //The only param should identify which ExternalTextureSource is needed
@@ -1810,7 +1772,7 @@ namespace Ogre
     {
 		// This params object does not have the command stripped
 		// Split only up to first delimiter, program deals with the rest
-		StringVector vecparams = StringUtil::split(params, " \t", 1);
+		StringVector vecparams = params.split(" \t", 1);
 		if (vecparams.size() != 2)
 		{
             logParseError("Invalid texture parameter entry; "
@@ -1828,7 +1790,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseReceiveShadows(String& params, MaterialScriptContext& context)
     {
-        StringUtil::toLowerCase(params);
+        params.toLowerCase();
         if (params == "on")
             context.material->setReceiveShadows(true);
         else if (params == "off")
@@ -1841,14 +1803,7 @@ namespace Ogre
         return false;
 
     }
-    //-----------------------------------------------------------------------
-    bool parseDefaultParams(String& params, MaterialScriptContext& context)
-    {
-        context.section = MSS_DEFAULT_PARAMETERS;
-        // Should be a brace next
-        return true;
-    }
-
+	
     //-----------------------------------------------------------------------
     //-----------------------------------------------------------------------
     MaterialSerializer::MaterialSerializer()
@@ -1921,14 +1876,7 @@ namespace Ogre
         mProgramAttribParsers.insert(AttribParserList::value_type("source", (ATTRIBUTE_PARSER)parseProgramSource));
         mProgramAttribParsers.insert(AttribParserList::value_type("syntax", (ATTRIBUTE_PARSER)parseProgramSyntax));
         mProgramAttribParsers.insert(AttribParserList::value_type("includes_skeletal_animation", (ATTRIBUTE_PARSER)parseProgramSkeletalAnimation));
-        mProgramAttribParsers.insert(AttribParserList::value_type("default_params", (ATTRIBUTE_PARSER)parseDefaultParams));
 		
-        // Set up program default param attribute parsers
-        mProgramDefaultParamAttribParsers.insert(AttribParserList::value_type("param_indexed", (ATTRIBUTE_PARSER)parseParamIndexed));
-        mProgramDefaultParamAttribParsers.insert(AttribParserList::value_type("param_indexed_auto", (ATTRIBUTE_PARSER)parseParamIndexedAuto));
-        mProgramDefaultParamAttribParsers.insert(AttribParserList::value_type("param_named", (ATTRIBUTE_PARSER)parseParamNamed));
-        mProgramDefaultParamAttribParsers.insert(AttribParserList::value_type("param_named_auto", (ATTRIBUTE_PARSER)parseParamNamedAuto));
-        mProgramDefaultParamAttribParsers.insert(AttribParserList::value_type("param_named", (ATTRIBUTE_PARSER)parseParamNamedAuto));
 
         mScriptContext.section = MSS_NONE;
         mScriptContext.material = 0;
@@ -2113,7 +2061,6 @@ namespace Ogre
 				finishProgramDefinition();
                 mScriptContext.section = MSS_NONE;
                 delete mScriptContext.programDef;
-                mScriptContext.defaultParamLines.clear();
                 mScriptContext.programDef = NULL;
             }
             else
@@ -2122,7 +2069,7 @@ namespace Ogre
 				// do this manually because we want to call a custom
 				// routine when the parser is not found
 				// First, split line on first divisor only
-				StringVector splitCmd = StringUtil::split(line, " \t", 1);
+				StringVector splitCmd = line.split(" \t", 1);
 				// Find attribute parser
 				AttribParserList::iterator iparser = mProgramAttribParsers.find(splitCmd[0]);
 				if (iparser == mProgramAttribParsers.end())
@@ -2132,26 +2079,12 @@ namespace Ogre
 				}
 				else
 				{
-                    String cmd = splitCmd.size() >= 2? splitCmd[1]:StringUtil::BLANK;
+                    String cmd = splitCmd.size() >= 2? splitCmd[1]:String::BLANK;
 					// Use parser with remainder
-                    return iparser->second(cmd, mScriptContext );
+                    iparser->second(cmd, mScriptContext );
 				}
 				
             }
-            break;
-        case MSS_DEFAULT_PARAMETERS:
-            if (line == "}")
-            {
-                // End of default parameters
-                mScriptContext.section = MSS_PROGRAM;
-            }
-            else
-            {
-                // Save default parameter lines up until we finalise the program
-                mScriptContext.defaultParamLines.push_back(line);
-            }
-
-
             break;
         };
 
@@ -2162,7 +2095,6 @@ namespace Ogre
 	{
 		// Now it is time to create the program and propagate the parameters
 		MaterialScriptProgramDefinition* def = mScriptContext.programDef;
-        GpuProgram* gp = 0;
 		if (def->language == "asm")
 		{
 			// Native assembler
@@ -2178,9 +2110,9 @@ namespace Ogre
 					", you must specify a syntax code.", mScriptContext);
 			}
 			// Create
-			gp = GpuProgramManager::getSingleton().
+			GpuProgram* gp = GpuProgramManager::getSingleton().
 				createProgram(def->name, def->source, def->progType, def->syntax);
-
+			gp->setSkeletalAnimationIncluded(def->supportsSkeletalAnimation);
 		}
 		else
 		{
@@ -2194,18 +2126,19 @@ namespace Ogre
 			// Create
             try 
             {
-			    HighLevelGpuProgram* hgp = HighLevelGpuProgramManager::getSingleton().
+			    HighLevelGpuProgram* gp = HighLevelGpuProgramManager::getSingleton().
 				    createProgram(def->name, def->language, def->progType);
-                gp = hgp;
                 // Set source file
-                hgp->setSourceFile(def->source);
+                gp->setSourceFile(def->source);
+                // Skel animation supported
+                gp->setSkeletalAnimationIncluded(def->supportsSkeletalAnimation);
 
 			    // Set custom parameters
 			    std::map<String, String>::const_iterator i, iend;
 			    iend = def->customParameters.end();
 			    for (i = def->customParameters.begin(); i != iend; ++i)
 			    {
-				    if (!hgp->setParameter(i->first, i->second))
+				    if (!gp->setParameter(i->first, i->second))
 				    {
 					    logParseError("Error in program " + def->name + 
 						    " parameter " + i->first + " is not valid.", mScriptContext);
@@ -2218,47 +2151,12 @@ namespace Ogre
                     + def->name + "', error reported was: " + e.getFullDescription());
             }
         }
-        // Set skeletal animation option
-        gp->setSkeletalAnimationIncluded(def->supportsSkeletalAnimation);
-
-        // Set up to receive default parameters
-        if (gp->isSupported() 
-            && !mScriptContext.defaultParamLines.empty())
-        {
-            mScriptContext.programParams = gp->getDefaultParameters();
-            mScriptContext.program = gp;
-            StringVector::iterator i, iend;
-            iend = mScriptContext.defaultParamLines.end();
-            for (i = mScriptContext.defaultParamLines.begin();
-                i != iend; ++i)
-            {
-                // find & invoke a parser
-                // do this manually because we want to call a custom
-                // routine when the parser is not found
-                // First, split line on first divisor only
-                StringVector splitCmd = StringUtil::split(*i, " \t", 1);
-                // Find attribute parser
-                AttribParserList::iterator iparser 
-                    = mProgramDefaultParamAttribParsers.find(splitCmd[0]);
-                if (iparser != mProgramDefaultParamAttribParsers.end())
-                {
-                    String cmd = splitCmd.size() >= 2? splitCmd[1]:StringUtil::BLANK;
-                    // Use parser with remainder
-                    iparser->second(cmd, mScriptContext );
-                }
-
-            }
-            // Reset
-            mScriptContext.program = 0;
-            mScriptContext.programParams.setNull();
-        }
-
 	}
     //-----------------------------------------------------------------------
 	bool MaterialSerializer::invokeParser(String& line, AttribParserList& parsers)
     {
         // First, split line on first divisor only
-        StringVector splitCmd = StringUtil::split(line, " \t", 1);
+        StringVector splitCmd = line.split(" \t", 1);
         // Find attribute parser
         AttribParserList::iterator iparser = parsers.find(splitCmd[0]);
         if (iparser == parsers.end())
@@ -2269,7 +2167,7 @@ namespace Ogre
         }
         else
         {
-            String cmd = splitCmd.size() >= 2 ? splitCmd[1] : StringUtil::BLANK;
+            String cmd = splitCmd.size() >= 2 ? splitCmd[1] : String::BLANK;
             // Use parser, make sure we have 2 params before using splitCmd[1]
             return iparser->second( cmd, mScriptContext );
         }

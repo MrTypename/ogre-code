@@ -224,6 +224,7 @@ namespace Ogre {
 
         // Update bounds from own attached objects
         ObjectMap::iterator i;
+        AxisAlignedBox bx;
         for (i = mObjectsByName.begin(); i != mObjectsByName.end(); ++i)
         {
             // Merge world bounds of each object
@@ -310,14 +311,28 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     Node* SceneNode::createChildImpl(void)
     {
-        assert(mCreator);
-        return mCreator->createSceneNode();
+        // Support detached scene nodes
+        if (mCreator)
+        {
+            return mCreator->createSceneNode();
+        }
+        else
+        {
+            return new SceneNode(NULL);
+        }
     }
     //-----------------------------------------------------------------------
     Node* SceneNode::createChildImpl(const String& name)
     {
-        assert(mCreator);
-        return mCreator->createSceneNode(name);
+        // Support detached scene nodes
+        if (mCreator)
+        {
+            return mCreator->createSceneNode(name);
+        }
+        else
+        {
+            return new SceneNode(NULL, name);
+        }
     }
     //-----------------------------------------------------------------------
     AxisAlignedBox SceneNode::_getWorldAABB(void) const

@@ -46,9 +46,7 @@ namespace Ogre {
         m_pCamera = NULL;
 
         // Generate name
-		StringUtil::StrStreamType name;
-		name << _TO_CHAR("SimpleRenderable") << ms_uGenNameCount++;
-		m_strName = name.str();
+        m_strName << _TO_CHAR("SimpleRenderable") << ms_uGenNameCount ++;
     }
 
     void SimpleRenderable::setMaterial( const String& matName )

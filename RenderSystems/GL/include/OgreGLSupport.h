@@ -53,13 +53,10 @@ public:
     virtual void stop() = 0;
 
     /**
-    * Set the correct context (that of _target) as active.
-    * 0 means 'activate some context', for example in case of uploading
-    * textures. This obviously fails if there is no context yet.
+    * Set the correct context as active
     */
-    virtual void begin_context(RenderTarget *_target = 0)
-    {
-    }
+    virtual void begin_context()
+    { }
 
     /**
     * Stop the currrent context

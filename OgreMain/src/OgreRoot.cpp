@@ -49,7 +49,11 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreConfigDialog.h"
 #include "OgreStringConverter.h"
 
-#include "OgreILCodecs.h"
+#include "OgrePNGCodec.h"
+#include "OgreBMPCodec.h"
+#include "OgreJPEGCodec.h"
+#include "OgreTGACodec.h"
+#include "OgreDDSCodec.h"
 
 #include "OgreFontManager.h"
 #include "OgreHardwareBufferManager.h"
@@ -110,7 +114,6 @@ namespace Ogre {
     {
         handleTerminate();
     }
-
 
     //-----------------------------------------------------------------------
     Root::Root(const String& pluginFileName, const String& configFileName, const String& logFileName)
@@ -174,8 +177,18 @@ namespace Ogre {
         mZipArchiveFactory = new ZipArchiveFactory();
         ArchiveManager::getSingleton().addArchiveFactory( mZipArchiveFactory );
 
-	    // Register image codecs
-	    ILCodecs::registerCodecs();	
+        mPNGCodec = new PNGCodec;
+        Codec::registerCodec( mPNGCodec );
+        mJPEGCodec = new JPEGCodec;
+        Codec::registerCodec( mJPEGCodec );
+        mTGACodec = new TGACodec;
+        Codec::registerCodec( mTGACodec );
+        mDDSCodec = new DDSCodec;
+        Codec::registerCodec( mDDSCodec );
+        mJPGCodec = new JPGCodec;
+        Codec::registerCodec( mJPGCodec );
+        mBMPCodec = new BMPCodec;
+        Codec::registerCodec( mBMPCodec );
 
         mHighLevelGpuProgramManager = new HighLevelGpuProgramManager();
 
@@ -199,7 +212,27 @@ namespace Ogre {
         // Seed random number generator for future use
         srand((unsigned)time(0));
 
-        mFirstTimePostWindowInit = false;
+#if OGRE_COMPILER == COMPILER_MSVC
+#   if OGRE_COMP_VER < 1300
+        // Instantiate templates for spooling to a String
+        // This seems to be a crappy VC6 thing, it generates link errors if we use
+        //  the templates from outside OgreMain, even when 'inline'.
+        String str1, str2;
+        Quaternion q;
+        Vector3 v;
+        Matrix4 m;
+        float f = 0.0;
+        int i = 0;
+        char c = 'A';
+        str1 = "";
+        str2 = "aa";
+        str1 << str2 << q << v << f << i << c;
+        // Stop instantiating templates
+#   endif
+#endif
+
+        
+
 
     }
 
@@ -211,7 +244,12 @@ namespace Ogre {
 
 		delete mExternalTextureSourceManager;
 
-        ILCodecs::deleteCodecs();
+        delete mBMPCodec;
+        delete mDDSCodec;
+        delete mTGACodec;
+        delete mJPGCodec;
+        delete mJPEGCodec;
+        delete mPNGCodec;
         delete mZipArchiveFactory;
 #if OGRE_PROFILING
         delete mProfiler;
@@ -240,10 +278,6 @@ namespace Ogre {
         delete mPlatformManager;
         delete mDynLibManager;
         delete mLogManager;
-
-        ResourceManager::cleanupCommonArchive () ;
-
-        StringInterface::cleanupDictionary ();
     }
 
     //-----------------------------------------------------------------------
@@ -252,7 +286,7 @@ namespace Ogre {
         ::FILE *fp;
         char rec[100];
 
-        fp = fopen(mConfigFileName.c_str(), "w");
+        fp = fopen(mConfigFileName, "w");
         if (!fp)
             Except(Exception::ERR_CANNOT_WRITE_TO_FILE, "Cannot create settings file.",
             "Root::saveConfig");
@@ -307,7 +341,7 @@ namespace Ogre {
         }
 
         renderSystem = cfg.getSetting("Render System");
-        if(renderSystem.empty())
+        if(!renderSystem)
         {
             // No render system entry - error
             return false;
@@ -827,7 +861,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void Root::oneTimePostWindowInit(void)
     {
-        if (!mFirstTimePostWindowInit)
+        static bool firsttime = true;
+        if (firsttime)
         {
 			// Initialise material manager
 			mMaterialManager->initialise();
@@ -839,9 +874,9 @@ namespace Ogre {
             mOverlayManager->parseAllSources();
 			// Init mesh manager
 			MeshManager::getSingleton()._initialise();
-            mFirstTimePostWindowInit = true;
         }
 
+        firsttime = false;
     }
     //-----------------------------------------------------------------------
     void Root::_updateAllRenderTargets(void)

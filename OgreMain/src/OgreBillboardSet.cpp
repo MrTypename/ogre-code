@@ -349,53 +349,105 @@ namespace Ogre {
                 vTexBuf->lock(HardwareBuffer::HBL_DISCARD) );
         }
 
-		for(it = mActiveBillboards.begin();
-			it != mActiveBillboards.end();
-			++it )
-		{
-			// Skip if not visible (NB always true if not bounds checking individual billboards)
-			if (!billboardVisible(cam, it)) continue;
+        if( mAllDefaultSize ) // If they're all the same size
+        {
+            /* No per-billboard checking, just blast through.
+               Saves us an if clause every billboard which may
+               make a difference.
+            */
 
 			if (mBillboardType == BBT_ORIENTED_SELF)
 			{
-				// Have to generate axes & offsets per billboard
-				genBillboardAxes(*cam, &camX, &camY, *it);
-            }
+				for( it = mActiveBillboards.begin();
+					it != mActiveBillboards.end();
+					++it )
+				{
+					// Skip if not visible (NB always true if not bounds checking individual billboards)
+					if (!billboardVisible(cam, it)) continue;
 
-            if( mAllDefaultSize ) // If they're all the same size
-            {
-                /* No per-billboard checking, just blast through.
-                   Saves us an if clause every billboard which may
-                   make a difference.
-                */
-
-			    if (mBillboardType == BBT_ORIENTED_SELF)
-			    {
+					// Have to generate axes & offsets per billboard
+					genBillboardAxes(*cam, &camX, &camY, *it);
 					genVertOffsets(leftOff, rightOff, topOff, bottomOff, 
 						mDefaultWidth, mDefaultHeight, camX, camY, vOffset);
-				}
-				genVertices(&pV, &pC, &pT, vOffset, *it);
-			}
-            else // not all default size
-            {
-                Vector3 vOwnOffset[4];
-				// If it has own dimensions, or self-oriented, gen offsets
-                if (mBillboardType == BBT_ORIENTED_SELF || 
-                    (*it)->mOwnDimensions)
-			    {
-					// Generate using own dimensions
-					genVertOffsets(leftOff, rightOff, topOff, bottomOff, 
-						(*it)->mWidth, (*it)->mHeight, camX, camY, vOwnOffset);
-					// Create vertex data            
-					genVertices(&pV, &pC, &pT, vOwnOffset, *it);
-			    } 
-				else // Use default dimension, already computed before the loop, for faster creation
-				{
+
 					genVertices(&pV, &pC, &pT, vOffset, *it);
+
+					// Increment visibles
+					mNumVisibleBillboards++;
+				}
+			} else
+			{
+				for( it = mActiveBillboards.begin();
+					it != mActiveBillboards.end();
+					++it )
+				{
+					// Skip if not visible (NB always true if not bounds checking individual billboards)
+					if (!billboardVisible(cam, it)) continue;
+
+					genVertices(&pV, &pC, &pT, vOffset, *it);
+
+					// Increment visibles
+					mNumVisibleBillboards++;
 				}
 			}
-			// Increment visibles
-			mNumVisibleBillboards++;
+        }
+        else // not all default size
+        {
+            Vector3 vOwnOffset[4];
+            if (mBillboardType == BBT_ORIENTED_SELF)
+			{
+				for( it = mActiveBillboards.begin(); it != mActiveBillboards.end(); ++it )
+				{
+					// Skip if not visible (NB always true if not bounds checking individual billboards)
+					if (!billboardVisible(cam, it)) continue;
+
+					// Have to generate axes & offsets per billboard
+					genBillboardAxes(*cam, &camX, &camY, *it);
+			
+					// If it has own dimensions, or self-oriented, gen offsets
+					if( (*it)->mOwnDimensions) 
+					{
+						// Generate using own dimensions
+						genVertOffsets(leftOff, rightOff, topOff, bottomOff, 
+							(*it)->mWidth, (*it)->mHeight, camX, camY, vOwnOffset);
+						// Create vertex data            
+						genVertices(&pV, &pC, &pT, vOwnOffset, *it);
+					}
+					else // Use default dimension, already computed before the loop, for faster creation
+					{
+						genVertices(&pV, &pC, &pT, vOffset, *it);
+					}
+
+					// Increment visibles
+					mNumVisibleBillboards++;
+
+				}
+			} else
+			{
+				for( it = mActiveBillboards.begin(); it != mActiveBillboards.end(); ++it )
+				{
+					// Skip if not visible (NB always true if not bounds checking individual billboards)
+					if (!billboardVisible(cam, it)) continue;
+
+					// If it has own dimensions, or self-oriented, gen offsets
+					if( (*it)->mOwnDimensions) 
+					{
+						// Generate using own dimensions
+						genVertOffsets(leftOff, rightOff, topOff, bottomOff, 
+							(*it)->mWidth, (*it)->mHeight, camX, camY, vOwnOffset);
+						// Create vertex data            
+						genVertices(&pV, &pC, &pT, vOwnOffset, *it);
+					}
+					else // Use default dimension, already computed before the loop, for faster creation
+					{
+						genVertices(&pV, &pC, &pT, vOffset, *it);
+					}
+
+					// Increment visibles
+					mNumVisibleBillboards++;
+
+				}
+			}
         }
 
 		if (!mFixedTextureCoords)

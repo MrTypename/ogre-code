@@ -65,7 +65,7 @@ void GLArbGpuProgram::bindProgramParameters(GpuProgramParametersSharedPtr params
         unsigned int index = 0;
         while (realIt.hasMoreElements())
         {
-            const GpuProgramParameters::RealConstantEntry* e = realIt.peekNextPtr();
+            GpuProgramParameters::RealConstantEntry* e = realIt.peekNextPtr();
             if (e->isSet)
             {
                 glProgramLocalParameter4fvARB_ptr(type, index, e->val);

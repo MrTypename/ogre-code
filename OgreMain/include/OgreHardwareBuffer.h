@@ -82,28 +82,13 @@ namespace Ogre {
 			    it will only ever write data. Locking a buffer with this flag will ALWAYS 
 			    return a pointer to new, blank memory rather than the memory associated 
 			    with the contents of the buffer; this avoids DMA stalls because you can 
-			    write to a new memory area while the previous one is being used. 
+			    write to a new memory area while the previous one is being used
 			    */
 			    HBU_WRITE_ONLY = 4,
-                /** Indicates that the application will be refilling the contents
-                of the buffer regularly (not just updating, but generating the
-                contents from scratch), and therefore does not mind if the contents 
-                of the buffer are lost somehow and need to be recreated. This
-                allows and additional level of optimisation on the buffer.
-                This option only really makes sense when combined with 
-                HBU_DYNAMIC_WRITE_ONLY.
-                */
-                HBU_DISCARDABLE = 8,
 				/// Combination of HBU_STATIC and HBU_WRITE_ONLY
 				HBU_STATIC_WRITE_ONLY = 5, 
-				/** Combination of HBU_DYNAMIC and HBU_WRITE_ONLY. If you use 
-                this, strongly consider using HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE
-                instead if you update the entire contents of the buffer very 
-                regularly. 
-                */
-				HBU_DYNAMIC_WRITE_ONLY = 6,
-                /// Combination of HBU_DYNAMIC, HBU_WRITE_ONLY and HBU_DISCARDABLE
-                HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE = 14
+				/// Combination of HBU_DYNAMIC and HBU_WRITE_ONLY
+				HBU_DYNAMIC_WRITE_ONLY = 6
 
 
 		    };
@@ -149,18 +134,7 @@ namespace Ogre {
             HardwareBuffer(Usage usage, bool systemMemory, bool useShadowBuffer) 
 				: mUsage(usage), mIsLocked(false), mSystemMemory(systemMemory), 
                 mUseShadowBuffer(useShadowBuffer), mpShadowBuffer(NULL), mShadowUpdated(false), 
-                mSuppressHardwareUpdate(false) 
-            {
-                // If use shadow buffer, upgrade to WRITE_ONLY on hardware side
-                if (useShadowBuffer && usage == HBU_DYNAMIC)
-                {
-                    mUsage = HBU_DYNAMIC_WRITE_ONLY;
-                }
-                else if (useShadowBuffer && usage == HBU_STATIC)
-                {
-                    mUsage = HBU_STATIC_WRITE_ONLY;
-                }
-            }
+                mSuppressHardwareUpdate(false) {}
             virtual ~HardwareBuffer() {}
 		    /** Lock the buffer for (potentially) reading / writing.
 		    @param offset The byte offset from the start of the buffer to lock

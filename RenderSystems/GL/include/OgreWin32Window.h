@@ -46,6 +46,7 @@ namespace Ogre {
         void resize(unsigned int width, unsigned int height);
         void swapBuffers(bool waitForVSync);
 
+        void outputText(int x, int y, const String& text);
         /** Overridden - see RenderTarget.
         */
         void writeContentsToFile(const String& filename);

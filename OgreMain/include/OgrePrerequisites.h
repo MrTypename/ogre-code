@@ -124,13 +124,6 @@ namespace Ogre {
     #define OGRE_DELETE(p)       { if(p) { delete (p);     (p)=NULL; } }
     #define OGRE_DELETE_ARRAY(p) { if(p) { delete[] (p);   (p)=NULL; } }
 
-	#if OGRE_WCHAR_T_STRINGS
-		typedef std::wstring _StringBase;
-	#else
-		typedef std::string _StringBase;
-	#endif
-	
-	typedef _StringBase String;
 
 // Pre-declare classes
 // Allows use of pointers in header files without including individual .h
@@ -279,6 +272,7 @@ namespace Ogre {
     class SkeletonManager;
     class Sphere;
     class SphereSceneQuery;
+    class String;
     class StringConverter;
     class StringInterface;
     class SubEntity;

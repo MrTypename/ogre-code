@@ -159,9 +159,7 @@ namespace Ogre {
         if (vbmi->second->empty())
         {
             // copy buffer, use shadow buffer and make dynamic
-            vbuf = makeBufferCopy(
-                sourceBuffer, 
-                HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE, 
+            vbuf = makeBufferCopy(sourceBuffer, HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY, 
                 true);
         }
         else

@@ -118,7 +118,7 @@ namespace Ogre {
                     createVertexBuffer(
                         decl->getVertexSize(POS_TEX_BINDING), 
                         mRenderOp.vertexData->vertexCount,
-                        HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
+                        HardwareBuffer::HBU_DYNAMIC);
             bind->setBinding(POS_TEX_BINDING, vbuf);
 
             // colours
@@ -126,7 +126,7 @@ namespace Ogre {
                     createVertexBuffer(
                         decl->getVertexSize(COLOUR_BINDING), 
                         mRenderOp.vertexData->vertexCount,
-                        HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
+                        HardwareBuffer::HBU_DYNAMIC);
             bind->setBinding(COLOUR_BINDING, vbuf);
 
             mAllocSize = numChars;

@@ -94,17 +94,6 @@ namespace Ogre {
     {
         return mData;
     }
-    //-----------------------------------------------------------------------
-    uchar * DataChunk::getCurrentPtr(void)
-    {
-        return mPos;
-    }
-
-    //-----------------------------------------------------------------------
-    const uchar * DataChunk::getCurrentPtr() const
-    {
-        return mPos;
-    }
 
     //-----------------------------------------------------------------------
     size_t DataChunk::read(void* buffer, size_t size)
@@ -188,7 +177,7 @@ namespace Ogre {
         buf[count] = '\0';
         String ret = buf;
         if (trimAfter)
-            StringUtil::trim(ret);
+            ret.trim();
         return ret;
 
     }

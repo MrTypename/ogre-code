@@ -35,7 +35,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreCamera.h"
 #include "OgreStringConverter.h"
 #include "OgreLogManager.h"
-#include "OgreException.h"
+
 
 
 
@@ -86,6 +86,11 @@ namespace Ogre {
         // Arrange for the deletion of emitters & affectors
         removeAllEmitters();
         removeAllAffectors();
+    }
+    //-----------------------------------------------------------------------
+    const String& ParticleSystem::getName(void) const
+    {
+        return mName;
     }
     //-----------------------------------------------------------------------
     ParticleEmitter* ParticleSystem::addEmitter(const String& emitterType)
@@ -474,7 +479,7 @@ namespace Ogre {
                 "The type of billboard to use. 'point' means a simulated spherical particle, " 
                 "'oriented_common' means all particles in the set are oriented around common_direction, "
                 "and 'oriented_self' means particles are oriented around their own direction.",
-                PT_STRING),
+                PT_UNSIGNED_INT),
                 &msBillboardTypeCmd);
 
             dict->addParameter(ParameterDef("common_direction", 
@@ -619,13 +624,6 @@ namespace Ogre {
         {
             t = BBT_ORIENTED_SELF;
         }
-        else
-        {
-            Except(Exception::ERR_INVALIDPARAMS, 
-                "Invalid billboard_type '" + val + "'", 
-                "ParticleSystem::CmdBillboardType::doSet");
-        }
-
         static_cast<ParticleSystem*>(target)->setBillboardType(t);
     }
     //-----------------------------------------------------------------------

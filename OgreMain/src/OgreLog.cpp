@@ -32,7 +32,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     Log::Log( const String& name, bool debuggerOuput )
     {
-        mfpLog.open(name.c_str());
+        mfpLog.open(name);
         mDebugOut = debuggerOuput;
         mLogLevel = LL_NORMAL;
     }

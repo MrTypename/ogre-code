@@ -478,7 +478,7 @@ namespace Ogre {
             }
         }
         // to keep compiler happy
-        return StringUtil::BLANK;
+        return String::BLANK;
     }
     //---------------------------------------------------------------------
     const String& ShadowVolumeExtrudeProgram::getProgramName(
