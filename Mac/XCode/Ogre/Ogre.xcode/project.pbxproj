@@ -5868,7 +5868,7 @@
 			buildRules = (
 			);
 			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = "\"$(HOME)/Library/Frameworks\" /Users/temas/work/zziplib-0.10.82/Xcode/build";
+				FRAMEWORK_SEARCH_PATHS = "\"$(HOME)/Library/Frameworks\"";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Carbon.framework/Headers/Carbon.h";
 				INFOPLIST_FILE = "GL Render System-Info.plist";
@@ -6873,7 +6873,7 @@
 			buildRules = (
 			);
 			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = "\"$(HOME)/Library/Frameworks\" /Users/temas/work/zziplib-0.10.82/Xcode/build";
+				FRAMEWORK_SEARCH_PATHS = "\"$(HOME)/Library/Frameworks\"";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Carbon.framework/Headers/Carbon.h";
 				INFOPLIST_FILE = "SDL Platform Manager-Info.plist";
@@ -10570,7 +10570,7 @@
 			explicitFileType = wrapper.framework;
 			isa = PBXFileReference;
 			name = zzip.framework;
-			path = "/Users/temas/work/zziplib-0.10.82/Xcode/build/zzip.framework";
+			path = "/Users/temas/work/zziplib-0.10.82/Xcode-orig/build/zzip.framework";
 			refType = 0;
 			sourceTree = "<absolute>";
 		};
@@ -10965,7 +10965,7 @@
 				GCC_PFE_FILE_C_DIALECTS = "c++";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Ogre_Prefix.pch;
-				HEADER_SEARCH_PATHS = /usr/X11R6/include/freetype2;
+				HEADER_SEARCH_PATHS = "/usr/X11R6/include/freetype2 /usr/X11R6/include";
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = /usr/X11R6/lib;
