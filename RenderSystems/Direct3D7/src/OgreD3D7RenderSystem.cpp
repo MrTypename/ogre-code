@@ -424,8 +424,6 @@ namespace Ogre {
     {
         RenderWindow* autoWindow = 0;
 
-        // call superclass method
-        RenderSystem::initialise(autoCreateWindow);
 
         LogManager::getSingleton().logMessage(
             "***************************************\n"
@@ -528,7 +526,10 @@ namespace Ogre {
         LogManager::getSingleton().logMessage("*** Direct3D Subsystem Initialised Ok ***");
         LogManager::getSingleton().logMessage("*****************************************");
 
-        LogManager::getSingleton().logMessage(
+        // call superclass method
+        RenderSystem::initialise(autoCreateWindow);
+
+		LogManager::getSingleton().logMessage(
             "The following capabilities are available:");
 
         // Check for hardware stencil support
@@ -543,7 +544,8 @@ namespace Ogre {
         // Set the number of texture units based on details from current device
         mCapabilities->setNumTextureUnits(mD3DDeviceDesc.wMaxSimultaneousTextures);
 
-        return autoWindow;
+
+		return autoWindow;
 
     }
 
@@ -1473,8 +1475,9 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    void D3DRenderSystem::_render(const LegacyRenderOperation& op)
+    void D3DRenderSystem::_render(const RenderOperation& op)
     {
+        /* TODO
         OgreGuard( "D3DRenderSystem::_render" );
 
         HRESULT hr;
@@ -1629,6 +1632,7 @@ namespace Ogre {
         }
 
         OgreUnguard();
+        */
     }
 
     //-----------------------------------------------------------------------
@@ -2207,56 +2211,49 @@ namespace Ogre {
     {
         HRESULT hr;
 
-        if (mode == FOG_NONE)
-        {
-            // Just disable
-            hr = mlpD3DDevice->SetRenderState(D3DRENDERSTATE_FOGTABLEMODE, D3DFOG_NONE);
+		D3DRENDERSTATETYPE fogType, fogTypeNot;
+
+		if (mD3DDeviceDesc.dpcTriCaps.dwRasterCaps & D3DPRASTERCAPS_FOGTABLE)
+		{
+			fogType = D3DRENDERSTATE_FOGTABLEMODE;
+			fogTypeNot = D3DRENDERSTATE_FOGVERTEXMODE;
+		}
+		else
+		{
+			fogType = D3DRENDERSTATE_FOGVERTEXMODE;
+			fogTypeNot = D3DRENDERSTATE_FOGTABLEMODE;
+		}
+
+		if( mode == FOG_NONE)
+		{
+			// just disable
+			hr = mlpD3DDevice->SetRenderState(fogType, D3DFOG_NONE );
 			hr = mlpD3DDevice->SetRenderState(D3DRENDERSTATE_FOGENABLE, FALSE);
-        }
-        else
-        {
-            // Allow fog
-            hr = mlpD3DDevice->SetRenderState(D3DRENDERSTATE_FOGENABLE, TRUE);
+		}
+		else
+		{
+			// Allow fog
+			hr = mlpD3DDevice->SetRenderState( D3DRENDERSTATE_FOGENABLE, TRUE );
+			hr = mlpD3DDevice->SetRenderState( fogTypeNot, D3DFOG_NONE );
+			switch(mode)
+			{
+			case FOG_EXP:
+				hr = mlpD3DDevice->SetRenderState( fogType, D3DFOG_EXP);
+				break;
+			case FOG_EXP2:
+				hr = mlpD3DDevice->SetRenderState( fogType, D3DFOG_EXP2);
+				break;
+			case FOG_LINEAR:
+				hr = mlpD3DDevice->SetRenderState( fogType, D3DFOG_LINEAR);
+				break;
 
-            // Set pixel fog mode
-            D3DFOGMODE d3dFogMode;
-            switch (mode)
-            {
-            case FOG_EXP:
-                d3dFogMode = D3DFOG_EXP;
-                break;
-            case FOG_EXP2:
-                d3dFogMode = D3DFOG_EXP2;
-                break;
-            case FOG_LINEAR:
-                d3dFogMode = D3DFOG_LINEAR;
-                break;
-            }
-            mlpD3DDevice->SetRenderState( D3DRENDERSTATE_FOGVERTEXMODE,  D3DFOG_NONE);
-            hr = mlpD3DDevice->SetRenderState(D3DRENDERSTATE_FOGTABLEMODE, d3dFogMode);
+			}
 
-            // Set colour
-            hr = mlpD3DDevice->SetRenderState(D3DRENDERSTATE_FOGCOLOR, colour.getAsLongARGB());
-            hr = mlpD3DDevice->SetRenderState(D3DRENDERSTATE_FOGTABLESTART, *((LPDWORD) (&start)) );
-            hr = mlpD3DDevice->SetRenderState(D3DRENDERSTATE_FOGTABLEEND, *((LPDWORD) (&end)) );
-            hr = mlpD3DDevice->SetRenderState(D3DRENDERSTATE_FOGTABLEDENSITY, *((LPDWORD) (&density)) );
-
-            /*
-            if (mode == FOG_LINEAR)
-            {
-                // Set start & end
-                // Note the crap casting required because D3D likes DWORD values
-                hr = mlpD3DDevice->SetRenderState(D3DRENDERSTATE_FOGSTART, *((LPDWORD) (&start)) );
-                hr = mlpD3DDevice->SetRenderState(D3DRENDERSTATE_FOGEND, *((LPDWORD) (&end)) );
-            }
-            else
-            {
-                // Set density
-                hr = mlpD3DDevice->SetRenderState(D3DRENDERSTATE_FOGDENSITY, *((LPDWORD) (&density)) );
-            }
-            */
-
-        }
+			hr = mlpD3DDevice->SetRenderState( D3DRENDERSTATE_FOGCOLOR, colour.getAsLongARGB() );
+			hr = mlpD3DDevice->SetRenderState( D3DRENDERSTATE_FOGSTART, *((LPDWORD)(&start)) );
+			hr = mlpD3DDevice->SetRenderState( D3DRENDERSTATE_FOGEND, *((LPDWORD)(&end)) );
+			hr = mlpD3DDevice->SetRenderState( D3DRENDERSTATE_FOGDENSITY, *((LPDWORD)(&density)) );
+		}
 
 
     }
@@ -2453,10 +2450,6 @@ namespace Ogre {
 		// TODO
 	}
 
-    void D3DRenderSystem::_render(const RenderOperation& op)
-	{
-		// TODO
-	}
 
 
 

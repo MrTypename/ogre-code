@@ -50,12 +50,19 @@ namespace Ogre {
 		    mpFont = 0;
 
         memset( &mRenderOp, 0, sizeof( mRenderOp ) );
-        mRenderOp.operationType = LegacyRenderOperation::OT_TRIANGLE_LIST;
+
+        mRenderOp.vertexData = new VertexData;
+        mRenderOp.vertexData->vertexStart = 0;
+        mRenderOp.vertexData->vertexCount = 0;
+
+        mRenderOp.operationType =RenderOperation::OT_TRIANGLE_LIST;
+
+        /* TODO
         mRenderOp.vertexOptions = LegacyRenderOperation::VO_TEXTURE_COORDS | 
             LegacyRenderOperation::VO_DIFFUSE_COLOURS;
         mRenderOp.numTextureCoordSets = 1;
         mRenderOp.numTextureDimensions[0] = 2;
-        mRenderOp.numVertices = 0;
+        */
 
         mColourTop = ColourValue::White;
         mColourBottom = ColourValue::White;
@@ -77,9 +84,9 @@ namespace Ogre {
         checkMemoryAllocation( DEFAULT_INITIAL_CHARS );
 
         mCharHeight = 0.02;
-		    mPixelCharHeight = 12;
-		    mSpaceWidth = 0;
-		    mPixelSpaceWidth = 0;
+        mPixelCharHeight = 12;
+        mSpaceWidth = 0;
+        mPixelSpaceWidth = 0;
 
         mScrLines = mHeight / mCharHeight;
 
@@ -196,6 +203,7 @@ namespace Ogre {
     {
         if( mAllocSize < numFaces)
         {
+            /* TODO
             if( mRenderOp.pVertices )
                 delete [] mRenderOp.pVertices;
             if (mRenderOp.pTexCoords[0])
@@ -207,6 +215,7 @@ namespace Ogre {
             mRenderOp.pVertices = new Real[ numFaces * 3 * 3 ];
             mRenderOp.pTexCoords[0] = new Real[ numFaces * 3 * 2 ];
             mRenderOp.pDiffuseColour = new RGBA[numFaces * 3];
+            */
 
             mAllocSize = numFaces;
         }
@@ -223,7 +232,9 @@ namespace Ogre {
       else
       {
           mUpdateGeometry = false;
-          mRenderOp.numVertices = 0; // FIX ME: don't like this here
+          mRenderOp.vertexData->vertexStart = 0; // FIX ME: don't like this here
+          mRenderOp.vertexData->vertexCount = 0;
+
       }
     }
 
@@ -349,9 +360,11 @@ namespace Ogre {
 
         height = mCharHeight * 2.0;
 
+        /* TODO
         pVert = mRenderOp.pVertices;
         pTex  = mRenderOp.pTexCoords[ 0 ];
         pDest = mRenderOp.pDiffuseColour;
+        */
 
         farLeft = _getDerivedLeft() * 2.0 - 1.0;
 
@@ -421,6 +434,7 @@ namespace Ogre {
                 // First tri
                 //
                 // Upper left
+                /* TODO
                 *pVert++ = left;
                 *pVert++ = top;
                 *pVert++ = -1.0;
@@ -489,6 +503,7 @@ namespace Ogre {
                 *pDest++ = t->topColour;
                 *pDest++ = t->bottomColour;
                 *pDest++ = t->bottomColour;
+                */
 
                 left += width;
                 len  += width;
@@ -496,7 +511,9 @@ namespace Ogre {
             }
         }
 
+        /* TODO
         mRenderOp.numVertices = (pVert - mRenderOp.pVertices) / 3;
+        */
     }
 
     void TTYGuiElement::updatePositionGeometry()
@@ -593,6 +610,10 @@ namespace Ogre {
         //if( mScrollBar != NULL )
         //    mScrollBar->removeScrollListener(this);
 
+        if( mRenderOp.vertexData )
+            delete mRenderOp.vertexData;
+
+      /* TODO
         if( mRenderOp.pVertices )
             delete [] mRenderOp.pVertices;
 
@@ -601,6 +622,7 @@ namespace Ogre {
         
         if( mRenderOp.pDiffuseColour )
             delete [] mRenderOp.pDiffuseColour;
+            */
 
     }
     //---------------------------------------------------------------------
@@ -609,9 +631,9 @@ namespace Ogre {
         return msTypeName;
     }
     //---------------------------------------------------------------------
-    void TTYGuiElement::getLegacyRenderOperation(LegacyRenderOperation& rend)
+    void TTYGuiElement::getRenderOperation(RenderOperation& op)
     {
-        rend = mRenderOp;
+        op = mRenderOp;
     }
     //---------------------------------------------------------------------
     void TTYGuiElement::setMaterialName(const String& matName)

@@ -264,7 +264,7 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _render(const LegacyRenderOperation& op);
+        void _render(const RenderOperation& op);
         /** See
           RenderSystem
          */
@@ -349,10 +349,6 @@ namespace Ogre {
           RenderSystem
          */
 		void setVertexBufferBinding(VertexBufferBinding* binding);
-        /** See
-          RenderSystem
-         */
-        void _render(const RenderOperation& op);
 
         // ----------------------------------
         // End Overridden members
