@@ -1,0 +1,6 @@
+if BUILD_PYTHON_INTERFACE
+PYSUBDIR=PythonInterface
+else
+PYSUBDIR=
+endif
+SUBDIRS=$(PYSUBDIR) XMLConverter
