@@ -65,16 +65,14 @@ namespace Ogre {
 				will be created
 			@param indexBufferUsage The usage flags with which the index buffer(s) created for 
 				this mesh will be created with.
-			@param vertexBufferShadowed If true, the vertex buffers will be shadowed by system memory 
-                copies for faster read access
-			@param indexBufferShadowed If true, the index buffers will be shadowed by system memory 
-                copies for faster read access
+			@param vertexBufferSysMem If true, the vertex buffers will be created in system memory
+			@param indexBufferSysMem If true, the index buffers will be created in system memory
 			@param priority The priority of this mesh in the resource system
         */
         Mesh* load( const String& filename, 
 			HardwareBuffer::Usage vertexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
 			HardwareBuffer::Usage indexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
-			bool vertexBufferShadowed = true, bool indexBufferShadowed = true,
+			bool vertexBufferSysMem = false, bool indexBufferSysMem = false,
 			int priority = 1);
 
         /** Creates a Mesh resource.
@@ -138,7 +136,7 @@ namespace Ogre {
             Real uTile = 1.0f, Real vTile = 1.0f, const Vector3& upVector = Vector3::UNIT_Y,
 			HardwareBuffer::Usage vertexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
 			HardwareBuffer::Usage indexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY,
-			bool vertexShadowBuffer = true, bool indexShadowBuffer = true);
+			bool vertexShadowBuffer = false, bool indexShadowBuffer = false);
 
         
         /** Creates a plane, which because of it's texture coordinates looks like a curved
@@ -195,7 +193,7 @@ namespace Ogre {
             const Quaternion& orientation = Quaternion::IDENTITY,
 			HardwareBuffer::Usage vertexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
 			HardwareBuffer::Usage indexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY,
-			bool vertexShadowBuffer = true, bool indexShadowBuffer = true);
+			bool vertexShadowBuffer = false, bool indexShadowBuffer = false);
 
 		/** Creates a genuinely curved plane, by default majoring on the x/y axes facing positive Z.
             @param
@@ -244,7 +242,7 @@ namespace Ogre {
 			Real xTile = 1.0f, Real yTile = 1.0f, const Vector3& upVector = Vector3::UNIT_Y,
 			HardwareBuffer::Usage vertexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
 			HardwareBuffer::Usage indexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY,
-			bool vertexShadowBuffer = true, bool indexShadowBuffer = true);
+			bool vertexShadowBuffer = false, bool indexShadowBuffer = false);
 
         /** Creates a Bezier patch based on an array of control vertices.
             @param
@@ -286,7 +284,7 @@ namespace Ogre {
             PatchSurface::VisibleSide visibleSide = PatchSurface::VS_FRONT,
             HardwareBuffer::Usage vbUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
             HardwareBuffer::Usage ibUsage = HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY,
-            bool vbUseShadow = true, bool ibUseShadow = true);
+            bool vbUseShadow = false, bool ibUseShadow = false);
         
         /** Override standard Singleton retrieval.
             @remarks

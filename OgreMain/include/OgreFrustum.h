@@ -87,14 +87,10 @@ namespace Ogre
 
 
         // Internal functions for calcs
-        virtual void updateFrustum(void) const;
-        virtual void updateView(void) const;
-        virtual bool isViewOutOfDate(void) const;
-        virtual bool isFrustumOutOfDate(void) const;
-        /// Signal to update frustum information.
-        virtual void invalidateFrustum(void);
-        /// Signal to update view information.
-        virtual void invalidateView(void);
+        void updateFrustum(void) const;
+        void updateView(void) const;
+        bool isViewOutOfDate(void) const;
+        bool isFrustumOutOfDate(void) const;
 
         /// Shared class-level name for Movable type
         static String msMovableType;
@@ -121,11 +117,11 @@ namespace Ogre
             @note
                 Setting the FOV overrides the value supplied for frustum::setNearClipPlane.
          */
-        virtual void setFOVy(Real fovy);
+        void setFOVy(Real fovy);
 
         /** Retrieves the frustums Y-dimension Field Of View (FOV).
         */
-        virtual Real getFOVy(void) const;
+        Real getFOVy(void) const;
 
         /** Sets the position of the near clipping plane.
             @remarks
@@ -138,11 +134,11 @@ namespace Ogre
             @param
                 near The distance to the near clipping plane from the frustum in world coordinates.
          */
-        virtual void setNearClipDistance(Real nearDist);
+        void setNearClipDistance(Real nearDist);
 
         /** Sets the position of the near clipping plane.
         */
-        virtual Real getNearClipDistance(void) const;
+        Real getNearClipDistance(void) const;
 
         /** Sets the distance to the far clipping plane.
             @remarks
@@ -160,11 +156,11 @@ namespace Ogre
             @param
                 far The distance to the far clipping plane from the frustum in world coordinates.
         */
-        virtual void setFarClipDistance(Real farDist);
+        void setFarClipDistance(Real farDist);
 
         /** Retrieves the distance from the frustum to the far clipping plane.
         */
-        virtual Real getFarClipDistance(void) const;
+        Real getFarClipDistance(void) const;
 
         /** Sets the aspect ratio for the frustum viewport.
             @remarks
@@ -174,11 +170,11 @@ namespace Ogre
                 The default for most fullscreen windows is 1.3333 - this is also assumed by Ogre unless you
                 use this method to state otherwise.
         */
-        virtual void setAspectRatio(Real ratio);
+        void setAspectRatio(Real ratio);
 
         /** Retreives the current aspect ratio.
         */
-        virtual Real getAspectRatio(void) const;
+        Real getAspectRatio(void) const;
 
         /** Gets the projection matrix for this frustum. Mainly for use by OGRE internally.
         @remarks
@@ -187,7 +183,7 @@ namespace Ogre
             getStandardProjectionMatrix.
 
         */
-        virtual const Matrix4& getProjectionMatrix(void) const;
+        const Matrix4& getProjectionMatrix(void) const;
         /** Gets the 'standard' projection matrix for this frustum, ie the 
         projection matrix which conforms to standard right-handed rules.
         @remarks
@@ -199,17 +195,17 @@ namespace Ogre
             GL uses [-1,1], and the range must be kept the same between programmable
             and fixed-function pipelines.
         */
-        virtual const Matrix4& getStandardProjectionMatrix(void) const;
+        const Matrix4& getStandardProjectionMatrix(void) const;
 
         /** Gets the view matrix for this frustum. Mainly for use by OGRE internally.
         */
-        virtual const Matrix4& getViewMatrix(void) const;
+        const Matrix4& getViewMatrix(void) const;
 
         /** Retrieves a specified plane of the frustum.
             @remarks
                 Gets a reference to one of the planes which make up the frustum frustum, e.g. for clipping purposes.
         */
-        virtual const Plane& getFrustumPlane( FrustumPlane plane ) const;
+        const Plane& getFrustumPlane( FrustumPlane plane );
 
         /** Tests whether the given container is visible in the Frustum.
             @param
@@ -222,7 +218,7 @@ namespace Ogre
             @par
                 Otherwise, false is returned.
         */
-        virtual bool isVisible(const AxisAlignedBox& bound, FrustumPlane* culledBy = 0) const;
+        bool isVisible(const AxisAlignedBox& bound, FrustumPlane* culledBy = 0);
 
         /** Tests whether the given container is visible in the Frustum.
             @param
@@ -235,7 +231,7 @@ namespace Ogre
             @par
                 Otherwise, false is returned.
         */
-        virtual bool isVisible(const Sphere& bound, FrustumPlane* culledBy = 0) const;
+        bool isVisible(const Sphere& bound, FrustumPlane* culledBy = 0);
 
         /** Tests whether the given vertex is visible in the Frustum.
             @param
@@ -248,7 +244,7 @@ namespace Ogre
             @par
                 Otherwise, false is returned.
         */
-        virtual bool isVisible(const Vector3& vert, FrustumPlane* culledBy = 0) const;
+        bool isVisible(const Vector3& vert, FrustumPlane* culledBy = 0);
 
 
         /** Overridden from MovableObject */

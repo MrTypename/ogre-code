@@ -40,7 +40,6 @@ http://www.gnu.org/copyleft/lesser.txt.s
 #include "OgreGLGpuProgramManager.h"
 #include "OgreException.h"
 #include "OgreGLATIFSInit.h"
-#include "OgreGLHardwareOcclusionQuery.h"
 
 
 #ifdef HAVE_CONFIG_H
@@ -78,12 +77,6 @@ GL_CombinerOutputNV_Func glCombinerOutputNV_ptr;
 GL_FinalCombinerInputNV_Func glFinalCombinerInputNV_ptr;
 GL_TrackMatrixNV_Func glTrackMatrixNV_ptr;
 PFNGLCOMPRESSEDTEXIMAGE2DARBPROC glCompressedTexImage2DARB_ptr;
-GL_ActiveStencilFaceEXT_Func glActiveStencilFaceEXT_ptr;
-GL_GenOcclusionQueriesNV_Func glGenOcclusionQueriesNV_ptr;	
-GL_DeleteOcclusionQueriesNV_Func glDeleteOcclusionQueriesNV_ptr;
-GL_BeginOcclusionQueryNV_Func glBeginOcclusionQueryNV_ptr;
-GL_EndOcclusionQueryNV_Func glEndOcclusionQueryNV_ptr;
-GL_GetOcclusionQueryuivNV_Func glGetOcclusionQueryuivNV_ptr;
 
 namespace Ogre {
 
@@ -123,6 +116,11 @@ namespace Ogre {
         mViewMatrix = Matrix4::IDENTITY;
         
         initConfigOptions();
+
+        mStencilFail = mStencilZFail = mStencilPass = GL_KEEP;
+        mStencilFunc = GL_ALWAYS;
+        mStencilRef = 0;
+        mStencilMask = 0xffffffff;
 
         mColourWrite[0] = mColourWrite[1] = mColourWrite[2] = mColourWrite[3] = true;
 
@@ -164,20 +162,12 @@ namespace Ogre {
         glCombinerOutputNV_ptr = 0;
         glFinalCombinerInputNV_ptr = 0;
         glTrackMatrixNV_ptr = 0;
-        glActiveStencilFaceEXT_ptr = 0;
-        glGenOcclusionQueriesNV_ptr = 0;
-        glDeleteOcclusionQueriesNV_ptr = 0;
-        glBeginOcclusionQueryNV_ptr = 0;
-        glEndOcclusionQueryNV_ptr = 0;
-        glGetOcclusionQueryuivNV_ptr = 0;
 
         mCurrentLights = 0;
         mMinFilter = FO_LINEAR;
         mMipFilter = FO_POINT;
         mCurrentVertexProgram = 0;
         mCurrentFragmentProgram = 0;
-
-        mClipPlanes.reserve(6);
 
         OgreUnguard();
     }
@@ -232,11 +222,11 @@ namespace Ogre {
         return mGLSupport->validateConfig();
     }
 
-    RenderWindow* GLRenderSystem::initialise(bool autoCreateWindow, const String& windowTitle)
+    RenderWindow* GLRenderSystem::initialise(bool autoCreateWindow)
     {
 
         mGLSupport->start();
-		RenderWindow* autoWindow = mGLSupport->createWindow(autoCreateWindow, this, windowTitle);
+		RenderWindow* autoWindow = mGLSupport->createWindow(autoCreateWindow, this);
 
         _setCullingMode( mCullingMode );
         
@@ -416,29 +406,6 @@ namespace Ogre {
             }
         }
 
-        // Scissor test is standard in GL 1.2 (is it emulated on some cards though?)
-        mCapabilities->setCapability(RSC_SCISSOR_TEST);
-		// As are user clipping planes
-		mCapabilities->setCapability(RSC_USER_CLIP_PLANES);
-
-        // 2-sided stencil?
-        if (mGLSupport->checkExtension("GL_EXT_stencil_two_side"))
-        {
-            mCapabilities->setCapability(RSC_TWO_SIDED_STENCIL);
-        }
-        // stencil wrapping?
-        if (mGLSupport->checkExtension("GL_EXT_stencil_wrap"))
-        {
-            mCapabilities->setCapability(RSC_STENCIL_WRAP);
-        }
-
-        // Check for hardware occlusion support
-        if(mGLSupport->checkExtension("GL_NV_occlusion_query"))
-        {
-            mCapabilities->setCapability(RSC_HWOCCLUSION);		
-        }
-
-
         // Get extension function pointers
         glActiveTextureARB_ptr = 
             (GL_ActiveTextureARB_Func)mGLSupport->getProcAddress("glActiveTextureARB");
@@ -494,18 +461,6 @@ namespace Ogre {
         glCompressedTexImage2DARB_ptr =
             (PFNGLCOMPRESSEDTEXIMAGE2DARBPROC)mGLSupport->getProcAddress("glCompressedTexImage2DARB");
         InitATIFragmentShaderExtensions(*mGLSupport);
-        glActiveStencilFaceEXT_ptr = 
-            (GL_ActiveStencilFaceEXT_Func)mGLSupport->getProcAddress("glActiveStencilFaceEXT");
-        glGenOcclusionQueriesNV_ptr =
-            (GL_GenOcclusionQueriesNV_Func)mGLSupport->getProcAddress("glGenOcclusionQueriesNV");
-        glDeleteOcclusionQueriesNV_ptr =
-            (GL_DeleteOcclusionQueriesNV_Func)mGLSupport->getProcAddress("glDeleteOcclusionQueriesNV");
-        glBeginOcclusionQueryNV_ptr =
-            (GL_BeginOcclusionQueryNV_Func)mGLSupport->getProcAddress("glBeginOcclusionQueryNV");
-        glEndOcclusionQueryNV_ptr =
-            (GL_EndOcclusionQueryNV_Func)mGLSupport->getProcAddress("glEndOcclusionQueryNV");
-        glGetOcclusionQueryuivNV_ptr =
-            (GL_GetOcclusionQueryuivNV_Func)mGLSupport->getProcAddress("glGetOcclusionQueryuivNV");
 
         mCapabilities->log(LogManager::getSingleton().getDefaultLog());
     }
@@ -714,8 +669,6 @@ namespace Ogre {
          
         makeGLMatrix(mat, mWorldMatrix);
         glMultMatrixf(mat);
-
-        setGLClipPlanes();
     }
     //-----------------------------------------------------------------------------
     void GLRenderSystem::_setProjectionMatrix(const Matrix4 &m)
@@ -1053,8 +1006,34 @@ namespace Ogre {
             // Activate the viewport clipping
             glEnable(GL_SCISSOR_TEST);
 
-            clearFrameBuffer(FBT_COLOUR | FBT_DEPTH, 
-                mActiveViewport->getBackgroundColour());
+            ColourValue col = mActiveViewport->getBackgroundColour();
+            
+            glClearColor(col.r, col.g, col.b, col.a);
+            // Enable depth & colour buffer for writing if it isn't
+         
+            if (!mDepthWrite)
+            {
+              glDepthMask( GL_TRUE );
+            }
+			bool colourMask = !mColourWrite[0] || !mColourWrite[1] 
+				|| !mColourWrite[2] || mColourWrite[3]; 
+			if (colourMask)
+			{
+				glColorMask(true, true, true, true);
+			}
+            // Clear buffers
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            // Reset depth write state if appropriate
+            // Enable depth buffer for writing if it isn't
+            if (!mDepthWrite)
+            {
+              glDepthMask( GL_FALSE );
+            }
+			if (colourMask)
+			{
+				glColorMask(mColourWrite[0], mColourWrite[1], mColourWrite[2], mColourWrite[3]);
+			}
+
         }        
 
         // Update light positions / directions because GL modifies them
@@ -1289,37 +1268,52 @@ namespace Ogre {
         }
     }
     //---------------------------------------------------------------------
-    void GLRenderSystem::setStencilBufferParams(CompareFunction func, ulong refValue, 
-        ulong mask, StencilOperation stencilFailOp, 
-        StencilOperation depthFailOp, StencilOperation passOp, 
-        bool twoSidedOperation)
+    void GLRenderSystem::setStencilBufferFunction(CompareFunction func)
     {
-        if (twoSidedOperation)
-        {
-            if (!mCapabilities->hasCapability(RSC_TWO_SIDED_STENCIL))
-                Except(Exception::ERR_INVALIDPARAMS, "2-sided stencils are not supported",
-                    "GLRenderSystem::setStencilBufferParams");
-            glActiveStencilFaceEXT_ptr(GL_FRONT);
-        }
-        
-        glStencilMask(mask);
-        glStencilFunc(convertCompareFunction(func), refValue, mask);
-        glStencilOp(convertStencilOp(stencilFailOp), convertStencilOp(depthFailOp), 
-            convertStencilOp(passOp));
-
-        if (twoSidedOperation)
-        {
-            // set everything again, inverted
-            glActiveStencilFaceEXT_ptr(GL_BACK);
-            glStencilMask(mask);
-            glStencilFunc(convertCompareFunction(func), refValue, mask);
-            glStencilOp(
-                convertStencilOp(stencilFailOp, true), 
-                convertStencilOp(depthFailOp, true), 
-                convertStencilOp(passOp, true));
-            // reset
-            glActiveStencilFaceEXT_ptr(GL_FRONT);
-        }
+        // Have to use saved values for other params since GL doesn't have 
+        // individual setters
+        mStencilFunc = convertCompareFunction(func);
+        glStencilFunc(mStencilFunc, mStencilRef, mStencilMask);
+    }
+    //---------------------------------------------------------------------
+    void GLRenderSystem::setStencilBufferReferenceValue(ulong refValue)
+    {
+        // Have to use saved values for other params since GL doesn't have 
+        // individual setters
+        mStencilRef = refValue;
+        glStencilFunc(mStencilFunc, mStencilRef, mStencilMask);
+    }
+    //---------------------------------------------------------------------
+    void GLRenderSystem::setStencilBufferMask(ulong mask)
+    {
+        // Have to use saved values for other params since GL doesn't have 
+        // individual setters
+        mStencilMask = mask;
+        glStencilFunc(mStencilFunc, mStencilRef, mStencilMask);
+    }
+    //---------------------------------------------------------------------
+    void GLRenderSystem::setStencilBufferFailOperation(StencilOperation op)
+    {
+        // Have to use saved values for other params since GL doesn't have 
+        // individual setters
+        mStencilFail = convertStencilOp(op);
+        glStencilOp(mStencilFail, mStencilZFail, mStencilPass);
+    }
+    //---------------------------------------------------------------------
+    void GLRenderSystem::setStencilBufferDepthFailOperation(StencilOperation op)
+    {
+        // Have to use saved values for other params since GL doesn't have 
+        // individual setters
+        mStencilZFail = convertStencilOp(op);
+        glStencilOp(mStencilFail, mStencilZFail, mStencilPass);
+    }
+    //---------------------------------------------------------------------
+    void GLRenderSystem::setStencilBufferPassOperation(StencilOperation op)
+    {
+        // Have to use saved values for other params since GL doesn't have 
+        // individual setters
+        mStencilPass = convertStencilOp(op);
+        glStencilOp(mStencilFail, mStencilZFail, mStencilPass);
     }
     //---------------------------------------------------------------------
     GLint GLRenderSystem::convertCompareFunction(CompareFunction func)
@@ -1347,7 +1341,7 @@ namespace Ogre {
         return GL_ALWAYS;
     }
     //---------------------------------------------------------------------
-    GLint GLRenderSystem::convertStencilOp(StencilOperation op, bool invert)
+    GLint GLRenderSystem::convertStencilOp(StencilOperation op)
     {
         switch(op)
         {
@@ -1358,18 +1352,29 @@ namespace Ogre {
         case SOP_REPLACE:
             return GL_REPLACE;
         case SOP_INCREMENT:
-            return invert ? GL_DECR : GL_INCR;
+            return GL_INCR;
         case SOP_DECREMENT:
-            return invert ? GL_INCR : GL_DECR;
-        case SOP_INCREMENT_WRAP:
-            return invert ? GL_DECR_WRAP_EXT : GL_INCR_WRAP_EXT;
-        case SOP_DECREMENT_WRAP:
-            return invert ? GL_INCR_WRAP_EXT : GL_DECR_WRAP_EXT;
+            return GL_DECR;
         case SOP_INVERT:
             return GL_INVERT;
         };
         // to keep compiler happy
         return SOP_KEEP;
+    }
+    //---------------------------------------------------------------------
+    void GLRenderSystem::setStencilBufferParams(CompareFunction func, ulong refValue, 
+        ulong mask, StencilOperation stencilFailOp, 
+        StencilOperation depthFailOp, StencilOperation passOp)
+    {
+        // optimise this into 2 calls instead of many
+        mStencilFunc = convertCompareFunction(func);
+        mStencilRef = refValue;
+        mStencilMask = mask;
+        mStencilFail = convertStencilOp(stencilFailOp);
+        mStencilZFail = convertStencilOp(depthFailOp);
+        mStencilPass = convertStencilOp(passOp);
+        glStencilFunc(mStencilFunc, mStencilRef, mStencilMask);
+        glStencilOp(mStencilFail, mStencilZFail, mStencilPass);
     }
 	//---------------------------------------------------------------------
     GLuint GLRenderSystem::getCombinedMinMipFilter(void)
@@ -1680,17 +1685,43 @@ namespace Ogre {
     void GLRenderSystem::setGLLightPositionDirection(Light* lt, size_t lightindex)
     {
         // Set position / direction
-        Vector4 vec;
-		// Use general 4D vector which is the same as GL's approach
-		vec = lt->getAs4DVector();
-
-		glLightfv(GL_LIGHT0 + lightindex, GL_POSITION, vec.val);
-		// Set spotlight direction
-        if (lt->getType() == Light::LT_SPOTLIGHT)
+        Vector3 vec;
+        GLfloat f4vals[4];
+        if (lt->getType() == Light::LT_POINT)
+        {
+            vec = lt->getDerivedPosition();
+            f4vals[0] = vec.x;
+            f4vals[1] = vec.y;
+            f4vals[2] = vec.z;
+            f4vals[3] = 1.0;
+            glLightfv(GL_LIGHT0 + lightindex, GL_POSITION, f4vals);
+        }
+        if (lt->getType() == Light::LT_DIRECTIONAL)
         {
             vec = lt->getDerivedDirection();
-            vec.w = 0.0; 
-            glLightfv(GL_LIGHT0 + lightindex, GL_SPOT_DIRECTION, vec.val);
+            f4vals[0] = -vec.x; // GL light directions are in eye coords
+            f4vals[1] = -vec.y;
+            f4vals[2] = -vec.z; // GL light directions are in eye coords
+            f4vals[3] = 0.0; // important!
+            // In GL you set direction through position, but the
+            //  w value of the vector being 0 indicates which it is
+            glLightfv(GL_LIGHT0 + lightindex, GL_POSITION, f4vals);
+        }
+        if (lt->getType() == Light::LT_SPOTLIGHT)
+        {
+            vec = lt->getDerivedPosition();
+            f4vals[0] = vec.x;
+            f4vals[1] = vec.y;
+            f4vals[2] = vec.z;
+            f4vals[3] = 1.0;
+            glLightfv(GL_LIGHT0 + lightindex, GL_POSITION, f4vals);
+
+            vec = lt->getDerivedDirection();
+            f4vals[0] = vec.x; 
+            f4vals[1] = vec.y;
+            f4vals[2] = vec.z; 
+            f4vals[3] = 0.0; 
+            glLightfv(GL_LIGHT0 + lightindex, GL_SPOT_DIRECTION, f4vals);
         }
     }
     //---------------------------------------------------------------------
@@ -1909,124 +1940,5 @@ namespace Ogre {
             mCurrentFragmentProgram->bindProgramParameters(params);
         }
     }
-	//---------------------------------------------------------------------
-    void GLRenderSystem::setScissorTest(bool enabled, size_t left, 
-        size_t top, size_t right, size_t bottom)
-    {
-        if (enabled)
-        {
-            glEnable(GL_SCISSOR_TEST);
-            // NB GL uses width / height rather than right / bottom
-            glScissor(left, top, right-left, bottom-top);
-        }
-        else
-        {
-            glDisable(GL_SCISSOR_TEST);
-        }
-    }
-    //---------------------------------------------------------------------
-    void GLRenderSystem::clearFrameBuffer(unsigned int buffers, 
-        const ColourValue& colour, Real depth, unsigned short stencil)
-    {
-
-        GLbitfield flags = 0;
-        if (buffers & FBT_COLOUR)
-        {
-            flags |= GL_COLOR_BUFFER_BIT;
-        }
-        if (buffers & FBT_DEPTH)
-        {
-            flags |= GL_DEPTH_BUFFER_BIT;
-        }
-        if (buffers & FBT_STENCIL)
-        {
-            flags |= GL_STENCIL_BUFFER_BIT;
-        }
-
-
-        // Enable depth & colour buffer for writing if it isn't
-
-        if (!mDepthWrite)
-        {
-            glDepthMask( GL_TRUE );
-        }
-        bool colourMask = !mColourWrite[0] || !mColourWrite[1] 
-        || !mColourWrite[2] || mColourWrite[3]; 
-        if (colourMask)
-        {
-            glColorMask(true, true, true, true);
-        }
-        // Set values
-        glClearColor(colour.r, colour.g, colour.b, colour.a);
-        glClearDepth(depth);
-        glClearStencil(stencil);
-        // Clear buffers
-        glClear(flags);
-        // Reset depth write state if appropriate
-        // Enable depth buffer for writing if it isn't
-        if (!mDepthWrite)
-        {
-            glDepthMask( GL_FALSE );
-        }
-        if (colourMask)
-        {
-            glColorMask(mColourWrite[0], mColourWrite[1], mColourWrite[2], mColourWrite[3]);
-        }
-
-    }
-    // ------------------------------------------------------------------
-    void GLRenderSystem::_makeProjectionMatrix(Real left, Real right, 
-        Real bottom, Real top, Real nearPlane, Real farPlane, Matrix4& dest, 
-        bool forGpuProgram)
-    {
-        Real width = right - left;
-        Real height = top - bottom;
-        Real q = -(farPlane + nearPlane) / (farPlane - nearPlane);
-        Real qn = -2 * (farPlane * nearPlane) / (farPlane - nearPlane);
-        dest = Matrix4::ZERO;
-        dest[0][0] = 2 * nearPlane / width;
-        dest[0][2] = (right+left) / width;
-        dest[1][1] = 2 * nearPlane / height;
-        dest[1][2] = (top+bottom) / height;
-        dest[2][2] = q;
-        dest[2][3] = qn;
-        dest[3][2] = -1;
-    }
-
-    // ------------------------------------------------------------------
-    void GLRenderSystem::setClipPlane (ushort index, Real A, Real B, Real C, Real D)
-    {
-        if (mClipPlanes.size() < index+1)
-            mClipPlanes.resize(index+1);
-        mClipPlanes[index] = Vector4 (A, B, C, D);
-        GLdouble plane[4] = { A, B, C, D };
-        glClipPlane (GL_CLIP_PLANE0 + index, plane);
-    }
-
-    // ------------------------------------------------------------------
-    void GLRenderSystem::setGLClipPlanes() const
-    {
-        int size = mClipPlanes.size();
-        for (int i=0; i<size; i++)
-        {
-            const Vector4 &p = mClipPlanes[i];
-            GLdouble plane[4] = { p.x, p.y, p.z, p.w };
-            glClipPlane (GL_CLIP_PLANE0 + i, plane);
-        }
-    }
-
-    // ------------------------------------------------------------------
-    void GLRenderSystem::enableClipPlane (ushort index, bool enable)
-    {
-        glEnable (GL_CLIP_PLANE0 + index);
-    }
-    //---------------------------------------------------------------------
-    HardwareOcclusionQuery* GLRenderSystem::createHardwareOcclusionQuery(void)
-    {
-        return new GLHardwareOcclusionQuery(); 
-    }
-
-
-
 
 }

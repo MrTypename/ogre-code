@@ -301,7 +301,7 @@ namespace Ogre
             Real fLength = Math::Sqrt( x * x + y * y + z * z );
 
             // Will also work for zero-sized vectors, but will change nothing
-            if ( fLength > 1e-08 )
+            if ( fLength > 1e-06 )
             {
                 Real fInvLength = 1.0 / fLength;
                 x *= fInvLength;
@@ -545,9 +545,6 @@ namespace Ogre
         static const Vector3 UNIT_X;
         static const Vector3 UNIT_Y;
         static const Vector3 UNIT_Z;
-        static const Vector3 NEGATIVE_UNIT_X;
-        static const Vector3 NEGATIVE_UNIT_Y;
-        static const Vector3 NEGATIVE_UNIT_Z;
         static const Vector3 UNIT_SCALE;
 
         /** Function for writing to a stream.

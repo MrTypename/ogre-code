@@ -36,8 +36,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreCamera.h"
 #include "OgreTagPoint.h"
 #include "OgreAxisAlignedBox.h"
-#include "OgreHardwareBufferManager.h"
-#include "OgreVector4.h"
 
 namespace Ogre {
     String Entity::msMovableType = "Entity";
@@ -46,7 +44,6 @@ namespace Ogre {
     {
 		mFullBoundingBox = new AxisAlignedBox;
         mNormaliseNormals = false;
-        mCastShadows = true;
     }
     //-----------------------------------------------------------------------
     Entity::Entity( const String& name, Mesh* mesh, SceneManager* creator) :
@@ -101,7 +98,6 @@ namespace Ogre {
 		mMinMaterialLodIndex = 99;
 
 
-        mCastShadows = true;
     }
     //-----------------------------------------------------------------------
     Entity::~Entity()
@@ -133,14 +129,6 @@ namespace Ogre {
             delete [] mBoneMatrices;
 
 		delete mFullBoundingBox;
-
-        // Delete shadow renderables
-        ShadowRenderableList::iterator si, siend;
-        siend = mShadowRenderables.end();
-        for (si = mShadowRenderables.begin(); si != siend; ++si)
-        {
-            delete *si;
-        }
     }
     //-----------------------------------------------------------------------
     Mesh* Entity::getMesh(void)
@@ -297,12 +285,11 @@ namespace Ogre {
 			subEntList = &mSubEntityList;
 		}
 
-		// Add each visible SubEntity to the queue
+		// Add each SubEntity to the queue
         SubEntityList::iterator i, iend;
         iend = subEntList->end();
         for (i = subEntList->begin(); i != iend; ++i)
         {
-          if((*i)->isVisible())  
             queue->addRenderable(*i, mRenderQueueID, RENDERABLE_DEFAULT_PRIORITY);
         }
 
@@ -535,151 +522,5 @@ namespace Ogre {
         }
         return rad;
 	}
-    //-----------------------------------------------------------------------
-    EdgeData* Entity::getEdgeList(void)
-    {
-        // Get from Mesh
-        return mMesh->getEdgeList();
-    }
-    //-----------------------------------------------------------------------
-    ShadowCaster::ShadowRenderableListIterator 
-    Entity::getShadowVolumeRenderableIterator(
-        ShadowTechnique shadowTechnique, const Light* light, 
-        HardwareIndexBufferSharedPtr* indexBuffer, 
-        bool extrude, unsigned long flags)
-    {
-        assert(indexBuffer && "Only external index buffers are supported right now");
-        assert((*indexBuffer)->getType() == HardwareIndexBuffer::IT_16BIT && 
-            "Only 16-bit indexes supported for now");
-
-
-        // Prep mesh if required
-        if(!mMesh->isPreparedForShadowVolumes())
-            mMesh->prepareForShadowVolume();
-
-
-        // TODO: for skeletal animation, use an intermediate buffer or some such
-
-        // Calculate the object space light details
-        Vector4 lightPos = light->getAs4DVector();
-        Matrix4 world2Obj = mParentNode->_getFullTransform().inverse();
-        lightPos =  world2Obj * lightPos; 
-
-        // We need to search the edge list for silhouette edges
-        EdgeData* edgeList = getEdgeList();
-
-        // Init shadow renderable list if required
-        if (mShadowRenderables.empty())
-        {
-            EdgeData::EdgeGroupList::iterator egi;
-            ShadowRenderableList::iterator si, siend;
-            mShadowRenderables.resize(edgeList->edgeGroups.size());
-            siend = mShadowRenderables.end();
-            egi = edgeList->edgeGroups.begin();
-            for (si = mShadowRenderables.begin(); si != siend; ++si, ++egi)
-            {
-                EntityShadowRenderable* esr = 
-                    new EntityShadowRenderable(this, indexBuffer, egi->vertexData);
-                *si = esr;
-                // Extrude vertices in software if required
-                if (extrude)
-                {
-                    extrudeVertices(esr->getPositionBuffer(), 
-                        egi->vertexData->vertexCount, lightPos);
-
-                }
-
-            }
-        }
-
-        // Calc triangle light facing
-        updateEdgeListLightFacing(edgeList, lightPos);
-
-        // Generate indexes and update renderables
-        generateShadowVolume(edgeList, *indexBuffer, light,
-            mShadowRenderables, flags);
-
-        return ShadowRenderableListIterator(mShadowRenderables.begin(), 
-            mShadowRenderables.end());
-    }
-    //-----------------------------------------------------------------------
-    //-----------------------------------------------------------------------
-    Entity::EntityShadowRenderable::EntityShadowRenderable(Entity* parent, 
-        HardwareIndexBufferSharedPtr* indexBuffer, const VertexData* vertexData)
-        : mParent(parent)
-    {
-        // Initialise render op
-        mRenderOp.indexData = new IndexData();
-        mRenderOp.indexData->indexBuffer = *indexBuffer;
-        mRenderOp.indexData->indexStart = 0;
-        // index start and count are sorted out later
-
-        // Create vertex data which just references position component (and 2 component)
-        mRenderOp.vertexData = new VertexData();
-        mRenderOp.vertexData->vertexDeclaration = 
-            HardwareBufferManager::getSingleton().createVertexDeclaration();
-        mRenderOp.vertexData->vertexBufferBinding = 
-            HardwareBufferManager::getSingleton().createVertexBufferBinding();
-        // Map in position data
-        mRenderOp.vertexData->vertexDeclaration->addElement(0,0,VET_FLOAT3, VES_POSITION);
-        mPositionBuffer = vertexData->vertexBufferBinding->getBuffer(
-                vertexData->vertexDeclaration->findElementBySemantic(VES_POSITION)->getSource());
-        mRenderOp.vertexData->vertexBufferBinding->setBinding(0, mPositionBuffer);
-        // Map in w-coord buffer (if present)
-        if(!vertexData->hardwareShadowVolWBuffer.isNull())
-        {
-            mRenderOp.vertexData->vertexDeclaration->addElement(1,0,VET_FLOAT1, VES_TEXTURE_COORDINATES, 0);
-            mWBuffer = vertexData->hardwareShadowVolWBuffer;
-            mRenderOp.vertexData->vertexBufferBinding->setBinding(1, mWBuffer);
-        }
-        // Use same vertex start as input
-        mRenderOp.vertexData->vertexStart = vertexData->vertexStart;
-        // Vertex count must take into account the doubling of the buffer,
-        // because second half of the buffer is the extruded copy
-        mRenderOp.vertexData->vertexCount = 
-            vertexData->vertexCount * 2;
-        
-
-    }
-    //-----------------------------------------------------------------------
-    Entity::EntityShadowRenderable::~EntityShadowRenderable()
-    {
-        delete mRenderOp.indexData;
-        delete mRenderOp.vertexData;
-    }
-    //-----------------------------------------------------------------------
-    void Entity::EntityShadowRenderable::getWorldTransforms(Matrix4* xform) const
-    {
-        unsigned short numBones = mParent->_getNumBoneMatrices();
-
-		if (!numBones)
-        {
-            *xform = mParent->_getParentNodeFullTransform();
-        }
-        else
-        {
-            // Bones, use cached matrices built when Entity::_updateRenderQueue was called
-			const Matrix4* bones = mParent->_getBoneMatrices();
-            int i;
-            for (i = 0; i < numBones; ++i)
-            {
-                *xform = bones[i];
-                ++xform;
-            }
-        }
-    }
-    //-----------------------------------------------------------------------
-    const Quaternion& Entity::EntityShadowRenderable::getWorldOrientation(void) const
-    {
-        return mParent->getParentNode()->_getDerivedOrientation();
-    }
-    //-----------------------------------------------------------------------
-    const Vector3& Entity::EntityShadowRenderable::getWorldPosition(void) const
-    {
-        return mParent->getParentNode()->_getDerivedPosition();
-    }
-    //-----------------------------------------------------------------------
-
-
 
 }

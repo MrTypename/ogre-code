@@ -122,7 +122,7 @@ namespace Ogre {
 			// Register the window class
 
 			WNDCLASS wndClass = { CS_HREDRAW | CS_VREDRAW, WndProc, 0, 4, hInst,
-				LoadIcon( NULL, IDI_APPLICATION ),
+				LoadIcon( NULL, "IDI_ICON1" ),
 				LoadCursor( NULL, IDC_ARROW ),
 				(HBRUSH)GetStockObject( BLACK_BRUSH ), NULL,
 				TEXT(name.c_str()) };
@@ -180,8 +180,7 @@ namespace Ogre {
 			LML_NORMAL, "Created Win32Window '%s' : %ix%i, %ibpp",
 			mName.c_str(), mWidth, mHeight, mColourDepth );
 
-		
-        PIXELFORMATDESCRIPTOR pfd = {
+		PIXELFORMATDESCRIPTOR pfd = {
 			sizeof(PIXELFORMATDESCRIPTOR),
 			1,
 			PFD_DRAW_TO_WINDOW |
@@ -194,8 +193,8 @@ namespace Ogre {
 			0,
 			0,
 			0, 0, 0, 0,
-			32, 			     // 32-bit depth-buffer (will be emulated in 16-bit colour mode)
-			8,				     // 8-bit stencil buffer
+			32, 			     // 32-bit z-buffer
+			0,				     // no stencil buffer
 			0,
 			PFD_MAIN_PLANE,
 			0,

@@ -72,19 +72,8 @@ namespace Ogre
         SOP_INCREMENT,
         /// Decrease the stencil value by 1, clamping at 0
         SOP_DECREMENT,
-        /// Increase the stencil value by 1, wrapping back to 0 when incrementing the maximum value
-        SOP_INCREMENT_WRAP,
-        /// Decrease the stencil value by 1, wrapping when decrementing 0
-        SOP_DECREMENT_WRAP,
         /// Invert the bits of the stencil buffer
         SOP_INVERT
-    };
-
-    /** Defines the frame buffers which can be cleared. */
-    enum FrameBufferType {
-        FBT_COLOUR  = 0x1,
-        FBT_DEPTH   = 0x2,
-        FBT_STENCIL = 0x4
     };
 
     /** Defines the functionality of a 3D API
@@ -191,7 +180,7 @@ namespace Ogre
             @returns
                 A pointer to the automatically created window, if requested, otherwise null.
         */
-        virtual RenderWindow* initialise(bool autoCreateWindow, const String& windowTitle = "OGRE Render Window");
+        virtual RenderWindow* initialise(bool autoCreateWindow);
 
         /** Restart the renderer (normally following a change in settings).
         */
@@ -594,14 +583,6 @@ namespace Ogre
         virtual void _makeProjectionMatrix(Real fovy, Real aspect, Real nearPlane, Real farPlane, 
             Matrix4& dest, bool forGpuProgram = false) = 0;
 
-        /** Builds a perspective projection matrix for the case when frustum is
-            not centered around camera.
-        @remarks
-            Viewport coordinates are in camera coordinate frame, i.e. camera is 
-            at the origin.
-        */
-        virtual void _makeProjectionMatrix(Real left, Real right, Real bottom, Real top, 
-            Real nearPlane, Real farPlane, Matrix4& dest, bool forGpuProgram = false) = 0;
         /** Sets how to rasterise triangles, as points, wireframe or solid polys. */
         virtual void _setRasterisationMode(SceneDetailLevel level) = 0;
 
@@ -660,17 +641,41 @@ namespace Ogre
         @param depthFailOp The action to perform when the stencil check passes, but the
             depth buffer check still fails
         @param passOp The action to take when both the stencil and depth check pass.
-        @param twoSidedOperation If set to true, then if you render both back and front faces 
-            (you'll have to turn off culling) then these parameters will apply for front faces, 
-            and the inverse of them will happen for back faces (keep remains the same).
         */
         virtual void setStencilBufferParams(CompareFunction func = CMPF_ALWAYS_PASS, 
             ulong refValue = 0, ulong mask = 0xFFFFFFFF, 
             StencilOperation stencilFailOp = SOP_KEEP, 
             StencilOperation depthFailOp = SOP_KEEP,
-            StencilOperation passOp = SOP_KEEP, 
-            bool twoSidedOperation = false) = 0;
+            StencilOperation passOp = SOP_KEEP);
 
+        /** Sets the stencil test function.
+        @remarks
+            The stencil test is:<PRE>
+            (Reference Value & Mask) CompareFunction (Stencil Buffer Value & Mask)</PRE>
+        */
+        virtual void setStencilBufferFunction(CompareFunction func) = 0;
+        /** Sets the stencil buffer reference value.
+        @remarks
+            This value is used in the stencil test:<PRE>
+            (Reference Value & Mask) CompareFunction (Stencil Buffer Value & Mask)</PRE>
+            It can also be used as the destination value for the stencil buffer if the
+            operation which is performed is SOP_REPLACE.
+        */
+        virtual void setStencilBufferReferenceValue(ulong refValue) = 0;
+        /** Sets the stencil buffer mask value.
+        @remarks
+            This is applied thus:<PRE>
+            (Reference Value & Mask) CompareFunction (Stencil Buffer Value & Mask)</PRE>
+        */
+        virtual void setStencilBufferMask(ulong mask) = 0;
+        /** Sets the action to perform if the stencil test fails. */
+        virtual void setStencilBufferFailOperation(StencilOperation op) = 0;
+        /** Sets the action to perform if the stencil test passes, but the depth
+            buffer test fails. */
+        virtual void setStencilBufferDepthFailOperation(StencilOperation op) = 0;
+        /** Sets the action to perform if both the stencil test and the depth buffer 
+            test passes. */
+        virtual void setStencilBufferPassOperation(StencilOperation op) = 0;
 
         /** Performs a software vertex blend on the passed in operation. 
         @remarks
@@ -733,41 +738,9 @@ namespace Ogre
 
         /** Internal method for updating all render targets attached to this rendering system. */
         virtual void _updateAllRenderTargets(void);
-
-        /** Set a clipping plane. */
-        virtual void setClipPlane (ushort index, const Plane &p);
-        /** Set a clipping plane. */
-        virtual void setClipPlane (ushort index, Real A, Real B, Real C, Real D) = 0;
-        /** Enable the clipping plane. */
-        virtual void enableClipPlane (ushort index, bool enable) = 0;
-
         /** Sets whether or not vertex windings set should be inverted; this can be important
             for rendering reflections. */
         virtual void setInvertVertexWinding(bool invert);
-        /** Sets the 'scissor region' ie the region of the target in which rendering can take place.
-        @remarks
-            This method allows you to 'mask off' rendering in all but a given rectangular area
-            as identified by the parameters to this method.
-        @note
-            Not all systems support this method. Check the RenderSystemCapabilities for the
-            RSC_SCISSOR_TEST capability to see if it is supported.
-        @param enabled True to enable the scissor test, false to disable it.
-        @param left, top, right, bottom The location of the corners of the rectangle, expressed in
-            <i>pixels</i>.
-        */
-        virtual void setScissorTest(bool enabled, size_t left = 0, size_t top = 0, 
-            size_t right = 800, size_t bottom = 600) = 0;
-
-        /** Clears one or more frame buffers on the active render target. 
-        @param buffers Combination of one or more elements of FrameBufferType
-            denoting which buffers are to be cleared
-        @param colour The colour to clear the colour buffer with, if enabled
-        @param depth The value to initialise the depth buffer with, if enabled
-        @param stencil The value to initialise the stencil buffer with, if enabled.
-        */
-        virtual void clearFrameBuffer(unsigned int buffers, 
-            const ColourValue& colour = ColourValue::Black, 
-            Real depth = 1.0f, unsigned short stencil = 0) = 0;
     protected:
 
 

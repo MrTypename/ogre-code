@@ -319,7 +319,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    RenderWindow* D3DRenderSystem::initialise(bool autoCreateWindow, const String& windowTitle)
+    RenderWindow* D3DRenderSystem::initialise(bool autoCreateWindow)
     {
         RenderWindow* autoWindow = 0;
 
@@ -401,7 +401,7 @@ namespace Ogre {
             }
 
             // Create myself a window
-            autoWindow = this->createRenderWindow(windowTitle, width, height, colourDepth, fullScreen);
+            autoWindow = this->createRenderWindow("OGRE Render Window", width, height, colourDepth, fullScreen);
 
 
 
@@ -545,25 +545,16 @@ namespace Ogre {
             mTextureManager = new D3DTextureManager(mlpD3DDevice);
 
             // Check for hardware stencil support
-            // Get render target, then depth buffer and check format
             LPDIRECTDRAWSURFACE7 lpTarget;
-            win->getCustomAttribute("DDBACKBUFFER", &lpTarget);
-            DDSCAPS2 ddscaps;
-            ZeroMemory(&ddscaps, sizeof(DDSCAPS2));
-            ddscaps.dwCaps = DDSCAPS_ZBUFFER;
-            lpTarget->GetAttachedSurface(&ddscaps, &lpTarget);
-            lpTarget->Release();
-            DDSURFACEDESC2 ddsd;
-            ddsd.dwSize = sizeof(DDSURFACEDESC2);
-            lpTarget->GetSurfaceDesc(&ddsd);
-            DWORD stencil =  ddsd.ddpfPixelFormat.dwStencilBitDepth;
+            mlpD3DDevice->GetRenderTarget(&lpTarget);
+            lpTarget->Release(); // decrement ref count
+            DDPIXELFORMAT pf;
+            lpTarget->GetPixelFormat(&pf);
+            DWORD stencil =  pf.dwStencilBitDepth;
             if(stencil > 0)
             {
                 mCapabilities->setCapability(RSC_HWSTENCIL);
                 mCapabilities->setStencilBufferBitDepth(stencil);
-                if ((mD3DDeviceDesc.dwStencilCaps & D3DSTENCILCAPS_INCR) && 
-                    (mD3DDeviceDesc.dwStencilCaps & D3DSTENCILCAPS_DECR))
-                    mCapabilities->setCapability(RSC_STENCIL_WRAP);
             }
 
             // Anisotropy?
@@ -1321,8 +1312,12 @@ namespace Ogre {
         // Clear the viewport if required
         if (mActiveViewport->getClearEveryFrame())
         {
-            clearFrameBuffer(FBT_COLOUR | FBT_DEPTH, 
-                mActiveViewport->getBackgroundColour());
+            hr = mlpD3DDevice->Clear(0,0,D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER,
+                mActiveViewport->getBackgroundColour().getAsLongARGB(),
+                1.0f, 0);
+            if (FAILED(hr))
+                Except(hr, "Error clearing viewport.",
+                "D3DRenderSystem::_beginFrame");
         }
 
         hr = mlpD3DDevice->BeginScene();
@@ -2256,58 +2251,57 @@ namespace Ogre {
 
     }
     //---------------------------------------------------------------------
-    void D3DRenderSystem::setStencilBufferParams(CompareFunction func, ulong refValue, 
-        ulong mask, StencilOperation stencilFailOp, 
-        StencilOperation depthFailOp, StencilOperation passOp, 
-        bool twoSidedOperation)
+    void D3DRenderSystem::setStencilBufferFunction(CompareFunction func)
     {
-        HRESULT hr;
-
-        // D3D7 does not support 2-sided stencil operations
-        if (twoSidedOperation)
-            Except(Exception::ERR_INVALIDPARAMS, "Direct3D7 does not support 2-sided stencil ops",
-               "D3DRenderSystem::setStencilBufferParams");
-
-        // Function
-        hr = __SetRenderState(D3DRENDERSTATE_STENCILFUNC, 
+        HRESULT hr = __SetRenderState(D3DRENDERSTATE_STENCILFUNC, 
             convertCompareFunction(func));
-
         if (FAILED(hr))
             Except(hr, "Error setting stencil buffer test function.",
-            "D3DRenderSystem::setStencilBufferParams");
+            "D3DRenderSystem::_setStencilBufferFunction");
 
-        // reference value
-        hr = __SetRenderState(D3DRENDERSTATE_STENCILREF, refValue);
+    }
+    //---------------------------------------------------------------------
+    void D3DRenderSystem::setStencilBufferReferenceValue(ulong refValue)
+    {
+        HRESULT hr = __SetRenderState(D3DRENDERSTATE_STENCILREF, refValue);
         if (FAILED(hr))
             Except(hr, "Error setting stencil buffer reference value.",
-            "D3DRenderSystem::setStencilBufferParams");
-
-        // mask
-        hr = __SetRenderState(D3DRENDERSTATE_STENCILMASK, mask);
+            "D3DRenderSystem::setStencilBufferReferenceValue");
+    }
+    //---------------------------------------------------------------------
+    void D3DRenderSystem::setStencilBufferMask(ulong mask)
+    {
+        HRESULT hr = __SetRenderState(D3DRENDERSTATE_STENCILMASK, mask);
         if (FAILED(hr))
             Except(hr, "Error setting stencil buffer mask.",
-            "D3DRenderSystem::setStencilBufferParams");
-
-        // fail op
-        hr = __SetRenderState(D3DRENDERSTATE_STENCILFAIL, 
-            convertStencilOp(stencilFailOp));
+            "D3DRenderSystem::setStencilBufferMask");
+    }
+    //---------------------------------------------------------------------
+    void D3DRenderSystem::setStencilBufferFailOperation(StencilOperation op)
+    {
+        HRESULT hr = __SetRenderState(D3DRENDERSTATE_STENCILFAIL, 
+            convertStencilOp(op));
         if (FAILED(hr))
             Except(hr, "Error setting stencil fail operation.",
-            "D3DRenderSystem::setStencilBufferParams");
-
-        // depth fail op
-        hr = __SetRenderState(D3DRENDERSTATE_STENCILZFAIL, 
-            convertStencilOp(depthFailOp));
+            "D3DRenderSystem::setStencilBufferFailOperation");
+    }
+    //---------------------------------------------------------------------
+    void D3DRenderSystem::setStencilBufferDepthFailOperation(StencilOperation op)
+    {
+        HRESULT hr = __SetRenderState(D3DRENDERSTATE_STENCILZFAIL, 
+            convertStencilOp(op));
         if (FAILED(hr))
             Except(hr, "Error setting stencil depth fail operation.",
-            "D3DRenderSystem::setStencilBufferParams");
-
-        // pass op
-        hr = __SetRenderState(D3DRENDERSTATE_STENCILPASS, 
-            convertStencilOp(passOp));
+            "D3DRenderSystem::setStencilBufferDepthFailOperation");
+    }
+    //---------------------------------------------------------------------
+    void D3DRenderSystem::setStencilBufferPassOperation(StencilOperation op)
+    {
+        HRESULT hr = __SetRenderState(D3DRENDERSTATE_STENCILPASS, 
+            convertStencilOp(op));
         if (FAILED(hr))
             Except(hr, "Error setting stencil pass operation.",
-            "D3DRenderSystem::setStencilBufferParams");
+            "D3DRenderSystem::setStencilBufferPassOperation");
     }
     //---------------------------------------------------------------------
     D3DCMPFUNC D3DRenderSystem::convertCompareFunction(CompareFunction func)
@@ -2349,10 +2343,6 @@ namespace Ogre {
             return D3DSTENCILOP_INCRSAT;
         case SOP_DECREMENT:
             return D3DSTENCILOP_DECRSAT;
-        case SOP_INCREMENT_WRAP:
-            return D3DSTENCILOP_INCR;
-        case SOP_DECREMENT_WRAP:
-            return D3DSTENCILOP_DECR;
         case SOP_INVERT:
             return D3DSTENCILOP_INVERT;
         };
@@ -2518,75 +2508,7 @@ namespace Ogre {
         else
             return mlpD3DDevice->SetTextureStageState(stage, type, value);
     }
-    //---------------------------------------------------------------------
-    void D3DRenderSystem::clearFrameBuffer(unsigned int buffers, 
-        const ColourValue& colour, Real depth, unsigned short stencil)
-    {
-        DWORD flags = 0;
-        if (buffers & FBT_COLOUR)
-        {
-            flags |= D3DCLEAR_TARGET;
-        }
-        if (buffers & FBT_DEPTH)
-        {
-            flags |= D3DCLEAR_ZBUFFER;
-        }
-        // Only try to clear the stencil if supported, otherwise it will fail
-        if (buffers & FBT_STENCIL && mCapabilities->hasCapability(RSC_HWSTENCIL))
-        {
-            flags |= D3DCLEAR_STENCIL;
-        }
-        HRESULT hr;
-        if( FAILED( hr = mlpD3DDevice->Clear( 
-            0, 
-            NULL, 
-            flags,
-            colour.getAsLongARGB(), 
-            depth, 
-            stencil ) ) )
-        {
-            String msg = getErrorDescription(hr);
-            Except( hr, "Error clearing frame buffer : " 
-                + msg, "D3DRenderSystem::clearFrameBuffer" );
-        }
-    }
-    //---------------------------------------------------------------------
-    void D3DRenderSystem::_makeProjectionMatrix(Real left, Real right, 
-        Real bottom, Real top, Real nearPlane, Real farPlane, Matrix4& dest,
-        bool forGpuProgram)
-    {
-        Real width = right - left;
-        Real height = top - bottom;
-        Real Q = farPlane / ( farPlane - nearPlane );
-        dest = Matrix4::ZERO;
-        dest[0][0] = 2 * nearPlane / width;
-        dest[0][2] = (right+left) / width;
-        dest[1][1] = 2 * nearPlane / height;
-        dest[1][2] = (top+bottom) / height;
-        dest[2][2] = Q;
-        dest[3][2] = 1.0f;
-        dest[2][3] = -Q * nearPlane;
-    }
 
-    // ------------------------------------------------------------------
-    void D3DRenderSystem::setClipPlane (ushort index, Real A, Real B, Real C, Real D)
-    {
-        float plane[4] = { A, B, C, D };
-        mlpD3DDevice->SetClipPlane (index, plane);
-    }
-
-    // ------------------------------------------------------------------
-    void D3DRenderSystem::enableClipPlane (ushort index, bool enable)
-    {
-        DWORD prev;
-        mlpD3DDevice->GetRenderState(D3DRENDERSTATE_CLIPPLANEENABLE, &prev);
-        __SetRenderState(D3DRENDERSTATE_CLIPPLANEENABLE, prev | (1 << index));
-    }
-    //---------------------------------------------------------------------
-    HardwareOcclusionQuery* D3DRenderSystem::createHardwareOcclusionQuery(void)
-    {
-        return (HardwareOcclusionQuery*) 0;	// Hardware occlusion is not supported when DirectX7 is used
-    }
 
 
 }

@@ -335,69 +335,48 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    void Node::translate(const Vector3& d, TransformSpace relativeTo)
+    void Node::translate(const Vector3& d)
     {
-        Vector3 adjusted;
-        switch(relativeTo) 
-        {
-        case TS_LOCAL:
-            // position is relative to parent so transform downwards
-            mPosition += mOrientation * d;
-        	break;
-        case TS_WORLD:
-            // position is relative to parent so transform upwards
-            if (mParent)
-            {
-                mPosition += mParent->_getDerivedOrientation().Inverse() * d; 
-            }
-            else
-            {
-                mPosition += d;
-            }
-        	break;
-        case TS_PARENT:
-            mPosition += d;
-            break;
-        }
+        mPosition += d;
         needUpdate();
 
     }
     //-----------------------------------------------------------------------
-    void Node::translate(Real x, Real y, Real z, TransformSpace relativeTo)
+    void Node::translate(Real x, Real y, Real z)
     {
         Vector3 v(x,y,z);
-        translate(v, relativeTo);
+        translate(v);
     }
     //-----------------------------------------------------------------------
-    void Node::translate(const Matrix3& axes, const Vector3& move, TransformSpace relativeTo)
+    void Node::translate(const Matrix3& axes, const Vector3& move)
     {
         Vector3 derived = axes * move;
-        translate(derived, relativeTo);
+        translate(derived);
     }
     //-----------------------------------------------------------------------
-    void Node::translate(const Matrix3& axes, Real x, Real y, Real z, TransformSpace relativeTo)
+    void Node::translate(const Matrix3& axes, Real x, Real y, Real z)
     {
         Vector3 d(x,y,z);
-        translate(axes,d,relativeTo);
+        translate(axes,d);
     }
     //-----------------------------------------------------------------------
-    void Node::roll(Real angleunits, TransformSpace relativeTo)
+    void Node::roll(Real angleunits)
     {
-        rotate(Vector3::UNIT_Z, angleunits, relativeTo);
+        rotate(Vector3::UNIT_Z, angleunits);
     }
     //-----------------------------------------------------------------------
-    void Node::pitch(Real angleunits, TransformSpace relativeTo)
+    void Node::pitch(Real angleunits)
     {
-        rotate(Vector3::UNIT_X, angleunits, relativeTo);
+        rotate(Vector3::UNIT_X, angleunits);
     }
     //-----------------------------------------------------------------------
-    void Node::yaw(Real angleunits, TransformSpace relativeTo)
+    void Node::yaw(Real angleunits)
     {
-        rotate(Vector3::UNIT_Y, angleunits, relativeTo);
+        rotate(Vector3::UNIT_Y, angleunits);
 
     }
     //-----------------------------------------------------------------------
-    void Node::rotate(const Vector3& axis, Real angleunits, TransformSpace relativeTo)
+    void Node::rotate(const Vector3& axis, Real angleunits)
     {
         Quaternion q;
         q.FromAngleAxis(Math::AngleUnitsToRadians(angleunits),axis);
@@ -405,24 +384,10 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    void Node::rotate(const Quaternion& q, TransformSpace relativeTo)
+    void Node::rotate(const Quaternion& q)
     {
-        switch(relativeTo) 
-        {
-        case TS_PARENT:
-            // Rotations are normally relative to local axes, transform up
-            mOrientation = mOrientation * (mOrientation.Inverse() * q);
-            break;
-        case TS_WORLD:
-            // Rotations are normally relative to local axes, transform up
-            mOrientation = mOrientation * 
-                (_getDerivedOrientation().Inverse() * q);
-            break;
-        case TS_LOCAL:
-            // Note the order of the mult, i.e. q comes after
-            mOrientation = mOrientation * q;
-            break;
-        }
+        // Note the order of the mult, i.e. q comes after
+        mOrientation = mOrientation * q;
         needUpdate();
     }
     //-----------------------------------------------------------------------

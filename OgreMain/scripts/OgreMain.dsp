@@ -212,10 +212,6 @@ SOURCE=..\src\OgreDynLibManager.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\OgreEdgeListBuilder.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\OgreEntity.cpp
 # End Source File
 # Begin Source File
@@ -289,10 +285,6 @@ SOURCE=..\src\OgreHardwareBufferManager.cpp
 # Begin Source File
 
 SOURCE=..\src\OgreHardwareIndexBuffer.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\OgreHardwareOcclusionQuery.cpp
 # End Source File
 # Begin Source File
 
@@ -561,10 +553,6 @@ SOURCE=..\src\OgreSerializer.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\OgreShadowCaster.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\OgreSimpleRenderable.cpp
 # End Source File
 # Begin Source File
@@ -818,10 +806,6 @@ SOURCE=..\include\OgreDynLibManager.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\include\OgreEdgeListBuilder.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\include\OgreEntity.h
 # End Source File
 # Begin Source File
@@ -927,10 +911,6 @@ SOURCE=..\include\OgreHardwareBufferManager.h
 # Begin Source File
 
 SOURCE=..\include\OgreHardwareIndexBuffer.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\OgreHardwareOcclusionQuery.h
 # End Source File
 # Begin Source File
 
@@ -1279,10 +1259,6 @@ SOURCE=..\include\OgreSDDataChunk.h
 # Begin Source File
 
 SOURCE=..\include\OgreSerializer.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\OgreShadowCaster.h
 # End Source File
 # Begin Source File
 

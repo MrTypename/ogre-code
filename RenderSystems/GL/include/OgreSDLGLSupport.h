@@ -26,7 +26,7 @@ public:
     */
     String validateConfig(void);
 
-    virtual RenderWindow* createWindow(bool autoCreateWindow, GLRenderSystem* renderSystem, const String& windowTitle);
+    virtual RenderWindow* createWindow(bool autoCreateWindow, GLRenderSystem* renderSystem);
 
 	/**
 	* Create a new specific render window

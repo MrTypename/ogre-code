@@ -50,7 +50,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreTextureUnitState.h"
 #include "OgreException.h"
 #include "OgreLogManager.h"
-#include "OgreHardwareBufferManager.h"
 
 // This class implements the most basic scene manager
 
@@ -89,9 +88,7 @@ namespace Ogre {
 
         mDisplayNodes = false;
 
-	    mShowBoundingBoxes = false;
-        mShadowTechnique = SHADOWTYPE_NONE;
-        mDebugShadows = false;
+	  mShowBoundingBoxes = false;
     }
 
     SceneManager::~SceneManager()
@@ -638,13 +635,6 @@ namespace Ogre {
         _applySceneAnimations();
         _updateSceneGraph(camera);
 
-        // Auto-track nodes
-        AutoTrackingSceneNodes::iterator atsni, atsniend;
-        atsniend = mAutoTrackingSceneNodes.end();
-        for (atsni = mAutoTrackingSceneNodes.begin(); atsni != atsniend; ++atsni)
-        {
-            (*atsni)->_autoTrack();
-        }
         // Auto-track camera if required
         camera->_autoTrack();
 
@@ -657,42 +647,8 @@ namespace Ogre {
             mDestRenderSystem->setInvertVertexWinding(false);
         }
 
-        // Set camera window clipping planes (if any)
-		if (mDestRenderSystem->getCapabilities()->hasCapability(RSC_USER_CLIP_PLANES))
-		{
-			if (camera->isWindowSet())  
-			{
-				const std::vector<Plane>& planeList = 
-					camera->getWindowPlanes();
-				for (int i = 0; i < 4; ++i)
-				{
-					mDestRenderSystem->enableClipPlane(i, true);
-					mDestRenderSystem->setClipPlane(i, planeList[i]);
-				}
-			}
-			else
-			{
-				for (int i = 0; i < 4; ++i)
-				{
-					mDestRenderSystem->enableClipPlane(i, false);
-				}
-			}
-		}
         // Clear the render queue
         mRenderQueue.clear();
-
-        // Are we using any shadows at all?
-        if (mShadowTechnique != SHADOWTYPE_NONE)
-        {
-            // Locate any lights which could be affecting the frustum
-            findLightsAffectingFrustum(camera);
-        }
-        // Deal with shadow setup
-        if (mShadowTechnique == SHADOWTYPE_STENCIL_ADDITIVE)
-        {
-            // Additive stencil, we need to split everything by light
-            // TODO - add a different queue handler to do this
-        }
 
         // Parse the scene and tag visibles
         _findVisibleObjects(camera);
@@ -721,30 +677,8 @@ namespace Ogre {
         // Update controllers (after begineFrame since some are frameTime dependent)
         ControllerManager::getSingleton().updateAllControllers();
 
-        if (mShadowTechnique == SHADOWTYPE_STENCIL_ADDITIVE)
-        {
-            // Need to do a ambient or depth-only pass here
-            //_renderVisibleObjectsSolidAmbientOnly();
-
-            // Need to render per light
-            //_renderVisibleObjectsSolidPerLight();
-
-            // Now render transparents
-            //_renderVisibleObjectsTransparent();
-
-        }
-        else 
-        {
-            // Render scene content 
-            _renderVisibleObjects();
-
-            if (mShadowTechnique == SHADOWTYPE_STENCIL_MODULATIVE)
-            {
-                // Do a post-pass with stencils
-                renderModulativeStencilShadows(camera);
-            }
-        }
-
+        // Render scene content (only entities in this SceneManager, no world geometry)
+        _renderVisibleObjects();
 
 
         
@@ -1935,180 +1869,6 @@ namespace Ogre {
 	{
 		return mShowBoundingBoxes;
 	}
-    //---------------------------------------------------------------------
-    void SceneManager::_notifyAutotrackingSceneNode(SceneNode* node, bool autoTrack)
-    {
-        if (autoTrack)
-        {
-            mAutoTrackingSceneNodes.insert(node);
-        }
-        else
-        {
-            mAutoTrackingSceneNodes.erase(node);
-        }
-    }
-	//---------------------------------------------------------------------
-    void SceneManager::setShadowTechnique(ShadowTechnique technique,
-        bool debug)
-    {
-        mShadowTechnique = technique;
-        mDebugShadows = debug;
-        // Create an estimated sized shadow index buffer
-        mShadowIndexBuffer = HardwareBufferManager::getSingleton().
-            createIndexBuffer(HardwareIndexBuffer::IT_16BIT, 50000, 
-            HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY, false);
-    }
-	//---------------------------------------------------------------------
-    void SceneManager::findLightsAffectingFrustum(const Camera* camera)
-    {
-        // Basic iteration for this SM
-        mLightsAffectingFrustum.clear();
-        SceneLightList::iterator i, iend;
-        iend = mLights.end();
-        Sphere sphere;
-        for (i = mLights.begin(); i != iend; ++i)
-        {
-            Light* l = i->second;
-            if (l->getType() == Light::LT_DIRECTIONAL)
-            {
-                // Always visible
-                mLightsAffectingFrustum.push_back(l);
-            }
-            else
-            {
-                // NB treating spotlight as point for simplicity
-                // Just see if the lights attenuation range is within the frustum
-                sphere.setCenter(l->getPosition());
-                sphere.setRadius(l->getAttenuationRange());
-                if (camera->isVisible(sphere))
-                {
-                    mLightsAffectingFrustum.push_back(l);
-                }
-                
-            }
-        }
-
-    }
-	//---------------------------------------------------------------------
-    bool SceneManager::ShadowCasterSceneQueryListener::queryResult(
-        MovableObject* object)
-    {
-        mCasterList->push_back(object);
-        return true;
-    }
-	//---------------------------------------------------------------------
-    bool SceneManager::ShadowCasterSceneQueryListener::queryResult(
-        SceneQuery::WorldFragment* fragment)
-    {
-        // don't deal with world geometry
-        return true;
-    }
-	//---------------------------------------------------------------------
-    const SceneManager::ShadowCasterList& SceneManager::findShadowCastersForLight(
-        const Light* light, const Camera* camera)
-    {
-        mShadowCasterList.clear();
-
-        if (light->getType() == Light::LT_DIRECTIONAL)
-        {
-            // Hmm, how to efficiently locate shadow casters for an infinite light?
-            // TODO
-        }
-        else
-        {
-            SphereSceneQuery* ssc = createSphereQuery(
-                Sphere(light->getPosition(), light->getAttenuationRange()) );
-
-            // Execute, use callback
-            ShadowCasterSceneQueryListener listener(&mShadowCasterList);
-            ssc->execute(&listener);
-
-            delete ssc;
-
-        }
-
-
-        return mShadowCasterList;
-    }
-	//---------------------------------------------------------------------
-    void SceneManager::renderModulativeStencilShadows(const Camera* camera)
-    {
-        // Can we do a 2-sided stencil?
-        bool stencil2sided = false;
-        if (mDestRenderSystem->getCapabilities()->hasCapability(RSC_TWO_SIDED_STENCIL))
-        {
-            stencil2sided = true;
-        }
-
-        // Do we have access to vertex programs?
-        bool extrudeInSoftware = true;
-        if (mDestRenderSystem->getCapabilities()->hasCapability(RSC_VERTEX_PROGRAM))
-        {
-            // TODO
-            //extrudeInSoftware = false;
-        }
-
-
-        // Iterate over lights
-        LightList::const_iterator li, liend;
-        liend = mLightsAffectingFrustum.end();
-        SphereSceneQuery* ssc = 0;
-
-        mDestRenderSystem->_setColourBufferWriteEnabled(false, false, false, false);
-        mDestRenderSystem->_setDepthBufferWriteEnabled(false);
-
-        for (li = mLightsAffectingFrustum.begin(); li != liend; ++li)
-        {
-            Light* l = *li;
-            // Figure out the near clip volume
-            const PlaneBoundedVolume& nearClipVol = 
-                l->_getNearClipVolume(camera);
-
-            const ShadowCasterList& casters = findShadowCastersForLight(l, camera);
-            ShadowCasterList::const_iterator si, siend;
-            siend = casters.end();
-            for (si = casters.begin(); si != siend; ++si)
-            {
-                ShadowCaster* caster = *si;
-
-                if (caster->getCastShadows())
-                {
-                    bool zfailAlgo = false;
-                    unsigned long flags = 0;
-
-                    // Determine if zfail is required
-                    zfailAlgo = nearClipVol.intersects(caster->getWorldBoundingBox());
-
-                    if (zfailAlgo)
-                    {
-                        flags += SRF_INCLUDE_LIGHT_CAP +SRF_INCLUDE_DARK_CAP;
-                    }
-
-                    // Get shadow renderables
-                    caster->getShadowVolumeRenderableIterator(mShadowTechnique,
-                        l, &mShadowIndexBuffer, extrudeInSoftware, flags);
-
-                    // Render a shadow volume here
-                    // TODO
-                    //  - find out if we need to use zfail algo or is zpass ok (util method)
-                    //  - if we have 2-sided stencil, one render with no culling
-                    //  - otherwise, 2 renders, one with each culling method and invert the ops
-
-                }
-            }
-
-        }
-
-
-        // render full-screen shadow modulator, use .material for this so user can change effect
-        // TODO
-
-        // revert colour write state
-        mDestRenderSystem->_setColourBufferWriteEnabled(true, true, true, true);
-        // revert depth write state
-        mDestRenderSystem->_setDepthBufferWriteEnabled(true);
-
-    }
 	//---------------------------------------------------------------------
     AxisAlignedBoxSceneQuery* 
     SceneManager::createAABBQuery(const AxisAlignedBox& box, unsigned long mask)

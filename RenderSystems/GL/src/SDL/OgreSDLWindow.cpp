@@ -69,7 +69,7 @@ namespace Ogre {
         int flags = SDL_OPENGL | SDL_HWPALETTE;
 
         SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-		
+
         if (fullScreen)
             flags |= SDL_FULLSCREEN;
 
@@ -77,7 +77,7 @@ namespace Ogre {
         screen = SDL_SetVideoMode(width, height, colourDepth, flags);
         if (!screen)
         {
-            fprintf(stderr, "Could not make screen: %s.\n", SDL_GetError());
+            fprintf(stderr, "Could not make screen\n");
             exit(1);
         }
         fprintf(stderr, "screen is valid\n");

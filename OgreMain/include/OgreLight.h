@@ -29,10 +29,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreColourValue.h"
 #include "OgreVector3.h"
-#include "OgreVector4.h"
 #include "OgreString.h"
 #include "OgreMovableObject.h"
-#include "OgrePlaneBoundedVolume.h"
 
 namespace Ogre {
 
@@ -283,27 +281,6 @@ namespace Ogre {
         /** Overridden from MovableObject */
         Real getBoundingRadius(void) const { return 0; /* not visible */ }
 
-		/** Gets the details of this light as a 4D vector.
-		@remarks
-			Getting details of a light as a 4D vector can be useful for
-			doing general calculations between different light types; for
-			example the vector can represent both position lights (w=1.0f)
-			and directional lights (w=0.0f) and be used in the same 
-			calculations.
-		*/
-		Vector4 getAs4DVector(void) const;
-
-        /** Internal method for calculating the 'near clip volume', which is
-            the volume formed between the near clip rectangle of the 
-            camera and the light.
-        @remarks This volume is a pyramid for a point/spot light and
-            a cuboid for a directional light. It can used to detect whether
-            an object could be casting a shadow on the viewport. Note that
-            the reference returned is to a shared volume which will be 
-            reused across calls to this method.
-        */
-        const PlaneBoundedVolume& _getNearClipVolume(const Camera* cam);
-
 
     private:
         /// internal method for synchronising with parent node (if any)
@@ -333,8 +310,6 @@ namespace Ogre {
 
         /// Shared class-level name for Movable type
         static String msMovableType;
-
-        PlaneBoundedVolume mNearClipVolume;
 
 
 

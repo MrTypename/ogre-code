@@ -170,7 +170,7 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        RenderWindow* initialise(bool autoCreateWindow, const String& windowTitle = "OGRE Render Window");
+        RenderWindow* initialise(bool autoCreateWindow);
         /** See
           RenderSystem
          */
@@ -330,11 +330,6 @@ namespace Ogre {
         void _makeProjectionMatrix(Real fovy, Real aspect, Real nearPlane, 
             Real farPlane, Matrix4& dest, bool forGpuProgram = false);
         /** See
-        RenderSystem
-        */
-        void _makeProjectionMatrix(Real left, Real right, Real bottom, Real top,
-            Real nearPlane, Real farPlane, Matrix4& dest, bool forGpuProgram = false);
-        /** See
           RenderSystem
          */
         void _setRasterisationMode(SceneDetailLevel level);
@@ -345,12 +340,30 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void setStencilBufferParams(CompareFunction func = CMPF_ALWAYS_PASS, 
-            ulong refValue = 0, ulong mask = 0xFFFFFFFF, 
-            StencilOperation stencilFailOp = SOP_KEEP, 
-            StencilOperation depthFailOp = SOP_KEEP,
-            StencilOperation passOp = SOP_KEEP, 
-            bool twoSidedOperation = false);
+        void setStencilBufferFunction(CompareFunction func);
+        /** See
+          RenderSystem
+         */
+        void setStencilBufferReferenceValue(ulong refValue);
+        /** See
+          RenderSystem
+         */
+        void setStencilBufferMask(ulong mask);
+        /** See
+          RenderSystem
+         */
+        void setStencilBufferFailOperation(StencilOperation op);
+        /** See
+          RenderSystem
+         */
+        void setStencilBufferDepthFailOperation(StencilOperation op);
+        /** See
+          RenderSystem
+         */
+        void setStencilBufferPassOperation(StencilOperation op);
+        /** See
+          RenderSystem
+         */
         void _setTextureUnitFiltering(size_t unit, FilterType ftype, FilterOptions filter);
         /** See
           RenderSystem
@@ -380,24 +393,7 @@ namespace Ogre {
           RenderSystem
          */
         void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params) { /* do nothing */}
-        /** See
-          RenderSystem
-         */
-        void setScissorTest(bool enabled, size_t left = 0, size_t top = 0, size_t right = 800, size_t bottom = 600)
-        { /* do nothing, d3d7 does not support scissor rect */ }
-        /** See
-        RenderSystem
-        */
-        void clearFrameBuffer(unsigned int buffers, 
-            const ColourValue& colour = ColourValue::Black, 
-            Real depth = 1.0f, unsigned short stencil = 0);
 
-        void setClipPlane (ushort index, Real A, Real B, Real C, Real D);
-        void enableClipPlane (ushort index, bool enable);
-        /** See
-        RenderSystem
-        */
-        HardwareOcclusionQuery* createHardwareOcclusionQuery(void);
         // ----------------------------------
         // End Overridden members
         // ----------------------------------

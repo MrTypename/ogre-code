@@ -31,7 +31,6 @@ OgreDefaultHardwareBufferManager.h \
 OgreDDSCodec.h \
 OgreDynLib.h \
 OgreDynLibManager.h \
-OgreEdgeListBuilder.h \
 OgreEntity.h \
 OgreErrorDialog.h \
 OgreEventDispatcher.h \
@@ -59,7 +58,6 @@ OgreGpuProgramUsage.h \
 OgreHardwareBuffer.h \
 OgreHardwareBufferManager.h \
 OgreHardwareIndexBuffer.h \
-OgreHardwareOcclusionQuery.h \
 OgreHardwareVertexBuffer.h \
 OgreHighLevelGpuProgram.h \
 OgreHighLevelGpuProgramManager.h \
@@ -114,7 +112,6 @@ OgrePass.h \
 OgrePatchMesh.h \
 OgrePatchSurface.h \
 OgrePlane.h \
-OgrePlaneBoundedVolume.h \
 OgrePlatform.h \
 OgrePlatformManager.h \
 OgrePositionTarget.h \
@@ -148,7 +145,6 @@ OgreSceneQuery.h \
 OgreScrollEvent.h \
 OgreScrollTarget.h \
 OgreSerializer.h \
-OgreShadowCaster.h \
 OgreSharedPtr.h \
 OgreSimpleRenderable.h \
 OgreSimpleSpline.h \

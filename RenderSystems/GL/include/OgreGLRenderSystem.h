@@ -30,10 +30,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreRenderSystem.h"
 #include "OgreGLHardwareBufferManager.h"
 #include "OgreGLGpuProgramManager.h"
-#include "OgreVector4.h"
 
 #include "OgreGLSupport.h"
-
 
 namespace Ogre {
     /**
@@ -49,12 +47,6 @@ namespace Ogre {
         // Note that a null value indicates a free slot
         #define MAX_LIGHTS 8
         Light* mLights[MAX_LIGHTS];
-
-        // clip planes
-        typedef std::vector<Vector4> PlaneList;
-        PlaneList mClipPlanes;
-        void setGLClipPlanes() const;
-
 
         // view matrix to set world against
         Matrix4 mViewMatrix;
@@ -88,7 +80,13 @@ namespace Ogre {
 		bool mColourWrite[4];
 
         GLint convertCompareFunction(CompareFunction func);
-        GLint convertStencilOp(StencilOperation op, bool invert = false);
+        GLint convertStencilOp(StencilOperation op);
+
+        // Save stencil settings since GL insists on having them in groups
+        // Means we have to call functions more than once, but what the hey
+        GLint mStencilFunc, mStencilRef;
+        GLuint mStencilMask;
+        GLint mStencilFail, mStencilZFail, mStencilPass;
 
 		// internal method for anisotrophy validation
 		GLfloat _getCurrentAnisotropy(size_t unit);
@@ -142,7 +140,7 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        RenderWindow* initialise(bool autoCreateWindow, const String& windowTitle = "OGRE Render Window");
+        RenderWindow* initialise(bool autoCreateWindow);
         /** See
           RenderSystem
          */
@@ -298,19 +296,6 @@ namespace Ogre {
         void _makeProjectionMatrix(Real fovy, Real aspect, Real nearPlane, Real farPlane, 
             Matrix4& dest, bool forGpuProgram = false);
         /** See
-        RenderSystem
-        */
-        void _makeProjectionMatrix(Real left, Real right, Real bottom, Real top, 
-            Real nearPlane, Real farPlane, Matrix4& dest, bool forGpuProgram = false);
-        /** See
-        RenderSystem
-        */
-        void setClipPlane (ushort index, Real A, Real B, Real C, Real D);
-        /** See
-        RenderSystem
-        */
-        void enableClipPlane (ushort index, bool enable);
-        /** See
           RenderSystem
          */
         void _setRasterisationMode(SceneDetailLevel level);
@@ -318,14 +303,40 @@ namespace Ogre {
           RenderSystem
          */
         void setStencilCheckEnabled(bool enabled);
+        /** See
+          RenderSystem
+         */
+        void setStencilBufferFunction(CompareFunction func);
+        /** See
+          RenderSystem
+         */
+        void setStencilBufferReferenceValue(ulong refValue);
+        /** See
+          RenderSystem
+         */
+        void setStencilBufferMask(ulong mask);
+        /** See
+          RenderSystem
+         */
+        void setStencilBufferFailOperation(StencilOperation op);
+        /** See
+          RenderSystem
+         */
+        void setStencilBufferDepthFailOperation(StencilOperation op);
+        /** See
+          RenderSystem
+         */
+        void setStencilBufferPassOperation(StencilOperation op);
         /** See RenderSystem.
+        @remarks
+            This is overridden because GL likes to set stencil options together, so we can
+            provide a better custom implementation of this than using the superclass.
          */
         void setStencilBufferParams(CompareFunction func = CMPF_ALWAYS_PASS, 
             ulong refValue = 0, ulong mask = 0xFFFFFFFF, 
             StencilOperation stencilFailOp = SOP_KEEP, 
             StencilOperation depthFailOp = SOP_KEEP,
-            StencilOperation passOp = SOP_KEEP, 
-            bool twoSidedOperation = false);
+            StencilOperation passOp = SOP_KEEP);
         /** See
           RenderSystem
          */
@@ -358,14 +369,6 @@ namespace Ogre {
           RenderSystem
          */
         void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params);
-        /** See
-          RenderSystem
-         */
-        void setScissorTest(bool enabled, size_t left = 0, size_t top = 0, size_t right = 800, size_t bottom = 600) ;
-        void clearFrameBuffer(unsigned int buffers, 
-            const ColourValue& colour = ColourValue::Black, 
-            Real depth = 1.0f, unsigned short stencil = 0);
-        HardwareOcclusionQuery* createHardwareOcclusionQuery(void);
 
         // ----------------------------------
         // End Overridden members

@@ -42,8 +42,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreD3D9GpuProgramManager.h"
 #include "OgreD3D9HLSLProgramFactory.h"
 #include "OgreHighLevelGpuProgramManager.h"
-#include "OgreD3D9HardwareOcclusionQuery.h"
-
 
 namespace Ogre 
 {
@@ -414,7 +412,7 @@ namespace Ogre
 		return mOptions;
 	}
 	//---------------------------------------------------------------------
-	RenderWindow* D3D9RenderSystem::initialise( bool autoCreateWindow, const String& windowTitle )
+	RenderWindow* D3D9RenderSystem::initialise( bool autoCreateWindow )
 	{
 		RenderWindow* autoWindow = NULL;
 		LogManager::getSingleton().logMessage( "D3D9 : Subsystem Initialising" );
@@ -467,7 +465,7 @@ namespace Ogre
 			height = videoMode->getHeight();
 			colourDepth = videoMode->getColourDepth();
 
-			autoWindow = this->createRenderWindow( windowTitle, width, height, colourDepth, fullScreen );
+			autoWindow = this->createRenderWindow( "OGRE Render Window", width, height, colourDepth, fullScreen );
 		}
 
         LogManager::getSingleton().logMessage("***************************************");
@@ -609,32 +607,8 @@ namespace Ogre
         // We always support VBOs
         mCapabilities->setCapability(RSC_VBO);
 
-        // Scissor test
-        if (mCaps.RasterCaps & D3DPRASTERCAPS_SCISSORTEST)
-            mCapabilities->setCapability(RSC_SCISSOR_TEST);
-
-        // Two-sided stencil
-        if (mCaps.StencilCaps & D3DSTENCILCAPS_TWOSIDED)
-            mCapabilities->setCapability(RSC_TWO_SIDED_STENCIL);
-
-        // stencil wrap
-        if ((mCaps.StencilCaps & D3DSTENCILCAPS_INCR) && 
-            (mCaps.StencilCaps & D3DSTENCILCAPS_DECR))
-            mCapabilities->setCapability(RSC_STENCIL_WRAP);
-
-        // Check for hardware occlusion support
-        if ( ( mpD3DDevice->CreateQuery(D3DQUERYTYPE_OCCLUSION,  NULL ) ) == D3D_OK )	
-        {
-            mCapabilities->setCapability(RSC_HWOCCLUSION);
-        }
         convertVertexShaderCaps();
         convertPixelShaderCaps();
-
-		// User clip planes
-        if (mCaps.MaxUserClipPlanes > 0)
-		{
-			mCapabilities->setCapability(RSC_USER_CLIP_PLANES);
-		}
 
         mCapabilities->log(LogManager::getSingleton().getDefaultLog());
     }
@@ -1507,68 +1481,53 @@ namespace Ogre
 			Except(hr, "Error enabling / disabling stencilling.",
 			"D3D9RenderSystem::setStencilCheckEnabled");
 	}
-    //---------------------------------------------------------------------
-    void D3D9RenderSystem::setStencilBufferParams(CompareFunction func, ulong refValue, 
-        ulong mask, StencilOperation stencilFailOp, 
-        StencilOperation depthFailOp, StencilOperation passOp, 
-        bool twoSidedOperation)
-    {
-        HRESULT hr;
-
-        // 2-sided operation
-        if (twoSidedOperation)
-        {
-            if (!mCapabilities->hasCapability(RSC_TWO_SIDED_STENCIL))
-                Except(Exception::ERR_INVALIDPARAMS, "2-sided stencils are not supported",
-                    "D3D9RenderSystem::setStencilBufferParams");
-            hr = __SetRenderState(D3DRS_TWOSIDEDSTENCILMODE, TRUE);
-		    if (FAILED(hr))
-			    Except(hr, "Error setting 2-sided stencil mode.",
-			    "D3D9RenderSystem::setStencilBufferParams");
-        }
-        else
-        {
-            hr = __SetRenderState(D3DRS_TWOSIDEDSTENCILMODE, FALSE);
-		    if (FAILED(hr))
-			    Except(hr, "Error setting 1-sided stencil mode.",
-			    "D3D9RenderSystem::setStencilBufferParams");
-        }
-
-        // func
-        hr = __SetRenderState(D3DRS_STENCILFUNC, D3D9Mappings::get(func));
+	//---------------------------------------------------------------------
+	void D3D9RenderSystem::setStencilBufferFunction(CompareFunction func)
+	{
+		HRESULT hr = __SetRenderState(D3DRS_STENCILFUNC, D3D9Mappings::get(func));
 		if (FAILED(hr))
 			Except(hr, "Error setting stencil buffer test function.",
-			"D3D9RenderSystem::setStencilBufferParams");
-
-        // reference value
-        hr = __SetRenderState(D3DRS_STENCILREF, refValue);
+			"D3D9RenderSystem::_setStencilBufferFunction");
+	}
+	//---------------------------------------------------------------------
+	void D3D9RenderSystem::setStencilBufferReferenceValue(ulong refValue)
+	{
+		HRESULT hr = __SetRenderState(D3DRS_STENCILREF, refValue);
 		if (FAILED(hr))
 			Except(hr, "Error setting stencil buffer reference value.",
-			"D3D9RenderSystem::setStencilBufferParams");
-
-        // mask
-        hr = __SetRenderState(D3DRS_STENCILMASK, mask);
+			"D3D9RenderSystem::setStencilBufferReferenceValue");
+	}
+	//---------------------------------------------------------------------
+	void D3D9RenderSystem::setStencilBufferMask(ulong mask)
+	{
+		HRESULT hr = __SetRenderState(D3DRS_STENCILMASK, mask);
 		if (FAILED(hr))
 			Except(hr, "Error setting stencil buffer mask.",
-			"D3D9RenderSystem::setStencilBufferParams");
-
-		// fail op
-        hr = __SetRenderState(D3DRS_STENCILFAIL, D3D9Mappings::get(stencilFailOp));
+			"D3D9RenderSystem::setStencilBufferMask");
+	}
+	//---------------------------------------------------------------------
+	void D3D9RenderSystem::setStencilBufferFailOperation(StencilOperation op)
+	{
+		HRESULT hr = __SetRenderState(D3DRS_STENCILFAIL, D3D9Mappings::get(op));
 		if (FAILED(hr))
 			Except(hr, "Error setting stencil fail operation.",
-			"D3D9RenderSystem::setStencilBufferParams");
-
-        // depth fail op
-        hr = __SetRenderState(D3DRS_STENCILZFAIL, D3D9Mappings::get(depthFailOp));
+			"D3D9RenderSystem::setStencilBufferFailOperation");
+	}
+	//---------------------------------------------------------------------
+	void D3D9RenderSystem::setStencilBufferDepthFailOperation(StencilOperation op)
+	{
+		HRESULT hr = __SetRenderState(D3DRS_STENCILZFAIL, D3D9Mappings::get(op));
 		if (FAILED(hr))
 			Except(hr, "Error setting stencil depth fail operation.",
-			"D3D9RenderSystem::setStencilBufferParams");
-
-        // pass op
-        hr = __SetRenderState(D3DRS_STENCILPASS, D3D9Mappings::get(passOp));
+			"D3D9RenderSystem::setStencilBufferDepthFailOperation");
+	}
+	//---------------------------------------------------------------------
+	void D3D9RenderSystem::setStencilBufferPassOperation(StencilOperation op)
+	{
+		HRESULT hr = __SetRenderState(D3DRS_STENCILPASS, D3D9Mappings::get(op));
 		if (FAILED(hr))
 			Except(hr, "Error setting stencil pass operation.",
-			"D3D9RenderSystem::setStencilBufferParams");
+			"D3D9RenderSystem::setStencilBufferPassOperation");
 	}
 	//---------------------------------------------------------------------
     void D3D9RenderSystem::_setTextureUnitFiltering(size_t unit, FilterType ftype, 
@@ -1706,8 +1665,16 @@ namespace Ogre
 		// Clear the viewport if required
 		if( mActiveViewport->getClearEveryFrame() )
 		{
-            clearFrameBuffer(FBT_COLOUR | FBT_DEPTH, 
-                mActiveViewport->getBackgroundColour());
+			if( FAILED( hr = mpD3DDevice->Clear( 
+				0, 
+				NULL, 
+				D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER,
+				mActiveViewport->getBackgroundColour().getAsLongARGB(), 
+				1.0f, 0 ) ) )
+			{
+				String msg = DXGetErrorDescription9(hr);
+				Except( hr, "Error clearing viewport : " + msg, "D3D9RenderSystem::_beginFrame" );
+			}
 		}
 
 		if( FAILED( hr = mpD3DDevice->BeginScene() ) )
@@ -2111,108 +2078,6 @@ namespace Ogre
             }
             break;
         };
-    }
-	//---------------------------------------------------------------------
-    void D3D9RenderSystem::setScissorTest(bool enabled, size_t left, size_t top, size_t right,
-        size_t bottom)
-    {
-        HRESULT hr;
-        if (enabled)
-        {
-            if (FAILED(hr = __SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE)))
-            {
-                Except(hr, "Unable to enable scissor rendering state; " + getErrorDescription(hr), 
-                    "D3D9RenderSystem::setScissorTest");
-            }
-            RECT rect;
-            rect.left = left;
-            rect.top = top;
-            rect.bottom = bottom;
-            rect.right = right;
-            if (FAILED(hr = mpD3DDevice->SetScissorRect(&rect)))
-            {
-                Except(hr, "Unable to set scissor rectangle; " + getErrorDescription(hr), 
-                    "D3D9RenderSystem::setScissorTest");
-            }
-        }
-        else
-        {
-            if (FAILED(hr = __SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE)))
-            {
-                Except(hr, "Unable to disable scissor rendering state; " + getErrorDescription(hr), 
-                    "D3D9RenderSystem::setScissorTest");
-            }
-        }
-    }
-    //---------------------------------------------------------------------
-    void D3D9RenderSystem::clearFrameBuffer(unsigned int buffers, 
-        const ColourValue& colour, Real depth, unsigned short stencil)
-    {
-        DWORD flags = 0;
-        if (buffers & FBT_COLOUR)
-        {
-            flags |= D3DCLEAR_TARGET;
-        }
-        if (buffers & FBT_DEPTH)
-        {
-            flags |= D3DCLEAR_ZBUFFER;
-        }
-        // Only try to clear the stencil buffer if supported
-        if (buffers & FBT_STENCIL && mCapabilities->hasCapability(RSC_HWSTENCIL))
-        {
-            flags |= D3DCLEAR_STENCIL;
-        }
-        HRESULT hr;
-        if( FAILED( hr = mpD3DDevice->Clear( 
-            0, 
-            NULL, 
-            flags,
-            colour.getAsLongARGB(), 
-            depth, 
-            stencil ) ) )
-        {
-            String msg = DXGetErrorDescription9(hr);
-            Except( hr, "Error clearing frame buffer : " 
-                + msg, "D3D9RenderSystem::clearFrameBuffer" );
-        }
-    }
-    //---------------------------------------------------------------------
-    void D3D9RenderSystem::_makeProjectionMatrix(Real left, Real right, 
-        Real bottom, Real top, Real nearPlane, Real farPlane, Matrix4& dest,
-        bool forGpuProgram)
-    {
-        D3DXMATRIX d3dMatrix;
-        if (forGpuProgram)
-        {
-            D3DXMatrixPerspectiveOffCenterRH(&d3dMatrix, 
-                left, right, bottom, top, nearPlane, farPlane);
-        }
-        else
-        {
-            D3DXMatrixPerspectiveOffCenterRH(&d3dMatrix, 
-                left, right, bottom, top, nearPlane, farPlane);
-        }
-        dest = D3D9Mappings::convertD3DXMatrix(d3dMatrix);
-    }
-
-    // ------------------------------------------------------------------
-    void D3D9RenderSystem::setClipPlane (ushort index, Real A, Real B, Real C, Real D)
-    {
-        float plane[4] = { A, B, C, D };
-        mpD3DDevice->SetClipPlane (index, plane);
-    }
-
-    // ------------------------------------------------------------------
-    void D3D9RenderSystem::enableClipPlane (ushort index, bool enable)
-    {
-        DWORD prev;
-        mpD3DDevice->GetRenderState(D3DRS_CLIPPLANEENABLE, &prev);
-        __SetRenderState(D3DRS_CLIPPLANEENABLE, prev | (1 << index));
-    }
-    //---------------------------------------------------------------------
-    HardwareOcclusionQuery* D3D9RenderSystem::createHardwareOcclusionQuery(void)
-    {
-        return new D3D9HardwareOcclusionQuery(mpD3DDevice); 
     }
 
 }

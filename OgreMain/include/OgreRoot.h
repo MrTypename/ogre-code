@@ -71,8 +71,7 @@ namespace Ogre
         RenderSystemList mRenderers;
         RenderSystem* mActiveRenderer;
         String mVersion;
-		String mConfigFileName;
-	    bool mQueuedEnd;
+				String mConfigFileName;
 
         // Singletons
         LogManager* mLogManager;
@@ -246,7 +245,7 @@ namespace Ogre
                 A pointer to the automatically created window, if
                 requested, otherwise <b>NULL</b>.
         */
-	    RenderWindow* initialise(bool autoCreateWindow, const String& windowTitle = "OGRE Render Window");
+	    RenderWindow* initialise(bool autoCreateWindow);
 
         /** Gets a reference to a SceneManager object.
             @remarks
@@ -329,16 +328,6 @@ namespace Ogre
         */
         void removeFrameListener(FrameListener* oldListener);
 
-        /** Queues the end of rendering.
-            @remarks
-                This method will do nothing unless startRendering() has
-                been called, in which case before the next frame is rendered
-                the rendering loop will bail out.
-            @see
-                Root, Root::startRendering
-        */
-        void queueEndRendering(void);
-
         /** Starts / restarts the automatic rendering cycle.
             @remarks
                 This method begins the automatic rendering of the scene. It
@@ -366,12 +355,6 @@ namespace Ogre
         */
         void startRendering(void);
 
-        /** Render one frame. 
-        @remarks
-            Updates all the render targets automatically and then returns,
-            raising frame events before and after.
-        */
-        bool renderOneFrame(void);
         /** Shuts down the system manually.
             @remarks
                 This is normally done by Ogre automatically so don't think

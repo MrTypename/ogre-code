@@ -114,9 +114,7 @@ namespace Ogre {
 
         // Init
         mActiveRenderer = 0;
-        mVersion = StringConverter::toString(OGRE_VERSION_MAJOR) + "." + 
-            StringConverter::toString(OGRE_VERSION_MINOR) + "." + 
-            StringConverter::toString(OGRE_VERSION_PATCH);
+        mVersion = "0.13.0";
 		mConfigFileName = configFileName;
 
         // Create log manager and default log file
@@ -429,7 +427,7 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    RenderWindow* Root::initialise(bool autoCreateWindow, const String& windowTitle)
+    RenderWindow* Root::initialise(bool autoCreateWindow)
     {
         if (!mActiveRenderer)
             Except(Exception::ERR_NO_RENDERSYSTEM_SELECTED,
@@ -438,7 +436,7 @@ namespace Ogre {
 
         mControllerManager = new ControllerManager();
 
-        mAutoWindow =  mActiveRenderer->initialise(autoCreateWindow, windowTitle);
+        mAutoWindow =  mActiveRenderer->initialise(autoCreateWindow);
 
         if (autoCreateWindow)
         {
@@ -569,11 +567,6 @@ namespace Ogre {
         return Real(times.back() - times.front()) / ((times.size()-1) * 1000);
     }
     //-----------------------------------------------------------------------
-    void Root::queueEndRendering(void)
-    {
-	    mQueuedEnd = true;
-    }	
-    //-----------------------------------------------------------------------
     void Root::startRendering(void)
     {
         assert(mActiveRenderer != 0);
@@ -585,9 +578,7 @@ namespace Ogre {
             mEventTimes[i].clear();
 
         // Infinite loop, until broken out of by frame listeners
-		// or break out by calling queueEndRendering()
-		mQueuedEnd = false;
-		while( !mQueuedEnd )
+		while( true )
 		{
 #if OGRE_PLATFORM == PLATFORM_WIN32
             // Pump events on Win32
@@ -599,21 +590,16 @@ namespace Ogre {
 			}
 #endif
 
-            if (!renderOneFrame())
-                break;
+			if(!_fireFrameStarted())
+				break;
+
+            mActiveRenderer->_updateAllRenderTargets();
+
+			if(!_fireFrameEnded())
+				break;
 		}
 
 
-    }
-    //-----------------------------------------------------------------------
-    bool Root::renderOneFrame(void)
-    {
-        if(!_fireFrameStarted())
-            return false;
-
-        mActiveRenderer->_updateAllRenderTargets();
-
-        return _fireFrameEnded();
     }
     //-----------------------------------------------------------------------
     void Root::shutdown(void)
