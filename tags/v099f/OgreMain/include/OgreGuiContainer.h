@@ -1,0 +1,102 @@
+/*
+-----------------------------------------------------------------------------
+This source file is part of OGRE
+    (Object-oriented Graphics Rendering Engine)
+For the latest info, see http://ogre.sourceforge.net/
+
+Copyright © 2000-2002 The OGRE Team
+Also see acknowledgements in Readme.html
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+-----------------------------------------------------------------------------
+*/
+
+#ifndef __GuiContainer_H__
+#define __GuiContainer_H__
+
+#include "OgrePrerequisites.h"
+#include "OgreGuiElement.h"
+#include "OgreIteratorWrappers.h"
+
+namespace Ogre {
+
+
+    /** A 2D element which contains other GuiElement instances.
+    @remarks
+        This is a specialisation of GuiElement for 2D elements that contain other
+        elements. These are also the smallest elements that can be attached directly
+        to an Overlay.
+    @remarks
+        GuiContainers should be managed using GuiManager. This class is responsible for
+        instantiating / deleting elements, and also for accepting new types of element
+        from plugins etc.
+    */
+    class _OgreExport GuiContainer : public GuiElement
+    {
+    public:
+        typedef std::map<String, GuiElement*> ChildMap;
+        typedef MapIterator<ChildMap> ChildIterator;
+        typedef std::map<String, GuiContainer*> ChildContainerMap;
+        typedef MapIterator<ChildContainerMap> ChildContainerIterator;
+    protected:
+        // Map of all children
+        ChildMap mChildren;
+        // Map of container children (subset of mChildren)
+        ChildContainerMap mChildContainers;
+        
+    public:
+        /// Constructor: do not call direct, use GuiManager::createElement
+        GuiContainer(const String& name);
+        virtual ~GuiContainer();
+
+        /** Adds another GuiElement to this container. */
+        virtual void addChild(GuiElement* elem);
+        /** Add a nested container to this container. */
+        virtual void addChild(GuiContainer* cont);
+        /** Removes a named element from this container. */
+        virtual void removeChild(const String& name);
+        /** Gets the named child of this container. */
+        virtual GuiElement* getChild(const String& name);
+
+        /** Gets an object for iterating over all the children of this object. */
+        virtual ChildIterator getChildIterator(void);
+
+        /** Gets an iterator for just the container children of this object.
+        @remarks
+            Good for cascading updates without having to use RTTI
+        */
+        virtual ChildContainerIterator getChildContainerIterator(void);
+
+        /** Overridden from GuiElement. */
+        virtual void _update(void);
+
+        /** Overridden from GuiElement. */
+        virtual void _notifyZOrder(ushort newZOrder);
+
+        /** Overridden from GuiElement. */
+        virtual void _updateRenderQueue(RenderQueue* queue);
+
+
+
+
+    };
+
+
+
+}
+
+
+#endif
+
