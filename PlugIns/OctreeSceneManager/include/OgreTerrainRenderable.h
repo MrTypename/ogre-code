@@ -103,7 +103,7 @@ namespace Ogre
             lodMorphStart = 0.5;
             useTriStrips = false;
             primaryCamera = 0;
-            terrainMaterial.setNull();
+            terrainMaterial = 0;
         };
         /// The size of one edge of a terrain page, in vertices
         size_t pageSize;
@@ -133,7 +133,7 @@ namespace Ogre
         /// Whether vertex colours are enabled
         bool coloured;
         /// Pointer to the material to use to render the terrain
-        MaterialPtr terrainMaterial;
+        Material *terrainMaterial;
 
     };
 
@@ -213,7 +213,7 @@ namespace Ogre
         */
         virtual void getRenderOperation( RenderOperation& rend );
 
-        virtual const MaterialPtr& getMaterial( void ) const
+        virtual Material* getMaterial( void ) const
         {
             return mMaterial;
         };
@@ -261,7 +261,7 @@ namespace Ogre
         }
 
 
-        void setMaterial(const MaterialPtr& m )
+        void setMaterial( Material *m )
         {
             mMaterial = m;
         };
@@ -368,7 +368,7 @@ namespace Ogre
         /// The MovableObject type
         static String mType;
         /// Current material used by this tile
-        MaterialPtr mMaterial;    
+        Material *mMaterial;    
         /// Whether this tile has been initialised    
         bool mInit;
         /// Shared array of IndexData (reuse indexes across tiles)

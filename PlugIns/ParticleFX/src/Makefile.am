@@ -1,8 +1,8 @@
-INCLUDES = $(STLPORT_CFLAGS) -I$(top_srcdir)/PlugIns/ParticleFX/include -I$(top_srcdir)/OgreMain/include -DPLUGIN_ParticleFX_EXPORTS
+INCLUDES = $(STLPORT_CFLAGS) -I$(top_srcdir)/PlugIns/ParticleFX/include -I$(top_srcdir)/OgreMain/include
 
-pkglib_LTLIBRARIES = Plugin_ParticleFX.la
+pkglib_PROGRAMS = Plugin_ParticleFX.so
 
-Plugin_ParticleFX_la_SOURCES = OgreAreaEmitter.cpp \
+Plugin_ParticleFX_so_SOURCES = OgreAreaEmitter.cpp \
                         OgreBoxEmitter.cpp \
                         OgreColourFaderAffector.cpp \
                         OgreColourFaderAffector2.cpp \
@@ -18,5 +18,5 @@ Plugin_ParticleFX_la_SOURCES = OgreAreaEmitter.cpp \
 						OgreRotationAffector.cpp \
 						OgreScaleAffector.cpp 
 
-Plugin_ParticleFX_la_LDFLAGS = -module $(PLUGIN_FLAGS) -L$(top_builddir)/OgreMain/src
-Plugin_ParticleFX_la_LIBADD = -lOgreMain
+Plugin_ParticleFX_so_LDFLAGS = $(SHARED_FLAGS) -L$(top_srcdir)/OgreMain/src
+Plugin_ParticleFX_so_LDADD = -lOgreMain

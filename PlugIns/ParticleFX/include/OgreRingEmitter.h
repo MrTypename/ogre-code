@@ -59,7 +59,7 @@ namespace Ogre {
             void doSet(void* target, const String& val);
         };
 
-        RingEmitter(ParticleSystem* psys);
+        RingEmitter();
 
         /** See ParticleEmitter. */
         void _initParticle(Particle* pParticle);

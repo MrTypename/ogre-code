@@ -50,7 +50,7 @@ namespace Ogre {
         };
 
         /** Default constructor. */
-        ScaleAffector(ParticleSystem* psys);
+        ScaleAffector();
 
         /** See ParticleAffector. */
         void _affectParticles(ParticleSystem* pSystem, Real timeElapsed);

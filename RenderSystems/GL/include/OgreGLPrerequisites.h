@@ -210,12 +210,7 @@ extern GL_GetOcclusionQueryuivNV_Func glGetOcclusionQueryuivNV_ptr;
 
 };
 
-extern PFNGLCOMPRESSEDTEXIMAGE1DARBPROC glCompressedTexImage1DARB_ptr;
 extern PFNGLCOMPRESSEDTEXIMAGE2DARBPROC glCompressedTexImage2DARB_ptr;
-extern PFNGLCOMPRESSEDTEXIMAGE3DARBPROC glCompressedTexImage3DARB_ptr;
-extern PFNGLCOMPRESSEDTEXSUBIMAGE1DARBPROC glCompressedTexSubImage1DARB_ptr;
-extern PFNGLCOMPRESSEDTEXSUBIMAGE2DARBPROC glCompressedTexSubImage2DARB_ptr;
-extern PFNGLCOMPRESSEDTEXSUBIMAGE3DARBPROC glCompressedTexSubImage3DARB_ptr;
 
 namespace Ogre {
     // Forward declarations
@@ -224,8 +219,41 @@ namespace Ogre {
     class GLTexture;
     class GLTextureManager;
     class GLGpuProgram;
-    class GLContext;
+
 }
 
+
+#ifdef  OGRE_DEBUG_MODE
+
+#ifndef GL_ERROR_EXCEPT
+
+#define OGRE_GL_GETERROR(ERROR_MSG) {const GLubyte *errString; \
+    GLenum errCode = glGetError(); \
+    if (errCode != GL_NO_ERROR) {  \
+    errString = gluErrorString (errCode);  \
+    LogManager::getSingleton().logMessage  ("[GL] :" + ERROR_MSG +  \
+    " : " + Ogre::String( (const char*) errString)); \
+        } \
+    }
+
+#else //GL_ERROR_EXCEPT
+
+#define OGRE_GL_GETERROR(ERROR_MSG) {const GLubyte *errString; \
+    GLenum errCode = glGetError(); \
+    if (errCode != GL_NO_ERROR) {  \
+    errString = gluErrorString (errCode);  \
+    Except (Exception::ERR_INTERNAL_ERROR,  \
+    ERROR_MSG +  \
+    " : " + Ogre::String( (const char*) errString), String("")); \
+        } \
+    }
+
+#endif //GL_ERROR_EXCEPT
+
+#else //OGRE_DEBUG_MODE
+
+#define OGRE_GL_GETERROR()
+
+#endif //OGRE_DEBUG_MODE
 
 #endif

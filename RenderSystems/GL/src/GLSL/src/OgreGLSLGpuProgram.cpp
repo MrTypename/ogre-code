@@ -35,13 +35,8 @@ namespace Ogre {
 	GLuint GLSLGpuProgram::mFragmentShaderCount = 0;
 
     //-----------------------------------------------------------------------------
-	GLSLGpuProgram::GLSLGpuProgram(GLSLProgram* parent) : 
-        GLGpuProgram(parent->getCreator(), parent->getName(), parent->getHandle(), 
-            parent->getGroup(), false, 0), mGLSLProgram(parent)
+	GLSLGpuProgram::GLSLGpuProgram(GLSLProgram* parent) : GLGpuProgram(parent->getName(), parent->getType(), "glsl"), mGLSLProgram(parent)
     {
-        mType = parent->getType();
-        mSyntaxCode = "glsl";
-
 		if (parent->getType() == GPT_VERTEX_PROGRAM)
 		{
 			mProgramID = ++mVertexShaderCount;
@@ -55,13 +50,7 @@ namespace Ogre {
 		mLoadFromFile = false;
 
     }
-    //-----------------------------------------------------------------------
-    GLSLGpuProgram::~GLSLGpuProgram()
-    {
-        // have to call this here reather than in Resource destructor
-        // since calling virtual methods in base destructors causes crash
-        unload(); 
-    }
+
 	//-----------------------------------------------------------------------------
     void GLSLGpuProgram::load(void)
     {

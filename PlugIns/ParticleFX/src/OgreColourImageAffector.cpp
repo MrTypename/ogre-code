@@ -27,7 +27,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreStringConverter.h"
 #include "OgreParticle.h"
 #include "OgreException.h"
-#include "OgreResourceGroupManager.h"
+
 
 namespace Ogre {
     
@@ -35,8 +35,7 @@ namespace Ogre {
 	ColourImageAffector::CmdImageAdjust		ColourImageAffector::msImageCmd;
 
     //-----------------------------------------------------------------------
-    ColourImageAffector::ColourImageAffector(ParticleSystem* psys)
-        :ParticleAffector(psys)
+    ColourImageAffector::ColourImageAffector()
     {
         mType = "ColourImage";
 
@@ -54,10 +53,10 @@ namespace Ogre {
 		const uchar*		data			= mColourImage.getData();
 		const Real			div_255			= 1.0f / 255.f;
 		
-		pParticle->colour.r = data[0] * div_255;
-		pParticle->colour.g = data[1] * div_255;
-		pParticle->colour.b = data[2] * div_255;
-		pParticle->colour.a = data[3] * div_255;
+		pParticle->mColour.r = data[0] * div_255;
+		pParticle->mColour.g = data[1] * div_255;
+		pParticle->mColour.b = data[2] * div_255;
+		pParticle->mColour.a = data[3] * div_255;
     
 	}
     //-----------------------------------------------------------------------
@@ -66,16 +65,15 @@ namespace Ogre {
         Particle*			p;
 		ParticleIterator	pi				= pSystem->_getIterator();
 
-		int				   width			= mColourImage.getWidth()  - 1;
-		int				   height			= mColourImage.getHeight() - 1;
+		Real				width			= mColourImage.getWidth()  - 1;
+		Real				height			= mColourImage.getHeight() - 1;
 		const uchar*		data			= mColourImage.getData();
-        const Real      div_255         = 1.0f / 255.f;
-        
+
 		while (!pi.end())
 		{
 			p = pi.getNext();
-			const Real		life_time		= p->totalTimeToLive;
-			Real			particle_time	= 1.0f - (p->timeToLive / life_time); 
+			const Real		life_time		= p->mTotalTimeToLive;
+			Real			particle_time	= 1.0f - (p->mTimeToLive / life_time); 
 
 			if (particle_time > 1.0f)
 				particle_time = 1.0f;
@@ -84,29 +82,25 @@ namespace Ogre {
 
 			const Real		float_index		= particle_time * width;
 			const int		index			= (int)float_index;
-
-            if(index < 0)
-            {
-				p->colour = mColourImage.getColourAt(0, 0, 0);
-            }
-            else if(index >= width) 
-            {
-                p->colour = mColourImage.getColourAt(width, 0, 0);
-            }
-            else
-            {
-                // Linear interpolation
+			const int		position		= index * 4;
+			const Real		div_255			= 1.0f / 255.f;
+				
+			if (index <= 0 || index >= width)
+			{
+				p->mColour.r = (data[position + 0] * div_255);
+				p->mColour.g = (data[position + 1] * div_255);
+				p->mColour.b = (data[position + 2] * div_255);
+				p->mColour.a = (data[position + 3] * div_255);
+			} else
+			{
 				const Real		fract		= float_index - (Real)index;
-				const Real		to_colour	= fract;
-				const Real		from_colour	= 1.0f - to_colour;
-             
-                ColourValue from=mColourImage.getColourAt(index, 0, 0),
-							to=mColourImage.getColourAt(index+1, 0, 0);
+				const Real		to_color	= fract * div_255;
+				const Real		from_color	= (div_255 - to_color);
 
-				p->colour.r = from.r*from_colour + to.r*to_colour;
-                p->colour.g = from.g*from_colour + to.g*to_colour;
-                p->colour.b = from.b*from_colour + to.b*to_colour;
-                p->colour.a = from.a*from_colour + to.a*to_colour;
+				p->mColour.r = (data[position + 0] * from_color) + (data[position + 4] * to_color);
+				p->mColour.g = (data[position + 1] * from_color) + (data[position + 5] * to_color);
+				p->mColour.b = (data[position + 2] * from_color) + (data[position + 6] * to_color);
+				p->mColour.a = (data[position + 3] * from_color) + (data[position + 7] * to_color);
 			}
 		}
     }
@@ -115,16 +109,15 @@ namespace Ogre {
     void ColourImageAffector::setImageAdjust(String name)
     {
 		mColourImageName = name;
-        mColourImage.load(name, mParent->getResourceGroupName());
+		mColourImage.load(name);
 
 		PixelFormat	format = mColourImage.getFormat();
 
-		if ( !PixelUtil::isAccessible(format) )
+		if ( format != PF_A8R8G8B8 )
 		{
-			Except( Exception::ERR_INVALIDPARAMS, "Error: Image is not accessible (rgba) image.",
+			Except( Exception::ERR_INVALIDPARAMS, "Error: Image is not a rgba image.",
 					"ColourImageAffector::setImageAdjust" );
 		}
-
 	}
     //-----------------------------------------------------------------------
     String ColourImageAffector::getImageAdjust(void) const

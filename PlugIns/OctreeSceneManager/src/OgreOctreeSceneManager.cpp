@@ -380,12 +380,12 @@ void OctreeSceneManager::destroySceneNode( const String &name )
     SceneManager::destroySceneNode( name );
 }
 
-bool OctreeSceneManager::getOptionValues( const String & key, StringVector  &refValueList )
+bool OctreeSceneManager::getOptionValues( const String & key, std::list < SDDataChunk > &refValueList )
 {
     return SceneManager::getOptionValues( key, refValueList );
 }
 
-bool OctreeSceneManager::getOptionKeys( StringVector & refKeys )
+bool OctreeSceneManager::getOptionKeys( std::list < String > & refKeys )
 {
     SceneManager::getOptionKeys( refKeys );
     refKeys.push_back( "CullCamera" );

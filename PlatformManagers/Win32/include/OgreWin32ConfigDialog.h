@@ -37,7 +37,6 @@ namespace Ogre {
     {
     public:
         Win32ConfigDialog(HINSTANCE hInst);
-        
         /** Overridden: see CConfigDialog.
          */
         bool display(void);

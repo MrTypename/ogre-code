@@ -108,11 +108,11 @@ private:
 	SceneNode *objectNode ;
 
 	// mesh-specific data
-	MeshPtr originalMesh ;
-	MeshPtr clonedMesh ;
+	Mesh *originalMesh ;
+	Mesh *clonedMesh ;
 
 	Entity *objectEntity ;
-	std::vector<MaterialPtr> clonedMaterials ;
+	std::vector<Material*> clonedMaterials ;
 
 	// configuration
 	Real displacement ;
@@ -125,7 +125,7 @@ private:
 	LayerBlendOperationEx currentLBX ;
 	size_t currentCubeMapIndex ;
 	StringVector availableCubeMaps ;
-	MaterialPtr material ;
+	Material *material ;
 	
 	void _updatePositionNoise(int numVertices, Real *dstVertices,
 		Real *defaultVertices)
@@ -276,7 +276,8 @@ private:
 	{
 		// delete cloned materials 
 		for(unsigned int m=0;m<clonedMaterials.size();m++) {
-			MaterialManager::getSingleton().remove(clonedMaterials[m]->getHandle()) ;
+			MaterialManager::getSingleton().unload(clonedMaterials[m]) ;
+			delete clonedMaterials[m];
 		}
 		clonedMaterials.clear();
 		
@@ -285,7 +286,8 @@ private:
 		mSceneMgr->removeEntity(ENTITY_NAME);
 		
 		// destroy mesh as well, to reset its geometry
-		MeshManager::getSingleton().remove(clonedMesh->getHandle());
+		MeshManager::getSingleton().unload(clonedMesh);
+		delete clonedMesh;
 		
 		objectEntity = 0 ;
 	}
@@ -371,8 +373,7 @@ private:
 	{
 		// we create new Mesh based on the original one, but changing
 		// HBU flags (inside _prepareVertexData)
-		clonedMesh = MeshManager::getSingleton().createManual(MESH_NAME, 
-            ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+		clonedMesh = MeshManager::getSingleton().createManual(MESH_NAME);
 		clonedMesh->_setBounds(originalMesh->getBounds()); 
 		clonedMesh->_setBoundingSphereRadius(originalMesh->getBoundingSphereRadius());
 		//~ if (originalMesh->sharedVertexData)
@@ -403,14 +404,13 @@ private:
 		
 		// load mesh if necessary - note, I assume this is the only point
 		// Mesh can get loaded, since I want to make sure about its HBU etc.
-		originalMesh = MeshManager::getSingleton().getByName(meshName);
-		if (originalMesh.isNull()) {
+		originalMesh = (Mesh*) MeshManager::getSingleton().getByName(meshName);
+		if (!originalMesh) {
 			originalMesh = MeshManager::getSingleton().load(meshName,
-                ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
 				HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
 				HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
 				true, true); //so we can still read it
-			if (originalMesh.isNull()) {
+			if (!originalMesh) {
 				Except(Exception::ERR_ITEM_NOT_FOUND,
 					"Can't find a mesh: '"+meshName+"'",
 					"CubeMapListener::prepareEntity");
@@ -432,11 +432,11 @@ private:
 			// check if this submesh has material set
 			if (subMesh->isMatInitialised()) {
 				const String& matName = subMesh->getMaterialName();
-				MaterialPtr subMat = 
-                    MaterialManager::getSingleton().getByName(matName);
-				if (!subMat.isNull()) { // clone material, add layers from global material
+				Material *subMat = (Material*) MaterialManager::getSingleton().
+					getByName(matName);
+				if (subMat) { // clone material, add layers from global material
 					subMat->load();
-					MaterialPtr cloned = subMat->clone(
+					Material *cloned = subMat->clone(
 						"CubeMapTempMaterial#"+StringConverter::toString(m));
                     Pass* clonedPass = cloned->getTechnique(0)->getPass(0);
 					// can't help it - have to do it :)
@@ -469,17 +469,17 @@ private:
 	
 	void updateInfoDisplacement()
 	{
-		OverlayManager::getSingleton().getOverlayElement("Example/CubeMapping/Displacement")
+		GuiManager::getSingleton().getGuiElement("Example/CubeMapping/Displacement")
 			->setCaption("[1/2] Displacement: "+StringConverter::toString(displacement));		
 	}
 	void updateInfoDensity()
 	{
-		OverlayManager::getSingleton().getOverlayElement("Example/CubeMapping/Density")
+		GuiManager::getSingleton().getGuiElement("Example/CubeMapping/Density")
 			->setCaption("[3/4] Noise density: "+StringConverter::toString(density));		
 	}
 	void updateInfoTimeDensity()
 	{
-		OverlayManager::getSingleton().getOverlayElement("Example/CubeMapping/TimeDensity")
+		GuiManager::getSingleton().getGuiElement("Example/CubeMapping/TimeDensity")
 			->setCaption("[5/6] Time density: "+StringConverter::toString(timeDensity));
 	}
 	void setObject()
@@ -488,12 +488,12 @@ private:
 		const String& meshName = availableMeshes[currentMeshIndex];
 		printf("Switching to object: %s\n", meshName.c_str());
 		prepareEntity(meshName);
-		OverlayManager::getSingleton().getOverlayElement("Example/CubeMapping/Object")
+		GuiManager::getSingleton().getGuiElement("Example/CubeMapping/Object")
 			->setCaption("[O] Object: "+meshName);
 	}
 	void setNoiseOn()
 	{
-		OverlayManager::getSingleton().getOverlayElement("Example/CubeMapping/Noise")
+		GuiManager::getSingleton().getGuiElement("Example/CubeMapping/Noise")
 			->setCaption(String("[N] Noise: ")+ ((noiseOn)?"on":"off") );		
 	}
 	void setMaterialBlending()
@@ -513,7 +513,7 @@ private:
 #undef _LAZYERU_		
 		// reset entities, materials and so on
 		prepareEntity(availableMeshes[currentMeshIndex]);
-		OverlayManager::getSingleton().getOverlayElement("Example/CubeMapping/Material")
+		GuiManager::getSingleton().getGuiElement("Example/CubeMapping/Material")
 			->setCaption("[M] Material blend:"+lbxName);
 	}
 	void setCubeMap()
@@ -525,26 +525,32 @@ private:
 		for(i=0;i<(int)pass->getTextureUnitState(0)->getNumFrames();i++) {
 			String oldTexName = pass->getTextureUnitState(0)->
 				getFrameTextureName(i);
-			TexturePtr oldTex = TextureManager::getSingleton().getByName(oldTexName);
-			TextureManager::getSingleton().remove(oldTexName);
+			Texture *oldTex = (Texture*) 
+				TextureManager::getSingleton().getByName(oldTexName);
+			TextureManager::getSingleton().unload(oldTexName);
+			//~ oldTex->unload();
+			delete oldTex ;
 		}
 		pass->getTextureUnitState(0)->setCubicTextureName(cubeMapName, true);
 		
-		MaterialPtr mat2 = 
+		Material *mat2 = (Material*) 
 			MaterialManager::getSingleton().getByName(SKYBOX_MATERIAL);
         Pass* pass2 = mat2->getTechnique(0)->getPass(0);
 		for(i=0;i<(int)pass2->getTextureUnitState(0)->getNumFrames();i++) {
 			String oldTexName = pass2->getTextureUnitState(0)->
 				getFrameTextureName(i);
-			TexturePtr oldTex = TextureManager::getSingleton().getByName(oldTexName);
-			TextureManager::getSingleton().remove(oldTexName);
+			Texture *oldTex = (Texture*) 
+				TextureManager::getSingleton().getByName(oldTexName);
+			TextureManager::getSingleton().unload(oldTexName);
+			//~ oldTex->unload();
+			delete oldTex ;
 		}
 		pass2->getTextureUnitState(0)->setCubicTextureName(cubeMapName, false);
 
 		mSceneMgr->setSkyBox(true, SKYBOX_MATERIAL );
 
 		prepareEntity(availableMeshes[currentMeshIndex]);
-		OverlayManager::getSingleton().getOverlayElement("Example/CubeMapping/CubeMap")
+		GuiManager::getSingleton().getGuiElement("Example/CubeMapping/CubeMap")
 			->setCaption("[C] CubeMap:"+cubeMapName);
 	}
 	
@@ -585,9 +591,10 @@ public:
 		timeDensity = 5.0f;
 		objectEntity = 0 ;
 		
-		material = MaterialManager::getSingleton().getByName(MATERIAL_NAME);
+		material = (Material*) MaterialManager::getSingleton().
+			getByName(MATERIAL_NAME);
 
-		if (material.isNull()) {
+		if (!material) {
 			Except( Exception::ERR_ITEM_NOT_FOUND,
 				"Can't find material: "+String(MATERIAL_NAME),
 				"CubeMapListener::CubeMapListener");
@@ -705,7 +712,7 @@ protected:
         objectNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 
 		// show overlay
-		Overlay* overlay = OverlayManager::getSingleton().getByName("Example/CubeMappingOverlay");    
+		Overlay *overlay = (Overlay*)OverlayManager::getSingleton().getByName("Example/CubeMappingOverlay");    
 		overlay->show();
 	}
 

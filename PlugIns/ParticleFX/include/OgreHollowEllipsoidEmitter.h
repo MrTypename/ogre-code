@@ -65,7 +65,7 @@ namespace Ogre {
         };
         // See AreaEmitter
 
-        HollowEllipsoidEmitter(ParticleSystem* psys);
+        HollowEllipsoidEmitter();
 
         /** See ParticleEmitter. */
         void _initParticle(Particle* pParticle);

@@ -29,6 +29,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreMeshSerializer.h"
 #include "OgreXMLSkeletonSerializer.h"
 #include "OgreSkeletonSerializer.h"
+#include "OgreDataChunk.h"
 #include "OgreXMLPrerequisites.h"
 #include "OgreDefaultHardwareBufferManager.h"
 #include <iostream>
@@ -252,23 +253,31 @@ XMLMeshSerializer* xmlMeshSerializer;
 SkeletonSerializer* skeletonSerializer;
 XMLSkeletonSerializer* xmlSkeletonSerializer;
 DefaultHardwareBufferManager *bufferManager;
-MeshManager* meshMgr;
-ResourceGroupManager* rgm;
 
 
 void meshToXML(XmlOptions opts)
 {
-    std::ifstream ifs;
-    ifs.open(opts.source.c_str(), std::ios_base::in | std::ios_base::binary);
-    DataStreamPtr stream(new FileStreamDataStream(opts.source, &ifs));
+    struct stat tagStat;
 
-    MeshPtr mesh = MeshManager::getSingleton().create("conversion", 
-        ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+    SDDataChunk chunk;
+    FILE* pFile = fopen( opts.source.c_str(), "rb" );
+    if (!pFile)
+    {
+        cout << "Unable to open file " << opts.source << " - fatal error." << endl;
+        exit (1);
+    }
+    stat( opts.source.c_str(), &tagStat );
+    chunk.allocate( tagStat.st_size );
+    fread( (void*)chunk.getPtr(), tagStat.st_size, 1, pFile );
+    fclose( pFile );
+
+    Mesh mesh("conversion");
     
+    MeshManager meshManager;
 
-    meshSerializer->importMesh(stream, mesh.getPointer());
+    meshSerializer->importMesh(chunk, &mesh);
    
-    xmlMeshSerializer->exportMesh(mesh.getPointer(), opts.dest);
+    xmlMeshSerializer->exportMesh(&mesh, opts.dest);
 
 }
 
@@ -287,32 +296,31 @@ void XMLToBinary(XmlOptions opts)
     if (!stricmp(root->Value(), "mesh"))
     {
         delete doc;
-        MeshPtr newMesh = MeshManager::getSingleton().createManual("conversion", 
-            ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-        xmlMeshSerializer->importMesh(opts.source, newMesh.getPointer());
+        Mesh newMesh("conversion");
+        xmlMeshSerializer->importMesh(opts.source, &newMesh);
 
         // Re-jig the buffers?
         if (opts.reorganiseBuffers)
         {
             logMgr->logMessage("Reorganising vertex buffers to automatic layout..");
             // Shared geometry
-            if (newMesh->sharedVertexData)
+            if (newMesh.sharedVertexData)
             {
                 // Automatic
                 VertexDeclaration* newDcl = 
-                    newMesh->sharedVertexData->vertexDeclaration->getAutoOrganisedDeclaration(
-                        newMesh->hasSkeleton());
-                if (*newDcl != *(newMesh->sharedVertexData->vertexDeclaration))
+                    newMesh.sharedVertexData->vertexDeclaration->getAutoOrganisedDeclaration(
+                        newMesh.hasSkeleton());
+                if (*newDcl != *(newMesh.sharedVertexData->vertexDeclaration))
                 {
                     // Usages don't matter here since we're onlly exporting
                     BufferUsageList bufferUsages;
                     for (size_t u = 0; u <= newDcl->getMaxSource(); ++u)
                         bufferUsages.push_back(HardwareBuffer::HBU_STATIC_WRITE_ONLY);
-                    newMesh->sharedVertexData->reorganiseBuffers(newDcl, bufferUsages);
+                    newMesh.sharedVertexData->reorganiseBuffers(newDcl, bufferUsages);
                 }
             }
             // Dedicated geometry
-            Mesh::SubMeshIterator smIt = newMesh->getSubMeshIterator();
+            Mesh::SubMeshIterator smIt = newMesh.getSubMeshIterator();
             unsigned short idx = 0;
             while (smIt.hasMoreElements())
             {
@@ -322,7 +330,7 @@ void XMLToBinary(XmlOptions opts)
                     // Automatic
                     VertexDeclaration* newDcl = 
                         sm->vertexData->vertexDeclaration->getAutoOrganisedDeclaration(
-                            newMesh->hasSkeleton());
+                            newMesh.hasSkeleton());
                     if (*newDcl != *(sm->vertexData->vertexDeclaration))
                     {
                         // Usages don't matter here since we're onlly exporting
@@ -353,7 +361,7 @@ void XMLToBinary(XmlOptions opts)
         }
         else if(opts.numLods == 0) // otherwise only ask if not specified on command line
         {
-            if (newMesh->getNumLodLevels() > 1)
+            if (newMesh.getNumLodLevels() > 1)
             {
                 std::cout << "\nXML already contains level-of detail information.\n"
                     "Do you want to: (u)se it, (r)eplace it, or (d)rop it?";
@@ -367,7 +375,7 @@ void XMLToBinary(XmlOptions opts)
                     }
                     else if (response == "d")
                     {
-                        newMesh->removeLodLevels();
+                        newMesh.removeLodLevels();
                     }
                     else if (response == "r")
                     {
@@ -467,7 +475,7 @@ void XMLToBinary(XmlOptions opts)
 
             }
 
-            newMesh->generateLodLevels(distanceList, quota, reduction);
+            newMesh.generateLodLevels(distanceList, quota, reduction);
         }
 
         if (opts.interactiveMode)
@@ -515,13 +523,13 @@ void XMLToBinary(XmlOptions opts)
         if (opts.generateEdgeLists)
         {
             std::cout << "Generating edge lists...." << std::endl;
-            newMesh->buildEdgeList();
+            newMesh.buildEdgeList();
         }
 
         if (opts.generateTangents)
         {
             unsigned short srcTex, destTex;
-            bool existing = newMesh->suggestTangentVectorBuildParams(srcTex, destTex);
+            bool existing = newMesh.suggestTangentVectorBuildParams(srcTex, destTex);
             if (existing)
             {
                 std::cout << "\nThis mesh appears to already have a set of 3D texture coordinates, " <<
@@ -549,20 +557,19 @@ void XMLToBinary(XmlOptions opts)
             if (opts.generateTangents)
             {
                 std::cout << "Generating tangent vectors...." << std::endl;
-                newMesh->buildTangentVectors(srcTex, destTex);
+                newMesh.buildTangentVectors(srcTex, destTex);
             }
         }
 
 
-        meshSerializer->exportMesh(newMesh.getPointer(), opts.dest);
+        meshSerializer->exportMesh(&newMesh, opts.dest);
     }
     else if (!stricmp(root->Value(), "skeleton"))
     {
         delete doc;
-        SkeletonPtr newSkel = SkeletonManager::getSingleton().create("conversion", 
-            ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-        xmlSkeletonSerializer->importSkeleton(opts.source, newSkel.getPointer());
-        skeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest);
+        Skeleton newSkel("conversion");
+        xmlSkeletonSerializer->importSkeleton(opts.source, &newSkel);
+        skeletonSerializer->exportSkeleton(&newSkel, opts.dest);
     }
 
 
@@ -570,22 +577,25 @@ void XMLToBinary(XmlOptions opts)
 
 void skeletonToXML(XmlOptions opts)
 {
+    struct stat tagStat;
 
-    std::ifstream ifs;
-    ifs.open(opts.source.c_str(), std::ios_base::in | std::ios_base::binary);
-	if (!ifs)
+    SDDataChunk chunk;
+    stat( opts.source.c_str(), &tagStat );
+    chunk.allocate( tagStat.st_size );
+    FILE* pFile = fopen( opts.source.c_str(), "rb" );
+	if (!pFile)
 	{
 		cout << "Unable to load file " << opts.source << endl;
 		exit(1);
 	}
+    fread( (void*)chunk.getPtr(), tagStat.st_size, 1, pFile );
+    fclose( pFile );
 
-    SkeletonPtr skel = SkeletonManager::getSingleton().create("conversion", 
-        ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+    Skeleton skel("conversion");
 
-    DataStreamPtr stream(new FileStreamDataStream(opts.source, &ifs));
-    skeletonSerializer->importSkeleton(stream, skel.getPointer());
+    skeletonSerializer->importSkeleton(chunk, &skel);
    
-    xmlSkeletonSerializer->exportSkeleton(skel.getPointer(), opts.dest);
+    xmlSkeletonSerializer->exportSkeleton(&skel, opts.dest);
 
 }
 
@@ -598,10 +608,7 @@ int main(int numargs, char** args)
     }
 
     logMgr = new LogManager();
-	logMgr->createLog("OgreXMLConverter.log"); 
-    rgm = new ResourceGroupManager();
     mth = new Math();
-    meshMgr = new MeshManager();
     matMgr = new MaterialManager();
     matMgr->initialise();
     skelMgr = new SkeletonManager();
@@ -644,9 +651,7 @@ int main(int numargs, char** args)
     delete meshSerializer;
     delete skelMgr;
     delete matMgr;
-    delete meshMgr;
     delete mth;
-    delete rgm;
     delete logMgr;
 
     return 0;

@@ -38,9 +38,9 @@ namespace Ogre {
         String getName() const { return "Rotator"; }
 
         /** See ParticleAffectorFactory */
-        ParticleAffector* createAffector(ParticleSystem* psys)
+        ParticleAffector* createAffector(void)
         {
-            ParticleAffector* p = new RotationAffector(psys);
+            ParticleAffector* p = new RotationAffector();
             mAffectors.push_back(p);
             return p;
         }

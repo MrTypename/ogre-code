@@ -34,11 +34,11 @@ namespace Ogre {
 class GLGpuNvparseProgram : public GLGpuProgram
 {
 public:
-    GLGpuNvparseProgram(ResourceManager* creator, 
-        const String& name, ResourceHandle handle, 
-        const String& group, bool isManual, ManualResourceLoader* loader);
-    virtual ~GLGpuNvparseProgram();
+    GLGpuNvparseProgram(const String& name, GpuProgramType gptype, const String& syntaxCode);
+    virtual ~GLGpuNvparseProgram() { }
 
+    /// @copydoc Resource::unload
+    void unload(void);
 
     /// Execute the binding functions for this program
     void bindProgram(void);
@@ -52,8 +52,6 @@ public:
     { return mProgramID; }
 
 protected:
-    /// @copydoc Resource::unload
-    void unloadImpl(void);
     void loadFromSource(void);
 
 private:

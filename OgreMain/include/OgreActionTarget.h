@@ -26,8 +26,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 /***************************************************************************
 OgreActionTarget.h  -  
 	Handles the adding and removing of ActionListeners.
+	This is implemented through the use of a binary multicaster.
+	See EventMulticaster.
 
-    Components that process the Action should subclass this class 
+	GuiElements (or other components) that process the Action should subclass this class 
 	and call processActionEvent when that event is identified.
 
 -------------------
@@ -45,21 +47,21 @@ namespace Ogre {
 
 	/** Handles the adding and removing of ActionListeners.
 	@remarks
-		Components that process the Action should subclass this class 
+		This is implemented through the use of a binary multicaster.
+		See EventMulticaster. 
+		GuiElements (or other components) that process the Action should subclass this class 
 		and call processActionEvent when that event is identified.
 	*/
     class _OgreExport ActionTarget : public EventTarget
     {
     protected:
-        std::set<ActionListener*> mActionListeners;
+		ActionListener* mActionListener;
 
     public:
-		ActionTarget() { }
-        virtual ~ActionTarget() {}
-
-	    void processActionEvent(ActionEvent* e) ;
-	    void addActionListener(ActionListener* l) ;
-	    void removeActionListener(ActionListener* l) ;
+		ActionTarget();
+	void processActionEvent(ActionEvent* e) ;
+	void addActionListener(ActionListener* l) ;
+	void removeActionListener(ActionListener* l) ;
     };
 
 

@@ -215,8 +215,39 @@ namespace Ogre {
         // TODO: deal with child windows
         mParentHWnd = parentHWnd;
 
+		DWORD dwStyle = (fullScreen ? WS_POPUP : WS_OVERLAPPEDWINDOW) | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+		RECT rc;
 
-        // Register the window class
+		mWidth = width;
+		mHeight = height;
+
+		if (!fullScreen)
+		{
+			// Calculate window dimensions required to get the requested client area
+			SetRect(&rc, 0, 0, mWidth, mHeight);
+			AdjustWindowRect(&rc, dwStyle, false);
+			mWidth = rc.right - rc.left;
+			mHeight = rc.bottom - rc.top;
+
+			// Clamp width and height to the desktop dimensions
+			if (mWidth > (unsigned)GetSystemMetrics(SM_CXSCREEN))
+				mWidth = (unsigned)GetSystemMetrics(SM_CXSCREEN);
+			if (mHeight > (unsigned)GetSystemMetrics(SM_CYSCREEN))
+				mHeight = (unsigned)GetSystemMetrics(SM_CYSCREEN);
+
+			if (!left)
+				mLeft = (GetSystemMetrics(SM_CXSCREEN) / 2) - (mWidth / 2);
+			else
+				mLeft = left;
+			if (!top)
+				mTop = (GetSystemMetrics(SM_CYSCREEN) / 2) - (mHeight / 2);
+			else
+				mTop = top;
+		}
+		else
+			mTop = mLeft = 0;
+
+		// Register the window class
         // NB Allow 4 bytes of window data for D3D7RenderWindow pointer
         WNDCLASS wndClass = { CS_HREDRAW | CS_VREDRAW, WndProc, 0, 4, hInst,
                               LoadIcon( NULL, IDI_APPLICATION ),
@@ -229,15 +260,12 @@ namespace Ogre {
         // Pass pointer to self
         HWND hWnd = CreateWindow( TEXT(name.c_str()),
                                   TEXT(name.c_str()),
-                                  WS_OVERLAPPEDWINDOW, left, top,
-                                  width, height, 0L, 0L, hInst, this );
-		if (!fullScreen)
-		{
-			RECT rc;
-			GetClientRect(hWnd,&rc);
-			mWidth = rc.right;
-			mHeight = rc.bottom;
-		}
+                                  dwStyle, mLeft, mTop,
+                                  mWidth, mHeight, 0L, 0L, hInst, this );
+
+		GetClientRect(hWnd,&rc);
+		mWidth = rc.right;
+		mHeight = rc.bottom;
 
 		ShowWindow( hWnd, SW_SHOWNORMAL );
         UpdateWindow( hWnd );
@@ -272,12 +300,10 @@ namespace Ogre {
             ClientToScreen( mHWnd, (POINT*)&rcBlitDest.right );
         }
 
-        StringUtil::StrStreamType str;
-        str << "D3D7 : Created D3D7 Rendering Window '"
-            << mName << "' : " << mWidth << "x" << mHeight 
-            << ", " << mColourDepth << "bpp";
-        LogManager::getSingleton().logMessage(
-            LML_NORMAL, str.str());
+        LogManager::getSingleton().logMessage( 
+            LML_NORMAL, 
+            "Created Win32 Rendering Window '%s': %i x %i @ %ibpp", 
+            mName.c_str(), mWidth, mHeight, mColourDepth );
 
         // Set up DirectDraw if appropriate
         // NB devices & surfaces set up for root window only
@@ -671,10 +697,10 @@ namespace Ogre {
          }
  
  
-         ImageCodec::ImageData *imgData = new ImageCodec::ImageData();
-         imgData->width = desc.dwWidth;
-         imgData->height = desc.dwHeight;
-         imgData->format = PF_BYTE_RGB;
+         ImageCodec::ImageData imgData;
+         imgData.width = desc.dwWidth;
+         imgData.height = desc.dwHeight;
+         imgData.format = PF_R8G8B8;
  
          // Allocate contiguous buffer (surfaces aren't necessarily contiguous)
          uchar* pBuffer = new uchar[desc.dwWidth * desc.dwHeight * 3];
@@ -725,7 +751,7 @@ namespace Ogre {
  
  
          // Wrap buffer in a chunk
-         MemoryDataStreamPtr stream(new MemoryDataStream(pBuffer, desc.dwWidth * desc.dwHeight * 3, false));
+         DataChunk chunk(pBuffer, desc.dwWidth * desc.dwHeight * 3);
  
          // Get codec 
          size_t pos = filename.find_last_of(".");
@@ -743,7 +769,7 @@ namespace Ogre {
          Codec * pCodec = Codec::getCodec(extension);
  
          // Write out
-         pCodec->codeToFile(stream, filename, Codec::CodecDataPtr(imgData));
+         pCodec->codeToFile(chunk, filename, &imgData);
  
          delete [] pBuffer;
 		 pTempSurf->Release();

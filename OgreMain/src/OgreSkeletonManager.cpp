@@ -42,22 +42,25 @@ namespace Ogre
     //-----------------------------------------------------------------------
     SkeletonManager::SkeletonManager()
     {
-        mLoadOrder = 300.0f;
-        mResourceType = "Skeleton";
 
-        ResourceGroupManager::getSingleton()._registerResourceManager(mResourceType, this);
+
     }
     //-----------------------------------------------------------------------
-    SkeletonManager::~SkeletonManager()
+    Resource* SkeletonManager::create( const String& name)
     {
-        ResourceGroupManager::getSingleton()._unregisterResourceManager(mResourceType);
+        return new Skeleton(name);
     }
     //-----------------------------------------------------------------------
-    Resource* SkeletonManager::createImpl(const String& name, ResourceHandle handle, 
-        const String& group, bool isManual, ManualResourceLoader* loader, 
-        const NameValuePairList* createParams)
+    Skeleton* SkeletonManager::load( const String& filename, int priority)
     {
-        return new Skeleton(this, name, handle, group, isManual, loader);
+        Skeleton* pSkeleton = (Skeleton*)(getByName(filename));
+        if (!pSkeleton)
+        {
+            pSkeleton = (Skeleton*)create(filename);
+            ResourceManager::load(pSkeleton, priority);
+        }
+        return pSkeleton;
+
     }
 
 

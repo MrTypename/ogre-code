@@ -52,144 +52,78 @@ namespace Ogre {
     {
     public:
 
-        TextureManager(bool enable32Bit = true);
+        TextureManager(bool enable32Bit = true) : mIs32Bit(enable32Bit), mDefaultNumMipMaps(0) {}
         virtual ~TextureManager();
 
         /** Loads a texture from a file.
+            @remarks
+                Loads a texture from a graphics file (PNG, JPG or TGA). Textures
+                will be kept in memory unless resources become short, in which
+                case textures with lower priority will be unloaded first. Textures
+                of equal priority will be unloaded on a 'least recently used' (LRU)
+                basis. Textures will be automatically reloaded when used again
+                but this will involve a performance hit.
+            @par
+                The budget for texture memory can be set through the
+                ResourceManager::setMemoryBudget method.
             @param
-                name The file to load, or a String identifier in some cases
-            @param
-                group The name of the resource group to assign the texture to
+                filename The file to load (JPG or PNG accepted, also BMP on Windows), 
+                or a String identifier in some cases
             @param
                 texType The type of texture to load/create, defaults to normal 2D textures
             @param
-                numMipmaps The number of pre-filtered mipmaps to generate. If left to default (-1) then
-                the TextureManager's default number of mipmaps will be used (see setDefaultNumMipmaps())
+                numMipMaps The number of pre-filtered mipmaps to generate. If left to default (-1) then
+                the TextureManager's default number of mipmaps will be used (see setDefaultNumMipMaps())
             @param
                 gamma The gamma adjustment factor to apply to this texture (brightening/darkening)
-        */
-        virtual TexturePtr load( 
-            const String& name, const String& group, 
-            TextureType texType = TEX_TYPE_2D, int numMipmaps = -1, 
-            Real gamma = 1.0f);
+            @param
+                priority The higher the priority, the less likely this texture will be unloaded due to memory limits.
+            @see
+                ResourceManager::setMemoryBudget
 
-        /** Loads a texture from an Image object.
-            @param
-                name The name to give the resulting texture
-            @param
-                group The name of the resource group to assign the texture to
-            @param
-                img The Image object which contains the data to load
-            @param
-                texType The type of texture to load/create, defaults to normal 2D textures
-            @param
-                numMipmaps The number of pre-filtered mipmaps to generate. If left to default (-1) then
-                the TextureManager's default number of mipmaps will be used (see setDefaultNumMipmaps())
-            @param
-                gamma The gamma adjustment factor to apply to this texture (brightening/darkening)
         */
-        virtual TexturePtr loadImage( 
-            const String &name, const String& group, const Image &img, 
+        virtual Texture * load( 
+            const String& name, TextureType texType = TEX_TYPE_2D,
+            int numMipMaps = -1, Real gamma = 1.0f, int priority = 1 );
+
+        virtual Texture * loadImage( 
+            const String &name, const Image &img, 
             TextureType texType = TEX_TYPE_2D,
-            int iNumMipmaps = -1, Real gamma = 1.0f);
+            int iNumMipMaps = -1, Real gamma = 1.0f, int priority = 1 );
 			
-        /** Loads a texture from a raw data stream.
-            @param
-                name The name to give the resulting texture
-            @param
-                group The name of the resource group to assign the texture to
-            @param
-                stream Incoming data stream
-            @param
-                width, height The dimensions of the texture
-            @param
-                format The format of the data being passed in; the manager reserves
-                the right to create a different format for the texture if the 
-                original format is not available in this context.
-            @param
-                texType The type of texture to load/create, defaults to normal 2D textures
-            @param
-                numMipmaps The number of pre-filtered mipmaps to generate. If left to default (-1) then
-                the TextureManager's default number of mipmaps will be used (see setDefaultNumMipmaps())
-            @param
-                gamma The gamma adjustment factor to apply to this texture (brightening/darkening)
-        */
-        virtual TexturePtr loadRawData(const String &name, const String& group,
-            DataStreamPtr& stream, ushort uWidth, ushort uHeight, 
-            PixelFormat format, TextureType texType = TEX_TYPE_2D, 
-            int iNumMipmaps = -1, Real gamma = 1.0f);
+		virtual Texture *loadRawData( 
+			const String &name, const DataChunk &pData, 
+			ushort uWidth, ushort uHeight, PixelFormat eFormat,
+            TextureType texType = TEX_TYPE_2D,
+            int iNumMipMaps = -1, Real gamma = 1.0f, int priority = 1 );
 
-		/** Create a manual texture with specified width, height and depth (not loaded from a file).
-            @param
-                name The name to give the resulting texture
-            @param
-                group The name of the resource group to assign the texture to
-            @param
-                img The Image object which contains the data to load
-            @param
-                texType The type of texture to load/create, defaults to normal 2D textures
-            @param
-                width, height, depth The dimensions of the texture
-            @param
-                numMipmaps The number of pre-filtered mipmaps to generate. If left to default (-1) then
-                the TextureManager's default number of mipmaps will be used (see setDefaultNumMipmaps())
-            @param
-                format The internal format you wish to request; the manager reserves
-                the right to create a different format if the one you select is
-                not available in this context.
-            @param
-                usage The kind of usage this texture is intended for
-            @param
-                loader If you intend the contents of the manual texture to be 
-                regularly updated, to the extent that you don't need to recover 
-                the contents if the texture content is lost somehow, you can leave
-                this parameter as 0. However, if you intend to populate the
-                texture only once, then you should implement ManualResourceLoader
-                and pass a pointer to it in this parameter; this means that if the
-                manual texture ever needs to be reloaded, the ManualResourceLoader
-                will be called to do it.
+        /** @copydoc ResourceManager::load */
+        virtual void load( Resource *res, int priority = 1 )
+        {
+            ResourceManager::load( res, priority );
+        }
+
+        virtual Resource * create( const String& name )
+        {
+            return create(name, TEX_TYPE_2D);
+        }
+
+        virtual Texture * create( const String& name, TextureType texType) = 0;
+
+        virtual Texture * createAsRenderTarget( const String& name ) = 0;
+
+        virtual Texture * createManual( 
+            const String & name,
+            TextureType texType,
+            uint width,
+            uint height,
+            uint num_mips,
+            PixelFormat format,
+            TextureUsage usage ) = 0;
+
+        /** Manually unloads a texture from the loaded set.
         */
-        virtual TexturePtr createManual(const String & name, const String& group,
-            TextureType texType, uint width, uint height, uint depth, 
-			uint num_mips, PixelFormat format, TextureUsage usage = TU_DEFAULT, ManualResourceLoader* loader = 0 );
-			
-        /** Create a manual texture with a depth of 1 (not loaded from a file).
-            @param
-                name The name to give the resulting texture
-            @param
-                group The name of the resource group to assign the texture to
-            @param
-                img The Image object which contains the data to load
-            @param
-                texType The type of texture to load/create, defaults to normal 2D textures
-            @param
-                width, height The dimensions of the texture
-            @param
-                numMipmaps The number of pre-filtered mipmaps to generate. If left to default (-1) then
-                the TextureManager's default number of mipmaps will be used (see setDefaultNumMipmaps())
-            @param
-                format The internal format you wish to request; the manager reserves
-                the right to create a different format if the one you select is
-                not available in this context.
-            @param
-                usage The kind of usage this texture is intended for
-            @param
-                loader If you intend the contents of the manual texture to be 
-                regularly updated, to the extent that you don't need to recover 
-                the contents if the texture content is lost somehow, you can leave
-                this parameter as 0. However, if you intend to populate the
-                texture only once, then you should implement ManualResourceLoader
-                and pass a pointer to it in this parameter; this means that if the
-                manual texture ever needs to be reloaded, the ManualResourceLoader
-                will be called to do it.
-        */
-        TexturePtr createManual(const String & name, const String& group,
-            TextureType texType, uint width, uint height, uint num_mips,
-            PixelFormat format, TextureUsage usage = TU_DEFAULT, ManualResourceLoader* loader = 0 )
-		{
-			return createManual(name, group, texType, width, height, 1, 
-				num_mips, format, usage, loader);
-		}
+        virtual void unload(const String& filename);
 
         /** Enables / disables 32-bit textures.
         */
@@ -201,13 +135,13 @@ namespace Ogre {
             @note
                 The default value is 0.
         */
-        virtual void setDefaultNumMipmaps(int num);
+        virtual void setDefaultNumMipMaps(int num);
 
         /** Sets the default number of mipmaps to be used for loaded textures.
         */
-        virtual int getDefaultNumMipmaps()
+        virtual int getDefaultNumMipMaps()
         {
-            return mDefaultNumMipmaps;
+            return mDefaultNumMipMaps;
         }
 
         /** Override standard Singleton retrieval.
@@ -244,9 +178,8 @@ namespace Ogre {
         static TextureManager* getSingletonPtr(void);
 
     protected:
-
         bool mIs32Bit;
-        int mDefaultNumMipmaps;
+        int mDefaultNumMipMaps;
     };
 }// Namespace
 

@@ -26,7 +26,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreSerializer.h"
 #include "OgreLogManager.h"
-#include "OgreDataStream.h"
+#include "OgreDataChunk.h"
 #include "OgreException.h"
 #include "OgreVector3.h"
 #include "OgreQuaternion.h"
@@ -34,9 +34,9 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 namespace Ogre {
 
-    /// stream overhead = ID + size
-    const unsigned long STREAM_OVERHEAD_SIZE = sizeof(unsigned short) + sizeof(unsigned long);
-    const unsigned short HEADER_STREAM_ID = 0x1000;
+    /// Chunk overhead = ID + size
+    const unsigned long CHUNK_OVERHEAD_SIZE = sizeof(unsigned short) + sizeof(unsigned long);
+    const unsigned short HEADER_CHUNK_ID = 0x1000;
     //---------------------------------------------------------------------
     Serializer::Serializer()
     {
@@ -51,20 +51,20 @@ namespace Ogre {
     void Serializer::writeFileHeader(void)
     {
         
-        unsigned short val = HEADER_STREAM_ID;
+        unsigned short val = HEADER_CHUNK_ID;
         writeShorts(&val, 1);
 
         writeString(mVersion);
 
     }
     //---------------------------------------------------------------------
-    void Serializer::writeChunkHeader(uint16 id, uint32 size)
+    void Serializer::writeChunkHeader(unsigned short id, unsigned long size)
     {
         writeShorts(&id, 1);
-        writeInts(&size, 1);
+        writeLongs(&size, 1);
     }
     //---------------------------------------------------------------------
-    void Serializer::writeReals(const Real* const pReal, size_t count = 1)
+    void Serializer::writeReals(const Real* pReal, size_t count)
     {
 #	if OGRE_ENDIAN == ENDIAN_BIG
             Real * pRealToWrite = (Real *)malloc(sizeof(Real) * count);
@@ -79,7 +79,7 @@ namespace Ogre {
 #	endif
     }
     //---------------------------------------------------------------------
-    void Serializer::writeShorts(const uint16* const pShort, size_t count = 1)
+    void Serializer::writeShorts(const unsigned short* pShort, size_t count)
     {
 #	if OGRE_ENDIAN == ENDIAN_BIG
             unsigned short * pShortToWrite = (unsigned short *)malloc(sizeof(unsigned short) * count);
@@ -94,7 +94,7 @@ namespace Ogre {
 #	endif
     }
     //---------------------------------------------------------------------
-    void Serializer::writeInts(const uint32* const pInt, size_t count = 1)
+    void Serializer::writeInts(const unsigned int* pInt, size_t count)
     {
 #	if OGRE_ENDIAN == ENDIAN_BIG
             unsigned int * pIntToWrite = (unsigned int *)malloc(sizeof(unsigned int) * count);
@@ -109,8 +109,22 @@ namespace Ogre {
 #	endif
     }
     //---------------------------------------------------------------------
+    void Serializer::writeLongs(const unsigned long* pLong, size_t count)
+    {
+#	if OGRE_ENDIAN == ENDIAN_BIG
+            unsigned long * pLongToWrite = (unsigned long *)malloc(sizeof(unsigned long) * count);
+            memcpy(pLongToWrite, pLong, sizeof(unsigned long) * count);
+            
+            flipToLittleEndian(pLongToWrite, sizeof(unsigned long), count);
+            writeData(pLongToWrite, sizeof(unsigned long), count);
+            
+            free(pLongToWrite);
+# 	else
+            writeData(pLong, sizeof(unsigned long), count);
+#	endif
+    }
     //---------------------------------------------------------------------
-    void Serializer::writeBools(const bool* const pBool, size_t count = 1)
+    void Serializer::writeBools(const bool* pBool, size_t count)
     {
     //no endian flipping for 1-byte bools
     //XXX Nasty Hack to convert to 1-byte bools
@@ -131,7 +145,7 @@ namespace Ogre {
     }
     
     //---------------------------------------------------------------------
-    void Serializer::writeData(const void* const buf, size_t size, size_t count)
+    void Serializer::writeData(const void* buf, size_t size, size_t count)
     {
         fwrite((void* const)buf, size, count, mpfFile);
     }
@@ -143,17 +157,17 @@ namespace Ogre {
         fputc('\n', mpfFile);
     }
     //---------------------------------------------------------------------
-    void Serializer::readFileHeader(DataStreamPtr& stream)
+    void Serializer::readFileHeader(DataChunk& chunk)
     {
         unsigned short headerID;
         
         // Read header ID
-        readShorts(stream, &headerID, 1);
+        readShorts(chunk, &headerID, 1);
         
-        if (headerID == HEADER_STREAM_ID)
+        if (headerID == HEADER_CHUNK_ID)
         {
             // Read version
-            String ver = readString(stream);
+            String ver = readString(chunk);
             if (ver != mVersion)
             {
                 Except(Exception::ERR_INTERNAL_ERROR, 
@@ -170,61 +184,72 @@ namespace Ogre {
 
     }
     //---------------------------------------------------------------------
-    unsigned short Serializer::readChunk(DataStreamPtr& stream)
+    unsigned short Serializer::readChunk(DataChunk& chunk)
     {
         unsigned short id;
-        readShorts(stream, &id, 1);
+        readShorts(chunk, &id, 1);
         
-        readInts(stream, &mCurrentstreamLen, 1);
+        readLongs(chunk, &mCurrentChunkLen, 1);
         return id;
     }
     //---------------------------------------------------------------------
-    void Serializer::readBools(DataStreamPtr& stream, bool* pDest, size_t count)
+    void Serializer::readBools(DataChunk& chunk, bool* pDest, size_t count)
     {
         //XXX Nasty Hack to convert 1 byte bools to 4 byte bools
 #	if OGRE_PLATFORM == PLATFORM_APPLE
         char * pTemp = (char *)malloc(1*count); // to hold 1-byte bools
-        stream->read(pTemp, 1 * count);
+        chunk.read(pTemp, 1 * count);
         for(int i = 0; i < count; i++)
             *(bool *)(pDest + i) = *(char *)(pTemp + i);
             
         free (pTemp);
 #	else
-        stream->read(pDest, sizeof(bool) * count);
+        chunk.read(pDest, sizeof(bool) * count);
 #	endif
         //no flipping on 1-byte datatypes
     }
     //---------------------------------------------------------------------
-    void Serializer::readReals(DataStreamPtr& stream, Real* pDest, size_t count)
+    void Serializer::readReals(DataChunk& chunk, Real* pDest, size_t count)
     {
-        stream->read(pDest, sizeof(Real) * count);
+        chunk.read(pDest, sizeof(Real) * count);
         flipFromLittleEndian(pDest, sizeof(Real), count);
     }
     //---------------------------------------------------------------------
-    void Serializer::readShorts(DataStreamPtr& stream, unsigned short* pDest, size_t count)
+    void Serializer::readShorts(DataChunk& chunk, unsigned short* pDest, size_t count)
     {
-        stream->read(pDest, sizeof(unsigned short) * count);
+        chunk.read(pDest, sizeof(unsigned short) * count);
         flipFromLittleEndian(pDest, sizeof(unsigned short), count);
     }
     //---------------------------------------------------------------------
-    void Serializer::readInts(DataStreamPtr& stream, unsigned int* pDest, size_t count)
+    void Serializer::readInts(DataChunk& chunk, unsigned int* pDest, size_t count)
     {
-        stream->read(pDest, sizeof(unsigned int) * count);
+        chunk.read(pDest, sizeof(unsigned int) * count);
         flipFromLittleEndian(pDest, sizeof(unsigned int), count);
     }
     //---------------------------------------------------------------------
-    String Serializer::readString(DataStreamPtr& stream, size_t numChars)
+    void Serializer::readLongs(DataChunk& chunk, unsigned long* pDest, size_t count) 
+    {
+        chunk.read(pDest, sizeof(unsigned long) * count);
+        flipFromLittleEndian(pDest, sizeof(unsigned long), count);
+    }
+    //---------------------------------------------------------------------
+    String Serializer::readString(DataChunk& chunk, size_t numChars)
     {
         assert (numChars <= 255);
         char str[255];
-        stream->read(str, numChars);
+        chunk.read(str, numChars);
         str[numChars] = '\0';
         return str;
     }
     //---------------------------------------------------------------------
-    String Serializer::readString(DataStreamPtr& stream)
+    String Serializer::readString(DataChunk& chunk)
     {
-        return stream->getLine(false);
+        char str[255];
+        size_t readcount;
+        readcount = chunk.readUpTo(str, 255);
+        str[readcount] = '\0';
+        return str;
+
     }
     //---------------------------------------------------------------------
     void Serializer::writeObject(const Vector3& vec)
@@ -243,19 +268,19 @@ namespace Ogre {
         writeReals(&q.w, 1);
     }
     //---------------------------------------------------------------------
-    void Serializer::readObject(DataStreamPtr& stream, Vector3& pDest)
+    void Serializer::readObject(DataChunk& chunk, Vector3* pDest)
     {
-        readReals(stream, &pDest.x, 1);
-        readReals(stream, &pDest.y, 1);
-        readReals(stream, &pDest.z, 1);
+        readReals(chunk, &pDest->x, 1);
+        readReals(chunk, &pDest->y, 1);
+        readReals(chunk, &pDest->z, 1);
     }
     //---------------------------------------------------------------------
-    void Serializer::readObject(DataStreamPtr& stream, Quaternion& pDest)
+    void Serializer::readObject(DataChunk& chunk, Quaternion* pDest)
     {
-        readReals(stream, &pDest.x, 1);
-        readReals(stream, &pDest.y, 1);
-        readReals(stream, &pDest.z, 1);
-        readReals(stream, &pDest.w, 1);
+        readReals(chunk, &pDest->x, 1);
+        readReals(chunk, &pDest->y, 1);
+        readReals(chunk, &pDest->z, 1);
+        readReals(chunk, &pDest->w, 1);
     }
     //---------------------------------------------------------------------
 

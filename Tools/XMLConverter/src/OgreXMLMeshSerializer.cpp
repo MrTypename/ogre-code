@@ -784,7 +784,7 @@ namespace Ogre {
 							ColourValue cv;
 							cv = StringConverter::parseColourValue(
 								xmlElem->Attribute("value"));
-							*pCol++ = cv.getAsARGB();
+							*pCol++ = cv.getAsLongARGB();
 						}
                         break;
                     case VES_SPECULAR:
@@ -799,7 +799,7 @@ namespace Ogre {
 							ColourValue cv;
 							cv = StringConverter::parseColourValue(
 								xmlElem->Attribute("value"));
-							*pCol++ = cv.getAsARGB();
+							*pCol++ = cv.getAsLongARGB();
 						}
                         break;
                     case VES_TEXTURE_COORDINATES:
@@ -1118,7 +1118,7 @@ namespace Ogre {
 		Mesh::MeshLodUsage usage;
 		const char* val = genNode->Attribute("fromdepthsquared");
 		usage.fromDepthSquared = StringConverter::parseReal(val);
-		usage.manualMesh.setNull();
+		usage.manualMesh = NULL;
 		usage.manualName = "";
         usage.edgeData = NULL;
 

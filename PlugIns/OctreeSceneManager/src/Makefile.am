@@ -1,8 +1,8 @@
-INCLUDES = $(STLPORT_CFLAGS) -I$(top_srcdir)/PlugIns/OctreeSceneManager/include -I$(top_srcdir)/OgreMain/include -DPLUGIN_TERRAIN_EXPORTS
+INCLUDES = $(STLPORT_CFLAGS) -I$(top_srcdir)/PlugIns/OctreeSceneManager/include -I$(top_srcdir)/OgreMain/include
 
-pkglib_LTLIBRARIES = Plugin_OctreeSceneManager.la
+pkglib_PROGRAMS = Plugin_OctreeSceneManager.so
 
-Plugin_OctreeSceneManager_la_SOURCES = \
+Plugin_OctreeSceneManager_so_SOURCES = \
 							OgreHeightmapTerrainPageSource.cpp \
 							OgreOctreeSceneManagerDll.cpp \
                             OgreOctreeSceneManager.cpp \
@@ -17,5 +17,5 @@ Plugin_OctreeSceneManager_la_SOURCES = \
 							OgreTerrainVertexProgram.cpp 
 
 
-Plugin_OctreeSceneManager_la_LDFLAGS = -module $(PLUGIN_FLAGS) -L$(top_builddir)/OgreMain/src
-Plugin_OctreeSceneManager_la_LIBADD = -lOgreMain
+Plugin_OctreeSceneManager_so_LDFLAGS = $(SHARED_FLAGS) -L$(top_srcdir)/OgreMain/src
+Plugin_OctreeSceneManager_so_LDADD = -lOgreMain

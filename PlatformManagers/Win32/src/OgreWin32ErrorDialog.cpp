@@ -25,10 +25,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreWin32ErrorDialog.h"
 #include "resource.h"
 
-namespace {
-    Ogre::Win32ErrorDialog* dlg;  // This is a pointer to instance, since this is a static member
-}
-
 namespace Ogre
 {
     Win32ErrorDialog::Win32ErrorDialog(HINSTANCE hInst)
@@ -36,7 +32,7 @@ namespace Ogre
         mHInstance = hInst;
     }
 
-
+    Win32ErrorDialog* dlg;  // This is a pointer to instance, since this is a static member
 
     BOOL Win32ErrorDialog::DlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
     {

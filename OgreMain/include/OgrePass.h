@@ -65,7 +65,6 @@ namespace Ogre {
         ColourValue mSpecular;    
         ColourValue mEmissive;
         Real mShininess;
-        TrackVertexColourType mTracking;
         //-------------------------------------------------------------------------
 
         //-------------------------------------------------------------------------
@@ -83,10 +82,7 @@ namespace Ogre {
 
         // Colour buffer settings
         bool mColourWrite;
-		
-		// Alpha reject settings
-		CompareFunction mAlphaRejectFunc;
-		unsigned char mAlphaRejectVal;
+
         //-------------------------------------------------------------------------    
 
         //-------------------------------------------------------------------------
@@ -267,10 +263,6 @@ namespace Ogre {
         */
         void setSelfIllumination(const ColourValue& selfIllum);
 
-        /** Sets which material properties follow the vertex colour
-         */
-        void setVertexColourTracking(TrackVertexColourType tracking);
-
         /** Gets the ambient colour reflectance of the pass.
         */
         const ColourValue& getAmbient(void) const;
@@ -290,10 +282,6 @@ namespace Ogre {
         /** Gets the 'shininess' property of the pass (affects specular highlights).
         */
         Real getShininess(void) const;
-        
-        /** Gets which material properties follow the vertex colour
-         */
-        TrackVertexColourType getVertexColourTracking(void) const;
 
         /** Inserts a new TextureUnitState object into the Pass.
         @remarks
@@ -617,31 +605,6 @@ namespace Ogre {
         /** Retrieves the depth bias value as set by setDepthValue. */
         ushort getDepthBias(void) const;
 
-        /** Sets the way the pass will have use alpha to totally reject pixels from the pipeline.
-        @remarks
-			The default is CMPF_ALWAYS_PASS i.e. alpha is not used to reject pixels.
-        @param func The comparison which must pass for the pixel to be written.
-        @param value 1 byte value against which alpha values will be tested(0-255)
-        @note
-			This option applies in both the fixed function and the programmable pipeline.
-        */
-        void setAlphaRejectSettings(CompareFunction func, unsigned char value);
-
-		/** Sets the alpha reject function. See setAlphaRejectSettings for more information.
-		*/
-		void setAlphaRejectFunction(CompareFunction func);
-
-		/** Gets the alpha reject value. See setAlphaRejectSettings for more information.
-		*/
-		void setAlphaRejectValue(unsigned char val);
-
-		/** Gets the alpha reject function. See setAlphaRejectSettings for more information.
-        */
-		CompareFunction getAlphaRejectFunction(void) const { return mAlphaRejectFunc; }
-
-        /** Gets the alpha reject value. See setAlphaRejectSettings for more information.
-        */
-		unsigned char getAlphaRejectValue(void) const { return mAlphaRejectVal; }
         /** Sets whether or not this pass should be run once per light which
 		    can affect the object being rendered.
 		@remarks
@@ -691,9 +654,6 @@ namespace Ogre {
 		/// Gets the parent Technique
         Technique* getParent(void) { return mParent; }
 
-		/// Gets the resource group of the ultimate parent Material
-		const String& getResourceGroup(void) const;
-
 		/** Sets the details of the vertex program to use.
 		@remarks
 			Only applicable to programmable passes, this sets the details of
@@ -723,7 +683,7 @@ namespace Ogre {
         /** Gets the vertex program parameters used by this pass. */
         GpuProgramParametersSharedPtr getVertexProgramParameters(void);
 		/** Gets the vertex program used by this pass, only available after _load(). */
-		const GpuProgramPtr& getVertexProgram(void);
+		GpuProgram* getVertexProgram(void);
 
 
         /** Sets the details of the vertex program to use when rendering as a 
@@ -769,7 +729,7 @@ namespace Ogre {
         GpuProgramParametersSharedPtr getShadowCasterVertexProgramParameters(void);
         /** Gets the vertex program used by this pass when rendering shadow casters, 
             only available after _load(). */
-        const GpuProgramPtr& getShadowCasterVertexProgram(void);
+        GpuProgram* getShadowCasterVertexProgram(void);
 
         /** Sets the details of the vertex program to use when rendering as a 
             shadow receiver.
@@ -810,7 +770,7 @@ namespace Ogre {
         GpuProgramParametersSharedPtr getShadowReceiverVertexProgramParameters(void);
         /** Gets the vertex program used by this pass when rendering shadow receivers, 
         only available after _load(). */
-        const GpuProgramPtr& getShadowReceiverVertexProgram(void);
+        GpuProgram* getShadowReceiverVertexProgram(void);
 
 
 		/** Sets the details of the fragment program to use.
@@ -840,7 +800,7 @@ namespace Ogre {
 		/** Gets the vertex program parameters used by this pass. */
 		GpuProgramParametersSharedPtr getFragmentProgramParameters(void);
 		/** Gets the vertex program used by this pass, only available after _load(). */
-		const GpuProgramPtr& getFragmentProgram(void);
+		GpuProgram* getFragmentProgram(void);
 
 		/** Splits this Pass to one which can be handled in the number of
 			texture units specified.

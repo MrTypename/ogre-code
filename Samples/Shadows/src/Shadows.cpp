@@ -72,9 +72,9 @@ ShadowTechnique mShadowTech[NUM_SHADOW_TECH] =
 int mCurrentAtheneMaterial;
 int mCurrentShadowTechnique = 0;
 
-OverlayElement* mShadowTechniqueInfo;
-OverlayElement* mMaterialInfo;
-OverlayElement* mInfo;
+GuiElement* mShadowTechniqueInfo;
+GuiElement* mMaterialInfo;
+GuiElement* mInfo;
 
 
 /** This class 'wibbles' the light and billboard */
@@ -300,12 +300,10 @@ protected:
         mLightNode->attachObject(bbs);
 
         // create controller, after this is will get updated on its own
-        ControllerFunctionRealPtr func = ControllerFunctionRealPtr(
-            new WaveformControllerFunction(Ogre::WFT_SINE, 0.75, 0.5));
+        WaveformControllerFunction* func = new WaveformControllerFunction(Ogre::WFT_SINE, 0.75, 0.5);
         ControllerManager& contMgr = ControllerManager::getSingleton();
-        ControllerValueRealPtr val = ControllerValueRealPtr(
-            new LightWibbler(mLight, bb, mMinLightColour, mMaxLightColour, 
-            mMinFlareSize, mMaxFlareSize));
+        LightWibbler* val = new LightWibbler(mLight, bb, mMinLightColour, mMaxLightColour, 
+            mMinFlareSize, mMaxFlareSize);
         Controller<Real>* controller = contMgr.createController(
             contMgr.getFrameTimeSource(), val, func);
 
@@ -350,13 +348,8 @@ protected:
         mLightNode->setAutoTracking(true, mSceneMgr->getRootSceneNode());
 
         // Prepare athene mesh for normalmapping
-        MeshPtr pAthene = MeshManager::getSingleton().load("athene.mesh", 
-            ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-        unsigned short src, dest;
-        if (!pAthene->suggestTangentVectorBuildParams(src, dest))
-        {
-            pAthene->buildTangentVectors(src, dest);
-        }
+        Mesh* pAthene = MeshManager::getSingleton().load("athene.mesh");
+        pAthene->buildTangentVectors(0,1);
 
         SceneNode* node;
         node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
@@ -408,8 +401,7 @@ protected:
         Plane plane;
         plane.normal = Vector3::UNIT_Y;
         plane.d = 100;
-        MeshManager::getSingleton().createPlane("Myplane",
-            ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane,
+        MeshManager::getSingleton().createPlane("Myplane",plane,
             1500,1500,20,20,true,1,5,5,Vector3::UNIT_Z);
         Entity* pPlaneEnt = mSceneMgr->createEntity( "plane", "Myplane" );
         pPlaneEnt->setMaterialName("Examples/Rockwall");
@@ -417,16 +409,16 @@ protected:
         mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pPlaneEnt);
 
         // show overlay
-        Overlay* pOver = OverlayManager::getSingleton().getByName("Example/ShadowsOverlay");    
-        mShadowTechniqueInfo = OverlayManager::getSingleton().getOverlayElement("Example/Shadows/ShadowTechniqueInfo");
-        mMaterialInfo = OverlayManager::getSingleton().getOverlayElement("Example/Shadows/MaterialInfo");
-        mInfo = OverlayManager::getSingleton().getOverlayElement("Example/Shadows/Info");
+        Overlay *pOver = (Overlay *)OverlayManager::getSingleton().getByName("Example/ShadowsOverlay");    
+        mShadowTechniqueInfo = GuiManager::getSingleton().getGuiElement("Example/Shadows/ShadowTechniqueInfo");
+        mMaterialInfo = GuiManager::getSingleton().getGuiElement("Example/Shadows/MaterialInfo");
+        mInfo = GuiManager::getSingleton().getGuiElement("Example/Shadows/Info");
 
         mShadowTechniqueInfo->setCaption("Current: " + mShadowTechDescriptions[mCurrentShadowTechnique]);
         mMaterialInfo->setCaption("Current: " + mAtheneMaterials[mCurrentAtheneMaterial]);
         pOver->show();
 
-		if (mRoot->getRenderSystem()->getCapabilities()->hasCapability(RSC_HWRENDER_TO_TEXTURE))
+		if (StringUtil::startsWith(mRoot->getRenderSystem()->getName(), "direct"))
         {
             // In D3D, use a 1024x1024 shadow texture
             mSceneMgr->setShadowTextureSettings(1024, 2);

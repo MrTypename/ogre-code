@@ -29,19 +29,8 @@ http://www.gnu.org/copyleft/gpl.html.
 
 using namespace Ogre;
 
-GLGpuProgramManager::GLGpuProgramManager()
-{
-    // Superclass sets up members 
-
-    // Register with resource group manager
-    ResourceGroupManager::getSingleton()._registerResourceManager(mResourceType, this);
-}
-
-
 GLGpuProgramManager::~GLGpuProgramManager()
 {
-    // Unregister with resource group manager
-    ResourceGroupManager::getSingleton()._unregisterResourceManager(mResourceType);
 }
 
 bool GLGpuProgramManager::registerProgramFactory(const String& syntaxCode, CreateGpuProgramCallback createFn)
@@ -59,55 +48,16 @@ GpuProgramParametersSharedPtr GLGpuProgramManager::createParameters(void)
     return GpuProgramParametersSharedPtr(new GpuProgramParameters());
 }
 
-/// @copydoc ResourceManager::createImpl
-Resource* GLGpuProgramManager::createImpl(const String& name, ResourceHandle handle, 
-                     const String& group, bool isManual, ManualResourceLoader* loader,
-                     const NameValuePairList* params)
-{
-    NameValuePairList::const_iterator paramSyntax, paramType;
-
-    if (!params || (paramSyntax = params->find("syntax")) == params->end() ||
-        (paramType = params->find("type")) == params->end())
-    {
-        Except(Exception::ERR_INVALIDPARAMS, 
-            "You must supply 'syntax' and 'type' parameters",
-            "GLGpuProgramManager::createImpl");
-    }
-
-    ProgramMap::const_iterator iter = mProgramMap.find(paramSyntax->second);
-    if(iter == mProgramMap.end())
-    {
-        // No factory, this is an unsupported syntax code, probably for another rendersystem
-        // Create a basic one, it doesn't matter what it is since it won't be used
-        return new GLGpuProgram(this, name, handle, group, isManual, loader);
-    }
-
-    GpuProgramType gpt;
-    if (paramType->second == "vertex_Program")
-    {
-        gpt = GPT_VERTEX_PROGRAM;
-    }
-    else
-    {
-        gpt = GPT_FRAGMENT_PROGRAM;
-    }
-
-    return (iter->second)(this, name, handle, group, isManual, loader, gpt, paramSyntax->second);
-
-}
-
-Resource* GLGpuProgramManager::createImpl(const String& name, ResourceHandle handle, 
-                     const String& group, bool isManual, ManualResourceLoader* loader,
-                     GpuProgramType gptype, const String& syntaxCode)
+GpuProgram* GLGpuProgramManager::create(const String& name, GpuProgramType gptype, const String& syntaxCode)
 {
     ProgramMap::const_iterator iter = mProgramMap.find(syntaxCode);
     if(iter == mProgramMap.end())
     {
         // No factory, this is an unsupported syntax code, probably for another rendersystem
         // Create a basic one, it doesn't matter what it is since it won't be used
-        return new GLGpuProgram(this, name, handle, group, isManual, loader);
+        return new GLGpuProgram(name, gptype, syntaxCode);
     }
     
-    return (iter->second)(this, name, handle, group, isManual, loader, gptype, syntaxCode);
+    return (iter->second)(name, gptype, syntaxCode);
 }
 

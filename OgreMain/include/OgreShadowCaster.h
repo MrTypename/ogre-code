@@ -43,7 +43,7 @@ namespace Ogre {
     class _OgreExport ShadowRenderable : public Renderable
     {
     protected:
-        MaterialPtr mMaterial;
+        Material* mMaterial;
         RenderOperation mRenderOp;
         ShadowRenderable* mLightCap; // used only if isLightCapSeparate == true
     public:
@@ -52,9 +52,9 @@ namespace Ogre {
         /** Set the material to be used by the shadow, should be set by the caller 
           before adding to a render queue
         */
-        void setMaterial(MaterialPtr& mat) { mMaterial = mat; }
+        void setMaterial(Material* mat) { mMaterial = mat; }
         /// Overridden from Renderable
-        const MaterialPtr& getMaterial(void) const { return mMaterial; }
+        Material* getMaterial(void) const { return mMaterial; }
         /// Overridden from Renderable
         void getRenderOperation(RenderOperation& op) { op = mRenderOp; }
         /// Get the internal render operation for set up
@@ -68,12 +68,7 @@ namespace Ogre {
         /// Overridden from Renderable
         Real getSquaredViewDepth(const Camera* cam) const{ return 0; /* not used */}
         /// Overridden from Renderable
-        const LightList& getLights(void) const 
-        {
-            // return empty
-            static LightList ll;
-            return ll;
-        }
+        const LightList& getLights(void) const;
         /** Does this renderable require a separate light cap?
         @remarks
             If possible, the light cap (when required) should be contained in the

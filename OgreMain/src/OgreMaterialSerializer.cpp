@@ -45,7 +45,7 @@ namespace Ogre
     void logParseError(const String& error, const MaterialScriptContext& context)
     {
         // log material name only if filename not specified
-        if (context.filename.empty() && !context.material.isNull())
+        if (context.filename.empty() && context.material)
         {
             LogManager::getSingleton().logMessage(
                 "Error in material " + context.material->getName() + 
@@ -53,7 +53,7 @@ namespace Ogre
         }
         else
         {
-            if (!context.material.isNull())
+            if (context.material)
             {
                 LogManager::getSingleton().logMessage(
                     "Error in material " + context.material->getName() +
@@ -103,74 +103,48 @@ namespace Ogre
     bool parseAmbient(String& params, MaterialScriptContext& context)
     {
         StringVector vecparams = StringUtil::split(params, " \t");
-        // Must be 1, 3 or 4 parameters 
-        if (vecparams.size() == 1) {
-            if(vecparams[0] == "vertexcolour") {
-               context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() | TVC_AMBIENT);
-            } else {
-                logParseError(
-                    "Bad ambient attribute, single parameter flag must be 'vertexcolour'", 
-                    context);
-            }
-        } 
-        else if (vecparams.size() == 3 || vecparams.size() == 4)
-        {
-            context.pass->setAmbient( _parseColourValue(vecparams) );
-            context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() & ~TVC_AMBIENT);
-        }
-        else 
+        // Must be 3 or 4 parameters 
+        if (vecparams.size() != 3 && vecparams.size() != 4)
         {
             logParseError(
-                "Bad ambient attribute, wrong number of parameters (expected 1, 3 or 4)", 
+                "Bad ambient attribute, wrong number of parameters (expected 3 or 4)", 
                 context);
-        }
-        return false;
-    }
-   //-----------------------------------------------------------------------
-    bool parseDiffuse(String& params, MaterialScriptContext& context)
-    {
-        StringVector vecparams = StringUtil::split(params, " \t");
-        // Must be 1, 3 or 4 parameters 
-        if (vecparams.size() == 1) {
-            if(vecparams[0] == "vertexcolour") {
-               context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() | TVC_DIFFUSE);
-            } else {
-                logParseError(
-                    "Bad diffuse attribute, single parameter flag must be 'vertexcolour'", 
-                    context);
-            }
-        }
-        else if (vecparams.size() == 3 || vecparams.size() == 4)
-        {
-            context.pass->setDiffuse( _parseColourValue(vecparams) );
-            context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() & ~TVC_DIFFUSE);
         }
         else
         {
+            context.pass->setAmbient( _parseColourValue(vecparams) );
+        }
+        return false;
+    }
+    //-----------------------------------------------------------------------
+    bool parseDiffuse(String& params, MaterialScriptContext& context)
+    {
+        StringVector vecparams = StringUtil::split(params, " \t");
+        // Must be 3 or 4 parameters 
+        if (vecparams.size() != 3 && vecparams.size() != 4)
+        {
             logParseError(
-                "Bad diffuse attribute, wrong number of parameters (expected 1, 3 or 4)", 
+                "Bad diffuse attribute, wrong number of parameters (expected 3 or 4)", 
                 context);
-        }        return false;
+        }
+        else
+        {
+            context.pass->setDiffuse( _parseColourValue(vecparams) );
+        }
+        return false;
     }
     //-----------------------------------------------------------------------
     bool parseSpecular(String& params, MaterialScriptContext& context)
     {
         StringVector vecparams = StringUtil::split(params, " \t");
-        // Must be 2, 4 or 5 parameters 
-        if(vecparams.size() == 2) 
-        {   
-            if(vecparams[0] == "vertexcolour") {
-                context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() | TVC_SPECULAR);
-                context.pass->setShininess(StringConverter::parseReal(vecparams[1]) );
-            }
-            else
-            {
-                logParseError(
-                    "Bad specular attribute, double parameter statement must be 'vertexcolour <shininess>'", 
-                    context);
-            }
-        } 
-        else if(vecparams.size() == 4 || vecparams.size() == 5) 
+        // Must be 4 or 5 parameters 
+        if (vecparams.size() != 4 && vecparams.size() != 5)
+        {
+            logParseError(
+                "Bad specular attribute, wrong number of parameters (expected 4 or 5)",
+                context);
+        }
+        else
         {
             context.pass->setSpecular(
                 StringConverter::parseReal(vecparams[0]), 
@@ -178,15 +152,8 @@ namespace Ogre
                 StringConverter::parseReal(vecparams[2]), 
                 vecparams.size() == 5? 
                     StringConverter::parseReal(vecparams[3]) : 1.0f);
-            context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() & ~TVC_SPECULAR);
             context.pass->setShininess(
                 StringConverter::parseReal(vecparams[vecparams.size() - 1]) );
-        }
-        else 
-        {
-            logParseError(
-                "Bad specular attribute, wrong number of parameters (expected 2, 4 or 5)",
-                context);
         }
         return false;
     }
@@ -194,26 +161,16 @@ namespace Ogre
     bool parseEmissive(String& params, MaterialScriptContext& context)
     {
         StringVector vecparams = StringUtil::split(params, " \t");
-        // Must be 1, 3 or 4 parameters 
-        if (vecparams.size() == 1) {
-            if(vecparams[0] == "vertexcolour") {
-               context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() | TVC_EMISSIVE);
-            } else {
-                logParseError(
-                    "Bad emissive attribute, single parameter flag must be 'vertexcolour'", 
-                    context);
-            }
-        }
-        else if (vecparams.size() == 3 || vecparams.size() == 4)
+        // Must be 3 or 4 parameters 
+        if (vecparams.size() != 3 && vecparams.size() != 4)
         {
-            context.pass->setSelfIllumination( _parseColourValue(vecparams) );
-            context.pass->setVertexColourTracking(context.pass->getVertexColourTracking() & ~TVC_EMISSIVE);
+            logParseError(
+                "Bad emissive attribute, wrong number of parameters (expected 3 or 4)", 
+                context);
         }
         else
         {
-            logParseError(
-                "Bad emissive attribute, wrong number of parameters (expected 1, 3 or 4)", 
-                context);
+            context.pass->setSelfIllumination( _parseColourValue(vecparams) );
         }
         return false;
     }
@@ -622,7 +579,7 @@ namespace Ogre
             else if (vecparams[1] == "cubic")
             {
                 tt = TEX_TYPE_CUBE_MAP;
-            } 
+            }
         }
         context.textureUnit->setTextureName(vecparams[0], tt);
         return false;
@@ -767,7 +724,7 @@ namespace Ogre
             return false;
         }
 
-        context.pass->setAlphaRejectSettings(cmp, StringConverter::parseInt(vecparams[1]));
+        context.textureUnit->setAlphaRejectSettings(cmp, StringConverter::parseInt(vecparams[1]));
 
         return false;
     }
@@ -1449,7 +1406,7 @@ namespace Ogre
     bool parseParamIndexed(String& params, MaterialScriptContext& context)
     {
         // NB skip this if the program is not supported or could not be found
-        if (context.program.isNull() || !context.program->isSupported())
+        if (!context.program || !context.program->isSupported())
         {
             return false;
         }
@@ -1474,7 +1431,7 @@ namespace Ogre
     bool parseParamIndexedAuto(String& params, MaterialScriptContext& context)
     {
         // NB skip this if the program is not supported or could not be found
-        if (context.program.isNull() || !context.program->isSupported())
+        if (!context.program || !context.program->isSupported())
         {
             return false;
         }
@@ -1499,7 +1456,7 @@ namespace Ogre
     bool parseParamNamed(String& params, MaterialScriptContext& context)
     {
         // NB skip this if the program is not supported or could not be found
-        if (context.program.isNull() || !context.program->isSupported())
+        if (!context.program || !context.program->isSupported())
         {
             return false;
         }
@@ -1536,7 +1493,7 @@ namespace Ogre
     bool parseParamNamedAuto(String& params, MaterialScriptContext& context)
     {
         // NB skip this if the program is not supported or could not be found
-        if (context.program.isNull() || !context.program->isSupported())
+        if (!context.program || !context.program->isSupported())
         {
             return false;
         }
@@ -1568,8 +1525,8 @@ namespace Ogre
     bool parseMaterial(String& params, MaterialScriptContext& context)
     {
         // Create a brand new material
-        context.material = 
-			MaterialManager::getSingleton().create(params, context.groupName);
+        context.material = static_cast<Material*>(
+            MaterialManager::getSingleton().create(params));
         // Remove pre-created technique from defaults
         context.material->removeAllTechniques();
 
@@ -1630,8 +1587,9 @@ namespace Ogre
         // update section
         context.section = MSS_PROGRAM_REF;
 
-        context.program = GpuProgramManager::getSingleton().getByName(params);
-        if (context.program.isNull())
+        context.program = static_cast<GpuProgram*>(
+            GpuProgramManager::getSingleton().getByName(params));
+        if (context.program == 0)
         {
             // Unknown program
             logParseError("Invalid vertex_program_ref entry - vertex program " 
@@ -1660,8 +1618,9 @@ namespace Ogre
         // update section
         context.section = MSS_PROGRAM_REF;
 
-        context.program = GpuProgramManager::getSingleton().getByName(params);
-        if (context.program.isNull())
+        context.program = static_cast<GpuProgram*>(
+            GpuProgramManager::getSingleton().getByName(params));
+        if (context.program == 0)
         {
             // Unknown program
             logParseError("Invalid vertex_program_ref entry - vertex program " 
@@ -1690,8 +1649,9 @@ namespace Ogre
         // update section
         context.section = MSS_PROGRAM_REF;
 
-        context.program = GpuProgramManager::getSingleton().getByName(params);
-        if (context.program.isNull())
+        context.program = static_cast<GpuProgram*>(
+            GpuProgramManager::getSingleton().getByName(params));
+        if (context.program == 0)
         {
             // Unknown program
             logParseError("Invalid vertex_program_ref entry - vertex program " 
@@ -1720,8 +1680,9 @@ namespace Ogre
         // update section
         context.section = MSS_PROGRAM_REF;
 
-        context.program = GpuProgramManager::getSingleton().getByName(params);
-        if (context.program.isNull())
+        context.program = static_cast<GpuProgram*>(
+            GpuProgramManager::getSingleton().getByName(params));
+        if (context.program == 0)
         {
             // Unknown program
             logParseError("Invalid fragment_program_ref entry - fragment program " 
@@ -1955,7 +1916,6 @@ namespace Ogre
         mPassAttribParsers.insert(AttribParserList::value_type("depth_check", (ATTRIBUTE_PARSER)parseDepthCheck));
         mPassAttribParsers.insert(AttribParserList::value_type("depth_write", (ATTRIBUTE_PARSER)parseDepthWrite));
         mPassAttribParsers.insert(AttribParserList::value_type("depth_func", (ATTRIBUTE_PARSER)parseDepthFunc));
-		mPassAttribParsers.insert(AttribParserList::value_type("alpha_rejection", (ATTRIBUTE_PARSER)parseAlphaRejection));
         mPassAttribParsers.insert(AttribParserList::value_type("colour_write", (ATTRIBUTE_PARSER)parseColourWrite));
         mPassAttribParsers.insert(AttribParserList::value_type("cull_hardware", (ATTRIBUTE_PARSER)parseCullHardware));
         mPassAttribParsers.insert(AttribParserList::value_type("cull_software", (ATTRIBUTE_PARSER)parseCullSoftware));
@@ -1979,6 +1939,7 @@ namespace Ogre
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("tex_coord_set", (ATTRIBUTE_PARSER)parseTexCoord));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("tex_address_mode", (ATTRIBUTE_PARSER)parseTexAddressMode));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("colour_op", (ATTRIBUTE_PARSER)parseColourOp));
+        mTextureUnitAttribParsers.insert(AttribParserList::value_type("alpha_rejection", (ATTRIBUTE_PARSER)parseAlphaRejection));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("colour_op_ex", (ATTRIBUTE_PARSER)parseColourOpEx));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("colour_op_multipass_fallback", (ATTRIBUTE_PARSER)parseColourOpFallback));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("alpha_op_ex", (ATTRIBUTE_PARSER)parseAlphaOpEx));
@@ -2013,11 +1974,11 @@ namespace Ogre
         mProgramDefaultParamAttribParsers.insert(AttribParserList::value_type("param_named", (ATTRIBUTE_PARSER)parseParamNamedAuto));
 
         mScriptContext.section = MSS_NONE;
-        mScriptContext.material.setNull();
+        mScriptContext.material = 0;
         mScriptContext.technique = 0;
         mScriptContext.pass = 0;
         mScriptContext.textureUnit = 0;
-        mScriptContext.program.setNull();
+        mScriptContext.program = 0;
         mScriptContext.lineNo = 0;
         mScriptContext.filename = "";
 		mScriptContext.techLev = -1;
@@ -2028,26 +1989,25 @@ namespace Ogre
     }
 
     //-----------------------------------------------------------------------
-    void MaterialSerializer::parseScript(DataStreamPtr& stream, const String& groupName)
+    void MaterialSerializer::parseScript(DataChunk& chunk, const String& filename)
     {
         String line;
         bool nextIsOpenBrace = false;
 
         mScriptContext.section = MSS_NONE;
-        mScriptContext.material.setNull();
+        mScriptContext.material = 0;
         mScriptContext.technique = 0;
         mScriptContext.pass = 0;
         mScriptContext.textureUnit = 0;
-        mScriptContext.program.setNull();
+        mScriptContext.program = 0;
         mScriptContext.lineNo = 0;
 		mScriptContext.techLev = -1;
 		mScriptContext.passLev = -1;
 		mScriptContext.stateLev = -1;
-        mScriptContext.filename = stream->getName();
-		mScriptContext.groupName = groupName;
-        while(!stream->eof())
+        mScriptContext.filename = filename;
+        while(!chunk.isEOF())
         {
-            line = stream->getLine();
+            line = chunk.getLine();
             mScriptContext.lineNo++;
             
             // DEBUG LINE
@@ -2081,9 +2041,6 @@ namespace Ogre
             logParseError("Unexpected end of file.", mScriptContext);
         }
 
-		// Make sure we invalidate our context shared pointer (don't wanna hold on)
-		mScriptContext.material.setNull();
-
     }
     //-----------------------------------------------------------------------
     bool MaterialSerializer::parseScriptLine(String& line)
@@ -2107,7 +2064,7 @@ namespace Ogre
             {
                 // End of material
                 mScriptContext.section = MSS_NONE;
-                mScriptContext.material.setNull();
+                mScriptContext.material = NULL;
 				//Reset all levels for next material
 				mScriptContext.passLev = -1;
 				mScriptContext.stateLev= -1;
@@ -2182,7 +2139,7 @@ namespace Ogre
             {
                 // End of program
                 mScriptContext.section = MSS_PASS;
-                mScriptContext.program.setNull();
+                mScriptContext.program = NULL;
             }
             else
             {
@@ -2248,7 +2205,7 @@ namespace Ogre
 	{
 		// Now it is time to create the program and propagate the parameters
 		MaterialScriptProgramDefinition* def = mScriptContext.programDef;
-        GpuProgramPtr gp;
+        GpuProgram* gp = 0;
 		if (def->language == "asm")
 		{
 			// Native assembler
@@ -2265,8 +2222,7 @@ namespace Ogre
 			}
 			// Create
 			gp = GpuProgramManager::getSingleton().
-				createProgram(def->name, mScriptContext.groupName, def->source, 
-                    def->progType, def->syntax);
+				createProgram(def->name, def->source, def->progType, def->syntax);
 
 		}
 		else
@@ -2281,10 +2237,8 @@ namespace Ogre
 			// Create
             try 
             {
-			    HighLevelGpuProgramPtr hgp = HighLevelGpuProgramManager::getSingleton().
-				    createProgram(def->name, mScriptContext.groupName, 
-                        def->language, def->progType);
-                // Assign to generalised version
+			    HighLevelGpuProgram* hgp = HighLevelGpuProgramManager::getSingleton().
+				    createProgram(def->name, def->language, def->progType);
                 gp = hgp;
                 // Set source file
                 hgp->setSourceFile(def->source);
@@ -2303,11 +2257,8 @@ namespace Ogre
             }
             catch (Exception& e)
             {
-                logParseError("Could not create GPU program '"
-                    + def->name + "', error reported was: " + e.getFullDescription(), mScriptContext);
-				mScriptContext.program.setNull();
-            	mScriptContext.programParams.setNull();
-				return;
+                LogManager::getSingleton().logMessage("Could not create GPU program '"
+                    + def->name + "', error reported was: " + e.getFullDescription());
             }
         }
         // Set skeletal animation option
@@ -2341,7 +2292,7 @@ namespace Ogre
 
             }
             // Reset
-            mScriptContext.program.setNull();
+            mScriptContext.program = 0;
             mScriptContext.programParams.setNull();
         }
 
@@ -2370,7 +2321,7 @@ namespace Ogre
         }
     }
     //-----------------------------------------------------------------------
-    void MaterialSerializer::exportMaterial(const MaterialPtr& pMat, const String &fileName, bool exportDefaults)
+    void MaterialSerializer::exportMaterial(const Material *pMat, const String &fileName, bool exportDefaults)
     {
         clearQueue();
         mDefaults = exportDefaults;
@@ -2396,7 +2347,7 @@ namespace Ogre
         clearQueue();
     }
     //-----------------------------------------------------------------------
-    void MaterialSerializer::queueForExport(const MaterialPtr& pMat, bool clearQueued, bool exportDefaults)
+    void MaterialSerializer::queueForExport(const Material *pMat, bool clearQueued, bool exportDefaults)
     {
         if (clearQueued)
             clearQueue();
@@ -2415,7 +2366,7 @@ namespace Ogre
         return mBuffer;
     }
     //-----------------------------------------------------------------------
-    void MaterialSerializer::writeMaterial(const MaterialPtr& pMat)
+    void MaterialSerializer::writeMaterial(const Material *pMat)
     {
         LogManager::getSingleton().logMessage("MaterialSerializer : writing material " + pMat->getName() + " to queue.", LML_CRITICAL);
         // Material name
@@ -2459,7 +2410,8 @@ namespace Ogre
 			}
 
             // Iterate over techniques
-            Material::TechniqueIterator it = pMat->getTechniqueIterator();
+            Material::TechniqueIterator it = 
+                const_cast<Material*>(pMat)->getTechniqueIterator();
             while (it.hasMoreElements())
             {
                 writeTechnique(it.getNext());
@@ -2594,16 +2546,6 @@ namespace Ogre
                 writeAttribute(3, "depth_check");
                 writeValue(pPass->getDepthCheckEnabled() ? "on" : "off");
             }
-			// alpha_rejection
-			if (mDefaults || 
-				pPass->getAlphaRejectFunction() != CMPF_ALWAYS_PASS ||
-				pPass->getAlphaRejectValue() != 0)
-			{
-				writeAttribute(3, "alpha_rejection");
-				writeCompareFunction(pPass->getAlphaRejectFunction());
-				writeValue(StringConverter::toString(pPass->getAlphaRejectValue()));
-			}
-
 
             //depth write
             if (mDefaults || 
@@ -2853,6 +2795,16 @@ namespace Ogre
                     + convertFiltering(pTex->getTextureFiltering(FT_MAG))
                     + " "
                     + convertFiltering(pTex->getTextureFiltering(FT_MIP)));
+            }
+
+            // alpha_rejection
+            if (mDefaults || 
+                pTex->getAlphaRejectFunction() != CMPF_ALWAYS_PASS ||
+                pTex->getAlphaRejectValue() != 0)
+            {
+                writeAttribute(4, "alpha_rejection");
+                writeCompareFunction(pTex->getAlphaRejectFunction());
+                writeValue(StringConverter::toString(pTex->getAlphaRejectValue()));
             }
 
             // colour_op_ex

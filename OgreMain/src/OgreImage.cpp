@@ -28,8 +28,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreArchiveManager.h"
 #include "OgreException.h"
 #include "OgreImageCodec.h"
-#include "OgreColourValue.h"
-
+#include "OgreSDDataChunk.h"
 // Dependency on IL/ILU for resize
 #include <IL/il.h>
 #include <IL/ilu.h>
@@ -226,9 +225,8 @@ namespace Ogre {
 
         m_uWidth = uWidth;
         m_uHeight = uHeight;
-		m_uDepth = 1;
         m_eFormat = eFormat;
-        m_ucPixelSize = PixelUtil::getNumElemBytes( m_eFormat );
+        m_ucPixelSize = PF2PS( m_eFormat );
         m_uSize = m_uWidth * m_uHeight * m_ucPixelSize;
 
         m_pBuffer = pData;
@@ -240,7 +238,7 @@ namespace Ogre {
 
     //-----------------------------------------------------------------------------
     Image & Image::loadRawData(
-        DataStreamPtr& stream,
+        const DataChunk &pData,
         ushort uWidth, ushort uHeight,
         PixelFormat eFormat )
     {
@@ -248,25 +246,18 @@ namespace Ogre {
 
         m_uWidth = uWidth;
         m_uHeight = uHeight;
-		m_uDepth = 1;
         m_eFormat = eFormat;
-        m_ucPixelSize = PixelUtil::getNumElemBytes( m_eFormat );
+        m_ucPixelSize = PF2PS( m_eFormat );
         m_uSize = m_uWidth * m_uHeight * m_ucPixelSize;
 
-        if (m_uSize != stream->size())
-        {
-            Except(Exception::ERR_INVALIDPARAMS, 
-                "Stream size does not match calculated image size! ", 
-                "Image::loadRawData");
-        }
-        m_pBuffer = new uchar[ m_uSize ];
-        stream->read(m_pBuffer, m_uSize);
+        m_pBuffer = new uchar[ uWidth * uHeight * m_ucPixelSize ];
+        memcpy( m_pBuffer, pData.getPtr(), uWidth * uHeight * m_ucPixelSize );
 
         OgreUnguardRet( *this );
     }
 
     //-----------------------------------------------------------------------------
-    Image & Image::load(const String& strFileName, const String& group)
+    Image & Image::load( const String& strFileName )
     {
         OgreGuard( "Image::load" );
 
@@ -295,13 +286,21 @@ namespace Ogre {
             "Unable to load image file '" + strFileName + "' - invalid extension.",
             "Image::load" );
 
-        DataStreamPtr encoded = 
-            ResourceGroupManager::getSingleton().openResource(strFileName, group);
+        SDDataChunk encoded;
+        DataChunk decoded;
 
-		Codec::DecodeResult res = pCodec->decode(encoded);
+        if( !ArchiveManager::getSingleton()._findResourceData( 
+            strFileName, 
+            encoded ) )
+        {
+            Except(
+            Exception::ERR_INVALIDPARAMS, 
+            "Unable to find image file '" + strFileName + "'.",
+            "Image::load" );
+        }
 
-		ImageCodec::ImageData* pData = 
-			static_cast<ImageCodec::ImageData*>(res.second.getPointer());
+        ImageCodec::ImageData * pData = static_cast< ImageCodec::ImageData * > (
+            pCodec->decode( encoded, &decoded ) );
 
         // Get the format and compute the pixel size
         m_uWidth = pData->width;
@@ -310,13 +309,12 @@ namespace Ogre {
         m_uSize = pData->size;
         m_eFormat = pData->format;
         m_uNumMipmaps = pData->num_mipmaps;
-        m_ucPixelSize = PixelUtil::getNumElemBytes( m_eFormat );
+        m_ucPixelSize = PF2PS( m_eFormat );
         m_uFlags = pData->flags;
 
-		// re-use the decoded buffer
-        m_pBuffer = res.first->getPtr();
-		// ensure we don't delete when stream is closed
-		res.first->setFreeOnClose(false);
+        delete pData;
+
+        m_pBuffer = decoded.getPtr();
         
         OgreUnguardRet( *this );
     }
@@ -347,19 +345,16 @@ namespace Ogre {
             "Unable to save image file '" + filename + "' - invalid extension.",
             "Image::save" );
 
-        ImageCodec::ImageData* imgData = new ImageCodec::ImageData();
-        imgData->format = m_eFormat;
-        imgData->height = m_uHeight;
-        imgData->width = m_uWidth;
-		// Wrap in CodecDataPtr, this will delete
-		Codec::CodecDataPtr codeDataPtr(imgData);
-		// Wrap memory, be sure not to delete when stream destroyed
-        MemoryDataStreamPtr wrapper(new MemoryDataStream(m_pBuffer, m_uSize, false));
-		
-        pCodec->codeToFile(wrapper, filename, codeDataPtr);
+        ImageCodec::ImageData imgData;
+        imgData.format = m_eFormat;
+        imgData.height = m_uHeight;
+        imgData.width = m_uWidth;
+        DataChunk wrapper(m_pBuffer, m_uSize);
+
+        pCodec->codeToFile(wrapper, filename, &imgData);
     }
     //-----------------------------------------------------------------------------
-    Image & Image::load(DataStreamPtr& stream, const String& type )
+    Image & Image::load( const DataChunk& chunk, const String& type )
     {
         OgreGuard( "Image::load" );
 
@@ -372,10 +367,10 @@ namespace Ogre {
             "Unable to load image - invalid extension.",
             "Image::load" );
 
-		Codec::DecodeResult res = pCodec->decode(stream);
+        DataChunk decoded;
 
-		ImageCodec::ImageData* pData = 
-			static_cast<ImageCodec::ImageData*>(res.second.getPointer());
+        ImageCodec::ImageData * pData = static_cast< ImageCodec::ImageData * >(
+            pCodec->decode( chunk, &decoded ) );
 
         m_uWidth = pData->width;
         m_uHeight = pData->height;
@@ -386,11 +381,11 @@ namespace Ogre {
         
         // Get the format and compute the pixel size
         m_eFormat = pData->format;
-        m_ucPixelSize = PixelUtil::getNumElemBytes( m_eFormat );
-		// Just use internal buffer of returned memory stream
-        m_pBuffer = res.first->getPtr();
-		// Make sure stream does not delete
-		res.first->setFreeOnClose(false);
+        m_ucPixelSize = PF2PS( m_eFormat );
+
+        delete pData;
+
+        m_pBuffer = decoded.getPtr();
 
         OgreUnguardRet( *this );
     }
@@ -471,9 +466,35 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     bool Image::getHasAlpha(void) const
     {
-        return PixelUtil::getFlags(m_eFormat) & PFF_HASALPHA;
+        return Image::formatHasAlpha(m_eFormat);
     }
-	//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
+    bool Image::formatHasAlpha(PixelFormat format)
+    {
+        switch( format )
+		{
+		case PF_A8:
+		case PF_A4L4:
+		case PF_L4A4:
+		case PF_A4R4G4B4:
+		case PF_B4G4R4A4:
+		case PF_A8R8G8B8:
+		case PF_B8G8R8A8:
+		case PF_A2R10G10B10:
+		case PF_B10G10R10A2:
+			return true;
+
+		case PF_UNKNOWN:
+		case PF_L8:
+		case PF_R5G6B5:
+		case PF_B5G6R5:
+		case PF_R8G8B8:
+		case PF_B8G8R8:
+		default:
+			return false;
+		}
+    }
+    //-----------------------------------------------------------------------------
     void Image::applyGamma( unsigned char *buffer, Real gamma, size_t size, uchar bpp )
     {
         if( gamma == 1.0f )
@@ -542,10 +563,10 @@ namespace Ogre {
         ilGenImages( 1, &ImageName );
         ilBindImage( ImageName );
 
-		PixelBox src = getPixelBox(0, 0);
-
-		// Convert image from OGRE to current IL image
-		ILUtil::fromOgre(src);
+        std::pair< int, int > fmt_bpp = OgreFormat2ilFormat( m_eFormat );
+        ilTexImage( 
+            m_uWidth, m_uHeight, 1, fmt_bpp.second, fmt_bpp.first, IL_UNSIGNED_BYTE, 
+            static_cast< void * >( m_pBuffer ) );
 
 		// set filter
 		iluImageParameter(ILU_FILTER, getILFilter(filter));
@@ -556,62 +577,14 @@ namespace Ogre {
 		delete [] m_pBuffer;
 		m_uWidth = width;
 		m_uHeight = height;
-		m_uDepth = 1;
-		size_t dataSize = PixelUtil::getMemorySize(m_uWidth, m_uHeight, m_uDepth, m_eFormat);
+		size_t dataSize = width * height * m_ucPixelSize;
 		m_pBuffer = new uchar[dataSize];
-		
-		PixelBox dest(m_uWidth, m_uHeight, m_uDepth, m_eFormat, m_pBuffer);
-		ILUtil::toOgre(dest);
+		memcpy(m_pBuffer, ilGetData(), dataSize);
 
         ilDeleteImages(1, &ImageName);
 
 		// return to default filter
 		iluImageParameter(ILU_FILTER, ILU_NEAREST);
 	}
-    //-----------------------------------------------------------------------
-	void Image::scale(const PixelBox &src, const PixelBox &scaled, Filter filter) 
-	{
-		ILuint ImageName;
-
-        ilGenImages( 1, &ImageName );
-        ilBindImage( ImageName );
-
-		// Convert image from OGRE to current IL image
-		ILUtil::fromOgre(src);
-		
-		// set filter
-		iluImageParameter(ILU_FILTER, getILFilter(filter));
-		
-		// do the scaling
-		if(!iluScale(scaled.getWidth(), scaled.getHeight(), scaled.getDepth())) {
-            Except( Exception::ERR_INTERNAL_ERROR,
-                iluErrorString(ilGetError()),
-                "Image::scale" ) ;
-        }
-		ILUtil::toOgre(scaled);
-
-        ilDeleteImages(1, &ImageName);
-
-		// return to default filter
-		iluImageParameter(ILU_FILTER, ILU_NEAREST);
-	}
-
-	//-----------------------------------------------------------------------------    
-
-    ColourValue Image::getColourAt(int x, int y, int z) 
-    {
-		ColourValue rval;
-        PixelUtil::unpackColour(&rval, m_eFormat, &m_pBuffer[m_ucPixelSize * (z * m_uWidth * m_uHeight + m_uWidth * y + x)]);
-		return rval;
-    }
-    
-    //-----------------------------------------------------------------------------    
-
-    PixelBox Image::getPixelBox(int cubeface, int mipmap) const
-    {
-        // TODO - do something with cubeface & mipmap
-        PixelBox src(getWidth(), getHeight(), getDepth(), getFormat(), const_cast<uint8*>(getData()));
-        return src;
-    }
 
 }

@@ -65,7 +65,7 @@ namespace Ogre {
         /// Comparator to order non-transparent object passes
         struct SolidQueueItemLess
         {
-            bool _OgreExport operator()(const Pass* a, const Pass* b) const
+            _OgreExport bool operator()(const Pass* a, const Pass* b) const
             {
                 // Sort by passHash, which is pass, then texture unit changes
                 unsigned long hasha = a->getHash();
@@ -85,7 +85,8 @@ namespace Ogre {
         struct TransparentQueueItemLess
         {
             const Camera* camera;
-            bool _OgreExport operator()(const RenderablePass& a, const RenderablePass& b) const
+
+            _OgreExport bool operator()(const RenderablePass& a, const RenderablePass& b) const
             {
                 if (a.renderable == b.renderable)
                 {

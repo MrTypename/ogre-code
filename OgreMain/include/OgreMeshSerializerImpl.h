@@ -57,17 +57,20 @@ namespace Ogre {
         */
         void exportMesh(const Mesh* pMesh, const String& filename);
 
-        /** Imports Mesh and (optionally) Material data from a .mesh file DataStream.
+        /** Imports Mesh and (optionally) Material data from a .mesh file DataChunk.
         @remarks
-        This method imports data from a DataStream opened from a .mesh file and places it's
+        This method imports data from a DataChunk opened from a .mesh file and places it's
         contents into the Mesh object which is passed in. 
-        @param stream The DataStream holding the .mesh data. Must be initialised (pos at the start of the buffer).
+        @param chunk The DataChunk holding the .mesh data. Must be initialised (pos at the start of the buffer).
         @param pDest Pointer to the Mesh object which will receive the data. Should be blank already.
         */
-        void importMesh(DataStreamPtr& stream, Mesh* pDest);
+        void importMesh(DataChunk& chunk, Mesh* pDest);
 
     protected:
 
+        typedef std::map<String, Material*> MaterialMap;
+        MaterialMap mMaterialList;
+        Mesh* mpMesh;
         bool mIsSkeletallyAnimated;
 
         // Internal methods
@@ -77,8 +80,8 @@ namespace Ogre {
         virtual void writeSubMeshOperation(const SubMesh* s);
         virtual void writeGeometry(const VertexData* pGeom);
         virtual void writeSkeletonLink(const String& skelName);
-        virtual void writeMeshBoneAssignment(const VertexBoneAssignment& assign);
-        virtual void writeSubMeshBoneAssignment(const VertexBoneAssignment& assign);
+        virtual void writeMeshBoneAssignment(const VertexBoneAssignment* assign);
+        virtual void writeSubMeshBoneAssignment(const VertexBoneAssignment* assign);
         virtual void writeLodInfo(const Mesh* pMesh);
         virtual void writeLodSummary(unsigned short numLevels, bool manual);
         virtual void writeLodUsageManual(const Mesh::MeshLodUsage& usage);
@@ -86,38 +89,35 @@ namespace Ogre {
         virtual void writeBoundsInfo(const Mesh* pMesh);
         virtual void writeEdgeList(const Mesh* pMesh);
 
-        virtual size_t calcMeshSize(const Mesh* pMesh);
-        virtual size_t calcSubMeshSize(const SubMesh* pSub);
-        virtual size_t calcGeometrySize(const VertexData* pGeom);
-        virtual size_t calcSkeletonLinkSize(const String& skelName);
-        virtual size_t calcBoneAssignmentSize(void);
-        virtual size_t calcSubMeshOperationSize(const SubMesh* pSub);
-        virtual size_t calcSubMeshNameTableSize(const Mesh* pMesh);
-        virtual size_t calcEdgeListSize(const Mesh* pMesh);
-        virtual size_t calcEdgeListLodSize(const EdgeData* data, bool isManual);
-        virtual size_t calcEdgeGroupSize(const EdgeData::EdgeGroup& group);
+        virtual unsigned long calcMeshSize(const Mesh* pMesh);
+        virtual unsigned long calcSubMeshSize(const SubMesh* pSub);
+        virtual unsigned long calcGeometrySize(const VertexData* pGeom);
+        virtual unsigned long calcSkeletonLinkSize(const String& skelName);
+        virtual unsigned long calcBoneAssignmentSize(void);
+        virtual unsigned long calcSubMeshOperationSize(const SubMesh* pSub);
+        virtual unsigned long calcSubMeshNameTableSize(const Mesh *pMesh);
+        virtual unsigned long calcEdgeListSize(const Mesh *pMesh);
+        virtual unsigned long calcEdgeListLodSize(const EdgeData* data, bool isManual);
+        virtual unsigned long calcEdgeGroupSize(const EdgeData::EdgeGroup& group);
 
-        virtual void readTextureLayer(DataStreamPtr& stream, Mesh* pMesh, MaterialPtr& pMat);
-        virtual void readSubMeshNameTable(DataStreamPtr& stream, Mesh* pMesh);
-        virtual void readMesh(DataStreamPtr& stream, Mesh* pMesh);
-        virtual void readSubMesh(DataStreamPtr& stream, Mesh* pMesh);
-        virtual void readSubMeshOperation(DataStreamPtr& stream, Mesh* pMesh, SubMesh* sub);
-        virtual void readGeometry(DataStreamPtr& stream, Mesh* pMesh, VertexData* dest);
-        virtual void readGeometryVertexDeclaration(DataStreamPtr& stream, Mesh* pMesh, VertexData* dest);
-        virtual void readGeometryVertexElement(DataStreamPtr& stream, Mesh* pMesh, VertexData* dest);
-        virtual void readGeometryVertexBuffer(DataStreamPtr& stream, Mesh* pMesh, VertexData* dest);
+        virtual void readTextureLayer(DataChunk& chunk, Material* pMat);
+        virtual void readSubMeshNameTable(DataChunk& chunk);
+        virtual void readMesh(DataChunk& chunk);
+        virtual void readSubMesh(DataChunk& chunk);
+        virtual void readSubMeshOperation(DataChunk& chunk, SubMesh* sub);
+        virtual void readGeometry(DataChunk& chunk, VertexData* dest);
+        virtual void readGeometryVertexDeclaration(DataChunk& chunk, VertexData* dest);
+        virtual void readGeometryVertexElement(DataChunk& chunk, VertexData* dest);
+        virtual void readGeometryVertexBuffer(DataChunk& chunk, VertexData* dest);
 
-        virtual void readSkeletonLink(DataStreamPtr& stream, Mesh* pMesh);
-        virtual void readMeshBoneAssignment(DataStreamPtr& stream, Mesh* pMesh);
-        virtual void readSubMeshBoneAssignment(DataStreamPtr& stream, Mesh* pMesh, 
-            SubMesh* sub);
-        virtual void readMeshLodInfo(DataStreamPtr& stream, Mesh* pMesh);
-        virtual void readMeshLodUsageManual(DataStreamPtr& stream, Mesh* pMesh, 
-            unsigned short lodNum, Mesh::MeshLodUsage& usage);
-        virtual void readMeshLodUsageGenerated(DataStreamPtr& stream, Mesh* pMesh, 
-            unsigned short lodNum, Mesh::MeshLodUsage& usage);
-        virtual void readBoundsInfo(DataStreamPtr& stream, Mesh* pMesh);
-        virtual void readEdgeList(DataStreamPtr& stream, Mesh* pMesh);
+        virtual void readSkeletonLink(DataChunk &chunk);
+        virtual void readMeshBoneAssignment(DataChunk& chunk);
+        virtual void readSubMeshBoneAssignment(DataChunk& chunk, SubMesh* sub);
+        virtual void readMeshLodInfo(DataChunk& chunk);
+        virtual void readMeshLodUsageManual(DataChunk& chunk, unsigned short lodNum, Mesh::MeshLodUsage& usage);
+        virtual void readMeshLodUsageGenerated(DataChunk& chunk, unsigned short lodNum, Mesh::MeshLodUsage& usage);
+        virtual void readBoundsInfo(DataChunk& chunk);
+        virtual void readEdgeList(DataChunk& chunk);
 
 
 
@@ -140,16 +140,12 @@ namespace Ogre {
         MeshSerializerImpl_v1_2();
         ~MeshSerializerImpl_v1_2();
     protected:
-        virtual void readMesh(DataStreamPtr& stream, Mesh* pMesh);
-        virtual void readGeometry(DataStreamPtr& stream, Mesh* pMesh, VertexData* dest);
-        virtual void readGeometryPositions(unsigned short bindIdx, DataStreamPtr& stream, 
-            Mesh* pMesh, VertexData* dest);
-        virtual void readGeometryNormals(unsigned short bindIdx, DataStreamPtr& stream, 
-            Mesh* pMesh, VertexData* dest);
-        virtual void readGeometryColours(unsigned short bindIdx, DataStreamPtr& stream, 
-            Mesh* pMesh, VertexData* dest);
-        virtual void readGeometryTexCoords(unsigned short bindIdx, DataStreamPtr& stream, 
-            Mesh* pMesh, VertexData* dest, unsigned short set);
+        virtual void readMesh(DataChunk& chunk);
+        virtual void readGeometry(DataChunk& chunk, VertexData* dest);
+        virtual void readGeometryPositions(unsigned short bindIdx, DataChunk& chunk, VertexData* dest);
+        virtual void readGeometryNormals(unsigned short bindIdx, DataChunk& chunk, VertexData* dest);
+        virtual void readGeometryColours(unsigned short bindIdx, DataChunk& chunk, VertexData* dest);
+        virtual void readGeometryTexCoords(unsigned short bindIdx, DataChunk& chunk, VertexData* dest, unsigned short set);
     };
 
     /** Class for providing backwards-compatibility for loading version 1.1 of the .mesh format. */
@@ -159,8 +155,7 @@ namespace Ogre {
         MeshSerializerImpl_v1_1();
         ~MeshSerializerImpl_v1_1();
     protected:
-        void readGeometryTexCoords(unsigned short bindIdx, DataStreamPtr& stream, 
-            Mesh* pMesh, VertexData* dest, unsigned short set);
+        void readGeometryTexCoords(unsigned short bindIdx, DataChunk& chunk, VertexData* dest, unsigned short set);
     };
 
 

@@ -33,19 +33,10 @@ http://www.gnu.org/copyleft/gpl.html.
 
 using namespace Ogre;
 
-GLGpuNvparseProgram::GLGpuNvparseProgram(ResourceManager* creator, 
-        const String& name, ResourceHandle handle, 
-        const String& group, bool isManual, ManualResourceLoader* loader) 
-        : GLGpuProgram(creator, name, handle, group, isManual, loader)
+GLGpuNvparseProgram::GLGpuNvparseProgram(const String& name, GpuProgramType gptype, const String& syntaxCode) :
+    GLGpuProgram(name, gptype, syntaxCode)
 {
     mProgramID = glGenLists(1);
-}
-
-GLGpuNvparseProgram::~GLGpuNvparseProgram()
-{
-    // have to call this here reather than in Resource destructor
-    // since calling virtual methods in base destructors causes crash
-    unload(); 
 }
 
 void GLGpuNvparseProgram::bindProgram(void)
@@ -90,7 +81,7 @@ void GLGpuNvparseProgram::bindProgramParameters(GpuProgramParametersSharedPtr pa
     }
 
 }
-void GLGpuNvparseProgram::unloadImpl(void)
+void GLGpuNvparseProgram::unload(void)
 {
     glDeleteLists(mProgramID,1);
 }

@@ -153,9 +153,9 @@ namespace Ogre {
                 }
             }
 #if OGRE_DEBUG_MODE
-			StringUtil::StrStreamType logname;
-			logname << "pm_level" << numLevels << ".log";
-			dumpContents(logname.str());
+			char logname[20];
+			sprintf(logname, "pm_level%d.log", numLevels);
+			dumpContents(logname);
 #endif
 
             // Bake a new LOD and add it to the list

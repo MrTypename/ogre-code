@@ -253,9 +253,10 @@ namespace Ogre {
     {
         OgreGuard( "D3DRenderSystem::setConfigOption" );
 
-        StringUtil::StrStreamType str;
-        str << "RenderSystem Option: " << name << " = " << value;
-        LogManager::getSingleton().logMessage(str.str());
+        char msg[128];
+
+        sprintf(msg, "RenderSystem Option: %s = %s", name.c_str(), value.c_str());
+        LogManager::getSingleton().logMessage(msg);
 
         // Find option
         ConfigOptionMap::iterator it = mOptions.find(name);
@@ -265,10 +266,9 @@ namespace Ogre {
             it->second.currentValue = value;
         else
         {
-            str.clear();
-            str << "Option named " << name << " does not exist.";
+            sprintf(msg, "Option named %s does not exist.", name.c_str());
             Except(Exception::ERR_INVALIDPARAMS,
-                str.str(), "D3DRenderSystem::setConfigOption");
+                msg, "D3DRenderSystem::setConfigOption");
         }
 
         // Refresh other options if DD Driver changed
@@ -613,7 +613,7 @@ namespace Ogre {
         OgreUnguardRet( win );
     }
 
-    RenderTexture * D3DRenderSystem::createRenderTexture( const String & name, unsigned int width, unsigned int height, TextureType texType, PixelFormat format )
+    RenderTexture * D3DRenderSystem::createRenderTexture( const String & name, unsigned int width, unsigned int height )
     {
         RenderTexture * rt = new D3D7RenderTexture( name, width, height );
         attachRenderTarget( *rt );
@@ -831,8 +831,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void D3DRenderSystem::_setSurfaceParams(const ColourValue &ambient,
         const ColourValue &diffuse, const ColourValue &specular,
-        const ColourValue &emissive, const Real shininess,
-        TrackVertexColourType tracking)
+        const ColourValue &emissive, const Real shininess)
     {
         // Remember last call
         static ColourValue lastAmbient = ColourValue::Black;
@@ -840,13 +839,13 @@ namespace Ogre {
         static ColourValue lastSpecular = ColourValue::Black;
         static ColourValue lastEmissive = ColourValue::Black;
         static Real lastShininess = 0.0;
-        static TrackVertexColourType lastTracking = -1;
 
         // Only update if changed
         if (ambient != lastAmbient || diffuse != lastDiffuse ||
             specular != lastSpecular || emissive != lastEmissive ||
             shininess != lastShininess)
         {
+
             // Convert to D3D
             D3DMATERIAL7 d3dMat;
 
@@ -876,40 +875,15 @@ namespace Ogre {
             if (FAILED(hr))
                 Except(hr, "Error setting D3D material.", "D3DRenderSystem::_setSurfaceParams");
 
-            // Remember the details
-            lastAmbient = ambient;
-            lastDiffuse = diffuse;
-            lastSpecular = specular;
-            lastEmissive = emissive;
-            lastShininess = shininess;                
-        }
-        if(tracking != lastTracking) 
-        {
-            if(tracking != TVC_NONE) 
-            {
-                mlpD3DDevice->SetRenderState(D3DRENDERSTATE_COLORVERTEX, TRUE);
-                mlpD3DDevice->SetRenderState(D3DRENDERSTATE_AMBIENTMATERIALSOURCE, (tracking&TVC_AMBIENT)?D3DMCS_COLOR1:D3DMCS_MATERIAL);
-                mlpD3DDevice->SetRenderState(D3DRENDERSTATE_DIFFUSEMATERIALSOURCE, (tracking&TVC_DIFFUSE)?D3DMCS_COLOR1:D3DMCS_MATERIAL);
-                mlpD3DDevice->SetRenderState(D3DRENDERSTATE_SPECULARMATERIALSOURCE, (tracking&TVC_SPECULAR)?D3DMCS_COLOR1:D3DMCS_MATERIAL);
-                mlpD3DDevice->SetRenderState(D3DRENDERSTATE_EMISSIVEMATERIALSOURCE, (tracking&TVC_EMISSIVE)?D3DMCS_COLOR1:D3DMCS_MATERIAL);
-            } 
-            else 
-            {
-                mlpD3DDevice->SetRenderState(D3DRENDERSTATE_COLORVERTEX, FALSE);               
-            }
-            lastTracking = tracking;
         }
     }
     //-----------------------------------------------------------------------
     void D3DRenderSystem::_setTexture(size_t stage, bool enabled, const String &texname)
     {
         HRESULT hr;
-        D3DTexturePtr dt = TextureManager::getSingleton().getByName(texname);
-        if (enabled && !dt.isNull())
+        D3DTexture* dt = static_cast< D3DTexture* >(TextureManager::getSingleton().getByName(texname));
+        if (enabled && dt)
         {
-            // note used
-            dt->touch();
-
             LPDIRECTDRAWSURFACE7 pTex = dt->getDDSurface();
             if (pTex != mTexStageDesc[stage].pTex)
             {
@@ -2267,7 +2241,7 @@ namespace Ogre {
 
             }
 
-            hr = __SetRenderState( D3DRENDERSTATE_FOGCOLOR, colour.getAsARGB() );
+            hr = __SetRenderState( D3DRENDERSTATE_FOGCOLOR, colour.getAsLongARGB() );
             hr = __SetRenderState( D3DRENDERSTATE_FOGSTART, *((LPDWORD)(&start)) );
             hr = __SetRenderState( D3DRENDERSTATE_FOGEND, *((LPDWORD)(&end)) );
             hr = __SetRenderState( D3DRENDERSTATE_FOGDENSITY, *((LPDWORD)(&density)) );
@@ -2277,9 +2251,9 @@ namespace Ogre {
     }
 
     //---------------------------------------------------------------------
-    void D3DRenderSystem::convertColourValue(const ColourValue& colour, uint32* pDest)
+    void D3DRenderSystem::convertColourValue(const ColourValue& colour, unsigned long* pDest)
     {
-        *pDest = colour.getAsARGB();
+        *pDest = colour.getAsLongARGB();
     }
     //---------------------------------------------------------------------
     void D3DRenderSystem::_makeProjectionMatrix(const Radian& fovy, Real aspect, 
@@ -2678,7 +2652,7 @@ namespace Ogre {
             0, 
             NULL, 
             flags,
-            colour.getAsARGB(), 
+            colour.getAsLongARGB(), 
             depth, 
             stencil ) ) )
         {

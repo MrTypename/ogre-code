@@ -30,18 +30,12 @@ http://www.gnu.org/copyleft/lesser.txt.
 namespace Ogre {
 
     //-----------------------------------------------------------------------
-    PatchMesh::PatchMesh(ResourceManager* creator, const String& name, ResourceHandle handle,
-        const String& group)
-        : Mesh(creator, name, handle, group, false, 0)
-    {
-    }
-    //-----------------------------------------------------------------------
-    void PatchMesh::define(void* controlPointBuffer, 
+    PatchMesh::PatchMesh(const String& name, void* controlPointBuffer, 
             VertexDeclaration *declaration, size_t width, size_t height,
             size_t uMaxSubdivisionLevel, size_t vMaxSubdivisionLevel,
             PatchSurface::VisibleSide visibleSide, HardwareBuffer::Usage vbUsage, 
             HardwareBuffer::Usage ibUsage,
-            bool vbUseShadow, bool ibUseShadow) 
+            bool vbUseShadow, bool ibUseShadow) : Mesh(name)
     {
         mVertexBufferUsage = vbUsage;
         mVertexBufferShadowBuffer = vbUseShadow;
@@ -56,6 +50,7 @@ namespace Ogre {
             PatchSurface::PST_BEZIER, uMaxSubdivisionLevel, vMaxSubdivisionLevel, 
             visibleSide);
 
+
     }
     //-----------------------------------------------------------------------
     void PatchMesh::setSubdivision(Real factor)
@@ -66,7 +61,7 @@ namespace Ogre {
         
     }
     //-----------------------------------------------------------------------
-    void PatchMesh::loadImpl(void)
+    void PatchMesh::load(void)
     {
         SubMesh* sm = this->createSubMesh();
         sm->vertexData = new VertexData();
@@ -100,6 +95,7 @@ namespace Ogre {
         // Set bounds
         this->_setBounds(mSurface.getBounds(), true);
         this->_setBoundingSphereRadius(mSurface.getBoundingSphereRadius());
+        mIsLoaded = true;
 
     }
 

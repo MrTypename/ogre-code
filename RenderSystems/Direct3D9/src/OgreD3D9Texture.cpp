@@ -23,11 +23,11 @@ http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9Texture.h"
-#include "OgreD3D9HardwarePixelBuffer.h"
 #include "OgreException.h"
 #include "OgreLogManager.h"
 #include "OgreStringConverter.h"
 #include "OgreBitwise.h"
+#include "OgreSDDataChunk.h"
 
 #include "OgreNoMemoryMacros.h"
 #include <d3dx9.h>
@@ -37,27 +37,53 @@ http://www.gnu.org/copyleft/lesser.txt.
 namespace Ogre 
 {
 	/****************************************************************************************/
-    D3D9Texture::D3D9Texture(ResourceManager* creator, const String& name, 
-        ResourceHandle handle, const String& group, bool isManual, 
-        ManualResourceLoader* loader, IDirect3DDevice9 *pD3DDevice)
-        :Texture(creator, name, handle, group, isManual, loader),
-        mpDev(pD3DDevice), 
-        mpD3D(NULL), 
-        mpNormTex(NULL),
-        mpCubeTex(NULL),
-        mpZBuff(NULL),
-        mpTex(NULL),
-        mAutoGenMipmaps(false)
+	D3D9Texture::D3D9Texture( const String& name, TextureType texType, IDirect3DDevice9 *pD3DDevice, TextureUsage usage )
 	{
-        _initDevice();
+		// normal constructor
+		this->_initMembers();
+		// set the device and caps/formats
+		this->_setDevice(pD3DDevice);
+
+		mName = name;
+		mTextureType = texType;
+		mUsage = usage;
+        mAutoGenMipMaps = false;
+
+		if (this->getTextureType() == TEX_TYPE_CUBE_MAP)
+			_constructCubeFaceNames(mName);
+	}
+	/****************************************************************************************/
+	D3D9Texture::D3D9Texture( const String& name, TextureType texType, IDirect3DDevice9 *pD3DDevice, uint width, uint height, uint numMips, PixelFormat format, TextureUsage usage )
+	{
+		// this constructor is mainly used for RTT
+		this->_initMembers();
+		// set the device and caps/formats
+		this->_setDevice(pD3DDevice);
+
+		mName = name;
+		mTextureType = texType;
+		mUsage = usage;
+		mNumMipMaps = numMips;
+        mAutoGenMipMaps = false;
+
+		if (this->getTextureType() == TEX_TYPE_CUBE_MAP)
+			_constructCubeFaceNames(mName);
+
+		this->_setSrcAttributes(width, height, 1, format);
+		// if it's a render target we must 
+		// create it right now, don't know why ???
+		if (mUsage == TU_RENDERTARGET)
+		{
+			this->_createTex();
+			mIsLoaded = true;
+		}
 	}
 	/****************************************************************************************/
 	D3D9Texture::~D3D9Texture()
 	{
+		if (this->isLoaded())
+			unload();
 		SAFE_RELEASE(mpD3D);
-        // have to call this here reather than in Resource destructor
-        // since calling virtual methods in base destructors causes crash
-        unload(); 
 	}
 	/****************************************************************************************/
 	void D3D9Texture::blitImage(const Image& src, const Image::Rect imgRect, const Image::Rect texRect )
@@ -173,7 +199,7 @@ namespace Ogre
         mpNormTex->AddDirtyRect(NULL);
 
         // Mipmapping
-        if (mAutoGenMipmaps)
+        if (mAutoGenMipMaps)
         {
 			hr = mpTex->SetAutoGenFilterType(_getBestFilterMethod());
 			if (FAILED(hr))
@@ -199,7 +225,7 @@ namespace Ogre
 		SAFE_RELEASE(pSrcSurface);
 	}
 	/****************************************************************************************/
-	void D3D9Texture::copyToTexture(TexturePtr& target)
+	void D3D9Texture::copyToTexture(Texture *target)
 	{
         // check if this & target are the same format and type
 		// blitting from or to cube textures is not supported yet
@@ -214,7 +240,7 @@ namespace Ogre
         HRESULT hr;
         D3D9Texture *other;
 		// get the target
-		other = reinterpret_cast< D3D9Texture * >( target.get() );
+		other = reinterpret_cast< D3D9Texture * >( target );
 		// target rectangle (whole surface)
 		RECT dstRC = {0, 0, other->getWidth(), other->getHeight()};
 
@@ -308,15 +334,26 @@ namespace Ogre
 		// we need src image info
 		this->_setSrcAttributes(tImage.getWidth(), tImage.getHeight(), 1, tImage.getFormat());
 		// create a blank texture
-		createInternalResources();
+		this->_createNormTex();
 		// set gamma prior to blitting
         Image::applyGamma(tImage.getData(), this->getGamma(), (uint)tImage.getSize(), tImage.getBPP());
 		this->_blitImageToNormTex(tImage);
 		mIsLoaded = true;
 	}
 	/****************************************************************************************/
-	void D3D9Texture::loadImpl()
+	void D3D9Texture::load()
 	{
+		// unload if loaded
+		if (this->isLoaded())
+			unload();
+		
+		if (mUsage == TU_RENDERTARGET)
+		{
+			this->_createTex();
+			mIsLoaded = true;
+			return;
+		}
+
 		// load based on tex.type
 		switch (this->getTextureType())
 		{
@@ -331,15 +368,20 @@ namespace Ogre
 			this->_loadCubeTex();
 			break;
 		default:
-			Except( Exception::ERR_INTERNAL_ERROR, "Unknown texture type", "D3D9Texture::loadImpl" );
+			Except( Exception::ERR_INTERNAL_ERROR, "Unknown texture type", "D3D9Texture::load" );
 			this->_freeResources();
 		}
 
 	}
 	/****************************************************************************************/
-	void D3D9Texture::unloadImpl()
+	void D3D9Texture::unload()
 	{
-		_freeResources();
+		// unload if it's loaded
+		if (this->isLoaded())
+		{
+			this->_freeResources();
+			mIsLoaded = false;
+		}
 	}
 	/****************************************************************************************/
 	void D3D9Texture::_freeResources()
@@ -358,13 +400,13 @@ namespace Ogre
 		if (StringUtil::endsWith(getName(), ".dds"))
         {
             // find & load resource data
-			DataStreamPtr dstream = ResourceGroupManager::getSingleton().openResource(mName, mGroup);
-            MemoryDataStream stream( dstream );
+            SDDataChunk chunk;
+            TextureManager::getSingleton()._findResourceData(this->getName(), chunk);
 
             HRESULT hr = D3DXCreateCubeTextureFromFileInMemory(
                 mpDev,
-                stream.getPtr(),
-                stream.size(),
+                chunk.getPtr(),
+                chunk.getSize(),
                 &mpCubeTex);
 
             if (FAILED(hr))
@@ -393,24 +435,21 @@ namespace Ogre
         {
 
             // Load from 6 separate files
-            _constructCubeFaceNames(mName);
             // First create the base surface, for that we need to know the size
             Image img;
-            img.load(this->_getCubeFaceName(0), mGroup);
+            img.load(this->_getCubeFaceName(0));
             _setSrcAttributes(img.getWidth(), img.getHeight(), 1, img.getFormat());
             // now create the texture
-            createInternalResources();
+            this->_createCubeTex();
 
 		    HRESULT hr; // D3D9 methods result
 
 		    // load faces
 		    for (size_t face = 0; face < 6; face++)
 		    {
-				DataStreamPtr dstream = 
-					ResourceGroupManager::getSingleton().openResource(
-                        _getCubeFaceName(face), mGroup);
-                MemoryDataStream stream(dstream);
-                    
+                SDDataChunk chunk;
+                TextureManager::getSingleton()._findResourceData(
+                    this->_getCubeFaceName(face), chunk);
                 
                 LPDIRECT3DSURFACE9 pDstSurface;
                 hr = mpCubeTex->GetCubeMapSurface((D3DCUBEMAP_FACES)face, 0, &pDstSurface);
@@ -425,8 +464,8 @@ namespace Ogre
                     pDstSurface,
                     NULL,                       // no palette
                     NULL,                       // entire surface
-                    stream.getPtr(),
-                    stream.size(),
+                    chunk.getPtr(),
+                    chunk.getSize(),
                     NULL,                       // entire source
                     D3DX_DEFAULT,               // default filtering
                     0,                          // No colour key
@@ -441,7 +480,7 @@ namespace Ogre
 		    }
 
             // Mipmaps
-            if (mAutoGenMipmaps)
+            if (mAutoGenMipMaps)
             {
                 // use best filtering method supported by hardware
                 hr = mpTex->SetAutoGenFilterType(_getBestFilterMethod());
@@ -476,13 +515,13 @@ namespace Ogre
 		assert(this->getTextureType() == TEX_TYPE_3D);
 
         // find & load resource data
-		DataStreamPtr dstream = ResourceGroupManager::getSingleton().openResource(mName, mGroup);
-		MemoryDataStream stream(dstream);
+        SDDataChunk chunk;
+        TextureManager::getSingleton()._findResourceData(this->getName(), chunk);
 
         HRESULT hr = D3DXCreateVolumeTextureFromFileInMemory(
             mpDev,
-            stream.getPtr(),
-            stream.size(),
+            chunk.getPtr(),
+            chunk.getSize(),
             &mpVolumeTex);
 
         if (FAILED(hr))
@@ -516,14 +555,13 @@ namespace Ogre
 
 		// Use D3DX
         // find & load resource data
-		DataStreamPtr dstream = 
-			ResourceGroupManager::getSingleton().openResource(mName, mGroup);
-        MemoryDataStream stream(dstream);
+        SDDataChunk chunk;
+        TextureManager::getSingleton()._findResourceData(this->getName(), chunk);
 
         HRESULT hr = D3DXCreateTextureFromFileInMemory(
             mpDev,
-            stream.getPtr(),
-            stream.size(),
+            chunk.getPtr(),
+            chunk.getSize(),
             &mpNormTex);
 
         if (FAILED(hr))
@@ -550,14 +588,11 @@ namespace Ogre
 		mIsLoaded = true;
 	}
 	/****************************************************************************************/
-    void D3D9Texture::createInternalResources(void)
+	void D3D9Texture::_createTex()
 	{
-		// If mSrcWidth and mSrcHeight are zero, the requested extents have probably been set
-		// through setWidth and setHeight, which set mWidth and mHeight. Take those values.
-		if(mSrcWidth == 0 || mSrcHeight == 0) {
-			mSrcWidth = mWidth;
-			mSrcHeight = mHeight;
-		}
+		// if we are there then the source image dim. and format must already be set !!!
+		assert(mSrcWidth > 0 || mSrcHeight > 0);
+
 		// load based on tex.type
 		switch (this->getTextureType())
 		{
@@ -569,7 +604,7 @@ namespace Ogre
 			this->_createCubeTex();
 			break;
 		default:
-			Except( Exception::ERR_INTERNAL_ERROR, "Unknown texture type", "D3D9Texture::createInternalResources" );
+			Except( Exception::ERR_INTERNAL_ERROR, "Unknown texture type", "D3D9Texture::_createTex" );
 			this->_freeResources();
 		}
 	}
@@ -585,13 +620,13 @@ namespace Ogre
 
 		// Use D3DX to help us create the texture, this way it can adjust any relevant sizes
 		DWORD usage = (mUsage == TU_RENDERTARGET) ? D3DUSAGE_RENDERTARGET : 0;
-		UINT numMips = (mNumMipmaps ? mNumMipmaps : 1);
+		UINT numMips = (mNumMipMaps ? mNumMipMaps : 1);
 		// check if mip maps are supported on hardware
-		if ((mDevCaps.TextureCaps & D3DPTEXTURECAPS_MIPMAP) && mNumMipmaps > 0)
+		if ((mDevCaps.TextureCaps & D3DPTEXTURECAPS_MIPMAP) && mNumMipMaps > 0)
 		{
 			// use auto.gen. if available
-            mAutoGenMipmaps = this->_canAutoGenMipmaps(usage, D3DRTYPE_TEXTURE, d3dPF);
-			if (mAutoGenMipmaps)
+            mAutoGenMipMaps = this->_canAutoGenMipMaps(usage, D3DRTYPE_TEXTURE, d3dPF);
+			if (mAutoGenMipMaps)
 			{
 				usage |= D3DUSAGE_AUTOGENMIPMAP;
 				numMips = 0;
@@ -600,7 +635,7 @@ namespace Ogre
 		else
 		{
 			// device don't support mip maps, or zero mipmaps requested
-			mNumMipmaps = 0;
+			mNumMipMaps = 0;
 			numMips = 1;
 		}
 
@@ -658,13 +693,13 @@ namespace Ogre
 
 		// Use D3DX to help us create the texture, this way it can adjust any relevant sizes
 		DWORD usage = (mUsage == TU_RENDERTARGET) ? D3DUSAGE_RENDERTARGET : 0;
-		UINT numMips = (mNumMipmaps ? mNumMipmaps : 1);
+		UINT numMips = (mNumMipMaps ? mNumMipMaps : 1);
 		// check if mip map cube textures are supported
 		if (mDevCaps.TextureCaps & D3DPTEXTURECAPS_MIPCUBEMAP)
 		{
 			// use auto.gen. if available
-            mAutoGenMipmaps = this->_canAutoGenMipmaps(usage, D3DRTYPE_CUBETEXTURE, d3dPF);
-			if (mAutoGenMipmaps)
+            mAutoGenMipMaps = this->_canAutoGenMipMaps(usage, D3DRTYPE_CUBETEXTURE, d3dPF);
+			if (mAutoGenMipMaps)
 			{
 				usage |= D3DUSAGE_AUTOGENMIPMAP;
 				numMips = 0;
@@ -673,7 +708,7 @@ namespace Ogre
 		else
 		{
 			// no mip map support for this kind of textures :(
-			mNumMipmaps = 0;
+			mNumMipMaps = 0;
 			numMips = 1;
 		}
 
@@ -719,9 +754,26 @@ namespace Ogre
 
 	}
 	/****************************************************************************************/
-	void D3D9Texture::_initDevice(void)
+	void D3D9Texture::_initMembers()
+	{
+		mpDev = NULL;
+		mpD3D = NULL;
+		mpNormTex = NULL;
+		mpCubeTex = NULL;
+		mpZBuff = NULL;
+		mpTex = NULL;
+
+		for (size_t i = 0; i < 6; ++i)
+			mCubeFaceNames[i] = "";
+
+		mWidth = mHeight = mSrcWidth = mSrcHeight = 0;
+		mIsLoaded = false;
+	}
+	/****************************************************************************************/
+	void D3D9Texture::_setDevice(IDirect3DDevice9 *pDev)
 	{ 
-		assert(mpDev);
+		assert(pDev);
+		mpDev = pDev;
 		HRESULT hr;
 
 		// get device caps
@@ -808,9 +860,6 @@ namespace Ogre
 			LogManager::getSingleton().logMessage("D3D9 : ***** Source image dimensions : " + StringConverter::toString(mSrcWidth) + "x" + StringConverter::toString(mSrcHeight));
 			LogManager::getSingleton().logMessage("D3D9 : ***** Texture dimensions : " + StringConverter::toString(mWidth) + "x" + StringConverter::toString(mHeight));
 		}
-		
-		// Create list of subsurfaces for getBuffer()
-		_createSurfaceList();
 	}
 	/****************************************************************************************/
 	void D3D9Texture::_setSrcAttributes(unsigned long width, unsigned long height, 
@@ -819,37 +868,37 @@ namespace Ogre
 		// set source image attributes
 		mSrcWidth = width; 
 		mSrcHeight = height; 
-		mSrcBpp = PixelUtil::getNumElemBits(format); 
-        mHasAlpha = PixelUtil::getFlags(format) & PFF_HASALPHA; 
+		mSrcBpp = _getPFBpp(format); 
+        mHasAlpha = Image::formatHasAlpha(format); 
 		// say to the world what we are doing
 		switch (this->getTextureType())
 		{
 		case TEX_TYPE_1D:
 			if (mUsage == TU_RENDERTARGET)
-				LogManager::getSingleton().logMessage("D3D9 : Creating 1D RenderTarget, name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipmaps) + " mip map levels");
+				LogManager::getSingleton().logMessage("D3D9 : Creating 1D RenderTarget, name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipMaps) + " mip map levels");
 			else
-				LogManager::getSingleton().logMessage("D3D9 : Loading 1D Texture, image name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipmaps) + " mip map levels");
+				LogManager::getSingleton().logMessage("D3D9 : Loading 1D Texture, image name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipMaps) + " mip map levels");
 			break;
 		case TEX_TYPE_2D:
 			if (mUsage == TU_RENDERTARGET)
-				LogManager::getSingleton().logMessage("D3D9 : Creating 2D RenderTarget, name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipmaps) + " mip map levels");
+				LogManager::getSingleton().logMessage("D3D9 : Creating 2D RenderTarget, name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipMaps) + " mip map levels");
 			else
-				LogManager::getSingleton().logMessage("D3D9 : Loading 2D Texture, image name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipmaps) + " mip map levels");
+				LogManager::getSingleton().logMessage("D3D9 : Loading 2D Texture, image name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipMaps) + " mip map levels");
 			break;
 		case TEX_TYPE_3D:
 			if (mUsage == TU_RENDERTARGET)
-				LogManager::getSingleton().logMessage("D3D9 : Creating 3D RenderTarget, name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipmaps) + " mip map levels");
+				LogManager::getSingleton().logMessage("D3D9 : Creating 3D RenderTarget, name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipMaps) + " mip map levels");
 			else
-				LogManager::getSingleton().logMessage("D3D9 : Loading 3D Texture, image name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipmaps) + " mip map levels");
+				LogManager::getSingleton().logMessage("D3D9 : Loading 3D Texture, image name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipMaps) + " mip map levels");
 			break;
 		case TEX_TYPE_CUBE_MAP:
 			if (mUsage == TU_RENDERTARGET)
-				LogManager::getSingleton().logMessage("D3D9 : Creating Cube map RenderTarget, name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipmaps) + " mip map levels");
+				LogManager::getSingleton().logMessage("D3D9 : Creating Cube map RenderTarget, name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipMaps) + " mip map levels");
 			else
-				LogManager::getSingleton().logMessage("D3D9 : Loading Cube Texture, base image name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipmaps) + " mip map levels");
+				LogManager::getSingleton().logMessage("D3D9 : Loading Cube Texture, base image name : '" + this->getName() + "' with " + StringConverter::toString(mNumMipMaps) + " mip map levels");
 			break;
 		default:
-			Except( Exception::ERR_INTERNAL_ERROR, "Unknown texture type", "D3D9Texture::_setSrcAttributes" );
+			Except( Exception::ERR_INTERNAL_ERROR, "Unknown texture type", "D3D9Texture::_createTex" );
 			this->_freeResources();
 		}
 	}
@@ -865,7 +914,7 @@ namespace Ogre
 		return D3DTEXF_POINT;
 	}
 	/****************************************************************************************/
-	bool D3D9Texture::_canAutoGenMipmaps(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat)
+	bool D3D9Texture::_canAutoGenMipMaps(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat)
 	{
 		// those MUST be initialized !!!
 		assert(mpDev);
@@ -1078,7 +1127,7 @@ namespace Ogre
 		}
 
         // Generate mipmaps
-        if (mAutoGenMipmaps)
+        if (mAutoGenMipMaps)
         {
             // Hardware mipmapping
 			// use best filtering method supported by hardware
@@ -1184,7 +1233,7 @@ namespace Ogre
 		}
 
         // Mipmaps
-        if (mAutoGenMipmaps)
+        if (mAutoGenMipMaps)
         {
 			// use best filtering method supported by hardware
 			hr = mpTex->SetAutoGenFilterType(_getBestFilterMethod());
@@ -1269,75 +1318,6 @@ namespace Ogre
 			this->_freeResources();
 		}
 	}
-	
-	/****************************************************************************************/
-	void D3D9Texture::_createSurfaceList()
-	{
-		IDirect3DSurface9 *surface;
-		IDirect3DVolume9 *volume;
-		
-		mSurfaceList.clear();
-		switch(getTextureType()) {
-		case TEX_TYPE_2D:
-			assert(mpNormTex);
-			// Make sure number of mips is right
-			mNumMipmaps = mpNormTex->GetLevelCount();
-			// For all mipmaps, store surfaces as HardwarePixelBufferSharedPtr
-			for(int mip=0; mip<mNumMipmaps; mip++)
-			{
-				if(mpNormTex->GetSurfaceLevel(mip, &surface) != D3D_OK)
-					Except(Exception::ERR_RENDERINGAPI_ERROR, "Get surface level failed",
-		 				"D3D9Texture::_createSurfaceList");	
-				mSurfaceList.push_back(HardwarePixelBufferSharedPtr(new D3D9HardwarePixelBuffer(surface)));
-			}
-			break;
-		case TEX_TYPE_CUBE_MAP:
-			assert(mpCubeTex);
-			mNumMipmaps = mpCubeTex->GetLevelCount();
-			// For all faces and mipmaps, store surfaces as HardwarePixelBufferSharedPtr
-			for(int face=0; face<6; face++)
-			{
-				for(int mip=0; mip<mNumMipmaps; mip++)
-				{
-					if(mpCubeTex->GetCubeMapSurface((D3DCUBEMAP_FACES)face, mip, &surface) != D3D_OK)
-						Except(Exception::ERR_RENDERINGAPI_ERROR, "Get cubemap surface failed",
-		 				"D3D9Texture::getBuffer");
-					mSurfaceList.push_back(HardwarePixelBufferSharedPtr(new D3D9HardwarePixelBuffer(surface)));
-				}
-			}
-			break;
-		case TEX_TYPE_3D:
-			assert(mpVolumeTex);
-			mNumMipmaps = mpVolumeTex->GetLevelCount();
-			// For all mipmaps, store surfaces as HardwarePixelBufferSharedPtr
-			for(int mip=0; mip<mNumMipmaps; mip++)
-			{
-				if(mpVolumeTex->GetVolumeLevel(mip, &volume) != D3D_OK)
-					Except(Exception::ERR_RENDERINGAPI_ERROR, "Get volume level failed",
-		 				"D3D9Texture::getBuffer");	
-				mSurfaceList.push_back(HardwarePixelBufferSharedPtr(new D3D9HardwarePixelBuffer(volume)));
-			}
-			break;
-		};
-
-	}
-	/****************************************************************************************/
-	HardwarePixelBufferSharedPtr D3D9Texture::getBuffer(int face, int mipmap) 
-	{
-		if(getTextureType() != TEX_TYPE_CUBE_MAP && face != 0)
-			Except(Exception::ERR_INVALIDPARAMS, "Normal textures have only face 0",
-					"D3D9Texture::getBuffer");
-		if(face < 0 || face >= 6)
-			Except(Exception::ERR_INVALIDPARAMS, "A three dimensional cube has six faces",
-					"D3D9Texture::getBuffer");
-		if(mipmap < 0 || mipmap >= mNumMipmaps)
-			Except(Exception::ERR_INVALIDPARAMS, "Mipmap index out of range",
-					"D3D9Texture::getBuffer");
-		int idx = face*mNumMipmaps + mipmap;
-		assert(idx < mSurfaceList.size());
-		return mSurfaceList[idx];
-	}
-	
 	/****************************************************************************************/
 	PixelFormat D3D9Texture::_getPF(D3DFORMAT d3dPF)
 	{
@@ -1345,44 +1325,22 @@ namespace Ogre
 		{
 		case D3DFMT_A8:
 			return PF_A8;
-		case D3DFMT_L8:
-			return PF_L8;
-		case D3DFMT_L16:
-			return PF_L16;
 		case D3DFMT_A4L4:
 			return PF_A4L4;
 		case D3DFMT_A4R4G4B4:
 			return PF_A4R4G4B4;
-		case D3DFMT_R5G6B5:
-			return PF_R5G6B5;
-		case D3DFMT_R8G8B8:
-			return PF_R8G8B8;
-		case D3DFMT_X8R8G8B8:
-			return PF_X8R8G8B8;
 		case D3DFMT_A8R8G8B8:
 			return PF_A8R8G8B8;
-		case D3DFMT_X8B8G8R8:
-			return PF_X8B8G8R8;
-		case D3DFMT_A8B8G8R8:
-			return PF_A8B8G8R8;
 		case D3DFMT_A2R10G10B10:
 			return PF_A2R10G10B10;
-        case D3DFMT_A2B10G10R10:
-           return PF_A2B10G10R10;
-		case D3DFMT_A16B16G16R16F: // verify?
-			return PF_FP_R16G16B16A16;
-		case D3DFMT_A32B32G32R32F: // verify?
-			return PF_FP_R32G32B32A32;
-		case D3DFMT_DXT1:
-			return PF_DXT1;
-		case D3DFMT_DXT2:
-			return PF_DXT2;
-		case D3DFMT_DXT3:
-			return PF_DXT3;
-		case D3DFMT_DXT4:
-			return PF_DXT4;
-		case D3DFMT_DXT5:
-			return PF_DXT5;
+		case D3DFMT_L8:
+			return PF_L8;
+		case D3DFMT_X1R5G5B5:
+		case D3DFMT_R5G6B5:
+			return PF_R5G6B5;
+		case D3DFMT_X8R8G8B8:
+		case D3DFMT_R8G8B8:
+			return PF_R8G8B8;
 		default:
 			return PF_UNKNOWN;
 		}
@@ -1394,77 +1352,30 @@ namespace Ogre
 		{
 		case PF_L8:
 			return D3DFMT_L8;
-		case PF_L16:
-			return D3DFMT_L16;
 		case PF_A8:
 			return D3DFMT_A8;
-		case PF_A4L4:
-			return D3DFMT_A4L4;
+		case PF_B5G6R5:
 		case PF_R5G6B5:
 			return D3DFMT_R5G6B5;
+		case PF_B4G4R4A4:
 		case PF_A4R4G4B4:
 			return D3DFMT_A4R4G4B4;
+		case PF_B8G8R8:
 		case PF_R8G8B8:
 			return D3DFMT_R8G8B8;
+		case PF_B8G8R8A8:
 		case PF_A8R8G8B8:
 			return D3DFMT_A8R8G8B8;
-		case PF_A8B8G8R8:
-			return D3DFMT_A8B8G8R8;
-		case PF_X8R8G8B8:
-			return D3DFMT_X8R8G8B8;
-		case PF_X8B8G8R8:
-			return D3DFMT_X8B8G8R8;
-		case PF_A2B10G10R10:
-            return D3DFMT_A2B10G10R10;
+		case PF_L4A4:
+		case PF_A4L4:
+			return D3DFMT_A4L4;
+		case PF_B10G10R10A2:
 		case PF_A2R10G10B10:
 			return D3DFMT_A2R10G10B10;
-		case PF_FP_R16G16B16A16: // verify?
-			return D3DFMT_A16B16G16R16F;
-		case PF_FP_R32G32B32A32: // verify?
-			return D3DFMT_A32B32G32R32F;
-		case PF_DXT1:
-			return D3DFMT_DXT1;
-		case PF_DXT2:
-			return D3DFMT_DXT2;
-		case PF_DXT3:
-			return D3DFMT_DXT3;
-		case PF_DXT4:
-			return D3DFMT_DXT4;
-		case PF_DXT5:
-			return D3DFMT_DXT5;
 		case PF_UNKNOWN:
 		default:
 			return D3DFMT_UNKNOWN;
 		}
 	}
-	/****************************************************************************************/
-	PixelFormat D3D9Texture::_getClosestSupportedPF(PixelFormat ogrePF)
-	{
-		if (_getPF(ogrePF) != D3DFMT_UNKNOWN)
-		{
-			return ogrePF;
-		}
-		switch(ogrePF)
-		{
-		case PF_L4A4:
-			return PF_A4L4;
-		case PF_B5G6R5:
-			return PF_R5G6B5;
-		case PF_B4G4R4A4:
-			return PF_A4R4G4B4;
-		case PF_B8G8R8:
-			return PF_R8G8B8;
-		case PF_B8G8R8A8:
-			return PF_A8R8G8B8;
-		case PF_FP_R16G16B16:
-			return PF_FP_R16G16B16A16;
-		case PF_FP_R32G32B32:
-			return PF_FP_R32G32B32A32;
-		case PF_UNKNOWN:
-		default:
-			return PF_A8R8G8B8;
-		}
-	}
-
 	/****************************************************************************************/
 }

@@ -544,7 +544,7 @@ namespace Ogre {
             for SceneNodes at SceneManager::setDisplaySceneNodes, and for entities based on skeletal 
             models using Entity::setDisplayBones()
         */
-        const MaterialPtr& getMaterial(void) const;
+        Material* getMaterial(void) const;
         /** Overridden from Renderable.
         @remarks
             This is only used if the SceneManager chooses to render the node. This option can be set
@@ -617,12 +617,7 @@ namespace Ogre {
         virtual void cancelUpdate(Node* child);
 
         /** @copydoc Renderable::getLights */
-        const LightList& getLights(void) const
-        {
-            // Nodes should not be lit by the scene, this will not get called
-            static LightList ll;
-            return ll;
-        }
+        const LightList& getLights(void) const;
 
 
 

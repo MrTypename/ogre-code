@@ -24,6 +24,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 #include "OgreBspSceneManager.h"
 #include "OgreBspResourceManager.h"
+#include "OgreBspLevel.h"
 #include "OgreBspNode.h"
 #include "OgreException.h"
 #include "OgreRenderSystem.h"
@@ -61,7 +62,7 @@ namespace Ogre {
         mSkyBoxEnabled = false;
         mSkyDomeEnabled = false;
 
-        mLevel.setNull();
+        mLevel = 0;
 
     }
 
@@ -69,19 +70,12 @@ namespace Ogre {
     BspSceneManager::~BspSceneManager()
     {
         freeMemory();
-        mLevel.setNull();
         delete mBspResMgr;
     }
-    //-----------------------------------------------------------------------
-    size_t BspSceneManager::estimateWorldGeometry(const String& filename)
-    {
-        return BspLevel::calculateLoadingStages(filename);
-        
-    }
+
     //-----------------------------------------------------------------------
     void BspSceneManager::setWorldGeometry(const String& filename)
     {
-        mLevel.setNull();
         // Check extension is .bsp
         char extension[6];
         size_t pos = filename.find_last_of(".");
@@ -99,8 +93,7 @@ namespace Ogre {
             "BspSceneManager::setWorldGeometry");
 
         // Load using resource manager
-        mLevel = BspResourceManager::getSingleton().load(filename, 
-            ResourceGroupManager::getSingleton().getWorldResourceGroupName());
+        mLevel = BspResourceManager::getSingleton().load(filename);
 
         // Init static render operation
         mRenderOp.vertexData = mLevel->mVertexData;
@@ -134,10 +127,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void BspSceneManager::renderStaticGeometry(void)
     {
-		// Check we should be rendering
-		if (!isRenderQueueToBeProcessed(mWorldGeometryRenderQueue))
-			return;
-
         // Cache vertex/face data first
         std::vector<StaticFaceGroup*>::const_iterator faceGrpi;
         static RenderOperation patchOp;
@@ -219,8 +208,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     BspNode* BspSceneManager::walkTree(Camera* camera, bool onlyShadowCasters)
     {
-		if (mLevel.isNull()) return 0;
-
         // Locate the leaf node where the camera is located
         BspNode* cameraNode = mLevel->findLeaf(camera->getDerivedPosition());
 
@@ -290,7 +277,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void BspSceneManager::processVisibleLeaf(BspNode* leaf, Camera* cam, bool onlyShadowCasters)
     {
-        MaterialPtr pMat;
+        Material* pMat;
         // Skip world geometry if we're only supposed to process shadow casters
         // World is pre-lit
         if (!onlyShadowCasters)
@@ -307,8 +294,7 @@ namespace Ogre {
                     continue;
                 StaticFaceGroup* faceGroup = mLevel->mFaceGroups + realIndex;
                 // Get Material pointer by handle
-                pMat = MaterialManager::getSingleton().getByHandle(faceGroup->materialHandle);
-                assert (!pMat.isNull());
+                pMat = getMaterial(faceGroup->materialHandle);
                 // Check normal (manual culling)
                 ManualCullingMode cullMode = pMat->getTechnique(0)->getPass(0)->getManualCullingMode();
                 if (cullMode != MANUAL_CULL_NONE)
@@ -322,7 +308,7 @@ namespace Ogre {
                 // Try to insert, will find existing if already there
                 std::pair<MaterialFaceGroupMap::iterator, bool> matgrpi;
                 matgrpi = mMatFaceGroupMap.insert(
-                    MaterialFaceGroupMap::value_type(pMat.getPointer(), std::vector<StaticFaceGroup*>())
+                    MaterialFaceGroupMap::value_type(pMat, std::vector<StaticFaceGroup*>())
                     );
                 // Whatever happened, matgrpi.first is map iterator
                 // Need to get second part of that to get vector
@@ -420,7 +406,7 @@ namespace Ogre {
     void BspSceneManager::freeMemory(void)
     {
         // no need to delete index buffer, will be handled by shared pointer
-        delete mRenderOp.indexData; 
+        //delete mRenderOp.indexData; // causing an error right now?
     }
     //-----------------------------------------------------------------------
     void BspSceneManager::showNodeBoxes(bool show)
@@ -502,7 +488,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     ViewPoint BspSceneManager::getSuggestedViewpoint(bool random)
     {
-        if (mLevel.isNull() || mLevel->mPlayerStarts.size() == 0)
+        if (!mLevel || mLevel->mPlayerStarts.size() == 0)
         {
             // No level, use default
             return SceneManager::getSuggestedViewpoint(random);
@@ -597,7 +583,7 @@ namespace Ogre {
         Issue: some movable-movable intersections could be reported twice if 2 movables
         overlap 2 leaves?
         */
-        const BspLevelPtr& lvl = ((BspSceneManager*)mParentSceneMgr)->getLevel();
+        BspLevel* lvl = ((BspSceneManager*)mParentSceneMgr)->getLevel();
         BspNode* leaf = lvl->getLeafStart();
         int numLeaves = lvl->getNumLeaves();
         

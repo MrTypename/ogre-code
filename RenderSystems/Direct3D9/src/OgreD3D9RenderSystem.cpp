@@ -174,7 +174,7 @@ namespace Ogre
 			return false;
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::initConfigOptions()
+	D3D9RenderSystem::initConfigOptions()
 	{
 		OgreGuard( "D3D9RenderSystem::initConfigOptions" );
 
@@ -271,9 +271,9 @@ namespace Ogre
 	{
 		OgreGuard( "D3D9RenderSystem::setConfigOption" );
 
-        StringUtil::StrStreamType str;
-        str << "D3D9 : RenderSystem Option: " << name << " = " << value;
-		LogManager::getSingleton().logMessage(str.str());
+		char msg[128];
+		sprintf( msg, "D3D9 : RenderSystem Option: %s = %s", name.c_str(), value.c_str() );
+		LogManager::getSingleton().logMessage( msg );
 
 		// Find option
 		ConfigOptionMap::iterator it = mOptions.find( name );
@@ -283,9 +283,8 @@ namespace Ogre
 			it->second.currentValue = value;
 		else
 		{
-            str.clear();
-            str << "Option named '" << name << "' does not exist.";
-			Except( Exception::ERR_INVALIDPARAMS, str.str(), "D3D9RenderSystem::setConfigOption" );
+			sprintf( msg, "Option named '%s' does not exist.", name.c_str() );
+			Except( Exception::ERR_INVALIDPARAMS, msg, "D3D9RenderSystem::setConfigOption" );
 		}
 
 		// Refresh other options if D3DDriver changed
@@ -688,11 +687,7 @@ namespace Ogre
 			}
 			
 		}
-        // non-power-of-two texturs always supported
-        mCapabilities->setCapability(RSC_NON_POWER_OF_2_TEXTURES);
-
-		// We always support rendertextures bigger than the frame buffer
-        mCapabilities->setCapability(RSC_HWRENDER_TO_TEXTURE);
+				
 
         mCapabilities->log(LogManager::getSingleton().getDefaultLog());
     }
@@ -863,7 +858,7 @@ namespace Ogre
         }
     }
     //---------------------------------------------------------------------
-	RenderTexture * D3D9RenderSystem::createRenderTexture( const String & name, unsigned int width, unsigned int height, TextureType texType, PixelFormat format )
+	RenderTexture * D3D9RenderSystem::createRenderTexture( const String & name, unsigned int width, unsigned int height )
 	{
 		RenderTexture *rt = new D3D9RenderTexture( name, width, height );
 		attachRenderTarget( *rt );
@@ -892,9 +887,9 @@ namespace Ogre
 		return errMsg;
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::convertColourValue( const ColourValue& colour, uint32* pDest )
+	void D3D9RenderSystem::convertColourValue( const ColourValue& colour, unsigned long* pDest )
 	{
-		*pDest = colour.getAsARGB();
+		*pDest = colour.getAsLongARGB();
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_makeProjectionMatrix(const Radian& fovy, Real aspect, Real nearPlane, 
@@ -968,7 +963,7 @@ namespace Ogre
         }
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::ResizeRepositionWindow(HWND wich)
+	D3D9RenderSystem::ResizeRepositionWindow(HWND wich)
 	{
 		for (RenderTargetMap::iterator it = mRenderTargets.begin(); it != mRenderTargets.end(); ++it)
 		{
@@ -1127,8 +1122,7 @@ namespace Ogre
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_setSurfaceParams( const ColourValue &ambient, const ColourValue &diffuse,
-		const ColourValue &specular, const ColourValue &emissive, Real shininess,
-        TrackVertexColourType tracking )
+		const ColourValue &specular, const ColourValue &emissive, Real shininess )
 	{
 		// Remember last call
 		static ColourValue lastAmbient = ColourValue::Black;
@@ -1136,12 +1130,11 @@ namespace Ogre
 		static ColourValue lastSpecular = ColourValue::Black;
 		static ColourValue lastEmissive = ColourValue::Black;
 		static Real lastShininess = 0.0;
-        static TrackVertexColourType lastTracking = -1;
 
 		// Only update if changed
 		if( ambient != lastAmbient || diffuse != lastDiffuse ||
 			specular != lastSpecular || emissive != lastEmissive ||
-			shininess != lastShininess)
+			shininess != lastShininess )
 		{
 			D3DMATERIAL9 material;
 			material.Diffuse = D3DXCOLOR( diffuse.r, diffuse.g, diffuse.b, diffuse.a );
@@ -1161,34 +1154,14 @@ namespace Ogre
 			lastEmissive = emissive;
 			lastShininess = shininess;
 		}
-        if(tracking != lastTracking) 
-        {
-            if(tracking != TVC_NONE) 
-            {
-                mpD3DDevice->SetRenderState(D3DRS_COLORVERTEX, TRUE);
-                mpD3DDevice->SetRenderState(D3DRS_AMBIENTMATERIALSOURCE, (tracking&TVC_AMBIENT)?D3DMCS_COLOR1:D3DMCS_MATERIAL);
-                mpD3DDevice->SetRenderState(D3DRS_DIFFUSEMATERIALSOURCE, (tracking&TVC_DIFFUSE)?D3DMCS_COLOR1:D3DMCS_MATERIAL);
-                mpD3DDevice->SetRenderState(D3DRS_SPECULARMATERIALSOURCE, (tracking&TVC_SPECULAR)?D3DMCS_COLOR1:D3DMCS_MATERIAL);
-                mpD3DDevice->SetRenderState(D3DRS_EMISSIVEMATERIALSOURCE, (tracking&TVC_EMISSIVE)?D3DMCS_COLOR1:D3DMCS_MATERIAL);
-            } 
-            else 
-            {
-                mpD3DDevice->SetRenderState(D3DRS_COLORVERTEX, FALSE);               
-            }
-            lastTracking = tracking;
-        }
-        
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_setTexture( size_t stage, bool enabled, const String &texname )
 	{
 		HRESULT hr;
-		D3D9TexturePtr dt = TextureManager::getSingleton().getByName(texname);
-		if (enabled && !dt.isNull())
+		D3D9Texture *dt = (D3D9Texture *)TextureManager::getSingleton().getByName(texname);
+		if (enabled && dt)
 		{
-            // note used
-            dt->touch();
-
 			IDirect3DBaseTexture9 *pTex = dt->getTexture();
 			if (mTexStageDesc[stage].pTex != pTex)
 			{
@@ -1615,7 +1588,7 @@ namespace Ogre
 			hr = __SetRenderState( fogTypeNot, D3DFOG_NONE );
 			hr = __SetRenderState( fogType, D3D9Mappings::get(mode) );
 
-			hr = __SetRenderState( D3DRS_FOGCOLOR, colour.getAsARGB() );
+			hr = __SetRenderState( D3DRS_FOGCOLOR, colour.getAsLongARGB() );
 			hr = __SetRenderState( D3DRS_FOGSTART, *((LPDWORD)(&start)) );
 			hr = __SetRenderState( D3DRS_FOGEND, *((LPDWORD)(&end)) );
 			hr = __SetRenderState( D3DRS_FOGDENSITY, *((LPDWORD)(&densitiy)) );
@@ -1937,10 +1910,17 @@ namespace Ogre
         D3D9VertexDeclaration* d3ddecl = 
             static_cast<D3D9VertexDeclaration*>(decl);
 
-        if (FAILED(hr = mpD3DDevice->SetVertexDeclaration(d3ddecl->getD3DVertexDeclaration())))
+        static VertexDeclaration* lastDecl = 0;
+
+        // attempt to detect duplicates
+        if (!lastDecl || !(*lastDecl == *decl))
         {
-            Except(hr, "Unable to set D3D9 vertex declaration", 
-                "D3D9RenderSystem::setVertexDeclaration");
+
+            if (FAILED(hr = mpD3DDevice->SetVertexDeclaration(d3ddecl->getD3DVertexDeclaration())))
+            {
+                Except(hr, "Unable to set D3D9 vertex declaration", 
+                    "D3D9RenderSystem::setVertexDeclaration");
+            }
         }
 
         // UnGuard
@@ -2354,7 +2334,7 @@ namespace Ogre
             0, 
             NULL, 
             flags,
-            colour.getAsARGB(), 
+            colour.getAsLongARGB(), 
             depth, 
             stencil ) ) )
         {

@@ -30,8 +30,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 namespace Ogre {
 
     //-----------------------------------------------------------------------
-    PointEmitter::PointEmitter(ParticleSystem* psys)
-        :ParticleEmitter(psys)
+    PointEmitter::PointEmitter()
     {
         mType = "Point";
         // Set up parameters
@@ -50,15 +49,15 @@ namespace Ogre {
         ParticleEmitter::_initParticle(pParticle);
 
         // Point emitter emits from own position
-        pParticle->position = mPosition;
+        pParticle->mPosition = mPosition;
 
         // Generate complex data by reference
-        genEmissionColour(pParticle->colour);
-        genEmissionDirection(pParticle->direction);
-        genEmissionVelocity(pParticle->direction);
+        genEmissionColour(pParticle->mColour);
+        genEmissionDirection(pParticle->mDirection);
+        genEmissionVelocity(pParticle->mDirection);
 
         // Generate simpler data
-        pParticle->timeToLive = pParticle->totalTimeToLive = genEmissionTTL();
+        pParticle->mTimeToLive = pParticle->mTotalTimeToLive = genEmissionTTL();
         
     }
     //-----------------------------------------------------------------------

@@ -27,7 +27,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreBspPrerequisites.h"
 #include "OgreQuake3Types.h"
-#include "OgreDataStream.h"
+#include "OgreDataChunk.h"
 
 
 namespace Ogre {
@@ -61,14 +61,7 @@ namespace Ogre {
     public:
         Quake3Level();
 
-        /** Load just the header information from a Quake3 file. 
-        @remarks
-            This method loads just the header information from the 
-            Quake3 file, in order to estimate the loading time.
-        */
-        void loadHeaderFromStream(DataStreamPtr& inStream);
-
-        /** Reads Quake3 bsp data from a stream as read from the file.
+        /** Reads Quake3 bsp data from a chunk of memory as read from the file.
             Since ResourceManagers generally locate data in a variety of
             places they typically manipulate them as a chunk of data, rather than
             a file pointer since this is unsupported through compressed archives.</p>
@@ -77,9 +70,9 @@ namespace Ogre {
             the offsets to which are kept in the table of contents. The 17 types
             are predefined (You can find them in OgreQuake3Types.h)
 
-            @param inStream Stream containing Quake3 data
+            @param inChunk Input chunk of memory containing Quake3 data
         */
-        void loadFromStream(DataStreamPtr& inStream);
+        void loadFromChunk(DataChunk& inChunk);
 
         /* Extracts the embedded lightmap texture data and loads them as textures.
            Calling this method makes the lightmap texture data embedded in
@@ -90,24 +83,21 @@ namespace Ogre {
         void extractLightmaps(void) const;
 
         /** Utility function read the header and set up pointers. */
-        void initialise(bool headerOnly = false);
-        /** Utility function read the header and set up counters. */
-        void initialiseCounts(void);
-        /** Utility function read the header and set up pointers. */
-        void initialisePointers(void);
+        void initialise(void);
 
         /** Utility function to return a pointer to a lump. */
         void* getLump(int lumpType);
         int getLumpSize(int lumpType);
+
 
         /** Debug method. */
         void dumpContents(void);
 
         // Internal storage
         // This is ALL temporary. Don't rely on it being static
-        MemoryDataStreamPtr mChunk;
 
         // NB no brushes, fog or local lightvolumes yet
+        DataChunk mChunk;
         bsp_header_t* mHeader;
         unsigned char* mLumpStart;
 

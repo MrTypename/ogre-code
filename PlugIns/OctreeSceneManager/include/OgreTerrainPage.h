@@ -26,7 +26,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define __TerrainPage_H__
 
 #include "OgreTerrainPrerequisites.h"
-#include "OgreRenderQueue.h"
 
 namespace Ogre {
 
@@ -77,9 +76,6 @@ namespace Ogre {
         If no tile exists at the point, it returns 0;
         */
         TerrainRenderable * getTerrainTile( const Vector3 & pt );
-
-		/** Sets the render queue group which the tiles should be rendered in. */
-		void setRenderQueue(RenderQueueGroupID qid);
 
 
     };

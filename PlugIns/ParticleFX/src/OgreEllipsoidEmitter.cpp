@@ -41,8 +41,7 @@ namespace Ogre {
 
 
     //-----------------------------------------------------------------------
-    EllipsoidEmitter::EllipsoidEmitter(ParticleSystem* psys)
-        : AreaEmitter(psys)
+    EllipsoidEmitter::EllipsoidEmitter()
     {
         initDefaults("Ellipsoid");
     }
@@ -78,16 +77,16 @@ namespace Ogre {
         // scale the found point to the ellipsoid's size and move it
         // relatively to the center of the emitter point
 
-        pParticle->position = mPosition + 
+        pParticle->mPosition = mPosition + 
          + x * mXRange + y * mYRange + z * mZRange;
 
         // Generate complex data by reference
-        genEmissionColour(pParticle->colour);
-        genEmissionDirection(pParticle->direction);
-        genEmissionVelocity(pParticle->direction);
+        genEmissionColour(pParticle->mColour);
+        genEmissionDirection(pParticle->mDirection);
+        genEmissionVelocity(pParticle->mDirection);
 
         // Generate simpler data
-        pParticle->timeToLive = pParticle->totalTimeToLive = genEmissionTTL();
+        pParticle->mTimeToLive = pParticle->mTotalTimeToLive = genEmissionTTL();
         
     }
 

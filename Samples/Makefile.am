@@ -1,5 +1,3 @@
 SUBDIRS = SkeletalAnimation BezierPatch EnvMapping Transpacency Lighting \
 ParticleFX TextureFX SkyDome BSP Common SkyPlane SkyBox CameraTrack Terrain \
-RenderToTexture Water CubeMapping Dot3Bump Smoke CelShading Fresnel Shadows \
-DynTex
-
+Gui Nature RenderToTexture Water CubeMapping Dot3Bump Smoke CelShading Fresnel Shadows

@@ -48,15 +48,13 @@ namespace Ogre {
     class _OgreExport ScrollTarget : public EventTarget
     {
     protected:
-        std::set<ScrollListener*> mScrollListeners;
+		ScrollListener* mScrollListener;
 
     public:
-		ScrollTarget() { }
-        virtual ~ScrollTarget() { }
-
-	    void processScrollEvent(ScrollEvent* e) ;
-	    void addScrollListener(ScrollListener* l) ;
-	    void removeScrollListener(ScrollListener* l) ;
+		ScrollTarget();
+	void processScrollEvent(ScrollEvent* e) ;
+	void addScrollListener(ScrollListener* l) ;
+	void removeScrollListener(ScrollListener* l) ;
     };
 
 

@@ -89,7 +89,7 @@ namespace Ogre
         FBT_DEPTH   = 0x2,
         FBT_STENCIL = 0x4
     };
-    
+
     /** Defines the functionality of a 3D API
         @remarks
             The RenderSystem class provides a base interface
@@ -290,7 +290,7 @@ namespace Ogre
 				size for the texture. Depending on the hardware driver or the underlying
 				API, these values might change when the texture is created.
 		*/
-        virtual RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height, TextureType texType = TEX_TYPE_2D,  PixelFormat format = PF_R8G8B8 ) = 0;
+        virtual RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height ) = 0;
 
         /** Destroys a render window */
         virtual void destroyRenderWindow(const String& name);
@@ -392,16 +392,11 @@ namespace Ogre
             specular highlights will be, imitating a more highly polished surface.
             This value is not constrained to 0.0-1.0, in fact it is likely to
             be more (10.0 gives a modest sheen to an object).
-            @param tracking A bit field that describes which of the ambient, diffuse, specular
-            and emissive colours follow the vertex colour of the primitive. When a bit in this field is set
-            its ColourValue is ignored. This is a combination of TVC_AMBIENT, TVC_DIFFUSE, TVC_SPECULAR(note that the shininess value is still
-            taken from shininess) and TVC_EMISSIVE. TVC_NONE means that there will be no material property
-            tracking the vertex colours.
+
         */
         virtual void _setSurfaceParams(const ColourValue &ambient,
             const ColourValue &diffuse, const ColourValue &specular,
-            const ColourValue &emissive, Real shininess,
-            TrackVertexColourType tracking = TVC_NONE) = 0;
+            const ColourValue &emissive, Real shininess) = 0;
         /**
           Sets the status of a single texture stage.
 
@@ -613,7 +608,7 @@ namespace Ogre
         @param colour The colour to convert
         @param pDest Pointer to location to put the result.
         */
-        virtual void convertColourValue(const ColourValue& colour, uint32* pDest) = 0;
+        virtual void convertColourValue(const ColourValue& colour, unsigned long* pDest) = 0;
 
         /** Builds a perspective projection matrix suitable for this render system.
         @remarks

@@ -185,12 +185,12 @@ AC_DEFUN([OGRE_GET_PLATFORM],
 [OGRE_PLATFORM=SDL
  AC_ARG_WITH(platform, 
              AC_HELP_STRING([--with-platform=PLATFORM],
-                            [the platform to build, currently SDL, GLX, Win32 or gtk]),
+                            [the platform to build, currently SDL or gtk]),
              OGRE_PLATFORM=$withval,
              OGRE_PLATFORM=SDL)
 
  
-  if test ! -d ${srcdir}/PlatformManagers/$OGRE_PLATFORM; then
+  if test ! -d PlatformManagers/$OGRE_PLATFORM; then
     OGRE_PLATFORM=SDL
   fi
 
@@ -209,11 +209,6 @@ AC_DEFUN([OGRE_GET_PLATFORM],
     GLX)
       PLATFORM_CFLAGS="-I/usr/X11R6/include"
       PLATFORM_LIBS="-L/usr/X11R6/lib -lX11 -lXaw"
-    ;;
-    Win32)
-      PLATFORM_CFLAGS=""
-      PLATFORM_LIBS="-lgdi32 -lwinmm -ldinput8 -ldxguid"
-    ;;
   esac
 
   AC_SUBST(PLATFORM_CFLAGS)
@@ -225,15 +220,12 @@ AC_DEFUN([OGRE_GET_GLSUPPORT],
 [OGRE_GLSUPPORT=SDL
  AC_ARG_WITH(gl-support, 
              AC_HELP_STRING([--with-gl-support=PLATFORM],
-                            [the platform to build, currently SDL, GLX, Win32 or gtk]),
+                            [the platform to build, currently SDL or gtk]),
              OGRE_GLSUPPORT=$withval,
              OGRE_GLSUPPORT=SDL)
 
-  if test "$OGRE_GLSUPPORT" = "Win32" ; then
-    # Uppercase/lowercase
-    OGRE_GLSUPPORT=win32
-  fi
-  if test ! -d ${srcdir}/RenderSystems/GL/src/$OGRE_GLSUPPORT; then
+ 
+  if test ! -d RenderSystems/GL/src/$OGRE_GLSUPPORT; then
     OGRE_GLSUPPORT=SDL
   fi
 
@@ -246,17 +238,12 @@ AC_DEFUN([OGRE_GET_GLSUPPORT],
       GLSUPPORT_CFLAGS=$SDL_CFLAGS
       GLSUPPORT_LIBS=$SDL_LIBS;;
     gtk) 
-    	PKG_CHECK_MODULES(GLSUPPORT, gtkglextmm-1.0)
-    	GLSUPPORT_LIBS="$GLSUPPORT_LIBS"
+    PKG_CHECK_MODULES(GLSUPPORT, gtkglextmm-1.0)
+    GLSUPPORT_LIBS="$GLSUPPORT_LIBS"
     ;;
     GLX)
 	GLSUPPORT_CFLAGS="-I/usr/X11R6/include"
 	GLSUPPORT_LIBS="-L/usr/X11R6/lib -lX11 -lXext -lGL -lXrandr"
-    ;;
-    win32)
-	GLSUPPORT_CFLAGS=""
-	GLSUPPORT_LIBS="-lgdi32 -lwinmm"
-    ;;
   esac
 
   AC_SUBST(GLSUPPORT_CFLAGS)
@@ -264,8 +251,7 @@ AC_DEFUN([OGRE_GET_GLSUPPORT],
   AC_SUBST(OGRE_GLSUPPORT)
   AC_CONFIG_FILES([RenderSystems/GL/src/gtk/Makefile
                    RenderSystems/GL/src/SDL/Makefile
-		   RenderSystems/GL/src/GLX/Makefile
-		   RenderSystems/GL/src/win32/Makefile])
+		   RenderSystems/GL/src/GLX/Makefile])
 ])
 
 AC_DEFUN([OGRE_BUILD_PYTHON_LINK],
@@ -362,32 +348,13 @@ AC_SUBST(PYTHON_LIBS)
 
 ])
 
-AC_DEFUN([OGRE_SETUP_FOR_TARGET],
+AC_DEFUN([OGRE_SETUP_FOR_HOST],
 [case $target in
-*-*-cygwin* | *-*-mingw* | *-*-pw32*)
-	AC_SUBST(SHARED_FLAGS, "-shared -no-undefined -Xlinker --export-all-symbols")
-	AC_SUBST(PLUGIN_FLAGS, "-shared -no-undefined -avoid-version")
-	AC_SUBST(GL_LIBS, "-lopengl32 -lglu32")	
-	AC_CHECK_TOOL(RC, windres)
-        nt=true
-;;
-*-*-darwin*)
-        AC_SUBST(SHARED_FLAGS, "-shared")
-        AC_SUBST(PLUGIN_FLAGS, "-shared -avoid-version")
-        AC_SUBST(GL_LIBS, "-lGL -lGLU")
-        osx=true
-;;
- *) dnl default to standard linux
+*) dnl default to standard linux
 	AC_SUBST(SHARED_FLAGS, "-shared")
-	AC_SUBST(PLUGIN_FLAGS, "-shared -avoid-version")
 	AC_SUBST(GL_LIBS, "-lGL -lGLU")
-        linux=true
 ;;
 esac
-dnl you must arrange for every AM_conditional to run every time configure runs
-AM_CONDITIONAL(OGRE_NT, test x$nt = xtrue)
-AM_CONDITIONAL(OGRE_LINUX, test x$linux = xtrue)
-AM_CONDITIONAL(OGRE_OSX,test x$osx = xtrue )
 ])
 
 
@@ -403,71 +370,4 @@ AC_DEFUN([OGRE_DETECT_ENDIAN],
 	]
 	,[AC_DEFINE(CONFIG_BIG_ENDIAN,,[Big endian machine])]
 	,[AC_DEFINE(CONFIG_LITTLE_ENDIAN,,[Little endian machine])])
-])
-
-AC_DEFUN([OGRE_CHECK_OPENEXR],
-[AC_ARG_ENABLE(openexr,
-              AC_HELP_STRING([--enable-openexr],
-                             [Build the OpenEXR plugin]),
-              [build_exr=true],
-              [build_exr=false])
-
-if test "x$build_exr" = "xtrue" ; then
-	PKG_CHECK_MODULES(OPENEXR, OpenEXR, [build_exr=true], [build_exr=false])
-
-	if test "x$build_exr" = "xtrue" ; then
-	   	AC_CONFIG_FILES([ PlugIns/EXRCodec/Makefile \
-    					 PlugIns/EXRCodec/src/Makefile \
-    					 PlugIns/EXRCodec/include/Makefile])
-		AC_SUBST(OPENEXR_CFLAGS)
-		AC_SUBST(OPENEXR_LIBS)
-
-	fi
-
-fi
-
-AM_CONDITIONAL(BUILD_EXRPLUGIN, test x$build_exr = xtrue)
-
-])
-
-AC_DEFUN([OGRE_CHECK_CG],
-[AC_ARG_ENABLE(cg,
-              AC_HELP_STRING([--disable-cg],
-                             [Do not build the Cg plugin (recommended you do so!)]),
-              [build_cg=$enableval],
-              [build_cg=yes])
-
-if test "x$build_cg" = "xyes" ; then
-	AC_CHECK_LIB(Cg, cgCreateProgram,,AC_MSG_ERROR([
-	****************************************************************
-	* You do not have the nVidia Cg libraries installed.           *
-	* Go to http://developer.nvidia.com/object/cg_toolkit.html     *
-	* (Click on Cg_Linux.tar.gz).                                  *
-	* You can disable the building of Cg support by providing      *	
-	* --disable-cg to this configure script but this is highly     *
-	* discouraged as this breaks many of the examples.             *
-	****************************************************************])
-	)
-fi
-
-AM_CONDITIONAL(BUILD_CGPLUGIN, test x$build_cg = xyes)
-
-])
-
-AC_DEFUN([OGRE_CHECK_CPPUNIT],
-[
-AM_PATH_CPPUNIT([1.9.0], [build_unit_tests=true])
-AM_CONDITIONAL([BUILD_UNIT_TESTS], [test x$build_unit_tests = xtrue])
-])
-
-
-AC_DEFUN([OGRE_CHECK_DX9],
-[AC_ARG_ENABLE(direct3d,
-              AC_HELP_STRING([--enable-direct3d],
-                             [Build the DirectX 9 Render System]),
-              [build_dx9=true],
-              [build_dx9=false])
-
-AM_CONDITIONAL(BUILD_DX9RENDERSYSTEM, test x$build_dx9 = xtrue)
-
 ])

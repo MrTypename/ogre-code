@@ -70,15 +70,14 @@ namespace Ogre {
         mAssemblerProgram = 
             GpuProgramManager::getSingleton().createProgramFromString(
                 mName, 
-                mGroup,
                 "",// dummy source, since we'll be using microcode
                 mType, 
                 mTarget);
-        static_cast<D3D9GpuProgram*>(mAssemblerProgram.get())->setExternalMicrocode(mpMicroCode);
+        static_cast<D3D9GpuProgram*>(mAssemblerProgram)->setExternalMicrocode(mpMicroCode);
 
     }
     //-----------------------------------------------------------------------
-    void D3D9HLSLProgram::unloadHighLevelImpl(void)
+    void D3D9HLSLProgram::unloadImpl(void)
     {
         SAFE_RELEASE(mpMicroCode);
         // mpConstTable is embedded inside the shader, so will get released with it
@@ -168,15 +167,13 @@ namespace Ogre {
             
     }
     //-----------------------------------------------------------------------
-    D3D9HLSLProgram::D3D9HLSLProgram(ResourceManager* creator, const String& name, 
-        ResourceHandle handle, const String& group, bool isManual, 
-        ManualResourceLoader* loader)
-        : HighLevelGpuProgram(creator, name, handle, group, isManual, loader)
-        , mpMicroCode(NULL), mpConstTable(NULL)
+    D3D9HLSLProgram::D3D9HLSLProgram(const String& name, GpuProgramType gpType, 
+        const String& language)
+        : HighLevelGpuProgram(name, gpType, language), mpMicroCode(NULL), 
+        mpConstTable(NULL)
     {
         if (createParamDictionary("D3D9HLSLProgram"))
         {
-            setupBaseParamDictionary();
             ParamDictionary* dict = getParamDictionary();
 
             dict->addParameter(ParameterDef("entry_point", 
@@ -191,9 +188,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     D3D9HLSLProgram::~D3D9HLSLProgram()
     {
-        // have to call this here reather than in Resource destructor
-        // since calling virtual methods in base destructors causes crash
-        unload(); 
+        // unload will be called by superclass
     }
     //-----------------------------------------------------------------------
     bool D3D9HLSLProgram::isSupported(void) const

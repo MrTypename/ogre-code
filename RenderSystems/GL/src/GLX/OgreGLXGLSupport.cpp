@@ -30,9 +30,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreGLXGLSupport.h"
 
 #include "OgreGLXWindow.h"
-#include "OgreGLTexture.h"
-
-#include "OgreGLXRenderTexture.h"
 
 namespace Ogre {
 
@@ -45,7 +42,6 @@ void GLXGLSupport::addConfig(void) {
 	ConfigOption optFullScreen;
 	ConfigOption optVideoMode;
 	ConfigOption optBitDepth;
-    ConfigOption optFSAA;
 
 	// FS setting possiblities
 	optFullScreen.name = "Full Screen";
@@ -59,7 +55,7 @@ void GLXGLSupport::addConfig(void) {
 	optVideoMode.immutable = false;
 
 	// We could query Xrandr here, but that wouldn't work in the non-fullscreen case
-	// or when that extension is disabled. Anyway, this list of modes is fairly
+	// or when that extension is disables. Anyway, this list of modes is fairly
 	// complete.
 	optVideoMode.possibleValues.push_back("640 x 480");
 	optVideoMode.possibleValues.push_back("800 x 600");
@@ -70,19 +66,9 @@ void GLXGLSupport::addConfig(void) {
 
 	optVideoMode.currentValue = "800 x 600";
 
-    //FSAA possibilities
-    optFSAA.name = "FSAA";
-    optFSAA.possibleValues.push_back("0");
-    optFSAA.possibleValues.push_back("2");
-    optFSAA.possibleValues.push_back("4");
-    optFSAA.possibleValues.push_back("6");
-    optFSAA.currentValue = "0";
-    optFSAA.immutable = false;
-
-
 	mOptions[optFullScreen.name] = optFullScreen;
 	mOptions[optVideoMode.name] = optVideoMode;
-    mOptions[optFSAA.name] = optFSAA;
+
 }
 
 String GLXGLSupport::validateConfig(void) {
@@ -106,14 +92,6 @@ RenderWindow* GLXGLSupport::createWindow(bool autoCreateWindow, GLRenderSystem* 
 
 		unsigned int w = StringConverter::parseUnsignedInt(val.substr(0, pos));
 		unsigned int h = StringConverter::parseUnsignedInt(val.substr(pos + 1));
-
-        // Parse FSAA config
-        int fsaa_x_samples = 0;
-        opt = mOptions.find("FSAA");
-        if(opt != mOptions.end())
-        {
-            fsaa_x_samples = StringConverter::parseInt(opt->second.currentValue);
-        }
 
 		// Make sure the window is centered
 		int screen = DefaultScreen(mDisplay);
@@ -157,14 +135,6 @@ void GLXGLSupport::stop() {
 		XCloseDisplay(mDisplay);
 	mDisplay = 0;
 }
-
-void GLXGLSupport::initialiseCapabilities(RenderSystemCapabilities &caps) 
-{
-    // Always? 
-    caps.setCapability(RSC_HWRENDER_TO_TEXTURE);
-}
-
-
 extern "C" {
 extern void (*glXGetProcAddressARB(const GLubyte *procName))( void );
 };
@@ -173,9 +143,39 @@ void* GLXGLSupport::getProcAddress(const String& procname) {
 	return (void*)glXGetProcAddressARB((const GLubyte*)procname.c_str());
 }
 
-RenderTexture * GLXGLSupport::createRenderTexture( const String & name, unsigned int width, unsigned int height, TextureType texType,  PixelFormat format ) 
-{
-	return new GLXRenderTexture(name, width, height, texType, format);
-}  
+#if 0
+// TODO: multiple context/window support
 
+void GLXGLSupport::begin_context(RenderTarget *_target)
+{
+	// Support nested contexts, in which case.. nothing happens
+    	++_context_ref;
+    	if (_context_ref == 1) {
+		if(_target) {
+			// Begin a specific context
+			OGREWidget *_ogre_widget = static_cast<GTKWindow*>(_target)->get_ogre_widget();
+
+	        	_ogre_widget->get_gl_window()->gl_begin(_ogre_widget->get_gl_context());
+		} else {
+			// Begin a generic main context
+			_main_window->gl_begin(_main_context);
+		}
+    	}
 }
+
+void GLXGLSupport::end_context()
+{
+    	--_context_ref;
+    	if(_context_ref < 0)
+        	Except(999, "Too many contexts destroyed!", "GTKGLSupport::end_context");
+    	if (_context_ref == 0)
+    	{
+		// XX is this enough? (_main_window might not be the current window,
+ 		// but we can never be sure the previous rendering window 
+		// even still exists)
+		_main_window->gl_end();
+    	}
+}
+#endif
+
+};

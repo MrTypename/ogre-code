@@ -29,8 +29,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 namespace Ogre {
 
     //-----------------------------------------------------------------------
-    ParticleIterator::ParticleIterator(std::list<Particle*>::iterator start, 
-        std::list<Particle*>::iterator end)
+    ParticleIterator::ParticleIterator(std::list<Billboard*>::iterator start, std::list<Billboard*>::iterator end)
     {
         mStart = mPos = start;
         mEnd = end;

@@ -28,11 +28,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "resource.h"
 #include "OgreException.h"
 
-namespace
-{
-    Ogre::Win32ConfigDialog* dlg;  // This is a pointer to instance, since this is a static member
-}
-
 namespace Ogre
 {
     Win32ConfigDialog::Win32ConfigDialog(HINSTANCE hInst)
@@ -40,6 +35,8 @@ namespace Ogre
         mHInstance = hInst;
         mSelectedRenderSystem = 0;
     }
+
+    Win32ConfigDialog* dlg;  // This is a pointer to instance, since this is a static member
 
     BOOL Win32ConfigDialog::DlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
     {

@@ -25,7 +25,12 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreStableHeaders.h"
 
 #include "OgreLogManager.h"
+
 #include "OgreException.h"
+
+// Required for va_start, va_end and sprintf
+#include <stdio.h>
+#include <stdarg.h>
 
 namespace Ogre {
 
@@ -98,6 +103,18 @@ namespace Ogre {
     void LogManager::logMessage( const String& message, LogMessageLevel lml, bool maskDebug)
     {
         getDefaultLog()->logMessage(message, lml, maskDebug);
+    }
+    //-----------------------------------------------------------------------
+    void LogManager::logMessage( LogMessageLevel lml, const char* szMessage, ... )
+    {
+        static char szBuffer[4097];
+        va_list list;
+        va_start( list, szMessage );
+
+        ::vsnprintf( szBuffer, 4096, szMessage, list );
+        getDefaultLog()->logMessage( szBuffer, lml );
+
+        va_end( list );
     }
     //-----------------------------------------------------------------------
     void LogManager::setLogDetail(LoggingLevel ll)

@@ -24,7 +24,7 @@ LGPL like the rest of the engine.
 #include "ExampleApplication.h"
 
 // Hack struct for test
-PatchMeshPtr patch;
+PatchMesh* patch;
 Entity* patchEntity;
 
 // Event handler to add ability to alter subdivision
@@ -171,8 +171,7 @@ protected:
 
 
         patch = MeshManager::getSingleton().createBezierPatch(
-            "Bezier1", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-            patchCtlPoints, patchDecl, 
+            "Bezier1", patchCtlPoints, patchDecl, 
             3, 3, 5, 5, PatchSurface::VS_BOTH);
 
         // Start patch at 0 detail
@@ -180,8 +179,7 @@ protected:
         // Create entity based on patch
         patchEntity = mSceneMgr->createEntity("Entity1", "Bezier1");
 
-        MaterialPtr pMat = MaterialManager::getSingleton().create("TextMat", 
-            ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+        Material *pMat = (Material*)MaterialManager::getSingleton().create( "TextMat" );
         pMat->getTechnique(0)->getPass(0)->createTextureUnitState( "BumpyMetal.jpg" );
         patchEntity->setMaterialName("TextMat");
 
@@ -191,11 +189,6 @@ protected:
         mCamera->setPosition(500,500, 1500);
         mCamera->lookAt(0,200,-300);
 
-    }
-    void destroyScene(void)
-    {
-        // free up the pointer before we shut down OGRE
-        patch.setNull();
     }
 	void createFrameListener(void)
     {

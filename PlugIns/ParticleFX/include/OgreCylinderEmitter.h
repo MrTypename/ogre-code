@@ -44,7 +44,7 @@ namespace Ogre {
     public:
         // See AreaEmitter
 
-        CylinderEmitter(ParticleSystem* psys);
+        CylinderEmitter();
 
         /** See ParticleEmitter. */
         void _initParticle(Particle* pParticle);

@@ -39,11 +39,20 @@ namespace Ogre {
     {
     public:
         // Constructor, called from D3DTextureManager
-        D3DTexture(ResourceManager* creator, const String& name, ResourceHandle handle,
-            const String& group, bool isManual, ManualResourceLoader* loader, 
-            IDirect3DDevice7 * lpDirect3dDevice);
+        D3DTexture( const String& name, TextureType texType, IDirect3DDevice7 * lpDirect3dDevice, TextureUsage usage );
+		/** Constructor that can be used to manually create a texture and set its parameters. */
+		D3DTexture( 
+			const String& name, 
+			TextureType texType, 
+			IDirect3DDevice7 * lpDirect3dDevice, 
+			uint width, 
+			uint height, 
+			uint num_mips,
+			PixelFormat format,
+			TextureUsage usage );
         virtual ~D3DTexture();
 
+        virtual void load(void);
         virtual void loadImage( const Image &img );
 		virtual void loadImage3D( const Image imgs[]);
         virtual void blitToTexture( const Image &src, unsigned uStartX, unsigned uStartY );        
@@ -51,27 +60,20 @@ namespace Ogre {
             const Image::Rect imgRect, const Image::Rect texRect );
 		virtual void blitImage3D(const Image src[],
             const Image::Rect imgRect, const Image::Rect texRect );
-		virtual void copyToTexture(TexturePtr& target );
+        virtual void unload(void);
+		virtual void copyToTexture( Texture * target );
 
         /// D3D-specific member that returns the underlying surface.
         LPDIRECTDRAWSURFACE7 getDDSurface(void);
 
-        /// @copydoc Texture::createInternalResources
-        void createInternalResources(void);
-
-		/// @copydoc Texture::getBuffer
-		HardwarePixelBufferSharedPtr getBuffer(int face, int mipmap);
     protected:
         IDirect3DDevice7 * mD3DDevice;       ///< A pointer to the Direct3D device.
         IDirectDrawSurface7 * mSurface;      ///< Surface of the (first) device-specific texture.
 		/// cube texture individual face names
 		String mCubeFaceNames[6];
 
-        /// @copydoc Resource::loadImpl
-        void loadImpl(void);
-        /// @copydoc Resource::unloadImpl
-        void unloadImpl(void);
 		
+		void createSurface(void);
 		void createSurface2D(void);
 		void createSurface3D(void);
 
@@ -86,84 +88,23 @@ namespace Ogre {
 		{ assert(face < 6); return mCubeFaceNames[face]; }
 		/// internal method, return the BPP for the specified format
 		static unsigned short _getPFBpp(PixelFormat ogrePF)
-        { return PixelUtil::getNumElemBits(ogrePF); }
+		{ return Image::getNumElemBits(ogrePF); }
     };
 
-    /** Specialisation of SharedPtr to allow SharedPtr to be assigned to D3DTexturePtr 
-    @note Has to be a subclass since we need operator=.
-    We could templatise this instead of repeating per Resource subclass, 
-    except to do so requires a form VC6 does not support i.e.
-    ResourceSubclassPtr<T> : public SharedPtr<T>
-    */
-    class D3DTexturePtr : public SharedPtr<D3DTexture> 
-    {
-    public:
-        D3DTexturePtr() : SharedPtr<D3DTexture>() {}
-        explicit D3DTexturePtr(D3DTexture* rep) : SharedPtr<D3DTexture>(rep) {}
-        D3DTexturePtr(const D3DTexturePtr& r) : SharedPtr<D3DTexture>(r) {} 
-        D3DTexturePtr(const ResourcePtr& r) : SharedPtr<D3DTexture>()
-        {
-			// lock & copy other mutex pointer
-			OGRE_LOCK_MUTEX(*r.OGRE_AUTO_MUTEX_NAME)
-			OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
-            pRep = static_cast<D3DTexture*>(r.getPointer());
-            pUseCount = r.useCountPointer();
-            if (pUseCount)
-            {
-                ++(*pUseCount);
-            }
-        }
-
-        /// Operator used to convert a ResourcePtr to a D3DTexturePtr
-        D3DTexturePtr& operator=(const ResourcePtr& r)
-        {
-            if (pRep == static_cast<D3DTexture*>(r.getPointer()))
-                return *this;
-            release();
-			// lock & copy other mutex pointer
-			OGRE_LOCK_MUTEX(*r.OGRE_AUTO_MUTEX_NAME)
-			OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
-            pRep = static_cast<D3DTexture*>(r.getPointer());
-            pUseCount = r.useCountPointer();
-            if (pUseCount)
-            {
-                ++(*pUseCount);
-            }
-            return *this;
-        }
-        /// Operator used to convert a TexturePtr to a D3DTexturePtr
-        D3DTexturePtr& operator=(const TexturePtr& r)
-        {
-            if (pRep == static_cast<D3DTexture*>(r.getPointer()))
-                return *this;
-            release();
-            pRep = static_cast<D3DTexture*>(r.getPointer());
-            pUseCount = r.useCountPointer();
-            if (pUseCount)
-            {
-                ++(*pUseCount);
-            }
-            return *this;
-        }
-    };
-
-
-    /// D3D7 implementation of RenderTexture
     class D3D7RenderTexture : public RenderTexture
     {
     public:
         D3D7RenderTexture( const String & name, uint width, uint height )
 			: RenderTexture( name, width, height )
         {
-            mPrivateTex = TextureManager::getSingleton().createManual(mName + 
-                "_PRIVATE##", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                TEX_TYPE_2D, mWidth, mHeight, 0, PF_R8G8B8, TU_RENDERTARGET);
-            mPrivateTex->createInternalResources();
+            mPrivateTex = TextureManager::getSingleton().createManual( mName + 
+                "_PRIVATE##", TEX_TYPE_2D, mWidth, mHeight, 0, PF_R8G8B8, TU_RENDERTARGET );
         }
 
 		virtual ~D3D7RenderTexture()
 		{
 			mPrivateTex->unload();
+			delete mPrivateTex;
 		}
 
 		bool requiresTextureFlipping() const { return false; }
@@ -174,14 +115,14 @@ namespace Ogre {
             {
                 LPDIRECTDRAWSURFACE7 *pSurf = (LPDIRECTDRAWSURFACE7*)pData;
 
-                *pSurf = mPrivateTex->getDDSurface();
+                *pSurf = ((D3DTexture*)mPrivateTex)->getDDSurface();
                 return;
             }
             else if( name == "DDFRONTBUFFER" )
             {
                 LPDIRECTDRAWSURFACE7 *pSurf = (LPDIRECTDRAWSURFACE7*)pData;
 
-                *pSurf = mPrivateTex->getDDSurface();
+                *pSurf = ((D3DTexture*)mPrivateTex)->getDDSurface();
                 return;
             }
             else if( name == "HWND" )
@@ -203,7 +144,7 @@ namespace Ogre {
 
     protected:
         /// The texture to which rendering takes place.
-        D3DTexturePtr mPrivateTex;
+        Texture * mPrivateTex;
 
     protected:
         virtual void _copyToTexture()

@@ -325,7 +325,7 @@ namespace Ogre {
 						HardwareBuffer::HBL_READ_ONLY));
 			}
 		}
-		catch(Exception&)
+		catch(Exception& e)
 		{
 			// Catch 'no buffer' exception and ignore
 		}
@@ -403,7 +403,7 @@ namespace Ogre {
 				vertexBufferBinding->getBuffer(buf++)->unlock();
 			}
 		}
-		catch(Exception& )
+		catch(Exception& e)
 		{
 			// Catch 'no buffer' exception and ignore
 		}
@@ -415,7 +415,7 @@ namespace Ogre {
 				newBinding->getBuffer(buf++)->unlock();
 			}
 		}
-		catch(Exception& )
+		catch(Exception& e)
 		{
 			// Catch 'no buffer' exception and ignore
 		}

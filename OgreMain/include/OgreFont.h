@@ -28,8 +28,6 @@ http://www.gnu.org/copyleft/lesser.txt
 
 #include "OgrePrerequisites.h"
 #include "OgreResource.h"
-#include "OgreTexture.h"
-#include "OgreMaterial.h"
 
 namespace Ogre
 {
@@ -66,50 +64,11 @@ namespace Ogre
     using a truetype font. You can either create the texture manually in code, or you
     can use a .fontdef script to define it (probably more practical since you can reuse
     the definition more easily)
-	@note
-	This class extends both Resource and ManualResourceLoader since it is
-	both a resource in it's own right, but it also provides the manual load
-	implementation for the Texture it creates.
     */
-	class _OgreExport Font : public Resource, public ManualResourceLoader
+    class _OgreExport Font : public Resource
     {
     protected:
-		/// Command object for Font - see ParamCommand 
-		class _OgreExport CmdType : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
-		/// Command object for Font - see ParamCommand 
-		class _OgreExport CmdSource : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
-		/// Command object for Font - see ParamCommand 
-		class _OgreExport CmdSize : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
-		/// Command object for Font - see ParamCommand 
-		class _OgreExport CmdResolution : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
-
-		// Command object for setting / getting parameters
-		static CmdType msTypeCmd;
-		static CmdSource msSourceCmd;
-		static CmdSize msSizeCmd;
-		static CmdResolution msResolutionCmd;
-
-		/// The type of font
+        /// The type of font
         FontType mType;
 
         /// Source of the font (either an image name or a truetype font)
@@ -134,10 +93,7 @@ namespace Ogre
         Real mAspectRatio[OGRE_NUM_GLYPHS];
 
         /// The material which is generated for this font
-        MaterialPtr mpMaterial;
-
-		/// Texture pointer
-		TexturePtr mTexture;
+        Material *mpMaterial;
 
         /// for TRUE_TYPE font only
         bool mAntialiasColour;
@@ -145,19 +101,12 @@ namespace Ogre
         /// Internal method for loading from ttf
         void createTextureFromFont(void);
 
-		/// @copydoc Resource::loadImpl
-		virtual void loadImpl();
-		/// @copydoc Resource::unloadImpl
-		virtual void unloadImpl();
-		/// @copydoc Resource::calculateSize
-		size_t calculateSize(void) const { return 0; } // permanent resource is in the texture 
     public:
 
         /** Constructor.
-		@see Resource
+        @param name Mandatory name, must be unique.
         */
-		Font(ResourceManager* creator, const String& name, ResourceHandle handle,
-			const String& group, bool isManual = false, ManualResourceLoader* loader = 0);
+        Font( const String& name);
         virtual ~Font();
 
         /** Sets the type of font. Must be set before loading. */
@@ -214,6 +163,10 @@ namespace Ogre
         */
         std::pair< uint, uint > StrBBox( const String & text, Real char_height, RenderWindow & window  );
 
+        /** See Resource. */
+        virtual void load();
+        /** See Resource. */
+        virtual void unload();
 
         /** Returns the teture coordinates of the associated glyph. 
             @remarks Parameter is a short to allow both ASCII and wide chars.
@@ -260,19 +213,19 @@ namespace Ogre
             unsigned OgreChar idx = OGRE_GLYPH_INDEX(id);
             mAspectRatio[ idx ] = ratio;
         }
-        /** Gets the material generated for this font, as a weak reference. 
+        /** Gets the material generated for this font. 
         @remarks
             This will only be valid after the Font has been loaded. 
         */
-        inline const MaterialPtr& getMaterial() const
+        inline const Material * getMaterial() const
         {
             return mpMaterial;
         }
-        /** Gets the material generated for this font, as a weak reference. 
+        /** Gets the material generated for this font. 
         @remarks
             This will only be valid after the Font has been loaded. 
         */
-        inline const MaterialPtr& getMaterial()
+        inline Material * getMaterial()
         {
             return mpMaterial;
         }
@@ -292,62 +245,11 @@ namespace Ogre
         	mAntialiasColour = enabled;
         }
 
-		/** Gets whether or not the colour of this font is antialiased as it is generated
-		from a true type font.
-		*/
         inline bool getAntialiasColour(void) const
         {
             return mAntialiasColour;
         }
-
-		/** Implementation of ManualResourceLoader::loadResource, called
-			when the Texture that this font creates needs to (re)load.
-		*/
-		void loadResource(Resource* resource);
     };
-	/** Specialisation of SharedPtr to allow SharedPtr to be assigned to FontPtr 
-	@note Has to be a subclass since we need operator=.
-	We could templatise this instead of repeating per Resource subclass, 
-	except to do so requires a form VC6 does not support i.e.
-	ResourceSubclassPtr<T> : public SharedPtr<T>
-	*/
-	class _OgreExport FontPtr : public SharedPtr<Font> 
-	{
-	public:
-		FontPtr() : SharedPtr<Font>() {}
-		explicit FontPtr(Font* rep) : SharedPtr<Font>(rep) {}
-		FontPtr(const FontPtr& r) : SharedPtr<Font>(r) {} 
-		FontPtr(const ResourcePtr& r) : SharedPtr<Font>()
-		{
-			// lock & copy other mutex pointer
-			OGRE_LOCK_MUTEX(*r.OGRE_AUTO_MUTEX_NAME)
-			OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
-			pRep = static_cast<Font*>(r.getPointer());
-			pUseCount = r.useCountPointer();
-			if (pUseCount)
-			{
-				++(*pUseCount);
-			}
-		}
-
-		/// Operator used to convert a ResourcePtr to a FontPtr
-		FontPtr& operator=(const ResourcePtr& r)
-		{
-			if (pRep == static_cast<Font*>(r.getPointer()))
-				return *this;
-			release();
-			// lock & copy other mutex pointer
-			OGRE_LOCK_MUTEX(*r.OGRE_AUTO_MUTEX_NAME)
-			OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
-			pRep = static_cast<Font*>(r.getPointer());
-			pUseCount = r.useCountPointer();
-			if (pUseCount)
-			{
-				++(*pUseCount);
-			}
-			return *this;
-		}
-	};
 }
 
 #endif

@@ -27,66 +27,36 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreTexture.h"
 
 namespace Ogre {
-	//--------------------------------------------------------------------------
-    Texture::Texture(ResourceManager* creator, const String& name, 
-        ResourceHandle handle, const String& group, bool isManual, 
-        ManualResourceLoader* loader)
-        : Resource(creator, name, handle, group, isManual, loader),
-            // init defaults; can be overridden before load()
-            mHeight(512),
-            mWidth(512),
+	
+    Texture::Texture(const String& name, TextureType texType, uint width, uint height, uint depth, uint num_mips, PixelFormat format, TextureUsage usage):
+            mHeight(height),
+            mWidth(width),
             mDepth(1),
-            mNumMipmaps(0),
+            mNumMipMaps(num_mips),
             mGamma(1.0f),
-            mTextureType(TEX_TYPE_2D),            
-            mFormat(PF_A8R8G8B8),
-            mUsage(TU_DEFAULT),
+            mTextureType(texType),            
+            mFormat(format),
+            mUsage(usage),
             // mSrcBpp inited later on
-            mSrcWidth(0),
-            mSrcHeight(0)
+            mSrcWidth(width),
+            mSrcHeight(height)
             // mFinalBpp inited later on by enable32bit
             // mHasAlpha inited later on            
-    {
+         {
+        mName = name;
+        mSrcBpp = Image::PF2BPP(mFormat);
+        mHasAlpha = Image::PFHasAlpha(mFormat);
 
         enable32Bit(false);
-
-        if (createParamDictionary("Texture"))
-        {
-            // Define the parameters that have to be present to load
-            // from a generic source; actually there are none, since when
-            // predeclaring, you use a texture file which includes all the
-            // information required.
-        }
-
         
     }
-    //--------------------------------------------------------------------------
-	void Texture::loadRawData( DataStreamPtr& stream, 
+  
+	void Texture::loadRawData( const DataChunk &pData, 
 		ushort uWidth, ushort uHeight, PixelFormat eFormat)
 	{
-		Image img;
-		img.loadRawData(stream, uWidth, uHeight, eFormat);
+		Image img ;
+		img.loadRawData( pData, uWidth, uHeight, eFormat);
 		loadImage(img);
-	}
-    //--------------------------------------------------------------------------
-    void Texture::setFormat(PixelFormat pf)
-    {
-        mFormat = pf;
-        // This should probably change with new texture access methods, but
-        // no changes made for now
-        mSrcBpp = PixelUtil::getNumElemBytes(mFormat);
-        mHasAlpha = PixelUtil::getFlags(mFormat) & PFF_HASALPHA;
-    }
-    //--------------------------------------------------------------------------
-	size_t Texture::calculateSize(void) const
-	{
-		// TODO - how do we calculate real DDS texture size?
-		return mWidth * mHeight * mDepth * mFinalBpp;
-	}
-	//--------------------------------------------------------------------------
-	int Texture::getNumFaces(void) const
-	{
-		return getTextureType() == TEX_TYPE_CUBE_MAP ? 6 : 1;
 	}
   
 }

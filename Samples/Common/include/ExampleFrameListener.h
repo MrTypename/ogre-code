@@ -61,10 +61,10 @@ protected:
 
         // update stats when necessary
         try {
-            OverlayElement* guiAvg = OverlayManager::getSingleton().getOverlayElement("Core/AverageFps");
-            OverlayElement* guiCurr = OverlayManager::getSingleton().getOverlayElement("Core/CurrFps");
-            OverlayElement* guiBest = OverlayManager::getSingleton().getOverlayElement("Core/BestFps");
-            OverlayElement* guiWorst = OverlayManager::getSingleton().getOverlayElement("Core/WorstFps");
+            GuiElement* guiAvg = GuiManager::getSingleton().getGuiElement("Core/AverageFps");
+            GuiElement* guiCurr = GuiManager::getSingleton().getGuiElement("Core/CurrFps");
+            GuiElement* guiBest = GuiManager::getSingleton().getGuiElement("Core/BestFps");
+            GuiElement* guiWorst = GuiManager::getSingleton().getGuiElement("Core/WorstFps");
 
             const RenderTarget::FrameStats& stats = mWindow->getStatistics();
 
@@ -75,10 +75,10 @@ protected:
             guiWorst->setCaption(worstFps + StringConverter::toString(stats.worstFPS)
                 +" "+StringConverter::toString(stats.worstFrameTime)+" ms");
 
-            OverlayElement* guiTris = OverlayManager::getSingleton().getOverlayElement("Core/NumTris");
+            GuiElement* guiTris = GuiManager::getSingleton().getGuiElement("Core/NumTris");
             guiTris->setCaption(tris + StringConverter::toString(stats.triangleCount));
 
-            OverlayElement* guiDbg = OverlayManager::getSingleton().getOverlayElement("Core/DebugText");
+            GuiElement* guiDbg = GuiManager::getSingleton().getGuiElement("Core/DebugText");
             guiDbg->setCaption(mWindow->getDebugText());
         }
         catch(...)
@@ -91,7 +91,7 @@ public:
     // Constructor takes a RenderWindow because it uses that to determine input context
     ExampleFrameListener(RenderWindow* win, Camera* cam, bool useBufferedInputKeys = false, bool useBufferedInputMouse = false)
     {
-        mDebugOverlay = OverlayManager::getSingleton().getByName("Core/DebugOverlay");
+        mDebugOverlay = (Overlay*)OverlayManager::getSingleton().getByName("Core/DebugOverlay");
         mUseBufferedInputKeys = useBufferedInputKeys;
 		mUseBufferedInputMouse = useBufferedInputMouse;
 		mInputTypeSwitchingOn = mUseBufferedInputKeys || mUseBufferedInputMouse;
@@ -102,6 +102,7 @@ public:
 		{
             mEventProcessor = new EventProcessor();
 			mEventProcessor->initialise(win);
+            OverlayManager::getSingleton().createCursorOverlay();
 			mEventProcessor->startProcessingEvents();
 			mEventProcessor->addKeyListener(this);
 			mInputDevice = mEventProcessor->getInputReader();

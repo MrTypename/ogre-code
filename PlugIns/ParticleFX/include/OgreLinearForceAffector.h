@@ -72,7 +72,7 @@ namespace Ogre {
             FA_ADD
         };
         /// Default constructor
-        LinearForceAffector(ParticleSystem* psys);
+        LinearForceAffector();
 
         /** See ParticleAffector. */
         void _affectParticles(ParticleSystem* pSystem, Real timeElapsed);

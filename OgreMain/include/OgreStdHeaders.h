@@ -80,8 +80,4 @@ extern "C" {
 }
 #endif
 
-#if OGRE_THREAD_SUPPORT
-#	include <boost/thread/recursive_mutex.hpp>
-#endif
-
 #endif

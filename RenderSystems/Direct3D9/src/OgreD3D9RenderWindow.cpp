@@ -189,10 +189,11 @@ namespace Ogre
 		// miscParam[4] = multisample quality
 		// miscParam[5] = vsync
 
-		hInst = *(HINSTANCE*)miscParam;
-
 		va_list marker;
-		va_start( marker, miscParam );
+		va_start( marker, depthBuffer );
+
+		tempPtr = va_arg( marker, long );
+		hInst = *(HINSTANCE*)tempPtr;
 
 		tempPtr = va_arg( marker, long );
 		driver = (D3D9Driver*)tempPtr;
@@ -224,15 +225,31 @@ namespace Ogre
 
 		if (!mExternalHandle)
 		{
+			DWORD dwStyle = (fullScreen ? WS_POPUP : WS_OVERLAPPEDWINDOW) | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+			RECT rc;
+
 			mWidth = width;
 			mHeight = height;
+
 			if (!fullScreen)
 			{
-				if (!left && (unsigned)GetSystemMetrics(SM_CXSCREEN) > mWidth)
+				// Calculate window dimensions required to get the requested client area
+				SetRect(&rc, 0, 0, mWidth, mHeight);
+				AdjustWindowRect(&rc, dwStyle, false);
+				mWidth = rc.right - rc.left;
+				mHeight = rc.bottom - rc.top;
+
+				// Clamp width and height to the desktop dimensions
+				if (mWidth > (unsigned)GetSystemMetrics(SM_CXSCREEN))
+					mWidth = (unsigned)GetSystemMetrics(SM_CXSCREEN);
+				if (mHeight > (unsigned)GetSystemMetrics(SM_CYSCREEN))
+					mHeight = (unsigned)GetSystemMetrics(SM_CYSCREEN);
+
+				if (!left)
 					mLeft = (GetSystemMetrics(SM_CXSCREEN) / 2) - (mWidth / 2);
 				else
 					mLeft = left;
-				if (!top && (unsigned)GetSystemMetrics(SM_CYSCREEN) > mHeight)
+				if (!top)
 					mTop = (GetSystemMetrics(SM_CYSCREEN) / 2) - (mHeight / 2);
 				else
 					mTop = top;
@@ -253,16 +270,11 @@ namespace Ogre
 			// Pass pointer to self
 			HWND hWnd = CreateWindow(TEXT(name.c_str()),
 									 TEXT(name.c_str()),
-									 WS_OVERLAPPEDWINDOW, mLeft, mTop,
+									 dwStyle, mLeft, mTop,
 									 mWidth, mHeight, 0L, 0L, hInst, this);
-
-			if (!fullScreen)
-			{
-				RECT rc;
-				GetClientRect(hWnd,&rc);
-				mWidth = rc.right;
-				mHeight = rc.bottom;
-			}
+			GetClientRect(hWnd,&rc);
+			mWidth = rc.right;
+			mHeight = rc.bottom;
 
 			ShowWindow(hWnd, SW_SHOWNORMAL);
 			UpdateWindow(hWnd);
@@ -292,12 +304,9 @@ namespace Ogre
 		// track colour depth
 		mColourDepth = colourDepth;
 
-        StringUtil::StrStreamType str;
-        str << "D3D9 : Created D3D9 Rendering Window '"
-            << mName << "' : " << mWidth << "x" << mHeight 
-            << ", " << mColourDepth << "bpp";
 		LogManager::getSingleton().logMessage(
-			LML_NORMAL, str.str());
+			LML_NORMAL, "D3D9 : Created D3D9 Rendering Window '%s' : %ix%i, %ibpp",
+			mName.c_str(), mWidth, mHeight, mColourDepth );
 
 		if( driver && mParentHWnd == NULL )
 		{
@@ -359,7 +368,7 @@ namespace Ogre
 				md3dpp.AutoDepthStencilFormat	= D3DFMT_D16;
 
 			md3dpp.MultiSampleType = mFSAAType;
-			md3dpp.MultiSampleQuality = (mFSAAQuality == 0) ? 0 : mFSAAQuality;
+			md3dpp.MultiSampleQuality = (mFSAAQuality == 0) ? NULL : mFSAAQuality;
 
 			hr = pD3D->CreateDevice( mpD3DDriver->getAdapterNumber(), devType, mHWnd,
 				D3DCREATE_HARDWARE_VERTEXPROCESSING, &md3dpp, &mpD3DDevice );
@@ -567,10 +576,10 @@ namespace Ogre
 			Except(hr, "can't lock rect!", "D3D9RenderWindow::writeContentsToFile");
 		} 
 
-        ImageCodec::ImageData *imgData = new ImageCodec::ImageData();
-        imgData->width = desc.Width;
-        imgData->height = desc.Height;
-        imgData->format = PF_BYTE_RGB;
+		ImageCodec::ImageData imgData;
+		imgData.width = desc.Width;
+		imgData.height = desc.Height;
+		imgData.format = PF_R8G8B8;
 
 		// Allocate contiguous buffer (surfaces aren't necessarily contiguous)
 		uchar* pBuffer = new uchar[desc.Width * desc.Height * 3];
@@ -622,7 +631,7 @@ namespace Ogre
 		}
 
 		// Wrap buffer in a chunk
-		MemoryDataStreamPtr stream(new MemoryDataStream(pBuffer, desc.Width * desc.Height * 3, false));
+		DataChunk chunk(pBuffer, desc.Width * desc.Height * 3);
 
 		// Get codec 
 		size_t pos = filename.find_last_of(".");
@@ -640,10 +649,7 @@ namespace Ogre
 		Codec * pCodec = Codec::getCodec(extension);
 
 		// Write out
-		{
-			Codec::CodecDataPtr ptr(imgData);
-        	pCodec->codeToFile(stream, filename, ptr);
-		}
+		pCodec->codeToFile(chunk, filename, &imgData);
 
 		delete [] pBuffer;
 

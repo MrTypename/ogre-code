@@ -1,5 +1,4 @@
 %start VS10Program
-%name-prefix="vs10_"
 %{
 void yyerror(char *s);
 int yylex(void);

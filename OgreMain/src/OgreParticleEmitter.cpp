@@ -25,7 +25,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreStableHeaders.h"
 
 #include "OgreParticleEmitter.h"
-#include "OgreParticleEmitterFactory.h"
 
 namespace Ogre {
 
@@ -52,9 +51,8 @@ namespace Ogre {
 
 
     //-----------------------------------------------------------------------
-    ParticleEmitter::ParticleEmitter(ParticleSystem* psys)
-      : mParent(psys),
-        mStartTime(0),
+    ParticleEmitter::ParticleEmitter()
+      : mStartTime(0),
         mDurationMin(0),
         mDurationMax(0),
         mDurationRemain(0),
@@ -559,33 +557,7 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    ParticleEmitterFactory::~ParticleEmitterFactory()
-    {
-        // Destroy all emitters
-        std::vector<ParticleEmitter*>::iterator i;
-        for (i = mEmitters.begin(); i != mEmitters.end(); ++i)
-        {
-            delete (*i);
-        }
-            
-        mEmitters.clear();
-
-    }
     //-----------------------------------------------------------------------
-    void ParticleEmitterFactory::destroyEmitter(ParticleEmitter* e)        
-    {
-        std::vector<ParticleEmitter*>::iterator i;
-        for (i = mEmitters.begin(); i != mEmitters.end(); ++i)
-        {
-            if ((*i) == e)
-            {
-                mEmitters.erase(i);
-                delete e;
-                break;
-            }
-        }
-    }
-
     //-----------------------------------------------------------------------
 
 }

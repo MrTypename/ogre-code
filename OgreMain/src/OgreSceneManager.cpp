@@ -56,7 +56,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreGpuProgramManager.h"
 #include "OgreGpuProgram.h"
 #include "OgreShadowVolumeExtrudeProgram.h"
-#include "OgreDataStream.h"
 
 // This class implements the most basic scene manager
 
@@ -77,8 +76,6 @@ mSkyPlaneEnabled(false),
 mSkyBoxEnabled(false),
 mSkyDomeEnabled(false),
 mFogMode(FOG_NONE),
-mSpecialCaseQueueMode(SCRQM_EXCLUDE),
-mWorldGeometryRenderQueue(RENDER_QUEUE_WORLD_GEOMETRY_1),
 mShadowCasterPlainBlackPass(0),
 mShadowReceiverPass(0),
 mDisplayNodes(false),
@@ -121,8 +118,6 @@ mShadowTextureFadeEnd(0.9)
         mSkyDomeEntity[i] = 0;
     }
 
-	mShadowCasterQueryListener = new ShadowCasterSceneQueryListener(this);
-
 
 }
 //-----------------------------------------------------------------------
@@ -130,7 +125,6 @@ SceneManager::~SceneManager()
 {
     clearScene();
     removeAllCameras();
-	delete mShadowCasterQueryListener;
     delete mSceneRoot;
     delete mFullScreenQuad;
     delete mShadowCasterSphereQuery;
@@ -157,48 +151,6 @@ void SceneManager::initRenderQueue(void)
     mRenderQueue->getQueueGroup(RENDER_QUEUE_SKIES_LATE)->setShadowsEnabled(false);
 }
 //-----------------------------------------------------------------------
-void SceneManager::addSpecialCaseRenderQueue(RenderQueueGroupID qid)
-{
-	mSpecialCaseQueueList.insert(qid);
-}
-//-----------------------------------------------------------------------
-void SceneManager::removeSpecialCaseRenderQueue(RenderQueueGroupID qid)
-{
-	mSpecialCaseQueueList.erase(qid);
-}
-//-----------------------------------------------------------------------
-void SceneManager::clearSpecialCaseRenderQueues(void)
-{
-	mSpecialCaseQueueList.clear();
-}
-//-----------------------------------------------------------------------
-void SceneManager::setSpecialCaseRenderQueueMode(SceneManager::SpecialCaseRenderQueueMode mode)
-{
-	mSpecialCaseQueueMode = mode;
-}
-//-----------------------------------------------------------------------
-SceneManager::SpecialCaseRenderQueueMode SceneManager::getSpecialCaseRenderQueueMode(void)
-{
-	return mSpecialCaseQueueMode;
-}
-//-----------------------------------------------------------------------
-bool SceneManager::isRenderQueueToBeProcessed(RenderQueueGroupID qid)
-{
-	bool inList = mSpecialCaseQueueList.find(qid) != mSpecialCaseQueueList.end();
-	return (inList && mSpecialCaseQueueMode == SCRQM_INCLUDE)
-		|| (!inList && mSpecialCaseQueueMode == SCRQM_EXCLUDE);
-}
-//-----------------------------------------------------------------------
-void SceneManager::setWorldGeometryRenderQueue(RenderQueueGroupID qid)
-{
-	mWorldGeometryRenderQueue = qid;
-}
-//-----------------------------------------------------------------------
-RenderQueueGroupID SceneManager::getWorldGeometryRenderQueue(void)
-{
-	return mWorldGeometryRenderQueue;
-}
-//-----------------------------------------------------------------------
 Camera* SceneManager::createCamera(const String& name)
 {
     // Check name not used
@@ -223,9 +175,7 @@ Camera* SceneManager::getCamera(const String& name)
     CameraList::iterator i = mCameras.find(name);
     if (i == mCameras.end())
     {
-        Except( Exception::ERR_ITEM_NOT_FOUND, 
-            "Cannot find Camera with name " + name,
-            "SceneManager::getCamera");
+        return 0;
     }
     else
     {
@@ -304,9 +254,7 @@ Light* SceneManager::getLight(const String& name)
     SceneLightList::iterator i = mLights.find(name);
     if (i == mLights.end())
     {
-        Except( Exception::ERR_ITEM_NOT_FOUND, 
-            "Cannot find Light with name " + name,
-            "SceneManager::getLight");
+        return 0;
     }
     else
     {
@@ -412,9 +360,7 @@ Entity* SceneManager::createEntity(const String& entityName, PrefabType ptype)
         break;
     }
 
-    Except( Exception::ERR_ITEM_NOT_FOUND, 
-        "Unknown prefab type for entity " + entityName,
-        "SceneManager::createEntity");
+    return 0;
 }
 
 //-----------------------------------------------------------------------
@@ -433,10 +379,7 @@ Entity* SceneManager::createEntity(
     }
 
     // Get mesh (load if required)
-    MeshPtr pMesh = MeshManager::getSingleton().load( 
-        meshName, 
-        // note that you can change the group by pre-loading the mesh 
-        ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+    Mesh* pMesh = MeshManager::getSingleton().load( meshName );
 
     // Create entity
     Entity* e = new Entity( entityName, pMesh, this );
@@ -453,9 +396,7 @@ Entity* SceneManager::getEntity(const String& name)
     EntityList::iterator i = mEntities.find(name);
     if (i == mEntities.end())
     {
-        Except( Exception::ERR_ITEM_NOT_FOUND, 
-            "Cannot find Entity with name " + name,
-            "SceneManager::getEntity");
+        return 0;
     }
     else
     {
@@ -543,6 +484,33 @@ void SceneManager::clearScene(void)
     mSkyBoxNode = mSkyPlaneNode = mSkyDomeNode = 0;
     mSkyBoxEnabled = mSkyPlaneEnabled = mSkyDomeEnabled = false; 
 
+}
+
+//-----------------------------------------------------------------------
+Material* SceneManager::createMaterial(const String& name)
+{
+    // Create using MaterialManager
+    Material* m = (Material*)MaterialManager::getSingleton().create(name);
+
+
+    return m;
+}
+//-----------------------------------------------------------------------
+Material* SceneManager::getDefaultMaterialSettings(void)
+{
+    return Material::mDefaultSettings;
+}
+//-----------------------------------------------------------------------
+Material* SceneManager::getMaterial(const String& name)
+{
+    return (Material*)MaterialManager::getSingleton().getByName(name);
+}
+
+//-----------------------------------------------------------------------
+Material* SceneManager::getMaterial(int handle)
+{
+    return static_cast<Material*>(
+        MaterialManager::getSingleton().getByHandle(handle));
 }
 //-----------------------------------------------------------------------
 SceneNode* SceneManager::createSceneNode(void)
@@ -673,8 +641,7 @@ Pass* SceneManager::setPass(Pass* pass)
                 pass->getDiffuse(), 
                 pass->getSpecular(), 
                 pass->getSelfIllumination(), 
-                pass->getShininess(),
-		pass->getVertexColourTracking() );
+                pass->getShininess() );
         }
 
         // Dynamic lighting enabled?
@@ -754,9 +721,6 @@ Pass* SceneManager::setPass(Pass* pass)
     mDestRenderSystem->_setDepthBufferCheckEnabled(pass->getDepthCheckEnabled());
     mDestRenderSystem->_setDepthBufferWriteEnabled(pass->getDepthWriteEnabled());
     mDestRenderSystem->_setDepthBias(pass->getDepthBias());
-	// Alpha-reject settings
-	mDestRenderSystem->_setAlphaRejectSettings(
-		pass->getAlphaRejectFunction(), pass->getAlphaRejectValue());
     // Set colour write mode
     // Right now we only use on/off, not per-channel
     bool colWrite = pass->getColourWriteEnabled();
@@ -977,8 +941,7 @@ void SceneManager::setSkyPlane(
                                Real tiling,
                                bool drawFirst,
                                Real bow, 
-                               int xsegments, int ysegments, 
-                               const String& groupName)
+                               int xsegments, int ysegments)
 {
     mSkyPlaneEnabled = enable;
     if (enable)
@@ -986,8 +949,8 @@ void SceneManager::setSkyPlane(
         String meshName = "SkyPlane";
         mSkyPlane = plane;
 
-        MaterialPtr m = MaterialManager::getSingleton().getByName(materialName);
-        if (m.isNull())
+        Material* m = getMaterial(materialName);
+        if (!m)
         {
             Except(Exception::ERR_INVALIDPARAMS, 
                 "Sky plane material '" + materialName + "' not found.",
@@ -1001,11 +964,12 @@ void SceneManager::setSkyPlane(
         mSkyPlaneDrawFirst = drawFirst;
 
         // Set up the plane
-        MeshPtr planeMesh = MeshManager::getSingleton().getByName(meshName);
-        if (!planeMesh.isNull())
+        Mesh* planeMesh = (Mesh*)MeshManager::getSingleton().getByName(meshName);
+        if (planeMesh)
         {
             // Destroy the old one
-            MeshManager::getSingleton().remove(planeMesh->getHandle());
+            MeshManager::getSingleton().unload(planeMesh);
+            delete planeMesh;
         }
 
         // Create up vector
@@ -1018,13 +982,13 @@ void SceneManager::setSkyPlane(
         {
             // Build a curved skyplane
             planeMesh = MeshManager::getSingleton().createCurvedPlane(
-                meshName, groupName, plane, gscale * 100, gscale * 100, gscale * bow * 100, 
+                meshName, plane, gscale * 100, gscale * 100, gscale * bow * 100, 
                 xsegments, ysegments, false, 1, tiling, tiling, up);
         }
         else
         {
             planeMesh = MeshManager::getSingleton().createPlane(
-                meshName, groupName, plane, gscale * 100, gscale * 100, xsegments, ysegments, false, 
+                meshName, plane, gscale * 100, gscale * 100, xsegments, ysegments, false, 
                 1, tiling, tiling, up);
         }
 
@@ -1058,17 +1022,16 @@ void SceneManager::setSkyBox(
                              const String& materialName,
                              Real distance,
                              bool drawFirst,
-                             const Quaternion& orientation,
-                             const String& groupName)
+                             const Quaternion& orientation )
 {
     mSkyBoxEnabled = enable;
     if (enable)
     {
-        MaterialPtr m = MaterialManager::getSingleton().getByName(materialName);
-        if (m.isNull())
+        Material* m = getMaterial(materialName);
+        if (!m)
         {
             Except(Exception::ERR_INVALIDPARAMS, 
-                "Sky box material '" + materialName + "' not found.",
+                "Sky box material '" + materialName + " not found.",
                 "SceneManager::setSkyBox");
         }
         // Make sure the material doesn't update the depth buffer
@@ -1095,7 +1058,7 @@ void SceneManager::setSkyBox(
         // Set up the box (6 planes)
         for (int i = 0; i < 6; ++i)
         {
-            MeshPtr planeMesh = createSkyboxPlane((BoxPlane)i, distance, orientation, groupName);
+            Mesh* planeMesh = createSkyboxPlane((BoxPlane)i, distance, orientation);
             String entName = "SkyBoxPlane" + StringConverter::toString(i);
 
             // Create entity 
@@ -1109,8 +1072,8 @@ void SceneManager::setSkyBox(
             // Have to create 6 materials, one for each frame
             // Used to use combined material but now we're using queue we can't split to change frame
             // This doesn't use much memory because textures aren't duplicated
-            MaterialPtr boxMat = matMgr.getByName(entName);
-            if (boxMat.isNull())
+            Material* boxMat = (Material*)matMgr.getByName(entName);
+            if (!boxMat)
             {
                 // Create new by clone
                 boxMat = m->clone(entName);
@@ -1144,14 +1107,13 @@ void SceneManager::setSkyDome(
                               Real distance,
                               bool drawFirst,
                               const Quaternion& orientation,
-                              int xsegments, int ysegments, int ySegmentsToKeep,
-                              const String& groupName)
+                              int xsegments, int ysegments, int ySegmentsToKeep)
 {
     mSkyDomeEnabled = enable;
     if (enable)
     {
-        MaterialPtr m = MaterialManager::getSingleton().getByName(materialName);
-        if (m.isNull())
+        Material* m = getMaterial(materialName);
+        if (!m)
         {
             Except(Exception::ERR_INVALIDPARAMS, 
                 "Sky dome material '" + materialName + " not found.",
@@ -1177,9 +1139,9 @@ void SceneManager::setSkyDome(
         // Set up the dome (5 planes)
         for (int i = 0; i < 5; ++i)
         {
-            MeshPtr planeMesh = createSkydomePlane((BoxPlane)i, curvature, 
+            Mesh* planeMesh = createSkydomePlane((BoxPlane)i, curvature, 
                 tiling, distance, orientation, xsegments, ysegments, 
-                i!=BP_UP ? ySegmentsToKeep : -1, groupName);
+                i!=BP_UP ? ySegmentsToKeep : -1);
 
             String entName = "SkyDomePlane" + StringConverter::toString(i);
 
@@ -1200,11 +1162,10 @@ void SceneManager::setSkyDome(
     }
 }
 //-----------------------------------------------------------------------
-MeshPtr SceneManager::createSkyboxPlane(
+Mesh* SceneManager::createSkyboxPlane(
                                       BoxPlane bp,
                                       Real distance,
-                                      const Quaternion& orientation,
-                                      const String& groupName)
+                                      const Quaternion& orientation )
 {
     Plane plane;
     String meshName;
@@ -1253,17 +1214,17 @@ MeshPtr SceneManager::createSkyboxPlane(
 
     // Check to see if existing plane
     MeshManager& mm = MeshManager::getSingleton();
-    MeshPtr planeMesh = mm.getByName(meshName);
-    if(!planeMesh.isNull())
+    Mesh* planeMesh = (Mesh*)mm.getByName(meshName);
+    if(planeMesh)
     {
         // destroy existing
-        mm.remove(planeMesh->getHandle());
+        mm.unload(planeMesh);
+        delete planeMesh;
     }
     // Create new
     Real planeSize = distance * 2;
     const int BOX_SEGMENTS = 1;
-    planeMesh = mm.createPlane(meshName, groupName, plane, planeSize, planeSize, 
-        BOX_SEGMENTS, BOX_SEGMENTS, false, 1, 1, 1, up);
+    planeMesh = mm.createPlane(meshName, plane, planeSize, planeSize, BOX_SEGMENTS, BOX_SEGMENTS, false, 1, 1, 1, up);
 
     //planeMesh->_dumpContents(meshName);
 
@@ -1271,14 +1232,13 @@ MeshPtr SceneManager::createSkyboxPlane(
 
 }
 //-----------------------------------------------------------------------
-MeshPtr SceneManager::createSkydomePlane(
+Mesh* SceneManager::createSkydomePlane(
                                        BoxPlane bp,
                                        Real curvature,
                                        Real tiling,
                                        Real distance,
                                        const Quaternion& orientation,
-                                       int xsegments, int ysegments, int ysegments_keep, 
-                                       const String& groupName)
+                                       int xsegments, int ysegments, int ysegments_keep)
 {
 
     Plane plane;
@@ -1317,7 +1277,7 @@ MeshPtr SceneManager::createSkydomePlane(
         break;
     case BP_DOWN:
         // no down
-        return MeshPtr();
+        return 0;
     }
     // Modify by orientation
     plane.normal = orientation * plane.normal;
@@ -1325,18 +1285,17 @@ MeshPtr SceneManager::createSkydomePlane(
 
     // Check to see if existing plane
     MeshManager& mm = MeshManager::getSingleton();
-    MeshPtr planeMesh = mm.getByName(meshName);
-    if(!planeMesh.isNull())
+    Mesh* planeMesh = (Mesh*)mm.getByName(meshName);
+    if(planeMesh)
     {
         // destroy existing
-        mm.remove(planeMesh->getHandle());
+        mm.unload(planeMesh);
+        delete planeMesh;
     }
     // Create new
     Real planeSize = distance * 2;
-    planeMesh = mm.createCurvedIllusionPlane(meshName, groupName, plane, 
-        planeSize, planeSize, curvature, 
-        xsegments, ysegments, false, 1, tiling, tiling, up, 
-        orientation, HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY, HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
+    planeMesh = mm.createCurvedIllusionPlane(meshName, plane, planeSize, planeSize, curvature, 
+        xsegments, ysegments, false, 1, tiling, tiling, up, orientation, HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY, HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
         false, false, ysegments_keep);
 
     //planeMesh->_dumpContents(meshName);
@@ -1378,10 +1337,7 @@ void SceneManager::_renderVisibleObjects(void)
     {
         // Get queue group id
         RenderQueueGroupID qId = queueIt.peekNextKey();
-		RenderQueueGroup* pGroup = queueIt.getNext();
-		// Skip this one if not to be processed
-		if (!isRenderQueueToBeProcessed(qId))
-			continue;
+        RenderQueueGroup* pGroup = queueIt.getNext();
 
 
         bool repeatQueue = false;
@@ -2047,7 +2003,8 @@ void SceneManager::renderSingleObject(Renderable* rend, Pass* pass,
             }
             // Do we need to update light states? 
             // Only do this if fixed-function vertex lighting applies
-            if (pass->getLightingEnabled() && !pass->hasVertexProgram())
+            if (pass->getLightingEnabled() &&
+                (!pass->hasVertexProgram() || pass->getVertexProgram()->getPassSurfaceAndLightStates()))
             {
                 mDestRenderSystem->_useLights(*pLightListToUse, pass->getMaxSimultaneousLights());
             }
@@ -2080,9 +2037,10 @@ void SceneManager::renderSingleObject(Renderable* rend, Pass* pass,
             }
         }
 
-        // Use manual lights if present, and not using vertex programs
+        // Use manual lights if present, and fixed-function vertex lighting applies
         if (manualLightList && 
-            pass->getLightingEnabled() && !pass->hasVertexProgram())
+            pass->getLightingEnabled() &&
+            (!pass->hasVertexProgram() || pass->getVertexProgram()->getPassSurfaceAndLightStates()))
         {
             mDestRenderSystem->_useLights(*manualLightList, pass->getMaxSimultaneousLights());
         }
@@ -2167,9 +2125,7 @@ BillboardSet* SceneManager::getBillboardSet(const String& name)
     BillboardSetList::iterator i = mBillboardSets.find(name);
     if (i == mBillboardSets.end())
     {
-        Except( Exception::ERR_ITEM_NOT_FOUND, 
-            "Cannot find BillboardSet with name " + name,
-            "SceneManager::getBillboardSet");
+        return 0;
     }
     else
     {
@@ -2410,6 +2366,98 @@ void SceneManager::manualRender(RenderOperation* rend,
 
     if (doBeginEndFrame)
         mDestRenderSystem->_endFrame();
+
+}
+//---------------------------------------------------------------------
+Overlay* SceneManager::createOverlay(const String& name, ushort zorder)
+{
+    /*
+    // check not existing
+    OverlayList::iterator i = mOverlays.find(name);
+    if (i != mOverlays.end())
+    {
+    Except(Exception::ERR_DUPLICATE_ITEM, 
+    "An overlay named " + name + " already exists.",
+    "SceneManager::createOverlay");
+    }
+    Overlay *newOverlay = new Overlay(name, zorder);
+
+    mOverlays.insert(OverlayList::value_type(name, newOverlay));
+    return newOverlay;
+    */
+
+    Overlay* newOverlay = (Overlay*)OverlayManager::getSingleton().create(name);
+    newOverlay->setZOrder(zorder);
+    return newOverlay;
+
+
+
+}
+//---------------------------------------------------------------------
+Overlay* SceneManager::getOverlay(const String& name)
+{
+    /*
+    OverlayList::iterator i = mOverlays.find(name);
+    if (i == mOverlays.end())
+    {
+    Except(Exception::ERR_ITEM_NOT_FOUND, 
+    "An overlay named " + name + " cannot be found.",
+    "SceneManager::getOverlay");
+    }
+
+    return i->second;
+    */
+    Overlay* ret = (Overlay*)OverlayManager::getSingleton().getByName(name);
+    if (!ret)
+    {
+        Except(Exception::ERR_ITEM_NOT_FOUND, 
+            "An overlay named " + name + " cannot be found.",
+            "SceneManager::getOverlay");
+    }
+
+    return ret;
+
+}
+//---------------------------------------------------------------------
+void SceneManager::destroyOverlay(const String& name)
+{
+    /*
+    OverlayList::iterator i = mOverlays.find(name);
+    if (i == mOverlays.end())
+    {
+    Except(Exception::ERR_ITEM_NOT_FOUND, 
+    "An overlay named " + name + " cannot be found.",
+    "SceneManager::destroyOverlay");
+    }
+
+    delete i->second;
+    mOverlays.erase(i);
+    */
+    Overlay* pOver = (Overlay*)OverlayManager::getSingleton().getByName(name);
+    if (!pOver)
+    {
+        Except(Exception::ERR_ITEM_NOT_FOUND, 
+            "An overlay named " + name + " cannot be found.",
+            "SceneManager::destroyOverlay");
+    }
+    OverlayManager::getSingleton().unload(pOver);
+    delete pOver;
+
+}
+//---------------------------------------------------------------------
+void SceneManager::destroyAllOverlays(void)
+{
+    /*
+    OverlayList::iterator i, iend;
+    iend = mOverlays.end();
+    for (i = mOverlays.begin(); i != iend; ++i)
+    {
+    delete i->second;
+    }
+    mOverlays.clear();
+    */
+    OverlayManager::getSingleton().unloadAndDestroyAll();
+
 
 }
 //---------------------------------------------------------------------
@@ -2671,8 +2719,7 @@ void SceneManager::findLightsAffectingFrustum(const Camera* camera)
 bool SceneManager::ShadowCasterSceneQueryListener::queryResult(
     MovableObject* object)
 {
-    if (object->getCastShadows() && object->isVisible() && 
-		mSceneMgr->isRenderQueueToBeProcessed(object->getRenderQueueGroup()))
+    if (object->getCastShadows() && object->isVisible())
     {
         if (mFarDistSquared)
         {
@@ -2757,10 +2804,10 @@ const SceneManager::ShadowCasterList& SceneManager::findShadowCastersForLight(
         else
             mShadowCasterAABBQuery->setBox(aabb);
         // Execute, use callback
-        mShadowCasterQueryListener->prepare(false, 
+        mShadowCasterQueryListener.prepare(false, 
             &(light->_getFrustumClipVolumes(camera)), 
             light, camera, &mShadowCasterList, mShadowFarDistSquared);
-        mShadowCasterAABBQuery->execute(mShadowCasterQueryListener);
+        mShadowCasterAABBQuery->execute(&mShadowCasterQueryListener);
 
 
     }
@@ -2786,9 +2833,9 @@ const SceneManager::ShadowCasterList& SceneManager::findShadowCastersForLight(
             }
 
             // Execute, use callback
-            mShadowCasterQueryListener->prepare(lightInFrustum, 
+            mShadowCasterQueryListener.prepare(lightInFrustum, 
                 volList, light, camera, &mShadowCasterList, mShadowFarDistSquared);
-            mShadowCasterSphereQuery->execute(mShadowCasterQueryListener);
+            mShadowCasterSphereQuery->execute(&mShadowCasterQueryListener);
 
         }
 
@@ -2806,14 +2853,14 @@ void SceneManager::initShadowVolumeMaterials(void)
 
     if (!mShadowDebugPass)
     {
-        MaterialPtr matDebug = 
-            MaterialManager::getSingleton().getByName("Ogre/Debug/ShadowVolumes");
-        if (matDebug.isNull())
+        Material* matDebug = static_cast<Material*>(
+            MaterialManager::getSingleton().getByName(
+            "Ogre/Debug/ShadowVolumes"));
+        if (!matDebug)
         {
             // Create
-            matDebug = MaterialManager::getSingleton().create(
-                "Ogre/Debug/ShadowVolumes", 
-                ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+            matDebug = static_cast<Material*>(
+                MaterialManager::getSingleton().create("Ogre/Debug/ShadowVolumes"));
             mShadowDebugPass = matDebug->getTechnique(0)->getPass(0);
             mShadowDebugPass->setSceneBlending(SBT_ADD); 
             mShadowDebugPass->setLightingEnabled(false);
@@ -2850,14 +2897,15 @@ void SceneManager::initShadowVolumeMaterials(void)
     if (!mShadowStencilPass)
     {
 
-        MaterialPtr matStencil = MaterialManager::getSingleton().getByName(
-            "Ogre/StencilShadowVolumes");
-        if (matStencil.isNull())
+        Material* matStencil = static_cast<Material*>(
+            MaterialManager::getSingleton().getByName(
+            "Ogre/StencilShadowVolumes"));
+        if (!matStencil)
         {
             // Init
-            matStencil = MaterialManager::getSingleton().create(
-                "Ogre/StencilShadowVolumes",
-                ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+            matStencil = static_cast<Material*>(
+                MaterialManager::getSingleton().create(
+                "Ogre/StencilShadowVolumes"));
             mShadowStencilPass = matStencil->getTechnique(0)->getPass(0);
 
             if (mDestRenderSystem->getCapabilities()->hasCapability(
@@ -2893,14 +2941,15 @@ void SceneManager::initShadowVolumeMaterials(void)
     if (!mShadowModulativePass)
     {
 
-        MaterialPtr matModStencil = MaterialManager::getSingleton().getByName(
-            "Ogre/StencilShadowModulationPass");
-        if (matModStencil.isNull())
+        Material* matModStencil = static_cast<Material*>(
+            MaterialManager::getSingleton().getByName(
+            "Ogre/StencilShadowModulationPass"));
+        if (!matModStencil)
         {
             // Init
-            matModStencil = MaterialManager::getSingleton().create(
-                "Ogre/StencilShadowModulationPass",
-                ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+            matModStencil = static_cast<Material*>(
+                MaterialManager::getSingleton().create(
+                "Ogre/StencilShadowModulationPass"));
             mShadowModulativePass = matModStencil->getTechnique(0)->getPass(0);
             mShadowModulativePass->setSceneBlending(SBF_DEST_COLOUR, SBF_ZERO); 
             mShadowModulativePass->setLightingEnabled(false);
@@ -2927,13 +2976,14 @@ void SceneManager::initShadowVolumeMaterials(void)
     // Also init shadow caster material for texture shadows
     if (!mShadowCasterPlainBlackPass)
     {
-        MaterialPtr matPlainBlack = MaterialManager::getSingleton().getByName(
-            "Ogre/TextureShadowCaster");
-        if (matPlainBlack.isNull())
+        Material* matPlainBlack = static_cast<Material*>(
+            MaterialManager::getSingleton().getByName(
+            "Ogre/TextureShadowCaster"));
+        if (!matPlainBlack)
         {
-            matPlainBlack = MaterialManager::getSingleton().create(
-                "Ogre/TextureShadowCaster",
-                ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+            matPlainBlack = static_cast<Material*>(
+                MaterialManager::getSingleton().create(
+                "Ogre/TextureShadowCaster"));
             mShadowCasterPlainBlackPass = matPlainBlack->getTechnique(0)->getPass(0);
             // Lighting has to be on, because we need shadow coloured objects
             // Note that because we can't predict vertex programs, we'll have to
@@ -2954,13 +3004,13 @@ void SceneManager::initShadowVolumeMaterials(void)
 
     if (!mShadowReceiverPass)
     {
-        MaterialPtr matShadRec = MaterialManager::getSingleton().getByName(
-            "Ogre/TextureShadowReceiver");
-        if (matShadRec.isNull())			
+        Material* matShadRec = static_cast<Material*>(
+            MaterialManager::getSingleton().getByName(
+            "Ogre/TextureShadowReceiver"));
+        if (!matShadRec)			
         {
-            matShadRec = MaterialManager::getSingleton().create(
-                "Ogre/TextureShadowReceiver",
-                ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+            matShadRec = static_cast<Material*>(
+                MaterialManager::getSingleton().create("Ogre/TextureShadowReceiver"));
             mShadowReceiverPass = matShadRec->getTechnique(0)->getPass(0);
             mShadowReceiverPass->setSceneBlending(SBF_DEST_COLOUR, SBF_ZERO);
             // No lighting, one texture unit 
@@ -2976,19 +3026,16 @@ void SceneManager::initShadowVolumeMaterials(void)
     }
 
     // Set up spot shadow fade texture (loaded from code data block)
-    TexturePtr spotShadowFadeTex = 
+    Texture* spotShadowFadeTex = (Texture*) 
         TextureManager::getSingleton().getByName("spot_shadow_fade.png");
-    if (spotShadowFadeTex.isNull())
+    if (!spotShadowFadeTex)
     {
-        // Load the manual buffer into an image (don't destroy memory!
-        DataStreamPtr stream(
-			new MemoryDataStream(SPOT_SHADOW_FADE_PNG, SPOT_SHADOW_FADE_PNG_SIZE, false));
+        // Load the manual buffer into an image
+        DataChunk chunk(SPOT_SHADOW_FADE_PNG, SPOT_SHADOW_FADE_PNG_SIZE);
         Image img;
-        img.load(stream, "png");
+        img.load(chunk, "png");
         spotShadowFadeTex = 
-            TextureManager::getSingleton().loadImage(
-			"spot_shadow_fade.png", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, 
-			img, TEX_TYPE_2D);
+            TextureManager::getSingleton().loadImage("spot_shadow_fade.png", img, TEX_TYPE_2D);
     }
 
     mShadowMaterialInitDone = true;
@@ -3009,7 +3056,7 @@ Pass* SceneManager::deriveShadowCasterPass(Pass* pass)
             // Did this result in a new vertex program?
             if (mShadowCasterPlainBlackPass->hasVertexProgram())
             {
-                const GpuProgramPtr& prg = mShadowCasterPlainBlackPass->getVertexProgram();
+                GpuProgram* prg = mShadowCasterPlainBlackPass->getVertexProgram();
                 // Load this program if not done already
                 if (!prg->isLoaded())
                     prg->load();
@@ -3051,7 +3098,7 @@ Pass* SceneManager::deriveShadowReceiverPass(Pass* pass)
             // Did this result in a new vertex program?
             if (mShadowReceiverPass->hasVertexProgram())
             {
-                const GpuProgramPtr& prg = mShadowReceiverPass->getVertexProgram();
+                GpuProgram* prg = mShadowReceiverPass->getVertexProgram();
                 // Load this program if required
                 if (!prg->isLoaded())
                     prg->load();
@@ -3578,11 +3625,10 @@ void SceneManager::createShadowTextures(unsigned short size, unsigned short coun
         mShadowTextures.push_back(shadowTex);
 
         // Also create corresponding Material used for rendering this shadow
-        MaterialPtr mat = MaterialManager::getSingleton().getByName(matName);
-        if (mat.isNull())
+        Material* mat = (Material*)MaterialManager::getSingleton().getByName(matName);
+        if (!mat)
         {
-            mat = MaterialManager::getSingleton().create(
-                matName, ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+            mat = (Material*)MaterialManager::getSingleton().create(matName);
         }
         else
         {

@@ -46,7 +46,7 @@ namespace Ogre {
         /** Constructor, don't call directly, this will be created automatically
         when you create an Entity based on a skeletally animated Mesh.
         */
-        SkeletonInstance(const SkeletonPtr& masterCopy);
+        SkeletonInstance(Skeleton* masterCopy);
         ~SkeletonInstance();
 
         /** Gets the number of animations on this skeleton. */
@@ -72,6 +72,12 @@ namespace Ogre {
         */
         void removeAnimation(const String& name);
 
+        /** Overridden from Skeleton
+        */
+        void load(void);
+        /** Overridden from Skeleton
+        */
+        void unload(void);
 
         /** Creates a TagPoint ready to be attached to a bone */
         TagPoint* createTagPointOnBone(Bone* bone, 
@@ -83,7 +89,7 @@ namespace Ogre {
 
     protected:
         /// Pointer back to master Skeleton
-        SkeletonPtr mSkeleton;
+        Skeleton* mSkeleton;
 
         typedef std::list<TagPoint*> ActiveTagPointList;
         typedef std::deque<TagPoint*> FreeTagPointQueue;
@@ -111,12 +117,6 @@ namespace Ogre {
         unsigned short mNextTagPointAutoHandle;
 
         void cloneBoneAndChildren(Bone* source, Bone* parent);
-        /** Overridden from Skeleton
-        */
-        void loadImpl(void);
-        /** Overridden from Skeleton
-        */
-        void unloadImpl(void);
 
     };
 

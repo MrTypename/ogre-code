@@ -32,17 +32,17 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 namespace Ogre {
 
-    /** This class manages the available ArchiveFactory plugins. 
+    /** ResourceManager specialization to handle Archive plug-ins.
+        @see
+            ResourceManager
     */
-    class _OgreExport ArchiveManager : public Singleton<ArchiveManager>
+    class _OgreExport ArchiveManager
+        : public ResourceManager, public Singleton<ArchiveManager>
     {
     protected:
         typedef std::map<String, ArchiveFactory*> ArchiveFactoryMap;
         /// Factories available to create archives, indexed by archive type (String identifier e.g. 'Zip')
         ArchiveFactoryMap mArchFactories;
-        /// Currently loaded archives
-        typedef std::map<String, Archive*> ArchiveMap;
-        ArchiveMap mArchives;
 
     public:
         /** Default constructor - should never get called by a client app.
@@ -60,20 +60,27 @@ namespace Ogre {
                 The filename that will be opened
             @param refLibrary
                 The library that contains the data-handling code
+            @param priority
+                The priority of the archive (not yet used)
             @returns
-                If the function succeeds, a valid pointer to an Archive
+                If the function succeeds, a valid pointer to an ArchiveEx
                 object is returened.
             @par
                 If the function fails, an exception is thrown.
         */
-        Archive* load( const String& filename, const String& archiveType);
+        ArchiveEx* load( const String& filename, const String& archiveType, int priority = 1 );
 
+        /** Overloaded from ResourceManager.
+            @see
+                ResourceManager::create
+        */
+        Resource* create( const String& name );
 
         /** Adds a new ArchiveFactory to the list of available factories.
             @remarks
                 Plugin developers who add new archive codecs need to call
                 this after defining their ArchiveFactory subclass and
-                Archive subclasses for their archive type.
+                ArchiveEx subclasses for their archive type.
         */
         void addArchiveFactory(ArchiveFactory* factory);
         /** Override standard Singleton retrieval.

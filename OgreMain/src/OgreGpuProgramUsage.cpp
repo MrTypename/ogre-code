@@ -45,9 +45,10 @@ namespace Ogre
 	//-----------------------------------------------------------------------------
 	void GpuProgramUsage::setProgramName(const String& name, bool resetParams)
 	{
-		mProgram = GpuProgramManager::getSingleton().getByName(name);
+		mProgram = static_cast<GpuProgram*>(
+			GpuProgramManager::getSingleton().getByName(name));
 
-        if (mProgram.isNull())
+        if (!mProgram)
         {
             String progType = (mType == GPT_VERTEX_PROGRAM ? "vertex" : "fragment");
             Except(Exception::ERR_ITEM_NOT_FOUND, 
@@ -76,7 +77,7 @@ namespace Ogre
         return mParameters;
     }
     //-----------------------------------------------------------------------------
-	void GpuProgramUsage::setProgram(GpuProgramPtr& prog) 
+	void GpuProgramUsage::setProgram(GpuProgram* prog) 
 	{
         mProgram = prog;
         // Reset parameters 

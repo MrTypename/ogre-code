@@ -264,6 +264,9 @@ namespace Ogre {
         // Change tetxure matrix 
         _setTextureMatrix(texUnit, tl.getTextureTransform());
 
+        // Set alpha rejection
+        _setAlphaRejectSettings(tl.getAlphaRejectFunction(), 
+            tl.getAlphaRejectValue());
 
     }
     //-----------------------------------------------------------------------

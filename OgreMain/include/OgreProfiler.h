@@ -41,7 +41,6 @@ Ogre-dependent is in the visualization/logging routines and the use of the Timer
 #include "OgrePrerequisites.h"
 #include "OgreSingleton.h"
 #include "OgreString.h"
-#include "OgreOverlay.h"
 
 #if OGRE_PROFILING == 1
 #   if OGRE_COMPILER != COMPILER_BORL
@@ -243,14 +242,14 @@ namespace Ogre {
             void changeEnableState();
 
             /** An internal function to create the container which will hold our display elements*/
-            OverlayContainer* createContainer();
+            GuiContainer* createContainer();
 
             /** An internal function to create a text area */
-            OverlayElement* createTextArea(const String& name, Real width, Real height, Real top, Real left, 
+            GuiElement* createTextArea(const String& name, Real width, Real height, Real top, Real left, 
                                        uint fontSize, const String& caption, bool show = true);
 
             /** An internal function to create a panel */
-            OverlayElement* createPanel(const String& name, Real width, Real height, Real top, Real left, 
+            GuiElement* createPanel(const String& name, Real width, Real height, Real top, Real left, 
                                     const String& materialName, bool show = true);
 
             /// Represents an individual profile call
@@ -329,7 +328,7 @@ namespace Ogre {
             typedef std::map<String, ProfileHistoryList::iterator> ProfileHistoryMap;
             typedef std::map<String, bool> DisabledProfileMap;
 
-            typedef std::list<OverlayElement*> ProfileBarList;
+            typedef std::list<GuiElement*> ProfileBarList;
 
             /// A stack for each individual profile per frame
             ProfileStack mProfiles;
@@ -360,7 +359,7 @@ namespace Ogre {
             Overlay* mOverlay;
 
             /// The window that displays the profiler results
-            OverlayContainer* mProfileGui;
+            GuiContainer* mProfileGui;
 
             /// The height of each bar
             Real mBarHeight;

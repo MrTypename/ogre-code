@@ -26,47 +26,59 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreStableHeaders.h"
 
 #include "OgreMouseMotionTarget.h"
+
 #include "OgreMouseEvent.h"
 #include "OgreEventListeners.h"
+#include "OgreEventMulticaster.h"	
+
 
 
 namespace Ogre {
 
+	MouseMotionTarget::MouseMotionTarget() 
+	{
+		mMouseMotionListener = 0;
+	}
+
     //-----------------------------------------------------------------------
+
 	void MouseMotionTarget::processMouseMotionEvent(MouseEvent* e) 
 	{
-        // Tell all listeners
-        std::set<MouseMotionListener*>::iterator i;
-        for (i= mMouseMotionListeners.begin(); i != mMouseMotionListeners.end(); ++i)
-        {
-		    MouseMotionListener* listener = *i;
-		    if (listener != 0) 
-		    {
-			    int id = e->getID();
-			    switch(id) 
-			    {
-			    case MouseEvent::ME_MOUSE_MOVED:
-				    listener->mouseMoved(e);
-				    break;
-			    case MouseEvent::ME_MOUSE_DRAGGED:
-				    listener->mouseDragged(e);
-				    break;
-			    case MouseEvent::ME_MOUSE_DRAGMOVED:
-				    listener->mouseDragMoved(e);
-				    break;
-			    }
-            }
+		MouseMotionListener* listener = mMouseMotionListener;
+		if (listener != NULL) 
+		{
+			int id = e->getID();
+			switch(id) 
+			{
+			case MouseEvent::ME_MOUSE_MOVED:
+				listener->mouseMoved(e);
+				break;
+			case MouseEvent::ME_MOUSE_DRAGGED:
+				listener->mouseDragged(e);
+				break;
+			case MouseEvent::ME_MOUSE_DRAGMOVED:
+				listener->mouseDragMoved(e);
+				break;
+			}
 		}
 	}
 
 	void MouseMotionTarget::addMouseMotionListener(MouseMotionListener* l) 
 	{
-        mMouseMotionListeners.insert(l);
+		if (l == NULL) 
+		{
+			return;
+		}
+		mMouseMotionListener = EventMulticaster::add(mMouseMotionListener,l);
 	}
 
 	void MouseMotionTarget::removeMouseMotionListener(MouseMotionListener* l) 
 	{
-        mMouseMotionListeners.erase(l);
+		if (l == NULL) 
+		{
+			return;
+		}
+		mMouseMotionListener = EventMulticaster::remove(mMouseMotionListener,l);
 	}
 }
 

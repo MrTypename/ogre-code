@@ -26,39 +26,41 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreHighLevelGpuProgram.h"
 #include "OgreException.h"
 #include "OgreGpuProgramManager.h"
+#include "OgreSDDataChunk.h"
 
 namespace Ogre
 {
     //---------------------------------------------------------------------------
-    HighLevelGpuProgram::HighLevelGpuProgram(ResourceManager* creator, 
-        const String& name, ResourceHandle handle, const String& group, 
-        bool isManual, ManualResourceLoader* loader)
-        : GpuProgram(creator, name, handle, group, isManual, loader), 
-        mHighLevelLoaded(false), mAssemblerProgram(0)
+    HighLevelGpuProgram::HighLevelGpuProgram(const String& name, GpuProgramType gptype, 
+        const String& language)
+        : GpuProgram(name, gptype, language), mHighLevelLoaded(false), mAssemblerProgram(0)
     {
     }
     //---------------------------------------------------------------------------
-    void HighLevelGpuProgram::loadImpl()
+    void HighLevelGpuProgram::load()
     {
+        if (mIsLoaded)
+        {
+            unload();
+        }
+
         // load self 
         loadHighLevelImpl();
 
         // create low-level implementation
         createLowLevelImpl();
         // load constructed assembler program
-        assert(!mAssemblerProgram.isNull() && "Subclass did not initialise mAssemblerProgram!");
+        assert(mAssemblerProgram && "Subclass did not initialise mAssemblerProgram!");
         mAssemblerProgram->load();
         mIsLoaded = true;
     }
     //---------------------------------------------------------------------------
-    void HighLevelGpuProgram::unloadImpl()
+    void HighLevelGpuProgram::unload()
     {   
-        if (!mAssemblerProgram.isNull())
-        {
+        if (mAssemblerProgram)
             mAssemblerProgram->unload();
-            mAssemblerProgram.setNull();
-        }
-        unloadHighLevelImpl();
+        unloadImpl();
+        mIsLoaded = false;
     }
     //---------------------------------------------------------------------------
     HighLevelGpuProgram::~HighLevelGpuProgram()
@@ -89,11 +91,9 @@ namespace Ogre
             if (mLoadFromFile)
             {
                 // find & load source code
-                DataStreamPtr stream = 
-                    ResourceGroupManager::getSingleton().openResource(
-                        mFilename, mGroup);
-
-                mSource = stream->getAsString();
+                SDDataChunk chunk;
+                GpuProgramManager::getSingleton()._findResourceData(mFilename, chunk);
+                mSource = chunk.getAsString();
             }
             loadFromSource();
             mHighLevelLoaded = true;

@@ -26,7 +26,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define _ImageCodec_H__
 
 #include "OgreCodec.h"
-#include "OgrePixelFormat.h"
+#include "OgreCommon.h"
 
 namespace Ogre {
 
@@ -44,11 +44,6 @@ namespace Ogre {
         class ImageData : public Codec::CodecData
         {
         public:
-			ImageData():
-				height(0), width(0), depth(1), size(0),
-				num_mipmaps(0), flags(0), format(PF_UNKNOWN)
-			{
-			}
             uint height;
             uint width;
             uint size;
@@ -66,6 +61,16 @@ namespace Ogre {
         };
 
     public:
+        virtual void code( const DataChunk& input, DataChunk* output, ... ) const = 0;
+        virtual CodecData * decode( const DataChunk& input, DataChunk* output, ... ) const = 0;
+        /** Encodes data to a file.
+        @param input Chunk containing data to write
+        @param outFileName Filename to output to (extension implies type)
+        @param pData ImageData pointer
+        */
+        virtual void codeToFile( const DataChunk& input, const String& outFileName, CodecData* pData) const = 0;
+
+        virtual String getType() const = 0;
     };
 
 } // namespace

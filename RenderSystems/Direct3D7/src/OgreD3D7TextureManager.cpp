@@ -38,9 +38,6 @@ namespace Ogre {
     {
         mlpD3DDevice = lpD3D;
         lpD3D->AddRef();
-
-        // register with group manager
-        ResourceGroupManager::getSingleton()._registerResourceManager(mResourceType, this);
     }
 
 #if OGRE_COMPILER == COMPILER_MSVC
@@ -50,15 +47,35 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     D3DTextureManager::~D3DTextureManager()
     {
+        this->unloadAndDestroyAll();
+
         __safeRelease( &mlpD3DDevice );
-        // unregister with group manager
-        ResourceGroupManager::getSingleton()._unregisterResourceManager(mResourceType);
     }
     //-----------------------------------------------------------------------
-    Resource* D3DTextureManager::createImpl(const String& name, 
-        ResourceHandle handle, const String& group, bool isManual, 
-        ManualResourceLoader* loader, const NameValuePairList* createParams)
+    Texture* D3DTextureManager::create( const String& name, TextureType texType )
     {
-        return new D3DTexture(this, name, handle, group, isManual, loader, mlpD3DDevice);
+        D3DTexture* t = new D3DTexture( name, texType, mlpD3DDevice, TU_DEFAULT );
+        t->enable32Bit(mIs32Bit);
+        return t;
     }
+    //-----------------------------------------------------------------------
+    Texture * D3DTextureManager::createAsRenderTarget( const String& name )
+    {
+        D3DTexture* t = new D3DTexture( name, TEX_TYPE_2D, mlpD3DDevice, TU_RENDERTARGET );
+        t->enable32Bit( mIs32Bit );
+        t->load();
+        return t;
+    }
+	//-----------------------------------------------------------------------
+	Texture * D3DTextureManager::createManual( 
+		const String & name,
+		TextureType texType, 
+		uint width,
+		uint height,
+		uint num_mips,
+		PixelFormat format,
+		TextureUsage usage )
+	{
+		return new D3DTexture( name, texType, mlpD3DDevice, width, height, num_mips, format, usage );
+	}
 }

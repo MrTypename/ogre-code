@@ -103,7 +103,7 @@ namespace Ogre {
         /// Name of the material to use
         String mMaterialName;
         /// Pointer to the material to use
-        MaterialPtr mpMaterial;
+        Material* mpMaterial;
 
         /// True if no billboards in this set have been resized - greater efficiency.
         bool mAllDefaultSize;
@@ -112,7 +112,6 @@ namespace Ogre {
         bool mAutoExtendPool;
 
         bool mFixedTextureCoords;
-        bool mWorldSpace;
 
         typedef std::list<Billboard*> ActiveBillboardList;
         typedef std::deque<Billboard*> FreeBillboardQueue;
@@ -147,20 +146,12 @@ namespace Ogre {
         /// The vertex position data for all billboards in this set.
         //Real* mpPositions;
         VertexData* mVertexData;
-        /// Shortcut to main buffer (positions, colours, texture coords)
-        HardwareVertexBufferSharedPtr mMainBuf;
-        /// Locked pointer to buffer
-        Real* mLockPtr;
-        /// Boundary offsets based on origin and camera orientation
-        /// Vector3 vLeftOff, vRightOff, vTopOff, vBottomOff;
-        /// Final vertex offsets, used where sizes all default to save calcs
-        Vector3 mVOffset[4];
-        /// Current camera
-        Camera* mCurrentCamera;
-        // Parametric offsets of origin
-        Real mLeftOff, mRightOff, mTopOff, mBottomOff;
-        // Camera axes in billboard space
-        Vector3 mCamX, mCamY;
+
+        /// The vertex colour data for all billboards in this set
+        //RGBA* mpColours;
+
+        /// The texture coordinates for all billboards in this set
+        //Real* mpTexCoords;
 
         /// The vertex index data for all billboards in this set (1 set only)
         //unsigned short* mpIndexes;
@@ -176,7 +167,7 @@ namespace Ogre {
         Vector3 mCommonDirection;
 
         /// Internal method for culling individual billboards
-        inline bool billboardVisible(Camera* cam, const Billboard& bill);
+        inline bool billboardVisible(Camera* cam, ActiveBillboardList::iterator bill);
 
         // Number of visible billboards (will be == getNumBillboards if mCullIndividual == false)
         unsigned short mNumVisibleBillboards;
@@ -195,17 +186,20 @@ namespace Ogre {
         @remarks
             Optional parameter pBill is only present for type BBT_ORIENTED_SELF
         */
-        virtual void genBillboardAxes(Camera* cam, Vector3* pX, Vector3 *pY, const Billboard* pBill = 0);
+        virtual void genBillboardAxes(const Camera& cam, Vector3* pX, Vector3 *pY, const Billboard* pBill = 0);
 
         /** Internal method, generates parametric offsets based on origin.
         */
         void getParametricOffsets(Real& left, Real& right, Real& top, Real& bottom);
 
         /** Internal method for generating vertex data. 
+        @param pPos Pointer to pointer to vertex positions, will be updated
+        @param pCol Pointer to pointer to vertex colours, will be updated
         @param offsets Array of 4 Vector3 offsets
-        @param bb Referenceto billboard
+        @param pBillboard Pointer to billboard
+        @returns new vertex index
         */
-        void genVertices(const Vector3* const offsets, const Billboard& pBillboard);
+        void genVertices(Real **pPos, RGBA** pCol, Real **pTex, const Vector3* const offsets, const Billboard* const pBillboard);
 
         /** Internal method generates vertex offsets.
         @remarks
@@ -226,8 +220,6 @@ namespace Ogre {
         bool mBuffersCreated;
         /// The number of billboard in the pool.
         unsigned int mPoolSize;
-        /// Is external billboard data in use?
-        bool mExternalData;
 
         /** Internal method creates vertex and index buffers.
         */
@@ -243,19 +235,10 @@ namespace Ogre {
                 which will be required, and pass it using this parameter. The set will
                 preallocate this number to avoid memory fragmentation. The default behaviour
                 once this pool has run out is to double it.
-            @param
-                externalDataSource If true, the source of data for drawing the 
-                billboards will not be the internal billboard list, but external 
-                data. When driving thebillboard from external data, you must call
-                _notifyCurrentCamera to reorient the billboards, setPoolSize to set
-                the maximum billboards you want to use, beginBillboards to 
-                start the update, and injectBillboard per billboard, 
-                followed by endBillboards.
             @see
                 BillboardSet::setAutoextend
         */
-        BillboardSet( const String& name, unsigned int poolSize = 20, 
-            bool externalDataSource = false);
+        BillboardSet( const String& name, unsigned int poolSize = 20);
 
         virtual ~BillboardSet();
 
@@ -438,16 +421,6 @@ namespace Ogre {
         */
         virtual void _notifyCurrentCamera(Camera* cam);
 
-        /** Begin injection of billboard data; applicable when 
-            constructing the BillboardSet for external data use.
-        */
-        void beginBillboards(void);
-        /** Define a billboard. */
-        void injectBillboard(const Billboard& bb);
-        /** Finish defining billboards. */
-        void endBillboards(void);
-
-
         /** Overridden from MovableObject
             @see
                 MovableObject
@@ -469,7 +442,7 @@ namespace Ogre {
             @see
                 MovableObject
         */
-        virtual const MaterialPtr& getMaterial(void) const;
+        virtual Material* getMaterial(void) const;
 
         /** Overridden from MovableObject
             @see
@@ -560,13 +533,6 @@ namespace Ogre {
         virtual void _updateBounds(void);
         /** @copydoc Renderable::getLights */
         const LightList& getLights(void) const;
-
-        /** Sets whether billboards should be treated as being in world space. 
-        @remarks
-            This is most useful when you are driving the billboard set from 
-            an external data source.
-        */
-        virtual void setBillboardsInWorldSpace(bool ws) { mWorldSpace = ws; }
 
     };
 

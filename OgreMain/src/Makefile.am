@@ -1,4 +1,4 @@
-INCLUDES = $(STLPORT_CFLAGS) $(FT2_CFLAGS) -I$(top_srcdir)/OgreMain/include -DOGRE_NONCLIENT_BUILD $(ZZIPLIB_CFLAGS)
+INCLUDES = $(STLPORT_CFLAGS) $(FT2_CFLAGS) -I$(top_srcdir)/OgreMain/include -DOGRE_NONCLIENT_BUILD
 
 lib_LTLIBRARIES=libOgreMain.la
 
@@ -7,15 +7,14 @@ libOgreMain_la_SOURCES = OgreActionEvent.cpp \
                          OgreAnimation.cpp \
                          OgreAnimationState.cpp \
                          OgreAnimationTrack.cpp \
+                         OgreArchiveEx.cpp \
                          OgreArchiveManager.cpp \
 						 OgreAutoParamDataSource.cpp \
                          OgreAxisAlignedBox.cpp \
                          OgreBillboard.cpp \
-                         OgreBillboardParticleRenderer.cpp \
                          OgreBillboardSet.cpp \
-                         OgreBitwise.cpp \
                          OgreBone.cpp \
-                         OgreBorderPanelOverlayElement.cpp \
+                         OgreBitwise.cpp \
                          OgreCamera.cpp \
                          OgreCodec.cpp \
                          OgreColourValue.cpp \
@@ -25,30 +24,35 @@ libOgreMain_la_SOURCES = OgreActionEvent.cpp \
                          OgreController.cpp \
                          OgreControllerManager.cpp \
                          OgreCursor.cpp \
-                         OgreDataStream.cpp \
+                         OgreDataChunk.cpp \
                          OgreDefaultHardwareBufferManager.cpp \
                          OgreDynLib.cpp \
                          OgreDynLibManager.cpp \
                          OgreEdgeListBuilder.cpp \
                          OgreEntity.cpp \
                          OgreEventDispatcher.cpp \
+                         OgreEventMulticaster.cpp \
                          OgreEventProcessor.cpp \
                          OgreEventQueue.cpp \
                          OgreException.cpp \
 						 OgreExternalTextureSource.cpp \
 						 OgreExternalTextureSourceManager.cpp \
-                         OgreFileSystem.cpp \
                          OgreFont.cpp \
                          OgreFontManager.cpp \
 						 OgreFrustum.cpp \
                          OgreGpuProgram.cpp \
                          OgreGpuProgramManager.cpp \
                          OgreGpuProgramUsage.cpp \
+                         OgreGuiContainer.cpp \
+                         OgreGuiControl.cpp \
+						 OgreGuiElement.cpp \
+                         OgreGuiElementCommands.cpp \
+                         OgreGuiManager.cpp \
+						 OgreGuiPressable.cpp \
 						 OgreHardwareBufferManager.cpp \
 						 OgreHardwareIndexBuffer.cpp \
 						 OgreHardwareOcclusionQuery.cpp \
 						 OgreHardwareVertexBuffer.cpp \
-						 OgreHardwarePixelBuffer.cpp \
 						 OgreHighLevelGpuProgram.cpp \
 						 OgreHighLevelGpuProgramManager.cpp \
                          OgreILImageCodec.cpp \
@@ -60,6 +64,7 @@ libOgreMain_la_SOURCES = OgreActionEvent.cpp \
                          OgreKeyFrame.cpp \
 						 OgreKeyTarget.cpp \
                          OgreLight.cpp \
+                         OgreListSelectionTarget.cpp \
                          OgreLog.cpp \
                          OgreLogManager.cpp \
                          OgreMaterial.cpp \
@@ -80,13 +85,7 @@ libOgreMain_la_SOURCES = OgreActionEvent.cpp \
 						 OgreMovablePlane.cpp \
                          OgreNode.cpp \
                          OgreOverlay.cpp \
-                         OgreOverlayContainer.cpp \
-						 OgreOverlayElement.cpp \
-                         OgreOverlayElementCommands.cpp \
                          OgreOverlayManager.cpp \
-                         OgrePixelFormat.cpp \
-                         OgrePanelOverlayElement.cpp \
-                         OgreParticle.cpp \
                          OgreParticleEmitter.cpp \
                          OgreParticleEmitterCommands.cpp \
                          OgreParticleIterator.cpp \
@@ -109,19 +108,16 @@ libOgreMain_la_SOURCES = OgreActionEvent.cpp \
                          OgreRenderTarget.cpp \
                          OgreRenderTexture.cpp \
                          OgreRenderWindow.cpp \
-                         OgreResource.cpp \
-                         OgreResourceBackgroundQueue.cpp \
-                         OgreResourceGroupManager.cpp \
                          OgreResourceManager.cpp \
                          OgreRoot.cpp \
                          OgreRotationSpline.cpp \
 						 OgreScrollEvent.cpp \
 						 OgreScrollTarget.cpp \
+                         OgreSDDataChunk.cpp \
                          OgreSceneManager.cpp \
                          OgreSceneManagerEnumerator.cpp \
                          OgreSceneNode.cpp \
                          OgreSceneQuery.cpp \
-                         OgreSearchOps.cpp \
                          OgreSerializer.cpp \
 						 OgreShadowCaster.cpp \
 						 OgreShadowVolumeExtrudeProgram.cpp \
@@ -140,18 +136,18 @@ libOgreMain_la_SOURCES = OgreActionEvent.cpp \
                          OgreSubMesh.cpp \
                          OgreTagPoint.cpp \
                          OgreTechnique.cpp \
-                         OgreTextAreaOverlayElement.cpp \
                          OgreTexture.cpp \
                          OgreTextureManager.cpp \
                          OgreTextureUnitState.cpp \
 						 OgreTimer.cpp \
                          OgreUserDefinedObject.cpp \
-                         OgreVector2.cpp \
                          OgreVector3.cpp \
                          OgreVertexIndexData.cpp \
                          OgreViewport.cpp \
                          OgreWireBoundingBox.cpp \
-                         OgreZip.cpp
+                         OgreZip.cpp \
+                         OgreZipArchiveFactory.cpp \
+                         unzip.c
 
-libOgreMain_la_LIBADD= $(STLPORT_LIBS) $(FT2_LIBS) $(ZZIPLIB_LIBS)
-libOgreMain_la_LDFLAGS = $(SHARED_FLAGS) -version-info @OGREMAIN_VERSION_INFO@
+libOgreMain_la_LIBADD= $(STLPORT_LIBS) $(FT2_LIBS)
+libOgreMain_la_LDFLAGS = -version-info @OGREMAIN_VERSION_INFO@

@@ -24,19 +24,15 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 
 #include "OgreWin32Window.h"
-#include "OgreRoot.h"
 #include "OgreLogManager.h"
 #include "OgreRenderSystem.h"
 #include "OgreImageCodec.h"
 #include "OgreException.h"
-#include "OgreWin32GLSupport.h"
-#include "OgreWin32Context.h"
+
 
 namespace Ogre {
 
-	Win32Window::Win32Window(Win32GLSupport &glsupport):
-		mGLSupport(glsupport),
-        mContext(0)
+    Win32Window::Win32Window()
     {
 		mIsFullScreen = false;
 		mHWnd = 0;
@@ -52,7 +48,8 @@ namespace Ogre {
     }
 
     void Win32Window::create(const String& name, unsigned int width, unsigned int height, unsigned int colourDepth,
-                           bool fullScreen, int left, int top, bool depthBuffer, void *miscParam, ...)
+                           bool fullScreen, int left, int top, bool depthBuffer,
+                           void* miscParam, ...)
     {
         HWND parentHWnd;
 		HINSTANCE hInst = GetModuleHandle("RenderSystem_GL.dll");
@@ -63,14 +60,15 @@ namespace Ogre {
 		// miscParam[1] = bool vsync
 		// miscParam[2] = int displayFrequency
 
-		Win32Window* parentRW = reinterpret_cast<Win32Window*>(miscParam);
+		va_list marker;
+		va_start( marker, depthBuffer );
+
+		tempPtr = va_arg( marker, long );
+		Win32Window* parentRW = reinterpret_cast<Win32Window*>(tempPtr);
 		if( parentRW == NULL )
 			parentHWnd = 0;
 		else
 			parentHWnd = parentRW->getWindowHandle();
-
-		va_list marker;
-		va_start( marker, miscParam );
 
 		tempPtr = va_arg( marker, long );
 		bool vsync = (tempPtr != 0);
@@ -95,11 +93,27 @@ namespace Ogre {
 		}
 
 		if (!mExternalHandle) {
+			DWORD dwStyle = (fullScreen ? WS_POPUP : WS_OVERLAPPEDWINDOW) | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+			RECT rc;
+
 			mWidth = width;
 			mHeight = height;
+
 			if (!fullScreen)
 			{
-				if (!left && (unsigned)GetSystemMetrics(SM_CXSCREEN) > mWidth)
+				// Calculate window dimensions required to get the requested client area
+				SetRect(&rc, 0, 0, mWidth, mHeight);
+				AdjustWindowRect(&rc, dwStyle, false);
+				mWidth = rc.right - rc.left;
+				mHeight = rc.bottom - rc.top;
+
+				// Clamp width and height to the desktop dimensions
+				if (mWidth > (unsigned)GetSystemMetrics(SM_CXSCREEN))
+					mWidth = (unsigned)GetSystemMetrics(SM_CXSCREEN);
+				if (mHeight > (unsigned)GetSystemMetrics(SM_CYSCREEN))
+					mHeight = (unsigned)GetSystemMetrics(SM_CYSCREEN);
+
+				if (!left)
                 {
 					mLeft = (GetSystemMetrics(SM_CXSCREEN) / 2) - (mWidth / 2);
                 }
@@ -107,7 +121,7 @@ namespace Ogre {
                 {
 					mLeft = left;
                 }
-				if (!top && (unsigned)GetSystemMetrics(SM_CYSCREEN) > mHeight)
+				if (!top)
                 {
 					mTop = (GetSystemMetrics(SM_CYSCREEN) / 2) - (mHeight / 2);
                 }
@@ -133,11 +147,9 @@ namespace Ogre {
 			// Create our main window
 			// Pass pointer to self
 			HWND hWnd = CreateWindowEx(fullScreen?WS_EX_TOPMOST:0, TEXT(name.c_str()), TEXT(name.c_str()),
-				(fullScreen?WS_POPUP:WS_OVERLAPPEDWINDOW)|WS_CLIPCHILDREN|WS_CLIPSIBLINGS, mLeft, mTop,
-				width, height, 0L, 0L, hInst, this);
+				dwStyle, mLeft, mTop, mWidth, mHeight, 0L, 0L, hInst, this);
 			mHWnd = hWnd;
 
-            RECT rc;
 			GetClientRect(mHWnd,&rc);
 			mWidth = rc.right;
 			mHeight = rc.bottom;
@@ -175,11 +187,9 @@ namespace Ogre {
 		
 		HDC hdc = GetDC(mHWnd);
 
-        StringUtil::StrStreamType str;
-        str << "Created Win32Window '"
-            << mName << "' : " << mWidth << "x" << mHeight
-            << ", " << mColourDepth << "bpp";
-        LogManager::getSingleton().logMessage(LML_NORMAL, str.str());
+		LogManager::getSingleton().logMessage(
+			LML_NORMAL, "Created Win32Window '%s' : %ix%i, %ibpp",
+			mName.c_str(), mWidth, mHeight, mColourDepth );
 
 		
         PIXELFORMATDESCRIPTOR pfd = {
@@ -223,21 +233,10 @@ namespace Ogre {
 			wglSwapIntervalEXT(0);
 
 		mReady = true;
-
-        // Create RenderSystem context
-        mContext = new Win32Context(mHDC, mGlrc);
-        // Register the context with the rendersystem and associate it with this window
-        GLRenderSystem *rs = static_cast<GLRenderSystem*>(Root::getSingleton().getRenderSystem());
-        rs->_registerContext(this, mContext);
     }
 
     void Win32Window::destroy(void)
     {
-        // Unregister and destroy OGRE GLContext
-        GLRenderSystem *rs = static_cast<GLRenderSystem*>(Root::getSingleton().getRenderSystem());
-        rs->_unregisterContext(this);
-        delete mContext;    
-
         wglSwapIntervalEXT(mOldSwapIntervall);
 		if (mGlrc) {
 			wglMakeCurrent(NULL, NULL);
@@ -300,11 +299,10 @@ namespace Ogre {
 
 	void Win32Window::writeContentsToFile(const String& filename)
 	{
-		ImageCodec::ImageData *imgData = new ImageCodec::ImageData();
-		imgData->width = mWidth;
-		imgData->height = mHeight;
-		imgData->depth = 1;
-		imgData->format = PF_BYTE_RGB;
+		ImageCodec::ImageData imgData;
+		imgData.width = mWidth;
+		imgData.height = mHeight;
+		imgData.format = PF_R8G8B8;
 
 		// Allocate buffer 
 		uchar* pBuffer = new uchar[mWidth * mHeight * 3];
@@ -313,15 +311,15 @@ namespace Ogre {
 		// I love GL: it does all the locking & colour conversion for us
 		glReadPixels(0,0, mWidth-1, mHeight-1, GL_RGB, GL_UNSIGNED_BYTE, pBuffer);
 
-		// Wrap buffer in a memory stream
-		DataStreamPtr stream(new MemoryDataStream(pBuffer, mWidth * mHeight * 3, false));
+		// Wrap buffer in a chunk
+		DataChunk chunk(pBuffer, mWidth * mHeight * 3);
 
 		// Need to flip the read data over in Y though
 		Image img;
-		img.loadRawData(stream, mWidth, mHeight, imgData->format );
+		img.loadRawData(chunk, mWidth, mHeight, PF_R8G8B8 );
 		img.flipAroundX();
 
-		MemoryDataStreamPtr streamFlipped(new MemoryDataStream(img.getData(), stream->size(), false));
+		DataChunk chunkFlipped(img.getData(), chunk.getSize());
 
 		// Get codec 
 		size_t pos = filename.find_last_of(".");
@@ -339,8 +337,7 @@ namespace Ogre {
 		Codec * pCodec = Codec::getCodec(extension);
 
 		// Write out
-		Codec::CodecDataPtr ptr(imgData);
-        pCodec->codeToFile(streamFlipped, filename, ptr);
+		pCodec->codeToFile(chunkFlipped, filename, &imgData);
 
 		delete [] pBuffer;
 	}
@@ -428,5 +425,4 @@ namespace Ogre {
 
 		return DefWindowProc( hWnd, uMsg, wParam, lParam );
 	}
-
 }

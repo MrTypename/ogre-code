@@ -35,7 +35,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 namespace Ogre {
     /**
-      Implementation of GL as a rendering system.
+      Implementation of SDL as a rendering system.
      */
     class GLRenderSystem : public RenderSystem
     {
@@ -101,7 +101,7 @@ namespace Ogre {
         GLSupport* mGLSupport;
         
         /// Internal method to set pos / direction of a light
-        void setGLLightPositionDirection(Light* lt, size_t lightindex);
+        void setGLLightPositionDirection(Light* lt, GLenum lightindex);
 
         bool mUseAutoTextureMatrix;
         GLfloat mAutoTextureMatrix[16];
@@ -121,15 +121,6 @@ namespace Ogre {
         GLGpuProgram* mCurrentVertexProgram;
         GLGpuProgram* mCurrentFragmentProgram;
 
-        /* The main GL context */
-        GLContext *mMainContext;
-        /* The current GL context */
-        GLContext *mCurrentContext;
-        /* Type that maps render targets to contexts */
-        typedef std::map<RenderTarget*,GLContext*> ContextMap;
-        /* Map of render target -> context mappings. This is used to find the
-         * GL context for a certain render target */
-        ContextMap mContextMap;
     public:
         // Default constructor / destructor
         GLRenderSystem();
@@ -186,7 +177,7 @@ namespace Ogre {
             bool fullScreen, int left = 0, int top = 0, bool depthBuffer = true,
             RenderWindow* parentWindowHandle = 0);
 
-        RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height, TextureType texType, PixelFormat format );
+        RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height );
 
         /** See
           RenderSystem
@@ -200,7 +191,7 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void convertColourValue(const ColourValue& colour, uint32* pDest);
+        void convertColourValue(const ColourValue& colour, unsigned long* pDest);
         /** See
           RenderSystem
          */
@@ -230,8 +221,7 @@ namespace Ogre {
          */
         void _setSurfaceParams(const ColourValue &ambient,
             const ColourValue &diffuse, const ColourValue &specular,
-            const ColourValue &emissive, Real shininess,
-            TrackVertexColourType tracking);
+            const ColourValue &emissive, Real shininess);
         /** See
           RenderSystem
          */
@@ -403,32 +393,8 @@ namespace Ogre {
         Real getMaximumDepthInputValue(void);
 
         // ----------------------------------
-        // GLRenderSystem specific members
+        // End Overridden members
         // ----------------------------------
-        /**
-         * One time initialization for the RenderState of a context. Things that
-         * only need to be set once, like the LightingModel can be defined here.
-         */
-        void _oneTimeContextInitialization();
-        /**
-         * Set current render target to target, enabling its GL context if needed
-         */
-        void _setRenderTarget(RenderTarget *target);
-        /**
-         * Register a render target->context mapping.
-         */
-        void _registerContext(RenderTarget *target, GLContext *context);
-        /**
-         * Unregister a render target->context mapping. If the context of target 
-         * is the current context, change the context to the main context so it
-         * can be destroyed safely.
-         */
-        void _unregisterContext(RenderTarget *target);
-        /**
-         * Get the main context. This is generally the context with which 
-         * a new context wants to share buffers and textures.
-         */
-        GLContext *_getMainContext();
     };
 }
 #endif

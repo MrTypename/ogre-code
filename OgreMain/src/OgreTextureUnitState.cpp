@@ -61,6 +61,8 @@ namespace Ogre {
         mRotate = 0;
         mTexModMatrix = Matrix4::IDENTITY;
         mRecalcTexMatrix = false;
+        mAlphaRejectFunc = CMPF_ALWAYS_PASS;
+        mAlphaRejectVal = 0;
 
         mNumFrames = 0;
         mAnimDuration = 0;
@@ -112,6 +114,8 @@ namespace Ogre {
         mAnimController = 0;
         mTexModMatrix = Matrix4::IDENTITY;
         mRecalcTexMatrix = false;
+        mAlphaRejectFunc = CMPF_ALWAYS_PASS;
+        mAlphaRejectVal = 0;
 
         mCubic = false;
         mTextureType = TEX_TYPE_2D;
@@ -268,9 +272,9 @@ namespace Ogre {
 
         if (numFrames > MAX_FRAMES)
         {
-			StringUtil::StrStreamType str;
-            str << "Maximum number of frames is " << MAX_FRAMES << ".";
-            Except(Exception::ERR_INVALIDPARAMS, str.str(), "TextureUnitState::setAnimatedTextureName");
+            char cmsg[128];
+            sprintf(cmsg, "Maximum number of frames is %d.", MAX_FRAMES);
+            Except(Exception::ERR_INVALIDPARAMS, cmsg, "TextureUnitState::setAnimatedTextureName");
         }
         mNumFrames = numFrames;
         mAnimDuration = duration;
@@ -279,9 +283,10 @@ namespace Ogre {
 
         for (unsigned int i = 0; i < mNumFrames; ++i)
         {
-			StringUtil::StrStreamType str;
-            str << baseName << "_" << i << ext;
-            mFrames[i] = str.str();
+            char suffix[5];
+            sprintf(suffix, "_%d", i);
+
+            mFrames[i] = baseName + suffix + ext;
         }
 
         // Load immediately if Material loaded
@@ -298,9 +303,9 @@ namespace Ogre {
     {
         if (numFrames > MAX_FRAMES)
         {
-			StringUtil::StrStreamType str;
-			str << "Maximum number of frames is " << MAX_FRAMES << ".";
-            Except(Exception::ERR_INVALIDPARAMS, str.str(), "TextureUnitState::setAnimatedTextureName");
+            char cmsg[128];
+            sprintf(cmsg, "Maximum number of frames is %d.", MAX_FRAMES);
+            Except(Exception::ERR_INVALIDPARAMS, cmsg, "TextureUnitState::setAnimatedTextureName");
         }
         mNumFrames = numFrames;
         mAnimDuration = duration;
@@ -323,9 +328,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     std::pair< uint, uint > TextureUnitState::getTextureDimensions( unsigned int frame ) const
     {
-        TexturePtr tex = TextureManager::getSingleton().getByName( mFrames[ frame ] );
-
-		if (tex.isNull())
+        Texture *tex = (Texture *)TextureManager::getSingleton().getByName( mFrames[ frame ] );
+		if (!tex)
 			Except( Exception::ERR_ITEM_NOT_FOUND, "Could not find texture " + mFrames[ frame ],
 				"TextureUnitState::getTextureDimensions" );
         return std::pair< uint, uint >( tex->getWidth(), tex->getHeight() );
@@ -655,6 +659,22 @@ namespace Ogre {
         mRecalcTexMatrix = true;
     }
     //-----------------------------------------------------------------------
+    void TextureUnitState::setAlphaRejectSettings(CompareFunction func, unsigned char value)
+    {
+        mAlphaRejectFunc = func;
+        mAlphaRejectVal = value;
+    }
+    //-----------------------------------------------------------------------
+    CompareFunction TextureUnitState::getAlphaRejectFunction(void) const
+    {
+        return mAlphaRejectFunc;
+    }
+    //-----------------------------------------------------------------------
+    unsigned char TextureUnitState::getAlphaRejectValue(void) const
+    {
+        return mAlphaRejectVal;
+    }
+    //-----------------------------------------------------------------------
     void TextureUnitState::setScrollAnimation(Real uSpeed, Real vSpeed)
     {
         // Remove existing effect
@@ -702,11 +722,10 @@ namespace Ogre {
         {
             if (mFrames[i] != "")
             {
-                // Ensure texture is loaded, default Mipmaps and priority
+                // Ensure texture is loaded, default MipMaps and priority
                 try {
 
-                    TextureManager::getSingleton().load(mFrames[i], 
-						mParent->getResourceGroup(), mTextureType);
+                    TextureManager::getSingleton().load(mFrames[i], mTextureType);
                     mIsBlank = false;
                 }
                 catch (...) {

@@ -4,11 +4,10 @@ INCLUDES = $(STLPORT_CFLAGS) -I$(top_srcdir)/RenderSystems/GL/include \
            -I$(top_srcdir)/RenderSystems/GL/src/$(OGRE_GLSUPPORT) \
            -I$(top_srcdir)/RenderSystems/GL/src/GLSL/include
 
-noinst_LTLIBRARIES=libGLSL.la
-libGLSL_la_SOURCES = OgreGLSLExtSupport.cpp \
+noinst_LIBRARIES=libGLSL.a
+libGLSL_a_SOURCES = OgreGLSLExtSupport.cpp \
                     OgreGLSLLinkProgramManager.cpp \
                     OgreGLSLGpuProgram.cpp \
                     OgreGLSLProgram.cpp \
                     OgreGLSLLinkProgram.cpp \
                     OgreGLSLProgramFactory.cpp
-libGLSL_la_LDFLAGS =

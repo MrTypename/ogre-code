@@ -30,6 +30,15 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 namespace Ogre {
 
+	enum ResourceType
+    {
+        /// All resource types
+        RESTYPE_ALL,
+        /// Textures
+        RESTYPE_TEXTURES,
+        /// Models
+        RESTYPE_MODELS
+    };
 
     /** Comparison functions used for the depth/stencil buffer operations and 
 		others. */
@@ -80,6 +89,8 @@ namespace Ogre {
         /// Similar to FO_LINEAR, but compensates for the angle of the texture plane
         FO_ANISOTROPIC
     };
+
+
 
     /** Light shading modes. */
     enum ShadeOptions
@@ -155,6 +166,53 @@ namespace Ogre {
         SDL_SOLID = 3
     };
 
+	/** The pixel format used for textures. */
+	enum PixelFormat
+	{
+		/// Unknown pixel format.
+		PF_UNKNOWN,
+		/// 8-bit pixel format, all bits luminace.
+		PF_L8,
+        /// 16-bit pixel format, all bits luminace.
+        PF_L16,
+		/// 8-bit pixel format, all bits alpha.
+		PF_A8,
+		/// 8-bit pixel format, 4 bits alpha, 4 bits luminace.
+		PF_A4L4,
+		/// 8-bit pixel format, 4 bits luminace, 4 bits alpha.
+		PF_L4A4,
+		/// 16-bit pixel format, 5 bits red, 6 bits green, 5 bits blue.
+		PF_R5G6B5,
+		/// 16-bit pixel format, 5 bits blue, 6 bits green, 5 bits red.
+		PF_B5G6R5,
+		/// 16-bit pixel format, 4 bits for alpha, red, green and blue.
+		PF_A4R4G4B4,
+		/// 16-bit pixel format, 4 bits for blue, green, red and alpha.
+		PF_B4G4R4A4,
+		/// 24-bit pixel format, 8 bits for red, green and blue.
+		PF_R8G8B8,
+		/// 24-bit pixel format, 8 bits for blue, green and red.
+		PF_B8G8R8,
+		/// 32-bit pixel format, 8 bits for alpha, red, green and blue.
+		PF_A8R8G8B8,
+		/// 32-bit pixel format, 8 bits for blue, green, red and alpha.
+		PF_B8G8R8A8,
+		/// 32-bit pixel format, 2 bits for alpha, 10 bits for red, green and blue.
+		PF_A2R10G10B10,
+		/// 32-bit pixel format, 10 bits for blue, green and red, 2 bits for alpha.
+		PF_B10G10R10A2,
+        /// DDS (DirectDraw Surface) DXT1 format
+        PF_DXT1,
+        /// DDS (DirectDraw Surface) DXT2 format
+        PF_DXT2,
+        /// DDS (DirectDraw Surface) DXT3 format
+        PF_DXT3,
+        /// DDS (DirectDraw Surface) DXT4 format
+        PF_DXT4,
+        /// DDS (DirectDraw Surface) DXT5 format
+        PF_DXT5
+	};
+
     /** An enumeration of broad shadow techniques */
     enum ShadowTechnique
     {
@@ -188,121 +246,15 @@ namespace Ogre {
         */
     };
 
-    /** An enumeration describing which material properties should track the vertex colours */
-    typedef int TrackVertexColourType;
-    enum TrackVertexColourEnum {
-        TVC_NONE        = 0x0,
-        TVC_AMBIENT     = 0x1,        
-        TVC_DIFFUSE     = 0x2,
-        TVC_SPECULAR    = 0x4,
-        TVC_EMISSIVE    = 0x8
-    };
+
+	PixelFormat ilFormat2OgreFormat( int ImageFormat, int BytesPerPixel );
+	std::pair< int, int > OgreFormat2ilFormat( PixelFormat format );
 
     typedef std::vector<Light*> LightList;
 
     typedef std::map<String, bool> UnaryOptionList;
     typedef std::map<String, String> BinaryOptionList;
-
-	/// Name / value parameter pair (first = name, second = value)
-	typedef std::map<String, String> NameValuePairList;
-
-        /** Structure used to define a rectangle in a 2-D integer space.
-        */
-        struct Rect
-        {
-            long left, top, right, bottom;
-
-            Rect()
-            {
-            }
-            Rect( long l, long t, long r, long b )
-            {
-                left = l;
-                top = t;   
-                right = r;
-                bottom = b;                
-            }
-            Rect& operator = ( const Rect& other )
-            {
-                left = other.left;
-                top = other.top;
-                right = other.right;
-                bottom = other.bottom;       
-
-                return *this;
-            }
-        };
-
-        /** Structure used to define a box in a 3-D integer space.
-         	Note that the left, top, and front edges are included but the right, 
-         	bottom and top ones are not.
-         */
-        struct Box
-        {
-            size_t left, top, right, bottom, front, back;
-			/// Parameterless constructor for setting the members manually
-            Box()
-            {
-            }
-            /** Define a box from left, top, right and bottom coordinates
-            	This box will have depth one (front=0 and back=1).
-            	@param	l	x value of left edge
-            	@param	t	y value of top edge
-            	@param	r	x value of right edge
-            	@param	b	y value of bottom edge
-            	@note Note that the left, top, and front edges are included 
- 		           	but the right, bottom and top ones are not.
-            */
-            Box( size_t l, size_t t, size_t r, size_t b ):
-                left(l),
-                top(t),   
-                right(r),
-                bottom(b),
-                front(0),
-                back(1)
-            {
-          		assert(right >= left && bottom >= top && back >= front);
-            }
-            /** Define a box from left, top, front, right, bottom and back
-            	coordinates.
-            	@param	l	x value of left edge
-            	@param	t	y value of top edge
-            	@param  ff  z value of front edge
-            	@param	r	x value of right edge
-            	@param	b	y value of bottom edge
-            	@param  bb  z value of back edge
-            	@note Note that the left, top, and front edges are included 
- 		           	but the right, bottom and top ones are not.
-            */
-            Box( size_t l, size_t t, size_t ff, size_t r, size_t b, size_t bb ):
-                left(l),
-                top(t),   
-                right(r),
-                bottom(b),
-                front(ff),
-                back(bb)
-            {
-          		assert(right >= left && bottom >= top && back >= front);
-            }
-            
-            /// Return true if the other box is a part of this one
-            bool contains(const Box &def) const
-            {
-            	return (def.left >= left && def.top >= top && def.front >= front &&
-					def.right <= right && def.bottom <= bottom && def.back <= back);
-            }
-            
-            /// Get the width of this box
-            size_t getWidth() const { return right-left; }
-            /// Get the height of this box
-            size_t getHeight() const { return bottom-top; }
-            /// Get the depth of this box
-            size_t getDepth() const { return back-front; }
-        };
-
-    
-	
-	/** Locate command-line options of the unary form '-blah' and of the
+    /** Locate command-line options of the unary form '-blah' and of the
         binary form '-blah foo', passing back the index of the next non-option.
     @param numargs, argv The standard parameters passed to the main method
     @param unaryOptList Map of unary options (ie those that do not require a parameter).
