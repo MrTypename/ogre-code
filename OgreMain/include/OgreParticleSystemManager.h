@@ -30,7 +30,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreParticleSystem.h"
 #include "OgreFrameListener.h"
 #include "OgreSingleton.h"
-#include "OgreIteratorWrappers.h"
 
 namespace Ogre {
 
@@ -306,14 +305,6 @@ namespace Ogre {
         @param tf The virtual speed of time (1.0 is real time).
 		*/
 		void setTimeFactor(Real tf);
-
-        typedef MapIterator<ParticleTemplateMap> ParticleSystemTemplateIterator;
-        /** Gets an iterator over the list of particle system templates. */
-        ParticleSystemTemplateIterator getTemplateIterator(void)
-        {
-            return ParticleSystemTemplateIterator(
-                mSystemTemplates.begin(), mSystemTemplates.end());
-        } 
 
         /** Override standard Singleton retrieval.
         @remarks

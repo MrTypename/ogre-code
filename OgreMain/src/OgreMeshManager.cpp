@@ -428,14 +428,11 @@ namespace Ogre
 		const Quaternion& orientation, 
         HardwareBuffer::Usage vertexBufferUsage, 
 		HardwareBuffer::Usage indexBufferUsage,
-		bool vertexShadowBuffer, bool indexShadowBuffer,
-        int ySegmentsToKeep)
+		bool vertexShadowBuffer, bool indexShadowBuffer)
 	{
         int i;
         Mesh* pMesh = createManual(name);
 		SubMesh *pSub = pMesh->createSubMesh();
-
-        if (ySegmentsToKeep == -1) ySegmentsToKeep = ysegments;
 
 		// Set up vertex data
 		// Use a single shared buffer
@@ -461,7 +458,7 @@ namespace Ogre
 			currOffset += VertexElement::getTypeSize(VET_FLOAT2);
         }
 
-		vertexData->vertexCount = (xsegments + 1) * (ySegmentsToKeep + 1);
+		vertexData->vertexCount = (xsegments + 1) * (ysegments + 1);
 
         // Allocate vertex buffer
 		HardwareVertexBufferSharedPtr vbuf = 
@@ -532,7 +529,7 @@ namespace Ogre
         Real maxSquaredLength;
         bool firstTime = true;
 
-        for (int y = ysegments - ySegmentsToKeep; y < ysegments + 1; ++y)
+        for (int y = 0; y < ysegments + 1; ++y)
         {
             for (int x = 0; x < xsegments + 1; ++x)
             {
@@ -602,8 +599,7 @@ namespace Ogre
 		vbuf->unlock();
         // Generate face list
         pSub->useSharedVertices = true;
-        tesselate2DMesh(pSub, xsegments + 1, ySegmentsToKeep + 1, false, 
-            indexBufferUsage, indexShadowBuffer);
+        tesselate2DMesh(pSub, xsegments + 1, ysegments + 1, false, indexBufferUsage, indexShadowBuffer);
 
         //pMesh->_updateBounds();
         pMesh->_setBounds(AxisAlignedBox(min, max));

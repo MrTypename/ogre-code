@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="kernel32.lib zlib.lib freetype.lib user32.lib $(NOINHERIT)"
-				OutputFile="$(OutDir)/OgreMain_d.dll"
+				OutputFile="$(OutDir)/OgreMain.dll"
 				Version="0.99"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
@@ -48,10 +48,10 @@
 				IgnoreAllDefaultLibraries="FALSE"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/OgreMain_d.pdb"
+				ProgramDatabaseFile="$(OutDir)/OgreMain.pdb"
 				SubSystem="1"
 				OptimizeForWindows98="1"
-				ImportLibrary="$(OutDir)/OgreMain_d.lib"
+				ImportLibrary="$(OutDir)/OgreMain.lib"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -172,6 +172,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreAxisAlignedBox.cpp">
 			</File>
 			<File
+				RelativePath="..\src\OgreBMPCodec.cpp">
+			</File>
+			<File
 				RelativePath="..\src\OgreBillboard.cpp">
 			</File>
 			<File
@@ -209,6 +212,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreCursor.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreDDSCodec.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreDataChunk.cpp">
@@ -304,9 +310,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreHighLevelGpuProgramManager.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreILCodecs.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreILImageCodec.cpp">
 			</File>
 			<File
@@ -317,6 +320,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreInputEvent.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreJPEGCodec.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreKeyEvent.cpp">
@@ -392,6 +398,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreOverlayManager.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgrePNGCodec.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreParticleEmitter.cpp">
@@ -555,6 +564,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreSubMesh.cpp">
 			</File>
 			<File
+				RelativePath="..\src\OgreTGACodec.cpp">
+			</File>
+			<File
 				RelativePath="..\src\OgreTagPoint.cpp">
 			</File>
 			<File
@@ -648,6 +660,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreAxisAlignedBox.h">
 			</File>
 			<File
+				RelativePath="..\include\OgreBMPCodec.h">
+			</File>
+			<File
 				RelativePath="..\include\OgreBillboard.h">
 			</File>
 			<File
@@ -697,6 +712,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreCursor.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreDDSCodec.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreDataChunk.h">
@@ -819,9 +837,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreHighLevelGpuProgramManager.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreILCodecs.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreILImageCodec.h">
 			</File>
 			<File
@@ -838,6 +853,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreIteratorWrappers.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreJPEGCodec.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreKeyEvent.h">
@@ -930,6 +948,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreOverlayManager.h">
 			</File>
 			<File
+				RelativePath="..\include\OgrePNGCodec.h">
+			</File>
+			<File
 				RelativePath="..\include\OgreParticle.h">
 			</File>
 			<File
@@ -994,9 +1015,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreQuaternion.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreRay.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreRectangle2D.h">
@@ -1138,6 +1156,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreSubMesh.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreTGACodec.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreTagPoint.h">

@@ -214,8 +214,7 @@ namespace Ogre
         static std::pair<bool, Real> intersects(const Ray& ray, const Plane& plane);
 
         /** Ray / sphere intersection, returns boolean result and distance. */
-        static std::pair<bool, Real> intersects(const Ray& ray, const Sphere& sphere, 
-            bool discardInside = true);
+        static std::pair<bool, Real> intersects(const Ray& ray, const Sphere& sphere);
         
         /** Ray / box intersection, returns boolean result and distance. */
         static std::pair<bool, Real> intersects(const Ray& ray, const AxisAlignedBox& sphere);
@@ -245,8 +244,6 @@ namespace Ogre
         static Matrix4 buildReflectionMatrix(const Plane& p);
         /** Calculate a face normal, including the w component which is the offset from the origin. */
         static Vector4 calculateFaceNormal(const Vector3& v1, const Vector3& v2, const Vector3& v3);
-        /** Calculate a face normal, no w-information. */
-        static Vector3 calculateBasicFaceNormal(const Vector3& v1, const Vector3& v2, const Vector3& v3);
 
         static const Real POS_INFINITY;
         static const Real NEG_INFINITY;

@@ -131,7 +131,7 @@ namespace Ogre {
 			// Create our main window
 			// Pass pointer to self
 			HWND hWnd = CreateWindowEx(fullScreen?WS_EX_TOPMOST:0, TEXT(name.c_str()), TEXT(name.c_str()),
-				(fullScreen?WS_POPUP:WS_OVERLAPPEDWINDOW)|WS_CLIPCHILDREN|WS_CLIPSIBLINGS, mLeft, mTop,
+				(fullScreen?WS_POPUP:WS_OVERLAPPEDWINDOW)|WS_CLIPCHILDREN|WS_CLIPSIBLINGS, left, top,
 				width, height, 0L, 0L, hInst, this);
 			mHWnd = hWnd;
 
@@ -283,6 +283,10 @@ namespace Ogre {
 		SwapBuffers(mHDC);
     }
 
+    void Win32Window::outputText(int x, int y, const String& text)
+    {
+        //deprecated
+    }
 	void Win32Window::writeContentsToFile(const String& filename)
 	{
 		ImageCodec::ImageData imgData;

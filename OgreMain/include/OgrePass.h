@@ -192,7 +192,7 @@ namespace Ogre {
         This setting has no effect if dynamic lighting is disabled (see Pass::setLightingEnabled),
         or if this is a programmable pass.
         */
-        void setDiffuse(Real red, Real green, Real blue, Real alpha);
+        void setDiffuse(Real red, Real green, Real blue);
 
         /** Sets the diffuse colour reflectance properties of this pass.
         @remarks
@@ -218,7 +218,7 @@ namespace Ogre {
         This setting has no effect if dynamic lighting is disabled (see Pass::setLightingEnabled),
         or if this is a programmable pass.
         */
-        void setSpecular(Real red, Real green, Real blue, Real alpha);
+        void setSpecular(Real red, Real green, Real blue);
 
         /** Sets the specular colour reflectance properties of this pass.
         @remarks

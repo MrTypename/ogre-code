@@ -360,9 +360,9 @@ namespace Ogre {
         RaySceneQuery(SceneManager* mgr);
         virtual ~RaySceneQuery();
         /** Sets the ray which is to be used for this query. */
-        virtual void setRay(const Ray& ray);
+        void setRay(const Ray& ray);
         /** Gets the ray which is to be used for this query. */
-        virtual const Ray& getRay(void) const;
+        const Ray& getRay(void) const;
         /** Sets whether the results of this query will be sorted by distance along the ray.
         @remarks
             Often you want to know what was the first object a ray intersected with, and this 
@@ -381,12 +381,12 @@ namespace Ogre {
             accuracy is not guaranteed; if in doubt, allow more results and filter them in more detail.
             0 means unlimited results.
         */
-        virtual void setSortByDistance(bool sort, ushort maxresults = 0);
+        void setSortByDistance(bool sort, ushort maxresults = 0);
         /** Gets whether the results are sorted by distance. */
-        virtual bool getSortByDistance(void) const;
+        bool getSortByDistance(void) const;
         /** Gets the maximum number of results returned from the query (only relevant if 
         results are being sorted) */
-        virtual ushort getMaxResults(void) const;
+        ushort getMaxResults(void) const;
         /** Executes the query, returning the results back in one list.
         @remarks
             This method executes the scene query as configured, gathers the results

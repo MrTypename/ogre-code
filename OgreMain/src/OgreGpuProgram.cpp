@@ -94,23 +94,8 @@ namespace Ogre
     GpuProgramParametersSharedPtr GpuProgram::createParameters(void)
     {
         // Default implementation simply returns standard parameters.
-        GpuProgramParametersSharedPtr ret = 
-			GpuProgramManager::getSingleton().createParameters();
-		// Copy in default parameters if present
-		if (!mDefaultParams.isNull())
-			ret->copyConstantsFrom(*(mDefaultParams.get()));
-		
-		return ret;
+        return GpuProgramManager::getSingleton().createParameters();
     }
-    //-----------------------------------------------------------------------------
-	GpuProgramParametersSharedPtr GpuProgram::getDefaultParameters(void)
-	{
-		if (mDefaultParams.isNull())
-		{
-			mDefaultParams = createParameters();
-		}
-		return mDefaultParams;
-	}
     //-----------------------------------------------------------------------------
 	GpuProgramParameters::GpuProgramParameters()
         : mTransposeMatrices(false)
@@ -220,7 +205,7 @@ namespace Ogre
         mAutoConstants.clear();
     }
 	//-----------------------------------------------------------------------------
-    GpuProgramParameters::AutoConstantIterator GpuProgramParameters::getAutoConstantIterator(void) const
+    GpuProgramParameters::AutoConstantIterator GpuProgramParameters::getAutoConstantIterator(void)
     {
         return AutoConstantIterator(mAutoConstants.begin(), mAutoConstants.end());
     }
@@ -441,54 +426,14 @@ namespace Ogre
         setConstantFromTime(getParamIndex(name), factor);
     }
     //---------------------------------------------------------------------------
-    GpuProgramParameters::RealConstantIterator GpuProgramParameters::getRealConstantIterator(void) const
+    GpuProgramParameters::RealConstantIterator GpuProgramParameters::getRealConstantIterator(void)
     {
         return RealConstantIterator(mRealConstants.begin(), mRealConstants.end());
     }
     //---------------------------------------------------------------------------
-    GpuProgramParameters::IntConstantIterator GpuProgramParameters::getIntConstantIterator(void) const
+    GpuProgramParameters::IntConstantIterator GpuProgramParameters::getIntConstantIterator(void)
     {
         return IntConstantIterator(mIntConstants.begin(), mIntConstants.end());
     }
-    //---------------------------------------------------------------------------
-	void GpuProgramParameters::copyConstantsFrom(const GpuProgramParameters& source)
-	{
-		// Iterate over fixed parameters
-		RealConstantIterator ri = source.getRealConstantIterator();
-		ushort i = 0;
-		while(ri.hasMoreElements())
-		{
-			RealConstantEntry re = ri.getNext();
-			if (re.isSet)
-			{
-				setConstant(i, re.val, 4);
-			}
-			++i;
-
-		}
-		IntConstantIterator ii = source.getIntConstantIterator();
-		i = 0;
-		while (ii.hasMoreElements())
-		{
-			IntConstantEntry ie = ii.getNext();
-			if (ie.isSet)
-			{
-				setConstant(i, ie.val, 4);
-			}
-			++i;
-		}
-
-		// Iterate over auto parameters
-		// Clear existing auto constants
-		clearAutoConstants();
-		AutoConstantIterator ai = source.getAutoConstantIterator();
-		while (ai.hasMoreElements())
-		{
-			AutoConstantEntry ae = ai.getNext();
-			setAutoConstant(ae.index, ae.paramType, ae.data);
-		}
-
-		
-	}
 
 }

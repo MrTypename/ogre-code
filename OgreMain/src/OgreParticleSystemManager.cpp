@@ -97,7 +97,7 @@ namespace Ogre {
                     {
                         // new emitter
                         // Get typename
-                        vecparams = StringUtil::split(line, "\t ");
+                        vecparams = line.split("\t ");
                         if (vecparams.size() < 2)
                         {
                             // Oops, bad emitter
@@ -114,7 +114,7 @@ namespace Ogre {
                     {
                         // new affector
                         // Get typename
-                        vecparams = StringUtil::split(line, "\t ");
+                        vecparams = line.split("\t ");
                         if (vecparams.size() < 2)
                         {
                             // Oops, bad emitter
@@ -212,7 +212,7 @@ namespace Ogre {
         ParticleSystem* pTemplate = getTemplate(templateName);
         if (!pTemplate)
         {
-            Except(Exception::ERR_INVALIDPARAMS, "Cannot find required template '" + templateName + "'", "ParticleSystemManager::createSystem");
+            Except(Exception::ERR_INVALIDPARAMS, "Cannot find required template'" + templateName + "'", "ParticleSystemManager::createSystem");
         }
 
         ParticleSystem* sys = createSystem(name, pTemplate->getParticleQuota());
@@ -370,8 +370,7 @@ namespace Ogre {
                 else
                 {
                     // Attribute
-					StringUtil::toLowerCase(line);
-                    parseEmitterAttrib(line, pEmit);
+                    parseEmitterAttrib(line.toLowerCase(), pEmit);
                 }
             }
         }
@@ -401,8 +400,7 @@ namespace Ogre {
                 else
                 {
                     // Attribute
-					StringUtil::toLowerCase(line);
-                    parseAffectorAttrib(line, pAff);
+                    parseAffectorAttrib(line.toLowerCase(), pAff);
                 }
             }
         }
@@ -413,7 +411,7 @@ namespace Ogre {
         std::vector<String> vecparams;
 
         // Split params on space
-        vecparams = StringUtil::split(line, "\t ", 1);
+        vecparams = line.split("\t ", 1);
 
         // Look up first param (command setting)
         if (!sys->setParameter(vecparams[0], vecparams[1]))
@@ -429,7 +427,7 @@ namespace Ogre {
         std::vector<String> vecparams;
 
         // Split params on first space
-        vecparams = StringUtil::split(line, "\t ", 1);
+        vecparams = line.split("\t ", 1);
 
         // Look up first param (command setting)
         if (!emit->setParameter(vecparams[0], vecparams[1]))
@@ -445,7 +443,7 @@ namespace Ogre {
         std::vector<String> vecparams;
 
         // Split params on space
-        vecparams = StringUtil::split(line, "\t ", 1);
+        vecparams = line.split("\t ", 1);
 
         // Look up first param (command setting)
         if (!aff->setParameter(vecparams[0], vecparams[1]))

@@ -133,9 +133,8 @@ namespace Ogre
     //---------------------------------------------------------------------
     void FontManager::parseAttribute(const String& line, Font* pFont)
     {
-        std::vector<String> params = StringUtil::split(line);
-        String& attrib = params[0];
-		StringUtil::toLowerCase(attrib);
+        std::vector<String> params = line.split();
+        String attrib = params[0].toLowerCase();
         if (attrib == "type")
         {
             // Check params
@@ -145,8 +144,7 @@ namespace Ogre
                 return;
             }
             // Set
-			StringUtil::toLowerCase(params[1]);
-            if (params[1] == "truetype")
+            if (params[1].toLowerCase() == "truetype")
             {
                 pFont->setType(FT_TRUETYPE);
             }

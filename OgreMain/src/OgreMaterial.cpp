@@ -340,34 +340,34 @@ namespace Ogre {
         setAmbient(ambient.r, ambient.g, ambient.b);
     }
     //-----------------------------------------------------------------------
-    void Material::setDiffuse(Real red, Real green, Real blue, Real alpha)
+    void Material::setDiffuse(Real red, Real green, Real blue)
     {
         Techniques::iterator i, iend;
         iend = mTechniques.end();
         for (i = mTechniques.begin(); i != iend; ++i)
         {
-            (*i)->setDiffuse(red, green, blue, alpha);
+            (*i)->setDiffuse(red, green, blue);
         }
     }
     //-----------------------------------------------------------------------
     void Material::setDiffuse(const ColourValue& diffuse)
     {
-        setDiffuse(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
+        setDiffuse(diffuse.r, diffuse.g, diffuse.b);
     }
     //-----------------------------------------------------------------------
-    void Material::setSpecular(Real red, Real green, Real blue, Real alpha)
+    void Material::setSpecular(Real red, Real green, Real blue)
     {
         Techniques::iterator i, iend;
         iend = mTechniques.end();
         for (i = mTechniques.begin(); i != iend; ++i)
         {
-            (*i)->setSpecular(red, green, blue, alpha);
+            (*i)->setSpecular(red, green, blue);
         }
     }
     //-----------------------------------------------------------------------
     void Material::setSpecular(const ColourValue& specular)
     {
-        setSpecular(specular.r, specular.g, specular.b, specular.a);
+        setSpecular(specular.r, specular.g, specular.b);
     }
     //-----------------------------------------------------------------------
     void Material::setShininess(Real val)

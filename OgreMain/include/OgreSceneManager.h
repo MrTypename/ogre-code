@@ -274,8 +274,7 @@ namespace Ogre {
         Mesh* createSkydomePlane(
             BoxPlane bp,
             Real curvature, Real tiling, Real distance,
-            const Quaternion& orientation,
-            int xsegments = 16, int ysegments = 16, int ySegmentsToKeep = -1);
+            const Quaternion& orientation);
 
         // Flag indicating whether SceneNodes will be rendered as a set of 3 axes
         bool mDisplayNodes;
@@ -1058,8 +1057,7 @@ namespace Ogre {
         virtual void setSkyDome(
             bool enable, const String& materialName, Real curvature = 10,
             Real tiling = 8, Real distance = 4000, bool drawFirst = true,
-            const Quaternion& orientation = Quaternion::IDENTITY,
-            int xsegments = 16, int ysegments = 16, int ysegments_keep = -1);
+            const Quaternion& orientation = Quaternion::IDENTITY);
 
         /** Sets the fogging mode applied to the scene.
             @remarks

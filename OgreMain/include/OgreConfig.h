@@ -34,12 +34,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 #define OGRE_STACK_UNWINDING 1
 
-/** There are three modes for handling asserts in OGRE:
-0 - STANDARD - Standard asserts in debug builds, nothing in release builds
-1 - RELEASE_EXCEPTIONS - Standard asserts in debug builds, exceptions in release builds
-2 - EXCEPTIONS - Exceptions in debug builds, exceptions in release builds
+/** If set to 1, special OGRE debug-build asserts are compiled as exception
+    throws on release builds
 */
-#define OGRE_ASSERT_MODE 0
+#define OGRE_RELEASE_ASSERT 0
 
 /** If set to >0, OGRE will always 'think' that the graphics card only has the
     number of texture units specified. Very useful for testing multipass fallback.

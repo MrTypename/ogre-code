@@ -78,9 +78,6 @@ namespace Ogre
 			loadHighLevelImpl();
 			populateParameterNames(params);
 		}
-		// Copy in default parameters if present
-		if (!mDefaultParams.isNull())
-			params->copyConstantsFrom(*(mDefaultParams.get()));
         return params;
     }
     //---------------------------------------------------------------------------

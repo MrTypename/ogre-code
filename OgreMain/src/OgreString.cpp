@@ -29,12 +29,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 namespace Ogre {
 
-	//-----------------------------------------------------------------------
-	const String StringUtil::BLANK = String("");
-	//-----------------------------------------------------------------------
-    void StringUtil::trim(String& str, bool left, bool right)
+    const String String::BLANK = String("");
+    //-----------------------------------------------------------------------
+    void String::trim(bool left, bool right)
     {
-        /*
         size_t lspaces, rspaces, len = length(), i;
 
         lspaces = rspaces = 0;
@@ -56,14 +54,10 @@ namespace Ogre {
         }
 
         *this = substr(lspaces, len-lspaces-rspaces);
-        */
-        static const String delims = " \t\r";
-        str.erase(str.find_last_not_of(delims)+1); // trim right
-        str.erase(0, str.find_first_not_of(delims)); // trim left
     }
 
     //-----------------------------------------------------------------------
-    std::vector<String> StringUtil::split( const String& str, const String& delims, unsigned int maxSplits)
+    std::vector<String> String::split( const String& delims, unsigned int maxSplits) const
     {
         // static unsigned dl;
         std::vector<String> ret;
@@ -74,29 +68,29 @@ namespace Ogre {
         start = 0;
         do 
         {
-            pos = str.find_first_of(delims, start);
+            pos = find_first_of(delims, start);
             if (pos == start)
             {
                 // Do nothing
                 start = pos + 1;
             }
-            else if (pos == String::npos || (maxSplits && numSplits == maxSplits))
+            else if (pos == npos || (maxSplits && numSplits == maxSplits))
             {
                 // Copy the rest of the string
-                ret.push_back( str.substr(start) );
+                ret.push_back( substr(start) );
                 break;
             }
             else
             {
                 // Copy up to delimiter
-                ret.push_back( str.substr(start, pos - start) );
+                ret.push_back( substr(start, pos - start) );
                 start = pos + 1;
             }
             // parse up to next real data
-            start = str.find_first_not_of(delims, start);
+            start = find_first_not_of(delims, start);
             ++numSplits;
 
-        } while (pos != String::npos);
+        } while (pos != npos);
 
 
 
@@ -104,57 +98,62 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    void StringUtil::toLowerCase(String& str)
+    String String::toLowerCase(void) 
     {
         std::transform(
-            str.begin(),
-            str.end(),
-            str.begin(),
-			tolower);
+            begin(),
+            end(),
+            begin(),
+            static_cast<int(*)(int)>(::tolower) );
+
+        return *this;
     }
 
     //-----------------------------------------------------------------------
-    void StringUtil::toUpperCase(String& str) 
+    String String::toUpperCase(void) 
     {
         std::transform(
-            str.begin(),
-            str.end(),
-            str.begin(),
-			toupper);
+            begin(),
+            end(),
+            begin(),
+            static_cast<int(*)(int)>(::toupper) );
+
+        return *this;
     }
     //-----------------------------------------------------------------------
-    Real StringUtil::toReal(const String& str)
+    Real String::toReal(void) const
     {
-        return (Real)atof(str.c_str());
+        return (Real)atof(this->c_str());
     }
     //-----------------------------------------------------------------------
-    bool StringUtil::startsWith(const String& str, const String& pattern, bool lowerCase)
+    bool String::startsWith(const String& pattern, bool lowerCase) const
     {
-        size_t thisLen = str.length();
+        size_t thisLen = this->length();
         size_t patternLen = pattern.length();
         if (thisLen < patternLen || patternLen == 0)
             return false;
 
-        String startOfThis = str.substr(0, patternLen);
+        String startOfThis = substr(0, patternLen);
         if (lowerCase)
-            StringUtil::toLowerCase(startOfThis);
+            startOfThis.toLowerCase();
 
         return (startOfThis == pattern);
     }
     //-----------------------------------------------------------------------
-    bool StringUtil::endsWith(const String& str, const String& pattern, bool lowerCase)
+    bool String::endsWith(const String& pattern, bool lowerCase) const
     {
-        size_t thisLen = str.length();
+        size_t thisLen = this->length();
         size_t patternLen = pattern.length();
         if (thisLen < patternLen || patternLen == 0)
             return false;
 
-        String endOfThis = str.substr(thisLen - patternLen, patternLen);
+        String endOfThis = substr(thisLen - patternLen, patternLen);
         if (lowerCase)
-            StringUtil::toLowerCase(endOfThis);
+            endOfThis.toLowerCase();
 
         return (endOfThis == pattern);
     }
     //-----------------------------------------------------------------------
 
 }
+

@@ -20,7 +20,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\include;..\..\..\OgreMain\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;PLUGIN_TERRAIN_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;PLUGIN_OctreeSceneManager_EXPORTS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -34,7 +34,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="OgreMain_d.lib"
+				AdditionalDependencies="OgreMain.lib"
 				OutputFile="$(OutDir)/Plugin_OctreeSceneManager.dll"
 				Version="0.99"
 				LinkIncremental="2"
@@ -81,7 +81,7 @@
 				EnableFiberSafeOptimizations="TRUE"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="..\include;..\..\..\OgreMain\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PLUGIN_TERRAIN_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PLUGIN_OctreeSceneManager_EXPORTS"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="FALSE"
@@ -130,9 +130,6 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm">
 			<File
-				RelativePath="..\src\OgreHeightmapTerrainPageSource.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreOctree.cpp">
 			</File>
 			<File
@@ -148,12 +145,6 @@
 				RelativePath="..\src\OgreOctreeSceneManagerDll.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreTerrainPage.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreTerrainPageSource.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreTerrainRenderable.cpp">
 			</File>
 			<File
@@ -167,9 +158,6 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc">
 			<File
-				RelativePath="..\include\OgreHeightmapTerrainPageSource.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreOctree.h">
 			</File>
 			<File
@@ -180,15 +168,6 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreOctreeSceneManager.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreTerrainPage.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreTerrainPageSource.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreTerrainPrerequisites.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreTerrainRenderable.h">

@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright © 2000-2004 The OGRE Team
+Copyright © 2000-2002 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -22,36 +22,45 @@ Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
 -----------------------------------------------------------------------------
 */
+#ifndef _TGACodec_H__
+#define _TGACodec_H__
 
-#ifndef __TerrainPrerequisites_H__
-#define __TerrainPrerequisites_H__
+#include "OgreILImageCodec.h"
 
-#include "OgrePrerequisites.h"
+namespace Ogre {
 
-//-----------------------------------------------------------------------
-// Forward declarations
-//-----------------------------------------------------------------------
+    /** ImageCodec specialized in Traga images.
+    */
+    class _OgreExport TGACodec : public ILImageCodec
+    {
+    protected:
 
-namespace Ogre
-{
-    class TerrainSceneManager;
-    class TerrainPageSource;
-    class TerrainRenderable;
-    class TerrainPage;
+    // We're mapping onto raw file data, so ensure members are packed with no gaps 
+    //    by using uchars all the way (more portable than #pragma pack
+    typedef struct {
+	    uchar id_length;
+	    uchar color_map_type;
+	    uchar image_type;
+	    uchar first_entry_index[2];
+	    uchar color_map_length[2];
+	    uchar color_map_entry_size;
+	    uchar x_origin[2];
+	    uchar y_origin[2];
+	    uchar image_width[2];
+	    uchar image_height[2];
+	    uchar pixel_depth;
+	    uchar image_descriptor;
+    } TgaHeader;
+
+    public:
+        void code( const DataChunk& input, DataChunk* output, ... ) const;
+        CodecData * decode( const DataChunk& input, DataChunk* output, ... ) const;
+
+        String getType() const { return "tga"; }
+
+        unsigned int getILType(void) const;
+    };
+
 }
-//-----------------------------------------------------------------------
-// Windows Settings
-//-----------------------------------------------------------------------
-
-#if OGRE_PLATFORM == PLATFORM_WIN32 
-#   ifdef PLUGIN_TERRAIN_EXPORTS 
-#       define _OgreTerrainExport __declspec(dllexport) 
-#   else 
-#       define _OgreTerrainExport __declspec(dllimport) 
-#   endif 
-#else 
-#   define _OgreTerrainExport 
-#endif 
 
 #endif
-

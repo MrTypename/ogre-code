@@ -26,9 +26,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define __Win32Input8_H__
 
 #include "OgreWin32Prerequisites.h"
-
-#ifndef DX7INPUTONLY 
-
 #include "OgreInput.h"
 #include "OgreInputEvent.h"
 
@@ -120,5 +117,5 @@ namespace Ogre {
 
 }
 
-#endif
+
 #endif

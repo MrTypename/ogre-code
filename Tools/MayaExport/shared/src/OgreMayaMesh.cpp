@@ -690,17 +690,13 @@ namespace OgreMaya {
 						int iUV;
 						MStatus stat = fnMesh.getPolygonUVid(iPoly, iPolyVertex, iUV, &(iterUVSet->sName));
 					
-						MeshVertexUV VertexUV;
-                        if(!stat.error()) {						    
+                        if(!stat.error()) {
+						    MeshVertexUV VertexUV;
 						    VertexUV.u = iterUVSet->uArray[iUV];
 						    VertexUV.v = 1.0f - iterUVSet->vArray[iUV];	// CJV 2004-01-05: Required for Ogre 0.13
+					
+						    FaceVertex.listUV.push_back(VertexUV);
 		                }
-						else {
-							VertexUV.u = 0;
-							VertexUV.v = 0;
-						}
-
-						FaceVertex.listUV.push_back(VertexUV);
 						
                         ++iterUVSet;                        
 					}

@@ -280,8 +280,7 @@ namespace Ogre
         
     }
     //-----------------------------------------------------------------------
-    std::pair<bool, Real> Math::intersects(const Ray& ray, const Sphere& sphere, 
-        bool discardInside)
+    std::pair<bool, Real> Math::intersects(const Ray& ray, const Sphere& sphere)
     {
         const Vector3& raydir = ray.getDirection();
         // Adjust ray origin relative to sphere center
@@ -289,7 +288,7 @@ namespace Ogre
         Real radius = sphere.getRadius();
 
         // Check origin inside first
-        if (rayorig.squaredLength() <= radius*radius && discardInside)
+        if (rayorig.squaredLength() <= radius*radius)
         {
             return std::pair<bool, Real>(true, 0);
         }
@@ -314,8 +313,6 @@ namespace Ogre
             // But we only want the closest one, so that's ok, just use the 
             // '-' version of the solver
             Real t = ( -b - Math::Sqrt(d) ) / (2 * a);
-            if (t < 0)
-                t = ( -b + Math::Sqrt(d) ) / (2 * a);
             return std::pair<bool, Real>(true, t);
         }
 
@@ -577,15 +574,9 @@ namespace Ogre
     //-----------------------------------------------------------------------
     Vector4 Math::calculateFaceNormal(const Vector3& v1, const Vector3& v2, const Vector3& v3)
     {
-        Vector3 normal = calculateBasicFaceNormal(v1, v2, v3);
-        // Now set up the w (distance of tri from origin
-        return Vector4(normal.x, normal.y, normal.z, -(normal.dotProduct(v1)));
-    }
-    //-----------------------------------------------------------------------
-    Vector3 Math::calculateBasicFaceNormal(const Vector3& v1, const Vector3& v2, const Vector3& v3)
-    {
         Vector3 normal = (v2 - v1).crossProduct(v3 - v1);
         normal.normalise();
-        return normal;
+        // Now set up the w (distance of tri from origin
+        return Vector4(normal.x, normal.y, normal.z, -(normal.dotProduct(v1)));
     }
 }

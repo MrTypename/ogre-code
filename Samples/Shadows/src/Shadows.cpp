@@ -421,7 +421,7 @@ protected:
         mMaterialInfo->setCaption("Current: " + mAtheneMaterials[mCurrentAtheneMaterial]);
         pOver->show();
 
-		if (StringUtil::startsWith(mRoot->getRenderSystem()->getName(), "direct"))
+        if (mRoot->getRenderSystem()->getName().startsWith("direct"))
         {
             // In D3D, use a 1024x1024 shadow texture
             mSceneMgr->setShadowTextureSettings(1024, 2);

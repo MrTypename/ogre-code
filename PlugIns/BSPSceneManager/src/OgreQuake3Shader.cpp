@@ -274,8 +274,7 @@ namespace Ogre {
         String ext, base;
 
         pos = texName.find_last_of(".");
-        ext = texName.substr(pos, 4);
-		StringUtil::toLowerCase(ext);
+        ext = static_cast<String>(texName.substr(pos, 4)).toLowerCase();
         base = texName.substr(0,pos);
         if (ext == ".jpg")
         {

@@ -25,12 +25,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 #ifndef __Win32Input_H__
 #define __Win32Input_H__
 
-
 #include "OgreWin32Prerequisites.h"
-#ifdef DX7INPUTONLY
 #include "OgreInput.h"
-
-
 
 #include <dinput.h>
 
@@ -65,37 +61,12 @@ namespace Ogre {
         /** Determines if the specified key is currently depressed.
             Note that this enquiry method uses the state of the keyboard at the last 'capture' call.
         */
-      virtual bool isKeyDown(KeyCode kc) const ;
+        bool isKeyDown(KeyCode kc);
 
         /** Retrieves the relative position of the mouse when capture was called relative to the last time. */
-//        int getMouseRelativeX(void) ;
+        int getMouseRelativeX(void);
         /** Retrieves the relative position of the mouse when capture was called relative to the last time. */
-//        int getMouseRelativeY(void) ;
-
-
-
-
-       /** @copydoc InputReader::isKeyDown */
-//      virtual bool isKeyDown(KeyCode kc) const;
-
-        /*
-         *	Mouse getters.
-         */
-      virtual long getMouseRelX() const;
-      virtual long getMouseRelY() const;
-      virtual long getMouseRelZ() const{return 0;};
-
-      virtual long getMouseAbsX() const{return 0;};
-      virtual long getMouseAbsY() const{return 0;};
-	  virtual long getMouseAbsZ() const{return 0;};
-
-      virtual void getMouseState( MouseState& state ) const{};
-
-      virtual bool getMouseButton( uchar button ) const{return false;};
-
-//		void setBufferedInput(bool keys, bool mouse) ;
-//		void flushAllBuffers() ;
-
+        int getMouseRelativeY(void);
 
 
 
@@ -119,5 +90,5 @@ namespace Ogre {
 
 }
 
-#endif
+
 #endif

@@ -30,7 +30,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreBlendMode.h"
 #include "OgreTextureUnitState.h"
 #include "OgreGpuProgram.h"
-#include "OgreStringVector.h"
 
 namespace Ogre {
 
@@ -44,7 +43,6 @@ namespace Ogre {
         MSS_TEXTUREUNIT,
         MSS_PROGRAM_REF,
 		MSS_PROGRAM,
-        MSS_DEFAULT_PARAMETERS,
 		MSS_TEXTURESOURCE
     };
 	/** Struct for holding a program definition which is in progress. */
@@ -75,7 +73,6 @@ namespace Ogre {
 		int techLev,	//Keep track of what tech, pass, and state level we are in
 			passLev,
 			stateLev;
-        StringVector defaultParamLines;
 
 		// Error reporting state
         size_t lineNo;
@@ -117,8 +114,6 @@ namespace Ogre {
         AttribParserList mProgramRefAttribParsers;
         /// Parsers for the program definition section of a script
         AttribParserList mProgramAttribParsers;
-        /// Parsers for the program definition section of a script
-        AttribParserList mProgramDefaultParamAttribParsers;
 
         void writeMaterial(const Material *pMat);
         void writeTechnique(const Technique* pTech);

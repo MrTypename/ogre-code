@@ -13,6 +13,7 @@ OgreBillboard.h \
 OgreBillboardSet.h \
 OgreBitwise.h \
 OgreBlendMode.h \
+OgreBMPCodec.h \
 OgreBone.h \
 OgreCamera.h \
 OgreCodec.h \
@@ -27,6 +28,7 @@ OgreControllerManager.h \
 OgreCursor.h \
 OgreDataChunk.h \
 OgreDefaultHardwareBufferManager.h \
+OgreDDSCodec.h \
 OgreDynLib.h \
 OgreDynLibManager.h \
 OgreEdgeListBuilder.h \
@@ -63,13 +65,13 @@ OgreHardwareOcclusionQuery.h \
 OgreHardwareVertexBuffer.h \
 OgreHighLevelGpuProgram.h \
 OgreHighLevelGpuProgramManager.h \
-OgreILCodecs.h \
 OgreILImageCodec.h \
 OgreImage.h \
 OgreImageCodec.h \
 OgreInput.h \
 OgreInputEvent.h \
 OgreIteratorWrappers.h \
+OgreJPEGCodec.h \
 OgreKeyEvent.h \
 OgreKeyFrame.h \
 OgreKeyTarget.h \
@@ -100,6 +102,7 @@ OgreNoMemoryMacros.h \
 OgreNode.h \
 OgreOverlay.h \
 OgreOverlayManager.h \
+OgrePNGCodec.h \
 OgreParticle.h \
 OgreParticleAffector.h \
 OgreParticleAffectorFactory.h \
@@ -176,6 +179,7 @@ OgreTagPoint.h \
 OgreTargetManager.h \
 OgreTechnique.h \
 OgreTextureUnitState.h \
+OgreTGACodec.h \
 OgreTexture.h \
 OgreTextureManager.h \
 OgreTimer.h \

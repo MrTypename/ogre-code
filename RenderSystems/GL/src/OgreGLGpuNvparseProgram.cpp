@@ -68,7 +68,7 @@ void GLGpuNvparseProgram::bindProgramParameters(GpuProgramParametersSharedPtr pa
         unsigned int index = 0;
         while (realIt.hasMoreElements())
         {
-            const GpuProgramParameters::RealConstantEntry* e = realIt.peekNextPtr();
+            GpuProgramParameters::RealConstantEntry* e = realIt.peekNextPtr();
             if (e->isSet)
             {
                 GLenum combinerStage = GL_COMBINER0_NV + (unsigned int)(index / 2);

@@ -115,6 +115,9 @@ namespace Ogre {
 
         virtual ~ParticleSystem();
 
+        /** Gets the name of this particle system */
+        virtual const String& getName(void) const;
+
         /** Adds an emitter to this particle system.
         @remarks
             Particles are created in a particle system by emitters - see the ParticleEmitter
@@ -285,6 +288,9 @@ namespace Ogre {
         static CmdBillboardType msBillboardTypeCmd;
         static CmdCommonDirection msCommonDirectionCmd;
 
+
+        /// Name of the particle system instance
+        String mName;
 
         typedef std::vector<ParticleEmitter*> ParticleEmitterList;
         typedef std::vector<ParticleAffector*> ParticleAffectorList;

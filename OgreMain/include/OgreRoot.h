@@ -73,8 +73,6 @@ namespace Ogre
         String mVersion;
 		String mConfigFileName;
 	    bool mQueuedEnd;
-        // In case multiple render windows are created, only once are the resources loaded.
-        bool mFirstTimePostWindowInit;
 
         // Singletons
         LogManager* mLogManager;
@@ -92,7 +90,7 @@ namespace Ogre
         OverlayManager* mOverlayManager;
         FontManager* mFontManager;
         ArchiveFactory *mZipArchiveFactory;
-
+        Codec* mPNGCodec, *mJPGCodec, *mJPEGCodec, *mTGACodec, *mDDSCodec, *mBMPCodec;
         Timer* mTimer;
         RenderWindow* mAutoWindow;
         Profiler* mProfiler;

@@ -192,6 +192,9 @@ protected:
 
     NodeList mVisible;
 
+    /// the world size
+    float mWorldSize;
+
     /// The root octree
     Octree *mOctree;
 
