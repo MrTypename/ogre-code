@@ -62,8 +62,6 @@ namespace Ogre
 		/// full-screen multisampling antialiasing level
 		DWORD mFSAAQuality;
 
-		/// external window handle ;)
-		HWND mExternalHandle;
 		/// instance
 		HINSTANCE mhInstance;
 
@@ -143,6 +141,7 @@ namespace Ogre
 		SecondaryWindowList mSecondaryWindows;
 
 		bool mDeviceLost;
+		bool mBasicStatesInitialised;
 
 	public:
 		// constructor
@@ -153,8 +152,6 @@ namespace Ogre
 		virtual void initConfigOptions(void);
 		// method for resizing/repositing the render window
  		virtual void ResizeRepositionWindow(HWND wich);
-		// method for setting external window hwnd
-		void SetExternalWindowHandle(HWND externalHandle){mExternalHandle = externalHandle;};
 
 		// Overridden RenderSystem functions
 		ConfigOptionMap& getConfigOptions(void);
@@ -200,7 +197,7 @@ namespace Ogre
         void _setTextureCoordCalculation(size_t unit, TexCoordCalcMethod m, 
             const Frustum* frustum = 0);
 		void _setTextureBlendMode( size_t unit, const LayerBlendModeEx& bm );
-        void _setTextureAddressingMode(size_t stage, const TextureUnitState::UVWAddressingMode& uvw);
+		void _setTextureAddressingMode( size_t unit, TextureUnitState::TextureAddressingMode tam );
 		void _setTextureMatrix( size_t unit, const Matrix4 &xform );
 		void _setSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor );
 		void _setAlphaRejectSettings( CompareFunction func, unsigned char value );

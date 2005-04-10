@@ -731,56 +731,19 @@ namespace Ogre
         return false;
     }
     //-----------------------------------------------------------------------
-	TextureUnitState::TextureAddressingMode convTexAddressMode(const String& params, MaterialScriptContext& context)
-	{
-		if (params=="wrap")
-			return TextureUnitState::TAM_WRAP;
-		else if (params=="mirror")
-			return TextureUnitState::TAM_MIRROR;
-		else if (params=="clamp")
-			return TextureUnitState::TAM_CLAMP;
-		else
-			logParseError("Bad tex_address_mode attribute, valid parameters are "
-				"'wrap', 'clamp' or 'mirror'.", context);
-		// default
-		return TextureUnitState::TAM_WRAP;
-	}
-    //-----------------------------------------------------------------------
     bool parseTexAddressMode(String& params, MaterialScriptContext& context)
     {
         StringUtil::toLowerCase(params);
+        if (params=="wrap")
+            context.textureUnit->setTextureAddressingMode(TextureUnitState::TAM_WRAP);
+        else if (params=="mirror")
+            context.textureUnit->setTextureAddressingMode(TextureUnitState::TAM_MIRROR);
+        else if (params=="clamp")
+            context.textureUnit->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
+        else
+            logParseError("Bad tex_address_mode attribute, valid parameters are "
+                "'wrap', 'clamp' or 'mirror'.", context);
 
-        StringVector vecparams = StringUtil::split(params, " \t");
-        size_t numParams = vecparams.size();
-		
-		if (numParams > 3 || numParams < 1)
-		{
-			logParseError("Invalid number of parameters to tex_address_mode"
-					" - must be between 1 and 3", context);
-		}
-		if (numParams == 1)
-		{
-			// Single-parameter option
-			context.textureUnit->setTextureAddressingMode(
-				convTexAddressMode(vecparams[0], context));
-		}
-		else 
-		{
-			// 2-3 parameter option
-			TextureUnitState::UVWAddressingMode uvw;
-			uvw.u = convTexAddressMode(vecparams[0], context);
-			uvw.v = convTexAddressMode(vecparams[1], context);
-			if (numParams == 3)
-			{
-				// w
-				uvw.w = convTexAddressMode(vecparams[2], context);
-			}
-			else
-			{
-				uvw.w = TextureUnitState::TAM_WRAP;
-			}
-			context.textureUnit->setTextureAddressingMode(uvw);
-		}
         return false;
     }
     //-----------------------------------------------------------------------
@@ -1378,6 +1341,7 @@ namespace Ogre
         // the index or the parameter name, which we ignore
 
         bool extras = false;
+		bool float_extras = false;
         GpuProgramParameters::AutoConstantType acType;
 
         StringUtil::toLowerCase(vecparams[1]);
@@ -1434,6 +1398,189 @@ namespace Ogre
         {
             acType = GpuProgramParameters::ACT_INVERSETRANSPOSE_WORLDVIEW_MATRIX;
         }
+		else if (vecparams[1] == "time_0_x") 
+		{
+			acType = GpuProgramParameters::ACT_TIME_0_X;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "costime_0_x") 
+		{
+			acType = GpuProgramParameters::ACT_COSTIME_0_X;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "sintime_0_x") 
+		{
+			acType = GpuProgramParameters::ACT_SINTIME_0_X;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "tantime_0_x") 
+		{
+			acType = GpuProgramParameters::ACT_TANTIME_0_X;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "time_0_x_packed") 
+		{
+			acType = GpuProgramParameters::ACT_TIME_0_X_PACKED;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "time_0_1") 
+		{
+			acType = GpuProgramParameters::ACT_TIME_0_1;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "costime_0_1") 
+		{
+			acType = GpuProgramParameters::ACT_COSTIME_0_1;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "sintime_0_1") 
+		{
+			acType = GpuProgramParameters::ACT_SINTIME_0_1;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "tantime_0_1") 
+		{
+			acType = GpuProgramParameters::ACT_TANTIME_0_1;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "time_0_1_packed") 
+		{
+			acType = GpuProgramParameters::ACT_TIME_0_1_PACKED;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "time_0_2pi") 
+		{
+			acType = GpuProgramParameters::ACT_TIME_0_2PI;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "costime_0_2pi") 
+		{
+			acType = GpuProgramParameters::ACT_COSTIME_0_2PI;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "sintime_0_2pi") 
+		{
+			acType = GpuProgramParameters::ACT_SINTIME_0_2PI;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "tantime_0_2pi") 
+		{
+			acType = GpuProgramParameters::ACT_TANTIME_0_2PI;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "time_0_2pi_packed") 
+		{
+			acType = GpuProgramParameters::ACT_TIME_0_2PI_PACKED;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "fps") 
+		{
+			acType = GpuProgramParameters::ACT_FPS;
+		}
+		else if (vecparams[1] == "viewport_width") 
+		{
+			acType = GpuProgramParameters::ACT_VIEWPORT_WIDTH;
+		}
+		else if (vecparams[1] == "viewport_height") 
+		{
+			acType = GpuProgramParameters::ACT_VIEWPORT_HEIGHT;
+		}
+		else if (vecparams[1] == "inverse_viewport_width") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_VIEWPORT_WIDTH;
+		}
+		else if (vecparams[1] == "inverse_viewport_height") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_VIEWPORT_HEIGHT;
+		}
+		else if (vecparams[1] == "view_direction") 
+		{
+			acType = GpuProgramParameters::ACT_VIEW_DIRECTION;
+		}
+		else if (vecparams[1] == "view_side_vector") 
+		{
+			acType = GpuProgramParameters::ACT_VIEW_SIDE_VECTOR;
+		}
+		else if (vecparams[1] == "view_up_vector") 
+		{
+			acType = GpuProgramParameters::ACT_VIEW_UP_VECTOR;
+		}
+		else if (vecparams[1] == "fov") 
+		{
+			acType = GpuProgramParameters::ACT_FOV;
+		}
+		else if (vecparams[1] == "near_clip_distance") 
+		{
+			acType = GpuProgramParameters::ACT_NEAR_CLIP_DISTANCE;
+		}
+		else if (vecparams[1] == "far_clip_distance") 
+		{
+			acType = GpuProgramParameters::ACT_FAR_CLIP_DISTANCE;
+		}
+		else if (vecparams[1] == "inverse_viewproj_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_VIEWPROJ_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_transpose_viewproj_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSETRANSPOSE_VIEWPROJ_MATRIX;
+		}
+		else if (vecparams[1] == "transpose_viewproj_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_TRANSPOSE_VIEWPROJ_MATRIX;
+		}
+		else if (vecparams[1] == "transpose_view_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_TRANSPOSE_VIEW_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_transpose_view_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSETRANSPOSE_VIEW_MATRIX;
+		}
+		else if (vecparams[1] == "projection_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_PROJECTION_MATRIX;
+		}
+		else if (vecparams[1] == "transpose_projection_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_TRANSPOSE_PROJECTION_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_projection_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_PROJECTION_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_transpose_projection_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSETRANSPOSE_PROJECTION_MATRIX;
+		}
+		else if (vecparams[1] == "transpose_worldviewproj_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_TRANSPOSE_WORLDVIEWPROJ_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_worldviewproj_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_WORLDVIEWPROJ_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_transpose_worldviewproj_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSETRANSPOSE_WORLDVIEWPROJ_MATRIX;
+		}
+		else if (vecparams[1] == "transpose_worldview_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_TRANSPOSE_WORLDVIEW_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_transpose_worldview_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_TRANSPOSE_WORLDVIEW_MATRIX;
+		}
+		else if (vecparams[1] == "transpose_world_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_TRANSPOSE_WORLD_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_transpose_world_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_TRANSPOSE_WORLD_MATRIX;
+		}
         else if (vecparams[1] == "light_diffuse_colour")
         {
             acType = GpuProgramParameters::ACT_LIGHT_DIFFUSE_COLOUR;
@@ -1522,8 +1669,16 @@ namespace Ogre
             }
             extraParam = StringConverter::parseInt(vecparams[2]);
         }
+		
+		
+		if (float_extras) {
+			Real rData = StringConverter::parseReal(vecparams[2]);
+			context.programParams->setAutoConstantReal(index, acType, rData);
+		}
+		else {
+			context.programParams->setAutoConstant(index, acType, extraParam);
+		}
 
-        context.programParams->setAutoConstant(index, acType, extraParam);
     }
     //-----------------------------------------------------------------------
     bool parseParamIndexed(String& params, MaterialScriptContext& context)
@@ -2906,15 +3061,11 @@ namespace Ogre
             }
 
             //addressing mode
-			const TextureUnitState::UVWAddressingMode& uvw = 
-				pTex->getTextureAddressingMode();
             if (mDefaults || 
-                uvw.u != Ogre::TextureUnitState::TAM_WRAP ||
-				uvw.v != Ogre::TextureUnitState::TAM_WRAP ||
-				uvw.w != Ogre::TextureUnitState::TAM_WRAP )
+                pTex->getTextureAddressingMode() != Ogre::TextureUnitState::TAM_WRAP)
             {
                 writeAttribute(4, "tex_address_mode");
-                switch (uvw.u)
+                switch (pTex->getTextureAddressingMode())
                 {
                 case Ogre::TextureUnitState::TAM_CLAMP:
                     writeValue("clamp");
@@ -2926,30 +3077,6 @@ namespace Ogre
                     writeValue("wrap");
                     break;
                 }
-				switch (uvw.v)
-				{
-				case Ogre::TextureUnitState::TAM_CLAMP:
-					writeValue(" clamp");
-					break;
-				case Ogre::TextureUnitState::TAM_MIRROR:
-					writeValue(" mirror");
-					break;
-				case Ogre::TextureUnitState::TAM_WRAP:
-					writeValue(" wrap");
-					break;
-				}
-				switch (uvw.w)
-				{
-				case Ogre::TextureUnitState::TAM_CLAMP:
-					writeValue(" clamp");
-					break;
-				case Ogre::TextureUnitState::TAM_MIRROR:
-					writeValue(" mirror");
-					break;
-				case Ogre::TextureUnitState::TAM_WRAP:
-					writeValue(" wrap");
-					break;
-				}
             }
 
             //filtering

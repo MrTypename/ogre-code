@@ -8,7 +8,7 @@ Tooltip: 'Exports selected meshs with armature animations to Ogre3D'
 """
 
 __author__ = ['Michael Reimpell', 'Jens Hoffmann', 'et al.']
-__version__ = ''
+__version__ = '0.15.0'
 __url__ = ['OGRE website, http://www.ogre3d.org',
 	'Script manual, http://www.ogre3d.org/docs/Tutorials/blender/index.html',
 	'OGRE forum, http://www.ogre3d.org/phpBB2/']
@@ -16,15 +16,143 @@ __bpydoc__ = """\
 Exports selected meshs with armature animations to Ogre3D.
 """
 
-# Blender to Ogre Mesh and Skeleton Exporter
+# Blender to Ogre Mesh and Skeleton Exporter v0.15.0
 # url: http://www.ogre3d.org
 
 # Ogre exporter written by Jens Hoffmann and Michael Reimpell
 # based on the Cal3D exporter v0.5 written by Jean-Baptiste LAMY
 
-# Copyright (C) 2004-2005 Michael Reimpell -- <M.Reimpell@tu-bs.de>
+# Copyright (C) 2004 Michael Reimpell -- <M.Reimpell@tu-bs.de>
 # Copyright (C) 2003 Jens Hoffmann -- <hoffmajs@gmx.de>
 # Copyright (C) 2003 Jean-Baptiste LAMY -- jiba@tuxfamily.org
+#
+# ChangeLog:
+#   0.7 :  released by Jens Hoffman
+#   0.8 :  * Mon Feb 02 2004 Michael Reimpell <M.Reimpell@tu-bs.de>
+#          - added GUI
+#   0.9 :  * Tue Feb 03 2004 Michael Reimpell <M.Reimpell@tu-bs.de>
+#          - added special header to be registered in blenders export menu
+#   0.10:  * Wed Feb 04 2004 Michael Reimpell <M.Reimpell@tu-bs.de>
+#          - blenders broken Draw.Scrollbar replaced with own class
+#          - texture origin changed to top-left (Ogre v0.13.0)
+#          - export log is shown in message window
+#          - dirty hack for blender 2.32 (does not implement IpoCurve.getName()
+#            for action Ipos)
+#   0.11:  * Mon Feb 09 2004 Michael Reimpell <M.Reimpell@tu-bs.de>
+#          - strip path from texture filenames in material file
+#          - back button for doneMessageBox
+#          - changed scrollbar focus behaviour
+#          - log text position offset
+#          - Ogre v0.13.0 material script support
+#            Material specific:
+#             amb * rgbCol          -> ambient <r> <g> <b> 
+#             rgbCol                -> diffuse <r> <g> <b>
+#             spec * specCol, hard  -> specular <r> <g> <b> <hard>
+#             emit*rgbCol           -> emissive <r> <g> <b>
+#             Material.mode
+#              ZINVERT              -> depth_func greater_equal
+#              ENV                  -> depth_func always_fail
+#              SHADELESS            -> lighting off
+#              NOMIST               -> fog_override true
+#            Face specific:
+#             NMFace.mode
+#              INVISIBLE            -> no export
+#              TEX                  -> texture_unit
+#             NMFace.transp
+#              SOLID                -> Default: scene_blend one zero
+#              ADD                  -> scene_blend add
+#              ALPHA                -> scene_blend alpha_blend
+#            Texture specific:
+#             NMFace.image.filename -> texture <name without path>
+#   0.12:  * Mon Feb 16 2004 Michael Reimpell <M.Reimpell@tu-bs.de>
+#          - black border flashing removed
+#          - added material script support for
+#            Material.mode
+#              TEXFACE -> disable ambient, diffuse, specular and emissive
+#          - exit on ESCKEY or QKEY pressed (not released)
+#          - added frame based animation export
+#   0.12.1: * Wed Feb 18 2004 Michael Reimpell <M.Reimpell@tu-bs.de>
+#          - changed two user interface strings to avoid confusion
+#   0.13:  * Mon Feb 23 2004 Michael Reimpell <M.Reimpell@tu-bs.de>
+#          - scrollbar marker moves on focus click without MOUSEY event
+#          - scrollbar marker focus light
+#          - show version number in GUI
+#          - transparent load and save of export settings
+#   0.13.1: * Wed Feb 25 2004 Michael Reimpell <M.Reimpell@tu-bs.de>
+#          - added support for vertices with different uv coordinates but same normal
+#          - improved button handling
+#          - added support for sticky uv coordinates
+#   0.13.2: * Thu Jun 03 2004 Michael Reimpell <M.Reimpell@tu-bs.de>
+#          - added warning if no materials or textures are defined
+#          - added warning if mesh has no visible faces
+#          - displays a message while exporting
+#          - added material script support for
+#            Material.mode
+#              SHADOW -> receive_shadows
+#   0.13.3: * Sun Jun 06 2004 Michael Reimpell <M.Reimpell@tu-bs.de>
+#          - changed GUI positions to ints to avoid DeprecationWarnings (Blender 2.33)
+#          - get frames per second setting from the render buttons (Blender 2.33)
+#          - respect new Armature.getBones() behaviour (Blender 2.33)
+#          - added missing argument in SkeletonMaterial creation
+#          - added option to rotate the coordinate system on export
+#   0.14.0: * Sun Jul 04 2004 Michael Reimpell <M.Reimpell@tu-bs.de>
+#          - script loadable via command line
+#          - Ogre logo added
+#          - changed material mapping:
+#             amb * World.getAmb() -> ambient <r> <g> <b>
+#            where World is the first world returned by Blender.World.Get()
+#          - selected objects menu visible even if "Export Armature" option disabled
+#          - use Blender.Armature.NLA submodule to access Action objects (Blender 2.33)
+#   0.14.1: * Fri Aug 13 2004 Michael Reimpell <M.Reimpell@tu-bs.de>
+#          - additional changes due to new Armature.getBones() behaviour (Blender 2.33)
+#          - ordering of the additional rotation on export changed
+#          - allow actions with less channels than bones
+#          - support for dotted parenting in armature edit mode
+#          - workaround for quaternion naming bug in Blender 2.34
+#          - support for single loc ipo curves
+#          - use Blender.World.GetActive() to get the ambient colour of the current world (Blender 2.34)
+#          - added mousewheel support to the scrollbar (Blender 2.34)
+#          - change keyframes and name of animation according to selected action
+#          - use Object.getMatrix("worldspace") (Blender 2.34)
+#          - smoothed scrollbar movement and removed flicker
+#   0.14.2: * Fri Aug 13 2004 Michael Reimpell <M.Reimpell@tu-bs.de>
+#          - location key frame values fixed
+#          - fixed redraw if action is changed
+#   0.15.0: * Sun Oct 24 2004 Michael Reimpell <M.Reimpell@tu-bs.de>
+#          - scalar product range correction in calc_rootaxis
+#          - made ArmatureAction.createArmatureActionDict a static method
+#          - renamed private methods to begin with an underscore
+#          - switched to javadoc comments
+#          - changed vertex buffer layout to allow software skinning
+#          - settings are now stored inside the .blend file
+#          - importing pickle module now optional
+#          - support for non-uniform keyframe scaling
+#          - export vertex colours
+#   0.15.1: * Michael Reimpell <M.Reimpell@tu-bs.de>
+#          - use Blender.World.GetCurrent() for Blender > 2.34
+#          - fixed calculation of initial bone rotation
+#          - preliminary normal map support
+#          - option to export in objects local coordinates
+#          - changed material file default name to the current scene name
+#          - files are now named after their datablock name
+#          - path selection starts with current export path
+#          - material ambient colour is scaled white
+#          - option to use scaled diffuse colour as ambient
+#          - BPy documentation added
+#          - coloured log
+#          - crossplatform path handling
+#          - allow empty material list entries
+#          - material export distinguishs between rendering and game engine materials
+#   0.15.1: * Sun Nov 27 2004 John Bartholomew <johnb213@users.sourceforge.net>
+#          - option to run OgreXMLConverter automatically on the exported files
+#
+# TODO:
+#          - vertex colours
+#          - code cleanup
+#          - noninteractive mode when called from command line
+#          - TWOSIDE face mode, TWOSIDED mesh mode
+#          - SUBSURF mesh mode
+#          - assign unskinned vertices to a static bone
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,6 +169,9 @@ Exports selected meshs with armature animations to Ogre3D.
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # this export script is assumed to be used with the latest blender version.
+#
+# Usage:
+# select the meshes you want to export and run this script (alt-p)
 
 # KEEP_SETTINGS (enable = 1, disable = 0)
 #  transparently load and save settings to the text 'ogreexport.cfg'
@@ -358,10 +489,6 @@ class ArmatureAction:
 							self.firstKeyFrame = iFrame
 						if ((iFrame > self.lastKeyFrame) or (self.lastKeyFrame is None)):
 							self.lastKeyFrame = iFrame
-		if self.firstKeyFrame == None:
-			self.firstKeyFrame = 1
-		if self.lastKeyFrame == None:
-			self.lastKeyFrame = 1
 		return
 	
 	# static method
@@ -395,10 +522,7 @@ class ArmatureAction:
 			iBone = 0
 			while ((not hasValidChannel) and (iBone < len(boneNameList))):
 				if (linkedActionIpoDict.keys().count(boneNameList[iBone]) == 1):
-					if len(linkedActionIpoDict[boneNameList[iBone]].getCurves()):
-						hasValidChannel = 1 # true
-					else:
-						iBone += 1
+					hasValidChannel = 1 # true
 				else:
 					iBone += 1
 			if hasValidChannel:
@@ -415,10 +539,7 @@ class ArmatureAction:
 				iBone = 0
 				while ((not hasValidChannel) and (iBone < len(boneNameList))):
 					if (actionIpoDict.keys().count(boneNameList[iBone]) == 1):
-						if len(actionIpoDict[boneNameList[iBone]].getCurves()):
-							hasValidChannel = 1 # true
-						else:
-							iBone += 1
+						hasValidChannel = 1 # true
 					else:
 						iBone += 1
 				if hasValidChannel:
@@ -1739,16 +1860,10 @@ class GameEngineMaterial(DefaultMaterial):
 	def __init__(self, blenderMesh, blenderFace):
 		self.mesh = blenderMesh
 		self.face = blenderFace
-		# check if a Blender material is assigned
-		try:
-			blenderMaterial = self.mesh.getMaterials(1)[self.face.materialIndex]
-		except:
-			blenderMaterial = None
-		self.material = blenderMaterial
 		DefaultMaterial.__init__(self, self._createName())
 		return
 	def writeTechniques(self, f):
-		mat = self.material
+		mat = self.mesh.getMaterials(1)[self.face.materialIndex]
 		if (not(mat)
 			and not(self.mesh.hasVertexColours())
 			and not(self.mesh.hasVertexUV() or self.mesh.hasFaceUV())):
@@ -1851,8 +1966,9 @@ class GameEngineMaterial(DefaultMaterial):
 		"""
 		materialName = ''
 		# nonempty rendering material?
-		if self.material:
-			materialName += self.material.getName() + '/'
+		faceMaterial = self.mesh.getMaterials(1)[self.face.materialIndex]
+		if faceMaterial:
+			materialName += faceMaterial.getName() + '/'
 		# blend mode
 		if (self.face.transp == Blender.NMesh.FaceTranspModes['ALPHA']):
 			materialName += 'ALPHA'
@@ -1877,28 +1993,49 @@ class RenderingMaterial(DefaultMaterial):
 	def __init__(self, blenderMesh, blenderFace):
 		self.mesh = blenderMesh
 		self.face = blenderFace
-		self.key = 0
-		self.mTexUVCol = None
-		self.mTexUVNor = None
-		self.mTexUVCsp = None
 		self.material = self.mesh.getMaterials(1)[self.face.materialIndex]
 		if self.material:
-			self._generateKey()
 			DefaultMaterial.__init__(self, self._createName())
 		else:
 			DefaultMaterial.__init__(self, 'None')
 		return
 	def writeTechniques(self, f):
 		# parse material
-		if self.key:
-			if self.TECHNIQUES.has_key(self.key):
-				techniques = self.TECHNIQUES[self.key]
-				techniques(self, f)
+		if self.material:
+			if not(self.material.mode & Blender.Material.Modes['HALO']):
+				# non-Halo
+				key = 0
+				if (self.material.mode & Blender.Material.Modes['VCOL_LIGHT']):
+					key |= self.VCOLLIGHT
+				if (self.material.mode & Blender.Material.Modes['VCOL_PAINT']):
+					key |= self.VCOLPAINT
+				if (self.material.mode & Blender.Material.Modes['TEXFACE']):
+					key |= self.TEXFACE
+				# textures
+				for mtex in self.material.getTextures():
+					if mtex:
+						if (mtex.tex.type == Blender.Texture.Types['IMAGE']):
+							if (mtex.texco & Blender.Texture.TexCo['UV']):
+								if (mtex.mapto & Blender.Texture.MapTo['COL']):
+									key |= self.IMAGEUVCOL
+								if (mtex.mapto & Blender.Texture.MapTo['NOR']):
+									# Check "Normal Map" image option
+									if (mtex.tex.imageFlags & 2048):
+										key |= self.IMAGEUVNOR
+									# else bumpmap
+								if (mtex.mapto & Blender.Texture.MapTo['CSP']):
+									key |= self.IMAGEUVCSP
+				# choose techniques
+				if self.TECHNIQUES.has_key(key):
+					techniques = self.TECHNIQUES[key]
+					techniques(self, f)
+				else:
+					# default
+					self.writeColours(f)
 			else:
-				# default
-				self.writeColours(f)
+				# Halo
+				DefaultMaterial('').writeTechniques(f)
 		else:
-			# Halo or empty material
 			DefaultMaterial('').writeTechniques(f)
 		return
 	def writeColours(self, f):
@@ -1925,66 +2062,6 @@ class RenderingMaterial(DefaultMaterial):
 		self.writeCommonOptions(f, 3)
 		# texture units
 		self.writeDiffuseTexture(f, 3)
-		f.write(tab(2) + "}\n") # pass
-		f.write(tab(1) + "}\n") # technique
-		return
-	def writeTexFace(self, f):
-		# preconditions: TEXFACE set
-		# 
-		# Note that an additional Col texture replaces the
-		# TEXFACE texture instead of blend over according to alpha.
-		#
-		# (amb+emit)textureCol + diffuseLight*ref*textureCol + specular
-		# 
-		imageFileName = None
-		if self.mTexUVCol:
-			# COL MTex replaces UV/Image Editor texture
-			imageFileName = PathName(self.mTexUVCol.tex.getImage().getFilename()).basename()
-		elif self.face.image:
-			# UV/Image Editor texture 
-			imageFileName = PathName(self.face.image.filename).basename()
-		
-		self.writeReceiveShadows(f, 1)
-		f.write(tab(1) + "technique\n" + tab(1) + "{\n")
-		col = [1.0, 1.0, 1.0]
-		# texture pass
-		f.write(tab(2) + "pass\n" + tab(2) + "{\n")
-		self.writeAmbient(f, col, 3)
-		self.writeDiffuse(f, col, 3)
-		if not(imageFileName):
-			self.writeSpecular(f, 3)
-		self.writeEmissive(f, col, 3)
-		self.writeSceneBlend(f,3)
-		self.writeCommonOptions(f, 3)
-		if imageFileName:
-			f.write(tab(3) + "texture_unit\n")
-			f.write(tab(3) + "{\n")
-			f.write(tab(4) + "texture %s\n" % imageFileName)
-			if self.mTexUVCol:
-				self.writeTextureAddressMode(f, self.mTexUVCol, 4)
-				self.writeTextureFiltering(f, self.mTexUVCol, 4)
-			# multiply with factors
-			f.write(tab(4) + "colour_op modulate\n")
-			f.write(tab(3) + "}\n") # texture_unit
-			f.write(tab(2) + "}\n") # texture pass
-			# specular pass
-			f.write(tab(2) + "pass\n" + tab(2) + "{\n")
-			f.write(tab(3) + "ambient 0.0 0.0 0.0\n")
-			f.write(tab(3) + "diffuse 0.0 0.0 0.0\n")
-			self.writeSpecular(f, 3)
-			f.write(tab(3) + "scene_blend add\n")
-			hasAlpha = 0
-			if (self.material.getAlpha() < 1.0):
-				hasAlpha = 1
-			else:
-				for mtex in self.material.getTextures():
-					if mtex:
-						if ((mtex.tex.type == Blender.Texture.Types['IMAGE'])
-							and (mtex.mapto & Blender.Texture.MapTo['ALPHA'])):
-							hasAlpha = 1
-			if (hasAlpha):
-				f.write(tab(3) + "depth_write off\n")
-			self.writeCommonOptions(f, 3)
 		f.write(tab(2) + "}\n") # pass
 		f.write(tab(1) + "}\n") # technique
 		return
@@ -2040,8 +2117,14 @@ class RenderingMaterial(DefaultMaterial):
 		return
 	def writeNormalMap(self, f):
 		# preconditions COL and NOR textures
-		colImage = PathName(self.mTexUVCol.tex.image.filename).basename()
-		norImage = PathName(self.mTexUVNor.tex.image.filename).basename()
+		for mtex in self.material.getTextures():
+			if mtex:
+				if (mtex.tex.type == Blender.Texture.Types['IMAGE']):
+					if (mtex.texco & Blender.Texture.TexCo['UV']):
+						if (mtex.mapto & Blender.Texture.MapTo['COL']):
+							colImage = PathName(mtex.tex.image.filename).basename()
+						if (mtex.mapto & Blender.Texture.MapTo['NOR']):
+							norImage = PathName(mtex.tex.image.filename).basename()
 		f.write("""	technique
 	{
 		pass
@@ -2240,13 +2323,20 @@ class RenderingMaterial(DefaultMaterial):
 			f.write(tab(indent)+"fog_override true\n")
 		return
 	def writeDiffuseTexture(self, f, indent = 0):
-		if self.mTexUVCol:
+		diffuseMTex = None
+		for mtex in self.material.getTextures():
+			if mtex:
+				if ((mtex.tex.type == Blender.Texture.Types['IMAGE'])
+				and (mtex.texco & Blender.Texture.TexCo['UV'])
+				and (mtex.mapto & Blender.Texture.MapTo['COL'])):
+					diffuseMTex = mtex
+		if diffuseMTex:
 			f.write(tab(indent)+"texture_unit\n")
 			f.write(tab(indent)+"{\n")
-			f.write(tab(indent + 1) + "texture %s\n" % PathName(self.mTexUVCol.tex.getImage().getFilename()).basename())
-			self.writeTextureAddressMode(f, self.mTexUVCol, indent + 1)
-			self.writeTextureFiltering(f, self.mTexUVCol, indent + 1)			
-			self.writeTextureColourOp(f, self.mTexUVCol, indent + 1)
+			f.write(tab(indent + 1) + "texture %s\n" % PathName(diffuseMTex.tex.getImage().getFilename()).basename())
+			self.writeTextureAddressMode(f, diffuseMTex, indent + 1)
+			self.writeTextureFiltering(f, diffuseMTex, indent + 1)			
+			self.writeTextureColourOp(f, diffuseMTex, indent + 1)
 			f.write(tab(indent)+"}\n") # texture_unit
 		return
 	def writeTextureAddressMode(self, f, blenderMTex, indent = 0):
@@ -2291,88 +2381,39 @@ class RenderingMaterial(DefaultMaterial):
 		return
 	# private
 	def _createName(self):
-		# must be called after _generateKey()
 		materialName = self.material.getName()
 		# two sided?
 		if (self.face.mode & Blender.NMesh.FaceModes['TWOSIDE']):
 			materialName += '/TWOSIDE'
-		# use UV/Image Editor texture?
-		if ((self.key & self.TEXFACE) and not(self.key & self.IMAGEUVCOL)):
-			materialName += '/TEXFACE'
-			if self.face.image:
-				materialName += '/' + PathName(self.face.image.filename).basename()
 		return materialName
-	def _generateKey(self):
-		# generates key and populates mTex fields
-		if self.material:
-			if not(self.material.mode & Blender.Material.Modes['HALO']):
-				self.key |= self.NONHALO
-				if (self.material.mode & Blender.Material.Modes['VCOL_LIGHT']):
-					self.key |= self.VCOLLIGHT
-				if (self.material.mode & Blender.Material.Modes['VCOL_PAINT']):
-					self.key |= self.VCOLPAINT
-				if (self.material.mode & Blender.Material.Modes['TEXFACE']):
-					self.key |= self.TEXFACE
-				# textures
-				for mtex in self.material.getTextures():
-					if mtex:
-						if (mtex.tex.type == Blender.Texture.Types['IMAGE']):
-							if (mtex.texco & Blender.Texture.TexCo['UV']):
-								if (mtex.mapto & Blender.Texture.MapTo['COL']):
-									self.key |= self.IMAGEUVCOL
-									self.mTexUVCol = mtex
-								if (mtex.mapto & Blender.Texture.MapTo['NOR']):
-									# Check "Normal Map" image option
-									if (mtex.tex.imageFlags & 2048):
-										self.key |= self.IMAGEUVNOR
-										self.mTexUVNor = mtex
-									# else bumpmap
-								if (mtex.mapto & Blender.Texture.MapTo['CSP']):
-									self.key |= self.IMAGEUVCSP
-									self.mTexUVCsp = mtex
-		return
-	NONHALO = 1
-	VCOLLIGHT = 2
-	VCOLPAINT = 4
-	TEXFACE = 8
-	IMAGEUVCOL = 16
-	IMAGEUVNOR = 32
-	IMAGEUVCSP = 64
+	VCOLLIGHT = 1
+	VCOLPAINT = 2
+	TEXFACE = 4
+	IMAGEUVCOL = 8
+	IMAGEUVNOR = 16
+	IMAGEUVCSP = 32
 	# material techniques export methods
 	TECHNIQUES = {
-		NONHALO|IMAGEUVCOL : writeColours,
-		NONHALO|IMAGEUVCOL|IMAGEUVCSP : writeColours,
-		NONHALO|TEXFACE : writeTexFace,
-		NONHALO|TEXFACE|VCOLLIGHT : writeTexFace,
-		NONHALO|TEXFACE|IMAGEUVCOL : writeTexFace,
-		NONHALO|TEXFACE|IMAGEUVNOR : writeTexFace,
-		NONHALO|TEXFACE|IMAGEUVCSP : writeTexFace,
-		NONHALO|TEXFACE|VCOLLIGHT|IMAGEUVCOL : writeTexFace,
-		NONHALO|TEXFACE|VCOLLIGHT|IMAGEUVNOR : writeTexFace,
-		NONHALO|TEXFACE|VCOLLIGHT|IMAGEUVCSP : writeTexFace,
-		NONHALO|TEXFACE|IMAGEUVCOL|IMAGEUVCSP : writeTexFace,
-		NONHALO|TEXFACE|IMAGEUVNOR|IMAGEUVCSP : writeTexFace,
-		NONHALO|TEXFACE|VCOLLIGHT|IMAGEUVCOL|IMAGEUVCSP : writeTexFace,
-		NONHALO|TEXFACE|VCOLLIGHT|IMAGEUVNOR|IMAGEUVCSP : writeTexFace,
-		NONHALO|VCOLPAINT : writeVertexColours,
-		NONHALO|VCOLPAINT|VCOLLIGHT : writeVertexColours,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR : writeNormalMap,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT : writeNormalMap,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR|VCOLPAINT : writeNormalMap,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR|TEXFACE : writeNormalMap,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR|IMAGEUVCSP : writeNormalMap,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT|VCOLPAINT : writeNormalMap,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT|TEXFACE : writeNormalMap,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT|IMAGEUVCSP : writeNormalMap,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR|VCOLPAINT|TEXFACE : writeNormalMap,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR|VCOLPAINT|IMAGEUVCSP : writeNormalMap,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR|TEXFACE|IMAGEUVCSP : writeNormalMap,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR|VCOLPAINT|TEXFACE|IMAGEUVCSP : writeNormalMap,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT|TEXFACE|IMAGEUVCSP : writeNormalMap,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT|VCOLPAINT|IMAGEUVCSP : writeNormalMap,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT|VCOLPAINT|TEXFACE : writeNormalMap,
-		NONHALO|IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT|VCOLPAINT|TEXFACE|IMAGEUVCSP : writeNormalMap
-		}
+	IMAGEUVCOL : writeColours,
+	IMAGEUVCOL|IMAGEUVCSP : writeColours,
+	VCOLPAINT : writeVertexColours,
+	IMAGEUVCOL|IMAGEUVNOR : writeNormalMap,
+	IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT : writeNormalMap,
+	IMAGEUVCOL|IMAGEUVNOR|VCOLPAINT : writeNormalMap,
+	IMAGEUVCOL|IMAGEUVNOR|TEXFACE : writeNormalMap,
+	IMAGEUVCOL|IMAGEUVNOR|IMAGEUVCSP : writeNormalMap,
+	IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT|VCOLPAINT : writeNormalMap,
+	IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT|TEXFACE : writeNormalMap,
+	IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT|IMAGEUVCSP : writeNormalMap,
+	IMAGEUVCOL|IMAGEUVNOR|VCOLPAINT|TEXFACE : writeNormalMap,
+	IMAGEUVCOL|IMAGEUVNOR|VCOLPAINT|IMAGEUVCSP : writeNormalMap,
+	IMAGEUVCOL|IMAGEUVNOR|TEXFACE|IMAGEUVCSP : writeNormalMap,
+	IMAGEUVCOL|IMAGEUVNOR|VCOLPAINT|TEXFACE|IMAGEUVCSP : writeNormalMap,
+	IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT|TEXFACE|IMAGEUVCSP : writeNormalMap,
+	IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT|VCOLPAINT|IMAGEUVCSP : writeNormalMap,
+	IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT|VCOLPAINT|TEXFACE : writeNormalMap,
+	IMAGEUVCOL|IMAGEUVNOR|VCOLLIGHT|VCOLPAINT|TEXFACE|IMAGEUVCSP : writeNormalMap
+	}	
 
 class Mesh:
 	def __init__(self, submeshList, skeleton=None, nmesh=None):
@@ -2869,6 +2910,7 @@ def process_face(face, submesh, mesh, matrix, skeleton=None):
 				normal = faceNormal
 			xmlVertex = XMLVertex(position, normal)
 			# uv coordinates
+			#remove#if submesh.material.texture:
 			if (mesh.hasVertexUV() or mesh.hasFaceUV()):
 				uv = [0,0]
 				if mesh.hasVertexUV():
@@ -2883,6 +2925,8 @@ def process_face(face, submesh, mesh, matrix, skeleton=None):
 					uv[1] = 1 - face.uv[i][1]
 				xmlVertex.appendTextureCoordinates(uv)
 			# vertex colour
+			#remove#if submesh.material.mat:
+			#remove#	if (submesh.material.mat.mode & Blender.Material.Modes["VCOL_PAINT"]):
 			if (mesh.hasVertexColours()):
 				colour = face.col[i]
 				xmlVertex.setColourDiffuse([colour.r/255.0, colour.g/255.0, colour.b/255.0, colour.a/255.0])
@@ -2993,7 +3037,7 @@ def export_mesh(object, exportOptions):
 		# faces assign to objectMaterial keys
 		objectMaterialFacesDict = {}
 
-		# note: these are blender materials. Even if nMaterials = 0
+		# note: these are blender materials. Evene if nMaterials = 0
 		#       the face can still have a texture (see above)
 		meshMaterialList = data.getMaterials(1)
 		# note: material slots may be empty, resp. meshMaterialList entries may be None
@@ -3005,11 +3049,7 @@ def export_mesh(object, exportOptions):
 			# choose "rendering materials" or "game engine materials"
 			if not(gameEngineMaterialsToggle.val):
 				# rendering materials
-				try:
-					blenderMaterial = meshMaterialList[face.materialIndex]
-				except:
-					exportLogger.logError("Material assignment missing for object \"%s\"!" % data.name)
-					blenderMaterial = None
+				blenderMaterial = meshMaterialList[face.materialIndex]
 				if blenderMaterial:
 					# non-empty material slot
 					faceMaterial = RenderingMaterial(data, face)
@@ -3017,21 +3057,9 @@ def export_mesh(object, exportOptions):
 					faceMaterial = DefaultMaterial('default')
 			else:
 				# game engine materials
-				if face.image:
-					if (not(face.mode & Blender.NMesh.FaceModes['INVISIBLE'])
-						and not(face.flag & Blender.NMesh.FaceFlags['HIDE'])):
-						faceMaterial = GameEngineMaterial(data, face)
-				else:
-					# check if a Blender material is assigned
-					try:
-						blenderMaterial = meshMaterialList[face.materialIndex]
-					except:
-						blenderMaterial = None
-					if blenderMaterial:
-						faceMaterial = GameEngineMaterial(data, face)
-					else:
-						exportLogger.logWarning("Face of object \"%s\" without material assignment! Using default material." % data.name)
-						faceMaterial = DefaultMaterial('default')
+				if (not(face.mode & Blender.NMesh.FaceModes['INVISIBLE'])
+					and not(face.flag & Blender.NMesh.FaceFlags['HIDE'])):
+					faceMaterial = GameEngineMaterial(data, face)
 			if faceMaterial:
 				# insert into Dicts
 				materialName = faceMaterial.getName()
@@ -3107,11 +3135,11 @@ def write_materials():
 	global materialsDict
 	file = materialString.val
 	exportLogger.logInfo("Materials \"%s\"" % file)
+
 	f = open(os.path.join(pathString.val, file), "w")
 	for material in materialsDict.values():
 		material.write(f)
 	f.close()
-	return
 
 #######################################################################################
 ## main export
@@ -3515,7 +3543,7 @@ def frameDecorator(x, y, width):
 	glRectf(x,y-36,x+width,y-16)
 	glColor3f(1.0,1.0,0)
 	glRasterPos2i(x+85, y-30)
-	Draw.Text("OGRE Exporter", "normal")
+	Draw.Text("OGRE Exporter 0.15.0", "normal")
 
 	# logo
 	glRasterPos2i(x+1, y-48)	

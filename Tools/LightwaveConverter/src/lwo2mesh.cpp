@@ -139,7 +139,7 @@ void Lwo2MeshWriter::doExportMaterials()
 		// Create deferred material so no load
 		MaterialPtr ogreMat = MaterialManager::getSingleton().getByName(surface->name);
 		
-		if (ogreMat.isNull())
+		if (!ogreMat)
 		{
 			ogreMat = MaterialManager::getSingleton().create(surface->name, 
                 ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
@@ -175,17 +175,12 @@ void Lwo2MeshWriter::doExportMaterials()
 				surface->luminosity.val * surface->color.rgb[1],
 				surface->luminosity.val * surface->color.rgb[2]
 			);
-
-			unsigned int j;
-			lwTexture *tex;
-			int cindex;
-			lwClip *clip;
 			
-			for (j = 0; j < surface->color.textures.size(); j++)
+			for (unsigned int j = 0; j < surface->color.textures.size(); j++)
 			{
-				tex = surface->color.textures[j];
-				cindex = tex->param.imap->cindex;
-				clip = object->lwFindClip(cindex);
+				lwTexture *tex = surface->color.textures[j];
+				int cindex = tex->param.imap->cindex;
+				lwClip *clip = object->lwFindClip(cindex);
 				
 				if (clip)
 				{
@@ -193,21 +188,7 @@ void Lwo2MeshWriter::doExportMaterials()
 					_makepath( texname, 0, 0, node, ext );					
 					ogreMat->getTechnique(0)->getPass(0)->createTextureUnitState(texname);
 				}
-			}
-
-			for (j = 0; j < surface->transparency.val.textures.size(); j++)
-			{
-				tex = surface->transparency.val.textures[j];
-				cindex = tex->param.imap->cindex;
-				clip = object->lwFindClip(cindex);
-				
-				if (clip)
-				{
-					_splitpath( clip->source.still->name, drive, dir, node, ext );
-					_makepath( texname, 0, 0, node, ext );					
-					ogreMat->getTechnique(0)->getPass(0)->createTextureUnitState(texname);
-				}
-			}
+			}			
 			materialSerializer->queueForExport(ogreMat);
 		}
 	}
@@ -239,7 +220,7 @@ Skeleton *Lwo2MeshWriter::doExportSkeleton(const String &skelName, int l)
 
 	if (!bones.size()) return NULL; // no bones means no skeleton
 
-	SkeletonPtr ogreskel = Ogre::SkeletonManager::getSingleton().create(skelName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+	Skeleton *ogreskel = new Skeleton(skelName);
 
 	unsigned int i;
 	// Create all the bones in turn
@@ -306,9 +287,7 @@ Skeleton *Lwo2MeshWriter::doExportSkeleton(const String &skelName, int l)
 
 	return ogreskel;
 */
-    if (!ogreskel.isNull())
-        Ogre::SkeletonManager::getSingleton().remove(ogreskel->getHandle());
-
+	delete ogreskel;
 	return NULL;
 }
 
@@ -612,6 +591,8 @@ bool Lwo2MeshWriter::writeLwo2Mesh(lwObject *nobject, char *ndest)
 	if (!object) return false;
 	if (!object->layers.size()) return false;
 	
+	LogManager::getSingleton().createLog("Lwo2MeshWriter.log");
+	
 	prepLwObject();
 	
 	vpoints points;
@@ -630,7 +611,7 @@ bool Lwo2MeshWriter::writeLwo2Mesh(lwObject *nobject, char *ndest)
 
 	bool SeparateLayers = flags[UseSeparateLayers] && ml > 1;
 
-    if (!SeparateLayers) ogreMesh = Ogre::MeshManager::getSingleton().create(ndest, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+	if (!SeparateLayers) ogreMesh = new Mesh(ndest);
 
 	Ogre::Vector3 boundingBoxMin(FLT_MAX, FLT_MAX, FLT_MAX);
 	Ogre::Vector3 boundingBoxMax(FLT_MIN, FLT_MIN, FLT_MIN);
@@ -650,7 +631,7 @@ bool Lwo2MeshWriter::writeLwo2Mesh(lwObject *nobject, char *ndest)
 
 		if (SeparateLayers)
 		{	
-			ogreMesh = Ogre::MeshManager::getSingleton().create(ndest, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+			ogreMesh = new Mesh(ndest);
 			ogreMesh->_setBounds(Ogre::AxisAlignedBox(currentMin, currentMax));
 			ogreMesh->_setBoundingSphereRadius(Ogre::Math::Sqrt(std::max(currentMin.squaredLength(), currentMax.squaredLength())));
 		}
@@ -732,20 +713,10 @@ bool Lwo2MeshWriter::writeLwo2Mesh(lwObject *nobject, char *ndest)
 					
 			ogreMesh->generateLodLevels(distanceList, quota, reduction);
 		}
-
-		if (flags[GenerateEdgeLists])
-		{
-			ogreMesh->buildEdgeList();
-		}
-
-		if (flags[GenerateTangents])
-		{
-			ogreMesh->buildTangentVectors();
-		}
 		
 		try
 		{
-			meshserializer.exportMesh(ogreMesh.getPointer(), fname);
+			meshserializer.exportMesh(ogreMesh, fname);
 		}
 		catch (...)
 		{
@@ -754,7 +725,7 @@ bool Lwo2MeshWriter::writeLwo2Mesh(lwObject *nobject, char *ndest)
 
 		ogreMesh->unload();
 
-		Ogre::MeshManager::getSingleton().remove(ogreMesh->getHandle());
+		delete ogreMesh;
 		if (flags[ExportSkeleton] && skeleton) delete skeleton;
 
 		if (!SeparateLayers) break;

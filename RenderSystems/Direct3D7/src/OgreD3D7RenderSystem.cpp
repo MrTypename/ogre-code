@@ -1256,28 +1256,26 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-	D3DTEXTUREADDRESS D3DRenderSystem::convertTextureAddressMode(
-		TextureUnitState::TextureAddressingMode tam) const
-	{
+    void D3DRenderSystem::_setTextureAddressingMode(size_t stage, TextureUnitState::TextureAddressingMode tam)
+    {
+        HRESULT hr;
+        D3DTEXTUREADDRESS d3dType;
+
         switch(tam)
         {
         case TextureUnitState::TAM_WRAP:
-            return D3DTADDRESS_WRAP;
+            d3dType = D3DTADDRESS_WRAP;
+            break;
         case TextureUnitState::TAM_MIRROR:
-            return D3DTADDRESS_MIRROR;
+            d3dType = D3DTADDRESS_MIRROR;
+            break;
         case TextureUnitState::TAM_CLAMP:
-            return D3DTADDRESS_CLAMP;
+            d3dType = D3DTADDRESS_CLAMP;
+            break;
         }
-	}
-    //-----------------------------------------------------------------------
-    void D3DRenderSystem::_setTextureAddressingMode(size_t stage, 
-		const TextureUnitState::UVWAddressingMode& uvw)
-    {
-        HRESULT hr;
 
-		// D3D7 doesn't support per-coordinate addressing mode
-        hr = __SetTextureStageState(stage, D3DTSS_ADDRESS, 
-			convertTextureAddressMode(uvw.u));
+
+        hr = __SetTextureStageState(stage, D3DTSS_ADDRESS, d3dType);
     }
     //-----------------------------------------------------------------------
     void D3DRenderSystem::_setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor)

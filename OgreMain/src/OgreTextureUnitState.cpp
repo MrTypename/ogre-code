@@ -502,34 +502,14 @@ namespace Ogre {
         return alphaBlendMode;
     }
     //-----------------------------------------------------------------------
-    const TextureUnitState::UVWAddressingMode& 
-	TextureUnitState::getTextureAddressingMode(void) const
+    TextureUnitState::TextureAddressingMode TextureUnitState::getTextureAddressingMode(void) const
     {
         return mAddressMode;
     }
     //-----------------------------------------------------------------------
-    void TextureUnitState::setTextureAddressingMode(
-		TextureUnitState::TextureAddressingMode tam)
+    void TextureUnitState::setTextureAddressingMode(TextureUnitState::TextureAddressingMode tam)
     {
-        mAddressMode.u = tam;
-        mAddressMode.v = tam;
-        mAddressMode.w = tam;
-    }
-    //-----------------------------------------------------------------------
-    void TextureUnitState::setTextureAddressingMode(
-		TextureUnitState::TextureAddressingMode u, 
-		TextureUnitState::TextureAddressingMode v,
-		TextureUnitState::TextureAddressingMode w)
-    {
-        mAddressMode.u = u;
-        mAddressMode.v = v;
-        mAddressMode.w = w;
-    }
-    //-----------------------------------------------------------------------
-    void TextureUnitState::setTextureAddressingMode(
-		const TextureUnitState::UVWAddressingMode& uvw)
-    {
-        mAddressMode = uvw;
+        mAddressMode = tam;
     }
     //-----------------------------------------------------------------------
     void TextureUnitState::setEnvironmentMap(bool enable, EnvMapType envMapType)

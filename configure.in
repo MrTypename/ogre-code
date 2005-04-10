@@ -1,12 +1,12 @@
 AC_PREREQ(2.50)
 
-AC_INIT([OGRE], [1.1.0])
+AC_INIT([OGRE], [1.0.1])
 
 AC_CANONICAL_TARGET
 
 # New syntax, but this is still buggy; PACKAGE gets defined as 'ogre' not 'OGRE'
 #AM_INIT_AUTOMAKE([1.7.0 foreign no-installinfo no-installman subdir-objects])
-AM_INIT_AUTOMAKE([OGRE], 1.1.0)
+AM_INIT_AUTOMAKE([OGRE], [1.0.1])
 AC_CONFIG_HEADERS([OgreMain/include/config.h])
 
 dnl Check for programs
@@ -28,7 +28,8 @@ if test x$GCC = xyes; then
     AC_MSG_CHECKING([version 3.x of gcc])
     if test -n "`$CC --version 2>&1|grep '3.'`"; then
         AC_DEFINE(EXT_HASH,, Use old STL hash options)
-        AC_SUBST(OGRE_CFLAGS, "-DEXT_HASH")
+        AC_DEFINE(GCC_3_1,, 3.x GCC version)
+        AC_SUBST(OGRE_CFLAGS, "-DGCC_3_1 -DEXT_HASH")
         AC_MSG_RESULT(yes);
     else
         AC_MSG_RESULT(no)!

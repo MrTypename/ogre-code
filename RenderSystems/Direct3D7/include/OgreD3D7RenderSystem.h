@@ -118,8 +118,7 @@ namespace Ogre {
         // Matrix conversion
         D3DMATRIX makeD3DMatrix(const Matrix4& mat);
         Matrix4 convertD3DMatrix(const D3DMATRIX& mat);
-		D3DTEXTUREADDRESS convertTextureAddressMode(TextureUnitState::TextureAddressingMode tam) const;
-			
+
         void initConfigOptions(void);
         void initInputDevices(void);
         void processInputDevices(void);
@@ -259,7 +258,7 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _setTextureAddressingMode(size_t stage, const TextureUnitState::UVWAddressingMode& uvw);
+        void _setTextureAddressingMode(size_t unit, TextureUnitState::TextureAddressingMode tam);
         /** See
           RenderSystem
          */
