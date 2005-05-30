@@ -1166,30 +1166,26 @@ namespace Ogre {
         glActiveTextureARB_ptr( GL_TEXTURE0 );
     }
     //-----------------------------------------------------------------------------
-	GLint GLRenderSystem::getTextureAddressingMode(
-		TextureUnitState::TextureAddressingMode tam) const
-	{
+    void GLRenderSystem::_setTextureAddressingMode(size_t stage, TextureUnitState::TextureAddressingMode tam)
+    {
+        GLint type;
         switch(tam)
         {
         case TextureUnitState::TAM_WRAP:
-            return GL_REPEAT;
+            type = GL_REPEAT;
+            break;
         case TextureUnitState::TAM_MIRROR:
-            return GL_MIRRORED_REPEAT;
+            type = GL_MIRRORED_REPEAT;
+            break;
         case TextureUnitState::TAM_CLAMP:
-            return GL_CLAMP_TO_EDGE;
+            type = GL_CLAMP_TO_EDGE;
+            break;
         }
-		
-	}
-    //-----------------------------------------------------------------------------
-    void GLRenderSystem::_setTextureAddressingMode(size_t stage, const TextureUnitState::UVWAddressingMode& uvw)
-    {
+
         glActiveTextureARB_ptr( GL_TEXTURE0 + stage );
-        glTexParameteri( mTextureTypes[stage], GL_TEXTURE_WRAP_S, 
-			getTextureAddressingMode(uvw.u));
-        glTexParameteri( mTextureTypes[stage], GL_TEXTURE_WRAP_T, 
-			getTextureAddressingMode(uvw.v));
-        glTexParameteri( mTextureTypes[stage], GL_TEXTURE_WRAP_R, 
-				getTextureAddressingMode(uvw.w));
+        glTexParameteri( mTextureTypes[stage], GL_TEXTURE_WRAP_S, type );
+        glTexParameteri( mTextureTypes[stage], GL_TEXTURE_WRAP_T, type );
+        glTexParameteri( mTextureTypes[stage], GL_TEXTURE_WRAP_R, type );
         glActiveTextureARB_ptr( GL_TEXTURE0 );
     }
     //-----------------------------------------------------------------------------

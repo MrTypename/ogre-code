@@ -1,6 +1,5 @@
 pkginclude_HEADERS = Ogre.h \
 OgreArchive.h \
-OgreAnimable.h \
 OgreAnimation.h \
 OgreAnimationState.h \
 OgreAnimationTrack.h \
@@ -122,7 +121,6 @@ OgrePrerequisites.h \
 OgreProfiler.h \
 OgreProgressiveMesh.h \
 OgreQuaternion.h \
-OgreRadixSort.h \
 OgreRay.h \
 OgreRectangle.h \
 OgreRectangle2D.h \

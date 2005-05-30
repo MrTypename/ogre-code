@@ -57,9 +57,6 @@ namespace Ogre {
 	class DefaultRaySceneQuery;
 	class DefaultSphereSceneQuery;
 	class DefaultAxisAlignedBoxSceneQuery;
-	class EntityFactory;
-	class LightFactory;
-	class BillboardSetFactory;
 
     /** Manages the rendering of a 'scene' i.e. a collection of primitives.
         @remarks
@@ -78,17 +75,14 @@ namespace Ogre {
      */
     class _OgreExport SceneManager
     {
+		friend class DefaultIntersectionSceneQuery; 
+	    friend class DefaultRaySceneQuery;
+	    friend class DefaultSphereSceneQuery;
+	    friend class DefaultAxisAlignedBoxSceneQuery;
+        friend class DefaultPlaneBoundedVolumeListSceneQuery;
     public:
-        /// Query type mask which will be used for world geometry @see SceneQuery
-        static uint32 WORLD_GEOMETRY_TYPE_MASK;
-		/// Query type mask which will be used for entities @see SceneQuery
-		static uint32 ENTITY_TYPE_MASK;
-		/// Query type mask which will be used for effects like billboardsets / particle systems @see SceneQuery
-		static uint32 FX_TYPE_MASK;
-		/// Query type mask which will be used for StaticGeometry  @see SceneQuery
-		static uint32 STATICGEOMETRY_TYPE_MASK;
-		/// Query type mask which will be used for lights  @see SceneQuery
-		static uint32 LIGHT_TYPE_MASK;
+        /// Query mask which will be used for world geometry @see SceneQuery
+        static unsigned long WORLD_GEOMETRY_QUERY_MASK;
         /** Comparator for material map, for sorting materials into render order (e.g. transparent last).
         */
         struct materialLess
@@ -145,6 +139,25 @@ namespace Ogre {
         /** Central list of cameras - for easy memory management and lookup.
         */
         CameraList mCameras;
+
+        typedef std::map<String, Light* > SceneLightList;
+
+        /** Central list of lights - for easy memory management and lookup.
+        */
+        SceneLightList mLights;
+
+
+        typedef std::map<String, Entity* > EntityList;
+
+        /** Central list of entities - for easy memory management and lookup.
+        */
+        EntityList mEntities;
+
+        typedef std::map<String, BillboardSet* > BillboardSetList;
+
+        /** Central list of billboard sets - for easy memory management and lookup.
+        */
+        BillboardSetList mBillboardSets;
 
 		typedef std::map<String, StaticGeometry* > StaticGeometryList;
 		StaticGeometryList mStaticGeometryList;
@@ -440,17 +453,6 @@ namespace Ogre {
         };
 
         ShadowCasterSceneQueryListener* mShadowCasterQueryListener;
-
-		typedef std::map<String, MovableObjectFactory*> MovableObjectFactoryMap;
-		MovableObjectFactoryMap mMovableObjectFactoryMap;
-		typedef std::map<String, MovableObject*> MovableObjectMap;
-		typedef std::map<String, MovableObjectMap*> MovableObjectCollectionMap;
-		MovableObjectCollectionMap mMovableObjectCollectionMap;
-		uint32 mNextMovableObjectTypeFlag;
-		// stock factories
-		EntityFactory* mEntityFactory;
-		LightFactory* mLightFactory;
-		BillboardSetFactory* mBillboardSetFactory;
 
         /** Internal method for locating a list of shadow casters which 
             could be affecting the frustum for a given light. 
@@ -748,26 +750,11 @@ namespace Ogre {
                 SceneManager cannot handle any sort of world geometry and so will always
                 throw an exception. However subclasses like BspSceneManager can load
                 particular types of world geometry e.g. "q3dm1.bsp".
+            @par
+                World geometry will be loaded via the 'common' resource paths and archives set in the
+                ResourceManager class.
         */
         virtual void setWorldGeometry(const String& filename);
-
-        /** Sets the source of the 'world' geometry, i.e. the large, mainly 
-			static geometry making up the world e.g. rooms, landscape etc.
-            @remarks
-                Depending on the type of SceneManager (subclasses will be 
-				specialised for particular world geometry types) you have 
-				requested via the Root or SceneManagerEnumerator classes, you 
-				can pass a stream to this method and it will attempt to load 
-				the world-level geometry for use. If the manager can only 
-				handle one input format the typeName parameter is not required.
-				The stream passed will be read (and it's state updated). 
-			@param stream Data stream containing data to load
-			@param typeName String identifying the type of world geometry
-				contained in the stream - not required if this manager only 
-				supports one type of world geometry.
-        */
-		virtual void setWorldGeometry(DataStreamPtr& stream, 
-			const String& typeName = StringUtil::BLANK);
 
         /** Estimate the number of loading stages required to load the named
             world geometry. 
@@ -783,20 +770,6 @@ namespace Ogre {
         */
         virtual size_t estimateWorldGeometry(const String& filename) { return 0; }
 
-        /** Estimate the number of loading stages required to load the named
-            world geometry. 
-        @remarks
-			Operates just like the version of this method which takes a
-			filename, but operates on a stream instead. Note that since the
-			stream is updated, you'll need to reset the stream or reopen it
-			when it comes to loading it for real.
-		@param stream Data stream containing data to load
-		@param typeName String identifying the type of world geometry
-			contained in the stream - not required if this manager only 
-			supports one type of world geometry.
-		*/		
-        virtual size_t estimateWorldGeometry(DataStreamPtr& stream, 
-			const String& typeName = StringUtil::BLANK) { return 0; }
         /** Asks the SceneManager to provide a suggested viewpoint from which the scene should be viewed.
             @remarks
                 Typically this method returns the origin unless a) world geometry has been loaded using
@@ -1216,8 +1189,6 @@ namespace Ogre {
             the orientation of the nodes.
         */
         virtual void setDisplaySceneNodes(bool display);
-        /** Returns true if all scene nodes axis are to be displayed */
-        virtual bool getDisplaySceneNodes(void) const {return mDisplayNodes;}
 
         /** Creates an animation which can be used to animate scene nodes.
         @remarks
@@ -1480,12 +1451,27 @@ namespace Ogre {
         /** Destroys a scene query of any type. */
         virtual void destroyQuery(SceneQuery* query);
 
+        typedef MapIterator<SceneLightList> LightIterator;
+        typedef MapIterator<EntityList> EntityIterator;
         typedef MapIterator<CameraList> CameraIterator;
+        typedef MapIterator<BillboardSetList> BillboardSetIterator;
         typedef MapIterator<AnimationList> AnimationIterator;
 
+        /** Returns a specialised MapIterator over all lights in the scene. */
+        LightIterator getLightIterator(void) {
+            return LightIterator(mLights.begin(), mLights.end());
+        }
+        /** Returns a specialised MapIterator over all entities in the scene. */
+        EntityIterator getEntityIterator(void) {
+            return EntityIterator(mEntities.begin(), mEntities.end());
+        }
         /** Returns a specialised MapIterator over all cameras in the scene. */
         CameraIterator getCameraIterator(void) {
             return CameraIterator(mCameras.begin(), mCameras.end());
+        }
+        /** Returns a specialised MapIterator over all BillboardSets in the scene. */
+        BillboardSetIterator getBillboardSetIterator(void) {
+            return BillboardSetIterator(mBillboardSets.begin(), mBillboardSets.end());
         }
         /** Returns a specialised MapIterator over all animations in the scene. */
         AnimationIterator getAnimationIterator(void) {
@@ -1809,111 +1795,6 @@ namespace Ogre {
 		virtual void removeStaticGeometry(const String& name);
 		/** Remove & destroy all StaticGeometry instances. */
 		virtual void removeAllStaticGeometry(void);
-
-
-		/** Register a new MovableObjectFactory which will create new MovableObject
-			instances of a particular type, as identified by the getType() method.
-		@remarks
-			Plugin creators can create subclasses of MovableObjectFactory which 
-			construct custom subclasses of MovableObject for insertion in the 
-			scene. This is the primary way that plugins can make custom objects
-			available.
-		@param fact Pointer to the factory instance
-		@param overrideExisting Set this to true to override any existing 
-			factories which are registered for the same type. You should only
-			change this if you are very sure you know what you're doing. 
-		*/
-		virtual void addMovableObjectFactory(MovableObjectFactory* fact, 
-			bool overrideExisting = false);
-		/** Removes a previously registered MovableObjectFactory.
-		@remarks
-			All instances of objects created by this factory will be destroyed
-			before removing the factory (by calling back the factories 
-			'destroyInstance' method). The plugin writer is responsible for actually
-			destroying the factory.
-		*/
-		virtual void removeMovableObjectFactory(MovableObjectFactory* fact);
-		/// Checks whether a factory is registered for a given MovableObject type
-		virtual bool hasMovableObjectFactory(const String& typeName) const;
-		/** Allocate the next MovableObject type flag.
-		@remarks
-			This is done automatically if MovableObjectFactory::requestTypeFlags
-			returns true; don't call this manually unless you're sure you need to.
-		*/
-		uint32 _allocateNextMovableObjectTypeFlag(void);
-
-		typedef ConstMapIterator<MovableObjectFactoryMap> MovableObjectFactoryIterator;
-		/** Return an iterator over all the MovableObjectFactory instances currently
-			registered.
-		*/
-		virtual MovableObjectFactoryIterator getMovableObjectFactoryIterator(void) const;
-
-		/** Create a movable object of the type specified.
-		@remarks
-			This is the generalised form of MovableObject creation where you can
-			create a MovableObject of any specialised type generically, including
-			any new types registered using plugins.
-		@param name The name to give the object. Must be unique within type.
-		@param typeName The type of object to create
-		@param params Optional name/value pair list to give extra parameters to
-			the created object.
-		*/
-		virtual MovableObject* createMovableObject(const String& name, 
-			const String& typeName, const NameValuePairList* params = 0);
-		/** Destroys a MovableObject with the name specified, of the type specified.
-		@remarks
-			The MovableObject will automatically detach itself from any nodes
-			on destruction.
-		*/
-		virtual void destroyMovableObject(const String& name, const String& typeName);
-		/** Destroys a MovableObject.
-		@remarks
-			The MovableObject will automatically detach itself from any nodes
-			on destruction.
-		*/
-		virtual void destroyMovableObject(MovableObject* m);
-		/** Destroy all MovableObjects of a given type. */
-		virtual void destroyAllMovableObjectsByType(const String& typeName);
-		/** Destroy all MovableObjects. */
-		virtual void destroyAllMovableObjects(void);
-		/** Get a reference to a previously created MovableObject. */
-		virtual MovableObject* getMovableObject(const String& name, const String& typeName);
-		typedef MapIterator<MovableObjectMap> MovableObjectIterator;
-		/** Get an iterator over all MovableObect instances of a given type. */
-		virtual MovableObjectIterator getMovableObjectIterator(const String& typeName);
-		/** Inject a MovableObject instance created externally.
-		@remarks
-			This method 'injects' a MovableObject instance created externally into
-			the MovableObject instance registry held in the SceneManager. You
-			might want to use this if you have a MovableObject which you don't
-			want to register a factory for; for example a MovableObject which 
-			cannot be generally constructed by clients. 
-		@note
-			It is important that the MovableObject has a unique name for the type,
-			and that its getMovableType() method returns a proper type name.
-		*/
-		virtual void injectMovableObject(MovableObject* m);
-		/** Extract a previously injected MovableObject.
-		@remarks
-			Essentially this does the same as destroyMovableObject, but only
-			removes the instance from the internal lists, it does not attempt
-			to destroy it.
-		*/
-		virtual void extractMovableObject(const String& name, const String& typeName);
-		/** Extract a previously injected MovableObject.
-		@remarks
-			Essentially this does the same as destroyMovableObject, but only
-			removes the instance from the internal lists, it does not attempt
-			to destroy it.
-		*/
-		virtual void extractMovableObject(MovableObject* m);
-		/** Extract all injected MovableObjects of a given type.
-		@remarks
-			Essentially this does the same as destroyAllMovableObjectsByType, 
-			but only removes the instances from the internal lists, it does not 
-			attempt to destroy them.
-		*/
-		virtual void extractAllMovableObjectsByType(const String& typeName);
 
 		
     };

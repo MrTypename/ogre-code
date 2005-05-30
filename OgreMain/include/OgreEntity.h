@@ -70,8 +70,8 @@ namespace Ogre {
     */
     class _OgreExport Entity: public MovableObject
     {
-        // Allow EntityFactory full access
-        friend class EntityFactory;
+        // Allow SceneManager full access
+        friend class SceneManager;
         friend class SubEntity;
     public:
 	typedef std::set<Entity*> EntitySet;
@@ -83,7 +83,11 @@ namespace Ogre {
         Entity();
         /** Private constructor - specify name (the usual constructor used).
         */
-        Entity( const String& name, MeshPtr& mesh);
+        Entity( const String& name, MeshPtr& mesh, SceneManager* creator);
+
+        /** Name of the entity; used for location in the scene.
+        */
+        String mName;
 
         /** The Mesh that this Entity is based on.
         */
@@ -94,9 +98,17 @@ namespace Ogre {
         typedef std::vector<SubEntity*> SubEntityList;
         SubEntityList mSubEntityList;
 
+        /** Pointer back to the SceneManager that created this instance, for
+            notification purposes.
+        */
+        SceneManager* mCreatorSceneManager;
+
 
         /// State of animation for animable meshes
         AnimationStateSet* mAnimationState;
+
+        /// Shared class-level name for Movable type
+        static String msMovableType;
 
 
         /// Temp blend buffer details for shared geometry
@@ -307,6 +319,9 @@ namespace Ogre {
         /** Overridden - see MovableObject.
         */
         void _updateRenderQueue(RenderQueue* queue);
+
+        /** Overridden from MovableObject */
+        const String& getName(void) const;
 
         /** Overridden from MovableObject */
         const String& getMovableType(void) const;
@@ -524,29 +539,10 @@ namespace Ogre {
 			for entities which are software skinned. 
 		*/
 		const VertexData* _getSharedBlendedVertexData(void) const;
-		/// Override to return specific type flag
-		uint32 getTypeFlags(void) const;
-
 
 
 
     };
-
-	/** Factory object for creating Entity instances */
-	class _OgreExport EntityFactory : public MovableObjectFactory
-	{
-	protected:
-		MovableObject* createInstanceImpl( const String& name, const NameValuePairList* params);
-	public:
-		EntityFactory() {}
-		~EntityFactory() {}
-		
-		static String FACTORY_TYPE_NAME;
-
-		const String& getType(void) const;
-		void destroyInstance( MovableObject* obj);  
-
-	};
 
 } // namespace
 

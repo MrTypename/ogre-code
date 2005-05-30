@@ -534,21 +534,6 @@ namespace Ogre {
 		return mCurrentCamera->getFarClipDistance(); 
 	}
 	//-----------------------------------------------------------------------------
-    int AutoParamDataSource::getPassNumber(void) const
-    {
-        return mPassNumber;
-    }
-	//-----------------------------------------------------------------------------
-    void AutoParamDataSource::setPassNumber(const int passNumber)
-    {
-        mPassNumber = passNumber;
-    }
-	//-----------------------------------------------------------------------------
-    void AutoParamDataSource::incPassNumber(void)
-    {
-        ++mPassNumber;
-    }
-	//-----------------------------------------------------------------------------
-
+	
 }
 

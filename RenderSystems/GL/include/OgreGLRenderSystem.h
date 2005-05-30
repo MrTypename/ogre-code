@@ -77,7 +77,6 @@ namespace Ogre {
         void makeGLMatrix(GLfloat gl_matrix[16], const Matrix4& m);
  
         GLint getBlendMode(SceneBlendFactor ogreBlend) const;
-		GLint getTextureAddressingMode(TextureUnitState::TextureAddressingMode tam) const;
 
         void setLights();
 
@@ -248,7 +247,7 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _setTextureAddressingMode(size_t stage, const TextureUnitState::UVWAddressingMode& uvw);
+        void _setTextureAddressingMode(size_t stage, TextureUnitState::TextureAddressingMode tam);
         /** See
           RenderSystem
          */

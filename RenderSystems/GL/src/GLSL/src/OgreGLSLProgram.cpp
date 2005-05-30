@@ -209,18 +209,10 @@ namespace Ogre {
 
 			childShader->attachToProgramObject( programObject );
 
-			++childprogramcurrent;
+			childprogramcurrent++;
 		}
 
 	}
-
-    //-----------------------------------------------------------------------
-    const String& GLSLProgram::getLanguage(void) const
-    {
-        static const String language = "glsl";
-
-        return language;
-    }
 
   
 }

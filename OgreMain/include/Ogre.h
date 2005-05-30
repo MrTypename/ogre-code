@@ -29,7 +29,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreAnimation.h"
 #include "OgreAnimationTrack.h"
-#include "OgreAny.h"
 #include "OgreArchive.h"
 #include "OgreArchiveManager.h"
 #include "OgreAxisAlignedBox.h"
@@ -76,7 +75,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgrePatchSurface.h"
 #include "OgrePlatformManager.h"
 #include "OgreProfiler.h"
-#include "OgreRadixSort.h"
 #include "OgreRenderQueueListener.h"
 #include "OgreRenderSystem.h"
 #include "OgreRenderTargetListener.h"

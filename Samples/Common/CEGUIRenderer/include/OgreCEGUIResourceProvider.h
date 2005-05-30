@@ -44,7 +44,6 @@ public:
 
 //    void loadInputSourceContainer(const String& filename, InputSourceContainer& output);
     void loadRawDataContainer(const String& filename, RawDataContainer& output, const String& resourceGroup);
-    void unloadRawDataContainer(RawDataContainer& output);
 };
 
 } // End of  CEGUI namespace section

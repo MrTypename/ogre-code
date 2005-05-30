@@ -32,7 +32,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreParticleIterator.h"
 #include "OgreStringInterface.h"
 #include "OgreMovableObject.h"
-#include "OgreRadixSort.h"
 
 namespace Ogre {
 
@@ -96,13 +95,6 @@ namespace Ogre {
             String doGet(const void* target) const;
             void doSet(void* target, const String& val);
         };
-		/** Command object for sorting (see ParamCommand).*/
-		class CmdSorted : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
 
         /// Default constructor required for STL creation in manager
         ParticleSystem();
@@ -325,6 +317,9 @@ namespace Ogre {
         */
         virtual void _updateRenderQueue(RenderQueue* queue);
 
+        /** Overridden from MovableObject */
+        const String& getName(void) const { return mName; }
+
         /** Fast-forwards this system by the required number of seconds.
         @remarks
             This method allows you to fast-forward a system so that it effectively looks like
@@ -423,16 +418,6 @@ namespace Ogre {
 		/** @copydoc MovableObject::setRenderQueueGroup */
 		void setRenderQueueGroup(RenderQueueGroupID queueID);
 
-		/** Set whether or not particles are sorted according to the camera.
-		@remarks
-			Enabling sorting alters the order particles are sent to the renderer.
-			When enabled, particles are sent to the renderer in order of 
-			furthest distance from the camera.
-		*/
-		void setSortingEnabled(bool enabled) { mSorted = enabled; }
-		/// Gets whether particles are sorted relative to the camera.
-		bool getSortingEnabled(void) const { return mSorted; }
-
 
     protected:
 
@@ -443,7 +428,6 @@ namespace Ogre {
         static CmdQuota msQuotaCmd;
         static CmdWidth msWidthCmd;
         static CmdRenderer msRendererCmd;
-		static CmdSorted msSortedCmd;
 
 
         AxisAlignedBox mAABB;
@@ -454,6 +438,8 @@ namespace Ogre {
         /// World AABB, only used to compare world-space positions to calc bounds
         AxisAlignedBox mWorldAABB;
 
+        /// Name of the system; used for location in the scene.
+        String mName;
         /// Name of the resource group to use to load materials
         String mResourceGroupName;
         /// Name of the material to use
@@ -468,23 +454,12 @@ namespace Ogre {
         Real mDefaultHeight;
 		/// Speed factor
 		Real mSpeedFactor;
-		/// Particles sorted according to camera?
-		bool mSorted;
 
         typedef std::list<Particle*> ActiveParticleList;
-        typedef std::list<Particle*> FreeParticleList;
+        typedef std::deque<Particle*> FreeParticleQueue;
         typedef std::vector<Particle*> ParticlePool;
 
-		/// Sorting functor
-		struct SortFunctor
-		{
-			Vector3 sortDir;
-			float operator()(Particle* p) const;
-		};
-		SortFunctor mSortFunctor;
-		RadixSort<ActiveParticleList, Particle*, float> mRadixSorter;
-
-		/** Active particle list.
+        /** Active particle list.
             @remarks
                 This is a linked list of pointers to particles in the particle pool.
             @par
@@ -500,11 +475,10 @@ namespace Ogre {
                 This contains a list of the particles free for use as new instances
                 as required by the set. Particle instances are preconstructed up 
                 to the estimated size in the mParticlePool vector and are 
-                referenced on this deque at startup. As they get used this list
-                reduces, as they get released back to to the set they get added
-				back to the list.
+                referenced on this deque at startup. As they get used this deque
+                reduces, as they get released back to to the set they get added back to the deque.
         */
-        FreeParticleList mFreeParticles;
+        FreeParticleQueue mFreeParticles;
 
         /** Pool of particle instances for use and reuse in the active particle list.
             @remarks
@@ -547,9 +521,6 @@ namespace Ogre {
 
         /** Applies the effects of affectors. */
         void _triggerAffectors(Real timeElapsed);
-
-		/** Sort the particles in the system **/
-		void _sortParticles(Camera* cam);
 
         /** Resize the internal pool of particles. */
         void increasePool(size_t size);
@@ -608,10 +579,6 @@ namespace Ogre {
             bounds on an ad-hoc basis.
         */
         void _updateBounds(void);
-
-		/// Override to return specific type flag
-		uint32 getTypeFlags(void) const;
-
 
     };
 

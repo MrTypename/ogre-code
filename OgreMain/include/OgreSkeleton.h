@@ -265,7 +265,7 @@ namespace Ogre {
 
 
 		/** Gets the animation blending mode which this skeleton will use. */
-        virtual SkeletonAnimationBlendMode getBlendMode() const;
+        virtual SkeletonAnimationBlendMode getBlendMode();
         /** Sets the animation blending mode this skeleton will use. */
 		virtual void setBlendMode(SkeletonAnimationBlendMode state);
 

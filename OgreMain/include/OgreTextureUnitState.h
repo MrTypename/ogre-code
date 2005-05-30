@@ -119,12 +119,6 @@ namespace Ogre {
             TAM_CLAMP
         };
 
-		/** Texture addressing mode for each texture coordinate. */
-		struct UVWAddressingMode
-		{
-			TextureAddressingMode u, v, w;
-		};
-
         /** Enum identifying the frame indexes for faces of a cube map (not the composite 3D type.
         */
         enum TextureCubeFace
@@ -503,42 +497,21 @@ namespace Ogre {
         // get texture rotation effects angle value
         const Radian& getTextureRotate(void) const;
 
-        /** Gets the texture addressing mode for a given coordinate, 
-		 	i.e. what happens at uv values above 1.0.
+        /** Gets the texture addressing mode, i.e. what happens at uv values above 1.0.
         @note
-        	The default is TAM_WRAP i.e. the texture repeats over values of 1.0.
+        The default is TAM_WRAP i.e. the texture repeats over values of 1.0.
         */
-        const UVWAddressingMode& getTextureAddressingMode(void) const;
+        TextureAddressingMode getTextureAddressingMode(void) const;
 
         /** Sets the texture addressing mode, i.e. what happens at uv values above 1.0.
         @note
         The default is TAM_WRAP i.e. the texture repeats over values of 1.0.
-		@note This is a shortcut method which sets the addressing mode for all
-			coordinates at once; you can also call the more specific method
-			to set the addressing mode per coordinate.
         @note
         This applies for both the fixed-function and programmable pipelines.
         */
         void setTextureAddressingMode( TextureAddressingMode tam);
 
-        /** Sets the texture addressing mode, i.e. what happens at uv values above 1.0.
-        @note
-        The default is TAM_WRAP i.e. the texture repeats over values of 1.0.
-        @note
-        This applies for both the fixed-function and programmable pipelines.
-		*/
-        void setTextureAddressingMode( TextureAddressingMode u, 
-			TextureAddressingMode v, TextureAddressingMode w);
-
-        /** Sets the texture addressing mode, i.e. what happens at uv values above 1.0.
-        @note
-        The default is TAM_WRAP i.e. the texture repeats over values of 1.0.
-        @note
-        This applies for both the fixed-function and programmable pipelines.
-		*/
-        void setTextureAddressingMode( const UVWAddressingMode& uvw);
-
-		/** Setting advanced blending options.
+        /** Setting advanced blending options.
         @remarks
         This is an extended version of the TextureUnitState::setColourOperation method which allows
         extremely detailed control over the blending applied between this and earlier layers.
@@ -905,7 +878,7 @@ protected:
 		int mTextureSrcMipmaps; // Request number of mipmaps
 
         unsigned int mTextureCoordSetIndex;
-        UVWAddressingMode mAddressMode;                
+        TextureAddressingMode mAddressMode;                
 
         LayerBlendModeEx colourBlendMode;
         SceneBlendFactor colourBlendFallbackSrc;

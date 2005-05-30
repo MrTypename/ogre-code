@@ -2346,95 +2346,10 @@ protected:
 
 	}
 
-	void testBillboardTextureCoords()
-	{
-		mSceneMgr->setAmbientLight(ColourValue::White);
-
-		BillboardSet* bbs = mSceneMgr->createBillboardSet("test");
-		float xsegs = 3;
-		float ysegs = 3;
-		float width = 300;
-		float height = 300;
-		float gap = 30;
-
-		// set up texture coords
-		bbs->setTextureStacksAndSlices(ysegs, xsegs);
-		bbs->setDefaultDimensions(width/xsegs, height/xsegs);
-
-		for (float y = 0; y < ysegs; ++y)
-		{
-			for (float x = 0; x < xsegs; ++x)
-			{
-				Vector3 midPoint;
-				midPoint.x = (x * width / xsegs) + ((x-1) * gap);
-				midPoint.y = (y * height / xsegs) + ((y-1) * gap);
-				midPoint.z = 0;
-				Billboard* bb = bbs->createBillboard(midPoint);
-				bb->setTexCoords((ysegs - y - 1)*ysegs + x);
-			}
-		}
-
-		bbs->setMaterialName("Examples/OgreLogo");
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(bbs);
-
-	}
-
-	class SortFunctor
-	{
-	public:
-		int operator()(const int& p) const
-		{
-			return p;
-		}
-
-	};
-	void testRadixSort()
-	{
-		RadixSort<std::list<int>, int, int> rs;
-		SortFunctor f;
-
-		std::list<int> particles;
-		for (int r = 0; r < 20; ++r)
-		{
-			particles.push_back((int)Math::RangeRandom(-1e3f, 1e3f));
-		}
-
-		std::list<int>::iterator i;
-		LogManager::getSingleton().logMessage("BEFORE");
-		for (i = particles.begin(); i != particles.end(); ++i)
-		{
-			StringUtil::StrStreamType str;
-			str << *i;
-			LogManager::getSingleton().logMessage(str.str());
-		}
-
-		rs.sort(particles, f);
-
-
-		LogManager::getSingleton().logMessage("AFTER");
-		for (i = particles.begin(); i != particles.end(); ++i)
-		{
-			StringUtil::StrStreamType str;
-			str << *i;
-			LogManager::getSingleton().logMessage(str.str());
-		}
-
-
-
-	}
-
 
     // Just override the mandatory create scene method
     void createScene(void)
     {
-
-		AnyNumeric anyInt1(43);
-		AnyNumeric anyInt2(5);
-		AnyNumeric anyInt3 = anyInt1 + anyInt2;
-
-		std::cout << anyInt3;
-		//Any anyString("test");
-
         //testMatrices();
         //testBsp();
         //testAlpha();
@@ -2470,10 +2385,9 @@ protected:
 		//testSimpleMesh();
 		//test2Windows();
 		//testStaticGeometry();
-		//testBillboardTextureCoords();
+		testBug();
 		//testReloadResources();
 		//testTransparencyMipMaps();
-		testRadixSort();
     }
     // Create new frame listener
     void createFrameListener(void)

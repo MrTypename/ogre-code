@@ -57,8 +57,7 @@ namespace Ogre {
     protected:
         Technique* mParent;
         unsigned short mIndex; // pass index
-        String mName; // optional name for the pass
-        uint32 mHash; // pass hash
+        unsigned long mHash; // pass hash
         //-------------------------------------------------------------------------
         // Colour properties, only applicable in fixed-function passes
         ColourValue mAmbient;
@@ -151,27 +150,15 @@ namespace Ogre {
 
         /// Returns true if this pass is programmable ie includes either a vertex or fragment program.
         bool isProgrammable(void) const { return mVertexProgramUsage || mFragmentProgramUsage; }
+
         /// Returns true if this pass uses a programmable vertex pipeline
         bool hasVertexProgram(void) const { return mVertexProgramUsage != NULL; }
+
         /// Returns true if this pass uses a programmable fragment pipeline
         bool hasFragmentProgram(void) const { return mFragmentProgramUsage != NULL; }
-        /// Returns true if this pass uses a shadow caster vertex program
-        bool hasShadowCasterVertexProgram(void) const { return mShadowCasterVertexProgramUsage != NULL; }
-        /// Returns true if this pass uses a shadow caster vertex program
-        bool hasShadowReceiverVertexProgram(void) const { return mShadowReceiverVertexProgramUsage != NULL; }
-
 
         /// Gets the index of this Pass in the parent Technique
         unsigned short getIndex(void) const { return mIndex; }
-        /* Set the name of the pass
-        @remarks
-        The name of the pass is optional.  Its usefull in material scripts where a material could inherit
-        from another material and only want to modify a particalar pass.
-        */
-        void setName(const String& name);
-        /// get the name of the pass
-        const String getName(void) const { return mName; }
-
         /** Sets the ambient colour reflectance properties of this pass.
         @remarks
         The base colour of a pass is determined by how much red, green and blue light is reflects
@@ -734,9 +721,9 @@ namespace Ogre {
 		/** Gets the name of the vertex program used by this pass. */
 		const String& getVertexProgramName(void) const;
         /** Gets the vertex program parameters used by this pass. */
-        GpuProgramParametersSharedPtr getVertexProgramParameters(void) const;
+        GpuProgramParametersSharedPtr getVertexProgramParameters(void);
 		/** Gets the vertex program used by this pass, only available after _load(). */
-		const GpuProgramPtr& getVertexProgram(void) const;
+		const GpuProgramPtr& getVertexProgram(void);
 
 
         /** Sets the details of the vertex program to use when rendering as a 
@@ -779,10 +766,10 @@ namespace Ogre {
         /** Gets the name of the vertex program used by this pass when rendering shadow casters. */
         const String& getShadowCasterVertexProgramName(void) const;
         /** Gets the vertex program parameters used by this pass when rendering shadow casters. */
-        GpuProgramParametersSharedPtr getShadowCasterVertexProgramParameters(void) const;
+        GpuProgramParametersSharedPtr getShadowCasterVertexProgramParameters(void);
         /** Gets the vertex program used by this pass when rendering shadow casters, 
             only available after _load(). */
-        const GpuProgramPtr& getShadowCasterVertexProgram(void) const;
+        const GpuProgramPtr& getShadowCasterVertexProgram(void);
 
         /** Sets the details of the vertex program to use when rendering as a 
             shadow receiver.
@@ -820,10 +807,10 @@ namespace Ogre {
         /** Gets the name of the vertex program used by this pass when rendering shadow receivers. */
         const String& getShadowReceiverVertexProgramName(void) const;
         /** Gets the vertex program parameters used by this pass when rendering shadow receivers. */
-        GpuProgramParametersSharedPtr getShadowReceiverVertexProgramParameters(void) const;
+        GpuProgramParametersSharedPtr getShadowReceiverVertexProgramParameters(void);
         /** Gets the vertex program used by this pass when rendering shadow receivers, 
         only available after _load(). */
-        const GpuProgramPtr& getShadowReceiverVertexProgram(void) const;
+        const GpuProgramPtr& getShadowReceiverVertexProgram(void);
 
 
 		/** Sets the details of the fragment program to use.
@@ -851,9 +838,9 @@ namespace Ogre {
 		/** Gets the name of the fragment program used by this pass. */
 		const String& getFragmentProgramName(void) const;
 		/** Gets the vertex program parameters used by this pass. */
-		GpuProgramParametersSharedPtr getFragmentProgramParameters(void) const;
+		GpuProgramParametersSharedPtr getFragmentProgramParameters(void);
 		/** Gets the vertex program used by this pass, only available after _load(). */
-		const GpuProgramPtr& getFragmentProgram(void) const;
+		const GpuProgramPtr& getFragmentProgram(void);
 
 		/** Splits this Pass to one which can be handled in the number of
 			texture units specified.
@@ -881,7 +868,7 @@ namespace Ogre {
             using firstly its index (so that all passes are rendered in order), then
             by the textures which it's TextureUnitState instances are using.
         */
-        uint32 getHash(void) const;
+        unsigned long getHash(void) const;
 		/// Mark the hash as dirty
 		void _dirtyHash(void);
         /** Internal method for recalculating the hash.

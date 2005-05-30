@@ -146,22 +146,6 @@ namespace Ogre {
 						newUniformReference.isReal = false;
 						newUniformReference.mElementCount = 4;
 						break;
-
-                    case GL_FLOAT_MAT2_ARB:
-						newUniformReference.isReal = true;
-						newUniformReference.mElementCount = 4;
-						break;
-
-                    case GL_FLOAT_MAT3_ARB:
-						newUniformReference.isReal = true;
-						newUniformReference.mElementCount = 9;
-						break;
-
-                    case GL_FLOAT_MAT4_ARB:
-						newUniformReference.isReal = true;
-						newUniformReference.mElementCount = 16;
-						break;
-
 					}// end switch
 
 					mUniformReferences.push_back(newUniformReference);
@@ -209,42 +193,8 @@ namespace Ogre {
 							break;
 
 						case 4:
-                            {
-                                if (currentUniform->mType == GL_FLOAT_MAT2_ARB)
-                                {
-                                    glUniformMatrix2fvARB_ptr( currentUniform->mLocation, 1, GL_TRUE, currentRealConstant->val);
-                                }
-                                else
-                                {
-							        glUniform4fvARB_ptr( currentUniform->mLocation, 1, currentRealConstant->val );
-                                }
-                            }
+							glUniform4fvARB_ptr( currentUniform->mLocation, 1, currentRealConstant->val );
 							break;
-
-                        case 9:
-                            {
-                                Real mat[9];
-                                // assume that the 3x3 matrix is packed
-                                memcpy(mat, currentRealConstant++->val, sizeof(Real) * 4);
-                                memcpy(mat + 4, currentRealConstant++->val, sizeof(Real) * 4);
-                                memcpy(mat + 4, currentRealConstant->val, sizeof(Real) );
-
-                                glUniformMatrix3fvARB_ptr( currentUniform->mLocation, 1, GL_TRUE, mat);
-                                break;
-                            }
-
-                        case 16:
-                            {
-                                Real mat[16];
-                                memcpy(mat, currentRealConstant++->val, sizeof(Real) * 4);
-                                memcpy(mat + 4, currentRealConstant++->val, sizeof(Real) * 4);
-                                memcpy(mat + 8, currentRealConstant++->val, sizeof(Real) * 4);
-                                memcpy(mat + 12, currentRealConstant->val, sizeof(Real) * 4);
-
-                                glUniformMatrix4fvARB_ptr( currentUniform->mLocation, 1, GL_TRUE, mat);
-                                break;
-                            }
-
 
 						} // end switch
 					}

@@ -39,7 +39,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreParticleAffectorFactory.h"
 #include "OgreParticleSystemRenderer.h"
 #include "OgreMaterialManager.h"
-#include "OgreSceneManager.h"
 
 namespace Ogre {
     // Init statics
@@ -49,13 +48,12 @@ namespace Ogre {
     ParticleSystem::CmdQuota ParticleSystem::msQuotaCmd;
     ParticleSystem::CmdWidth ParticleSystem::msWidthCmd;
     ParticleSystem::CmdRenderer ParticleSystem::msRendererCmd;
-	ParticleSystem::CmdSorted ParticleSystem::msSortedCmd;
 
     //-----------------------------------------------------------------------
     ParticleSystem::ParticleSystem() 
       : mBoundsAutoUpdate(true), mBoundsUpdateTime(10.0f),
         mResourceGroupName(ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME),
-        mIsRendererConfigured(false), mSpeedFactor(1.0f), mSorted(false), mRenderer(0),
+        mIsRendererConfigured(false), mSpeedFactor(1.0f), mRenderer(0),
         mCullIndividual(false), mPoolSize(0)
     {
         initParameters();
@@ -72,10 +70,11 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     ParticleSystem::ParticleSystem(const String& name, const String& resourceGroup)
-      : MovableObject(name), mBoundsAutoUpdate(true), mBoundsUpdateTime(10.0f),
+      : mBoundsAutoUpdate(true), mBoundsUpdateTime(10.0f),
         mResourceGroupName(resourceGroup), mIsRendererConfigured(false),
 		mSpeedFactor(1.0f), mRenderer(0), mCullIndividual(false), mPoolSize(0)
     {
+        mName = name;
         setDefaultDimensions( 100, 100 );
         setMaterialName( "BaseWhite" );
         // Default to 10 particles, expect app to specify (will only be increased, not decreased)
@@ -216,7 +215,6 @@ namespace Ogre {
         setMaterialName(rhs.mMaterialName);
         setDefaultDimensions(rhs.mDefaultWidth, rhs.mDefaultHeight);
         mCullIndividual = rhs.mCullIndividual;
-		mSorted = rhs.mSorted;
 
         setRenderer(rhs.getRendererName());
         // Copy settings
@@ -451,7 +449,8 @@ namespace Ogre {
     {
         // Fast creation (don't use superclass since emitter will init)
         Particle* p = mFreeParticles.front();
-        mActiveParticles.splice(mActiveParticles.end(), mFreeParticles, mFreeParticles.begin());
+        mFreeParticles.pop_front();
+        mActiveParticles.push_back(p);
 
         p->_notifyOwner(this);
 
@@ -558,10 +557,6 @@ namespace Ogre {
 				PT_STRING),
 				&msRendererCmd);
 
-			dict->addParameter(ParameterDef("sorted", 
-				"Sets whether particles should be sorted relative to the camera. ",
-				PT_BOOL),
-				&msSortedCmd);
         }
     }
     //-----------------------------------------------------------------------
@@ -645,7 +640,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     const String& ParticleSystem::getMovableType(void) const
     {
-        return ParticleSystemFactory::FACTORY_TYPE_NAME;
+        static String mType = "ParticleSystem";
+        return mType;
     }
     //-----------------------------------------------------------------------
     void ParticleSystem::_notifyParticleResized(void)
@@ -704,12 +700,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ParticleSystem::_notifyCurrentCamera(Camera* cam)
     {
-        if (mSorted)
-		{
-			_sortParticles(cam);
-		}
-
-		if (mRenderer)
+        if (mRenderer)
         {
 			if (!mIsRendererConfigured)
 				configureRenderer();
@@ -864,23 +855,6 @@ namespace Ogre {
 			mRenderer->setRenderQueueGroup(queueID);
 		}
 	}
-	//-----------------------------------------------------------------------
-	void ParticleSystem::_sortParticles(Camera* cam)
-	{
-		Quaternion camQ = cam->getDerivedOrientation();
-		mSortFunctor.sortDir = camQ * Vector3::UNIT_Z;
-
-		mRadixSorter.sort(mActiveParticles, mSortFunctor);
-	}
-	float ParticleSystem::SortFunctor::operator()(Particle* p) const
-	{
-		return sortDir.dotProduct(p->position);
-	}
-	//-----------------------------------------------------------------------
-	uint32 ParticleSystem::getTypeFlags(void) const
-	{
-		return SceneManager::FX_TYPE_MASK;
-	}
     //-----------------------------------------------------------------------
     String ParticleSystem::CmdCull::doGet(const void* target) const
     {
@@ -943,17 +917,6 @@ namespace Ogre {
     {
         static_cast<ParticleSystem*>(target)->setRenderer(val);
     }
-	//-----------------------------------------------------------------------
-	String ParticleSystem::CmdSorted::doGet(const void* target) const
-	{
-		return StringConverter::toString(
-			static_cast<const ParticleSystem*>(target)->getSortingEnabled());
-	}
-	void ParticleSystem::CmdSorted::doSet(void* target, const String& val)
-	{
-		static_cast<ParticleSystem*>(target)->setSortingEnabled(
-			StringConverter::parseBool(val));
-	}
     //-----------------------------------------------------------------------
     ParticleAffector::~ParticleAffector() 
     {

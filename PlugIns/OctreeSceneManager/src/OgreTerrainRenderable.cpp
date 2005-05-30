@@ -62,10 +62,12 @@ namespace Ogre
 
     //-----------------------------------------------------------------------
     TerrainRenderable::TerrainRenderable(const String& name)
-        : Renderable(), MovableObject(name), mTerrain(0), mDeltaBuffers(0), mPositionBuffer(0)
+        : Renderable(), mTerrain(0), mName(name),  mDeltaBuffers(0), mPositionBuffer(0)
     {
         mForcedRenderLevel = -1;
         mLastNextLevel = -1;
+        // Default query flags to top bit so users can exclude it if they wish
+        mQueryFlags = SceneManager::WORLD_GEOMETRY_QUERY_MASK;
 
         mMinLevelDistSqr = 0;
 
@@ -87,12 +89,6 @@ namespace Ogre
         deleteGeometry();
         _destroyLevelIndexes();
     }
-	//-----------------------------------------------------------------------
-	uint32 TerrainRenderable::getTypeFlags(void) const
-	{
-		// return world flag
-		return SceneManager::WORLD_GEOMETRY_TYPE_MASK;
-	}
     //-----------------------------------------------------------------------
     void TerrainRenderable::deleteGeometry()
     {

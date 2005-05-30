@@ -182,6 +182,11 @@ namespace Ogre
         void initialise(int startx, int startz, Real* pageHeightData);
 
         //movable object methods
+        /** Returns the name of the TerrainRenderable */
+        virtual const String& getName( void ) const
+        {
+            return mName;
+        };
 
         /** Returns the type of the movable. */
         virtual const String& getMovableType( void ) const
@@ -287,8 +292,6 @@ namespace Ogre
             GpuProgramParameters* params) const;
         /// Get the static list of indexes cached (internal use only)
         static TerrainBufferCache& _getIndexCache(void) {return msIndexCache;}
-		/// @see MovableObject
-		uint32 getTypeFlags(void) const;
     protected:
         /// Static list of index buffers
         static TerrainBufferCache msIndexCache;
@@ -360,6 +363,8 @@ namespace Ogre
         AxisAlignedBox mBounds;
         /// The center point of this tile
         Vector3 mCenter;
+        /// Name of this renderable
+        String mName;
         /// The MovableObject type
         static String mType;
         /// Current material used by this tile

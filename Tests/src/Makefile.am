@@ -9,8 +9,7 @@ TestSuite_SOURCES = main.cpp \
                     ../OgreMain/src/StringTests.cpp \
                     ../OgreMain/src/ZipArchiveTests.cpp \
                     ../OgreMain/src/BitwiseTests.cpp \
-                    ../OgreMain/src/PixelFormatTests.cpp \
-                    ../OgreMain/src/RadixSort.cpp
+                    ../OgreMain/src/PixelFormatTests.cpp
 
 TestSuite_LDFLAGS = -L$(top_builddir)/OgreMain/src $(CPPUNIT_LIBS)
 TestSuite_LDADD = -lOgreMain
