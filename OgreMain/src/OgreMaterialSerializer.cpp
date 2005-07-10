@@ -436,88 +436,50 @@ namespace Ogre
         return false;
     }
     //-----------------------------------------------------------------------
-    void parseIterationLightTypes(String& params, MaterialScriptContext& context)
-    {
-        // Parse light type
-        if (params == "directional")
-        {
-            context.pass->setIteratePerLight(true, true, Light::LT_DIRECTIONAL);
-        }
-        else if (params == "point")
-        {
-            context.pass->setIteratePerLight(true, true, Light::LT_POINT);
-        }
-        else if (params == "spot")
-        {
-            context.pass->setIteratePerLight(true, true, Light::LT_SPOTLIGHT);
-        }
-        else
-        {
-            logParseError("Bad iteration attribute, valid values for light type parameter "
-                "are 'point' or 'directional' or 'spot'.", context);
-        }
-
-    }
-    //-----------------------------------------------------------------------
     bool parseIteration(String& params, MaterialScriptContext& context)
     {
-        // we could have more than one parameter
-        /** combinations could be:
-            iteration once
-            iteration once_per_light [light type]
-            iteration <number>
-            iteration <number> [per_light] [light type]
-        */
         StringUtil::toLowerCase(params);
         StringVector vecparams = StringUtil::split(params, " \t");
-        if (vecparams.size() < 1 || vecparams.size() > 3)
+        if (vecparams.size() != 1 && vecparams.size() != 2)
         {
-            logParseError("Bad iteration attribute, expected 1 to 3 parameters.", context);
+            logParseError("Bad iteration attribute, expected 1 or 2 parameters.", context);
             return false;
         }
 
         if (vecparams[0]=="once")
-            context.pass->setIteratePerLight(false);
+            context.pass->setRunOncePerLight(false);
         else if (vecparams[0]=="once_per_light")
         {
             if (vecparams.size() == 2)
             {
-                parseIterationLightTypes(vecparams[1], context);
-            }
-            else 
-            {
-                context.pass->setIteratePerLight(true, false);
-            }
-
-        }
-        else // could be using form: <number> [per_light] [light type]
-        {
-            int passIterationCount = StringConverter::parseInt(vecparams[0]);
-            if (passIterationCount > 0)
-            {
-                context.pass->setPassIterationCount(passIterationCount);
-                if (vecparams.size() > 1)
+                // Parse light type
+                if (vecparams[1] == "directional")
                 {
-                    if (vecparams[1] == "per_light")
-                    {
-                        if (vecparams.size() == 3)
-                        {
-                            parseIterationLightTypes(vecparams[2], context);
-                        }
-                        else 
-                        {
-                            context.pass->setIteratePerLight(true, false);
-                        }
-                    }
-                    else
-                        logParseError(
-                            "Bad iteration attribute, valid parameters are <number> [per_light] [light type].", context);
+                    context.pass->setRunOncePerLight(true, true, Light::LT_DIRECTIONAL);
+                }
+                else if (vecparams[1] == "point")
+                {
+                    context.pass->setRunOncePerLight(true, true, Light::LT_POINT);
+                }
+                else if (vecparams[1] == "spot")
+                {
+                    context.pass->setRunOncePerLight(true, true, Light::LT_SPOTLIGHT);
+                }
+                else
+                {
+                    logParseError("Bad iteration attribute, valid values for second parameter "
+                        "are 'point' or 'directional' or 'spot'.", context);
                 }
             }
             else
-                logParseError(
-                    "Bad iteration attribute, valid parameters are 'once' or 'once_per_light' or <number> [per_light] [light type].", context);
+            {
+                context.pass->setRunOncePerLight(true, false);
+            }
+
         }
+        else
+            logParseError(
+                "Bad iteration attribute, valid parameters are 'once' or 'once_per_light'.", context);
         return false;
     }
     //-----------------------------------------------------------------------
@@ -769,56 +731,19 @@ namespace Ogre
         return false;
     }
     //-----------------------------------------------------------------------
-	TextureUnitState::TextureAddressingMode convTexAddressMode(const String& params, MaterialScriptContext& context)
-	{
-		if (params=="wrap")
-			return TextureUnitState::TAM_WRAP;
-		else if (params=="mirror")
-			return TextureUnitState::TAM_MIRROR;
-		else if (params=="clamp")
-			return TextureUnitState::TAM_CLAMP;
-		else
-			logParseError("Bad tex_address_mode attribute, valid parameters are "
-				"'wrap', 'clamp' or 'mirror'.", context);
-		// default
-		return TextureUnitState::TAM_WRAP;
-	}
-    //-----------------------------------------------------------------------
     bool parseTexAddressMode(String& params, MaterialScriptContext& context)
     {
         StringUtil::toLowerCase(params);
+        if (params=="wrap")
+            context.textureUnit->setTextureAddressingMode(TextureUnitState::TAM_WRAP);
+        else if (params=="mirror")
+            context.textureUnit->setTextureAddressingMode(TextureUnitState::TAM_MIRROR);
+        else if (params=="clamp")
+            context.textureUnit->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
+        else
+            logParseError("Bad tex_address_mode attribute, valid parameters are "
+                "'wrap', 'clamp' or 'mirror'.", context);
 
-        StringVector vecparams = StringUtil::split(params, " \t");
-        size_t numParams = vecparams.size();
-		
-		if (numParams > 3 || numParams < 1)
-		{
-			logParseError("Invalid number of parameters to tex_address_mode"
-					" - must be between 1 and 3", context);
-		}
-		if (numParams == 1)
-		{
-			// Single-parameter option
-			context.textureUnit->setTextureAddressingMode(
-				convTexAddressMode(vecparams[0], context));
-		}
-		else 
-		{
-			// 2-3 parameter option
-			TextureUnitState::UVWAddressingMode uvw;
-			uvw.u = convTexAddressMode(vecparams[0], context);
-			uvw.v = convTexAddressMode(vecparams[1], context);
-			if (numParams == 3)
-			{
-				// w
-				uvw.w = convTexAddressMode(vecparams[2], context);
-			}
-			else
-			{
-				uvw.w = TextureUnitState::TAM_WRAP;
-			}
-			context.textureUnit->setTextureAddressingMode(uvw);
-		}
         return false;
     }
     //-----------------------------------------------------------------------
@@ -1372,9 +1297,6 @@ namespace Ogre
             roundedDims = dims;
         }
 
-        // set the name of the parameter if it exists
-        String paramName = (commandname == "param_named") ? vecparams[0] : "";
-
         // Now parse all the values
         if (isReal)
         {
@@ -1387,15 +1309,11 @@ namespace Ogre
             // Fill up to multiple of 4 with zero
             for (; i < roundedDims; ++i)
             {
-                realBuffer[i] = 0.0f; 
-
+                realBuffer[i] = 0.0f;
             }
             // Set
             context.programParams->setConstant(index, realBuffer, roundedDims * 0.25);
             delete [] realBuffer;
-
-            // log the parameter
-            context.programParams->addConstantDefinition(paramName, index, dims, GpuProgramParameters::ET_REAL);
         }
         else
         {
@@ -1413,8 +1331,6 @@ namespace Ogre
             // Set
             context.programParams->setConstant(index, intBuffer, roundedDims * 0.25);
             delete [] intBuffer;
-            // log the parameter
-            context.programParams->addConstantDefinition(paramName, index, dims, GpuProgramParameters::ET_INT);
         }
     }
     //-----------------------------------------------------------------------
@@ -1424,85 +1340,346 @@ namespace Ogre
         // NB we assume that the first element of vecparams is taken up with either 
         // the index or the parameter name, which we ignore
 
-        // make sure param is in lower case
+        bool extras = false;
+		bool float_extras = false;
+        GpuProgramParameters::AutoConstantType acType;
+
         StringUtil::toLowerCase(vecparams[1]);
 
-        // lookup the param to see if its a valid auto constant
-        const GpuProgramParameters::AutoConstantDefinition* autoConstantDef =
-            context.programParams->getAutoConstantDefinition(vecparams[1]);
-
-        // exit with error msg if the auto constant definition wasn't found
-        if (!autoConstantDef)
+        if (vecparams[1] == "world_matrix")
+        {
+            acType = GpuProgramParameters::ACT_WORLD_MATRIX;
+        }
+        else if (vecparams[1] == "world_matrix_array")
+        {
+            acType = GpuProgramParameters::ACT_WORLD_MATRIX_ARRAY;
+        }
+        else if (vecparams[1] == "world_matrix_array_3x4")
+        {
+            acType = GpuProgramParameters::ACT_WORLD_MATRIX_ARRAY_3x4;
+        }
+        else if (vecparams[1] == "view_matrix")
+        {
+            acType = GpuProgramParameters::ACT_VIEW_MATRIX;
+        }
+		else if (vecparams[1] == "projection_matrix")
+		{
+			acType = GpuProgramParameters::ACT_PROJECTION_MATRIX;
+		}
+        else if (vecparams[1] == "viewproj_matrix")
+        {
+            acType = GpuProgramParameters::ACT_VIEWPROJ_MATRIX;
+        }
+        else if (vecparams[1] == "worldview_matrix")
+        {
+            acType = GpuProgramParameters::ACT_WORLDVIEW_MATRIX;
+        }
+        else if (vecparams[1] == "worldviewproj_matrix")
+        {
+            acType = GpuProgramParameters::ACT_WORLDVIEWPROJ_MATRIX;
+        }
+        else if (vecparams[1] == "inverse_world_matrix")
+        {
+            acType = GpuProgramParameters::ACT_INVERSE_WORLD_MATRIX;
+        }
+		else if (vecparams[1] == "inverse_view_matrix")
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_VIEW_MATRIX;
+		}
+        else if (vecparams[1] == "inverse_worldview_matrix")
+        {
+            acType = GpuProgramParameters::ACT_INVERSE_WORLDVIEW_MATRIX;
+        }
+        else if (vecparams[1] == "inverse_transpose_world_matrix")
+        {
+            acType = GpuProgramParameters::ACT_INVERSETRANSPOSE_WORLD_MATRIX;
+        }
+        else if (vecparams[1] == "inverse_transpose_worldview_matrix")
+        {
+            acType = GpuProgramParameters::ACT_INVERSETRANSPOSE_WORLDVIEW_MATRIX;
+        }
+		else if (vecparams[1] == "time_0_x") 
+		{
+			acType = GpuProgramParameters::ACT_TIME_0_X;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "costime_0_x") 
+		{
+			acType = GpuProgramParameters::ACT_COSTIME_0_X;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "sintime_0_x") 
+		{
+			acType = GpuProgramParameters::ACT_SINTIME_0_X;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "tantime_0_x") 
+		{
+			acType = GpuProgramParameters::ACT_TANTIME_0_X;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "time_0_x_packed") 
+		{
+			acType = GpuProgramParameters::ACT_TIME_0_X_PACKED;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "time_0_1") 
+		{
+			acType = GpuProgramParameters::ACT_TIME_0_1;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "costime_0_1") 
+		{
+			acType = GpuProgramParameters::ACT_COSTIME_0_1;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "sintime_0_1") 
+		{
+			acType = GpuProgramParameters::ACT_SINTIME_0_1;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "tantime_0_1") 
+		{
+			acType = GpuProgramParameters::ACT_TANTIME_0_1;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "time_0_1_packed") 
+		{
+			acType = GpuProgramParameters::ACT_TIME_0_1_PACKED;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "time_0_2pi") 
+		{
+			acType = GpuProgramParameters::ACT_TIME_0_2PI;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "costime_0_2pi") 
+		{
+			acType = GpuProgramParameters::ACT_COSTIME_0_2PI;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "sintime_0_2pi") 
+		{
+			acType = GpuProgramParameters::ACT_SINTIME_0_2PI;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "tantime_0_2pi") 
+		{
+			acType = GpuProgramParameters::ACT_TANTIME_0_2PI;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "time_0_2pi_packed") 
+		{
+			acType = GpuProgramParameters::ACT_TIME_0_2PI_PACKED;
+			float_extras = true;
+		}
+		else if (vecparams[1] == "fps") 
+		{
+			acType = GpuProgramParameters::ACT_FPS;
+		}
+		else if (vecparams[1] == "viewport_width") 
+		{
+			acType = GpuProgramParameters::ACT_VIEWPORT_WIDTH;
+		}
+		else if (vecparams[1] == "viewport_height") 
+		{
+			acType = GpuProgramParameters::ACT_VIEWPORT_HEIGHT;
+		}
+		else if (vecparams[1] == "inverse_viewport_width") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_VIEWPORT_WIDTH;
+		}
+		else if (vecparams[1] == "inverse_viewport_height") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_VIEWPORT_HEIGHT;
+		}
+		else if (vecparams[1] == "view_direction") 
+		{
+			acType = GpuProgramParameters::ACT_VIEW_DIRECTION;
+		}
+		else if (vecparams[1] == "view_side_vector") 
+		{
+			acType = GpuProgramParameters::ACT_VIEW_SIDE_VECTOR;
+		}
+		else if (vecparams[1] == "view_up_vector") 
+		{
+			acType = GpuProgramParameters::ACT_VIEW_UP_VECTOR;
+		}
+		else if (vecparams[1] == "fov") 
+		{
+			acType = GpuProgramParameters::ACT_FOV;
+		}
+		else if (vecparams[1] == "near_clip_distance") 
+		{
+			acType = GpuProgramParameters::ACT_NEAR_CLIP_DISTANCE;
+		}
+		else if (vecparams[1] == "far_clip_distance") 
+		{
+			acType = GpuProgramParameters::ACT_FAR_CLIP_DISTANCE;
+		}
+		else if (vecparams[1] == "inverse_viewproj_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_VIEWPROJ_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_transpose_viewproj_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSETRANSPOSE_VIEWPROJ_MATRIX;
+		}
+		else if (vecparams[1] == "transpose_viewproj_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_TRANSPOSE_VIEWPROJ_MATRIX;
+		}
+		else if (vecparams[1] == "transpose_view_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_TRANSPOSE_VIEW_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_transpose_view_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSETRANSPOSE_VIEW_MATRIX;
+		}
+		else if (vecparams[1] == "projection_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_PROJECTION_MATRIX;
+		}
+		else if (vecparams[1] == "transpose_projection_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_TRANSPOSE_PROJECTION_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_projection_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_PROJECTION_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_transpose_projection_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSETRANSPOSE_PROJECTION_MATRIX;
+		}
+		else if (vecparams[1] == "transpose_worldviewproj_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_TRANSPOSE_WORLDVIEWPROJ_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_worldviewproj_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_WORLDVIEWPROJ_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_transpose_worldviewproj_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSETRANSPOSE_WORLDVIEWPROJ_MATRIX;
+		}
+		else if (vecparams[1] == "transpose_worldview_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_TRANSPOSE_WORLDVIEW_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_transpose_worldview_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_TRANSPOSE_WORLDVIEW_MATRIX;
+		}
+		else if (vecparams[1] == "transpose_world_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_TRANSPOSE_WORLD_MATRIX;
+		}
+		else if (vecparams[1] == "inverse_transpose_world_matrix") 
+		{
+			acType = GpuProgramParameters::ACT_INVERSE_TRANSPOSE_WORLD_MATRIX;
+		}
+        else if (vecparams[1] == "light_diffuse_colour")
+        {
+            acType = GpuProgramParameters::ACT_LIGHT_DIFFUSE_COLOUR;
+            extras = true;
+        }
+        else if (vecparams[1] == "light_specular_colour")
+        {
+            acType = GpuProgramParameters::ACT_LIGHT_SPECULAR_COLOUR;
+            extras = true;
+        }
+        else if (vecparams[1] == "light_attenuation")
+        {
+            acType = GpuProgramParameters::ACT_LIGHT_ATTENUATION;
+            extras = true;
+        }
+        else if (vecparams[1] == "light_position")
+        {
+            acType = GpuProgramParameters::ACT_LIGHT_POSITION;
+            extras = true;
+        }
+        else if (vecparams[1] == "light_direction")
+        {
+            acType = GpuProgramParameters::ACT_LIGHT_DIRECTION;
+            extras = true;
+        }
+        else if (vecparams[1] == "light_position_object_space")
+        {
+            acType = GpuProgramParameters::ACT_LIGHT_POSITION_OBJECT_SPACE;
+            extras = true;
+        }
+        else if (vecparams[1] == "light_direction_object_space")
+        {
+            acType = GpuProgramParameters::ACT_LIGHT_DIRECTION_OBJECT_SPACE;
+            extras = true;
+        }
+        else if (vecparams[1] == "ambient_light_colour")
+        {
+            acType = GpuProgramParameters::ACT_AMBIENT_LIGHT_COLOUR;
+        }
+        else if (vecparams[1] == "camera_position")
+        {
+            acType = GpuProgramParameters::ACT_CAMERA_POSITION;
+        }
+        else if (vecparams[1] == "camera_position_object_space")
+        {
+            acType = GpuProgramParameters::ACT_CAMERA_POSITION_OBJECT_SPACE;
+        }
+        else if (vecparams[1] == "texture_viewproj_matrix")
+        {
+            acType = GpuProgramParameters::ACT_TEXTURE_VIEWPROJ_MATRIX;
+        }
+        else if (vecparams[1] == "time")
+        {
+            // Special case!
+            Real factor = 1.0f;
+            if (vecparams.size() == 3)
+            {
+                factor = StringConverter::parseReal(vecparams[2]);
+            }
+            
+            context.programParams->setConstantFromTime(index, factor);
+            return;
+        }
+        else if (vecparams[1] == "custom")
+        {
+            acType = GpuProgramParameters::ACT_CUSTOM;
+            extras = true;
+        }
+		else
 		{
 			logParseError("Invalid " + commandname + " attribute - "
 				+ vecparams[1], context);
 			return;
+
 		}
 
-        // add AutoConstant based on the type of data it uses
-        switch (autoConstantDef->dataType)
+        // Do we need any extra parameters?
+        size_t extraParam = 0;
+        if (extras)
         {
-        case GpuProgramParameters::ACDT_NONE:
-            context.programParams->setAutoConstant(index, autoConstantDef->acType, 0);
-            break;
-
-        case GpuProgramParameters::ACDT_INT:
+            if (vecparams.size() != 3)
             {
-                if (vecparams.size() != 3)
-                {
-                    logParseError("Invalid " + commandname + " attribute - "
-                        "expected 3 parameters.", context);
-                    return;
-                }
-
-                size_t extraParam = StringConverter::parseInt(vecparams[2]);
-                context.programParams->setAutoConstant(index, autoConstantDef->acType, extraParam);
+                logParseError("Invalid " + commandname + " attribute - "
+                    "expected 3 parameters.", context);
+                return;
             }
-            break;
+            extraParam = StringConverter::parseInt(vecparams[2]);
+        }
+		
+		
+		if (float_extras) {
+			Real rData = StringConverter::parseReal(vecparams[2]);
+			context.programParams->setAutoConstantReal(index, acType, rData);
+		}
+		else {
+			context.programParams->setAutoConstant(index, acType, extraParam);
+		}
 
-        case GpuProgramParameters::ACDT_REAL:
-            {
-                // special handling for time
-                if (autoConstantDef->acType == GpuProgramParameters::ACT_TIME)
-                {
-                    Real factor = 1.0f;
-                    if (vecparams.size() == 3)
-                    {
-                        factor = StringConverter::parseReal(vecparams[2]);
-                    }
-                    
-                    context.programParams->setConstantFromTime(index, factor);
-                }
-                else // normal processing for auto constants that take an extra real value
-                {
-                    if (vecparams.size() != 3)
-                    {
-                        logParseError("Invalid " + commandname + " attribute - "
-                            "expected 3 parameters.", context);
-                        return;
-                    }
-
-			        Real rData = StringConverter::parseReal(vecparams[2]);
-			        context.programParams->setAutoConstantReal(index, autoConstantDef->acType, rData);
-                }
-            }
-            break;
-
-        } // end switch
-
-        String paramName = (commandname == "param_named_auto") ? vecparams[0] : "";
-        // add constant definition based on AutoConstant
-        // make element count 0 so that proper allocation occurs when AutoState is set up
-        size_t constantIndex = context.programParams->addConstantDefinition(
-			paramName, index, 0, autoConstantDef->elementType);
-        // update constant definition auto settings
-        // since an autoconstant was just added, its the last one in the container
-        size_t autoIndex = context.programParams->getAutoConstantCount() - 1;
-        // setup autoState which will allocate the proper amount of storage required by constant entries
-        context.programParams->setConstantDefinitionAutoState(constantIndex, true, autoIndex);
-        
     }
-
     //-----------------------------------------------------------------------
     bool parseParamIndexed(String& params, MaterialScriptContext& context)
     {
@@ -1625,47 +1802,12 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseMaterial(String& params, MaterialScriptContext& context)
     {
-        // nfz:
-        // check params for reference to parent material to copy from
-        // syntax: material name : parentMaterialName
-        // check params for a colon after the first name and extract the parent name
-        StringVector vecparams = StringUtil::split(params, ":", 1);
-        MaterialPtr basematerial;
-
         // Create a brand new material
-        if (vecparams.size() >= 2)
-        {
-            // if a second parameter exists then assume its the name of the base material
-            // that this new material should clone from
-            StringUtil::trim(vecparams[1]);
-            // make sure base material exists
-            basematerial = MaterialManager::getSingleton().getByName(vecparams[1]);
-            // if it doesn't exist then report error in log and just create a new material
-            if (basematerial.isNull())
-            {
-                logParseError("parent material: " + vecparams[1] + " not found for new material:"
-                    + vecparams[0], context);
-            }
-        }
-
-        // get rid of leading and trailing white space from material name
-        StringUtil::trim(vecparams[0]);
-
         context.material = 
-			MaterialManager::getSingleton().create(vecparams[0], context.groupName);
-
-        if (!basematerial.isNull())
-        {
-            // copy parent material details to new material
-            basematerial->copyDetailsTo(context.material);
-        }
-        else
-        {
-            // Remove pre-created technique from defaults
-            context.material->removeAllTechniques();
-        }
-
+			MaterialManager::getSingleton().create(params, context.groupName);
 		context.material->_notifyOrigin(context.filename);
+        // Remove pre-created technique from defaults
+        context.material->removeAllTechniques();
 
         // update section
         context.section = MSS_MATERIAL;
@@ -1676,58 +1818,14 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseTechnique(String& params, MaterialScriptContext& context)
     {
-
-        // if params is not empty then see if the technique name already exists
-        if (!params.empty() && (context.material->getNumTechniques() > 0))
-        {
-            // find the pass with name = params
-            Technique * foundTechnique = context.material->getTechnique(params);
-            if (foundTechnique)
-            {
-                // figure out technique index by iterating through technique container
-                // would be nice if each technique remembered its index
-                int count = 0;
-                Material::TechniqueIterator i = context.material->getTechniqueIterator();
-                while(i.hasMoreElements())
-                {
-                    if (foundTechnique == i.peekNext())
-                        break;
-                    i.moveNext();
-                    ++count;
-                }
-
-                context.techLev = count;
-            }
-            else
-            {
-                // name was not found so a new technique is needed
-                // position technique level to the end index
-                // a new technique will be created later on
-                context.techLev = context.material->getNumTechniques();
-            }
-
-        }
-        else 
-        {
-            // no name was given in the script so a new technique will be created
-		    // Increase technique level depth
-		    context.techLev += 1;
-        }
-
-        // Create a new technique if it doesn't already exist
-        if (context.material->getNumTechniques() > context.techLev)
-        {
-            context.technique = context.material->getTechnique(context.techLev);
-        }
-        else
-        {
-            context.technique = context.material->createTechnique();
-            if (!params.empty())
-                context.technique->setName(params);
-        }
+        // Create a new technique
+        context.technique = context.material->createTechnique();
 
         // update section
         context.section = MSS_TECHNIQUE;
+
+		//Increase technique level depth
+		context.techLev += 1;
 
         // Return TRUE because this must be followed by a {
         return true;
@@ -1735,44 +1833,14 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parsePass(String& params, MaterialScriptContext& context)
     {
-        // if params is not empty then see if the pass name already exists
-        if (!params.empty() && (context.technique->getNumPasses() > 0))
-        {
-            // find the pass with name = params
-            Pass * foundPass = context.technique->getPass(params);
-            if (foundPass)
-            {
-                context.passLev = foundPass->getIndex();
-            }
-            else
-            {
-                // name was not found so a new pass is needed
-                // position pass level to the end index
-                // a new pass will be created later on
-                context.passLev = context.technique->getNumPasses();
-            }
-
-        }
-        else
-        {
-		    //Increase pass level depth
-		    context.passLev += 1;
-        }
-
-        if (context.technique->getNumPasses() > context.passLev)
-        {
-            context.pass = context.technique->getPass(context.passLev);
-        }
-        else
-        {
-            // Create a new pass
-            context.pass = context.technique->createPass();
-            if (!params.empty())
-                context.pass->setName(params);
-        }
+        // Create a new pass
+        context.pass = context.technique->createPass();
 
         // update section
         context.section = MSS_PASS;
+
+		//Increase pass level depth
+		context.passLev += 1;
 
         // Return TRUE because this must be followed by a {
         return true;
@@ -1780,52 +1848,14 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseTextureUnit(String& params, MaterialScriptContext& context)
     {
-        // if params is a number then see if that texture unit exists and is in bounds
-        // if not then log the warning and just move on to the next TU from current
-        if (!params.empty())
-        {
-            // specifying an index in the script for a TU means that a specific TU is being requested
-            // try to get the specific TU
-            // if the index requested is not valid, just creat a new TU
-            int newStateLev = StringConverter::parseInt(params);
+        // Create a new texture unit
+        context.textureUnit = context.pass->createTextureUnitState();
 
-            // check if index is in bounds
-            if ((newStateLev >= 0) && (newStateLev < context.pass->getNumTextureUnitStates()))
-            {
-                context.stateLev = newStateLev;
-            }
-            else
-            {
-                // position index to end: defaults to creating a new TU
-                context.stateLev = context.pass->getNumTextureUnitStates();
-                // check if the new index is one past the end
-                if (newStateLev != context.stateLev)
-                {
-                    // oops, not in bounds so log it and add a new TU anyway
-                    logParseError("Texture Unit State index: " + StringConverter::toString(newStateLev) +
-                    " out of bounds, using index " + StringConverter::toString(context.stateLev) + " instead", context);
-                }
-            }
-        }
-        else
-        {
-            // an index number was not given in the script for the texture unit
-		    // Increase texture unit depth
-		    context.stateLev += 1;
-        }
-
-        if (context.pass->getNumTextureUnitStates() > context.stateLev)
-        {
-            context.textureUnit = context.pass->getTextureUnitState(context.stateLev);
-        }
-        else
-        {
-            // Create a new texture unit
-            context.textureUnit = context.pass->createTextureUnitState();
-        }
         // update section
         context.section = MSS_TEXTUREUNIT;
 
+		// Increase texture unit depth
+		context.stateLev += 1;
 
         // Return TRUE because this must be followed by a {
         return true;
@@ -1836,36 +1866,20 @@ namespace Ogre
         // update section
         context.section = MSS_PROGRAM_REF;
 
-        // check if pass has a vertex program already
-        if (context.pass->hasVertexProgram())
-        {
-            // if existing pass vertex program has same name as params
-            // or params is empty then use current vertex program
-            if (params.empty() || (context.pass->getVertexProgramName() == params))
-            {
-                context.program = context.pass->getVertexProgram();
-            }
-        }
-
-        // if context.program was not set then try to get the vertex program using the name 
-        // passed in params
+        context.program = GpuProgramManager::getSingleton().getByName(params);
         if (context.program.isNull())
         {
-            context.program = GpuProgramManager::getSingleton().getByName(params);
-            if (context.program.isNull())
-            {
-                // Unknown program
-                logParseError("Invalid vertex_program_ref entry - vertex program " 
-                    + params + " has not been defined.", context);
-                return true;
-            }
-
-            context.isProgramShadowCaster = false;
-            context.isProgramShadowReceiver = false;
-            
-            // Set the vertex program for this pass
-            context.pass->setVertexProgram(params);
+            // Unknown program
+            logParseError("Invalid vertex_program_ref entry - vertex program " 
+                + params + " has not been defined.", context);
+            return true;
         }
+
+        context.isProgramShadowCaster = false;
+        context.isProgramShadowReceiver = false;
+        
+        // Set the vertex program for this pass
+        context.pass->setVertexProgram(params);
 
         // Create params? Skip this if program is not supported
         if (context.program->isSupported())
@@ -1920,7 +1934,6 @@ namespace Ogre
                 + params + " has not been defined.", context);
             return true;
         }
-        
 
         context.isProgramShadowCaster = false;
         context.isProgramShadowReceiver = true;
@@ -1943,33 +1956,17 @@ namespace Ogre
         // update section
         context.section = MSS_PROGRAM_REF;
 
-        // check if pass has a fragment program already
-        if (context.pass->hasFragmentProgram())
-        {
-            // if existing pass fragment program has same name as params
-            // or params is empty then use current fragment program
-            if (params.empty() || (context.pass->getFragmentProgramName() == params))
-            {
-                context.program = context.pass->getFragmentProgram();
-            }
-        }
-
-        // if context.program was not set then try to get the fragment program using the name 
-        // passed in params
+        context.program = GpuProgramManager::getSingleton().getByName(params);
         if (context.program.isNull())
         {
-            context.program = GpuProgramManager::getSingleton().getByName(params);
-            if (context.program.isNull())
-            {
-                // Unknown program
-                logParseError("Invalid fragment_program_ref entry - fragment program " 
-                    + params + " has not been defined.", context);
-                return true;
-            }
-            
-            // Set the vertex program for this pass
-            context.pass->setFragmentProgram(params);
+            // Unknown program
+            logParseError("Invalid fragment_program_ref entry - fragment program " 
+                + params + " has not been defined.", context);
+            return true;
         }
+        
+        // Set the vertex program for this pass
+        context.pass->setFragmentProgram(params);
 
         // Create params? Skip this if program is not supported
         if (context.program->isSupported())
@@ -1990,7 +1987,6 @@ namespace Ogre
 		context.programDef = new MaterialScriptProgramDefinition();
 		context.programDef->progType = GPT_VERTEX_PROGRAM;
         context.programDef->supportsSkeletalAnimation = false;
-		context.programDef->supportsMorphAnimation = false;
 
 		// Get name and language code
 		StringVector vecparams = StringUtil::split(params, " \t");
@@ -2019,7 +2015,6 @@ namespace Ogre
 		context.programDef = new MaterialScriptProgramDefinition();
 		context.programDef->progType = GPT_FRAGMENT_PROGRAM;
 		context.programDef->supportsSkeletalAnimation = false;
-		context.programDef->supportsMorphAnimation = false;
 
 		// Get name and language code
 		StringVector vecparams = StringUtil::split(params, " \t");
@@ -2056,15 +2051,6 @@ namespace Ogre
 
         return false;
     }
-	//-----------------------------------------------------------------------
-	bool parseProgramMorphAnimation(String& params, MaterialScriptContext& context)
-	{
-		// Source filename, preserve case
-		context.programDef->supportsMorphAnimation 
-			= StringConverter::parseBool(params);
-
-		return false;
-	}
     //-----------------------------------------------------------------------
     bool parseProgramSyntax(String& params, MaterialScriptContext& context)
     {
@@ -2253,7 +2239,6 @@ namespace Ogre
         mProgramAttribParsers.insert(AttribParserList::value_type("source", (ATTRIBUTE_PARSER)parseProgramSource));
         mProgramAttribParsers.insert(AttribParserList::value_type("syntax", (ATTRIBUTE_PARSER)parseProgramSyntax));
         mProgramAttribParsers.insert(AttribParserList::value_type("includes_skeletal_animation", (ATTRIBUTE_PARSER)parseProgramSkeletalAnimation));
-		mProgramAttribParsers.insert(AttribParserList::value_type("includes_morph_animation", (ATTRIBUTE_PARSER)parseProgramMorphAnimation));
         mProgramAttribParsers.insert(AttribParserList::value_type("default_params", (ATTRIBUTE_PARSER)parseDefaultParams));
 		
         // Set up program default param attribute parsers
@@ -2564,8 +2549,6 @@ namespace Ogre
         }
         // Set skeletal animation option
         gp->setSkeletalAnimationIncluded(def->supportsSkeletalAnimation);
-		// Set morph animation option
-		gp->setMorphAnimationIncluded(def->supportsMorphAnimation);
 		// set origin
 		gp->_notifyOrigin(mScriptContext.filename);
 
@@ -2626,20 +2609,16 @@ namespace Ogre
         }
     }
     //-----------------------------------------------------------------------
-    void MaterialSerializer::exportMaterial(const MaterialPtr& pMat, const String &fileName, bool exportDefaults, const bool includeProgDef)
+    void MaterialSerializer::exportMaterial(const MaterialPtr& pMat, const String &fileName, bool exportDefaults)
     {
         clearQueue();
         mDefaults = exportDefaults;
-        mIncludeProgramDefinition = includeProgDef;
         writeMaterial(pMat);
         exportQueued(fileName);
     }
     //-----------------------------------------------------------------------
-    void MaterialSerializer::exportQueued(const String &fileName, const String& programFilename)
+    void MaterialSerializer::exportQueued(const String &fileName)
     {
-        // write out gpu program definitions to the buffer
-        writeGpuPrograms();
-
         if (mBuffer == "")
             OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Queue is empty !", "MaterialSerializer::exportQueued");
 
@@ -2650,46 +2629,24 @@ namespace Ogre
             OGRE_EXCEPT(Exception::ERR_CANNOT_WRITE_TO_FILE, "Cannot create material file.",
             "MaterialSerializer::export");
 
-        if (mIncludeProgramDefinition && !mGpuProgramBuffer.empty())
-        {
-            fputs(mGpuProgramBuffer.c_str(), fp);
-        }
         fputs(mBuffer.c_str(), fp);
         fclose(fp);
-
-        // write program script if program filename and program definitions
-        // were not included in material script
-        if (!mIncludeProgramDefinition && !mGpuProgramBuffer.empty() && !programFilename.empty())
-        {
-            FILE *fp;
-            fp = fopen(programFilename.c_str(), "w");
-            if (!fp)
-                OGRE_EXCEPT(Exception::ERR_CANNOT_WRITE_TO_FILE, "Cannot create program material file.",
-                "MaterialSerializer::export");
-            fputs(mGpuProgramBuffer.c_str(), fp);
-            fclose(fp);
-        }
-
         LogManager::getSingleton().logMessage("MaterialSerializer : done.", LML_CRITICAL);
         clearQueue();
     }
     //-----------------------------------------------------------------------
-    void MaterialSerializer::queueForExport(const MaterialPtr& pMat, 
-		bool clearQueued, bool exportDefaults, const bool includeProgDef)
+    void MaterialSerializer::queueForExport(const MaterialPtr& pMat, bool clearQueued, bool exportDefaults)
     {
         if (clearQueued)
             clearQueue();
 
         mDefaults = exportDefaults;
-        mIncludeProgramDefinition = includeProgDef;
         writeMaterial(pMat);
     }
     //-----------------------------------------------------------------------
     void MaterialSerializer::clearQueue()
     {
         mBuffer = "";
-        mGpuProgramBuffer = "";
-        mGpuProgramDefinitionContainer.clear();
     }
     //-----------------------------------------------------------------------
     const String &MaterialSerializer::getQueuedAsString() const
@@ -2745,7 +2702,6 @@ namespace Ogre
             while (it.hasMoreElements())
             {
                 writeTechnique(it.getNext());
-                mBuffer += "\n";
             }
         }
         endSection(0);
@@ -2755,7 +2711,6 @@ namespace Ogre
     {
         // Technique header
         writeAttribute(1, "technique");
-        writeValue(pTech->getName());
         beginSection(1);
         {
             // Iterate over passes
@@ -2763,7 +2718,6 @@ namespace Ogre
             while (it.hasMoreElements())
             {
                 writePass(it.getNext());
-                mBuffer += "\n";
             }
         }
         endSection(1);
@@ -2773,7 +2727,6 @@ namespace Ogre
     void MaterialSerializer::writePass(const Pass* pPass)
     {
         writeAttribute(2, "pass");
-        writeValue(pPass->getName());
         beginSection(2);
         {
             //lighting
@@ -2792,22 +2745,11 @@ namespace Ogre
             }
 			// iteration
             if (mDefaults || 
-                pPass->getIteratePerLight() || (pPass->getPassIterationCount() > 0))
+                pPass->getRunOncePerLight())
             {
                 writeAttribute(3, "iteration");
-                // multipass count
-                if (pPass->getPassIterationCount() > 0)
-                {
-                    writeValue(StringConverter::toString(pPass->getPassIterationCount()));
-                    if (pPass->getIteratePerLight())
-                        writeValue("per_light");
-                }
-                else
-                {
-                    writeValue(pPass->getIteratePerLight() ? "once_per_light" : "once");
-                }
-
-                if (pPass->getIteratePerLight() && pPass->getRunOnlyForOneLightType())
+                writeValue(pPass->getRunOncePerLight() ? "once_per_light" : "once");
+                if (pPass->getRunOncePerLight() && pPass->getRunOnlyForOneLightType())
                 {
                     switch (pPass->getOnlyLightType())
                     {
@@ -3020,29 +2962,6 @@ namespace Ogre
                 }
             }
 
-            // nfz
-
-            //  GPU Vertex and Fragment program references and parameters
-            if (pPass->hasVertexProgram())
-            {
-                writeVertexProgramRef(pPass);
-            }
-
-            if (pPass->hasFragmentProgram())
-            {
-                writeFragmentProgramRef(pPass);
-            }
-
-            if (pPass->hasShadowCasterVertexProgram())
-            {
-                writeShadowCasterVertexProgramRef(pPass);
-            }
-
-            if (pPass->hasShadowReceiverVertexProgram())
-            {
-                writeShadowReceiverVertexProgramRef(pPass);
-            }
-
             // Nested texture layers
             Pass::TextureUnitStateIterator it = const_cast<Pass*>(pPass)->getTextureUnitStateIterator();
             while(it.hasMoreElements())
@@ -3142,15 +3061,11 @@ namespace Ogre
             }
 
             //addressing mode
-			const TextureUnitState::UVWAddressingMode& uvw = 
-				pTex->getTextureAddressingMode();
             if (mDefaults || 
-                uvw.u != Ogre::TextureUnitState::TAM_WRAP ||
-				uvw.v != Ogre::TextureUnitState::TAM_WRAP ||
-				uvw.w != Ogre::TextureUnitState::TAM_WRAP )
+                pTex->getTextureAddressingMode() != Ogre::TextureUnitState::TAM_WRAP)
             {
                 writeAttribute(4, "tex_address_mode");
-                switch (uvw.u)
+                switch (pTex->getTextureAddressingMode())
                 {
                 case Ogre::TextureUnitState::TAM_CLAMP:
                     writeValue("clamp");
@@ -3162,30 +3077,6 @@ namespace Ogre
                     writeValue("wrap");
                     break;
                 }
-				switch (uvw.v)
-				{
-				case Ogre::TextureUnitState::TAM_CLAMP:
-					writeValue(" clamp");
-					break;
-				case Ogre::TextureUnitState::TAM_MIRROR:
-					writeValue(" mirror");
-					break;
-				case Ogre::TextureUnitState::TAM_WRAP:
-					writeValue(" wrap");
-					break;
-				}
-				switch (uvw.w)
-				{
-				case Ogre::TextureUnitState::TAM_CLAMP:
-					writeValue(" clamp");
-					break;
-				case Ogre::TextureUnitState::TAM_MIRROR:
-					writeValue(" mirror");
-					break;
-				case Ogre::TextureUnitState::TAM_WRAP:
-					writeValue(" wrap");
-					break;
-				}
             }
 
             //filtering
@@ -3379,8 +3270,7 @@ namespace Ogre
         writeValue(StringConverter::toString(effect.amplitude));
     }
     //-----------------------------------------------------------------------
-    void MaterialSerializer::writeScrollEffect(
-		const TextureUnitState::TextureEffect& effect, const TextureUnitState *pTex)
+    void MaterialSerializer::writeScrollEffect(const TextureUnitState::TextureEffect& effect, const TextureUnitState *pTex)
     {
         if (effect.arg1 || effect.arg2)
         {
@@ -3552,421 +3442,4 @@ namespace Ogre
             break;
         }
     }
-
-    // nfz
-    //-----------------------------------------------------------------------
-    void MaterialSerializer::writeVertexProgramRef(const Pass* pPass)
-    {
-        mBuffer += "\n";
-        writeAttribute(3, "vertex_program_ref");
-        writeValue( pPass->getVertexProgramName() );
-        beginSection(3);
-        {
-            // write out paramters
-            GpuProgramParameters* defaultParams= 0;
-            const GpuProgramPtr program = pPass->getVertexProgram();
-            // does the vertex program have default parameters?
-            if (program->hasDefaultParameters())
-                defaultParams = program->getDefaultParameters().getPointer();
-
-            writeGPUProgramParameters(pPass->getVertexProgramParameters(), defaultParams);
-        }
-        endSection(3);
-
-        // add to GpuProgram contatiner
-        mGpuProgramDefinitionContainer.insert(pPass->getVertexProgramName());
-
-    }
-    //-----------------------------------------------------------------------
-    void MaterialSerializer::writeShadowCasterVertexProgramRef(const Pass* pPass)
-    {
-        mBuffer += "\n";
-        writeAttribute(3, "shadow_caster_vertex_program_ref");
-        writeValue( pPass->getShadowCasterVertexProgramName() );
-        beginSection(3);
-        {
-            // write out paramters
-            GpuProgramParameters* defaultParams= 0;
-            const GpuProgramPtr program = pPass->getShadowCasterVertexProgram();
-            // does the vertex program have default parameters?
-            if (program->hasDefaultParameters())
-                defaultParams = program->getDefaultParameters().getPointer();
-
-            writeGPUProgramParameters(pPass->getShadowCasterVertexProgramParameters(), defaultParams);
-        }
-        endSection(3);
-
-        // add to GpuProgram contatiner
-        mGpuProgramDefinitionContainer.insert(pPass->getShadowCasterVertexProgramName());
-    }
-    //-----------------------------------------------------------------------
-    void MaterialSerializer::writeShadowReceiverVertexProgramRef(const Pass* pPass)
-    {
-        mBuffer += "\n";
-        writeAttribute(3, "shadow_receiver_vertex_program_ref");
-        writeValue( pPass->getShadowReceiverVertexProgramName() );
-        beginSection(3);
-        {
-            // write out paramters
-            GpuProgramParameters* defaultParams= 0;
-            const GpuProgramPtr program = pPass->getShadowReceiverVertexProgram();
-            // does the vertex program have default parameters?
-            if (program->hasDefaultParameters())
-                defaultParams = program->getDefaultParameters().getPointer();
-
-            writeGPUProgramParameters(pPass->getShadowReceiverVertexProgramParameters(), defaultParams);
-        }
-        endSection(3);
-
-        // add to GpuProgram contatiner
-        mGpuProgramDefinitionContainer.insert(pPass->getShadowReceiverVertexProgramName());
-    }
-
-    //-----------------------------------------------------------------------
-    void MaterialSerializer::writeFragmentProgramRef(const Pass* pPass)
-    {
-        mBuffer += "\n";
-        writeAttribute(3, "fragment_program_ref");
-        writeValue( pPass->getFragmentProgramName() );
-        beginSection(3);
-        {
-            // write out paramters
-            GpuProgramParameters* defaultParams= 0;
-            const GpuProgramPtr program = pPass->getFragmentProgram();
-            // does the vertex program have default parameters?
-            if (program->hasDefaultParameters())
-                defaultParams = program->getDefaultParameters().getPointer();
-
-            writeGPUProgramParameters(pPass->getFragmentProgramParameters(), defaultParams);
-
-        }
-        endSection(3);
-
-        // add to GpuProgram contatiner
-        mGpuProgramDefinitionContainer.insert(pPass->getFragmentProgramName());
-    }
-
-    //-----------------------------------------------------------------------
-    static bool isConstantRealValsEqual(const GpuProgramParameters::RealConstantEntry* constEntry,
-        const GpuProgramParameters::RealConstantEntry* defaultEntry, const size_t elementCount)
-    {
-        assert(constEntry && defaultEntry);
-        // assume values are equal
-        bool isEqual = false;
-
-        if (constEntry && defaultEntry)
-        {
-            // assume values are equal
-            isEqual = true;
-            size_t currentIndex = 0;
-            // iterate through real constants 
-            while ((currentIndex < elementCount) && isEqual)
-            {
-                // compare the values within the constant entry
-                size_t idx = 0;
-                while ((idx < 4) && (currentIndex < elementCount) && isEqual)
-                {
-                    if (constEntry->val[idx] != defaultEntry->val[idx])
-                        isEqual = false;
-                    ++idx;
-                    ++currentIndex;
-                }
-                ++constEntry;
-                ++defaultEntry;
-            }
-
-        }
-
-        return isEqual;
-    }
-
-    //-----------------------------------------------------------------------
-    static bool isConstantIntValsEqual(const GpuProgramParameters::IntConstantEntry* constEntry,
-        const GpuProgramParameters::IntConstantEntry* defaultEntry, const size_t elementCount)
-    {
-        assert(constEntry && defaultEntry);
-        // assume values are equal
-        bool isEqual = false;
-
-        if (constEntry && defaultEntry)
-        {
-            // assume values are equal
-            isEqual = true;
-            size_t currentIndex = 0;
-            // iterate through real constants 
-            while ((currentIndex < elementCount) && isEqual)
-            {
-                // compare the values within the constant entry
-                size_t idx = 0;
-                while ((idx < 4) && (currentIndex < elementCount) && isEqual)
-                {
-                    if (constEntry->val[idx] != defaultEntry->val[idx])
-                        isEqual = false;
-                    ++idx;
-                    ++currentIndex;
-                }
-                ++constEntry;
-                ++defaultEntry;
-            }
-
-        }
-
-        return isEqual;
-    }
-
-
-    //-----------------------------------------------------------------------
-    void MaterialSerializer::writeGPUProgramParameters(
-		const GpuProgramParametersSharedPtr& params, 
-		GpuProgramParameters* defaultParams, const int level, 
-		const bool useMainBuffer)
-    {
-        // iterate through the constant definitions
-        const size_t paramCount = params->getNumConstantDefinitions();
-        size_t paramIndex = 0;
-        while (paramIndex < paramCount)
-        {
-            // get the constant definition
-            const GpuProgramParameters::ConstantDefinition* constDef = 
-				params->getConstantDefinition(paramIndex);
-            if (constDef)
-            {
-                // don't duplicate constants that are defined as a default parameter
-                bool defaultExist = false;
-                if (defaultParams)
-                {
-                    // find matching default parameter
-                    const GpuProgramParameters::ConstantDefinition* defaultConstDef = 
-                        defaultParams->findMatchingConstantDefinition(
-							constDef->name, constDef->entryIndex, constDef->elementType);
-
-                    if (defaultConstDef)
-                    {
-                        //check all the elements for being equal
-                        // auto settings must be the same to be equal
-                        if ((defaultConstDef->isAuto && constDef->isAuto) && 
-							(defaultConstDef->autoIndex == constDef->autoIndex))
-                        {
-                            defaultExist = true;
-                        }
-                        else // check the values
-                        {
-                            if (constDef->elementType == GpuProgramParameters::ET_REAL)
-                            {
-                                const GpuProgramParameters::RealConstantEntry* constEntry =
-                                    params->getRealConstantEntry(constDef->entryIndex);
-
-                                const GpuProgramParameters::RealConstantEntry* defaultEntry =
-                                    defaultParams->getRealConstantEntry(defaultConstDef->entryIndex);
-                            
-                                defaultExist = isConstantRealValsEqual(constEntry, defaultEntry, constDef->elementCount);
-                            }
-                            else // dealing with int
-                            {
-                                const GpuProgramParameters::IntConstantEntry* constEntry =
-                                    params->getIntConstantEntry(constDef->entryIndex);
-
-                                const GpuProgramParameters::IntConstantEntry* defaultEntry =
-                                    defaultParams->getIntConstantEntry(defaultConstDef->entryIndex);
-                            
-                                defaultExist = isConstantIntValsEqual(constEntry, defaultEntry, constDef->elementCount);
-                            }
-
-                        }
-                    }
-
-                }
-
-                if (!defaultExist)
-                {
-                    String label;
-                    // is the param named
-                    if (!constDef->name.empty())
-                        label = "param_named";
-                    else
-                        label = "param_indexed";
-                    // is it auto
-                    if (constDef->isAuto)
-                        label += "_auto";
-
-                    writeAttribute(level, label, useMainBuffer);
-                    // output param name or index
-                    if (!constDef->name.empty())
-                        writeValue(constDef->name, useMainBuffer);
-                    else
-                        writeValue(StringConverter::toString(constDef->entryIndex), useMainBuffer);
-
-                    // if auto output auto type name and data if needed
-                    if (constDef->isAuto)
-                    {
-                        // get the auto constant entry associated with this constant definition
-                        const GpuProgramParameters::AutoConstantEntry* autoEntry =
-                            params->getAutoConstantEntry(constDef->autoIndex);
-
-                        if (autoEntry)
-                        {
-                            const GpuProgramParameters::AutoConstantDefinition* autoConstDef = 
-                                GpuProgramParameters::getAutoConstantDefinition(autoEntry->paramType);
-
-                            assert(autoConstDef && "Bad auto constant Definition Table");
-                            // output auto constant name
-                            writeValue(autoConstDef->name, useMainBuffer);
-                            // output data if it uses it
-                            switch(autoConstDef->dataType)
-                            {
-                            case GpuProgramParameters::ACDT_REAL:
-                                writeValue(StringConverter::toString(autoEntry->fData), useMainBuffer);
-                                break;
-
-                            case GpuProgramParameters::ACDT_INT:
-                                writeValue(StringConverter::toString(autoEntry->data), useMainBuffer);
-                                break;
-                            }
-                        }
-                    }
-                    else // not auto so output all the values used
-                    {
-                        String countLabel;
-                        const size_t elementCount = constDef->elementCount;
-                        // get starting index for constant
-                        size_t entryIndex = constDef->entryIndex;
-                        size_t currentIndex = 0;
-
-                        // only write a number if > 1
-                        if (elementCount > 1)
-                            countLabel = StringConverter::toString(elementCount);
-
-                        if (constDef->elementType == GpuProgramParameters::ET_REAL)
-                        {
-                            writeValue("float" + countLabel, useMainBuffer);
-                            // iterate through real constants 
-                            while (currentIndex < elementCount)
-                            {
-                                // get the constant entry
-                                const GpuProgramParameters::RealConstantEntry* constEntry =
-                                    params->getRealConstantEntry(entryIndex);
-
-                                // output the values within the constant entry
-                                size_t idx = 0;
-                                while ((idx < 4) && (currentIndex < elementCount))
-                                {
-                                    writeValue(StringConverter::toString(constEntry->val[idx]), useMainBuffer);
-                                    ++idx;
-                                    ++currentIndex;
-                                }
-                                ++entryIndex;
-                            }
-
-                        }
-                        else
-                        {
-                            writeValue("int" + countLabel, useMainBuffer);
-                            // iterate through int constants 
-                            while (currentIndex < elementCount)
-                            {
-                                // get the constant entry
-                                const GpuProgramParameters::IntConstantEntry* constEntry =
-                                    params->getIntConstantEntry(entryIndex + currentIndex);
-
-                                // output the values within the constant entry
-                                size_t idx = 0;
-                                while ((idx < 4) && (currentIndex < elementCount))
-                                {
-                                    writeValue(StringConverter::toString(constEntry->val[idx]), useMainBuffer);
-                                    ++idx;
-                                    ++currentIndex;
-                                }
-                                ++entryIndex;
-                            }
-
-                        }
-                    }
-                } // end if (!defaultExist)
-
-            } // end if
-
-            ++paramIndex;
-
-        } // end while
-
-    }
-
-    //-----------------------------------------------------------------------
-    void MaterialSerializer::writeGpuPrograms(void)
-    {
-        // iterate through gpu program names in container
-        GpuProgramDefIterator currentDef = mGpuProgramDefinitionContainer.begin();
-        GpuProgramDefIterator endDef = mGpuProgramDefinitionContainer.end();
-
-        while (currentDef != endDef)
-        {
-            // get gpu program from gpu program manager
-            GpuProgramPtr program = GpuProgramManager::getSingleton().getByName((*currentDef));
-            // write gpu program definition type to buffer
-            // check program type for vertex program
-            // write program type
-            mGpuProgramBuffer += "\n";
-            writeAttribute(0, program->getParameter("type"), false);
-
-            // write program name
-            writeValue( program->getName(), false);
-            // write program language
-            const String language = program->getLanguage();
-            writeValue( language, false );
-            // write opening braces
-            beginSection(0, false);
-            {
-                // write program source + filenmae
-                writeAttribute(1, "source", false);
-                writeValue(program->getSourceFile(), false);
-                // write special parameters based on language
-                const ParameterList& params = program->getParameters();
-                ParameterList::const_iterator currentParam = params.begin();
-                ParameterList::const_iterator endParam = params.end();
-
-                while (currentParam != endParam)
-                {
-                    if (currentParam->name != "type")
-                    {
-                        String paramstr = program->getParameter(currentParam->name);
-                        if ((currentParam->name == "includes_skeletal_animation")
-                            && (paramstr == "false"))
-                            paramstr = "";
-						if ((currentParam->name == "includes_morph_animation")
-							&& (paramstr == "false"))
-							paramstr = "";
-
-                        if ((language != "asm") && (currentParam->name == "syntax"))
-                            paramstr = "";
-
-                        if (!paramstr.empty())
-                        {
-                            writeAttribute(1, currentParam->name, false);
-                            writeValue(paramstr, false);
-                        }
-                    }
-                    ++currentParam;
-                }
-
-                // write default parameters
-                if (program->hasDefaultParameters())
-                {
-                    mGpuProgramBuffer += "\n";
-                    GpuProgramParametersSharedPtr gpuDefaultParams = program->getDefaultParameters();
-                    writeAttribute(1, "default_params", false);
-                    beginSection(1, false);
-                    writeGPUProgramParameters(gpuDefaultParams, 0, 2, false);
-                    endSection(1, false);
-                }
-            }
-            // write closing braces
-            endSection(0, false);
-
-            ++currentDef;
-
-        }
-
-        mGpuProgramBuffer += "\n";
-    }
-
 }

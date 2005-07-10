@@ -30,6 +30,7 @@ http://www.gnu.org/copyleft/gpl.html.
 #include "OgreRenderSystemCapabilities.h"
 #include "OgreLogManager.h"
 #include "ATI_FS_GLGpuProgram.h"
+#include "OgreGLATIFSInit.h"
 
 using namespace Ogre;
 
@@ -40,7 +41,7 @@ ATI_FS_GLGpuProgram::ATI_FS_GLGpuProgram(ResourceManager* creator,
     GLGpuProgram(creator, name, handle, group, isManual, loader)
 {
 	mProgramType = GL_FRAGMENT_SHADER_ATI;
-    mProgramID = glGenFragmentShadersATI(1);
+    mProgramID = glGenFragmentShadersATI_ptr(1);
 }
 
 ATI_FS_GLGpuProgram::~ATI_FS_GLGpuProgram()
@@ -53,7 +54,7 @@ ATI_FS_GLGpuProgram::~ATI_FS_GLGpuProgram()
 void ATI_FS_GLGpuProgram::bindProgram(void)
 {
 	glEnable(mProgramType);
-	glBindFragmentShaderATI(mProgramID);
+	glBindFragmentShaderATI_ptr(mProgramID);
 }
 
 void ATI_FS_GLGpuProgram::unbindProgram(void)
@@ -78,7 +79,7 @@ void ATI_FS_GLGpuProgram::bindProgramParameters(GpuProgramParametersSharedPtr pa
             const GpuProgramParameters::RealConstantEntry* e = realIt.peekNextPtr();
             if (e->isSet)
             {
-                glSetFragmentShaderConstantATI( GL_CON_0_ATI + index, e->val);
+                glSetFragmentShaderConstantATI_ptr( GL_CON_0_ATI + index, e->val);
             }
             index++;
             realIt.moveNext();
@@ -88,20 +89,10 @@ void ATI_FS_GLGpuProgram::bindProgramParameters(GpuProgramParametersSharedPtr pa
 
 }
 
-void ATI_FS_GLGpuProgram::bindProgramPassIterationParameters(GpuProgramParametersSharedPtr params)
-{
-    GpuProgramParameters::RealConstantEntry* realEntry = params->getPassIterationEntry();
-
-    if (realEntry)
-    {
-        glSetFragmentShaderConstantATI( GL_CON_0_ATI + (GLuint)params->getPassIterationEntryIndex(), realEntry->val);
-    }
-}
-
 
 void ATI_FS_GLGpuProgram::unloadImpl(void)
 {
-	glDeleteFragmentShaderATI(mProgramID);
+	glDeleteFragmentShaderATI_ptr(mProgramID);
 }
 
 
@@ -117,11 +108,11 @@ void ATI_FS_GLGpuProgram::loadFromSource(void)
     bool Error = !PS1_4Assembler.compile(mSource.c_str());
 
     if(!Error) { 
-		glBindFragmentShaderATI(mProgramID);
-		glBeginFragmentShaderATI();
+		glBindFragmentShaderATI_ptr(mProgramID);
+		glBeginFragmentShaderATI_ptr();
 			// compile was successfull so send the machine instructions thru GL to GPU
 			Error = !PS1_4Assembler.bindAllMachineInstToFragmentShader();
-        glEndFragmentShaderATI();
+        glEndFragmentShaderATI_ptr();
 
 		// check GL for GPU machine instruction bind erros
 		if (Error)
@@ -131,8 +122,7 @@ void ATI_FS_GLGpuProgram::loadFromSource(void)
 		}
 
     }
-    else
-	{
+    else {
 		// an error occured when compiling the ps_1_4 source code
 		char buff[50];
         sprintf(buff,"error on line %d in pixel shader source\n", PS1_4Assembler.mCurrentLine);

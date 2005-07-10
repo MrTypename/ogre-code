@@ -253,10 +253,7 @@ namespace Ogre {
 		if (!wglMakeCurrent(mHDC, mGlrc))
 			OGRE_EXCEPT(0, "wglMakeCurrent", "Win32Window::create");
 
-		// Don't use wglew as if this is the first window, we won't have initialised yet
-		PFNWGLSWAPINTERVALEXTPROC _wglSwapIntervalEXT = 
-			(PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-		_wglSwapIntervalEXT(vsync? 1 : 0);
+		wglSwapIntervalEXT(vsync? 1 : 0);
 
 		// Create RenderSystem context
 		mContext = new Win32Context(mHDC, mGlrc);

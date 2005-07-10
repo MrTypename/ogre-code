@@ -40,10 +40,11 @@ http://www.gnu.org/copyleft/lesser.txt.s
 #include "ATI_FS_GLGpuProgram.h"
 #include "OgreGLGpuProgramManager.h"
 #include "OgreException.h"
+#include "OgreGLATIFSInit.h"
 #include "OgreGLSLExtSupport.h"
 #include "OgreGLHardwareOcclusionQuery.h"
 #include "OgreGLContext.h"
-#include "OgreGLFBORenderTexture.h"
+
 
 #ifdef HAVE_CONFIG_H
 #   include "config.h"
@@ -51,7 +52,56 @@ http://www.gnu.org/copyleft/lesser.txt.s
 
 // Convenience macro from ARB_vertex_buffer_object spec
 #define VBO_BUFFER_OFFSET(i) ((char *)NULL + (i))
-GLenum glewContextInit (Ogre::GLSupport *glSupport);
+
+// Pointers to extension functions
+GL_ActiveTextureARB_Func glActiveTextureARB_ptr;
+GL_ClientActiveTextureARB_Func glClientActiveTextureARB_ptr;
+GL_SecondaryColorPointerEXT_Func glSecondaryColorPointerEXT_ptr;
+GL_SecondaryColor3fEXT_Func glSecondaryColor3fEXT_ptr;
+GL_GenBuffersARB_Func glGenBuffersARB_ptr;
+GL_BindBufferARB_Func glBindBufferARB_ptr;
+GL_DeleteBuffersARB_Func glDeleteBuffersARB_ptr;
+GL_MapBufferARB_Func glMapBufferARB_ptr;
+GL_UnmapBufferARB_Func glUnmapBufferARB_ptr;
+GL_BufferDataARB_Func glBufferDataARB_ptr;
+GL_BufferSubDataARB_Func glBufferSubDataARB_ptr;
+GL_GetBufferSubDataARB_Func glGetBufferSubDataARB_ptr;
+GL_GenProgramsARB_Func glGenProgramsARB_ptr;
+GL_DeleteProgramsARB_Func glDeleteProgramsARB_ptr;
+GL_BindProgramARB_Func glBindProgramARB_ptr;
+GL_ProgramStringARB_Func glProgramStringARB_ptr;
+GL_ProgramLocalParameter4fvARB_Func glProgramLocalParameter4fvARB_ptr;
+GL_ProgramParameter4fvNV_Func glProgramParameter4fvNV_ptr;
+GL_VertexAttribPointerARB_Func glVertexAttribPointerARB_ptr;
+GL_EnableVertexAttribArrayARB_Func glEnableVertexAttribArrayARB_ptr;
+GL_DisableVertexAttribArrayARB_Func glDisableVertexAttribArrayARB_ptr;
+GL_CombinerStageParameterfvNV_Func glCombinerStageParameterfvNV_ptr;
+GL_CombinerParameterfvNV_Func glCombinerParameterfvNV_ptr;
+GL_CombinerParameteriNV_Func glCombinerParameteriNV_ptr;
+GL_GetProgramivARB_Func glGetProgramivARB_ptr;
+GL_LoadProgramNV_Func glLoadProgramNV_ptr;
+GL_CombinerInputNV_Func glCombinerInputNV_ptr;
+GL_CombinerOutputNV_Func glCombinerOutputNV_ptr;
+GL_FinalCombinerInputNV_Func glFinalCombinerInputNV_ptr;
+GL_TrackMatrixNV_Func glTrackMatrixNV_ptr;
+PFNGLCOMPRESSEDTEXIMAGE1DARBPROC glCompressedTexImage1DARB_ptr;
+PFNGLCOMPRESSEDTEXIMAGE2DARBPROC glCompressedTexImage2DARB_ptr;
+PFNGLCOMPRESSEDTEXIMAGE3DARBPROC glCompressedTexImage3DARB_ptr;
+PFNGLCOMPRESSEDTEXSUBIMAGE1DARBPROC glCompressedTexSubImage1DARB_ptr;
+PFNGLCOMPRESSEDTEXSUBIMAGE2DARBPROC glCompressedTexSubImage2DARB_ptr;
+PFNGLCOMPRESSEDTEXSUBIMAGE3DARBPROC glCompressedTexSubImage3DARB_ptr;
+PFNGLGETCOMPRESSEDTEXIMAGEARBPROC glGetCompressedTexImageARB_ptr;
+GL_ActiveStencilFaceEXT_Func glActiveStencilFaceEXT_ptr;
+GL_GenOcclusionQueriesNV_Func glGenOcclusionQueriesNV_ptr;	
+GL_DeleteOcclusionQueriesNV_Func glDeleteOcclusionQueriesNV_ptr;
+GL_BeginOcclusionQueryNV_Func glBeginOcclusionQueryNV_ptr;
+GL_EndOcclusionQueryNV_Func glEndOcclusionQueryNV_ptr;
+GL_GetOcclusionQueryuivNV_Func glGetOcclusionQueryuivNV_ptr;
+GL_GenQueriesARB_Func glGenQueriesARB_ptr;
+GL_DeleteQueriesARB_Func glDeleteQueriesARB_ptr;
+GL_BeginQueryARB_Func glBeginQueryARB_ptr;
+GL_EndQueryARB_Func glEndQueryARB_ptr;
+GL_GetQueryObjectuivARB_Func glGetQueryObjectuivARB_ptr;
 
 namespace Ogre {
 
@@ -95,8 +145,7 @@ namespace Ogre {
 
     GLRenderSystem::GLRenderSystem()
       : mDepthWrite(true), mHardwareBufferManager(0),
-        mGpuProgramManager(0),
-        mFBO(false)
+        mGpuProgramManager(0)
     {
         size_t i;
 
@@ -133,6 +182,45 @@ namespace Ogre {
         mMainContext = 0;
 
         mGLInitialized = false;
+
+        glActiveTextureARB_ptr = 0;
+        glClientActiveTextureARB_ptr = 0;
+        glSecondaryColorPointerEXT_ptr = 0;
+        glSecondaryColor3fEXT_ptr = 0;
+        glGenBuffersARB_ptr = 0;
+        glBindBufferARB_ptr = 0;
+        glDeleteBuffersARB_ptr = 0;
+        glMapBufferARB_ptr = 0;
+        glUnmapBufferARB_ptr = 0;
+        glBufferDataARB_ptr = 0;
+        glBufferSubDataARB_ptr = 0;
+        glGetBufferSubDataARB_ptr = 0;
+        glGenProgramsARB_ptr = 0;
+        glDeleteProgramsARB_ptr = 0;
+        glBindProgramARB_ptr = 0;
+        glProgramStringARB_ptr = 0;
+        glProgramLocalParameter4fvARB_ptr = 0;
+        glProgramParameter4fvNV_ptr = 0;
+        glCombinerStageParameterfvNV_ptr = 0;
+        glCombinerParameterfvNV_ptr = 0;
+        glCombinerParameteriNV_ptr = 0;
+        glGetProgramivARB_ptr = 0;
+        glLoadProgramNV_ptr = 0;
+        glCombinerInputNV_ptr = 0;
+        glCombinerOutputNV_ptr = 0;
+        glFinalCombinerInputNV_ptr = 0;
+        glTrackMatrixNV_ptr = 0;
+        glActiveStencilFaceEXT_ptr = 0;
+        glGenOcclusionQueriesNV_ptr = 0;
+        glDeleteOcclusionQueriesNV_ptr = 0;
+        glBeginOcclusionQueryNV_ptr = 0;
+        glEndOcclusionQueryNV_ptr = 0;
+        glGetOcclusionQueryuivNV_ptr = 0;
+		glGenQueriesARB_ptr = 0;
+		glDeleteQueriesARB_ptr = 0;
+		glBeginQueryARB_ptr = 0;
+		glEndQueryARB_ptr = 0;
+		glGetQueryObjectuivARB_ptr = 0;
 
         mCurrentLights = 0;
         mMinFilter = FO_LINEAR;
@@ -238,6 +326,7 @@ namespace Ogre {
         {
             GLint units;
             glGetIntegerv( GL_MAX_TEXTURE_UNITS, &units );
+			mFixedFunctionTextureUnits = units;
 
 			if (mGLSupport->checkExtension("GL_ARB_fragment_program"))
 			{
@@ -320,20 +409,20 @@ namespace Ogre {
 
             mGpuProgramManager->_pushSyntaxCode("arbvp1");
             mGpuProgramManager->registerProgramFactory("arbvp1", createGLArbGpuProgram);
-            if (mGLSupport->checkExtension("GL_NV_vertex_program2_option"))
-            {
-                mCapabilities->setMaxVertexProgramVersion("vp30");
-                mGpuProgramManager->_pushSyntaxCode("vp30");
-                mGpuProgramManager->registerProgramFactory("vp30", createGLArbGpuProgram);
-            }
+			if (mGLSupport->checkExtension("GL_NV_vertex_program2_option"))
+			{
+				mCapabilities->setMaxVertexProgramVersion("vp30");
+				mGpuProgramManager->_pushSyntaxCode("vp30");
+				mGpuProgramManager->registerProgramFactory("vp30", createGLArbGpuProgram);
+			}
 
-            if (mGLSupport->checkExtension("GL_NV_vertex_program3"))
-            {
-                mCapabilities->setMaxVertexProgramVersion("vp40");
-                mGpuProgramManager->_pushSyntaxCode("vp40");
-                mGpuProgramManager->registerProgramFactory("vp40", createGLArbGpuProgram);
-            }
-        }
+			if (mGLSupport->checkExtension("GL_NV_vertex_program3"))
+			{
+				mCapabilities->setMaxVertexProgramVersion("vp40");
+				mGpuProgramManager->_pushSyntaxCode("vp40");
+				mGpuProgramManager->registerProgramFactory("vp40", createGLArbGpuProgram);
+			}
+		}
 
         if (mGLSupport->checkExtension("GL_NV_register_combiners2") &&
             mGLSupport->checkExtension("GL_NV_texture_shader"))
@@ -383,20 +472,20 @@ namespace Ogre {
 
             mGpuProgramManager->_pushSyntaxCode("arbfp1");
             mGpuProgramManager->registerProgramFactory("arbfp1", createGLArbGpuProgram);
-            if (mGLSupport->checkExtension("GL_NV_fragment_program_option"))
-            {
-                mCapabilities->setMaxFragmentProgramVersion("fp30");
-                mGpuProgramManager->_pushSyntaxCode("fp30");
-                mGpuProgramManager->registerProgramFactory("fp30", createGLArbGpuProgram);
-            }
+			if (mGLSupport->checkExtension("GL_NV_fragment_program_option"))
+			{
+				mCapabilities->setMaxFragmentProgramVersion("fp30");
+				mGpuProgramManager->_pushSyntaxCode("fp30");
+				mGpuProgramManager->registerProgramFactory("fp30", createGLArbGpuProgram);
+			}
 
-            if (mGLSupport->checkExtension("GL_NV_fragment_program2"))
-            {
-                mCapabilities->setMaxFragmentProgramVersion("fp40");
-                mGpuProgramManager->_pushSyntaxCode("fp40");
-                mGpuProgramManager->registerProgramFactory("fp40", createGLArbGpuProgram);
-            }
-        }
+			if (mGLSupport->checkExtension("GL_NV_fragment_program2"))
+			{
+				mCapabilities->setMaxFragmentProgramVersion("fp40");
+				mGpuProgramManager->_pushSyntaxCode("fp40");
+				mGpuProgramManager->registerProgramFactory("fp40", createGLArbGpuProgram);
+			}        
+		}
 
 		// NFZ - check if GLSL is supported
 		if ( mGLSupport->checkExtension("GL_ARB_shading_language_100") &&
@@ -468,15 +557,7 @@ namespace Ogre {
         {
             mCapabilities->setCapability(RSC_TEXTURE_FLOAT);
         }
-        
-        // Check for framebuffer object extension
-        if(mGLSupport->checkExtension("GL_EXT_framebuffer_object"))
-        {
-            LogManager::getSingleton().logMessage("Framebuffer object support detected");
-            mFBO = true;
-            mCapabilities->setCapability(RSC_HWRENDER_TO_TEXTURE);
-        }
-        
+		
 		// 3D textures should be supported by GL 1.2, which is our minimum version
         mCapabilities->setCapability(RSC_TEXTURE_3D);
 
@@ -484,7 +565,104 @@ namespace Ogre {
 		mGLSupport->initialiseCapabilities(*mCapabilities);
 
         // Get extension function pointers
-        glewContextInit(mGLSupport);
+        glActiveTextureARB_ptr = 
+            (GL_ActiveTextureARB_Func)mGLSupport->getProcAddress("glActiveTextureARB");
+        glClientActiveTextureARB_ptr = 
+            (GL_ClientActiveTextureARB_Func)mGLSupport->getProcAddress("glClientActiveTextureARB");
+        glSecondaryColorPointerEXT_ptr = 
+            (GL_SecondaryColorPointerEXT_Func)mGLSupport->getProcAddress("glSecondaryColorPointerEXT");
+        glSecondaryColor3fEXT_ptr = 
+            (GL_SecondaryColor3fEXT_Func)mGLSupport->getProcAddress("glSecondaryColor3fEXT");
+        glGenBuffersARB_ptr = 
+            (GL_GenBuffersARB_Func)mGLSupport->getProcAddress("glGenBuffersARB");
+        glBindBufferARB_ptr = 
+            (GL_BindBufferARB_Func)mGLSupport->getProcAddress("glBindBufferARB");
+        glDeleteBuffersARB_ptr = 
+            (GL_DeleteBuffersARB_Func)mGLSupport->getProcAddress("glDeleteBuffersARB");
+        glMapBufferARB_ptr = 
+            (GL_MapBufferARB_Func)mGLSupport->getProcAddress("glMapBufferARB");
+        glUnmapBufferARB_ptr = 
+            (GL_UnmapBufferARB_Func)mGLSupport->getProcAddress("glUnmapBufferARB");
+        glBufferDataARB_ptr = 
+            (GL_BufferDataARB_Func)mGLSupport->getProcAddress("glBufferDataARB");
+        glBufferSubDataARB_ptr = 
+            (GL_BufferSubDataARB_Func)mGLSupport->getProcAddress("glBufferSubDataARB");
+        glGetBufferSubDataARB_ptr = 
+            (GL_GetBufferSubDataARB_Func)mGLSupport->getProcAddress("glGetBufferSubDataARB");
+        glGenProgramsARB_ptr =
+            (GL_GenProgramsARB_Func)mGLSupport->getProcAddress("glGenProgramsARB");
+        glDeleteProgramsARB_ptr =
+            (GL_DeleteProgramsARB_Func)mGLSupport->getProcAddress("glDeleteProgramsARB");
+        glBindProgramARB_ptr =
+            (GL_BindProgramARB_Func)mGLSupport->getProcAddress("glBindProgramARB");
+        glProgramStringARB_ptr =
+            (GL_ProgramStringARB_Func)mGLSupport->getProcAddress("glProgramStringARB");
+        glProgramLocalParameter4fvARB_ptr =
+            (GL_ProgramLocalParameter4fvARB_Func)mGLSupport->getProcAddress("glProgramLocalParameter4fvARB");
+         glProgramParameter4fvNV_ptr =
+            (GL_ProgramParameter4fvNV_Func)mGLSupport->getProcAddress("glProgramParameter4fvNV");
+         glVertexAttribPointerARB_ptr =
+             (GL_VertexAttribPointerARB_Func)mGLSupport->getProcAddress("glVertexAttribPointerARB");
+         glEnableVertexAttribArrayARB_ptr =
+             (GL_EnableVertexAttribArrayARB_Func)mGLSupport->getProcAddress("glEnableVertexAttribArrayARB");
+         glDisableVertexAttribArrayARB_ptr =
+             (GL_DisableVertexAttribArrayARB_Func)mGLSupport->getProcAddress("glDisableVertexAttribArrayARB");
+         glCombinerStageParameterfvNV_ptr =
+            (GL_CombinerStageParameterfvNV_Func)mGLSupport->getProcAddress("glCombinerStageParameterfvNV");
+        glCombinerParameterfvNV_ptr = 
+            (GL_CombinerParameterfvNV_Func)mGLSupport->getProcAddress("glCombinerParameterfvNV");
+         glCombinerParameteriNV_ptr = (GL_CombinerParameteriNV_Func)mGLSupport->getProcAddress("glCombinerParameteriNV");
+        glGetProgramivARB_ptr = 
+            (GL_GetProgramivARB_Func)mGLSupport->getProcAddress("glGetProgramivARB");
+        glLoadProgramNV_ptr = 
+            (GL_LoadProgramNV_Func)mGLSupport->getProcAddress("glLoadProgramNV");
+        glCombinerInputNV_ptr =
+            (GL_CombinerInputNV_Func)mGLSupport->getProcAddress("glCombinerInputNV");
+        glCombinerOutputNV_ptr =
+            (GL_CombinerOutputNV_Func)mGLSupport->getProcAddress("glCombinerOutputNV");
+        glFinalCombinerInputNV_ptr = 
+            (GL_FinalCombinerInputNV_Func)mGLSupport->getProcAddress("glFinalCombinerInputNV");
+        glTrackMatrixNV_ptr = 
+            (GL_TrackMatrixNV_Func)mGLSupport->getProcAddress("glTrackMatrixNV");
+		glCompressedTexImage1DARB_ptr =
+            (PFNGLCOMPRESSEDTEXIMAGE1DARBPROC)mGLSupport->getProcAddress("glCompressedTexImage1DARB");
+        glCompressedTexImage2DARB_ptr =
+            (PFNGLCOMPRESSEDTEXIMAGE2DARBPROC)mGLSupport->getProcAddress("glCompressedTexImage2DARB");
+		glCompressedTexImage3DARB_ptr =
+            (PFNGLCOMPRESSEDTEXIMAGE3DARBPROC)mGLSupport->getProcAddress("glCompressedTexImage3DARB");
+        glCompressedTexSubImage1DARB_ptr =
+            (PFNGLCOMPRESSEDTEXSUBIMAGE1DARBPROC)mGLSupport->getProcAddress("glCompressedTexSubImage1DARB");
+        glCompressedTexSubImage2DARB_ptr =
+            (PFNGLCOMPRESSEDTEXSUBIMAGE2DARBPROC)mGLSupport->getProcAddress("glCompressedTexSubImage2DARB");
+        glCompressedTexSubImage3DARB_ptr =
+            (PFNGLCOMPRESSEDTEXSUBIMAGE3DARBPROC)mGLSupport->getProcAddress("glCompressedTexSubImage3DARB");
+		glGetCompressedTexImageARB_ptr =
+			(PFNGLGETCOMPRESSEDTEXIMAGEARBPROC)mGLSupport->getProcAddress("glGetCompressedTexImageARB");
+        InitATIFragmentShaderExtensions(*mGLSupport);
+		InitGLShaderLanguageExtensions(*mGLSupport);
+        glActiveStencilFaceEXT_ptr = 
+            (GL_ActiveStencilFaceEXT_Func)mGLSupport->getProcAddress("glActiveStencilFaceEXT");
+        glGenOcclusionQueriesNV_ptr =
+            (GL_GenOcclusionQueriesNV_Func)mGLSupport->getProcAddress("glGenOcclusionQueriesNV");
+        glDeleteOcclusionQueriesNV_ptr =
+            (GL_DeleteOcclusionQueriesNV_Func)mGLSupport->getProcAddress("glDeleteOcclusionQueriesNV");
+        glBeginOcclusionQueryNV_ptr =
+            (GL_BeginOcclusionQueryNV_Func)mGLSupport->getProcAddress("glBeginOcclusionQueryNV");
+        glEndOcclusionQueryNV_ptr =
+            (GL_EndOcclusionQueryNV_Func)mGLSupport->getProcAddress("glEndOcclusionQueryNV");
+        glGetOcclusionQueryuivNV_ptr =
+            (GL_GetOcclusionQueryuivNV_Func)mGLSupport->getProcAddress("glGetOcclusionQueryuivNV");
+
+		glGenQueriesARB_ptr =
+			(GL_GenQueriesARB_Func)mGLSupport->getProcAddress("glGenQueriesARB");
+		glDeleteQueriesARB_ptr =
+			(GL_DeleteQueriesARB_Func)mGLSupport->getProcAddress("glDeleteQueriesARB");
+		glBeginQueryARB_ptr =
+			(GL_BeginQueryARB_Func)mGLSupport->getProcAddress("glBeginQueryARB");
+		glEndQueryARB_ptr =
+			(GL_EndQueryARB_Func)mGLSupport->getProcAddress("glEndQueryARB");
+		glGetQueryObjectuivARB_ptr =
+			(GL_GetQueryObjectuivARB_Func)mGLSupport->getProcAddress("glGetQueryObjectuivARB");
 
         mCapabilities->log(LogManager::getSingleton().getDefaultLog());
         mGLInitialized = true;
@@ -613,17 +791,8 @@ namespace Ogre {
 			}
 			LogManager::getSingleton().logMessage(ss.str());
 		}
-        RenderTexture *rt;
-        if(mFBO)
-        {
-            /// Frame buffer objects supported, use those
-            rt = new GLFBORenderTexture(name, width, height, texType, internalFormat, miscParams);
-        }
-        else
-        {
-            // Pass on the create call
-            rt = mGLSupport->createRenderTexture(name, width, height, texType, internalFormat, miscParams);
-        }
+		// Pass on the create call
+        RenderTexture *rt = mGLSupport->createRenderTexture(name, width, height, texType, internalFormat, miscParams);
         attachRenderTarget( *rt );
         return rt;
     }
@@ -862,7 +1031,7 @@ namespace Ogre {
 
         GLenum lastTextureType = mTextureTypes[stage];
 
-		glActiveTextureARB( GL_TEXTURE0 + stage );
+		glActiveTextureARB_ptr( GL_TEXTURE0 + stage );
 		if (enabled)
         {
             if (!tex.isNull())
@@ -877,24 +1046,36 @@ namespace Ogre {
 
             if(lastTextureType != mTextureTypes[stage] && lastTextureType != 0)
             {
-                glDisable( lastTextureType );
+				if (stage < mFixedFunctionTextureUnits)
+				{
+	                glDisable( lastTextureType );
+				}
             }
 
-			glEnable( mTextureTypes[stage] );
+			if (stage < mFixedFunctionTextureUnits)
+			{
+				glEnable( mTextureTypes[stage] );
+			}
+
 			if(!tex.isNull())
 				glBindTexture( mTextureTypes[stage], tex->getGLID() );
+
         }
         else
         {
-            if (lastTextureType != 0)
-            {
-                glDisable( mTextureTypes[stage] );
-            }
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			if (stage < mFixedFunctionTextureUnits)
+			{
+				if (lastTextureType != 0)
+				{
+					glDisable( mTextureTypes[stage] );
+				}
+				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			}
         }
 
-        glActiveTextureARB( GL_TEXTURE0 );
-    }
+        glActiveTextureARB_ptr( GL_TEXTURE0 );
+
+	}
 
     //-----------------------------------------------------------------------------
     void GLRenderSystem::_setTextureCoordSet(size_t stage, size_t index)
@@ -905,7 +1086,14 @@ namespace Ogre {
     void GLRenderSystem::_setTextureCoordCalculation(size_t stage, TexCoordCalcMethod m, 
         const Frustum* frustum)
     {
-        GLfloat M[16];
+		if (stage >= mFixedFunctionTextureUnits)
+		{
+			// Can't do this
+			return;
+		}
+
+		
+		GLfloat M[16];
         Matrix4 projectionBias;
 
         // Default to no extra auto texture matrix
@@ -916,9 +1104,9 @@ namespace Ogre {
         GLfloat eyePlaneR[] = {0.0, 0.0, 1.0, 0.0};
         GLfloat eyePlaneQ[] = {0.0, 0.0, 0.0, 1.0};
 
-        glActiveTextureARB( GL_TEXTURE0 + stage );
+        glActiveTextureARB_ptr( GL_TEXTURE0 + stage );
 
-        switch( m )
+		switch( m )
         {
         case TEXCALC_NONE:
             glDisable( GL_TEXTURE_GEN_S );
@@ -1033,39 +1221,41 @@ namespace Ogre {
         default:
             break;
         }
-        glActiveTextureARB( GL_TEXTURE0 );
+        glActiveTextureARB_ptr( GL_TEXTURE0 );
     }
     //-----------------------------------------------------------------------------
-	GLint GLRenderSystem::getTextureAddressingMode(
-		TextureUnitState::TextureAddressingMode tam) const
-	{
+    void GLRenderSystem::_setTextureAddressingMode(size_t stage, TextureUnitState::TextureAddressingMode tam)
+    {
+		GLint type;
         switch(tam)
         {
         case TextureUnitState::TAM_WRAP:
-            return GL_REPEAT;
+            type = GL_REPEAT;
+            break;
         case TextureUnitState::TAM_MIRROR:
-            return GL_MIRRORED_REPEAT;
+            type = GL_MIRRORED_REPEAT;
+            break;
         case TextureUnitState::TAM_CLAMP:
-            return GL_CLAMP_TO_EDGE;
+            type = GL_CLAMP_TO_EDGE;
+            break;
         }
-		
-	}
-    //-----------------------------------------------------------------------------
-    void GLRenderSystem::_setTextureAddressingMode(size_t stage, const TextureUnitState::UVWAddressingMode& uvw)
-    {
-        glActiveTextureARB( GL_TEXTURE0 + stage );
-        glTexParameteri( mTextureTypes[stage], GL_TEXTURE_WRAP_S, 
-			getTextureAddressingMode(uvw.u));
-        glTexParameteri( mTextureTypes[stage], GL_TEXTURE_WRAP_T, 
-			getTextureAddressingMode(uvw.v));
-        glTexParameteri( mTextureTypes[stage], GL_TEXTURE_WRAP_R, 
-				getTextureAddressingMode(uvw.w));
-        glActiveTextureARB( GL_TEXTURE0 );
+
+        glActiveTextureARB_ptr( GL_TEXTURE0 + stage );
+        glTexParameteri( mTextureTypes[stage], GL_TEXTURE_WRAP_S, type );
+        glTexParameteri( mTextureTypes[stage], GL_TEXTURE_WRAP_T, type );
+        glTexParameteri( mTextureTypes[stage], GL_TEXTURE_WRAP_R, type );
+        glActiveTextureARB_ptr( GL_TEXTURE0 );
     }
     //-----------------------------------------------------------------------------
     void GLRenderSystem::_setTextureMatrix(size_t stage, const Matrix4& xform)
     {
-        GLfloat mat[16];
+		if (stage >= mFixedFunctionTextureUnits)
+		{
+			// Can't do this
+			return;
+		}
+
+		GLfloat mat[16];
         makeGLMatrix(mat, xform);
 
 		if(mTextureTypes[stage] != GL_TEXTURE_3D && 
@@ -1088,7 +1278,7 @@ namespace Ogre {
 //            printf("\n");
 //        }
 
-        glActiveTextureARB(GL_TEXTURE0 + stage);
+        glActiveTextureARB_ptr(GL_TEXTURE0 + stage);
         glMatrixMode(GL_TEXTURE);
 
         if (mUseAutoTextureMatrix)
@@ -1106,7 +1296,7 @@ namespace Ogre {
         }
 
         glMatrixMode(GL_MODELVIEW);
-        glActiveTextureARB(GL_TEXTURE0);
+        glActiveTextureARB_ptr(GL_TEXTURE0);
     }
     //-----------------------------------------------------------------------------
     GLint GLRenderSystem::getBlendMode(SceneBlendFactor ogreBlend) const
@@ -1517,7 +1707,7 @@ namespace Ogre {
                    (!mInvertVertexWinding && mActiveRenderTarget->requiresTextureFlipping());
 
             // Set alternative versions of ops
-            glActiveStencilFaceEXT(GL_BACK);
+            glActiveStencilFaceEXT_ptr(GL_BACK);
             glStencilMask(mask);
             glStencilFunc(convertCompareFunction(func), refValue, mask);
             glStencilOp(
@@ -1525,7 +1715,7 @@ namespace Ogre {
                 convertStencilOp(depthFailOp, !flip), 
                 convertStencilOp(passOp, !flip));
             // reset
-            glActiveStencilFaceEXT(GL_FRONT);
+            glActiveStencilFaceEXT_ptr(GL_FRONT);
         }
         else
         {
@@ -1639,7 +1829,7 @@ namespace Ogre {
 	{
         OgreGuard( "GLRenderSystem::_setTextureUnitFiltering" );        
 
-		glActiveTextureARB( GL_TEXTURE0 + unit );
+		glActiveTextureARB_ptr( GL_TEXTURE0 + unit );
         switch(ftype)
         {
         case FT_MIN:
@@ -1679,7 +1869,7 @@ namespace Ogre {
             break;
 		}
 
-        glActiveTextureARB( GL_TEXTURE0 );
+        glActiveTextureARB_ptr( GL_TEXTURE0 );
 
 		OgreUnguard();
 	}
@@ -1707,7 +1897,13 @@ namespace Ogre {
 	//-----------------------------------------------------------------------------
     void GLRenderSystem::_setTextureBlendMode(size_t stage, const LayerBlendModeEx& bm)
     {       
-        // Check to see if blending is supported
+		if (stage >= mFixedFunctionTextureUnits)
+		{
+			// Can't do this
+			return;
+		}
+
+		// Check to see if blending is supported
         if(!mCapabilities->hasCapability(RSC_BLENDING))
             return;
 
@@ -1759,8 +1955,6 @@ namespace Ogre {
 			break;
         // XXX
         case LBS_SPECULAR:
-            src1op = GL_PRIMARY_COLOR;
-            break;
 		default:
             src1op = 0;
         }
@@ -1781,8 +1975,6 @@ namespace Ogre {
 			break;
         // XXX
         case LBS_SPECULAR:
-            src2op = GL_PRIMARY_COLOR;
-            break;
 		default:
             src2op = 0;
         }
@@ -1833,7 +2025,7 @@ namespace Ogre {
             cmd = 0;
         }
 
-		glActiveTextureARB(GL_TEXTURE0 + stage);
+		glActiveTextureARB_ptr(GL_TEXTURE0 + stage);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
 
 	    if (bm.blendType == LBT_COLOUR)
@@ -1900,7 +2092,7 @@ namespace Ogre {
         if (bm.source2 == LBS_MANUAL)
             glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, cv2);
 
-        glActiveTextureARB(GL_TEXTURE0);
+        glActiveTextureARB_ptr(GL_TEXTURE0);
 	}
     //---------------------------------------------------------------------
     void GLRenderSystem::setGLLightPositionDirection(Light* lt, GLenum lightindex)
@@ -1960,7 +2152,7 @@ namespace Ogre {
                 op.vertexData->vertexBufferBinding->getBuffer(elem->getSource());
             if(mCapabilities->hasCapability(RSC_VBO))
             {
-                glBindBufferARB(GL_ARRAY_BUFFER_ARB, 
+                glBindBufferARB_ptr(GL_ARRAY_BUFFER_ARB, 
                     static_cast<const GLHardwareVertexBuffer*>(vertexBuffer.get())->getGLBufferId());
                 pBufferData = VBO_BUFFER_OFFSET(elem->getOffset());
             }
@@ -2000,7 +2192,7 @@ namespace Ogre {
                 glEnableClientState( GL_COLOR_ARRAY );
                 break;
             case VES_SPECULAR:
-                glSecondaryColorPointerEXT(4, 
+                glSecondaryColorPointerEXT_ptr(4, 
                     GLHardwareBufferManager::getGLType(elem->getType()), 
                     static_cast<GLsizei>(vertexBuffer->getVertexSize()), 
                     pBufferData);
@@ -2008,13 +2200,13 @@ namespace Ogre {
                 break;
             case VES_TEXTURE_COORDINATES:
 
-                for (i = 0; i < mCapabilities->getNumTextureUnits(); i++)
+                for (i = 0; i < OGRE_MAX_TEXTURE_COORD_SETS; i++)
                 {
 					// Only set this texture unit's texcoord pointer if it
 					// is supposed to be using this element's index
 					if (mTextureCoordIndex[i] == elem->getIndex())
 					{
-						glClientActiveTextureARB(GL_TEXTURE0 + i);
+						glClientActiveTextureARB_ptr(GL_TEXTURE0 + i);
 						glTexCoordPointer(
 							VertexElement::getTypeCount(elem->getType()), 
 							GLHardwareBufferManager::getGLType(elem->getType()),
@@ -2026,25 +2218,25 @@ namespace Ogre {
                 break;
             case VES_BLEND_INDICES:
                 assert(mCapabilities->hasCapability(RSC_VERTEX_PROGRAM));
-                glVertexAttribPointerARB(
+                glVertexAttribPointerARB_ptr(
                     7, // matrix indices are vertex attribute 7 (no def?)
                     VertexElement::getTypeCount(elem->getType()), 
                     GLHardwareBufferManager::getGLType(elem->getType()), 
                     GL_FALSE, // normalisation disabled
                     static_cast<GLsizei>(vertexBuffer->getVertexSize()), 
                     pBufferData);
-                glEnableVertexAttribArrayARB(7);
+                glEnableVertexAttribArrayARB_ptr(7);
                 break;
             case VES_BLEND_WEIGHTS:
                 assert(mCapabilities->hasCapability(RSC_VERTEX_PROGRAM));
-                glVertexAttribPointerARB(
+                glVertexAttribPointerARB_ptr(
                     1, // weights are vertex attribute 1 (no def?)
                     VertexElement::getTypeCount(elem->getType()), 
                     GLHardwareBufferManager::getGLType(elem->getType()), 
                     GL_FALSE, // normalisation disabled
                     static_cast<GLsizei>(vertexBuffer->getVertexSize()), 
                     pBufferData);
-                glEnableVertexAttribArrayARB(1);
+                glEnableVertexAttribArrayARB_ptr(1);
                 break;
             default:
                 break;
@@ -2052,7 +2244,7 @@ namespace Ogre {
 
         }
 
-        glClientActiveTextureARB(GL_TEXTURE0);
+        glClientActiveTextureARB_ptr(GL_TEXTURE0);
 
         // Find the correct type to render
         GLint primType;
@@ -2082,7 +2274,7 @@ namespace Ogre {
         {
             if(mCapabilities->hasCapability(RSC_VBO))
             {
-                glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 
+                glBindBufferARB_ptr(GL_ELEMENT_ARRAY_BUFFER_ARB, 
                     static_cast<GLHardwareIndexBuffer*>(
                         op.indexData->indexBuffer.get())->getGLBufferId());
 
@@ -2098,38 +2290,31 @@ namespace Ogre {
 
             GLenum indexType = (op.indexData->indexBuffer->getType() == HardwareIndexBuffer::IT_16BIT) ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
 
-			do
-			{
-				glDrawElements(primType, op.indexData->indexCount, indexType, pBufferData);
-			} while (updatePassIterationRenderState());
+            glDrawElements(primType, op.indexData->indexCount, indexType, pBufferData);
 
         }
         else
         {
             glDrawArrays(primType, 0, op.vertexData->vertexCount);
-			do
-			{
-				glDrawArrays(primType, 0, op.vertexData->vertexCount);
-			} while (updatePassIterationRenderState());
         }
 
         glDisableClientState( GL_VERTEX_ARRAY );
-        for (int i = 0; i < mCapabilities->getNumTextureUnits(); i++)
+        for (int i = 0; i < OGRE_MAX_TEXTURE_COORD_SETS; i++)
         {
-            glClientActiveTextureARB(GL_TEXTURE0 + i);
+            glClientActiveTextureARB_ptr(GL_TEXTURE0 + i);
             glDisableClientState( GL_TEXTURE_COORD_ARRAY );
         }
-        glClientActiveTextureARB(GL_TEXTURE0);
+        glClientActiveTextureARB_ptr(GL_TEXTURE0);
         glDisableClientState( GL_NORMAL_ARRAY );
         glDisableClientState( GL_COLOR_ARRAY );
         glDisableClientState( GL_SECONDARY_COLOR_ARRAY );
         if (mCapabilities->hasCapability(RSC_VERTEX_PROGRAM))
         {
-            glDisableVertexAttribArrayARB(7); // disable indices
-            glDisableVertexAttribArrayARB(1); // disable weights
+            glDisableVertexAttribArrayARB_ptr(7); // disable indices
+            glDisableVertexAttribArrayARB_ptr(1); // disable weights
         }
         glColor4f(1,1,1,1);
-        glSecondaryColor3fEXT(0.0f, 0.0f, 0.0f);
+        glSecondaryColor3fEXT_ptr(0.0f, 0.0f, 0.0f);
 
         // UnGuard
         OgreUnguard();
@@ -2163,16 +2348,15 @@ namespace Ogre {
 
         if (gptype == GPT_VERTEX_PROGRAM && mCurrentVertexProgram)
         {
-            mActiveVertexGpuProgramParameters.setNull();
             mCurrentVertexProgram->unbindProgram();
             mCurrentVertexProgram = 0;
         }
         else if (gptype == GPT_FRAGMENT_PROGRAM && mCurrentFragmentProgram)
         {
-            mActiveFragmentGpuProgramParameters.setNull();
             mCurrentFragmentProgram->unbindProgram();
             mCurrentFragmentProgram = 0;
         }
+
 
     }
 	//---------------------------------------------------------------------
@@ -2180,25 +2364,11 @@ namespace Ogre {
     {
         if (gptype == GPT_VERTEX_PROGRAM)
         {
-            mActiveVertexGpuProgramParameters = params;
             mCurrentVertexProgram->bindProgramParameters(params);
         }
         else
         {
-            mActiveFragmentGpuProgramParameters = params;
             mCurrentFragmentProgram->bindProgramParameters(params);
-        }
-    }
-	//---------------------------------------------------------------------
-    void GLRenderSystem::bindGpuProgramPassIterationParameters(GpuProgramType gptype)
-    {
-        if (gptype == GPT_VERTEX_PROGRAM)
-        {
-            mCurrentVertexProgram->bindProgramPassIterationParameters(mActiveVertexGpuProgramParameters);
-        }
-        else
-        {
-            mCurrentFragmentProgram->bindProgramPassIterationParameters(mActiveFragmentGpuProgramParameters);
         }
     }
 	//---------------------------------------------------------------------
@@ -2441,35 +2611,17 @@ namespace Ogre {
     void GLRenderSystem::_setRenderTarget(RenderTarget *target)
     {
         mActiveRenderTarget = target;
-        
         // Switch context if different from current one
         ContextMap::iterator i = mContextMap.find(target);
-        if(i != mContextMap.end() && mCurrentContext != i->second) 
-        {
-            // This rendertarget has a registered context, activate it
+        if(i != mContextMap.end() && mCurrentContext != i->second) {
             mCurrentContext->endCurrent();
             mCurrentContext = i->second;
-            mCurrentContext->setCurrent();
-            
             // Check if the context has already done one-time initialisation
             if(!mCurrentContext->getInitialized()) {
                _oneTimeContextInitialization();
                mCurrentContext->setInitialized();
             }
-        }
-        
-        // Bind frame buffer object
-        if(mFBO)
-        {
-            GLuint fb;
-            /// Check if the render target is in the rendertarget->FBO map
-            FBOMap::iterator i = mFBOMap.find(target);
-            if(i != mFBOMap.end()) 
-                fb = i->second;
-            else
-                // Old style context (window/pbuffer) or copying render texture
-                fb = 0;
-            glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fb);
+            mCurrentContext->setCurrent();
         }
     }
     //---------------------------------------------------------------------

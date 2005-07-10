@@ -51,7 +51,7 @@ bool avp10_init(char * s)
 	line_number = 1;
 	myin = s;
 
-    glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_BINDING_ARB, &vpid);
+    glGetProgramivARB_ptr(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_BINDING_ARB, &vpid);
         
     if ( vpid == 0 )
     {
@@ -83,12 +83,12 @@ namespace
         const GLubyte *errString;
         int len = strlen(instring);
 
-        glBindProgramARB(target, id);
+        glBindProgramARB_ptr(target, id);
         errCode = glGetError();
         if (errCode == GL_INVALID_OPERATION)
                 errString = gluErrorString(errCode);
 
-        glProgramStringARB(target, 
+        glProgramStringARB_ptr(target, 
                            GL_PROGRAM_FORMAT_ASCII_ARB, 
                            len,
                            instring);

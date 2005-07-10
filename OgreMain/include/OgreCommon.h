@@ -141,10 +141,7 @@ namespace Ogre {
         /// Gradual steady increase from min to max over the period with an instant return to min at the end.
         WFT_SAWTOOTH,
         /// Gradual steady decrease from max to min over the period, with an instant return to max at the end.
-        WFT_INVERSE_SAWTOOTH,
-		/// Pulse Width Modulation. Works like WFT_SQUARE, except the high to low transition is controlled by duty cycle. 
-		/// With a duty cycle of 50% (0.5) will give the same output as WFT_SQUARE.
-		WFT_PWM
+        WFT_INVERSE_SAWTOOTH
     };
 
     /** The broad type of detail for rendering. */
@@ -203,43 +200,32 @@ namespace Ogre {
 	/// Name / value parameter pair (first = name, second = value)
 	typedef std::map<String, String> NameValuePairList;
 
-        template< typename T > struct TRect
-        {
-          T left, top, right, bottom;
-          TRect() {}
-          TRect( T const & l, T const & t, T const & r, T const & b )
-            : left( l ), top( t ), right( r ), bottom( b )
-          {
-          }
-          TRect( TRect const & o )
-            : left( o.left ), top( o.top ), right( o.right ), bottom( o.bottom )
-          {
-          }
-          TRect & operator=( TRect const & o )
-          {
-            left = o.left;
-            top = o.top;
-            right = o.right;
-            bottom = o.bottom;
-            return *this;
-          }
-          T width() const
-          {
-            return right - left;
-          }
-          T height() const
-          {
-            return bottom - top;
-          }
-        };
-
-        /** Structure used to define a rectangle in a 2-D floating point space.
-        */
-        typedef TRect<float> FloatRect;
-
         /** Structure used to define a rectangle in a 2-D integer space.
         */
-        typedef TRect< long > Rect;
+        struct Rect
+        {
+            long left, top, right, bottom;
+
+            Rect()
+            {
+            }
+            Rect( long l, long t, long r, long b )
+            {
+                left = l;
+                top = t;   
+                right = r;
+                bottom = b;                
+            }
+            Rect& operator = ( const Rect& other )
+            {
+                left = other.left;
+                top = other.top;
+                right = other.right;
+                bottom = other.bottom;       
+
+                return *this;
+            }
+        };
 
         /** Structure used to define a box in a 3-D integer space.
          	Note that the left, top, and front edges are included but the right, 

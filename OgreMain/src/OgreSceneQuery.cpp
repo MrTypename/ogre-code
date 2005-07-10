@@ -25,44 +25,28 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreStableHeaders.h"
 #include "OgreSceneQuery.h"
 #include "OgreException.h"
-#include "OgreSceneManager.h"
 
 namespace Ogre {
 
     //-----------------------------------------------------------------------
     SceneQuery::SceneQuery(SceneManager* mgr)
-        : mParentSceneMgr(mgr), mQueryMask(0xFFFFFFFF), 
-		mWorldFragmentType(SceneQuery::WFT_NONE)
+        : mParentSceneMgr(mgr), mQueryMask(0xFFFFFFFF), mWorldFragmentType(SceneQuery::WFT_NONE)
     {
-		// default type mask to everything except lights & fx (previous behaviour)
-		mQueryTypeMask = (0xFFFFFFFF & ~SceneManager::FX_TYPE_MASK) 
-			& ~SceneManager::LIGHT_TYPE_MASK;
-
     }
     //-----------------------------------------------------------------------
     SceneQuery::~SceneQuery()
     {
     }
     //-----------------------------------------------------------------------
-    void SceneQuery::setQueryMask(uint32 mask)
+    void SceneQuery::setQueryMask(unsigned long mask)
     {
         mQueryMask = mask;
     }
     //-----------------------------------------------------------------------
-    uint32 SceneQuery::getQueryMask(void) const
+    unsigned long SceneQuery::getQueryMask(void) const
     {
         return mQueryMask;
     }
-	//-----------------------------------------------------------------------
-	void SceneQuery::setQueryTypeMask(uint32 mask)
-	{
-		mQueryTypeMask = mask;
-	}
-	//-----------------------------------------------------------------------
-	uint32 SceneQuery::getQueryTypeMask(void) const
-	{
-		return mQueryTypeMask;
-	}
     //-----------------------------------------------------------------------
     void SceneQuery::setWorldFragmentType(enum SceneQuery::WorldFragmentType wft)
     {
@@ -196,10 +180,12 @@ namespace Ogre {
     {
         mSortByDistance = false;
         mMaxResults = 0;
+        mLastResult = NULL;
     }
     //-----------------------------------------------------------------------
     RaySceneQuery::~RaySceneQuery()
     {
+        clearResults();
     }
     //-----------------------------------------------------------------------
     void RaySceneQuery::setRay(const Ray& ray)
@@ -230,39 +216,48 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     RaySceneQueryResult& RaySceneQuery::execute(void)
     {
-        // Clear without freeing the vector buffer
-        mResult.clear();
-        
+        clearResults();
+        mLastResult = new RaySceneQueryResult();
         // Call callback version with self as listener
         this->execute(this);
 
         if (mSortByDistance)
         {
-            if (mMaxResults != 0 && mMaxResults < mResult.size())
+            // Perform sort
+            mLastResult->sort();
+
+            if (mMaxResults && mLastResult->size() > mMaxResults)
             {
-                // Partially sort the N smallest elements, discard others
-                std::partial_sort(mResult.begin(), mResult.begin()+mMaxResults, mResult.end());
-                mResult.resize(mMaxResults);
-            }
-            else
-            {
-                // Sort entire result array
-                std::sort(mResult.begin(), mResult.end());
+                // Constrain to maxresults
+                RaySceneQueryResult::iterator start;
+                int x = 0;
+                for(start = mLastResult->begin(); x < mMaxResults; ++x)
+                {
+                    // Increment deletion start point
+                    ++start;
+                }
+                // erase
+                mLastResult->erase(start, mLastResult->end());
             }
         }
 
-        return mResult;
+        return *mLastResult;
+
     }
     //-----------------------------------------------------------------------
-    RaySceneQueryResult& RaySceneQuery::getLastResults(void)
+    RaySceneQueryResult& RaySceneQuery::getLastResults(void) const
     {
-        return mResult;
+        assert (mLastResult);
+        return *mLastResult;
     }
     //-----------------------------------------------------------------------
     void RaySceneQuery::clearResults(void)
     {
-        // C++ idiom to free vector buffer: swap with empty vector
-        RaySceneQueryResult().swap(mResult);
+        if (mLastResult)
+        {
+            delete mLastResult;
+        }
+        mLastResult = NULL;
     }
     //-----------------------------------------------------------------------
     bool RaySceneQuery::queryResult(MovableObject* obj, Real distance)
@@ -272,7 +267,7 @@ namespace Ogre {
         dets.distance = distance;
         dets.movable = obj;
         dets.worldFragment = NULL;
-        mResult.push_back(dets);
+        mLastResult->push_back(dets);
         // Continue
         return true;
     }
@@ -284,7 +279,7 @@ namespace Ogre {
         dets.distance = distance;
         dets.movable = NULL;
         dets.worldFragment = fragment;
-        mResult.push_back(dets);
+        mLastResult->push_back(dets);
         // Continue
         return true;
     }

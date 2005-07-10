@@ -8,7 +8,6 @@
 #include "OgreWin32GLSupport.h"
 #include "OgreGLTexture.h"
 #include "OgreWin32Window.h"
-#include <GL/wglext.h>
 
 #define HW_RTT
 
@@ -17,8 +16,6 @@
 #endif
 
 using namespace Ogre;
-
-GLenum wglewContextInit (Ogre::GLSupport *glSupport);
 
 namespace Ogre {
 	Win32GLSupport::Win32GLSupport():
@@ -261,9 +258,6 @@ namespace Ogre {
 		assert(mInitialWindow);
 		// First, initialise the normal extensions
 		GLSupport::initialiseExtensions();
-		// wglew init
-		wglewContextInit(this);
-
 		// Check for W32 specific extensions probe function
 		PFNWGLGETEXTENSIONSSTRINGARBPROC _wglGetExtensionsStringARB = 
 			(PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
@@ -410,19 +404,13 @@ namespace Ogre {
 				};
 				int formats[256];
 				unsigned int count;
-				PFNWGLCHOOSEPIXELFORMATARBPROC _wglChoosePixelFormatARB =
-					(PFNWGLCHOOSEPIXELFORMATARBPROC)
-					wglGetProcAddress("wglChoosePixelFormatARB");
-				_wglChoosePixelFormatARB(hdc, iattr, 0, 256, formats, &count);
+				wglChoosePixelFormatARB(hdc, iattr, 0, 256, formats, &count);
 				
 				// determine what multisampling levels are offered
 				int query = WGL_SAMPLES_ARB, samples;
 				for (unsigned int i = 0; i < count; ++i)
 				{
-					PFNWGLGETPIXELFORMATATTRIBIVARBPROC _wglGetPixelFormatAttribivARB =
-						(PFNWGLGETPIXELFORMATATTRIBIVARBPROC)
-						wglGetProcAddress("wglGetPixelFormatAttribivARB");
-					if (_wglGetPixelFormatAttribivARB(hdc, formats[i],
+					if (wglGetPixelFormatAttribivARB(hdc, formats[i],
 													0, 1, &query, &samples))
 						mFSAALevels.push_back(samples);
 				}

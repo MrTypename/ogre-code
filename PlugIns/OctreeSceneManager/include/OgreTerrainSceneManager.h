@@ -78,10 +78,6 @@ public:
 
     /** Loads the terrain using parameters int he given config file. */
     void setWorldGeometry( const String& filename );
-    /** Loads the terrain using parameters in the given config file (contained 
-		in a stream). */
-	virtual void setWorldGeometry(DataStreamPtr& stream, 
-		const String& typeName = StringUtil::BLANK);
 
     /** Aligns TerrainRenderable neighbors, and renders them. */
     virtual void _renderVisibleObjects( void );
@@ -373,7 +369,7 @@ protected:
     TerrainPage2D mTerrainPages;
     
     /// Internal method for loading configurations settings
-    void loadConfig(DataStreamPtr& stream);
+    void loadConfig(const String& filename);
 
     /// Sets up the terrain material
     void setupTerrainMaterial(void);

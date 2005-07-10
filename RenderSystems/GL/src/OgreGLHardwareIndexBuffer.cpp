@@ -33,7 +33,7 @@ namespace Ogre {
         size_t numIndexes, HardwareBuffer::Usage usage, bool useShadowBuffer)
         : HardwareIndexBuffer(idxType, numIndexes, usage, false, useShadowBuffer)
     {
-        glGenBuffersARB( 1, &mBufferId );
+        glGenBuffersARB_ptr( 1, &mBufferId );
 
         if (!mBufferId)
         {
@@ -42,10 +42,10 @@ namespace Ogre {
                 "GLHardwareIndexBuffer::GLHardwareIndexBuffer");
         }
 
-        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, mBufferId);
+        glBindBufferARB_ptr(GL_ELEMENT_ARRAY_BUFFER_ARB, mBufferId);
 
         // Initialise buffer and set usage
-        glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, mSizeInBytes, NULL, 
+        glBufferDataARB_ptr(GL_ELEMENT_ARRAY_BUFFER_ARB, mSizeInBytes, NULL, 
             GLHardwareBufferManager::getGLUsage(usage));
 
         //std::cerr << "creating index buffer " << mBufferId << std::endl;
@@ -53,7 +53,7 @@ namespace Ogre {
 	//---------------------------------------------------------------------
     GLHardwareIndexBuffer::~GLHardwareIndexBuffer()
     {
-        glDeleteBuffersARB(1, &mBufferId);
+        glDeleteBuffersARB_ptr(1, &mBufferId);
     }
 	//---------------------------------------------------------------------
     void* GLHardwareIndexBuffer::lockImpl(size_t offset, 
@@ -68,13 +68,13 @@ namespace Ogre {
                     "GLHardwareIndexBuffer::lock");
         }
 
-        glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, mBufferId );
+        glBindBufferARB_ptr( GL_ELEMENT_ARRAY_BUFFER_ARB, mBufferId );
         
         if(options == HBL_DISCARD)
         {
             //TODO: really we should use this to indicate our discard of the buffer
             //However it makes no difference to fps on nVidia, and can crash some ATI
-            //glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, mSizeInBytes, NULL, 
+            //glBufferDataARB_ptr(GL_ELEMENT_ARRAY_BUFFER_ARB, mSizeInBytes, NULL, 
             //    GLHardwareBufferManager::getGLUsage(mUsage));
 
             // TODO: we should be using the below implementation, but nVidia cards
@@ -107,7 +107,7 @@ namespace Ogre {
                 "Invalid locking option set", "GLHardwareIndexBuffer::lock");
         }
 
-        void* pBuffer = glMapBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, access );
+        void* pBuffer = glMapBufferARB_ptr( GL_ELEMENT_ARRAY_BUFFER_ARB, access );
 
         if(pBuffer == 0)
         {
@@ -124,9 +124,9 @@ namespace Ogre {
 	//---------------------------------------------------------------------
 	void GLHardwareIndexBuffer::unlockImpl(void)
     {
-        glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, mBufferId );
+        glBindBufferARB_ptr( GL_ELEMENT_ARRAY_BUFFER_ARB, mBufferId );
 
-        if(!glUnmapBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB ))
+        if(!glUnmapBufferARB_ptr( GL_ELEMENT_ARRAY_BUFFER_ARB ))
         {
             OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
                 "Buffer data corrupted, please reload", 
@@ -148,15 +148,15 @@ namespace Ogre {
         }
         else
         {
-            glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, mBufferId );
-            glGetBufferSubDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, offset, length, pDest);
+            glBindBufferARB_ptr( GL_ELEMENT_ARRAY_BUFFER_ARB, mBufferId );
+            glGetBufferSubDataARB_ptr(GL_ELEMENT_ARRAY_BUFFER_ARB, offset, length, pDest);
         }
     }
 	//---------------------------------------------------------------------
     void GLHardwareIndexBuffer::writeData(size_t offset, size_t length, 
             const void* pSource, bool discardWholeBuffer)
     {
-        glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, mBufferId );
+        glBindBufferARB_ptr( GL_ELEMENT_ARRAY_BUFFER_ARB, mBufferId );
 
         // Update the shadow buffer
         if(mUseShadowBuffer)
@@ -169,12 +169,12 @@ namespace Ogre {
 
         if(discardWholeBuffer)
         {
-            glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, mSizeInBytes, NULL,
+            glBufferDataARB_ptr(GL_ELEMENT_ARRAY_BUFFER_ARB, mSizeInBytes, NULL,
                 GLHardwareBufferManager::getGLUsage(mUsage));
         }
 
         // Now update the real buffer
-        glBufferSubDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, offset, length, pSource);
+        glBufferSubDataARB_ptr(GL_ELEMENT_ARRAY_BUFFER_ARB, offset, length, pSource);
     }
 	//---------------------------------------------------------------------
 }

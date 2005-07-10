@@ -95,9 +95,9 @@ http://www.gnu.org/copyleft/lesser.txt
 namespace Ogre {
     // Define ogre version
     #define OGRE_VERSION_MAJOR 1
-    #define OGRE_VERSION_MINOR 1
-    #define OGRE_VERSION_PATCH 0
-    #define OGRE_VERSION_NAME "Dagon"
+    #define OGRE_VERSION_MINOR 0
+    #define OGRE_VERSION_PATCH 3
+    #define OGRE_VERSION_NAME "Azathoth"
 
     #if OGRE_DOUBLE_PRECISION == 1
 		/** Software floating point type.
@@ -269,10 +269,6 @@ namespace Ogre {
 	class MouseMotionListener;
 	class MouseTarget;
     class Node;
-	class NodeAnimationTrack;
-	class NodeKeyFrame;
-	class NumericAnimationTrack;
-	class NumericKeyFrame;
     class Overlay;
     class OverlayContainer;
     class OverlayElement;
@@ -345,25 +341,21 @@ namespace Ogre {
 	class TagPoint;
 	class TargetManager;
     class Technique;
-	class TempBlendedBufferInfo;
 	class ExternalTextureSource;
     class TextureUnitState;
     class Texture;
     class TexturePtr;
 	class TextureFont;
     class TextureManager;
-	class TransformKeyFrame;
 	class Timer;
     class UserDefinedObject;
     class Vector2;
     class Vector3;
     class Vector4;
     class Viewport;  
-	class VertexAnimationTrack;
     class VertexBufferBinding;
     class VertexData;
     class VertexDeclaration;
-	class VertexKeyFrame;
     class WireBoundingBox; 
 }
 

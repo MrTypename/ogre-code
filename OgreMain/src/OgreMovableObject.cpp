@@ -34,26 +34,18 @@ namespace Ogre {
 
     //-----------------------------------------------------------------------
     MovableObject::MovableObject()
-		: mCreator(0), mParentNode(0), mParentIsTagPoint(false), mVisible(true), 
-		 mUpperDistance(0), mSquaredUpperDistance(0), mBeyondFarDistance(false),
-         mRenderQueueID(RENDER_QUEUE_MAIN),
-         mRenderQueueIDSet(false), mQueryFlags(0xFFFFFFFF),
-         mCastShadows (true)
     {
-		mWorldAABB.setNull();
-        
+        mParentNode = 0;
+        mVisible = true;
+        mUserObject = 0;
+        mRenderQueueID = RENDER_QUEUE_MAIN;
+        mRenderQueueIDSet = false;
+        mQueryFlags = 0xFFFFFFFF;
+        mWorldAABB.setNull();
+        mParentIsTagPoint = false;
+        mCastShadows = true;
     }
-	//-----------------------------------------------------------------------
-	MovableObject::MovableObject(const String& name) 
-		: mName(name), mCreator(0), mParentNode(0), mParentIsTagPoint(false), 
-		mVisible(true), mUpperDistance(0), mSquaredUpperDistance(0), 
-		mBeyondFarDistance(false), mRenderQueueID(RENDER_QUEUE_MAIN),
-		mRenderQueueIDSet(false), mQueryFlags(0xFFFFFFFF),
-		mCastShadows (true)
-	{
-		mWorldAABB.setNull();
-	}
-	//-----------------------------------------------------------------------
+    //-----------------------------------------------------------------------
     MovableObject::~MovableObject()
     {
         if (mParentNode)
@@ -132,37 +124,9 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     bool MovableObject::isVisible(void) const
     {
-		return mVisible && !mBeyondFarDistance;
-    }
-	//-----------------------------------------------------------------------
-	void MovableObject::_notifyCurrentCamera(Camera* cam)
-	{
-		if (mParentNode)
-		{
-			if (mSquaredUpperDistance)
-			{
-				Real rad = getBoundingRadius();
-				Real squaredDepth = mParentNode->getSquaredViewDepth(cam);
-				// Distance from the edge of the bounding sphere
-				Real dist = squaredDepth - rad*rad;
-				// Clamp to 0
-				dist = std::max(static_cast<Real>(0.0), dist);
-				if (dist > mSquaredUpperDistance)
-				{
-					mBeyondFarDistance = true;
-				}
-				else
-				{
-					mBeyondFarDistance = false;
-				}
-			}
-			else
-			{
-				mBeyondFarDistance = false;
-			}
-		}
+        return mVisible;
 
-	}
+    }
     //-----------------------------------------------------------------------
     void MovableObject::setRenderQueueGroup(RenderQueueGroupID queueID)
     {
@@ -246,27 +210,6 @@ namespace Ogre {
             return 0;
         }
     }
-	//-----------------------------------------------------------------------
-	uint32 MovableObject::getTypeFlags(void) const
-	{
-		if (mCreator)
-		{
-			return mCreator->getTypeFlags();
-		}
-		else
-		{
-			return 0xFFFFFFFF;
-		}
-	}
-	//-----------------------------------------------------------------------
-	//-----------------------------------------------------------------------
-	MovableObject* MovableObjectFactory::createInstance(
-		const String& name, const NameValuePairList* params)
-	{
-		MovableObject* m = createInstanceImpl(name, params);
-		m->_notifyCreator(this);
-		return m;
-	}
 
 
 }

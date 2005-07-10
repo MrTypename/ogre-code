@@ -43,9 +43,8 @@ namespace Ogre {
         mMaterialLodIndex = 0;
         mRenderDetail = SDL_SOLID;
         mVisible = true;
-        mSkelAnimVertexData = 0;
-		mSoftwareMorphAnimVertexData = 0;
-		mHardwareMorphAnimVertexData = 0;
+        mBlendedVertexData = 0;
+        mBlendedVertexData = NULL;
 
 
 
@@ -53,12 +52,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     SubEntity::~SubEntity()
     {
-        if (mSkelAnimVertexData)
-            delete mSkelAnimVertexData;
-		if (mHardwareMorphAnimVertexData)
-			delete mHardwareMorphAnimVertexData;
-		if (mSoftwareMorphAnimVertexData)
-			delete mSoftwareMorphAnimVertexData;
+        if (mBlendedVertexData)
+            delete mBlendedVertexData;
     }
     //-----------------------------------------------------------------------
     SubMesh* SubEntity::getSubMesh(void)
@@ -76,6 +71,8 @@ namespace Ogre {
 
         //String oldName = mMaterialName;
         mMaterialName = name;
+        // Update SceneManager re material change
+        //mParentEntity->mCreatorSceneManager->_notifyMaterialUsage(oldName, mMaterialName, this);
         mpMaterial = MaterialManager::getSingleton().getByName(mMaterialName);
 
         if (mpMaterial.isNull())
@@ -116,48 +113,24 @@ namespace Ogre {
     {
 		// Use LOD
         mSubMesh->_getRenderOperation(op, mParentEntity->mMeshLodIndex);
-		// Deal with any vertex data overrides
-		op.vertexData = getVertexDataForBinding();
+        // Do we need to use software skinned vertex data?
+        if (mParentEntity->hasSkeleton() && !mParentEntity->mHardwareSkinning)
+        {
+            op.vertexData = mSubMesh->useSharedVertices ? 
+                mParentEntity->mSharedBlendedVertexData : mBlendedVertexData;
 
+        }
     }
-	//-----------------------------------------------------------------------
-	VertexData* SubEntity::getVertexDataForBinding(void)
-	{
-		if (mSubMesh->useSharedVertices)
-		{
-			return mParentEntity->getVertexDataForBinding();
-		}
-		else
-		{
-			Entity::VertexDataBindChoice c = mParentEntity->chooseVertexDataForBinding();
-			switch(c)
-			{
-			case Entity::BIND_ORIGINAL:
-				return mSubMesh->vertexData;
-			case Entity::BIND_HARDWARE_MORPH:
-				return mHardwareMorphAnimVertexData;
-			case Entity::BIND_SOFTWARE_MORPH:
-				return mSoftwareMorphAnimVertexData;
-			case Entity::BIND_SOFTWARE_SKELETAL:
-				return mSkelAnimVertexData;
-			};
-			// keep compiler happy
-			return mSubMesh->vertexData;
-
-		}
-	}
     //-----------------------------------------------------------------------
     void SubEntity::getWorldTransforms(Matrix4* xform) const
     {
         if (!mParentEntity->mNumBoneMatrices)
         {
-			// no bones
             *xform = mParentEntity->_getParentNodeFullTransform();
         }
         else
         {
-			// bones
-            if (!mParentEntity->isHardwareAnimationEnabled())
+            if (!mParentEntity->isHardwareSkinningEnabled())
             {
                 // Software skinning involves pretransforming
                 // No transform required
@@ -190,7 +163,7 @@ namespace Ogre {
     unsigned short SubEntity::getNumWorldTransforms(void) const
     {
         if (!mParentEntity->mNumBoneMatrices ||
-            !mParentEntity->isHardwareAnimationEnabled())
+            !mParentEntity->isHardwareSkinningEnabled())
         {
             // No skeletal animation, or software skinning (pretransformed)
             return 1;
@@ -234,53 +207,19 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void SubEntity::prepareTempBlendBuffers(void)
     {
-		if (mSubMesh->useSharedVertices)
-			return;
-
-        if (mSkelAnimVertexData) 
+        if (mBlendedVertexData) 
         {
-            delete mSkelAnimVertexData;
-            mSkelAnimVertexData = 0;
+            delete mBlendedVertexData;
+            mBlendedVertexData = 0;
         }
-		if (mSoftwareMorphAnimVertexData) 
-		{
-			delete mSoftwareMorphAnimVertexData;
-			mSoftwareMorphAnimVertexData = 0;
-		}
-		if (mHardwareMorphAnimVertexData) 
-		{
-			delete mHardwareMorphAnimVertexData;
-			mHardwareMorphAnimVertexData = 0;
-		}
-
 		if (!mSubMesh->useSharedVertices)
 		{
-			if (mParentEntity->hasMorphAnimation())
-			{
-				// Create temporary vertex blend info
-				// Prepare temp vertex data if needed
-				// Clone without copying data, remove blending info
-				// (since blend is performed in software)
-				mSoftwareMorphAnimVertexData = 
-					mParentEntity->cloneVertexDataRemoveBlendInfo(mSubMesh->vertexData);
-				mParentEntity->extractTempBufferInfo(mSoftwareMorphAnimVertexData, &mTempMorphAnimInfo);
-
-				// Also clone for hardware usage, don't remove blend info since we'll
-				// need it if we also hardware skeletally animate
-				mHardwareMorphAnimVertexData = mSubMesh->vertexData->clone(false);
-			}
-
-			if (mParentEntity->hasSkeleton())
-			{
-				// Create temporary vertex blend info
-				// Prepare temp vertex data if needed
-				// Clone without copying data, remove blending info
-				// (since blend is performed in software)
-				mSkelAnimVertexData = 
-					mParentEntity->cloneVertexDataRemoveBlendInfo(mSubMesh->vertexData);
-				mParentEntity->extractTempBufferInfo(mSkelAnimVertexData, &mTempSkelAnimInfo);
-
-			}
+			// Clone without copying data
+			mBlendedVertexData = 
+            	mParentEntity->cloneVertexDataRemoveBlendInfo(
+					mSubMesh->vertexData);
+			mParentEntity->extractTempBufferInfo(
+				mBlendedVertexData, &mTempBlendedBuffer);
 		}
     }
     //-----------------------------------------------------------------------
@@ -289,89 +228,10 @@ namespace Ogre {
         return mParentEntity->getCastShadows();
     }
 	//-----------------------------------------------------------------------
-	VertexData* SubEntity::_getSkelAnimVertexData(void) 
+	const VertexData* SubEntity::_getBlendedVertexData(void) const
 	{
-		assert (mSkelAnimVertexData && "Not software skinned!");
-		return mSkelAnimVertexData;
+		assert (mBlendedVertexData && "Not software skinned!");
+		return mBlendedVertexData;
 	}
-	//-----------------------------------------------------------------------
-	VertexData* SubEntity::_getSoftwareMorphAnimVertexData(void)
-	{
-		assert (mSoftwareMorphAnimVertexData && "Not morph animated!");
-		return mSoftwareMorphAnimVertexData;
-	}
-	//-----------------------------------------------------------------------
-	VertexData* SubEntity::_getHardwareMorphAnimVertexData(void)
-	{
-		assert (mHardwareMorphAnimVertexData && "Not morph animated!");
-		return mHardwareMorphAnimVertexData;
-	}
-	//-----------------------------------------------------------------------
-	TempBlendedBufferInfo* SubEntity::_getSkelAnimTempBufferInfo(void) 
-	{
-		return &mTempSkelAnimInfo;
-	}
-	//-----------------------------------------------------------------------
-	TempBlendedBufferInfo* SubEntity::_getMorphAnimTempBufferInfo(void) 
-	{
-		return &mTempMorphAnimInfo;
-	}
-	//-----------------------------------------------------------------------
-	void SubEntity::_updateCustomGpuParameter(
-		const GpuProgramParameters::AutoConstantEntry& constantEntry,
-		GpuProgramParameters* params) const
-	{
-		if (constantEntry.paramType == GpuProgramParameters::ACT_ANIMATION_PARAMETRIC)
-		{
-			// get the parametric morph value
-			if (mHardwareMorphAnimVertexData)
-			{
-				params->setConstant(constantEntry.index, 
-					mHardwareMorphAnimVertexData->hwMorphParametric);
-			}
-			else
-			{
-				params->setConstant(constantEntry.index, 
-					mParentEntity->mHardwareMorphAnimVertexData->hwMorphParametric);
-			}
-		}
-		else
-		{
-			// default
-			return Renderable::_updateCustomGpuParameter(constantEntry, params);
-		}
-	}
-	//-----------------------------------------------------------------------------
-	void SubEntity::copyOriginalVertexDataToMorph(void)
-	{
-		if (!mSubMesh->useSharedVertices)
-		{
-			const VertexElement* srcPosElem = 
-				mSubMesh->vertexData->vertexDeclaration->findElementBySemantic(VES_POSITION);
-			HardwareVertexBufferSharedPtr srcBuf = 
-				mSubMesh->vertexData->vertexBufferBinding->getBuffer(
-				srcPosElem->getSource());
-
-			// Bind to software
-			const VertexElement* destPosElem = 
-				mSoftwareMorphAnimVertexData->vertexDeclaration->findElementBySemantic(VES_POSITION);
-			mSoftwareMorphAnimVertexData->vertexBufferBinding->setBinding(
-				destPosElem->getSource(), srcBuf);
-
-			// Bind to hardware as both pos1 and pos2
-			if (!mHardwareMorphAnimVertexData->hwMorphTargetElement)
-				mHardwareMorphAnimVertexData->allocatehwMorphTargetElement();
-			destPosElem = 
-				mHardwareMorphAnimVertexData->vertexDeclaration->findElementBySemantic(VES_POSITION);
-			mHardwareMorphAnimVertexData->vertexBufferBinding->setBinding(
-				destPosElem->getSource(), srcBuf);
-			mHardwareMorphAnimVertexData->vertexBufferBinding->setBinding(
-				mHardwareMorphAnimVertexData->hwMorphTargetElement->getSource(),
-				srcBuf);
-			mHardwareMorphAnimVertexData->hwMorphParametric = 0.0f;
-
-		}
-	}
-
 
 }

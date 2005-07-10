@@ -274,69 +274,9 @@ namespace Ogre {
  			/** Provides inverse transpose of world matrix.
  			Equivalent to RenderMonkey's "WorldInverseTranspose".
  			*/
- 			ACT_INVERSE_TRANSPOSE_WORLD_MATRIX,
-
-            /** provides the pass index number within the technique
-                of the active materil.
-            */
-            ACT_PASS_NUMBER,
-
-            /** provides the current iteration number of the pass. The iteration
-                number is the number of times the current render operation has
-                been drawn for the acitve pass.
-            */
-            ACT_PASS_ITERATION_NUMBER,
-
-            /** provides current elapsed time
-            */
-            ACT_TIME,
-
-			/** Provides a parametric animation value [0..1], only available
-				where the renderable specifically implements it.
-			*/
-			ACT_ANIMATION_PARAMETRIC
+ 			ACT_INVERSE_TRANSPOSE_WORLD_MATRIX
  
         };
-
-        /** Defines the type of the extra data item used by the auto constant.
-
-        */
-        enum ACDataType {
-            /// no data is required
-            ACDT_NONE,
-            /// the auto constant requires data of type int
-            ACDT_INT,
-            /// the auto constant requires data of type real
-            ACDT_REAL
-        };
-
-        /** Defines the base element type of the auto constant
-        */
-        enum ElementType {
-            ET_INT,
-            ET_REAL
-        };
-
-        struct AutoConstantDefinition
-        {
-            AutoConstantType acType;
-            String name;
-            size_t elementCount;
-			/// The type of the constant in the program
-            ElementType elementType;
-			/// The type of any extra data
-            ACDataType dataType;
-
-			AutoConstantDefinition(AutoConstantType _acType, const String& _name, 
-				size_t _elementCount, ElementType _elementType, 
-				ACDataType _dataType)
-				:acType(_acType), name(_name), elementCount(_elementCount), 
-				elementType(_elementType), dataType(_dataType)
-			{
-				
-			}
-        };
-
         /** Structure recording the use of an automatic parameter. */
         class _OgrePrivate AutoConstantEntry
         {
@@ -366,7 +306,7 @@ namespace Ogre {
         {
             float val[4];
             bool isSet;
-            RealConstantEntry() : isSet(false)  {}
+            RealConstantEntry() : isSet(false) {}
         };
         /** Int parameter entry; contains both a group of 4 values and 
         an indicator to say if it's been set or not. This allows us to 
@@ -378,72 +318,29 @@ namespace Ogre {
             bool isSet;
             IntConstantEntry() : isSet(false) {}
         };
-
-        // nfz
-        /** stucture used to keep track of attributes for a constant definition.
-
-        */
-
-        struct ConstantDefinition
-        {
-            String name;
-            size_t entryIndex;
-            size_t elementCount;
-            ElementType elementType;
-            size_t autoIndex;
-            bool   isAllocated;
-            bool   isAuto;
-
-            ConstantDefinition()
-                : entryIndex(0)
-                , elementCount(0)
-                , elementType(ET_INT)
-                , autoIndex(0)
-                , isAllocated(false)
-                , isAuto(false)
-            {}
-
-        };
-
     protected:
-        static AutoConstantDefinition AutoConstantDictionary[];
         // Constant lists
         typedef std::vector<RealConstantEntry> RealConstantList;
         typedef std::vector<IntConstantEntry> IntConstantList;
         // Auto parameter storage
         typedef std::vector<AutoConstantEntry> AutoConstantList;
-        // parameter dictionary container
-        typedef std::vector<ConstantDefinition> ConstantDefinitionContainer;
         /// Packed list of floating-point constants
         RealConstantList mRealConstants;
         /// Packed list of integer constants
         IntConstantList mIntConstants;
         /// List of automatically updated parameters
         AutoConstantList mAutoConstants;
-        /// Container of parameter definitions
-        ConstantDefinitionContainer mConstantDefinitions;
-        /// Mapping from parameter names to NamedConstantEntry - high-level programs are expected to populate this
+        /// Mapping from parameter names to indexes - high-level programs are expected to populate this
         typedef std::map<String, size_t> ParamNameMap;
         ParamNameMap mParamNameMap;
         /// Do we need to transpose matrices?
         bool mTransposeMatrices;
 		/// flag to indicate if names not found will be automatically added
 		bool mAutoAddParamName;
-        /// active pass iteration parameter real constant entry;
-        RealConstantEntry* mActivePassIterationEntry;
-        /// index for active pass iteration parameter real constant entry;
-        size_t mActivePassIterationEntryIndex;
-
 
     public:
 		GpuProgramParameters();
 		~GpuProgramParameters() {}
-
-        /// Copy constructor
-        GpuProgramParameters(const GpuProgramParameters& oth);
-        /// Operator = overload
-        GpuProgramParameters& operator=(const GpuProgramParameters& oth);
-
 
 		/** Sets a 4-element floating-point parameter to the program.
 		@param index The constant index at which to place the parameter (each constant is
@@ -577,13 +474,6 @@ namespace Ogre {
         typedef ConstVectorIterator<AutoConstantList> AutoConstantIterator;
         /** Gets an iterator over the automatic constant bindings currently in place. */
         AutoConstantIterator getAutoConstantIterator(void) const;
-        /// Gets the number of int constants that have been set
-        size_t getAutoConstantCount(void) const { return mAutoConstants.size(); }
-		/** Gets a specific Auto Constant entry if index is in valid range
-			otherwise returns a NULL
-		@parem index which entry is to be retrieved
-		*/
-		AutoConstantEntry* getAutoConstantEntry(const size_t index);
         /** Returns true if this instance has any automatic constants. */
         bool hasAutoConstants(void) const { return !(mAutoConstants.empty()); }
         /** Updates the automatic parameters (except lights) based on the details provided. */
@@ -770,7 +660,7 @@ namespace Ogre {
         */  
         void setNamedConstantFromTime(const String& name, Real factor);
         /// Internal method for associating a parameter name with an index
-        void _mapParameterNameToIndex(const String& name, const size_t index );
+        void _mapParameterNameToIndex(const String& name, size_t index);
 
         /** Gets the constant index associated with a named parameter. */
         size_t getParamIndex(const String& name);
@@ -791,70 +681,7 @@ namespace Ogre {
 			GpuProgramParameters object.
 		*/
 		void copyConstantsFrom(const GpuProgramParameters& source);
-
-        /** Add (or update) a constant definition which describes a constant.  
-		@remarks
-			Mainly used for Material serialization but could also be used by material
-            editors. Returns the index of the constant definition.
-        @param name The name of the parameter.
-        @param index The constant index at which to place the parameter (each constant is
-            a 4D float).
-        @param elementCount The number of elements that make up the parameter. 
-			An example is if the parameter is a matrix4x4 then there are 16 
-			elements. 
-        @param isReal If true then indicates that the elements are float else they are int.
-        */
-        size_t addConstantDefinition(const String& name, const size_t index, 
-			const size_t elementCount, const ElementType elementType);
-
-        /** gets the constant definition associated with name if found else returns NULL
-        @param name The name of the constant
-        */
-        const ConstantDefinition* getConstantDefinition(const String& name) const;
-        /** gets the constant definition using an index into the constant definition array.
-            If the index is out of bounds then NULL is returned;
-        @param idx The constant index
-        */
-        const ConstantDefinition* getConstantDefinition(const size_t idx) const;
-        /** Find a matching constant defintion.  Matches name, entry index, and element type.
-        @returns NULL if no match is found.
-        */
-        const ConstantDefinition* findMatchingConstantDefinition(const String& name, 
-            const size_t entryIndex, const ElementType elementType) const;
-
-        /** Returns the number of constant definitions
-        */
-        size_t getNumConstantDefinitions(void) const { return mConstantDefinitions.size(); }
-        /** Set the constant definition's Auto state.
-        @param index The index of the constant definition.
-        @param isAuto If true then constant is being updated automatically.
-        @param autoIndex Index for AutoConstantEntry.
-        */
-        void setConstantDefinitionAutoState( const size_t index, 
-			const bool isAuto, const size_t autoIndex );
-        /** gets the auto constant definition associated with name if found else returns NULL
-        @param name The name of the auto constant
-        */
-        static const AutoConstantDefinition* getAutoConstantDefinition(const String& name);
-        /** gets the auto constant definition using an index into the auto constant definition array.
-            If the index is out of bounds then NULL is returned;
-        @param idx The auto constant index
-        */
-        static const AutoConstantDefinition* getAutoConstantDefinition(const size_t idx);
-        /** Returns the number of auto constant definitions
-        */
-        inline static size_t getNumAutoConstantDefinitions(void);
-        /** increments the multipass number entry by 1 if it exists
-        */
-        void incPassIterationNumber(void);
-        /** gets the MultipassEntry if it exists.
-        @returns NULL if a Multipass constant entry does not exist.
-        */
-        RealConstantEntry* getPassIterationEntry(void);
-        /** gets the MultipassEntry index.  The value returned is only valid if if 
-            getMultipassEntry() does not return NULL.
-        */
-        size_t getPassIterationEntryIndex(void) const { return mActivePassIterationEntryIndex; }
+		
     };
 
     /// Shared pointer used to hold references to GpuProgramParameters instances
@@ -911,8 +738,6 @@ namespace Ogre {
         String mSyntaxCode;
         /// Does this (vertex) program include skeletal animation?
         bool mSkeletalAnimation;
-		/// Does this (vertex) program include morph animation?
-		bool mMorphAnimation;
 		/// The default parameters for use with this object
 		GpuProgramParametersSharedPtr mDefaultParams;
 		/// Does this program want light states passed through fixed pipeline
@@ -1002,23 +827,6 @@ namespace Ogre {
         */
         virtual bool isSkeletalAnimationIncluded(void) const { return mSkeletalAnimation; }
 
-        /** Sets whether a vertex program includes the required instructions
-        to perform morph animation. 
-        @remarks
-        If this is set to true, OGRE will not blend the geometry according to 
-        morph animation, it will expect the vertex program to do it.
-        */
-        virtual void setMorphAnimationIncluded(bool included) 
-		{ mMorphAnimation = included; }
-
-        /** Returns whether a vertex program includes the required instructions
-            to perform morph animation. 
-        @remarks
-            If this returns true, OGRE will not blend the geometry according to 
-            morph animation, it will expect the vertex program to do it.
-        */
-        virtual bool isMorphAnimationIncluded(void) const { return mMorphAnimation; }
-
 		/** Get a reference to the default parameters which are to be used for all
 			uses of this program.
 		@remarks
@@ -1030,10 +838,6 @@ namespace Ogre {
 			which are unique to their own usage of the program.
 		*/
 		virtual GpuProgramParametersSharedPtr getDefaultParameters(void);
-
-        /** Returns true if default parameters have been set up.  
-        */
-        virtual bool hasDefaultParameters(void) const { return !mDefaultParams.isNull(); }
 
 		/** Sets whether a vertex program requires light and material states to be passed
 		to through fixed pipeline low level API rendering calls.
@@ -1050,11 +854,6 @@ namespace Ogre {
 		through fixed pipeline low level API rendering calls
 		*/
 		virtual bool getPassSurfaceAndLightStates(void) const { return mPassSurfaceAndLightStates; }
-
-        /** Returns a string that specifies the language of the gpu programs as specified
-        in a material script. ie: asm, cg, hlsl, glsl
-        */
-        virtual const String& getLanguage(void) const;
 
     protected:
         /// Virtual method which must be implemented by subclasses, load from mSource

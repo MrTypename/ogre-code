@@ -1218,28 +1218,28 @@ protected:
         // Spline it for nice curves
         anim->setInterpolationMode(Animation::IM_SPLINE);
         // Create a track to animate the head's node
-        NodeAnimationTrack* track = anim->createNodeTrack(0, headNode);
+        AnimationTrack* track = anim->createTrack(0, headNode);
         // Setup keyframes
-        TransformKeyFrame* key = track->createNodeKeyFrame(0); // startposition
-        key = track->createNodeKeyFrame(2.5);
+        KeyFrame* key = track->createKeyFrame(0); // startposition
+        key = track->createKeyFrame(2.5);
         key->setTranslate(Vector3(500,500,-1000));
-        key = track->createNodeKeyFrame(5);
+        key = track->createKeyFrame(5);
         key->setTranslate(Vector3(-1500,1000,-600));
-        key = track->createNodeKeyFrame(7.5);
+        key = track->createKeyFrame(7.5);
         key->setTranslate(Vector3(0,-100,0));
-        key = track->createNodeKeyFrame(10);
+        key = track->createKeyFrame(10);
         key->setTranslate(Vector3(0,0,0));
         // Create a track to animate the second head's node
-        track = anim->createNodeTrack(1, headNode2);
+        track = anim->createTrack(1, headNode2);
         // Setup keyframes
-        key = track->createNodeKeyFrame(0); // startposition
-        key = track->createNodeKeyFrame(2.5);
+        key = track->createKeyFrame(0); // startposition
+        key = track->createKeyFrame(2.5);
         key->setTranslate(Vector3(-500,600,-100));
-        key = track->createNodeKeyFrame(5);
+        key = track->createKeyFrame(5);
         key->setTranslate(Vector3(800,200,-600));
-        key = track->createNodeKeyFrame(7.5);
+        key = track->createKeyFrame(7.5);
         key->setTranslate(Vector3(200,-1000,0));
-        key = track->createNodeKeyFrame(10);
+        key = track->createKeyFrame(10);
         key->setTranslate(Vector3(30,70,110));
         // Create a new animation state to track this
         mAnimState = mSceneMgr->createAnimationState("CameraTrack");
@@ -1807,28 +1807,28 @@ protected:
         // Spline it for nice curves
         anim->setInterpolationMode(Animation::IM_SPLINE);
         // Create a track to animate the head's node
-        NodeAnimationTrack* track = anim->createNodeTrack(0, headNode);
+        AnimationTrack* track = anim->createTrack(0, headNode);
         // Setup keyframes
-        TransformKeyFrame* key = track->createNodeKeyFrame(0); // startposition
-        key = track->createNodeKeyFrame(2.5);
+        KeyFrame* key = track->createKeyFrame(0); // startposition
+        key = track->createKeyFrame(2.5);
         key->setTranslate(Vector3(500,500,-1000));
-        key = track->createNodeKeyFrame(5);
+        key = track->createKeyFrame(5);
         key->setTranslate(Vector3(-1500,1000,-600));
-        key = track->createNodeKeyFrame(7.5);
+        key = track->createKeyFrame(7.5);
         key->setTranslate(Vector3(0,-100,0));
-        key = track->createNodeKeyFrame(10);
+        key = track->createKeyFrame(10);
         key->setTranslate(Vector3(0,0,0));
         // Create a track to animate the second head's node
-        track = anim->createNodeTrack(1, headNode2);
+        track = anim->createTrack(1, headNode2);
         // Setup keyframes
-        key = track->createNodeKeyFrame(0); // startposition
-        key = track->createNodeKeyFrame(2.5);
+        key = track->createKeyFrame(0); // startposition
+        key = track->createKeyFrame(2.5);
         key->setTranslate(Vector3(-500,600,-100));
-        key = track->createNodeKeyFrame(5);
+        key = track->createKeyFrame(5);
         key->setTranslate(Vector3(800,200,-600));
-        key = track->createNodeKeyFrame(7.5);
+        key = track->createKeyFrame(7.5);
         key->setTranslate(Vector3(200,-1000,0));
-        key = track->createNodeKeyFrame(10);
+        key = track->createKeyFrame(10);
         key->setTranslate(Vector3(30,70,110));
         // Create a new animation state to track this
         mAnimState = mSceneMgr->createAnimationState("CameraTrack");
@@ -2267,7 +2267,7 @@ protected:
 
 	void testStaticGeometry(void)
 	{
-		mSceneMgr->setShadowTechnique(SHADOWTYPE_TEXTURE_MODULATIVE);
+		//mSceneMgr->setShadowTechnique(SHADOWTYPE_TEXTURE_MODULATIVE);
 		//mSceneMgr->setShowDebugShadows(true);
 
 		mSceneMgr->setSkyBox(true, "Examples/EveningSkyBox");
@@ -2277,7 +2277,7 @@ protected:
 		// Create a point light
 		Light* l = mSceneMgr->createLight("MainLight");
 		l->setType(Light::LT_DIRECTIONAL);
-		Vector3 dir(0, -1, -1.5);
+		Vector3 dir(1, -1, -1.5);
 		dir.normalise();
 		l->setDirection(dir);
 		l->setDiffuseColour(1.0, 0.7, 0.0);
@@ -2304,14 +2304,14 @@ protected:
 		StaticGeometry* s = mSceneMgr->createStaticGeometry("bing");
 		s->setCastShadows(true);
 		s->setRegionDimensions(Vector3(500,500,500));
-		for (int i = 0; i < 100; ++i)
+		for (int i = 0; i < 1000; ++i)
 		{
 			Vector3 pos;
 			pos.x = Math::RangeRandom(min.x, max.x);
 			pos.y = Math::RangeRandom(min.y, max.y);
 			pos.z = Math::RangeRandom(min.z, max.z);
 
-			s->addEntity(e, pos, Quaternion::IDENTITY);
+			s->addEntity(e, pos, Quaternion::IDENTITY, Vector3(5,5,5));
 
 		}
 
@@ -2346,168 +2346,10 @@ protected:
 
 	}
 
-	void testBillboardTextureCoords()
-	{
-		mSceneMgr->setAmbientLight(ColourValue::White);
-
-		BillboardSet* bbs = mSceneMgr->createBillboardSet("test");
-		float xsegs = 3;
-		float ysegs = 3;
-		float width = 300;
-		float height = 300;
-		float gap = 30;
-
-		// set up texture coords
-		bbs->setTextureStacksAndSlices(ysegs, xsegs);
-		bbs->setDefaultDimensions(width/xsegs, height/xsegs);
-
-		for (float y = 0; y < ysegs; ++y)
-		{
-			for (float x = 0; x < xsegs; ++x)
-			{
-				Vector3 midPoint;
-				midPoint.x = (x * width / xsegs) + ((x-1) * gap);
-				midPoint.y = (y * height / xsegs) + ((y-1) * gap);
-				midPoint.z = 0;
-				Billboard* bb = bbs->createBillboard(midPoint);
-				bb->setTexCoords((ysegs - y - 1)*ysegs + x);
-			}
-		}
-
-		bbs->setMaterialName("Examples/OgreLogo");
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(bbs);
-
-	}
-
-	class SortFunctor
-	{
-	public:
-		int operator()(const int& p) const
-		{
-			return p;
-		}
-
-	};
-	void testRadixSort()
-	{
-		RadixSort<std::list<int>, int, int> rs;
-		SortFunctor f;
-
-		std::list<int> particles;
-		for (int r = 0; r < 20; ++r)
-		{
-			particles.push_back((int)Math::RangeRandom(-1e3f, 1e3f));
-		}
-
-		std::list<int>::iterator i;
-		LogManager::getSingleton().logMessage("BEFORE");
-		for (i = particles.begin(); i != particles.end(); ++i)
-		{
-			StringUtil::StrStreamType str;
-			str << *i;
-			LogManager::getSingleton().logMessage(str.str());
-		}
-
-		rs.sort(particles, f);
-
-
-		LogManager::getSingleton().logMessage("AFTER");
-		for (i = particles.begin(); i != particles.end(); ++i)
-		{
-			StringUtil::StrStreamType str;
-			str << *i;
-			LogManager::getSingleton().logMessage(str.str());
-		}
-
-
-
-	}
-
-	void testMorphAnimation()
-	{
-		mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
-		Vector3 dir(-1, -1, 0.5);
-		dir.normalise();
-		Light* l = mSceneMgr->createLight("light1");
-		l->setType(Light::LT_DIRECTIONAL);
-		l->setDirection(dir);
-
-		MeshPtr mesh = MeshManager::getSingleton().load("cube.mesh", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-
-		SubMesh* sm = mesh->getSubMesh(0);
-		// Re-organise geometry since this mesh has no animation and all 
-		// vertex elements are packed into one buffer
-		VertexDeclaration* newDecl = 
-			sm->vertexData->vertexDeclaration->getAutoOrganisedDeclaration(false, true);
-		sm->vertexData->reorganiseBuffers(newDecl);
-		// get the position buffer (which should now be separate);
-		const VertexElement* posElem = 
-			sm->vertexData->vertexDeclaration->findElementBySemantic(VES_POSITION);
-		HardwareVertexBufferSharedPtr origbuf = 
-			sm->vertexData->vertexBufferBinding->getBuffer(
-				posElem->getSource());
-
-		// Create a new position buffer with updated values
-		HardwareVertexBufferSharedPtr newbuf = 
-			HardwareBufferManager::getSingleton().createVertexBuffer(
-				VertexElement::getTypeSize(VET_FLOAT3),
-				sm->vertexData->vertexCount, 
-				HardwareBuffer::HBU_STATIC, true);
-		float* pSrc = static_cast<float*>(origbuf->lock(HardwareBuffer::HBL_READ_ONLY));
-		float* pDst = static_cast<float*>(newbuf->lock(HardwareBuffer::HBL_DISCARD));
-
-		for (size_t v = 0; v < sm->vertexData->vertexCount; ++v)
-		{
-			// x
-			*pDst++ = *pSrc++;
-			// y (translate)
-			*pDst++ = (*pSrc++) + 100.0f;
-			// z
-			*pDst++ = *pSrc++;
-		}
-
-		origbuf->unlock();
-		newbuf->unlock();
-		
-		// create a morph animation
-		Animation* anim = mesh->createAnimation("testAnim", 10.0f);
-		VertexAnimationTrack* vt = anim->createVertexTrack(1, sm->vertexData);
-		// re-use start positions for frame 0
-		VertexKeyFrame* kf = vt->createVertexKeyFrame(0);
-		kf->setVertexBuffer(origbuf);
-
-		// Use translated buffer for mid frame
-		kf = vt->createVertexKeyFrame(5.0f);
-		kf->setVertexBuffer(newbuf);
-
-		// re-use start positions for final frame
-		kf = vt->createVertexKeyFrame(10.0f);
-		kf->setVertexBuffer(origbuf);
-
-		Entity* e = mSceneMgr->createEntity("test", "cube.mesh");
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-
-		mAnimState = e->getAnimationState("testAnim");
-		mAnimState->setEnabled(true);
-
-
-
-
-	}
-
 
     // Just override the mandatory create scene method
     void createScene(void)
     {
-
-		AnyNumeric anyInt1(43);
-		AnyNumeric anyInt2(5);
-		AnyNumeric anyInt3 = anyInt1 + anyInt2;
-
-		std::cout << anyInt3;
-		//Any anyString("test");
-
         //testMatrices();
         //testBsp();
         //testAlpha();
@@ -2543,12 +2385,9 @@ protected:
 		//testSimpleMesh();
 		//test2Windows();
 		//testStaticGeometry();
-		//testBillboardTextureCoords();
+		testBug();
 		//testReloadResources();
 		//testTransparencyMipMaps();
-		//testRadixSort();
-		testMorphAnimation();
-		
     }
     // Create new frame listener
     void createFrameListener(void)

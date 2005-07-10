@@ -195,7 +195,7 @@ namespace Ogre
         void _setTextureCoordCalculation(size_t unit, TexCoordCalcMethod m, 
             const Frustum* frustum = 0);
 		void _setTextureBlendMode( size_t unit, const LayerBlendModeEx& bm );
-        void _setTextureAddressingMode(size_t stage, const TextureUnitState::UVWAddressingMode& uvw);
+		void _setTextureAddressingMode( size_t unit, TextureUnitState::TextureAddressingMode tam );
 		void _setTextureMatrix( size_t unit, const Matrix4 &xform );
 		void _setSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor );
 		void _setAlphaRejectSettings( CompareFunction func, unsigned char value );
@@ -224,22 +224,9 @@ namespace Ogre
 		void setVertexDeclaration(VertexDeclaration* decl);
 		void setVertexBufferBinding(VertexBufferBinding* binding);
         void _render(const RenderOperation& op);
-        /** See
-          RenderSystem
-         */
         void bindGpuProgram(GpuProgram* prg);
-        /** See
-          RenderSystem
-         */
         void unbindGpuProgram(GpuProgramType gptype);
-        /** See
-          RenderSystem
-         */
         void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params);
-        /** See
-          RenderSystem
-         */
-        void bindGpuProgramPassIterationParameters(GpuProgramType gptype);
         /** See
           RenderSystem
          */
@@ -263,6 +250,8 @@ namespace Ogre
 		bool isDeviceLost(void);
 		/** Notify that a device has been lost */
 		void _notifyDeviceLost(void);
+
+
 
 	};
 }

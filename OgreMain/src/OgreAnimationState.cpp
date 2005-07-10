@@ -30,38 +30,35 @@ http://www.gnu.org/copyleft/lesser.txt.
 namespace Ogre 
 {
 
-	//---------------------------------------------------------------------
-	AnimationState::AnimationState(AnimationStateSet* parent, const AnimationState &rhs)
-	{
-		mAnimationName = rhs.mAnimationName;
-		mTimePos = rhs.mTimePos;
-		mLoop = rhs.mLoop;
-		setLength(rhs.mLength);
-		mWeight = rhs.mWeight;
-		mParent = parent;
-
-		mParent->_notifyDirty();
-
-	}
+    //---------------------------------------------------------------------
+    AnimationState::AnimationState()
+    {
+        mTimePos = 0;
+        mLength = 0;
+        mInvLength = 0;
+        mWeight = 1.0;
+        mLoop = true;
+    }
 	//---------------------------------------------------------------------
 	AnimationState::~AnimationState()
 	{
 	}
     //---------------------------------------------------------------------
-    AnimationState::AnimationState(const String& animName, 
-		AnimationStateSet *parent, Real timePos, Real length, Real weight, 
-		bool enabled)
-        : mAnimationName(animName), mParent(parent), mTimePos(timePos), 
-		mWeight(weight), mEnabled(enabled)
+    AnimationState::AnimationState(const String& animName, Real timePos, Real length, Real weight, bool enabled)
+        : mAnimationName(animName), mTimePos(timePos), mWeight(weight), mEnabled(enabled)
     {
         mLoop = true;
         setLength(length);
-		mParent->_notifyDirty();
     }
     //---------------------------------------------------------------------
     const String& AnimationState::getAnimationName() const
     {
         return mAnimationName;
+    }
+    //---------------------------------------------------------------------
+    void AnimationState::setAnimationName(const String& name)
+    {
+        mAnimationName = name;
     }
     //---------------------------------------------------------------------
     Real AnimationState::getTimePosition(void) const
@@ -71,27 +68,22 @@ namespace Ogre
     //---------------------------------------------------------------------
     void AnimationState::setTimePosition(Real timePos)
     {
-		if (timePos != mTimePos)
-		{
-			mTimePos = timePos;
-			if (mLoop)
-			{
-				// Wrap
-				mTimePos = fmod(mTimePos, mLength);
-				if(mTimePos < 0)
-					mTimePos += mLength;     
-			}
-			else
-			{
-				// Clamp
-				if(mTimePos < 0)
-					mTimePos = 0;
-				else if (mTimePos > mLength)
-					mTimePos = mLength;
-			}
-			mParent->_notifyDirty();
-		}
-
+        mTimePos = timePos;
+        if (mLoop)
+        {
+            // Wrap
+            mTimePos = fmod(mTimePos, mLength);
+            if(mTimePos < 0)
+                mTimePos += mLength;     
+        }
+        else
+        {
+            // Clamp
+            if(mTimePos < 0)
+                mTimePos = 0;
+            else if (mTimePos > mLength)
+                mTimePos = mLength;
+        }
     }
     //---------------------------------------------------------------------
     Real AnimationState::getLength() const
@@ -120,14 +112,12 @@ namespace Ogre
     void AnimationState::setWeight(Real weight)
     {
         mWeight = weight;
-		mParent->_notifyDirty();
     }
     //---------------------------------------------------------------------
     void AnimationState::addTime(Real offset)
     {
         setTimePosition(mTimePos += offset);
-		mParent->_notifyDirty();
-}
+    }
     //---------------------------------------------------------------------
     bool AnimationState::getEnabled(void) const
     {
@@ -137,7 +127,6 @@ namespace Ogre
     void AnimationState::setEnabled(bool enabled)
     {
         mEnabled = enabled;
-		mParent->_notifyDirty();
     }
     //---------------------------------------------------------------------
     bool AnimationState::operator==(const AnimationState& rhs) const
@@ -162,6 +151,16 @@ namespace Ogre
         return !(*this == rhs);
     }
     //---------------------------------------------------------------------
+    Real AnimationState::getValue(void) const
+    {
+        return mTimePos * mInvLength;
+    }
+    //---------------------------------------------------------------------
+    void AnimationState::setValue(Real value)
+    {
+        mTimePos = value * mLength;
+    }
+    //---------------------------------------------------------------------
     void AnimationState::copyStateFrom(const AnimationState& animState)
     {
         mTimePos = animState.mTimePos;
@@ -170,114 +169,20 @@ namespace Ogre
         mWeight = animState.mWeight;
         mEnabled = animState.mEnabled;
         mLoop = animState.mLoop;
-		mParent->_notifyDirty();
-
     }
-	//---------------------------------------------------------------------
-	//---------------------------------------------------------------------
-	AnimationStateSet::AnimationStateSet() : mDirty(true)
-	{
-	}
-	//---------------------------------------------------------------------
-	AnimationStateSet::AnimationStateSet(const AnimationStateSet& rhs)
-		: mDirty(true)
-	{
-		for (AnimationStateMap::const_iterator i = rhs.mAnimationStates.begin();
-			i != rhs.mAnimationStates.end(); ++i)
-		{
-			AnimationState* src = i->second;
-			mAnimationStates[src->getAnimationName()] = 
-				new AnimationState(this, *src);
-		}
 
-	}
-	//---------------------------------------------------------------------
-	AnimationStateSet::~AnimationStateSet()
-	{
-		// Destroy
-		removeAllAnimationStates();
-	}
-	//---------------------------------------------------------------------
-	void AnimationStateSet::removeAnimationState(const String& name)
-	{
-		AnimationStateMap::iterator i = mAnimationStates.find(name);
-		if (i != mAnimationStates.end())
-		{
-			delete i->second;
-			mAnimationStates.erase(i);
-		}
-	}
-	//---------------------------------------------------------------------
-	void AnimationStateSet::removeAllAnimationStates(void)
-	{
-		for (AnimationStateMap::iterator i = mAnimationStates.begin();
-			i != mAnimationStates.end(); ++i)
-		{
-			delete i->second;
-		}
-		mAnimationStates.clear();
-
-	}
-	//---------------------------------------------------------------------
-	AnimationState* AnimationStateSet::createAnimationState(const String& name,  
-		Real timePos, Real length, Real weight, bool enabled)
-	{
-		AnimationStateMap::iterator i = mAnimationStates.find(name);
-		if (i != mAnimationStates.end())
-		{
-			OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM, 
-				"State for animation named '" + name + "' already exists.", 
-				"AnimationStateSet::createAnimationState");
-		}
-
-		AnimationState* newState = new AnimationState(name, this, timePos, 
-			length, weight, enabled);
-		mAnimationStates[name] = newState;
-
-		return newState;
-
-	}
-	//---------------------------------------------------------------------
-	AnimationState* AnimationStateSet::getAnimationState(const String& name) const
-	{
-		AnimationStateMap::const_iterator i = mAnimationStates.find(name);
-		if (i == mAnimationStates.end())
-		{
-			OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, 
-				"No state found for animation named '" + name + "'", 
-				"AnimationStateSet::getAnimationState");
-		}
-		return i->second;
-	}
-	//---------------------------------------------------------------------
-	bool AnimationStateSet::hasAnimationState(const String& name) const
-	{
-		return mAnimationStates.find(name) != mAnimationStates.end();
-	}
-	//---------------------------------------------------------------------
-	AnimationStateIterator AnimationStateSet::getAnimationStateIterator(void)
-	{
-		return AnimationStateIterator(
-			mAnimationStates.begin(), mAnimationStates.end());
-	}
-	//---------------------------------------------------------------------
-	ConstAnimationStateIterator AnimationStateSet::getAnimationStateIterator(void) const
-	{
-		return ConstAnimationStateIterator(
-			mAnimationStates.begin(), mAnimationStates.end());
-	}
-	//---------------------------------------------------------------------
-	void AnimationStateSet::copyMatchingState(AnimationStateSet* target)
-	{
-        AnimationStateMap::iterator i, iend;
-        iend = target->mAnimationStates.end();
-        for (i = target->mAnimationStates.begin(); i != iend; ++i) {
-            AnimationStateMap::const_iterator iother = mAnimationStates.find(i->first);
-            if (iother == mAnimationStates.end()) {
+    //---------------------------------------------------------------------
+    void CopyAnimationStateSubset(AnimationStateSet& target, const AnimationStateSet& source)
+    {
+        AnimationStateSet::iterator i, iend;
+        iend = target.end();
+        for (i = target.begin(); i != iend; ++i) {
+            AnimationStateSet::const_iterator iother = source.find(i->first);
+            if (iother == source.end()) {
                 OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, "No animation entry found named " + i->first, 
-                    "AnimationStateSet::copyMatchingState");
+                    "CopyAnimationStateSubset");
             } else {
-                i->second->copyStateFrom(*(iother->second));
+                i->second.copyStateFrom(iother->second);
             }
         }
     }

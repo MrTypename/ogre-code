@@ -32,46 +32,31 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreAxisAlignedBox.h"
 #include "OgreSphere.h"
 #include "OgreShadowCaster.h"
-#include "OgreFactoryObj.h"
-#include "OgreAnimable.h"
-#include "OgreAny.h"
-#include "OgreUserDefinedObject.h"
 
 namespace Ogre {
 
-	// Forward declaration
-	class MovableObjectFactory;
 
     /** Abstract class definining a movable object in a scene.
         @remarks
             Instances of this class are discrete, relatively small, movable objects
             which are attached to SceneNode objects to define their position.
     */
-    class _OgreExport MovableObject : public ShadowCaster, public AnimableObject
+    class _OgreExport MovableObject : public ShadowCaster
     {
     protected:
-		/// Name of this object
-		String mName;
-		/// Creator of this object (if created by a factory)
-		MovableObjectFactory* mCreator;
         /// node to which this object is attached
         Node* mParentNode;
         bool mParentIsTagPoint;
         /// Is this object visible?
         bool mVisible;
-		/// Upper distance to still render
-		Real mUpperDistance;
-		Real mSquaredUpperDistance;
-		/// Hidden because of distance?
-		bool mBeyondFarDistance;
-		/// User defined link to another object / value / whatever
-		Any mUserAny;
+        /// User defined object which is linked to this object
+        UserDefinedObject *mUserObject;
         /// The render queue to use when rendering this object
         RenderQueueGroupID mRenderQueueID;
 		/// Flags whether the RenderQueue's default should be used.
 		bool mRenderQueueIDSet;
         /// Flags determining whether this object is included / excluded from scene queries
-        uint32 mQueryFlags;
+        unsigned long mQueryFlags;
         /// Cached world AABB of this object
         mutable AxisAlignedBox mWorldAABB;
 		// Cached world bounding sphere
@@ -86,17 +71,12 @@ namespace Ogre {
         /// Constructor
         MovableObject();
 
-		/// Named constructor
-		MovableObject(const String& name);
         /** Virtual destructor - read Scott Meyers if you don't know why this is needed.
         */
         virtual ~MovableObject();
 
-		/** Notify the object of it's creator (internal use only) */
-		virtual void _notifyCreator(MovableObjectFactory* fact) { mCreator = fact; }
-
         /** Returns the name of this object. */
-		virtual const String& getName(void) const { return mName; }
+        virtual const String& getName(void) const = 0;
 
         /** Returns the type name of this object. */
         virtual const String& getMovableType(void) const = 0;
@@ -135,7 +115,7 @@ namespace Ogre {
                 Certain objects may want to do specific processing based on the camera position. This method notifies
                 them incase they wish to do this.
         */
-        virtual void _notifyCurrentCamera(Camera* cam);
+        virtual void _notifyCurrentCamera(Camera* cam) = 0;
 
         /** Retrieves the local axis-aligned bounding box for this object.
             @remarks
@@ -162,22 +142,8 @@ namespace Ogre {
         /** Tells this object whether to be visible or not, if it has a renderable component. */
         virtual void setVisible(bool visible);
 
-        /** Returns whether or not this object is supposed to be visible or not. 
-		@remarks
-			Takes into account both upper rendering distance and visible flag.
-		*/
+        /** Returns whether or not this object is supposed to be visible or not. */
         virtual bool isVisible(void) const;
-		/** Sets the distance at which the object is no longer rendered.
-		@param dist Distance beyond which the object will not be rendered 
-			(the default is 0, which means objects are always rendered).
-		*/
-		virtual void setRenderingDistance(Real dist) { 
-			mUpperDistance = dist; 
-			mSquaredUpperDistance = mUpperDistance * mUpperDistance;
-		}
-
-		/** Gets the distance at which batches are no longer rendered. */
-		virtual Real getRenderingDistance(void) const { return mUpperDistance; }
 
         /** Call this to associate your own custom user object instance with this MovableObject.
         @remarks
@@ -185,27 +151,11 @@ namespace Ogre {
             can establish a link between an OGRE instance of MovableObject and your own application
             classes. Call this method to establish the link.
         */
-        virtual void setUserObject(UserDefinedObject* obj) { mUserAny = Any(obj); }
+        virtual void setUserObject(UserDefinedObject* obj) { mUserObject = obj; }
         /** Retrieves a pointer to a custom application object associated with this movable by an earlier
             call to setUserObject.
         */
-        virtual UserDefinedObject* getUserObject(void) 
-		{ 
-			return any_cast<UserDefinedObject*>(mUserAny); 
-		}
-
-		/** Sets any kind of user value on this object.
-		@remarks
-			This method allows you to associate any user value you like with 
-			this MovableObject. This can be a pointer back to one of your own
-			classes for instance.
-		@note This value is shared with setUserObject so don't use both!
-		*/
-		virtual void setUserAny(const Any& anything) { mUserAny = anything; }
-
-		/** Retrieves the custom user value associated with this object.
-		*/
-		virtual const Any& getUserAny(void) const { return mUserAny; }
+        virtual UserDefinedObject* getUserObject(void) { return mUserObject; }
 
         /** Sets the render queue group this entity will be rendered through.
         @remarks
@@ -275,86 +225,12 @@ namespace Ogre {
         bool getCastShadows(void) const { return mCastShadows; }
         /** Get the distance to extrude for a point/spot light */
         Real getPointExtrusionDistance(const Light* l) const;
-		/** Get the 'type flags' for this MovableObject.
-		@remarks
-			A type flag identifies the type of the MovableObject as a bitpattern. 
-			This is used for categorical inclusion / exclusion in SceneQuery
-			objects. By default, this method returns all ones for objects not 
-			created by a MovableObjectFactory (hence always including them); 
-			otherwise it returns the value assigned to the MovableObjectFactory.
-			Custom objects which don't use MovableObjectFactory will need to 
-			override this if they want to be included in queries.
-		*/
-		virtual uint32 getTypeFlags(void) const;
 
 
 
 
 
     };
-
-	/** Interface definition for a factory class which produces a certain
-		kind of MovableObject, and can be registered with Root in order
-		to allow all clients to produce new instances of this object, integrated
-		with the standard Ogre processing.
-	*/
-	class _OgreExport MovableObjectFactory 
-	{
-	protected:
-		/// Type flag, allocated if requested
-		unsigned long mTypeFlag;
-
-		/// Internal implementation of create method - must be overridden
-		virtual MovableObject* createInstanceImpl(
-			const String& name, const NameValuePairList* params = 0) = 0;
-	public:
-		MovableObjectFactory() : mTypeFlag(0xFFFFFFFF) {}
-		virtual ~MovableObjectFactory() {}
-		/// Get the type of the object to be created
-		virtual const String& getType(void) const = 0;
-
-		/** Create a new instance of the object.
-		@param name The name of the new object
-		@param params Name/value pair list of additional parameters required to 
-			construct the object (defined per subtype). Optional.
-		*/
-		virtual MovableObject* createInstance(
-			const String& name, const NameValuePairList* params = 0);
-		/** Destroy an instance of the object */
-		virtual void destroyInstance(MovableObject* obj) = 0;
-
-		/** Does this factory require the allocation of a 'type flag', used to 
-			selectively include / exclude this type from scene queries?
-		@remarks
-			The default implementation here is to return 'false', ie not to 
-			request a unique type mask from Root. For objects that
-			never need to be excluded in SceneQuery results, that's fine, since
-			the default implementation of MovableObject::getTypeFlags is to return
-			all ones, hence matching any query type mask. However, if you want the
-			objects created by this factory to be filterable by queries using a 
-			broad type, you have to give them a (preferably unique) type mask - 
-			and given that you don't know what other MovableObject types are 
-			registered, Root will allocate you one. 
-		*/
-		virtual bool requestTypeFlags(void) const { return false; }
-		/** Notify this factory of the type mask to apply. 
-		@remarks
-			This should normally only be called by Root in response to
-			a 'true' result from requestTypeMask. However, you can actually use
-			it yourself if you're careful; for example to assign the same mask
-			to a number of different types of object, should you always wish them
-			to be treated the same in queries.
-		*/
-		void _notifyTypeFlags(unsigned long flag) { mTypeFlag = flag; }
-
-		/** Gets the type flag for this factory.
-		@remarks
-			A type flag is like a query flag, except that it applies to all instances
-			of a certain type of object.
-		*/
-		unsigned long getTypeFlags(void) const { return mTypeFlag; }
-
-	};
 
 }
 #endif

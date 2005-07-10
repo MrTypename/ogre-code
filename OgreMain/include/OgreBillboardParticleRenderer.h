@@ -129,11 +129,6 @@ namespace Ogre {
         void _notifyDefaultDimensions(Real width, Real height);
 		/// @copydoc ParticleSystemRenderer::setRenderQueueGroup
 		void setRenderQueueGroup(RenderQueueGroupID queueID);
-		/// @copydoc ParticleSystemRenderer::setKeepParticlesInLocalSpace
-		void setKeepParticlesInLocalSpace(bool keepLocal);
-
-		/// Access BillboardSet in use
-		BillboardSet* getBillboardSet(void) const { return mBillboardSet; }
 
     protected:
         static CmdBillboardType msBillboardTypeCmd;

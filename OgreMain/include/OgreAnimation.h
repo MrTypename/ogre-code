@@ -29,9 +29,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgrePrerequisites.h"
 #include "OgreString.h"
 #include "OgreIteratorWrappers.h"
-#include "OgreAnimable.h"
-#include "OgreAnimationTrack.h"
-
 
 namespace Ogre {
 
@@ -83,25 +80,13 @@ namespace Ogre {
         /** Gets the total length of the animation. */
         Real getLength(void) const;
 
-        /** Creates a NodeAnimationTrack for animating a Node.
-        @param handle Handle to give the track, used for accessing the track later. 
+        /** Creates an AnimationTrack. 
+        @param handle Numeric handle to give the track, used for accessing the track later. 
             Must be unique within this Animation.
         */
-        NodeAnimationTrack* createNodeTrack(unsigned short handle);
+        AnimationTrack* createTrack(unsigned short handle);
 
-		/** Creates a NumericAnimationTrack for animating any numeric value.
-		@param handle Handle to give the track, used for accessing the track later. 
-		Must be unique within this Animation.
-		*/
-		NumericAnimationTrack* createNumericTrack(unsigned short handle);
-
-		/** Creates a VertexAnimationTrack for animating vertex position data.
-		@param handle Handle to give the track, used for accessing the track later. 
-		Must be unique within this Animation.
-		*/
-		VertexAnimationTrack* createVertexTrack(unsigned short handle);
-
-		/** Creates a new AnimationTrack automatically associated with a Node. 
+        /** Creates a new AnimationTrack automatically associated with a Node. 
         @remarks
             This method creates a standard AnimationTrack, but also associates it with a
             target Node which will receive all keyframe effects.
@@ -109,66 +94,25 @@ namespace Ogre {
             Must be unique within this Animation.
         @param node A pointer to the Node object which will be affected by this track
         */
-        NodeAnimationTrack* createNodeTrack(unsigned short handle, Node* node);
+        AnimationTrack* createTrack(unsigned short handle, Node* node);
 
-		/** Creates a NumericAnimationTrack and associates it with an animable. 
-		@param handle Handle to give the track, used for accessing the track later. 
-		@param anim Animable object link
-		Must be unique within this Animation.
-		*/
-		NumericAnimationTrack* createNumericTrack(unsigned short handle, 
-			const AnimableValuePtr& anim);
+        /** Gets the number of AnimationTrack objects which make up this animation. */
+        unsigned short getNumTracks(void) const;
 
-		/** Creates a VertexAnimationTrack and associates it with VertexData. 
-		@param handle Handle to give the track, used for accessing the track later. 
-		@param data VertexData object link
-		Must be unique within this Animation.
-		*/
-		VertexAnimationTrack* createVertexTrack(unsigned short handle, 
-			VertexData* data);
+        /** Gets a track by it's handle. */
+        AnimationTrack* getTrack(unsigned short handle) const;
 
-		/** Gets the number of NodeAnimationTrack objects contained in this animation. */
-        unsigned short getNumNodeTracks(void) const;
 
-        /** Gets a node track by it's handle. */
-        NodeAnimationTrack* getNodeTrack(unsigned short handle) const;
+        /** Destroys the track with the given handle. */
+        void destroyTrack(unsigned short handle);
 
-		/** Gets the number of NumericAnimationTrack objects contained in this animation. */
-		unsigned short getNumNumericTracks(void) const;
-
-		/** Gets a numeric track by it's handle. */
-		NumericAnimationTrack* getNumericTrack(unsigned short handle) const;
-
-		/** Gets the number of VertexAnimationTrack objects contained in this animation. */
-		unsigned short getNumVertexTracks(void) const;
-
-		/** Gets a Vertex track by it's handle. */
-		VertexAnimationTrack* getVertexTrack(unsigned short handle) const;
-
-		
-		/** Destroys the node track with the given handle. */
-        void destroyNodeTrack(unsigned short handle);
-
-		/** Destroys the numeric track with the given handle. */
-		void destroyNumericTrack(unsigned short handle);
-
-		/** Destroys the Vertex track with the given handle. */
-		void destroyVertexTrack(unsigned short handle);
-
-		/** Removes and destroys all tracks making up this animation. */
+        /** Removes and destroys all tracks making up this animation. */
         void destroyAllTracks(void);
-
-		/** Removes and destroys all tracks making up this animation. */
-		void destroyAllNodeTracks(void);
-		/** Removes and destroys all tracks making up this animation. */
-		void destroyAllNumericTracks(void);
-		/** Removes and destroys all tracks making up this animation. */
-		void destroyAllVertexTracks(void);
 
         /** Applies an animation given a specific time point and weight.
         @remarks
-            Where you have associated animation tracks with objects, you can eaily apply
-            an animation to those objects by calling this method.
+            Where you have associated animation tracks with Node objects, you can eaily apply
+            an animation to those nodes by calling this method.
         @param timePos The time position in the animation to apply.
         @param weight The influence to give to this track, 1.0 for full influence, less to blend with
           other animations.
@@ -178,7 +122,7 @@ namespace Ogre {
         void apply(Real timePos, Real weight = 1.0, bool accumulate = false, 
 			Real scale = 1.0f);
 
-        /** Applies all node tracks given a specific time point and weight to a given skeleton.
+        /** Applies an animation given a specific time point and weight to a given skeleton.
         @remarks
         Where you have associated animation tracks with Node objects, you can eaily apply
         an animation to those nodes by calling this method.
@@ -190,14 +134,6 @@ namespace Ogre {
         */
         void apply(Skeleton* skeleton, Real timePos, Real weight = 1.0, 
 			bool accumulate = false, Real scale = 1.0f);
-
-		/** Applies all vertex tracks given a specific time point and weight to a given entity.
-		@remarks
-		@param timePos The time position in the animation to apply.
-		@param software Whether to populate the software morph vertex data
-		@param hardware Whether to populate the hardware morph vertex data
-		*/
-		void apply(Entity* entity, Real timePos, bool software, bool hardware);
 
         /** Tells the animation how to interpolate between keyframes.
         @remarks
@@ -259,36 +195,16 @@ namespace Ogre {
         /** Gets the default rotation interpolation mode for all animations. */
         static RotationInterpolationMode getDefaultRotationInterpolationMode(void);
 
-        typedef std::map<unsigned short, NodeAnimationTrack*> NodeTrackList;
-        typedef ConstMapIterator<NodeTrackList> NodeTrackIterator;
+        typedef std::map<unsigned short, AnimationTrack*> TrackList;
+        typedef ConstMapIterator<TrackList> TrackIterator;
 
-		typedef std::map<unsigned short, NumericAnimationTrack*> NumericTrackList;
-		typedef ConstMapIterator<NumericTrackList> NumericTrackIterator;
+        /// Fast access to NON-UPDATEABLE track list
+        const TrackList& _getTrackList(void) const;
 
-		typedef std::map<unsigned short, VertexAnimationTrack*> VertexTrackList;
-		typedef ConstMapIterator<VertexTrackList> VertexTrackIterator;
-
-		/// Fast access to NON-UPDATEABLE node track list
-        const NodeTrackList& _getNodeTrackList(void) const;
-
-        /// Get non-updateable iterator over node tracks
-        NodeTrackIterator getNodeTrackIterator(void) const
-        { return NodeTrackIterator(mNodeTrackList.begin(), mNodeTrackList.end()); }
+        /// Get non-updateable iterator over tracks
+        TrackIterator getTrackIterator(void) const
+        { return TrackIterator(mTrackList.begin(), mTrackList.end()); }
         
-		/// Fast access to NON-UPDATEABLE numeric track list
-		const NumericTrackList& _getNumericTrackList(void) const;
-
-		/// Get non-updateable iterator over node tracks
-		NumericTrackIterator getNumericTrackIterator(void) const
-		{ return NumericTrackIterator(mNumericTrackList.begin(), mNumericTrackList.end()); }
-
-		/// Fast access to NON-UPDATEABLE Vertex track list
-		const VertexTrackList& _getVertexTrackList(void) const;
-
-		/// Get non-updateable iterator over node tracks
-		VertexTrackIterator getVertexTrackIterator(void) const
-		{ return VertexTrackIterator(mVertexTrackList.begin(), mVertexTrackList.end()); }
-
 		/** Optimise an animation by removing unnecessary tracks and keyframes.
 		@remarks
 			When you export an animation, it is possible that certain tracks
@@ -303,12 +219,8 @@ namespace Ogre {
 
 
     protected:
-        /// Node tracks, indexed by handle
-        NodeTrackList mNodeTrackList;
-		/// Numeric tracks, indexed by handle
-		NumericTrackList mNumericTrackList;
-		/// Vertex tracks, indexed by handle
-		VertexTrackList mVertexTrackList;
+        /// Tracks, indexed by handle
+        TrackList mTrackList;
         String mName;
 
         Real mLength;
@@ -321,6 +233,7 @@ namespace Ogre {
 
         
     };
+
 
 
 }

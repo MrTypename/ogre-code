@@ -156,7 +156,7 @@ void GLHardwarePixelBuffer::upload(const PixelBox &data)
 		// for compressed formats
 		switch(mTarget) {
 			case GL_TEXTURE_1D:
-				glCompressedTexSubImage1DARB(GL_TEXTURE_1D, mLevel, 
+				glCompressedTexSubImage1DARB_ptr(GL_TEXTURE_1D, mLevel, 
 					data.left,
 					data.getWidth(),
 					format, data.getConsecutiveSize(),
@@ -164,14 +164,14 @@ void GLHardwarePixelBuffer::upload(const PixelBox &data)
 				break;
 			case GL_TEXTURE_2D:
 			case GL_TEXTURE_CUBE_MAP:
-				glCompressedTexSubImage2DARB(mFaceTarget, mLevel, 
+				glCompressedTexSubImage2DARB_ptr(mFaceTarget, mLevel, 
 					data.left, data.top, 
 					data.getWidth(), data.getHeight(),
 					format, data.getConsecutiveSize(),
 					data.data);
 				break;
 			case GL_TEXTURE_3D:
-				glCompressedTexSubImage3DARB(GL_TEXTURE_3D, mLevel, 
+				glCompressedTexSubImage3DARB_ptr(GL_TEXTURE_3D, mLevel, 
 					data.left, data.top, data.front,
 					data.getWidth(), data.getHeight(), data.getDepth(),
 					format, data.getConsecutiveSize(),
@@ -251,7 +251,12 @@ void GLHardwarePixelBuffer::upload(const PixelBox &data)
 					data.data);
 				break;
 			case GL_TEXTURE_3D:
+#if OGRE_PLATFORM == OGRE_PLATFORM_LINUX
+				// GLX doesn't define it
+				glTexSubImage3DEXT(
+#else
 				glTexSubImage3D(
+#endif
 					GL_TEXTURE_3D, mLevel, 
 					data.left, data.top, data.front,
 					data.getWidth(), data.getHeight(), data.getDepth(),
@@ -282,7 +287,7 @@ void GLHardwarePixelBuffer::download(const PixelBox &data)
 		 	"GLHardwarePixelBuffer::upload");
 		// Data must be consecutive and at beginning of buffer as PixelStorei not allowed
 		// for compressed formate
-		glGetCompressedTexImageARB(mFaceTarget, mLevel, data.data);
+		glGetCompressedTexImageARB_ptr(mFaceTarget, mLevel, data.data);
 	} 
 	else
 	{
