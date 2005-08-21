@@ -121,15 +121,7 @@ namespace Ogre {
         /** Specialised from SceneManager to support Quake3 bsp files. */
         size_t estimateWorldGeometry(const String& filename);
         
-        /** Specialised from SceneManager to support Quake3 bsp files. */
-        void setWorldGeometry(DataStreamPtr& stream, 
-			const String& typeName = StringUtil::BLANK);
-
-        /** Specialised from SceneManager to support Quake3 bsp files. */
-        size_t estimateWorldGeometry(DataStreamPtr& stream, 
-			const String& typeName = StringUtil::BLANK);
-
-		/** Tells the manager whether to draw the axis-aligned boxes that surround
+        /** Tells the manager whether to draw the axis-aligned boxes that surround
             nodes in the Bsp tree. For debugging purposes.
         */
         void showNodeBoxes(bool show);

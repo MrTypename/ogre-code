@@ -29,37 +29,23 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreTagPoint.h"
 #include "OgreLight.h"
 #include "OgreEntity.h"
-#include "OgreRoot.h"
-#include "OgreSceneManager.h"
 
 namespace Ogre {
-	//-----------------------------------------------------------------------
-	//-----------------------------------------------------------------------
-	uint32 MovableObject::msDefaultQueryFlags = 0xFFFFFFFF;
-	uint32 MovableObject::msDefaultVisibilityFlags = 0xFFFFFFFF;
+
     //-----------------------------------------------------------------------
     MovableObject::MovableObject()
-		: mCreator(0), mParentNode(0), mParentIsTagPoint(false), mVisible(true), 
-		 mUpperDistance(0), mSquaredUpperDistance(0), mBeyondFarDistance(false),
-         mRenderQueueID(RENDER_QUEUE_MAIN),
-         mRenderQueueIDSet(false), mQueryFlags(msDefaultQueryFlags),
-		 mVisibilityFlags(msDefaultVisibilityFlags), mCastShadows (true)
     {
-		mWorldAABB.setNull();
-        
+        mParentNode = 0;
+        mVisible = true;
+        mUserObject = 0;
+        mRenderQueueID = RENDER_QUEUE_MAIN;
+        mRenderQueueIDSet = false;
+        mQueryFlags = 0xFFFFFFFF;
+        mWorldAABB.setNull();
+        mParentIsTagPoint = false;
+        mCastShadows = true;
     }
-	//-----------------------------------------------------------------------
-	MovableObject::MovableObject(const String& name) 
-		: mName(name), mCreator(0), mParentNode(0), mParentIsTagPoint(false), 
-		mVisible(true), mUpperDistance(0), mSquaredUpperDistance(0), 
-		mBeyondFarDistance(false), mRenderQueueID(RENDER_QUEUE_MAIN),
-		mRenderQueueIDSet(false), mQueryFlags(msDefaultQueryFlags),
-		mVisibilityFlags(msDefaultVisibilityFlags),
-		mCastShadows (true)
-	{
-		mWorldAABB.setNull();
-	}
-	//-----------------------------------------------------------------------
+    //-----------------------------------------------------------------------
     MovableObject::~MovableObject()
     {
         if (mParentNode)
@@ -138,42 +124,9 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     bool MovableObject::isVisible(void) const
     {
-		bool flagVis = true;
-		if (Root::getSingleton()._getCurrentSceneManager())
-		{
-			flagVis = (mVisibilityFlags & 
-				Root::getSingleton()._getCurrentSceneManager()->getVisibilityMask()) != 0;
-		}
+        return mVisible;
 
-		return mVisible && !mBeyondFarDistance && flagVis;
     }
-	//-----------------------------------------------------------------------
-	void MovableObject::_notifyCurrentCamera(Camera* cam)
-	{
-		if (mParentNode)
-		{
-			if (mUpperDistance > 0)
-			{
-				Real rad = getBoundingRadius();
-				Real squaredDepth = mParentNode->getSquaredViewDepth(cam);
-				// Max distance to still render
-				Real maxDist = mUpperDistance + rad;
-				if (squaredDepth > Math::Sqr(maxDist))
-				{
-					mBeyondFarDistance = true;
-				}
-				else
-				{
-					mBeyondFarDistance = false;
-				}
-			}
-			else
-			{
-				mBeyondFarDistance = false;
-			}
-		}
-
-	}
     //-----------------------------------------------------------------------
     void MovableObject::setRenderQueueGroup(RenderQueueGroupID queueID)
     {
@@ -257,27 +210,6 @@ namespace Ogre {
             return 0;
         }
     }
-	//-----------------------------------------------------------------------
-	uint32 MovableObject::getTypeFlags(void) const
-	{
-		if (mCreator)
-		{
-			return mCreator->getTypeFlags();
-		}
-		else
-		{
-			return 0xFFFFFFFF;
-		}
-	}
-	//-----------------------------------------------------------------------
-	//-----------------------------------------------------------------------
-	MovableObject* MovableObjectFactory::createInstance(
-		const String& name, const NameValuePairList* params)
-	{
-		MovableObject* m = createInstanceImpl(name, params);
-		m->_notifyCreator(this);
-		return m;
-	}
 
 
 }

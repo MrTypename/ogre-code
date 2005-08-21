@@ -117,6 +117,66 @@ namespace Ogre {
         return val32;
     }
     //---------------------------------------------------------------------
+    void ColourValue::setAsRGBA(const RGBA val)
+    {
+        uint32 val32 = val;
+
+        // Convert from 32bit pattern
+        // (RGBA = 8888)
+
+        // Red
+        r = static_cast<uint8>(val32 >> 24) / 255.0f;
+
+        // Green
+        g = static_cast<uint8>(val32 >> 16) / 255.0f;
+
+        // Blue
+        b = static_cast<uint8>(val32 >> 8) / 255.0f;
+
+        // Alpha
+        a = static_cast<uint8>(val32) / 255.0f;
+    }
+    //---------------------------------------------------------------------
+    void ColourValue::setAsARGB(const ARGB val)
+    {
+        uint32 val32 = val;
+
+        // Convert from 32bit pattern
+        // (ARGB = 8888)
+
+        // Alpha
+        a = static_cast<uint8>(val32 >> 24) / 255.0f;
+
+        // Red
+        r = static_cast<uint8>(val32 >> 16) / 255.0f;
+
+        // Green
+        g = static_cast<uint8>(val32 >> 8) / 255.0f;
+
+        // Blue
+        b = static_cast<uint8>(val32) / 255.0f;
+    }
+    //---------------------------------------------------------------------
+    void ColourValue::setAsABGR(const ABGR val)
+    {
+        uint32 val32 = val;
+
+        // Convert from 32bit pattern
+        // (ABGR = 8888)
+
+        // Alpha
+        a = static_cast<uint8>(val32 >> 24) / 255.0f;
+
+        // Blue
+        b = static_cast<uint8>(val32 >> 16) / 255.0f;
+
+        // Green
+        g = static_cast<uint8>(val32 >> 8) / 255.0f;
+
+        // Red
+        r = static_cast<uint8>(val32) / 255.0f;
+    }
+    //---------------------------------------------------------------------
     bool ColourValue::operator==(const ColourValue& rhs) const
     {
         return (r == rhs.r &&
@@ -129,93 +189,6 @@ namespace Ogre {
     {
         return !(*this == rhs);
     }
-	//---------------------------------------------------------------------
-	void ColourValue::setHSB(Real hue, Real saturation, Real brightness)
-	{
-		// wrap hue
-		if (hue > 1.0f)
-		{
-			hue -= (int)hue;
-		}
-		else if (hue < 0.0f)
-		{
-			hue += (int)hue + 1;
-		}
-		// clamp saturation / brightness
-		saturation = std::min(saturation, (Real)1.0);
-		saturation = std::max(saturation, (Real)0.0);
-		brightness = std::min(brightness, (Real)1.0);
-		brightness = std::max(brightness, (Real)0.0);
-
-		if (brightness == 0.0f)
-		{   
-			// early exit, this has to be black
-			r = g = b = 0.0f;
-			return;
-		}
-
-		if (saturation == 0.0f)
-		{   
-			// early exit, this has to be grey
-
-			r = g = b = brightness;
-			return;
-		}
-
-
-		Real hueDomain  = hue * 6.0f;
-		if (hueDomain >= 6.0f)
-		{
-			// wrap around, and allow mathematical errors
-			hueDomain = 0.0f;
-		}
-		unsigned short domain = (unsigned short)hueDomain;
-		Real f1 = brightness * (1 - saturation);
-		Real f2 = brightness * (1 - saturation * (hueDomain - domain));
-		Real f3 = brightness * (1 - saturation * (1 - (hueDomain - domain)));
-
-		switch (domain)
-		{
-		case 0:
-			// red domain; green ascends
-			r = brightness;
-			g = f3;
-			b = f1;
-			break;
-		case 1:
-			// yellow domain; red descends
-			r = f2;
-			g = brightness;
-			b = f1;
-			break;
-		case 2:
-			// green domain; blue ascends
-			r = f1;
-			g = brightness;
-			b = f3;
-			break;
-		case 3:
-			// cyan domain; green descends
-			r = f1;
-			g = f2;
-			b = brightness;
-			break;
-		case 4:
-			// blue domain; red ascends
-			r = f3;
-			g = f1;
-			b = brightness;
-			break;
-		case 5:
-			// magenta domain; blue descends
-			r = brightness;
-			g = f1;
-			b = f2;
-			break;
-		}
-
-
-	}
 
 }
 

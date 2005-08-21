@@ -1,6 +1,6 @@
 <HTML>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<!-- Created on , 25 2005 by texi2html 1.64 -->
+<!-- Created on , 20 2005 by texi2html 1.64 -->
 <!-- 
 Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
             Karl Berry  <karl@freefriends.org>
@@ -11,10 +11,10 @@ Send bugs and suggestions to <texi2html@mathematik.uni-kl.de>
  
 -->
 <HEAD>
-<TITLE>OGRE Manual v1.1.0: Techniques</TITLE>
+<TITLE>OGRE Manual v1.0.4: Techniques</TITLE>
 
-<META NAME="description" CONTENT="OGRE Manual v1.1.0: Techniques">
-<META NAME="keywords" CONTENT="OGRE Manual v1.1.0: Techniques">
+<META NAME="description" CONTENT="OGRE Manual v1.0.4: Techniques">
+<META NAME="keywords" CONTENT="OGRE Manual v1.0.4: Techniques">
 <META NAME="resource-type" CONTENT="document">
 <META NAME="distribution" CONTENT="global">
 <META NAME="Generator" CONTENT="texi2html 1.64">
@@ -48,10 +48,6 @@ Note that if the number of texture_unit entries exceeds the number of texture un
 </UL>
 <BR>
 In a material script, techniques must be listed in order of preference, i.e. the earlier techniques are preferred over the later techniques. This normally means you will list your most advanced, most demanding techniques first in the script, and list fallbacks afterwards.<BR><BR>
-
-To help clearly identify what each technique is used for, the technique can be named but its optional.  Techniques not named within the script will take on a name that is the technique index number.  For example: the first technique in a material is index 0, its name would be "0" if it was not given a name in the script.  The technique name must be unqiue within the material or else the final technique is the resulting merge of all techniques with the same name in the material.  A warning message is posted in the Ogre.log if this occurs.  Named techniques can help when copying a material and modifying an existing technique: (See section <A HREF="manual_22.html#SEC96">3.1.6 Copying Materials</A>)<BR><BR>
-
-Format technique name<BR><BR>
 
 Techniques have only one attribute of their own, which indicates which LOD index they belong to (See section <A HREF="manual_17.html#SEC33">lod_index</A>). We also mention an extra Material attribute called <A HREF="manual_17.html#lod_distances">lod_distances</A> which isn't a Technique attribute but is directly related to the lod_index attribute, so it's listed here for convenience.<BR><BR>
 
@@ -104,7 +100,7 @@ Techniques also contain one or more passes (and there must be at least one), See
 <BR>  
 <FONT SIZE="-1">
 This document was generated
-by <I>Steve Streeting</I> on <I>, 25 2005</I>
+by <I>Steve Streeting</I> on <I>, 20 2005</I>
 using <A HREF="http://www.mathematik.uni-kl.de/~obachman/Texi2html
 "><I>texi2html</I></A>
 

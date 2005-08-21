@@ -62,6 +62,7 @@ namespace Ogre {
         mTexModMatrix = Matrix4::IDENTITY;
         mRecalcTexMatrix = false;
 
+        mNumFrames = 0;
         mAnimDuration = 0;
         mAnimController = 0;
         mCubic = false;
@@ -69,6 +70,7 @@ namespace Ogre {
 		mTextureSrcMipmaps = -1;
         mTextureCoordSetIndex = 0;
 
+        mFrames[0] = StringUtil::BLANK;
         mCurrentFrame = 0;
 
         mParent->_dirtyHash();
@@ -148,10 +150,12 @@ namespace Ogre {
         const TextureUnitState &oth )
     {
         // copy basic members (int's, real's)
-        memcpy( this, &oth, (uchar *)(&oth.mFrames) - (uchar *)(&oth) );
+        memcpy( this, &oth, (uchar *)(&oth.mFrames[0]) - (uchar *)(&oth) );
+
         // copy complex members
-        mFrames  = oth.mFrames;
-        mName    = oth.mName;
+        for( ushort i = 0; i<mNumFrames; i++ )
+            mFrames[i] = oth.mFrames[i];
+
         mEffects = oth.mEffects;
 
         mParent->_dirtyHash();
@@ -162,10 +166,7 @@ namespace Ogre {
     const String& TextureUnitState::getTextureName(void) const
     {
         // Return name of current frame
-        if (mCurrentFrame < mFrames.size())
-            return mFrames[mCurrentFrame];
-        else
-            return StringUtil::BLANK;
+        return mFrames[mCurrentFrame];
     }
     //-----------------------------------------------------------------------
     void TextureUnitState::setTextureName( const String& name, TextureType texType, int mipmaps)
@@ -177,8 +178,8 @@ namespace Ogre {
         }
         else
         {
-            mFrames.resize(1);
             mFrames[0] = name;
+            mNumFrames = 1;
             mCurrentFrame = 0;
             mCubic = false;
             mTextureType = texType;
@@ -230,12 +231,12 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void TextureUnitState::setCubicTextureName(const String* const names, bool forUVW)
     {
-        mFrames.resize(forUVW ? 1 : 6);
+        mNumFrames = forUVW ? 1 : 6;
         mCurrentFrame = 0;
         mCubic = true;
         mTextureType = forUVW ? TEX_TYPE_CUBE_MAP : TEX_TYPE_2D;
 
-        for (unsigned int i = 0; i < mFrames.size(); ++i)
+        for (unsigned int i = 0; i < mNumFrames; ++i)
         {
             mFrames[i] = names[i];
         }
@@ -258,66 +259,6 @@ namespace Ogre {
         return mTextureType;
 
     }
-
-    //-----------------------------------------------------------------------
-    void TextureUnitState::setFrameTextureName(const String& name, unsigned int frameNumber)
-    {
-        if (frameNumber < mFrames.size())
-        {
-            mFrames[frameNumber] = name;
-
-            if (isLoaded())
-            {
-                _load(); // reload
-                // Tell parent to recalculate hash
-                mParent->_dirtyHash();
-            }
-        }
-        else // raise exception for frameNumber out of bounds
-        {
-            OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "frameNumber paramter value exceeds number of stored frames.",
-                "TextureUnitState::setFrameTextureName");
-        }
-    }
-
-    //-----------------------------------------------------------------------
-    void TextureUnitState::addFrameTextureName(const String& name)
-    {
-        mFrames.push_back(name);
-
-        // Load immediately if Material loaded
-        if (isLoaded())
-        {
-            _load();
-            // Tell parent to recalculate hash
-            mParent->_dirtyHash();
-        }
-    }
-
-    //-----------------------------------------------------------------------
-    void TextureUnitState::deleteFrameTextureName(const size_t frameNumber)
-    {
-        if (frameNumber < mFrames.size())
-        {
-            mFrames.erase(mFrames.begin() + frameNumber);
-
-            if (mFrames.empty())
-                mIsBlank = true;
-
-            if (isLoaded())
-            {
-                _load();
-                // Tell parent to recalculate hash
-                mParent->_dirtyHash();
-            }
-        }
-        else
-        {
-            OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "frameNumber paramter value exceeds number of stored frames.",
-                "TextureUnitState::deleteFrameTextureName");
-        }
-    }
-
     //-----------------------------------------------------------------------
     void TextureUnitState::setAnimatedTextureName( const String& name, unsigned int numFrames, Real duration)
     {
@@ -328,12 +269,18 @@ namespace Ogre {
         baseName = name.substr(0, pos);
         ext = name.substr(pos);
 
-        mFrames.resize(numFrames);
+        if (numFrames > OGRE_MAX_TEXTURE_FRAMES)
+        {
+			StringUtil::StrStreamType str;
+            str << "Maximum number of frames is " << OGRE_MAX_TEXTURE_FRAMES << ".";
+            OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, str.str(), "TextureUnitState::setAnimatedTextureName");
+        }
+        mNumFrames = numFrames;
         mAnimDuration = duration;
         mCurrentFrame = 0;
         mCubic = false;
 
-        for (unsigned int i = 0; i < mFrames.size(); ++i)
+        for (unsigned int i = 0; i < mNumFrames; ++i)
         {
 			StringUtil::StrStreamType str;
             str << baseName << "_" << i << ext;
@@ -352,12 +299,18 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void TextureUnitState::setAnimatedTextureName(const String* const names, unsigned int numFrames, Real duration)
     {
-        mFrames.resize(numFrames);
+        if (numFrames > OGRE_MAX_TEXTURE_FRAMES)
+        {
+			StringUtil::StrStreamType str;
+			str << "Maximum number of frames is " << OGRE_MAX_TEXTURE_FRAMES << ".";
+            OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, str.str(), "TextureUnitState::setAnimatedTextureName");
+        }
+        mNumFrames = numFrames;
         mAnimDuration = duration;
         mCurrentFrame = 0;
         mCubic = false;
 
-        for (unsigned int i = 0; i < mFrames.size(); ++i)
+        for (unsigned int i = 0; i < mNumFrames; ++i)
         {
             mFrames[i] = names[i];
         }
@@ -373,36 +326,20 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     std::pair< uint, uint > TextureUnitState::getTextureDimensions( unsigned int frame ) const
     {
-        if (frame < mFrames.size())
-        {
-            TexturePtr tex = TextureManager::getSingleton().getByName( mFrames[ frame ] );
+        TexturePtr tex = TextureManager::getSingleton().getByName( mFrames[ frame ] );
 
-		    if (tex.isNull())
-			    OGRE_EXCEPT( Exception::ERR_ITEM_NOT_FOUND, "Could not find texture " + mFrames[ frame ],
-				    "TextureUnitState::getTextureDimensions" );
-            return std::pair< uint, uint >( tex->getWidth(), tex->getHeight() );
-        }
-        else // frame exceeds the number of frames stored
-        {
-		    OGRE_EXCEPT( Exception::ERR_ITEM_NOT_FOUND, "frame number exceeded number of stored frames" ,
-			    "TextureUnitState::getTextureDimensions" );
-        }
-
+		if (tex.isNull())
+			OGRE_EXCEPT( Exception::ERR_ITEM_NOT_FOUND, "Could not find texture " + mFrames[ frame ],
+				"TextureUnitState::getTextureDimensions" );
+        return std::pair< uint, uint >( tex->getWidth(), tex->getHeight() );
     }
     //-----------------------------------------------------------------------
     void TextureUnitState::setCurrentFrame(unsigned int frameNumber)
     {
-        if (frameNumber < mFrames.size())
-        {
-            mCurrentFrame = frameNumber;
-            // this will affect the hash
-            mParent->_dirtyHash();
-        }
-        else
-        {
-            OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "frameNumber paramter value exceeds number of stored frames.",
-                "TextureUnitState::setCurrentFrame");
-        }
+        assert(frameNumber < mNumFrames);
+        mCurrentFrame = frameNumber;
+        // this will affect the hash
+        mParent->_dirtyHash();
 
     }
     //-----------------------------------------------------------------------
@@ -413,17 +350,12 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     unsigned int TextureUnitState::getNumFrames(void) const
     {
-        return (unsigned int)mFrames.size();
+        return mNumFrames;
     }
     //-----------------------------------------------------------------------
     const String& TextureUnitState::getFrameTextureName(unsigned int frameNumber) const
     {
-        if (frameNumber >= mFrames.size())
-        {
-            OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "frameNumber paramter value exceeds number of stored frames.",
-                "TextureUnitState::getFrameTextureName");
-        }
-
+        assert(frameNumber < mNumFrames);
         return mFrames[frameNumber];
     }
     //-----------------------------------------------------------------------
@@ -570,34 +502,14 @@ namespace Ogre {
         return alphaBlendMode;
     }
     //-----------------------------------------------------------------------
-    const TextureUnitState::UVWAddressingMode& 
-	TextureUnitState::getTextureAddressingMode(void) const
+    TextureUnitState::TextureAddressingMode TextureUnitState::getTextureAddressingMode(void) const
     {
         return mAddressMode;
     }
     //-----------------------------------------------------------------------
-    void TextureUnitState::setTextureAddressingMode(
-		TextureUnitState::TextureAddressingMode tam)
+    void TextureUnitState::setTextureAddressingMode(TextureUnitState::TextureAddressingMode tam)
     {
-        mAddressMode.u = tam;
-        mAddressMode.v = tam;
-        mAddressMode.w = tam;
-    }
-    //-----------------------------------------------------------------------
-    void TextureUnitState::setTextureAddressingMode(
-		TextureUnitState::TextureAddressingMode u, 
-		TextureUnitState::TextureAddressingMode v,
-		TextureUnitState::TextureAddressingMode w)
-    {
-        mAddressMode.u = u;
-        mAddressMode.v = v;
-        mAddressMode.w = w;
-    }
-    //-----------------------------------------------------------------------
-    void TextureUnitState::setTextureAddressingMode(
-		const TextureUnitState::UVWAddressingMode& uvw)
-    {
-        mAddressMode = uvw;
+        mAddressMode = tam;
     }
     //-----------------------------------------------------------------------
     void TextureUnitState::setEnvironmentMap(bool enable, EnvMapType envMapType)
@@ -789,7 +701,7 @@ namespace Ogre {
     void TextureUnitState::_load(void)
     {
         // Load textures
-        for (unsigned int i = 0; i < mFrames.size(); ++i)
+        for (unsigned int i = 0; i < mNumFrames; ++i)
         {
             if (mFrames[i] != "")
             {
@@ -1021,11 +933,6 @@ namespace Ogre {
             removeEffect(ET_PROJECTIVE_TEXTURE);
         }
 
-    }
-    //-----------------------------------------------------------------------
-    void TextureUnitState::setName(const String& name)
-    {
-        mName = name;
     }
 
 }

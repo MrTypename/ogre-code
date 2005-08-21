@@ -119,16 +119,6 @@ namespace Ogre {
 		
 	}
 
-	//-----------------------------------------------------------------------------
-	void GLSLGpuProgram::bindProgramPassIterationParameters(GpuProgramParametersSharedPtr params)
-	{
-		// activate the link program object
-		GLSLLinkProgram* linkProgram = GLSLLinkProgramManager::getSingleton().getActiveLinkProgram();
-		// pass on parameters from params to program object uniforms
-		linkProgram->updatePassIterationUniforms( params );
-		
-	}
-
 
 }
 

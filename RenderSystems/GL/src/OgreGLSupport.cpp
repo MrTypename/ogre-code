@@ -86,6 +86,10 @@ namespace Ogre {
         ext.str("");
     }
 
+	void GLSupport::initialiseCapabilities(RenderSystemCapabilities &caps) {
+		// Do nothing by default
+	}
+
     bool GLSupport::checkMinGLVersion(const String& v) const
     {
         unsigned int first, second, third;
@@ -130,15 +134,12 @@ namespace Ogre {
         
         return true;
     }
-    
-    bool GLSupport::supportsPBuffers()
-    {
-        return false;
-    }
 
-	GLPBuffer* GLSupport::createPBuffer(GLPBuffer::ComponentType format, size_t width, size_t height)
+	RenderTexture * GLSupport::createRenderTexture( const String & name, unsigned int width, unsigned int height,
+		TextureType texType, PixelFormat internalFormat, 
+		const NameValuePairList *miscParams )
     {
-        return 0;
-    }
+        return new GLRenderTexture(name, width, height, texType, internalFormat, miscParams);
+    }  
 
 }

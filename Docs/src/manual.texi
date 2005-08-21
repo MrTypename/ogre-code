@@ -1,7 +1,7 @@
 \input texinfo   @c -*-texinfo-*-
 @c %**start of header
 @setfilename manual.info
-@settitle OGRE Manual v1.1.0
+@settitle OGRE Manual v1.0.4
 @c %**end of header
    
 @titlepage
@@ -383,11 +383,6 @@ material walls/funkywall1
 
 Every material in the script must be given a name, which is the line 'material <blah>' before the first opening '{'. This name must be globally unique. It can include path characters (as in the example) to logically divide up your materials, and also to avoid duplicate names, but the engine does not treat the name as hierarchical, just as a string.@*@*
 
-@strong{ NOTE: ':' is the delimiter for specifying material copy in the script so it can't be used as part of the material name.}
-@*@*
-
-A material can copy from a previously defined material by using a @emph{colon} @strong{:} after the material name followed by the name of the reference material to copy. If the reference material can not be found then it is ignored.  (@xref{Copying Materials})@*@*
-
 A material can be made up of many techniques (@xref{Techniques})- a technique is one way of achieving the effect you are looking for. You can supply more than one technique in order to provide fallback approaches where a card does not have the ability to render the preferred technique, or where you wish to define lower level of detail versions of the material in order to conserve rendering power when objects are more distant. @*@*
 
 Each technique can be made up of many passes (@xref{Passes}), that is a complete render of the object can be performed multiple times with different settings in order to produce composite effects. Ogre may also split the passes you have defined into many passes at runtime, if you define a pass which uses too many texture units for the card you are currently running on (note that it can only do this if you are not using a fragment program). Each pass has a number of top-level attributes such as 'ambient' to set the amount & colour of the ambient light reflected by the material. Some of these options do not apply if you are using vertex programs, @xref{Passes} for more details. @*@*
@@ -434,10 +429,6 @@ Note that if the number of texture_unit entries exceeds the number of texture un
 @*
 In a material script, techniques must be listed in order of preference, i.e. the earlier techniques are preferred over the later techniques. This normally means you will list your most advanced, most demanding techniques first in the script, and list fallbacks afterwards.@*@*
 
-To help clearly identify what each technique is used for, the technique can be named but its optional.  Techniques not named within the script will take on a name that is the technique index number.  For example: the first technique in a material is index 0, its name would be "0" if it was not given a name in the script.  The technique name must be unqiue within the material or else the final technique is the resulting merge of all techniques with the same name in the material.  A warning message is posted in the Ogre.log if this occurs.  Named techniques can help when copying a material and modifying an existing technique: (@xref{Copying Materials})@*@*
-
-Format technique name@*@*
-
 Techniques have only one attribute of their own, which indicates which LOD index they belong to (@xref{lod_index}). We also mention an extra Material attribute called @ref{lod_distances} which isn't a Technique attribute but is directly related to the lod_index attribute, so it's listed here for convenience.@*@*
 
 @anchor{lod_index}
@@ -474,9 +465,6 @@ Techniques also contain one or more passes (and there must be at least one), @xr
 @node Passes
 @subsection Passes
 A pass is a single render of the geometry in question; a single call to the rendering API with a certain set of rendering properties. A technique can have between one and 16 passes, although clearly the more passes you use, the more expensive the technique will be to render.@*@*
-
-To help clearly identify what each pass is used for, the pass can be named but its optional.  Passes not named within the script will take on a name that is the pass index number.  For example: the first pass in a technique is index 0 so its name would be "0" if it was not given a name in the script.  The pass name must be unqiue within the technique or else the final pass is the resulting merge of all passes with the same name in the technique.  A warning message is posted in the Ogre.log if this occurs.  Named passes can help when copying a material and modifying an existing pass: (@xref{Copying Materials})@*@*
-
 Passes have a set of global attributes (described below), zero or more nested texture_unit entries (@xref{Texture Units}), and optionally a reference to a vertex and / or a fragment program (@xref{Using Vertex and Fragment Programs in a Pass}).
 
 @*@*
@@ -816,116 +804,16 @@ Default: max_lights 8@*
 
 Sets whether or not this pass is iterated, ie issued more than once.@*@*
 
-Basic Format: iteration <once | once_per_light> [lightType]@*@*
-Advanced Format: iteration <number> [<per_light> [lightType]]@*@*
-Examples:
-@table @asis
-@item iteration once
-	The pass is onle executed once which is the default behaviour.
-@item iteration once_per_light point
-	The pass is executed once for each point light.
-@item iteration 5
-	The render state for the pass will be setup and then the draw call will execute 5 times.
-@item iteration 5 per_light point
-	The render state for the pass will be setup and then the draw call will execute 5 times.  This will be done for each point light.
-@end table
-@*
+Format: iteration <once | once_per_light> [lightType]@*@*
+Example: iteration once_per_light point
 
 By default, passes are only issued once. However, if you use the programmable pipeline, or you wish to exceed the normal limits on the number of lights which are supported, you might want to use the once_per_light option. In this case, only light index 0 is ever used, and the pass is issued multiple times, each time with a different light in light index 0. Clearly this will make the pass more expensive, but it may be the only way to achieve certain effects such as per-pixel lighting effects which take into account 1..n lights.@*@*
 
-Using a number instead of "once" instructs the pass to iterate more than once after the render state is setup.  The render state is not changed after the initial setup so repeated draw calls are very fast and ideal for passes using programmable shaders that must iterate more than once with the same render state ie. shaders that do fur, motion blur, special filtering.@*@*
-
 If you use once_per_light, you should also add an ambient pass to the technique before this pass, otherwise when no lights are in range of this object it will not get rendered at all; this is important even when you have no ambient light in the scene, because you would still want the objects sihouette to appear.@*@*
 
-The second parameter to the attribute only applies if you use once_per_light or per_light, and restricts the pass to being run for lights of a single type (either 'point', 'directional' or 'spot'). In the example, the pass will be run once per point light. This can be useful because when you're writing a vertex / fragment program it is a lot better if you can assume the kind of lights you'll be dealing with. 
+The second parameter to the attribute only applies if you use once_per_light, and restricts the pass to being run for lights of a single type (either 'point', 'directional' or 'spot'). In the example, the pass will be run once per point light. This can be useful because when you;re writing a vertex / fragment program it is a lot better if you can assume the kind of lights you'll be dealing with. 
 @*@*
-Default: iteration once@*@*
-
-@anchor{fur_example}
-Example: Simple Fur shader material script that uses a second pass with 10 iterations to grow the fur:
-@example
-// GLSL simple Fur
-vertex_program GLSLDemo/FurVS glsl 
-{ 
-  source fur.vert 
-  default_params
-  {
-    param_named_auto lightPosition light_position_object_space 0
-    param_named_auto eyePosition camera_position_object_space
-    param_named_auto passNumber pass_number
-    param_named_auto multiPassNumber pass_iteration_number
-    param_named furLength float 0.15
-  }
-} 
-
-fragment_program GLSLDemo/FurFS glsl 
-{ 
-  source fur.frag 
-  default_params
-  {
-    param_named Ka float 0.2
-    param_named Kd float 0.5
-    param_named Ks float 0.0
-    param_named furTU int 0
-  }
-} 
-
-material Fur
-{ 
-  technique GLSL
-  { 
-    pass base_coat
-    { 
-      ambient 0.7 0.7 0.7
-      diffuse 0.5 0.8 0.5
-      specular 1.0 1.0 1.0 1.5
-
-      vertex_program_ref GLSLDemo/FurVS
-      {
-      }
-
-      fragment_program_ref GLSLDemo/FurFS 
-      { 
-      } 
-
-      texture_unit
-      {
-        texture Fur.tga
-        tex_coord_set 0
-        filtering trilinear
-      }
-
-    } 
-
-    pass grow_fur
-    { 
-      ambient 0.7 0.7 0.7
-      diffuse 0.8 1.0 0.8
-      specular 1.0 1.0 1.0 64
-      depth_write off
-
-      scene_blend src_alpha one
-      iteration 10
-      
-      vertex_program_ref GLSLDemo/FurVS
-      {
-      }
-
-      fragment_program_ref GLSLDemo/FurFS
-      {
-      }
-
-      texture_unit
-      {
-        texture Fur.tga
-        tex_coord_set 0
-        filtering trilinear
-      }
-    } 
-  } 
-}
-@end example
-Note: use gpu program auto parameters @ref{pass_number} and @ref{pass_iteration_number} to tell the vertex or fragment program the pass number and iteration number.
+Default: iteration once
 
 @node Texture Units
 @subsection Texture Units
@@ -1052,10 +940,9 @@ Default: tex_coord_set 0@*@*
 
 @anchor{tex_address_mode}
 @subheading tex_address_mode
-Defines what happens when texture coordinates exceed 1.0 for this texture layer.You can use the simple format to specify the addressing mode for all 3 potential texture coordinates at once, or you can use the 2/3 parameter extended format to specify a different mode per texture coordinate. @*@*
+Defines what happens when texture coordinates exceed 1.0 for this texture layer.@*@*
 
-Simple Format: tex_address_mode <uvw_mode> @*
-Extended Format: tex_address_mode <u_mode> <v_mode> [<w_mode>]
+Format: tex_address_mode <wrap|clamp|mirror>
 @table @asis
 @item wrap
 	Any value beyond 1.0 wraps back to 0.0. Texture is repeated.
@@ -1351,7 +1238,7 @@ The current supported syntaxes are:
 These are the DirectX vertex shader assembler syntaxes. 
 @item arbvp1
 This is the OpenGL standard assembler format for vertex programs. It's roughly equivalent to DirectX vs_1_1.
-@item ps_1_1, ps_1_2, ps_1_3, ps_1_4, ps_2_x, ps_3_0, ps_3_x
+@item ps_1_1, ps_1_2, ps_1_3, ps_1_4, ps_2_0, ps_2_x, ps_3_0, ps_3_x
 These are the DirectX pixel shader (ie fragment program) assembler syntaxes.@*
 NOTE: for ATI 8500, 9000, 9100, 9200 hardware, ps_1_1 to ps_1_4 can also be used in OpenGL.  The ATI 8500 to 9200 do not support arbfp1 but do support atifs extension in OpenGL which is very similar in function to ps_1_4 in DirectX.  Ogre has a built in ps_1_x to atifs compiler that is automatically invoked when ps_1_x is used in OpenGL on ATI hardware.
 @item arbfp1
@@ -1421,13 +1308,6 @@ You can implement skeletal animation in hardware by writing a vertex program whi
 	includes_skeletal_animation true
 @end example
 When you do this, any skeletally animated entity which uses this material will forgo the usual animation blend and will expect the vertex program to do it, for both vertex positions and normals.
-
-@subheading Morph Animation in Vertex Programs
-You can implement morph animation in hardware by writing a vertex program which linearly blends between the first and second position keyframes passed as positions and the first free texture coordinate set, and by binding the animation_parametric value to a parameter (which tells you how far to interpolate between the two). However, you need to communicate this support to Ogre so it does not perform morph animation in software for you. You do this by adding the following attribute to your vertex_program definition:
-@example
-	includes_morph_animation true
-@end example
-When you do this, any skeletally animated entity which uses this material will forgo the usual software morph and will expect the vertex program to do it. Note that if your model includes both skeletal animation and morph animation, they must both be implemented in the vertex program if either is to be hardware acceleration. 
 
 @subheading Vertex Programs With Shadows
 When using shadows (@xref{Shadows}), the use of vertex programs can add some additional complexities, because Ogre can only automatically deal with everything when using the fixed-function pipeline. If you use vertex programs, and you are also using shadows, you may need to make some adjustments. @*@*
@@ -1555,11 +1435,7 @@ The direction of a given light in world space. This requires an index in the 'ex
 @item light_position_object_space
 The position of a given light in object space (ie when the object is at (0,0,0)). This requires an index in the 'extra_params' field, and relates to the 'nth' closest light which could affect this object (ie 0 refers to the closest light). NB if there are no lights this close, then the parameter will be set to all zeroes.  Note that this property will work with all kinds of lights, even directional lights, since the parameter is set as a 4D vector. Point lights will be (pos.x, pos.y, pos.z, 1.0f) whilst directional lights will be (-dir.x, -dir.y, -dir.z, 0.0f). Operations like dot products will work consistently on both.
 @item light_direction_object_space
-The direction of a given light in object space (ie when the object is at (0,0,0)). This requires an index in the 'extra_params' field, and relates to the 'nth' closest light which could affect this object (ie 0 refers to the closest light). NB if there are no lights this close, then the parameter will be set to all zeroes.  DEPRECATED, except for spotlights - for directional lights we recommend that you use light_position_object_space instead since that returns a generic 4D vector.
-@item light_position_view_space
-The position of a given light in view space (ie when the camera is at (0,0,0)). This requires an index in the 'extra_params' field, and relates to the 'nth' closest light which could affect this object (ie 0 refers to the closest light). NB if there are no lights this close, then the parameter will be set to all zeroes.  Note that this property will work with all kinds of lights, even directional lights, since the parameter is set as a 4D vector. Point lights will be (pos.x, pos.y, pos.z, 1.0f) whilst directional lights will be (-dir.x, -dir.y, -dir.z, 0.0f). Operations like dot products will work consistently on both.
-@item light_direction_view_space
-The direction of a given light in view space (ie when the camera is at (0,0,0)). This requires an index in the 'extra_params' field, and relates to the 'nth' closest light which could affect this object (ie 0 refers to the closest light). NB if there are no lights this close, then the parameter will be set to all zeroes.  DEPRECATED, except for spotlights - for directional lights we recommend that you use light_position_view_space instead since that returns a generic 4D vector.
+The direction of a given light in object space (ie when the object is at (0,0,0)). This requires an index in the 'extra_params' field, and relates to the 'nth' closest light which could affect this object (ie 0 refers to the closest light). NB if there are no lights this close, then the parameter will be set to all zeroes.  DEPRECATED - this property only works on directional lights, and we recommend that you use light_position_object_space instead since that returns a generic 4D vector.
 @item ambient_light_colour
 The colour of the ambient light currently set in the scene.
 @item camera_position
@@ -1622,14 +1498,6 @@ Near clip distance, in world units
 Far clip distance, in world units (may be 0 for infinite view projection)
 @item texture_viewproj_matrix
 Only applicable to vertex programs which have been specified as the 'shadow receiver' vertex program alternative; this provides details of the view/projection matrix for the current shadow projector.
-@anchor{pass_number}
-@item pass_number
-Sets the active pass index number in a gpu parameter.  The first pass in a technique has an index of 0, the second an index of 1 and so on.  This is usefull for multipass shaders (ie fur or blur shader) that need to know what pass it is.  By setting up the auto parameter in a @ref{Default Program Parameters} list in a program definition, there is no requirement to set the pass number parameter in each pass and lose track. (@xref{fur_example})
-@anchor{pass_iteration_number}
-@item pass_iteration_number
-Usefull for GPU programs that need to know what the current pass iteration number is. The first iteration of a pass is numbered 0.  The last iteration number is one less than what is set for the pass iteration number.  If a pass has its iteration attribute set to 5 then the last iteration number (5th execution of the pass) is 4.(@xref{iteration})
-@item animation_parametric
-Useful for hardware morph animation. Sets the parametric value (0..1) representing the distance between the first position keyframe (bound to positions) and the second position keyframe (bound to the first free texture coordinate) so that the vertex program can interpolate between them.
 @item custom
 This allows you to map a custom parameter on an individual Renderable (see Renderable::setCustomParameter) to a parameter on a GPU program. It requires that you complete the 'extra_params' field with the index that was used in the Renderable::setCustomParameter call, and this will ensure that whenever this Renderable is used, it will have it's custom parameter mapped in. It's very important that this parameter has been defined on all Renderables that are assigned the material that contains this automatic mapping, otherwise the process will fail.
 @end table
@@ -1680,7 +1548,6 @@ shadow_receiver_vertex_program_ref myShadowReceiverVertexProgram
 
 For the purposes of writing this alternate program, there is an automatic parameter binding of 'texture_viewproj_matrix' which provides the program with texture projection parameters. The vertex program should do it's normal vertex processing, and generate texture coordinates using this matrix and place them in texture coord sets 0 and 1, since some shadow techniques use 2 texture units. The colour of the vertices output by this vertex program must always be white, so as not to affect the final colour of the rendered shadow.
 
-@include MaterialScriptCopy.inc
 
 @node Particle Scripts
 @section Particle Scripts
@@ -1759,12 +1626,6 @@ For a detailed description of the core particle system attributes, see the list 
 @ref{billboard_type}
 @item
 @ref{common_direction}
-@item
-@ref{particle_renderer, renderer}
-@item
-@ref{particle_sorted, sorted}
-@item
-@ref{particle_localspace, local_space}
 @end itemize
 See also: @ref{Particle Emitters}, @ref{Particle Affectors}
 
@@ -1817,36 +1678,10 @@ format: cull_each <true|false>@*
 example: cull_each true@*
 default: false@*
 
-@anchor{particle_renderer}
-@subheading renderer
-
-Particle systems do not render themselves, they do it through ParticleRenderer classes. Those classes are registered with a manager in order to provide particle systems with a particular 'look'. OGRE comes configured with a default billboard-based renderer, but more can be added through plugins. Particle renders are registered with a unique name, and you can use that name in this attribute to determine the renderer to use. The default is 'billboard'.@*@*
-
-Particle renderers can have attributes, which can be passed by setting them on the root particle system.@*@*
-
-format: renderer <renderer_name>@*
-default: billboard@*
-
-@anchor{particle_sorted}
-@subheading sorted
-
-By default, particles are not sorted. By setting this attribute to 'true', theparticles will be sorted with respect to the camera, furthest first. This can make certain rendering effects look better at a small sorting expense.@*@*
-
-format: sorted <true|false>@*
-default: false@*
-
-@anchor{particle_localspace}
-@subheading local_space
-
-By default, particles are emitted into world space, such that if you transform the node to which the system is attached, it will not affect the particles (only the emitters). This tends to give the normal expected behaviour, which is to model how real world particles travel independently from the objects they are emitted from. However, to create some effects you may want the particles to remain attached to the local space the emitter is in and to follow them directly. This option allows you to do that.@*@*
-
-format: local_space <true|false>@*
-default: false@*
-
 @anchor{billboard_type}
 @subheading billboard_type
 
-This is actually an attribute of the 'billboard' particle renderer (the default), and is an example of passing attributes to a particle renderer by declaring them directly within the system declaration. Particles using the default renderer are rendered using billboards, which are rectangles formed by 2 triangles which rotate to face the camera. However, there is more than 1 way to orient a billboard. The classic approach is for the billboard to directly face the camera: this is the default behaviour. However this arrangement only looks good for particles which are representing something vaguely spherical like a light flare. For more linear effectd like laser fire, you actually want the particle to have an orientation of it's own.@*@*
+Particles are rendered using billboards, which are rectangles formed by 2 triangles which rotate to face the camera. However, there is more than 1 way to orient a billboard. The classic approach is for the billboard to directly face the camera: this is the default behaviour. However this arrangement only looks good for particles which are representing something vaguely spherical like a light flare. For more linear effectd like laser fire, you actually want the particle to have an orientation of it's own.@*@*
 
 format: billboard_type <point|oriented_common|oriented_self>@*
 example: billboard_type oriented_self@*

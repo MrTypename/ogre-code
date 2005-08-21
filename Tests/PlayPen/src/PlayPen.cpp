@@ -740,34 +740,37 @@ protected:
 
 	void testBug()
 	{
-		// Set ambient light
-		mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
-		mWindow->getViewport(0)->setBackgroundColour(ColourValue::White);
+
+		//Load the main background
+		MaterialPtr      bgmaterial = MaterialManager::getSingleton().create("Background", "General");
+		bgmaterial->getTechnique(0)->getPass(0)->createTextureUnitState("ogrelogo.png");
+		bgmaterial->getTechnique(0)->getPass(0)->setDepthCheckEnabled(false);
+		bgmaterial->getTechnique(0)->getPass(0)->setDepthWriteEnabled(false);
+
+		//Disable lighting on background
+		bgmaterial->getTechnique(0)->getPass(0)->setLightingEnabled(false);
+
+		//Create background rectangle
+		Rectangle2D*   bgrect = new Rectangle2D(true);
+
+		//Cover whole screen
+		bgrect->setCorners(-1.0,1.0,1.0,-1.0);
+
+		//Kludge: set bounding box to a large size.
+		bgrect->setBoundingBox(AxisAlignedBox(-10000.0*Vector3::UNIT_SCALE, 100000.0*Vector3::UNIT_SCALE));
+		bgrect->setMaterial("Background");
+
+		//Render background before everything else
+		bgrect->setRenderQueueGroup(RENDER_QUEUE_BACKGROUND);
+
+		//Attach background to the scene
+		SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode("Background");
+		node->attachObject(bgrect); 	
 
 
-
-		Entity *ent = mSceneMgr->createEntity("robot", "logcabin.mesh");
-		// Uncomment the below to test software skinning
-		//ent->setMaterialName("Examples/Rocky");
-		// Add entity to the scene node
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
-		mAnimState = ent->getAnimationState("door1");
-		mAnimState->setEnabled(true);
-
-		// Give it a little ambience with lights
-		Light* l;
-		l = mSceneMgr->createLight("BlueLight");
-		l->setPosition(-200,-80,-100);
-		l->setDiffuseColour(0.5, 0.5, 1.0);
-
-		l = mSceneMgr->createLight("GreenLight");
-		l->setPosition(0,0,-100);
-		l->setDiffuseColour(0.5, 1.0, 0.5);
-
-		// Position the camera
-		mCamera->setPosition(100,50,100);
-		mCamera->lookAt(-50,50,0);
-
+		Entity* e = mSceneMgr->createEntity("2", "knot.mesh");
+		e->setMaterialName("mymaterial");
+		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
 	}
 
 	void testTransparencyMipMaps()
@@ -1201,28 +1204,28 @@ protected:
         // Spline it for nice curves
         anim->setInterpolationMode(Animation::IM_SPLINE);
         // Create a track to animate the head's node
-        NodeAnimationTrack* track = anim->createNodeTrack(0, headNode);
+        AnimationTrack* track = anim->createTrack(0, headNode);
         // Setup keyframes
-        TransformKeyFrame* key = track->createNodeKeyFrame(0); // startposition
-        key = track->createNodeKeyFrame(2.5);
+        KeyFrame* key = track->createKeyFrame(0); // startposition
+        key = track->createKeyFrame(2.5);
         key->setTranslate(Vector3(500,500,-1000));
-        key = track->createNodeKeyFrame(5);
+        key = track->createKeyFrame(5);
         key->setTranslate(Vector3(-1500,1000,-600));
-        key = track->createNodeKeyFrame(7.5);
+        key = track->createKeyFrame(7.5);
         key->setTranslate(Vector3(0,-100,0));
-        key = track->createNodeKeyFrame(10);
+        key = track->createKeyFrame(10);
         key->setTranslate(Vector3(0,0,0));
         // Create a track to animate the second head's node
-        track = anim->createNodeTrack(1, headNode2);
+        track = anim->createTrack(1, headNode2);
         // Setup keyframes
-        key = track->createNodeKeyFrame(0); // startposition
-        key = track->createNodeKeyFrame(2.5);
+        key = track->createKeyFrame(0); // startposition
+        key = track->createKeyFrame(2.5);
         key->setTranslate(Vector3(-500,600,-100));
-        key = track->createNodeKeyFrame(5);
+        key = track->createKeyFrame(5);
         key->setTranslate(Vector3(800,200,-600));
-        key = track->createNodeKeyFrame(7.5);
+        key = track->createKeyFrame(7.5);
         key->setTranslate(Vector3(200,-1000,0));
-        key = track->createNodeKeyFrame(10);
+        key = track->createKeyFrame(10);
         key->setTranslate(Vector3(30,70,110));
         // Create a new animation state to track this
         mAnimState = mSceneMgr->createAnimationState("CameraTrack");
@@ -1635,6 +1638,8 @@ protected:
             {
                 ent->getParentNode()->yaw(Degree(45));
             }
+
+			ent->getParentNode()->scale(Vector3(0.5, 0.5, 0.5));
         }
         mAnimState = ent->getAnimationState("Walk");
         mAnimState->setEnabled(true);
@@ -1790,28 +1795,28 @@ protected:
         // Spline it for nice curves
         anim->setInterpolationMode(Animation::IM_SPLINE);
         // Create a track to animate the head's node
-        NodeAnimationTrack* track = anim->createNodeTrack(0, headNode);
+        AnimationTrack* track = anim->createTrack(0, headNode);
         // Setup keyframes
-        TransformKeyFrame* key = track->createNodeKeyFrame(0); // startposition
-        key = track->createNodeKeyFrame(2.5);
+        KeyFrame* key = track->createKeyFrame(0); // startposition
+        key = track->createKeyFrame(2.5);
         key->setTranslate(Vector3(500,500,-1000));
-        key = track->createNodeKeyFrame(5);
+        key = track->createKeyFrame(5);
         key->setTranslate(Vector3(-1500,1000,-600));
-        key = track->createNodeKeyFrame(7.5);
+        key = track->createKeyFrame(7.5);
         key->setTranslate(Vector3(0,-100,0));
-        key = track->createNodeKeyFrame(10);
+        key = track->createKeyFrame(10);
         key->setTranslate(Vector3(0,0,0));
         // Create a track to animate the second head's node
-        track = anim->createNodeTrack(1, headNode2);
+        track = anim->createTrack(1, headNode2);
         // Setup keyframes
-        key = track->createNodeKeyFrame(0); // startposition
-        key = track->createNodeKeyFrame(2.5);
+        key = track->createKeyFrame(0); // startposition
+        key = track->createKeyFrame(2.5);
         key->setTranslate(Vector3(-500,600,-100));
-        key = track->createNodeKeyFrame(5);
+        key = track->createKeyFrame(5);
         key->setTranslate(Vector3(800,200,-600));
-        key = track->createNodeKeyFrame(7.5);
+        key = track->createKeyFrame(7.5);
         key->setTranslate(Vector3(200,-1000,0));
-        key = track->createNodeKeyFrame(10);
+        key = track->createKeyFrame(10);
         key->setTranslate(Vector3(30,70,110));
         // Create a new animation state to track this
         mAnimState = mSceneMgr->createAnimationState("CameraTrack");
@@ -2250,7 +2255,7 @@ protected:
 
 	void testStaticGeometry(void)
 	{
-		mSceneMgr->setShadowTechnique(SHADOWTYPE_TEXTURE_MODULATIVE);
+		//mSceneMgr->setShadowTechnique(SHADOWTYPE_TEXTURE_MODULATIVE);
 		//mSceneMgr->setShowDebugShadows(true);
 
 		mSceneMgr->setSkyBox(true, "Examples/EveningSkyBox");
@@ -2260,7 +2265,7 @@ protected:
 		// Create a point light
 		Light* l = mSceneMgr->createLight("MainLight");
 		l->setType(Light::LT_DIRECTIONAL);
-		Vector3 dir(0, -1, -1.5);
+		Vector3 dir(1, -1, -1.5);
 		dir.normalise();
 		l->setDirection(dir);
 		l->setDiffuseColour(1.0, 0.7, 0.0);
@@ -2287,14 +2292,14 @@ protected:
 		StaticGeometry* s = mSceneMgr->createStaticGeometry("bing");
 		s->setCastShadows(true);
 		s->setRegionDimensions(Vector3(500,500,500));
-		for (int i = 0; i < 100; ++i)
+		for (int i = 0; i < 1000; ++i)
 		{
 			Vector3 pos;
 			pos.x = Math::RangeRandom(min.x, max.x);
 			pos.y = Math::RangeRandom(min.y, max.y);
 			pos.z = Math::RangeRandom(min.z, max.z);
 
-			s->addEntity(e, pos, Quaternion::IDENTITY);
+			s->addEntity(e, pos, Quaternion::IDENTITY, Vector3(5,5,5));
 
 		}
 
@@ -2329,198 +2334,41 @@ protected:
 
 	}
 
-	void testBillboardTextureCoords()
+	void testDepthBias()
 	{
-		mSceneMgr->setAmbientLight(ColourValue::White);
+		SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode("Entity");
+		const String meshName("cube.mesh");
+		Entity* entity;
 
-		BillboardSet* bbs = mSceneMgr->createBillboardSet("test");
-		float xsegs = 3;
-		float ysegs = 3;
-		float width = 300;
-		float height = 300;
-		float gap = 30;
+		entity = mSceneMgr->createEntity("Entity", meshName);
+		entity->setMaterialName("Entity");
+		node->attachObject(entity);
 
-		// set up texture coords
-		bbs->setTextureStacksAndSlices(ysegs, xsegs);
-		bbs->setDefaultDimensions(width/xsegs, height/xsegs);
-
-		for (float y = 0; y < ysegs; ++y)
+		for (size_t i = 0; i <= 6;++i)
 		{
-			for (float x = 0; x < xsegs; ++x)
-			{
-				Vector3 midPoint;
-				midPoint.x = (x * width / xsegs) + ((x-1) * gap);
-				midPoint.y = (y * height / xsegs) + ((y-1) * gap);
-				midPoint.z = 0;
-				Billboard* bb = bbs->createBillboard(midPoint);
-				bb->setTexCoords((ysegs - y - 1)*ysegs + x);
-			}
+			String name("Decal");
+			name += StringConverter::toString(i);
+
+			MaterialPtr pMat = static_cast<MaterialPtr>(MaterialManager::getSingleton().create(
+				name, ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME));
+
+			pMat->getTechnique(0)->getPass(0)->setLightingEnabled(false);
+			pMat->getTechnique(0)->getPass(0)->setAlphaRejectSettings(CMPF_GREATER_EQUAL, 128);
+			pMat->getTechnique(0)->getPass(0)->setDepthBias(i);
+			pMat->getTechnique(0)->getPass(0)->createTextureUnitState(name + ".png");
+
+			entity = mSceneMgr->createEntity(name, meshName);
+			entity->setMaterialName(name);
+			node->attachObject(entity);
 		}
 
-		bbs->setMaterialName("Examples/OgreLogo");
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(bbs);
-
+		mCamera->setPosition(70.0, 90.0, 220.0);
+		mCamera->lookAt(Vector3::ZERO); 
 	}
-
-	class SortFunctor
-	{
-	public:
-		int operator()(const int& p) const
-		{
-			return p;
-		}
-
-	};
-	void testRadixSort()
-	{
-		RadixSort<std::list<int>, int, int> rs;
-		SortFunctor f;
-
-		std::list<int> particles;
-		for (int r = 0; r < 20; ++r)
-		{
-			particles.push_back((int)Math::RangeRandom(-1e3f, 1e3f));
-		}
-
-		std::list<int>::iterator i;
-		LogManager::getSingleton().logMessage("BEFORE");
-		for (i = particles.begin(); i != particles.end(); ++i)
-		{
-			StringUtil::StrStreamType str;
-			str << *i;
-			LogManager::getSingleton().logMessage(str.str());
-		}
-
-		rs.sort(particles, f);
-
-
-		LogManager::getSingleton().logMessage("AFTER");
-		for (i = particles.begin(); i != particles.end(); ++i)
-		{
-			StringUtil::StrStreamType str;
-			str << *i;
-			LogManager::getSingleton().logMessage(str.str());
-		}
-
-
-
-	}
-
-	void testMorphAnimation()
-	{
-		bool testStencil = true;
-
-		if (testStencil)
-			mSceneMgr->setShadowTechnique(SHADOWTYPE_STENCIL_MODULATIVE);
-
-		mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
-		Vector3 dir(-1, -1, 0.5);
-		dir.normalise();
-		Light* l = mSceneMgr->createLight("light1");
-		l->setType(Light::LT_DIRECTIONAL);
-		l->setDirection(dir);
-
-		/*
-		MeshPtr mesh = MeshManager::getSingleton().load("cube.mesh", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-
-		SubMesh* sm = mesh->getSubMesh(0);
-		// Re-organise geometry since this mesh has no animation and all 
-		// vertex elements are packed into one buffer
-		VertexDeclaration* newDecl = 
-			sm->vertexData->vertexDeclaration->getAutoOrganisedDeclaration(false, true);
-		sm->vertexData->reorganiseBuffers(newDecl);
-		if (testStencil)
-			sm->vertexData->prepareForShadowVolume(); // need to re-prep since reorganised
-		// get the position buffer (which should now be separate);
-		const VertexElement* posElem = 
-			sm->vertexData->vertexDeclaration->findElementBySemantic(VES_POSITION);
-		HardwareVertexBufferSharedPtr origbuf = 
-			sm->vertexData->vertexBufferBinding->getBuffer(
-				posElem->getSource());
-
-		// Create a new position buffer with updated values
-		HardwareVertexBufferSharedPtr newbuf = 
-			HardwareBufferManager::getSingleton().createVertexBuffer(
-				VertexElement::getTypeSize(VET_FLOAT3),
-				sm->vertexData->vertexCount, 
-				HardwareBuffer::HBU_STATIC, true);
-		float* pSrc = static_cast<float*>(origbuf->lock(HardwareBuffer::HBL_READ_ONLY));
-		float* pDst = static_cast<float*>(newbuf->lock(HardwareBuffer::HBL_DISCARD));
-
-		for (size_t v = 0; v < sm->vertexData->vertexCount; ++v)
-		{
-			// x
-			*pDst++ = *pSrc++;
-			// y (translate)
-			*pDst++ = (*pSrc++) + 100.0f;
-			// z
-			*pDst++ = *pSrc++;
-		}
-
-		origbuf->unlock();
-		newbuf->unlock();
-		
-		// create a morph animation
-		Animation* anim = mesh->createAnimation("testAnim", 10.0f);
-		VertexAnimationTrack* vt = anim->createVertexTrack(1, sm->vertexData);
-		// re-use start positions for frame 0
-		VertexKeyFrame* kf = vt->createVertexKeyFrame(0);
-		kf->setVertexBuffer(origbuf);
-
-		// Use translated buffer for mid frame
-		kf = vt->createVertexKeyFrame(5.0f);
-		kf->setVertexBuffer(newbuf);
-
-		// re-use start positions for final frame
-		kf = vt->createVertexKeyFrame(10.0f);
-		kf->setVertexBuffer(origbuf);
-
-		// write
-		MeshSerializer ser;
-		ser.exportMesh(mesh.get(), "testmorph.mesh");
-		*/
-
-		Entity* e = mSceneMgr->createEntity("test", "testmorph.mesh");
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-
-		// test hardware morph
-		//e->setMaterialName("testmorph");
-
-		mCamera->setNearClipDistance(0.5);
-		mSceneMgr->setShowDebugShadows(true);
-
-		mAnimState = e->getAnimationState("testAnim");
-		//mAnimState->setEnabled(true);
-		
-
-		Plane plane;
-		plane.normal = Vector3::UNIT_Y;
-		plane.d = 200;
-		MeshManager::getSingleton().createPlane("Myplane",
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane,
-			1500,1500,10,10,true,1,5,5,Vector3::UNIT_Z);
-		Entity* pPlaneEnt = mSceneMgr->createEntity( "plane", "Myplane" );
-		pPlaneEnt->setMaterialName("2 - Default");
-		pPlaneEnt->setCastShadows(false);
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pPlaneEnt);
-
-
-
-	}
-
 
     // Just override the mandatory create scene method
     void createScene(void)
     {
-
-		AnyNumeric anyInt1(43);
-		AnyNumeric anyInt2(5);
-		AnyNumeric anyInt3 = anyInt1 + anyInt2;
-
-		std::cout << anyInt3;
-		//Any anyString("test");
-
         //testMatrices();
         //testBsp();
         //testAlpha();
@@ -2556,12 +2404,11 @@ protected:
 		//testSimpleMesh();
 		//test2Windows();
 		//testStaticGeometry();
-		//testBillboardTextureCoords();
+		//testBug();
 		//testReloadResources();
 		//testTransparencyMipMaps();
-		//testRadixSort();
-		testMorphAnimation();
-		//testBug();
+		testDepthBias();
+
     }
     // Create new frame listener
     void createFrameListener(void)

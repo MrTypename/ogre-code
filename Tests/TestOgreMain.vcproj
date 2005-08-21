@@ -136,12 +136,6 @@
 				RelativePath="OgreMain\src\FileSystemArchiveTests.cpp">
 			</File>
 			<File
-				RelativePath="OgreMain\src\PixelFormatTests.cpp">
-			</File>
-			<File
-				RelativePath="OgreMain\src\RadixSort.cpp">
-			</File>
-			<File
 				RelativePath="OgreMain\src\StringTests.cpp">
 			</File>
 			<File
@@ -159,12 +153,6 @@
 			</File>
 			<File
 				RelativePath="OgreMain\include\FileSystemArchiveTests.h">
-			</File>
-			<File
-				RelativePath="OgreMain\include\PixelFormatTests.h">
-			</File>
-			<File
-				RelativePath="OgreMain\include\RadixSortTests.h">
 			</File>
 			<File
 				RelativePath="OgreMain\include\StringTests.h">

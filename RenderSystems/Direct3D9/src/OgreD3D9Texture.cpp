@@ -28,7 +28,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreLogManager.h"
 #include "OgreStringConverter.h"
 #include "OgreBitwise.h"
-#include "OgreD3D9Mappings.h"
 
 #include "OgreNoMemoryMacros.h"
 #include <d3dx9.h>
@@ -47,6 +46,7 @@ namespace Ogre
         mpNormTex(NULL),
         mpCubeTex(NULL),
 		mpVolumeTex(NULL),
+        mpZBuff(NULL),
         mpTex(NULL),
         mAutoGenMipmaps(false),
 		mDynamicTextures(false)
@@ -184,7 +184,7 @@ namespace Ogre
 			mIsLoaded = true;
 			return;
 		}
-
+		
 		// load based on tex.type
 		switch (this->getTextureType())
 		{
@@ -210,6 +210,7 @@ namespace Ogre
 		SAFE_RELEASE(mpNormTex);
 		SAFE_RELEASE(mpCubeTex);
 		SAFE_RELEASE(mpVolumeTex);
+		SAFE_RELEASE(mpZBuff);
 	}
 	/****************************************************************************************/
 	void D3D9Texture::_loadCubeTex()
@@ -246,8 +247,8 @@ namespace Ogre
             D3DSURFACE_DESC texDesc;
             mpCubeTex->GetLevelDesc(0, &texDesc);
             // set src and dest attributes to the same, we can't know
-            _setSrcAttributes(texDesc.Width, texDesc.Height, 1, D3D9Mappings::_getPF(texDesc.Format));
-            _setFinalAttributes(texDesc.Width, texDesc.Height, 1,  D3D9Mappings::_getPF(texDesc.Format));
+            _setSrcAttributes(texDesc.Width, texDesc.Height, 1, _getPF(texDesc.Format));
+            _setFinalAttributes(texDesc.Width, texDesc.Height, 1,  _getPF(texDesc.Format));
 			mIsLoaded = true;
         }
         else
@@ -309,8 +310,8 @@ namespace Ogre
 			hr = mpVolumeTex->GetLevelDesc(0, &texDesc);
 	
 			// set src and dest attributes to the same, we can't know
-			_setSrcAttributes(texDesc.Width, texDesc.Height, texDesc.Depth, D3D9Mappings::_getPF(texDesc.Format));
-			_setFinalAttributes(texDesc.Width, texDesc.Height, texDesc.Depth, D3D9Mappings::_getPF(texDesc.Format));
+			_setSrcAttributes(texDesc.Width, texDesc.Height, texDesc.Depth, _getPF(texDesc.Format));
+			_setFinalAttributes(texDesc.Width, texDesc.Height, texDesc.Depth, _getPF(texDesc.Format));
 			mIsLoaded = true;
         }
 		else
@@ -357,8 +358,8 @@ namespace Ogre
 			D3DSURFACE_DESC texDesc;
 			mpNormTex->GetLevelDesc(0, &texDesc);
 			// set src and dest attributes to the same, we can't know
-			_setSrcAttributes(texDesc.Width, texDesc.Height, 1, D3D9Mappings::_getPF(texDesc.Format));
-			_setFinalAttributes(texDesc.Width, texDesc.Height, 1, D3D9Mappings::_getPF(texDesc.Format));
+			_setSrcAttributes(texDesc.Width, texDesc.Height, 1, _getPF(texDesc.Format));
+			_setFinalAttributes(texDesc.Width, texDesc.Height, 1, _getPF(texDesc.Format));
 			mIsLoaded = true;
         }
 		else
@@ -492,8 +493,12 @@ namespace Ogre
 			OGRE_EXCEPT( hr, "Can't get texture description", "D3D9Texture::_createNormTex" );
 			this->freeInternalResources();
 		}
-		this->_setFinalAttributes(desc.Width, desc.Height, 1, D3D9Mappings::_getPF(desc.Format));
+		this->_setFinalAttributes(desc.Width, desc.Height, 1, this->_getPF(desc.Format));
 		
+		// create a depth stencil if this is a render target
+		if (mUsage & TU_RENDERTARGET)
+			this->_createDepthStencil();
+
 		// Set best filter type
 		if(mAutoGenMipmaps)
 		{
@@ -587,7 +592,11 @@ namespace Ogre
 			OGRE_EXCEPT( hr, "Can't get texture description", "D3D9Texture::_createCubeTex" );
 			this->freeInternalResources();
 		}
-		this->_setFinalAttributes(desc.Width, desc.Height, 1, D3D9Mappings::_getPF(desc.Format));
+		this->_setFinalAttributes(desc.Width, desc.Height, 1, this->_getPF(desc.Format));
+		
+		// create a depth stencil if this is a render target
+		if (mUsage & TU_RENDERTARGET)
+			this->_createDepthStencil();
 
 		// Set best filter type
 		if(mAutoGenMipmaps)
@@ -684,8 +693,12 @@ namespace Ogre
 			OGRE_EXCEPT( hr, "Can't get texture description", "D3D9Texture::_createVolumeTex" );
 			this->freeInternalResources();
 		}
-		this->_setFinalAttributes(desc.Width, desc.Height, desc.Depth, D3D9Mappings::_getPF(desc.Format));
+		this->_setFinalAttributes(desc.Width, desc.Height, desc.Depth, this->_getPF(desc.Format));
 		
+		// create a depth stencil if this is a render target
+		if (mUsage & TU_RENDERTARGET)
+			this->_createDepthStencil();
+
 		// Set best filter type
 		if(mAutoGenMipmaps)
 		{
@@ -899,9 +912,55 @@ namespace Ogre
 		if(mFormat == PF_UNKNOWN)
 			return mBBPixelFormat;
 		// Choose closest supported D3D format as a D3D format
-		return D3D9Mappings::_getPF(D3D9Mappings::_getClosestSupportedPF(mFormat));
-
+		return _getPF(_getClosestSupportedPF(mFormat));
 	}
+	/****************************************************************************************/
+	void D3D9Texture::_createDepthStencil()
+	{
+		IDirect3DSurface9 *pSrf;
+		D3DSURFACE_DESC srfDesc;
+		HRESULT hr;
+
+		/* Get the format of the depth stencil surface of our main render target. */
+		hr = mpDev->GetDepthStencilSurface(&pSrf);
+		if (FAILED(hr))
+		{
+			String msg = DXGetErrorDescription9(hr);
+			OGRE_EXCEPT( hr, "Error GetDepthStencilSurface : " + msg, "D3D9Texture::_createDepthStencil" );
+			this->freeInternalResources();
+		}
+		// get it's description
+		hr = pSrf->GetDesc(&srfDesc);
+		if (FAILED(hr))
+		{
+			String msg = DXGetErrorDescription9(hr);
+			OGRE_EXCEPT( hr, "Error GetDesc : " + msg, "D3D9Texture::_createDepthStencil" );
+			SAFE_RELEASE(pSrf);
+			this->freeInternalResources();
+		}
+		// release the temp. surface
+		SAFE_RELEASE(pSrf);
+		/** Create a depth buffer for our render target, it must be of
+		    the same format as other targets !!!
+		. */
+		hr = mpDev->CreateDepthStencilSurface( 
+			mSrcWidth, 
+			mSrcHeight, 
+			srfDesc.Format, 
+			srfDesc.MultiSampleType, 
+			NULL, 
+			FALSE, 
+			&mpZBuff, 
+			NULL);
+		// cry if failed 
+		if (FAILED(hr))
+		{
+			String msg = DXGetErrorDescription9(hr);
+			OGRE_EXCEPT( hr, "Error CreateDepthStencilSurface : " + msg, "D3D9Texture::_createDepthStencil" );
+			this->freeInternalResources();
+		}
+	}
+	
 	/****************************************************************************************/
 	// Macro to hide ugly cast
 	#define GETLEVEL(face,mip) \
@@ -916,7 +975,7 @@ namespace Ogre
 		// Make sure number of mips is right
 		mNumMipmaps = mpTex->GetLevelCount() - 1;
 		// Need to know static / dynamic
-		unsigned int bufusage;
+		HardwareBuffer::Usage bufusage;
 		if ((mUsage & TU_DYNAMIC) && mDynamicTextures)
 		{
 			bufusage = HardwareBuffer::HBU_DYNAMIC;
@@ -925,11 +984,7 @@ namespace Ogre
 		{
 			bufusage = HardwareBuffer::HBU_STATIC;
 		}
-		if (mUsage & TU_RENDERTARGET)
-		{
-			bufusage |= TU_RENDERTARGET;
-		}
-		
+
 		bool updateOldList = mSurfaceList.size() == (getNumFaces() * (mNumMipmaps + 1));
 		if(!updateOldList)
 		{
@@ -939,7 +994,7 @@ namespace Ogre
 			{
 				for(size_t mip=0; mip<=mNumMipmaps; ++mip)
 				{
-					buffer = new D3D9HardwarePixelBuffer((HardwareBuffer::Usage)bufusage);
+					buffer = new D3D9HardwarePixelBuffer(bufusage);
 					mSurfaceList.push_back(
 						HardwarePixelBufferSharedPtr(buffer)
 					);
@@ -961,7 +1016,7 @@ namespace Ogre
 				// this is safe because the texture keeps a reference as well
 				surface->Release();
 
-				GETLEVEL(0, mip)->bind(mpDev, surface, updateOldList);
+				GETLEVEL(0, mip)->bind(mpDev, surface);
 			}
 			break;
 		case TEX_TYPE_CUBE_MAP:
@@ -978,7 +1033,7 @@ namespace Ogre
 					// this is safe because the texture keeps a reference as well
 					surface->Release();
 					
-					GETLEVEL(face, mip)->bind(mpDev, surface, updateOldList);
+					GETLEVEL(face, mip)->bind(mpDev, surface);
 				}
 			}
 			break;
@@ -994,7 +1049,7 @@ namespace Ogre
 				// this is safe because the texture keeps a reference as well
 				volume->Release();
 						
-				GETLEVEL(0, mip)->bind(mpDev, volume, updateOldList);
+				GETLEVEL(0, mip)->bind(mpDev, volume);
 			}
 			break;
 		};
@@ -1023,7 +1078,153 @@ namespace Ogre
 		return mSurfaceList[idx];
 	}
 	
-	
+	/****************************************************************************************/
+	PixelFormat D3D9Texture::_getPF(D3DFORMAT d3dPF)
+	{
+		switch(d3dPF)
+		{
+		case D3DFMT_A8:
+			return PF_A8;
+		case D3DFMT_L8:
+			return PF_L8;
+		case D3DFMT_L16:
+			return PF_L16;
+		case D3DFMT_A4L4:
+			return PF_A4L4;
+		case D3DFMT_A8L8:
+			return PF_BYTE_LA;	// Assume little endian here
+		case D3DFMT_R3G3B2:
+			return PF_R3G3B2;
+		case D3DFMT_A1R5G5B5:
+			return PF_A1R5G5B5;
+		case D3DFMT_A4R4G4B4:
+			return PF_A4R4G4B4;
+		case D3DFMT_R5G6B5:
+			return PF_R5G6B5;
+		case D3DFMT_R8G8B8:
+			return PF_R8G8B8;
+		case D3DFMT_X8R8G8B8:
+			return PF_X8R8G8B8;
+		case D3DFMT_A8R8G8B8:
+			return PF_A8R8G8B8;
+		case D3DFMT_X8B8G8R8:
+			return PF_X8B8G8R8;
+		case D3DFMT_A8B8G8R8:
+			return PF_A8B8G8R8;
+		case D3DFMT_A2R10G10B10:
+			return PF_A2R10G10B10;
+        case D3DFMT_A2B10G10R10:
+           return PF_A2B10G10R10;
+		case D3DFMT_R16F:
+			return PF_FLOAT16_R;
+		case D3DFMT_A16B16G16R16F:
+			return PF_FLOAT16_RGBA;
+		case D3DFMT_R32F:
+			return PF_FLOAT32_R;
+		case D3DFMT_A32B32G32R32F:
+			return PF_FLOAT32_RGBA;
+		case D3DFMT_A16B16G16R16:
+			return PF_SHORT_RGBA;
+		case D3DFMT_DXT1:
+			return PF_DXT1;
+		case D3DFMT_DXT2:
+			return PF_DXT2;
+		case D3DFMT_DXT3:
+			return PF_DXT3;
+		case D3DFMT_DXT4:
+			return PF_DXT4;
+		case D3DFMT_DXT5:
+			return PF_DXT5;
+		default:
+			return PF_UNKNOWN;
+		}
+	}
+	/****************************************************************************************/
+	D3DFORMAT D3D9Texture::_getPF(PixelFormat ogrePF)
+	{
+		switch(ogrePF)
+		{
+		case PF_L8:
+			return D3DFMT_L8;
+		case PF_L16:
+			return D3DFMT_L16;
+		case PF_A8:
+			return D3DFMT_A8;
+		case PF_A4L4:
+			return D3DFMT_A4L4;
+		case PF_BYTE_LA:
+			return D3DFMT_A8L8; // Assume little endian here
+		case PF_R3G3B2:
+			return D3DFMT_R3G3B2;
+		case PF_A1R5G5B5:
+			return D3DFMT_A1R5G5B5;
+		case PF_R5G6B5:
+			return D3DFMT_R5G6B5;
+		case PF_A4R4G4B4:
+			return D3DFMT_A4R4G4B4;
+		case PF_R8G8B8:
+			return D3DFMT_R8G8B8;
+		case PF_A8R8G8B8:
+			return D3DFMT_A8R8G8B8;
+		case PF_A8B8G8R8:
+			return D3DFMT_A8B8G8R8;
+		case PF_X8R8G8B8:
+			return D3DFMT_X8R8G8B8;
+		case PF_X8B8G8R8:
+			return D3DFMT_X8B8G8R8;
+		case PF_A2B10G10R10:
+            return D3DFMT_A2B10G10R10;
+		case PF_A2R10G10B10:
+			return D3DFMT_A2R10G10B10;
+		case PF_FLOAT16_R:
+			return D3DFMT_R16F;
+		case PF_FLOAT16_RGBA:
+			return D3DFMT_A16B16G16R16F;
+		case PF_FLOAT32_R:
+			return D3DFMT_R32F;
+		case PF_FLOAT32_RGBA:
+			return D3DFMT_A32B32G32R32F;
+		case PF_SHORT_RGBA:
+			return D3DFMT_A16B16G16R16;
+		case PF_DXT1:
+			return D3DFMT_DXT1;
+		case PF_DXT2:
+			return D3DFMT_DXT2;
+		case PF_DXT3:
+			return D3DFMT_DXT3;
+		case PF_DXT4:
+			return D3DFMT_DXT4;
+		case PF_DXT5:
+			return D3DFMT_DXT5;
+		case PF_UNKNOWN:
+		default:
+			return D3DFMT_UNKNOWN;
+		}
+	}
+	/****************************************************************************************/
+	PixelFormat D3D9Texture::_getClosestSupportedPF(PixelFormat ogrePF)
+	{
+		if (_getPF(ogrePF) != D3DFMT_UNKNOWN)
+		{
+			return ogrePF;
+		}
+		switch(ogrePF)
+		{
+		case PF_B5G6R5:
+			return PF_R5G6B5;
+		case PF_B8G8R8:
+			return PF_R8G8B8;
+		case PF_B8G8R8A8:
+			return PF_A8R8G8B8;
+		case PF_FLOAT16_RGB:
+			return PF_FLOAT16_RGBA;
+		case PF_FLOAT32_RGB:
+			return PF_FLOAT32_RGBA;
+		case PF_UNKNOWN:
+		default:
+			return PF_A8R8G8B8;
+		}
+	}
 	/****************************************************************************************/
 	bool D3D9Texture::releaseIfDefaultPool(void)
 	{
@@ -1059,6 +1260,7 @@ namespace Ogre
 			// 1. This is a render target
 			// 2. This is a dynamic texture, which probably won't have a loader,
 			//    but if it does, we'll call it
+			// whether or no, the load() can do anything for me
 			if ((mIsManual && !mLoader) || mUsage & TU_RENDERTARGET)
 			{
 				// just recreate any internal resources

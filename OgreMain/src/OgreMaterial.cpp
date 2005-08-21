@@ -236,26 +236,6 @@ namespace Ogre {
         assert (index < mTechniques.size() && "Index out of bounds.");
         return mTechniques[index];
     }
-    //-----------------------------------------------------------------------
-    Technique* Material::getTechnique(const String& name)
-    {
-        Techniques::iterator i    = mTechniques.begin();
-        Techniques::iterator iend = mTechniques.end();
-        Technique* foundTechnique = 0;
-
-        // iterate through techniques to find a match
-        while (i != iend)
-        {
-            if ( (*i)->getName() == name )
-            {
-                foundTechnique = (*i);
-                break;
-            }
-            ++i;
-        }
-
-        return foundTechnique;
-    }
     //-----------------------------------------------------------------------	
     unsigned short Material::getNumTechniques(void) const
     {

@@ -133,7 +133,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     const Matrix4& AutoParamDataSource::getViewMatrix(void) const
     {
-        return mCurrentCamera->getViewMatrix(true);
+        return mCurrentCamera->getViewMatrix();
     }
     //-----------------------------------------------------------------------------
     const Matrix4& AutoParamDataSource::getViewProjectionMatrix(void) const
@@ -534,21 +534,6 @@ namespace Ogre {
 		return mCurrentCamera->getFarClipDistance(); 
 	}
 	//-----------------------------------------------------------------------------
-    int AutoParamDataSource::getPassNumber(void) const
-    {
-        return mPassNumber;
-    }
-	//-----------------------------------------------------------------------------
-    void AutoParamDataSource::setPassNumber(const int passNumber)
-    {
-        mPassNumber = passNumber;
-    }
-	//-----------------------------------------------------------------------------
-    void AutoParamDataSource::incPassNumber(void)
-    {
-        ++mPassNumber;
-    }
-	//-----------------------------------------------------------------------------
-
+	
 }
 

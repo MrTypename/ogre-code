@@ -83,18 +83,9 @@ namespace Ogre {
 		unsigned short mMaterialLodIndex;
 
         /// blend buffer details for dedicated geometry
-        VertexData* mSkelAnimVertexData;
+        VertexData* mBlendedVertexData;
         /// Quick lookup of buffers
-        TempBlendedBufferInfo mTempSkelAnimInfo;
-		/// Temp buffer details for software morph anim geometry
-		TempBlendedBufferInfo mTempMorphAnimInfo;
-		/// Vertex data details for software morph anim of shared geometry
-		VertexData* mSoftwareMorphAnimVertexData;
-		/// Vertex data details for hardware morph anim of shared geometry
-		/// - separate since we need to s/w anim for shadows whilst still altering
-		///   the vertex data for hardware morphing (pos2 binding)
-		VertexData* mHardwareMorphAnimVertexData;
-
+        TempBlendedBufferInfo mTempBlendedBuffer;
         /** Internal method for preparing this Entity for use in animation. */
         void prepareTempBlendBuffers(void);
 
@@ -154,38 +145,14 @@ namespace Ogre {
         SceneDetailLevel getRenderDetail() const {return mRenderDetail;}
         /** @copydoc Renderable::getLights */
         const LightList& getLights(void) const;
+        /// Get the temporary blended vertex data for this subentity
+        const VertexData* getBlendedVertexData(void) { return mBlendedVertexData; }
         /** @copydoc Renderable::getCastsShadows */
         bool getCastsShadows(void) const;
 		/** Advanced method to get the temporarily blended vertex information
 		for entities which are software skinned. 
 		*/
-		VertexData* _getSkelAnimVertexData(void);
-		/** Advanced method to get the temporarily blended software morph vertex information
-		*/
-		VertexData* _getSoftwareMorphAnimVertexData(void);
-		/** Advanced method to get the hardware morph vertex information
-		*/
-		VertexData* _getHardwareMorphAnimVertexData(void);
-		/** Advanced method to get the temp buffer information for software 
-		skeletal animation.
-		*/
-		TempBlendedBufferInfo* _getSkelAnimTempBufferInfo(void);
-		/** Advanced method to get the temp buffer information for software 
-		morph animation.
-		*/
-		TempBlendedBufferInfo* _getMorphAnimTempBufferInfo(void);
-		/// Retrieve the VertexData which should be used for GPU binding
-		VertexData* getVertexDataForBinding(void);
-
-		/** Internal method to copy original vertex data to the morph structures
-		should there be no active animation in use.
-		*/
-		void copyOriginalVertexDataToMorph(void);
-
-		/** Overridden from Renderble to provide some custom behaviour. */
-		void _updateCustomGpuParameter(
-			const GpuProgramParameters::AutoConstantEntry& constantEntry,
-			GpuProgramParameters* params) const;
+		const VertexData* _getBlendedVertexData(void) const;
     };
 
 }

@@ -24,14 +24,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 #include "OgreD3D9HardwarePixelBuffer.h"
 #include "OgreD3D9Texture.h"
-#include "OgreD3D9Mappings.h"
 #include "OgreException.h"
 #include "OgreLogManager.h"
 #include "OgreStringConverter.h"
 #include "OgreBitwise.h"
-
-#include "OgreRoot.h"
-#include "OgreRenderSystem.h"
 
 #include "OgreNoMemoryMacros.h"
 #include <d3dx9.h>
@@ -51,10 +47,9 @@ D3D9HardwarePixelBuffer::D3D9HardwarePixelBuffer(HardwareBuffer::Usage usage):
 }
 D3D9HardwarePixelBuffer::~D3D9HardwarePixelBuffer()
 {
-	destroyRenderTextures();
 }
 //-----------------------------------------------------------------------------  
-void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DSurface9 *surface, bool update)
+void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DSurface9 *surface)
 {
 	mpDev = dev;
 	mSurface = surface;
@@ -66,17 +61,14 @@ void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DSurface9 *sur
 	mWidth = desc.Width;
 	mHeight = desc.Height;
 	mDepth = 1;
-	mFormat = D3D9Mappings::_getPF(desc.Format);
+	mFormat = D3D9Texture::_getPF(desc.Format);
 	// Default
 	mRowPitch = mWidth;
 	mSlicePitch = mHeight*mWidth;
 	mSizeInBytes = PixelUtil::getMemorySize(mWidth, mHeight, mDepth, mFormat);
-
-	if(mUsage & TU_RENDERTARGET)
-		createRenderTextures(update);
 }
 //-----------------------------------------------------------------------------
-void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DVolume9 *volume, bool update)
+void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DVolume9 *volume)
 {
 	mpDev = dev;
 	mVolume = volume;
@@ -88,14 +80,11 @@ void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DVolume9 *volu
 	mWidth = desc.Width;
 	mHeight = desc.Height;
 	mDepth = desc.Depth;
-	mFormat = D3D9Mappings::_getPF(desc.Format);
+	mFormat = D3D9Texture::_getPF(desc.Format);
 	// Default
 	mRowPitch = mWidth;
 	mSlicePitch = mHeight*mWidth;
 	mSizeInBytes = PixelUtil::getMemorySize(mWidth, mHeight, mDepth, mFormat);
-
-	if(mUsage & TU_RENDERTARGET)
-		createRenderTextures(update);
 }
 //-----------------------------------------------------------------------------  
 // Util functions to convert a D3D locked box to a pixel box
@@ -163,10 +152,6 @@ D3DBOX toD3DBOXExtent(const PixelBox &lockBox)
 //-----------------------------------------------------------------------------  
 PixelBox D3D9HardwarePixelBuffer::lockImpl(const Image::Box lockBox,  LockOptions options)
 {
-	// Check for misuse
-	if(mUsage & TU_RENDERTARGET)
-		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "DirectX does not allow locking of or directly writing to RenderTargets. Use blitFromMemory if you need the contents.",
-		 	"D3D9HardwarePixelBuffer::lockImpl");	
 	// Set extents and format
 	PixelBox rval(lockBox, mFormat);
 	// Set locking flags according to options
@@ -284,7 +269,7 @@ void D3D9HardwarePixelBuffer::blitFromMemory(const PixelBox &src, const Image::B
 	PixelBox converted = src;
 
 	// convert to pixelbuffer's native format if necessary
-	if (D3D9Mappings::_getPF(src.format) == D3DFMT_UNKNOWN)
+	if (D3D9Texture::_getPF(src.format) == D3DFMT_UNKNOWN)
 	{
 		buf.bind(new MemoryDataStream(
 			PixelUtil::getMemorySize(src.getWidth(), src.getHeight(), src.getDepth(),
@@ -300,7 +285,7 @@ void D3D9HardwarePixelBuffer::blitFromMemory(const PixelBox &src, const Image::B
 		destRect = toD3DRECT(dstBox);
 		
 		if(D3DXLoadSurfaceFromMemory(mSurface, NULL, &destRect, 
-			converted.data, D3D9Mappings::_getPF(converted.format),
+			converted.data, D3D9Texture::_getPF(converted.format),
 			converted.rowPitch * PixelUtil::getNumElemBytes(converted.format),
 			NULL, &srcRect, D3DX_DEFAULT, 0) != D3D_OK)
 		{
@@ -315,7 +300,7 @@ void D3D9HardwarePixelBuffer::blitFromMemory(const PixelBox &src, const Image::B
 		destBox = toD3DBOX(dstBox);
 		
 		if(D3DXLoadVolumeFromMemory(mVolume, NULL, &destBox, 
-			converted.data, D3D9Mappings::_getPF(converted.format),
+			converted.data, D3D9Texture::_getPF(converted.format),
 			converted.rowPitch * PixelUtil::getNumElemBytes(converted.format),
 			converted.slicePitch * PixelUtil::getNumElemBytes(converted.format),
 			NULL, &srcBox, D3DX_DEFAULT, 0) != D3D_OK)
@@ -332,7 +317,7 @@ void D3D9HardwarePixelBuffer::blitToMemory(const Image::Box &srcBox, const Pixel
 {
 	// Decide on pixel format of temp surface
 	PixelFormat tmpFormat = mFormat; 
-	if(D3D9Mappings::_getPF(dst.format) != D3DFMT_UNKNOWN)
+	if(D3D9Texture::_getPF(dst.format) != D3DFMT_UNKNOWN)
 	{
 		tmpFormat = dst.format;
 	}
@@ -346,7 +331,7 @@ void D3D9HardwarePixelBuffer::blitToMemory(const Image::Box &srcBox, const Pixel
 		if(D3DXCreateTexture(
 			mpDev,
 			dst.getWidth(), dst.getHeight(), 0,
-			0, D3D9Mappings::_getPF(tmpFormat), D3DPOOL_SCRATCH,
+			0, D3D9Texture::_getPF(tmpFormat), D3DPOOL_SCRATCH,
 			&tmp
 			) != D3D_OK)
 		{
@@ -401,7 +386,7 @@ void D3D9HardwarePixelBuffer::blitToMemory(const Image::Box &srcBox, const Pixel
 		if(D3DXCreateVolumeTexture(
 			mpDev,
 			dst.getWidth(), dst.getHeight(), dst.getDepth(), 0,
-			0, D3D9Mappings::_getPF(tmpFormat), D3DPOOL_SCRATCH,
+			0, D3D9Texture::_getPF(tmpFormat), D3DPOOL_SCRATCH,
 			&tmp
 			) != D3D_OK)
 		{
@@ -477,58 +462,6 @@ void D3D9HardwarePixelBuffer::_setMipmapping(bool doMipmapGen, bool HWMipmaps, I
 	mHWMipmaps = HWMipmaps;
 	mMipTex = mipTex;
 }
-//-----------------------------------------------------------------------------    
-RenderTexture *D3D9HardwarePixelBuffer::getRenderTarget(size_t zoffset)
-{
-    assert(mUsage & TU_RENDERTARGET);
-    assert(zoffset < mDepth);
-    return mSliceTRT[zoffset];
-}
-//-----------------------------------------------------------------------------    
-void D3D9HardwarePixelBuffer::createRenderTextures(bool update)
-{
-    if (update)
-    {
-        assert(mSliceTRT.size() == mDepth);
-        for (SliceTRT::const_iterator it = mSliceTRT.begin(); it != mSliceTRT.end(); ++it)
-        {
-            D3D9RenderTexture *trt = static_cast<D3D9RenderTexture*>(*it);
-            trt->rebind(this);
-        }
-        return;
-    }
 
-	destroyRenderTextures();
-	if(!mSurface)
-	{
-		OGRE_EXCEPT( Exception::ERR_RENDERINGAPI_ERROR, 
-			"Rendering to 3D slices not supported yet for Direct3D",
-			 "D3D9HardwarePixelBuffer::createRenderTexture");
-	}
-	// Create render target for each slice
-    mSliceTRT.reserve(mDepth);
-	assert(mDepth==1);
-    for(size_t zoffset=0; zoffset<mDepth; ++zoffset)
-    {
-        String name;
-		name = "rtt/"+Ogre::StringConverter::toString((size_t)mSurface);
-		
-        RenderTexture *trt = new D3D9RenderTexture(name, this);
-        mSliceTRT.push_back(trt);
-        Root::getSingleton().getRenderSystem()->attachRenderTarget(*trt);
-    }
-}
-//-----------------------------------------------------------------------------    
-void D3D9HardwarePixelBuffer::destroyRenderTextures()
-{
-	if(mSliceTRT.empty())
-		return;
-	// Delete all render targets that are not yet deleted via _clearSliceRTT
-    for(size_t zoffset=0; zoffset<mDepth; ++zoffset)
-    {
-        if(mSliceTRT[zoffset])
-            Root::getSingleton().getRenderSystem()->destroyRenderTarget(mSliceTRT[zoffset]->getName());
-    }
-}
 
 };

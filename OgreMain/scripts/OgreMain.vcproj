@@ -114,7 +114,7 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				AdditionalLibraryDirectories="..\..\Dependencies\lib\$(ConfigurationName)"
 				IgnoreAllDefaultLibraries="FALSE"
 				IgnoreDefaultLibraryNames=""
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="FALSE"
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -144,9 +144,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm">
-			<File
-				RelativePath="..\src\OgreAnimable.cpp">
-			</File>
 			<File
 				RelativePath="..\src\OgreAnimation.cpp">
 			</File>
@@ -215,9 +212,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreDefaultHardwareBufferManager.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreDefaultSceneQueries.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreDynLib.cpp">
@@ -653,9 +647,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\Ogre.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreAnimable.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreAnimation.h">
 			</File>
 			<File
@@ -663,9 +654,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreAnimationTrack.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreAny.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreArchive.h">
@@ -1035,9 +1023,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreQuaternion.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreRadixSort.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreRay.h">

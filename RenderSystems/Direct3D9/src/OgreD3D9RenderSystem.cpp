@@ -44,7 +44,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreHighLevelGpuProgramManager.h"
 #include "OgreD3D9HardwareOcclusionQuery.h"
 #include "OgreFrustum.h"
-#include "OgreD3D9MultiRenderTarget.h"
+
 
 
 namespace Ogre 
@@ -142,7 +142,7 @@ namespace Ogre
 	//---------------------------------------------------------------------
 	const String& D3D9RenderSystem::getName() const
 	{
-		static String strName( "Direct3D9 Rendering Subsystem");
+		static String strName( "Direct3D9 Rendering SubSystem");
 		return strName;
 	}
 	//---------------------------------------------------------------------
@@ -551,9 +551,6 @@ namespace Ogre
 		{
 			HRESULT hr = mpD3DDevice->SetStreamSource(i, NULL, 0, 0);
 		}
-		// Clean up depth stencil surfaces
-		_cleanupDepthStencils();
-
 		RenderSystem::shutdown();
 		SAFE_DELETE( mDriverList );
 		mActiveD3DDriver = NULL;
@@ -763,16 +760,6 @@ namespace Ogre
 		// We always support rendertextures bigger than the frame buffer
         mCapabilities->setCapability(RSC_HWRENDER_TO_TEXTURE);
 
-		// Number of render targets
-		mCapabilities->setNumMultiRenderTargets(std::min((ushort)mCaps.NumSimultaneousRTs, (ushort)OGRE_MAX_MULTIPLE_RENDER_TARGETS));
-
-		//
-		if(mCaps.PrimitiveMiscCaps & D3DPMISCCAPS_MRTINDEPENDENTBITDEPTHS)
-		{
-			LogManager::getSingleton().logMessage("Multiple render targets with independent bit depths supported");
-
-		}
-
         mCapabilities->log(LogManager::getSingleton().getDefaultLog());
     }
     //---------------------------------------------------------------------
@@ -941,14 +928,30 @@ namespace Ogre
             mCapabilities->setCapability(RSC_FRAGMENT_PROGRAM);
         }
     }
-	//-----------------------------------------------------------------------
-	MultiRenderTarget * D3D9RenderSystem::createMultiRenderTarget(const String & name)
+    //---------------------------------------------------------------------
+	RenderTexture * D3D9RenderSystem::createRenderTexture( const String & name, 
+		unsigned int width, unsigned int height,
+		TextureType texType, PixelFormat internalFormat, const NameValuePairList *miscParams )
 	{
-		MultiRenderTarget *retval;
-		retval = new D3D9MultiRenderTarget(name);
-		attachRenderTarget(*retval);
-
-		return retval;
+		// Log a message
+		std::stringstream ss;
+		ss << "D3D9RenderSystem::createRenderTexture \"" << name << "\", " <<
+			width << "x" << height << " texType=" << texType <<
+			" internalFormat=" << PixelUtil::getFormatName(internalFormat) << " ";
+		if(miscParams)
+		{
+			ss << "miscParams: ";
+			NameValuePairList::const_iterator it;
+			for(it=miscParams->begin(); it!=miscParams->end(); ++it)
+			{
+				ss << it->first << "=" << it->second << " ";
+			}
+		}
+		LogManager::getSingleton().logMessage(ss.str());
+		// Create render texture
+		D3D9RenderTexture *rt = new D3D9RenderTexture( name, width, height, texType, internalFormat, miscParams );
+		attachRenderTarget( *rt );
+		return rt;
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::destroyRenderTarget(const String& name)
@@ -1450,15 +1453,14 @@ namespace Ogre
 		}
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setTextureAddressingMode( size_t stage, 
-		const TextureUnitState::UVWAddressingMode& uvw )
+	void D3D9RenderSystem::_setTextureAddressingMode( size_t stage, TextureUnitState::TextureAddressingMode tam )
 	{
 		HRESULT hr;
-		if( FAILED( hr = __SetSamplerState( stage, D3DSAMP_ADDRESSU, D3D9Mappings::get(uvw.u) ) ) )
+		if( FAILED( hr = __SetSamplerState( stage, D3DSAMP_ADDRESSU, D3D9Mappings::get(tam) ) ) )
 			OGRE_EXCEPT( hr, "Failed to set texture addressing mode for U", "D3D9RenderSystem::_setTextureAddressingMode" );
-		if( FAILED( hr = __SetSamplerState( stage, D3DSAMP_ADDRESSV, D3D9Mappings::get(uvw.v) ) ) )
+		if( FAILED( hr = __SetSamplerState( stage, D3DSAMP_ADDRESSV, D3D9Mappings::get(tam) ) ) )
 			OGRE_EXCEPT( hr, "Failed to set texture addressing mode for V", "D3D9RenderSystem::_setTextureAddressingMode" );
-		if( FAILED( hr = __SetSamplerState( stage, D3DSAMP_ADDRESSW, D3D9Mappings::get(uvw.w) ) ) )
+		if( FAILED( hr = __SetSamplerState( stage, D3DSAMP_ADDRESSW, D3D9Mappings::get(tam) ) ) )
 			OGRE_EXCEPT( hr, "Failed to set texture addressing mode for W", "D3D9RenderSystem::_setTextureAddressingMode" );
 	}
 	//---------------------------------------------------------------------
@@ -1886,35 +1888,21 @@ namespace Ogre
 			RenderTarget* target;
 			target = vp->getTarget();
 
-			// Retrieve render surfaces (up to OGRE_MAX_MULTIPLE_RENDER_TARGETS)
-			LPDIRECT3DSURFACE9 pBack[OGRE_MAX_MULTIPLE_RENDER_TARGETS];
-			memset(pBack, 0, sizeof(pBack));
+			LPDIRECT3DSURFACE9 pBack = NULL;
 			target->getCustomAttribute( "DDBACKBUFFER", &pBack );
-			if (!pBack[0])
+			if (!pBack)
 				return;
 
 			LPDIRECT3DSURFACE9 pDepth = NULL;
 			target->getCustomAttribute( "D3DZBUFFER", &pDepth );
 			if (!pDepth)
+				return;
+			
+			hr = mpD3DDevice->SetRenderTarget(0, pBack);
+			if (FAILED(hr))
 			{
-				/// No depth buffer provided, use our own
-				/// Request a depth stencil that is compatible with the format, multisample type and
-				/// dimensions of the render target.
-				D3DSURFACE_DESC srfDesc;
-				if(FAILED(pBack[0]->GetDesc(&srfDesc)))
-					return; // ?
-				pDepth = _getDepthStencilFor(srfDesc.Format, srfDesc.MultiSampleType, srfDesc.Width, srfDesc.Height);
-			}
-			// Bind render targets
-			uint count = mCapabilities->numMultiRenderTargets();
-			for(uint x=0; x<count; ++x)
-			{
-				hr = mpD3DDevice->SetRenderTarget(x, pBack[x]);
-				if (FAILED(hr))
-				{
-					String msg = DXGetErrorDescription9(hr);
-					OGRE_EXCEPT( hr, "Failed to setRenderTarget : " + msg, "D3D9RenderSystem::_setViewport" );
-				}
+				String msg = DXGetErrorDescription9(hr);
+				OGRE_EXCEPT( hr, "Failed to setRenderTarget : " + msg, "D3D9RenderSystem::_setViewport" );
 			}
 			hr = mpD3DDevice->SetDepthStencilSurface(pDepth);
 			if (FAILED(hr))
@@ -2149,34 +2137,25 @@ namespace Ogre
 				OGRE_EXCEPT( hr, "Failed to set index buffer", "D3D9RenderSystem::_render" );
             }
 
-            do
-            {
-                // do indexed draw operation
-			    hr = mpD3DDevice->DrawIndexedPrimitive(
-                    primType, 
-                    static_cast<INT>(op.vertexData->vertexStart), 
-                    0, // Min vertex index - assume we can go right down to 0 
-                    static_cast<UINT>(op.vertexData->vertexCount), 
-                    static_cast<UINT>(op.indexData->indexStart), 
-                    static_cast<UINT>(primCount)
-                    );
-
-            } while (updatePassIterationRenderState());
+			// do indexed draw operation
+			hr = mpD3DDevice->DrawIndexedPrimitive(
+                primType, 
+                static_cast<INT>(op.vertexData->vertexStart), 
+                0, // Min vertex index - assume we can go right down to 0 
+                static_cast<UINT>(op.vertexData->vertexCount), 
+                static_cast<UINT>(op.indexData->indexStart), 
+                static_cast<UINT>(primCount)
+                );
 		}
 		else
         {
-            // nfz: gpu_iterate
-            do
-            {
-                // Unindexed, a little simpler!
-			    hr = mpD3DDevice->DrawPrimitive(
-                    primType, 
-                    static_cast<UINT>(op.vertexData->vertexStart), 
-                    static_cast<UINT>(primCount)
-                    ); 
-
-            } while (updatePassIterationRenderState());
-        } 
+            // Unindexed, a little simpler!
+			hr = mpD3DDevice->DrawPrimitive(
+                primType, 
+                static_cast<UINT>(op.vertexData->vertexStart), 
+                static_cast<UINT>(primCount)
+                ); 
+        }
 
 		if( FAILED( hr ) )
 		{
@@ -2226,7 +2205,6 @@ namespace Ogre
         switch(gptype)
         {
         case GPT_VERTEX_PROGRAM:
-            mActiveVertexGpuProgramParameters.setNull();
             hr = mpD3DDevice->SetVertexShader(NULL);
             if (FAILED(hr))
             {
@@ -2235,7 +2213,6 @@ namespace Ogre
             }
             break;
         case GPT_FRAGMENT_PROGRAM:
-            mActiveFragmentGpuProgramParameters.setNull();
             hr = mpD3DDevice->SetPixelShader(NULL);
             if (FAILED(hr))
             {
@@ -2257,7 +2234,6 @@ namespace Ogre
         switch(gptype)
         {
         case GPT_VERTEX_PROGRAM:
-            mActiveVertexGpuProgramParameters = params;
             // Bind floats
             if (params->hasRealConstantParams())
             {
@@ -2271,7 +2247,7 @@ namespace Ogre
                         if (FAILED(hr = mpD3DDevice->SetVertexShaderConstantF(
                             index, e->val, 1)))
                         {
-                            OGRE_EXCEPT(hr, "Unable to upload vertex shader float parameters", 
+                            OGRE_EXCEPT(hr, "Unable to upload shader float parameters", 
                                 "D3D9RenderSystem::bindGpuProgramParameters");
                         }
                     }
@@ -2292,7 +2268,7 @@ namespace Ogre
                         if (FAILED(hr = mpD3DDevice->SetVertexShaderConstantI(
                             index, e->val, 1)))
                         {
-                            OGRE_EXCEPT(hr, "Unable to upload vertex shader float parameters", 
+                            OGRE_EXCEPT(hr, "Unable to upload shader float parameters", 
                                 "D3D9RenderSystem::bindGpuProgramParameters");
                         }
                     }
@@ -2302,7 +2278,6 @@ namespace Ogre
             }
             break;
         case GPT_FRAGMENT_PROGRAM:
-            mActiveFragmentGpuProgramParameters = params;
             // Bind floats
             if (params->hasRealConstantParams())
             {
@@ -2326,7 +2301,7 @@ namespace Ogre
                         if (FAILED(hr = mpD3DDevice->SetPixelShaderConstantF(
                             index, e->val, 1)))
                         {
-                            OGRE_EXCEPT(hr, "Unable to upload pixel shader float parameters", 
+                            OGRE_EXCEPT(hr, "Unable to upload shader float parameters", 
                                 "D3D9RenderSystem::bindGpuProgramParameters");
                         }
                     }
@@ -2347,7 +2322,7 @@ namespace Ogre
                         if (FAILED(hr = mpD3DDevice->SetPixelShaderConstantI(
                             index, e->val, 1)))
                         {
-                            OGRE_EXCEPT(hr, "Unable to upload pixel shader float parameters", 
+                            OGRE_EXCEPT(hr, "Unable to upload shader float parameters", 
                                 "D3D9RenderSystem::bindGpuProgramParameters");
                         }
                     }
@@ -2357,43 +2332,6 @@ namespace Ogre
             }
             break;
         };
-    }
-	//---------------------------------------------------------------------
-    void D3D9RenderSystem::bindGpuProgramPassIterationParameters(GpuProgramType gptype)
-    {
-
-        HRESULT hr;
-        GpuProgramParameters::RealConstantEntry* realEntry;
-
-        switch(gptype)
-        {
-        case GPT_VERTEX_PROGRAM:
-            realEntry = mActiveVertexGpuProgramParameters->getPassIterationEntry();
-            if (realEntry)
-            {
-                if (FAILED(hr = mpD3DDevice->SetVertexShaderConstantF(
-                        mActiveVertexGpuProgramParameters->getPassIterationEntryIndex(), realEntry->val, 1)))
-                {
-                    OGRE_EXCEPT(hr, "Unable to upload vertex shader multi pass parameters", 
-                    "D3D9RenderSystem::bindGpuProgramMultiPassParameters");
-                }
-            }
-            break;
-
-        case GPT_FRAGMENT_PROGRAM:
-            realEntry = mActiveFragmentGpuProgramParameters->getPassIterationEntry();
-            if (realEntry)
-            {
-                if (FAILED(hr = mpD3DDevice->SetPixelShaderConstantF(
-                        mActiveFragmentGpuProgramParameters->getPassIterationEntryIndex(), realEntry->val, 1)))
-                {
-                    OGRE_EXCEPT(hr, "Unable to upload pixel shader multi pass parameters", 
-                    "D3D9RenderSystem::bindGpuProgramMultiPassParameters");
-                }
-            }
-            break;
-
-        }
     }
     //---------------------------------------------------------------------
     void D3D9RenderSystem::setClipPlanes(const PlaneList& clipPlanes)
@@ -2639,9 +2577,6 @@ namespace Ogre
 	{
 		// Release all non-managed resources
 
-		// Cleanup depth stencils
-		_cleanupDepthStencils();
-
 		// We have to deal with non-managed textures and vertex buffers
 		// GPU programs don't have to be restored
 		static_cast<D3D9TextureManager*>(mTextureManager)->releaseDefaultPoolResources();
@@ -2701,109 +2636,4 @@ namespace Ogre
 		mBasicStatesInitialised = false;
 	}
 
-	//---------------------------------------------------------------------
-	// Formats to try, in decreasing order of preference
-	D3DFORMAT ddDepthStencilFormats[]={
-		D3DFMT_D24FS8,
-		D3DFMT_D24S8,
-		D3DFMT_D24X4S4,
-		D3DFMT_D24X8,
-		D3DFMT_D15S1,
-		D3DFMT_D16,
-		D3DFMT_D32
-	};
-#define NDSFORMATS (sizeof(ddDepthStencilFormats)/sizeof(D3DFORMAT))
-	
-	D3DFORMAT D3D9RenderSystem::_getDepthStencilFormatFor(D3DFORMAT fmt)
-	{
-		/// Check if result is cached
-		DepthStencilHash::iterator i = mDepthStencilHash.find((unsigned int)fmt);
-		if(i != mDepthStencilHash.end())
-			return i->second;
-		/// If not, probe with CheckDepthStencilMatch
-		D3DFORMAT dsfmt = D3DFMT_UNKNOWN;
-
-		/// Get description of primary render target
-		LPDIRECT3DSURFACE9 mSurface = mPrimaryWindow->getRenderSurface();
-		D3DSURFACE_DESC srfDesc;
-
-		if(!FAILED(mSurface->GetDesc(&srfDesc)))
-		{
-			/// Probe all depth stencil formats
-			/// Break on first one that matches
-			for(size_t x=0; x<NDSFORMATS; ++x)
-			{
-				if(mpD3D->CheckDepthStencilMatch(
-					mActiveD3DDriver->getAdapterNumber(),
-					D3DDEVTYPE_HAL, srfDesc.Format,
-					fmt, ddDepthStencilFormats[x]) == D3D_OK)
-				{
-					dsfmt = ddDepthStencilFormats[x];
-					break;
-				}
-			}
-		}
-		/// Cache result
-		mDepthStencilHash[(unsigned int)fmt] = dsfmt;
-		return dsfmt;
-	}
-	IDirect3DSurface9* D3D9RenderSystem::_getDepthStencilFor(D3DFORMAT fmt, D3DMULTISAMPLE_TYPE multisample, size_t width, size_t height)
-	{
-		D3DFORMAT dsfmt = _getDepthStencilFormatFor(fmt);
-		if(dsfmt == D3DFMT_UNKNOWN)
-			return 0;
-		IDirect3DSurface9 *surface = 0;
-
-		/// Check if result is cached
-		ZBufferFormat zbfmt(dsfmt, multisample);
-		ZBufferHash::iterator i = mZBufferHash.find(zbfmt);
-		if(i != mZBufferHash.end())
-		{
-			/// Check if size is larger or equal
-			if(i->second.width >= width && i->second.height >= height)
-			{
-				surface = i->second.surface;
-			} 
-			else
-			{
-				/// If not, destroy current buffer
-				i->second.surface->Release();
-				mZBufferHash.erase(i);
-			}
-		}
-		if(!surface)
-		{
-			/// If not, create the depthstencil surface
-			HRESULT hr = mpD3DDevice->CreateDepthStencilSurface( 
-				width, 
-				height, 
-				dsfmt, 
-				multisample, 
-				NULL, 
-				TRUE,  // discard true or false?
-				&surface, 
-				NULL);
-			if(FAILED(hr))
-			{
-				String msg = DXGetErrorDescription9(hr);
-				OGRE_EXCEPT( hr, "Error CreateDepthStencilSurface : " + msg, "D3D9RenderSystem::_getDepthStencilFor" );
-			}
-			/// And cache it
-			ZBufferRef zb;
-			zb.surface = surface;
-			zb.width = width;
-			zb.height = height;
-			mZBufferHash[zbfmt] = zb;
-		}
-		return surface;
-	}
-	void D3D9RenderSystem::_cleanupDepthStencils()
-	{
-		for(ZBufferHash::iterator i = mZBufferHash.begin(); i != mZBufferHash.end(); ++i)
-		{
-			/// Release buffer
-			i->second.surface->Release();
-		}
-		mZBufferHash.clear();
-	}
 }

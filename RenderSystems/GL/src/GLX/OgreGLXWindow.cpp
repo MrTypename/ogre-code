@@ -356,11 +356,18 @@ void GLXWindow::create(const String& name, unsigned int width, unsigned int heig
 
     // Create OGRE GL context
     mContext = new GLXContext(mDisplay, mWindow, mGlxContext);
+    // Register the context with the rendersystem and associate it with this window
+    rs->_registerContext(this, mContext);
+	
+	if ( rs->_getMainContext() == 0 )
+		glXMakeCurrent(mDisplay,mWindow,mGlxContext);
 }
 
 void GLXWindow::destroy(void)
 {
     // Unregister and destroy OGRE GLContext
+    GLRenderSystem *rs = static_cast<GLRenderSystem*>(Root::getSingleton().getRenderSystem());
+    rs->_unregisterContext(this);
     delete mContext;
 
     // Destroy GL context
@@ -463,10 +470,7 @@ GLXWindowInterface::~GLXWindowInterface()
 
 void GLXWindow::getCustomAttribute( const String& name, void* pData )
 {
-    if( name == "GLCONTEXT" ) {
-        *static_cast<GLXContext**>(pData) = mContext;
-        return;
-    } else if( name == "GLXWINDOW" ) {
+	if( name == "GLXWINDOW" ) {
 		*static_cast<Window*>(pData) = mWindow;
 		return;
 	} else if( name == "GLXDISPLAY" ) {
@@ -476,6 +480,7 @@ void GLXWindow::getCustomAttribute( const String& name, void* pData )
 		*static_cast<GLXWindowInterface**>(pData) = this;
 		return;
 	}
+	RenderWindow::getCustomAttribute(name, pData);
 }
 
 

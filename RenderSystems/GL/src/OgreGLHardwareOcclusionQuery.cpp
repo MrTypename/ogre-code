@@ -36,6 +36,7 @@ namespace Ogre {
   *
   * Updated on 12/7/2004 by Chris McGuirk
   * - Implemented ARB_occlusion_query
+  * Updated on 4/8/2005 by Tuan Kuranes email: tuan.kuranes@free.fr
   */
 
 /**
@@ -49,8 +50,8 @@ GLHardwareOcclusionQuery::GLHardwareOcclusionQuery()
 	mSkipInterval = 0;
 
 	// Check for hardware occlusion support
-	// This is a hack to see if hw occlusion is supported. pointer is 0 if it's not supported.
-    if(glGenQueriesARB != 0)
+	// This is a hack to see if hardware occlusion is supported. pointer is 0 if it's not supported.
+    if(glGenQueriesARB_ptr != 0)
     {
 		mHasOcclusionSupport = true;
 	}
@@ -61,7 +62,7 @@ GLHardwareOcclusionQuery::GLHardwareOcclusionQuery()
 
 	if(mHasOcclusionSupport)
 	{
-		glGenQueriesARB(1, &mQueryID );	
+		glGenQueriesARB_ptr(1, &mQueryID );	
 	}
 }
 
@@ -72,7 +73,7 @@ GLHardwareOcclusionQuery::~GLHardwareOcclusionQuery()
 { 
 	if( mHasOcclusionSupport )
 	{
-		glDeleteQueriesARB(1, &mQueryID);  
+		glDeleteQueriesARB_ptr(1, &mQueryID);  
 	}	
 }
 
@@ -92,7 +93,7 @@ void GLHardwareOcclusionQuery::beginOcclusionQuery()
 
 		if ( mSkipCounter == 0)
 		{
-			glBeginQueryARB(GL_SAMPLES_PASSED_ARB, mQueryID);
+			glBeginQueryARB_ptr(GL_SAMPLES_PASSED_ARB, mQueryID);
 		}
 	}
 }
@@ -104,7 +105,7 @@ void GLHardwareOcclusionQuery::endOcclusionQuery()
 	{
 		if( mSkipCounter == 0)
 		{
-			glEndQueryARB(GL_SAMPLES_PASSED_ARB);
+			glEndQueryARB_ptr(GL_SAMPLES_PASSED_ARB);
 		}
 
 		mSkipCounter++;
@@ -112,24 +113,38 @@ void GLHardwareOcclusionQuery::endOcclusionQuery()
 }
 
 //------------------------------------------------------------------
-// OpenGL dosn't use the flag paramter.
+// OpenGL dosn't use the flag parameter.
 //------------------------------------------------------------------
 bool GLHardwareOcclusionQuery::pullOcclusionQuery( unsigned int* NumOfFragments, const HW_OCCLUSIONQUERY flag  ) 
 {
 	if( mHasOcclusionSupport )	// Make it fail silently if hardware occlusion isn't supported
 	{
-		glGetQueryObjectuivARB(mQueryID, GL_QUERY_RESULT_ARB, (GLuint*)NumOfFragments);
+		glGetQueryObjectuivARB_ptr(mQueryID, GL_QUERY_RESULT_ARB, (GLuint*)NumOfFragments);
 	}
 	else
 	{
-		*NumOfFragments = 100000;		// Fails quitlly -> every object tested is visable.
+		*NumOfFragments = 100000;		// Fails quietly -> every object tested is visible.
 	}
 
 	mPixelCount = *NumOfFragments; 
 	
 	return true;
 }
+//------------------------------------------------------------------
+bool GLHardwareOcclusionQuery::isStillOutstanding(void)
+{   
+   if(mHasOcclusionSupport)
+   {
+      GLuint available;
 
+      glGetQueryObjectuivARB_ptr(mQueryID, GL_QUERY_RESULT_AVAILABLE_ARB, &available);
+      return !(available == GL_TRUE);
+   }
+   else
+   {
+      return false;   
+   }
+} 
 
 }
 

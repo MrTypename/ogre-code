@@ -36,9 +36,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 namespace Ogre {
 
-	// Forward decl
-	class ParticleSystemFactory;
-	
     /** Manages particle systems, particle system scripts (templates) and the available emitter & affector factories.
     @remarks
         This singleton class is responsible for creating and managing particle systems. All particle
@@ -60,7 +57,6 @@ namespace Ogre {
     class _OgreExport ParticleSystemManager: public Singleton<ParticleSystemManager>, 
         public FrameListener, public ScriptLoader
     {
-		friend class ParticleSystemFactory;
 	public:
         typedef std::map<String, ParticleSystem*> ParticleTemplateMap;
 		typedef std::map<String, ParticleAffectorFactory*> ParticleAffectorFactoryMap;
@@ -88,9 +84,6 @@ namespace Ogre {
 		/// Controls time
 		Real mTimeFactor;
 
-		// Factory instance
-		ParticleSystemFactory* mFactory;
-
         /** Internal script parsing method. */
         void parseNewEmitter(const String& type, DataStreamPtr& chunk, ParticleSystem* sys);
         /** Internal script parsing method. */
@@ -105,19 +98,6 @@ namespace Ogre {
         void skipToNextCloseBrace(DataStreamPtr& chunk);
         /** Internal script parsing method. */
         void skipToNextOpenBrace(DataStreamPtr& chunk);
-
-		/// Internal implementation of createSystem
-        ParticleSystem* createSystemImpl(const String& name, size_t quota, 
-			const String& resourceGroup, bool notifySceneMgr);
-		/// Internal implementation of createSystem
-        ParticleSystem* createSystemImpl(const String& name, const String& templateName, 
-			bool notifySceneMgr);
-		/// Internal implementation of destroySystem
-        void destroySystemImpl(const String& name, bool notifySceneMgr);
-		/// Internal implementation of destroySystem
-        void destroySystemImpl(ParticleSystem* sys, bool notifySceneMgr);
-		
-		
     public:
 
         ParticleSystemManager();
@@ -271,7 +251,6 @@ namespace Ogre {
         */
         void destroySystem(ParticleSystem* sys);
 
-
         /** Retrieves a pointer to a system already created. */
         ParticleSystem* getSystem(const String& name);
 
@@ -395,10 +374,7 @@ namespace Ogre {
                 mSystemTemplates.begin(), mSystemTemplates.end());
         } 
 
-        /** Get an instance of ParticleSystemFactory (internal use). */
-		ParticleSystemFactory* _getFactory(void) { return mFactory; }
-		
-		/** Override standard Singleton retrieval.
+        /** Override standard Singleton retrieval.
         @remarks
         Why do we do this? Well, it's because the Singleton
         implementation is in a .h file, which means it gets compiled
@@ -433,22 +409,6 @@ namespace Ogre {
 
     };
 
-	/** Factory object for creating ParticleSystem instances */
-	class _OgreExport ParticleSystemFactory : public MovableObjectFactory
-	{
-	protected:
-		MovableObject* createInstanceImpl( const String& name, const NameValuePairList* params);
-	public:
-		ParticleSystemFactory() {}
-		~ParticleSystemFactory() {}
-		
-		static String FACTORY_TYPE_NAME;
-
-		const String& getType(void) const;
-		void destroyInstance( MovableObject* obj);  
-
-	};
-	
 }
 
 #endif
