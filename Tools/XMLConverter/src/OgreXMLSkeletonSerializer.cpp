@@ -181,7 +181,7 @@ namespace Ogre {
 	void XMLSkeletonSerializer::readAnimations(Skeleton* skel, TiXmlElement* mAnimNode) {
 		
 		Animation * anim ;
-		NodeAnimationTrack * track ;
+		AnimationTrack * track ;
 		LogManager::getSingleton().logMessage("XMLSkeletonSerializer: Reading Animations data...");
 
 		for (TiXmlElement* animElem = mAnimNode->FirstChildElement("animation"); animElem != 0; animElem = animElem->NextSiblingElement())
@@ -205,7 +205,7 @@ namespace Ogre {
 
 				//LogManager::getSingleton().logMessage("Track sur le bone: " + boneName );
 
-				track = anim->createNodeTrack(trackIndex++,skel->getBone(boneName));
+				track = anim->createTrack(trackIndex++,skel->getBone(boneName));
 				readKeyFrames(track, trackElem->FirstChildElement("keyframes"));
 			}
 			
@@ -214,9 +214,9 @@ namespace Ogre {
 
 	}
 	//---------------------------------------------------------------------
-	void XMLSkeletonSerializer::readKeyFrames(NodeAnimationTrack* track, TiXmlElement* mKeyfNode) {
+	void XMLSkeletonSerializer::readKeyFrames(AnimationTrack* track, TiXmlElement* mKeyfNode) {
 		
-		TransformKeyFrame* kf ;
+		KeyFrame* kf ;
 		Quaternion q ;
 
 		for (TiXmlElement* keyfElem = mKeyfNode->FirstChildElement("keyframe"); keyfElem != 0; keyfElem = keyfElem->NextSiblingElement())
@@ -228,7 +228,7 @@ namespace Ogre {
 
             // Get time and create keyframe
 			time = StringConverter::parseReal(keyfElem->Attribute("time"));
-			kf = track->createNodeKeyFrame(time);
+			kf = track->createKeyFrame(time);
             // Optional translate
 			TiXmlElement* transElem = keyfElem->FirstChildElement("translate");
             if (transElem)
@@ -484,7 +484,7 @@ namespace Ogre {
         TiXmlElement* tracksNode = 
             animNode->InsertEndChild(TiXmlElement("tracks"))->ToElement();
 
-        Animation::NodeTrackIterator trackIt = anim->getNodeTrackIterator();
+        Animation::TrackIterator trackIt = anim->getTrackIterator();
         while (trackIt.hasMoreElements())
         {
             writeAnimationTrack(tracksNode, trackIt.getNext());
@@ -493,7 +493,7 @@ namespace Ogre {
     }
     //---------------------------------------------------------------------
     void XMLSkeletonSerializer::writeAnimationTrack(TiXmlElement* tracksNode, 
-        const NodeAnimationTrack* track)
+        const AnimationTrack* track)
     {
         TiXmlElement* trackNode = 
             tracksNode->InsertEndChild(TiXmlElement("track"))->ToElement();
@@ -510,12 +510,11 @@ namespace Ogre {
             trackNode->InsertEndChild(TiXmlElement("keyframes"))->ToElement();
         for (unsigned short i = 0; i < track->getNumKeyFrames(); ++i)
         {
-            writeKeyFrame(keysNode, track->getNodeKeyFrame(i));
+            writeKeyFrame(keysNode, track->getKeyFrame(i));
         }
     }
     //---------------------------------------------------------------------
-    void XMLSkeletonSerializer::writeKeyFrame(TiXmlElement* keysNode, 
-		const TransformKeyFrame* key)
+    void XMLSkeletonSerializer::writeKeyFrame(TiXmlElement* keysNode, const KeyFrame* key)
     {
         TiXmlElement* keyNode = 
             keysNode->InsertEndChild(TiXmlElement("keyframe"))->ToElement();

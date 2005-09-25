@@ -41,20 +41,24 @@ namespace Ogre {
 	/**
 	* Default object constructor
 	*/
-    D3D9HardwareOcclusionQuery::D3D9HardwareOcclusionQuery( IDirect3DDevice9* pD3DDevice ) :
-        mpDevice(pD3DDevice)
+	D3D9HardwareOcclusionQuery::D3D9HardwareOcclusionQuery( IDirect3DDevice9* pD3DDevice ) 
 	{ 
+		mpDevice = pD3DDevice;
+		mPixelCount = 0; 
+		mSkipCounter = 0;
+		mSkipInterval = 0;
+		mHasOcclusionSupport = false;
+
 		// create the occlusion query
-		const HRESULT hr = mpDevice->CreateQuery(D3DQUERYTYPE_OCCLUSION, &mpQuery);
+		HRESULT hr = mpDevice->CreateQuery(D3DQUERYTYPE_OCCLUSION, &mpQuery);
 
 		if ( hr != D3D_OK ) 
-		{	
-            if( D3DERR_NOTAVAILABLE == hr)
-	        {
-                OGRE_EXCEPT( Exception::ERR_INTERNAL_ERROR, 
-                    "Cannot allocate a Hardware query. This video card doesn't supports it, sorry.", 
-                    "D3D9HardwareOcclusionQuery::D3D9HardwareOcclusionQuery" );
-            }			
+		{
+			mHasOcclusionSupport = false;
+		}
+		else 
+		{
+			mHasOcclusionSupport = true;
 		}
 	}
 
@@ -70,76 +74,101 @@ namespace Ogre {
 	// Occlusion query functions (see base class documentation for this)
 	//--
 	void D3D9HardwareOcclusionQuery::beginOcclusionQuery() 
-	{	    	
-		mpQuery->Issue(D3DISSUE_BEGIN); 
-        mIsQueryResultStillOutstanding = true;
-        mPixelCount = 0;
+	{
+		// Make it fail silently if hardware occlusion isn't supported
+		if(mHasOcclusionSupport)
+		{
+			// Counter starts at 0 again at mSkipInterval 
+			if(mSkipCounter == mSkipInterval) 
+			{ 
+				mSkipCounter = 0; 
+			}
+
+			if (mSkipCounter == 0)
+			{
+				mpQuery->Issue(D3DISSUE_BEGIN); 
+			}
+		}
 	}
 
 	void D3D9HardwareOcclusionQuery::endOcclusionQuery() 
 	{ 
-		mpQuery->Issue(D3DISSUE_END); 
+		// Make it fail silently if hardware occlusion isn't supported
+		if(mHasOcclusionSupport)
+		{
+			if(mSkipCounter == 0)
+			{
+				mpQuery->Issue(D3DISSUE_END); 
+                mIsQueryResultStillOutstanding = true;
+			}
+
+			// The skip counter is increased
+			mSkipCounter++; 
+		}
 	}
 
 	//------------------------------------------------------------------
-	bool D3D9HardwareOcclusionQuery::pullOcclusionQuery( unsigned int* NumOfFragments ) 
+	// This version of pullOcclusionQuery causes the DX9 API/Driver to not flush all commands to the 3D card
+	// to allow a fast result from the query, but the batching of API calls to the card will be normal. 
+	// But the query wont be processed until the card receives the query in the next batch.
+	// Note: OpenGL dosn't use this flag at all so the application running OpenGL won't display any different behaviour.
+	//--
+	bool D3D9HardwareOcclusionQuery::pullOcclusionQuery( unsigned int* NumOfFragments, const HW_OCCLUSIONQUERY flag  ) 
 	{
-        // in case you didn't check if query arrived and want the result now.
-        if (mIsQueryResultStillOutstanding)
-        {
-            // Loop until the data becomes available
-            DWORD pixels;
-            const size_t dataSize = sizeof( DWORD );
-			while (1)
-            {
-                const HRESULT hr = mpQuery->GetData((void *)&pixels, dataSize, D3DGETDATA_FLUSH);
 
-                if  (hr == S_FALSE)
-                    continue;
-                if  (hr == S_OK)
-                {
-                    mPixelCount = pixels;
-                    *NumOfFragments = pixels;
-                    break;
-                }
-                if (hr == D3DERR_DEVICELOST)
-                {
-                    *NumOfFragments = 100000;
-                    mPixelCount = 100000;
-                    mpDevice->CreateQuery(D3DQUERYTYPE_OCCLUSION, &mpQuery);
-                    break;
-                }
-            } 
-            mIsQueryResultStillOutstanding = false;
-        }
-        else
-        {
-            // we already stored result from last frames.
-            *NumOfFragments = mPixelCount;
-        }		
+		// Make it fail silently if hardware occlusion isn't supported
+		if(mHasOcclusionSupport)
+		{
+            // in case you didn't check if query arrived and want the result now.
+            if (mIsQueryResultStillOutstanding)
+            {
+			    DWORD d3dFlags = (flag == HWOCCLUSIONQUERY_FLUSH) ? D3DGETDATA_FLUSH : 0;
+
+		        HRESULT hr;
+
+			    // run until success (http://www.gamedev.net/reference/programming/features/occlusionculling/page2.asp)
+			    while (hr = mpQuery->GetData( NumOfFragments, sizeof( *NumOfFragments ), d3dFlags) == S_FALSE)
+                    ;
+			    mPixelCount = *NumOfFragments;
+            }
+            else
+            {
+                // we already stored result from last frames.
+                 *NumOfFragments = mPixelCount;
+            }
+		}
+		else 
+		{
+			// fail silently if not supported, assume visible i suppose
+			mPixelCount = 100000;
+		}
+
 		return true;
 	}
     //------------------------------------------------------------------
     bool D3D9HardwareOcclusionQuery::isStillOutstanding(void)
-    {       
+    {
+    if(mHasOcclusionSupport)
+    {
         // in case you already asked for this query
         if (!mIsQueryResultStillOutstanding)
             return false;
 
-        DWORD pixels;
-        const HRESULT hr = mpQuery->GetData( (void *) &pixels, sizeof( DWORD ), D3DGETDATA_FLUSH);
+        DWORD d3dFlags = 0;// not asking for flushed queries here.
 
-        if (hr  == S_FALSE)
+
+        if (mpQuery->GetData( &mPixelCount, sizeof( mPixelCount ), d3dFlags) == S_FALSE)
             return true;
 
-        if (hr == D3DERR_DEVICELOST)
-        {
-            mPixelCount = 100000;
-            mpDevice->CreateQuery(D3DQUERYTYPE_OCCLUSION, &mpQuery);
-        }
-        mPixelCount = pixels;
         mIsQueryResultStillOutstanding = false;
         return false;
-    
+             
+    }
+    else
+    {
+        return false;
+    }
+       
     } 
+
 }

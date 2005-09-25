@@ -143,7 +143,7 @@ namespace Ogre {
         ColourValue colourArg2;
         /// Manual alpha value for manual source1
         Real alphaArg1;
-        /// Manual alpha value for manual source2
+        /// Manual colour value for manual source1
         Real alphaArg2;
         /// Manual blending factor
         Real factor;
@@ -210,9 +210,7 @@ namespace Ogre {
         /// Add the texture values to the existing scene content
         SBT_ADD,
 		/// Multiply the 2 colours together
-		SBT_MODULATE,
-        /// The default blend mode where source replaces destination
-        SBT_REPLACE
+		SBT_MODULATE
         // TODO : more
     };
 

@@ -77,8 +77,6 @@ namespace Ogre {
         void bindTempCopies(VertexData* targetData, bool suppressHardwareUpload);
         /** Overridden member from HardwareBufferLicensee. */
         void licenseExpired(HardwareBuffer* buffer);
-		/** Do we currently have buffer copies checked out? */
-		bool buffersCheckedOut(bool positions = true, bool normals = true) const;
     };
 
 

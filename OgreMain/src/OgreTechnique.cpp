@@ -36,7 +36,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 namespace Ogre {
     //-----------------------------------------------------------------------------
     Technique::Technique(Material* parent)
-        : mParent(parent), mIsSupported(false), mLodIndex(0)
+        : mParent(parent), mIsSupported(false), mIlluminationPassesCompilationPhase(IPS_NOT_COMPILED), mLodIndex(0)
     {
         // See above, defaults to unsupported until examined
     }
@@ -138,8 +138,9 @@ namespace Ogre {
         // If we got this far, we're ok
         mIsSupported = true;
 
-        // Now compile for categorised illumination, incase we need it
-        _compileIlluminationPasses();
+        // Compile for categorised illumination on demand
+        clearIlluminationPasses();
+        mIlluminationPassesCompilationPhase = IPS_NOT_COMPILED;
 
     }
     //-----------------------------------------------------------------------------
@@ -154,26 +155,6 @@ namespace Ogre {
     {
 		assert(index < mPasses.size() && "Index out of bounds");
 		return mPasses[index];
-    }
-    //-----------------------------------------------------------------------------
-    Pass* Technique::getPass(const String& name)
-    {
-        Passes::iterator i    = mPasses.begin();
-        Passes::iterator iend = mPasses.end();
-        Pass* foundPass = 0;
-
-        // iterate through techniques to find a match
-        while (i != iend)
-        {
-            if ( (*i)->getName() == name )
-            {
-                foundPass = (*i);
-                break;
-            }
-            ++i;
-        }
-
-        return foundPass;
     }
     //-----------------------------------------------------------------------------
     unsigned short Technique::getNumPasses(void) const
@@ -199,35 +180,6 @@ namespace Ogre {
         }
         mPasses.clear();
     }
-
-    //-----------------------------------------------------------------------------
-    bool Technique::movePass(const unsigned short sourceIndex, const unsigned short destinationIndex)
-    {
-        bool moveSuccessful = false;
-
-        // don't move the pass if source == destination
-        if (sourceIndex == destinationIndex) return true;
-
-        if( (sourceIndex < mPasses.size()) && (destinationIndex < mPasses.size()))
-        {
-            Passes::iterator i = mPasses.begin() + sourceIndex;
-            //Passes::iterator DestinationIterator = mPasses.begin() + destinationIndex;
-
-            Pass* pass = (*i);
-            mPasses.erase(i);
-
-            i = mPasses.begin() + destinationIndex;
-
-            // compensate for source erase if destination is greater than source
-            if (destinationIndex > sourceIndex) --i;
-
-            mPasses.insert(i, pass);
-            moveSuccessful = true;
-        }
-
-        return moveSuccessful;
-    }
-
     //-----------------------------------------------------------------------------
     const Technique::PassIterator Technique::getPassIterator(void)
     {
@@ -236,7 +188,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     Technique& Technique::operator=(const Technique& rhs)
     {
-        mName = rhs.mName;
 		this->mIsSupported = rhs.mIsSupported;
         this->mLodIndex = rhs.mLodIndex;
 		// copy passes
@@ -248,8 +199,9 @@ namespace Ogre {
 			Pass* p = new Pass(this, (*i)->getIndex(), *(*i));
 			mPasses.push_back(p);
 		}
-        // recompile illumination passes
-        _compileIlluminationPasses();
+        // Compile for categorised illumination on demand
+        clearIlluminationPasses();
+        mIlluminationPassesCompilationPhase = IPS_NOT_COMPILED;
 		return *this;
     }
     //-----------------------------------------------------------------------------
@@ -308,7 +260,7 @@ namespace Ogre {
 		for (il = mIlluminationPasses.begin(); il != ilend; ++il)
 		{
 			if((*il)->pass != (*il)->originalPass)
-			(*il)->pass->_load();
+			    (*il)->pass->_load();
 		}
     }
     //-----------------------------------------------------------------------------
@@ -541,17 +493,14 @@ namespace Ogre {
         }
     }
 
-    // --------------------------------------------------------------------
-    void Technique::setName(const String& name)
-    {
-        mName = name;
-    }
-
-
     //-----------------------------------------------------------------------
     void Technique::_notifyNeedsRecompile(void)
     {
-        mParent->_notifyNeedsRecompile();
+        // Disable require to recompile when splitting illumination passes
+        if (mIlluminationPassesCompilationPhase != IPS_COMPILE_DISABLED)
+        {
+            mParent->_notifyNeedsRecompile();
+        }
     }
     //-----------------------------------------------------------------------
     void Technique::setLodIndex(unsigned short index)
@@ -575,6 +524,8 @@ namespace Ogre {
         i = mPasses.begin();
         
         IlluminationStage iStage = IS_AMBIENT;
+
+        // Disable requirement to recompile during compile
 
         bool haveAmbient = false;
         while (i != iend)
@@ -604,8 +555,7 @@ namespace Ogre {
                         p->getSelfIllumination() != ColourValue::Black)
                     {
                         // Copy existing pass
-                        Pass* newPass = new Pass(this, p->getIndex());
-                        *newPass = *p;
+                        Pass* newPass = new Pass(this, p->getIndex(), *p);
                         // Remove any texture units
                         newPass->removeAllTextureUnitStates();
                         // Remove any fragment program
@@ -654,7 +604,7 @@ namespace Ogre {
                 }
                 break;
             case IS_PER_LIGHT:
-                if (p->getIteratePerLight())
+                if (p->getRunOncePerLight())
                 {
                     // If this is per-light already, use it directly
                     iPass = new IlluminationPass();
@@ -673,8 +623,7 @@ namespace Ogre {
                         p->getSpecular() != ColourValue::Black))
                     {
                         // Copy existing pass
-                        Pass* newPass = new Pass(this, p->getIndex());
-                        *newPass = *p;
+                        Pass* newPass = new Pass(this, p->getIndex(), *p);
                         // remove texture units
                         newPass->removeAllTextureUnitStates();
                         // remove fragment programs
@@ -717,8 +666,7 @@ namespace Ogre {
                     else
                     {
                         // Copy the pass and tweak away the lighting parts
-                        Pass* newPass = new Pass(this, p->getIndex());
-                        *newPass = *p;
+                        Pass* newPass = new Pass(this, p->getIndex(), *p);
                         newPass->setAmbient(ColourValue::Black);
                         newPass->setDiffuse(ColourValue::Black);
                         newPass->setSpecular(ColourValue::Black);
@@ -765,6 +713,16 @@ namespace Ogre {
     const Technique::IlluminationPassIterator 
     Technique::getIlluminationPassIterator(void)
     {
+        if (mIlluminationPassesCompilationPhase == IPS_NOT_COMPILED)
+        {
+            // prevents parent->_notifyNeedsRecompile() call during compile
+            mIlluminationPassesCompilationPhase = IPS_COMPILE_DISABLED;
+            // Splitting the passes into illumination passes
+            _compileIlluminationPasses();
+            // Mark that illumination passes compilation finished
+            mIlluminationPassesCompilationPhase = IPS_COMPILED;
+        }
+
         return IlluminationPassIterator(mIlluminationPasses.begin(), 
             mIlluminationPasses.end());
     }
@@ -774,21 +732,5 @@ namespace Ogre {
 		return mParent->getGroup();
 	}
 
-    //-----------------------------------------------------------------------
-    bool Technique::applyTextureAliases(const AliasTextureNamePairList& aliasList, const bool apply) const
-    {
-        // iterate through passes and apply texture alias
-        Passes::const_iterator i, iend;
-        iend = mPasses.end();
-        bool testResult = false;
-
-        for(i = mPasses.begin(); i != iend; ++i)
-        {
-            if ((*i)->applyTextureAliases(aliasList, apply))
-                testResult = true;
-        }
-
-        return testResult;
-    }
 
 }

@@ -683,21 +683,18 @@ namespace Ogre {
 		{
 
 			// addressing mode
-			TextureUnitState::UVWAddressingMode uvwadd;
-			uvwadd.u = convertAddressingMode(param.GetValue());
-			// default other dimensions incase not supplied
-			uvwadd.v = uvwadd.u;
-			uvwadd.w = uvwadd.u;
+			TextureUnitState::TextureAddressingMode uadd, vadd, wadd;
+			uadd = convertAddressingMode(param.GetValue());
 
 			param = shader.GetParameter(L"wrap_v");
 			if (param.IsValid())
 			{
-				uvwadd.v = convertAddressingMode(param.GetValue());
+				vadd = convertAddressingMode(param.GetValue());
 			}
 			param = shader.GetParameter(L"wrap_w");
 			if (param.IsValid())
 			{
-				uvwadd.w = convertAddressingMode(param.GetValue());
+				wadd = convertAddressingMode(param.GetValue());
 			}
 
 			// transform
@@ -739,7 +736,9 @@ namespace Ogre {
 			while (i != mTextureUnitTargetMap.end() && i->first == target)
 			{
 				TextureUnitState* tex = i->second;
-				tex->setTextureAddressingMode(uvwadd);
+				// NB Dagon supports per-coordinate addressing, Azathoth does not
+				// TODO update for Dagon
+				tex->setTextureAddressingMode(uadd);
 				if (usexform)
 					tex->setTextureTransform(xform);
 

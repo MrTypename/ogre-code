@@ -184,10 +184,9 @@ namespace Ogre {
         /** Frees internal texture resources for this texture. 
         */
         virtual void freeInternalResources(void);
-        
 		/** Copies (and maybe scales to fit) the contents of this texture to
 			another texture. */
-		virtual void copyToTexture( TexturePtr& target );
+		virtual void copyToTexture( TexturePtr& target ) {}
 
         /** Loads the data from an image.
         */
@@ -227,8 +226,6 @@ namespace Ogre {
 			be used to copy data from and to a particular level of the texture.
 			@param face 	Face number, in case of a cubemap texture. Must be 0
 							for other types of textures.
-                            For cubemaps, this is one of 
-                            +X (0), -X (1), +Y (2), -Y (3), +Z (4), -Z (5)
 			@param mipmap	Mipmap level. This goes from 0 for the first, largest
 							mipmap level to getNumMipmaps()-1 for the smallest.
 			@returns	A shared pointer to a hardware pixel buffer

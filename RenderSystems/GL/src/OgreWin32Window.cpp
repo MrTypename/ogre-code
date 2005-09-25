@@ -253,13 +253,13 @@ namespace Ogre {
 		if (!wglMakeCurrent(mHDC, mGlrc))
 			OGRE_EXCEPT(0, "wglMakeCurrent", "Win32Window::create");
 
-		// Don't use wglew as if this is the first window, we won't have initialised yet
-		PFNWGLSWAPINTERVALEXTPROC _wglSwapIntervalEXT = 
-			(PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-		_wglSwapIntervalEXT(vsync? 1 : 0);
+		wglSwapIntervalEXT(vsync? 1 : 0);
 
 		// Create RenderSystem context
 		mContext = new Win32Context(mHDC, mGlrc);
+		// Register the context with the rendersystem and associate it with this window
+		GLRenderSystem *rs = static_cast<GLRenderSystem*>(Root::getSingleton().getRenderSystem());
+		rs->_registerContext(this, mContext);
 
 		mActive = true;
 	}
@@ -270,8 +270,13 @@ namespace Ogre {
 			return;
 
 		// Unregister and destroy OGRE GLContext
-		delete mContext;
-
+		if (mContext)
+		{
+			GLRenderSystem *rs = static_cast<GLRenderSystem*>(Root::getSingleton().getRenderSystem());
+			rs->_unregisterContext(this);
+			delete mContext;
+			mContext = 0;
+		}
 		if (mGlrc)
 		{
 			wglDeleteContext(mGlrc);
@@ -482,15 +487,12 @@ namespace Ogre {
 
 	void Win32Window::getCustomAttribute( const String& name, void* pData )
 	{
-		if( name == "GLCONTEXT" ) {
-			*static_cast<GLContext**>(pData) = mContext;
-			return;
-		} else if( name == "HWND" )
+		if( name == "HWND" )
 		{
 			HWND *pHwnd = (HWND*)pData;
 			*pHwnd = getWindowHandle();
 			return;
-		} 
+		}
 	}
 
 }

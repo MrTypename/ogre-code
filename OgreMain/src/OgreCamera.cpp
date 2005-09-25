@@ -65,7 +65,7 @@ namespace Ogre {
 
         // Init matrices
         mViewMatrix = Matrix4::ZERO;
-        mProjMatrixRS = Matrix4::ZERO;
+        mProjMatrix = Matrix4::ZERO;
 
         mParentNode = 0;
 
@@ -86,7 +86,6 @@ namespace Ogre {
 
         mWindowSet = false;
         mAutoAspectRatio = false;
-		mCullFrustum = 0;
     }
 
     //-----------------------------------------------------------------------
@@ -323,20 +322,24 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     bool Camera::isViewOutOfDate(void) const
     {
+        bool returnVal = false;
         // Overridden from Frustum to use local orientation / position offsets
         // Attached to node?
         if (mParentNode != 0)
         {
-            if (mRecalcView ||
-                mParentNode->_getDerivedOrientation() != mLastParentOrientation ||
-                mParentNode->_getDerivedPosition() != mLastParentPosition)
+            if (!mRecalcView && mParentNode->_getDerivedOrientation() == mLastParentOrientation &&
+                mParentNode->_getDerivedPosition() == mLastParentPosition)
+            {
+                returnVal = false;
+            }
+            else
             {
                 // Ok, we're out of date with SceneNode we're attached to
                 mLastParentOrientation = mParentNode->_getDerivedOrientation();
                 mLastParentPosition = mParentNode->_getDerivedPosition();
                 mDerivedOrientation = mLastParentOrientation * mOrientation;
                 mDerivedPosition = (mLastParentOrientation * mPosition) + mLastParentPosition;
-                mRecalcView = true;
+                returnVal = true;
             }
         }
         else
@@ -353,10 +356,10 @@ namespace Ogre {
             mReflectPlane = mLinkedReflectPlane->_getDerivedPlane();
             mReflectMatrix = Math::buildReflectionMatrix(mReflectPlane);
             mLastLinkedReflectionPlane = mLinkedReflectPlane->_getDerivedPlane();
-            mRecalcView = true;
+            returnVal = true;
         }
 
-        return mRecalcView;
+        return returnVal || mRecalcView;
 
     }
 
@@ -371,14 +374,14 @@ namespace Ogre {
     // -------------------------------------------------------------------
     void Camera::invalidateView() const
     {
+        mRecalcView = true;
         mRecalcWindow = true;
-        Frustum::invalidateView();
     }
     // -------------------------------------------------------------------
     void Camera::invalidateFrustum(void) const
     {
+        mRecalcFrustum = true;
         mRecalcWindow = true;
-        Frustum::invalidateFrustum();
     }
     //-----------------------------------------------------------------------
     void Camera::_renderScene(Viewport *vp, bool includeOverlays)
@@ -637,129 +640,5 @@ namespace Ogre {
     {
         mAutoAspectRatio = autoratio;
     }
-	//-----------------------------------------------------------------------
-	bool Camera::isVisible(const AxisAlignedBox& bound, FrustumPlane* culledBy) const
-	{
-		if (mCullFrustum)
-		{
-			return mCullFrustum->isVisible(bound, culledBy);
-		}
-		else
-		{
-			return Frustum::isVisible(bound, culledBy);
-		}
-	}
-	//-----------------------------------------------------------------------
-	bool Camera::isVisible(const Sphere& bound, FrustumPlane* culledBy) const
-	{
-		if (mCullFrustum)
-		{
-			return mCullFrustum->isVisible(bound, culledBy);
-		}
-		else
-		{
-			return Frustum::isVisible(bound, culledBy);
-		}
-	}
-	//-----------------------------------------------------------------------
-	bool Camera::isVisible(const Vector3& vert, FrustumPlane* culledBy) const
-	{
-		if (mCullFrustum)
-		{
-			return mCullFrustum->isVisible(vert, culledBy);
-		}
-		else
-		{
-			return Frustum::isVisible(vert, culledBy);
-		}
-	}
-	//-----------------------------------------------------------------------
-	const Vector3* Camera::getWorldSpaceCorners(void) const
-	{
-		if (mCullFrustum)
-		{
-			return mCullFrustum->getWorldSpaceCorners();
-		}
-		else
-		{
-			return Frustum::getWorldSpaceCorners();
-		}
-	}
-	//-----------------------------------------------------------------------
-	const Plane& Camera::getFrustumPlane( unsigned short plane ) const
-	{
-		if (mCullFrustum)
-		{
-			return mCullFrustum->getFrustumPlane(plane);
-		}
-		else
-		{
-			return Frustum::getFrustumPlane(plane);
-		}
-	}
-	//-----------------------------------------------------------------------
-	bool Camera::projectSphere(const Sphere& sphere, 
-		Real* left, Real* top, Real* right, Real* bottom) const
-	{
-		if (mCullFrustum)
-		{
-			return mCullFrustum->projectSphere(sphere, left, top, right, bottom);
-		}
-		else
-		{
-			return Frustum::projectSphere(sphere, left, top, right, bottom);
-		}
-	}
-	//-----------------------------------------------------------------------
-	Real Camera::getNearClipDistance(void) const
-	{
-		if (mCullFrustum)
-		{
-			return mCullFrustum->getNearClipDistance();
-		}
-		else
-		{
-			return Frustum::getNearClipDistance();
-		}
-	}
-	//-----------------------------------------------------------------------
-	Real Camera::getFarClipDistance(void) const
-	{
-		if (mCullFrustum)
-		{
-			return mCullFrustum->getFarClipDistance();
-		}
-		else
-		{
-			return Frustum::getFarClipDistance();
-		}
-	}
-	//-----------------------------------------------------------------------
-	const Matrix4& Camera::getViewMatrix(void) const
-	{
-		if (mCullFrustum)
-		{
-			return mCullFrustum->getViewMatrix();
-		}
-		else
-		{
-			return Frustum::getViewMatrix();
-		}
-	}
-	//-----------------------------------------------------------------------
-	const Matrix4& Camera::getViewMatrix(bool ownFrustumOnly) const
-	{
-		if (ownFrustumOnly)
-		{
-			return Frustum::getViewMatrix();
-		}
-		else
-		{
-			return getViewMatrix();
-		}
-	}
-	//-----------------------------------------------------------------------
-
-
 
 } // namespace Ogre

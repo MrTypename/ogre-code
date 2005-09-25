@@ -24,8 +24,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 
 #include "OgreGLContext.h"
-#include "OgreGLRenderSystem.h"
-#include "OgreRoot.h"
 
 namespace Ogre {
     // Empty base class
@@ -33,11 +31,7 @@ namespace Ogre {
         initialized(false) {
     }
     
-    GLContext::~GLContext() {        
-        // Unregister and destroy this context
-        // This will disable it if it was still active
-        GLRenderSystem *rs = static_cast<GLRenderSystem*>(Root::getSingleton().getRenderSystem());
-        rs->_unregisterContext(this);
+    GLContext::~GLContext() {
     }
     
     void GLContext::endCurrent() {

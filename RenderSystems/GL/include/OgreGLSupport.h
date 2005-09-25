@@ -6,7 +6,6 @@
 
 #include "OgreRenderWindow.h"
 #include "OgreConfigOptionMap.h"
-#include "OgreGLPBuffer.h"
 
 namespace Ogre
 {
@@ -40,8 +39,10 @@ public:
 	virtual RenderWindow* newWindow(const String &name, unsigned int width, unsigned int height, 
 		bool fullScreen, const NameValuePairList *miscParams = 0) = 0;
 
-    virtual bool supportsPBuffers();
-    virtual GLPBuffer *createPBuffer(PixelComponentType format, size_t width, size_t height);
+	/// @copydoc RenderSystem::createRenderTexture
+	virtual RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height,
+		 	TextureType texType = TEX_TYPE_2D, PixelFormat internalFormat = PF_X8R8G8B8, 
+			const NameValuePairList *miscParams = 0 ); 
 
     /**
     * Start anything special
@@ -86,6 +87,11 @@ public:
         established.
     */
     virtual void initialiseExtensions();
+
+	/**	GLsupport specific capabilities (hardware render-to-texture, being one of 
+	    them) are marked in caps.
+	*/
+	virtual void initialiseCapabilities(RenderSystemCapabilities &caps);
 
 protected:
 	// Stored options

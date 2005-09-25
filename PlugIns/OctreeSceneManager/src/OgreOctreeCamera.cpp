@@ -56,8 +56,8 @@ OctreeCamera::Visibility OctreeCamera::getVisibility( const AxisAlignedBox &boun
     if ( bound.isNull() )
         return NONE;
 
-    // Make any pending updates to the calculated frustum planes
-    updateFrustumPlanes();
+    // Make any pending updates to the calculated frustum
+    updateView();
 
     // Get corners of the box
     const Vector3* pCorners = bound.getAllCorners();

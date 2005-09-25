@@ -54,14 +54,14 @@ namespace Ogre {
         {
             checkForGLSLError( "GLSLProgram::GLSLProgram", "GL Errors before creating shader object", 0 );
             // create shader object
-            mGLHandle = glCreateShaderObjectARB(
+            mGLHandle = glCreateShaderObjectARB_ptr(
                 (mType == GPT_VERTEX_PROGRAM) ? GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB );
 
             checkForGLSLError( "GLSLProgram::GLSLProgram", "Error creating GLSL shader Object", 0 );
         }
 
         const char* SLSource = mSource.c_str();
-		glShaderSourceARB(mGLHandle, 1, &SLSource, NULL);
+		glShaderSourceARB_ptr(mGLHandle, 1, &SLSource, NULL);
 		// check for load errors
 		checkForGLSLError( "GLSLProgram::loadFromSource", "Cannot load GLSL high-level shader source : " + mName, 0 );
 
@@ -72,9 +72,9 @@ namespace Ogre {
 	bool GLSLProgram::compile(const bool checkErrors)
 	{
 
-		glCompileShaderARB(mGLHandle);
+		glCompileShaderARB_ptr(mGLHandle);
 		// check for compile errors
-		glGetObjectParameterivARB(mGLHandle, GL_OBJECT_COMPILE_STATUS_ARB, &mCompiled);
+		glGetObjectParameterivARB_ptr(mGLHandle, GL_OBJECT_COMPILE_STATUS_ARB, &mCompiled);
 		// force exception if not compiled
 		if (checkErrors)
 		{
@@ -100,7 +100,7 @@ namespace Ogre {
     {
 		if (isSupported())
 		{
-			glDeleteObjectARB(mGLHandle);
+			glDeleteObjectARB_ptr(mGLHandle);
 		}
 
 		// should we do this here?
@@ -190,7 +190,7 @@ namespace Ogre {
 	//-----------------------------------------------------------------------
 	void GLSLProgram::attachToProgramObject( const GLhandleARB programObject )
 	{
-		glAttachObjectARB( programObject, mGLHandle );
+		glAttachObjectARB_ptr( programObject, mGLHandle );
 		checkForGLSLError( "GLSLLinkProgram::GLSLLinkProgram",
 			"Error attaching " + mName + " shader object to GLSL Program Object", programObject );
 		// attach child objects
@@ -209,18 +209,10 @@ namespace Ogre {
 
 			childShader->attachToProgramObject( programObject );
 
-			++childprogramcurrent;
+			childprogramcurrent++;
 		}
 
 	}
-
-    //-----------------------------------------------------------------------
-    const String& GLSLProgram::getLanguage(void) const
-    {
-        static const String language = "glsl";
-
-        return language;
-    }
 
   
 }

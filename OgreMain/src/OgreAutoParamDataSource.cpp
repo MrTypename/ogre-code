@@ -133,7 +133,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     const Matrix4& AutoParamDataSource::getViewMatrix(void) const
     {
-        return mCurrentCamera->getViewMatrix(true);
+        return mCurrentCamera->getViewMatrix();
     }
     //-----------------------------------------------------------------------------
     const Matrix4& AutoParamDataSource::getViewProjectionMatrix(void) const
@@ -150,7 +150,7 @@ namespace Ogre {
     {
         // NB use API-independent projection matrix since GPU programs
         // bypass the API-specific handedness and use right-handed coords
-        mProjectionMatrix = mCurrentCamera->getProjectionMatrixWithRSDepth();
+        mProjectionMatrix = mCurrentCamera->getStandardProjectionMatrix();
         if (mCurrentRenderTarget && mCurrentRenderTarget->requiresTextureFlipping())
         {
             // Because we're not using setProjectionMatrix, this needs to be done here
@@ -291,7 +291,7 @@ namespace Ogre {
         {
             mTextureViewProjMatrix = 
                 PROJECTIONCLIPSPACE2DTOIMAGESPACE_PERSPECTIVE * 
-                mCurrentTextureProjector->getProjectionMatrixWithRSDepth() * 
+                mCurrentTextureProjector->getStandardProjectionMatrix() * 
 				mCurrentTextureProjector->getViewMatrix();
             mTextureViewProjMatrixDirty = false;
         }
@@ -534,21 +534,6 @@ namespace Ogre {
 		return mCurrentCamera->getFarClipDistance(); 
 	}
 	//-----------------------------------------------------------------------------
-    int AutoParamDataSource::getPassNumber(void) const
-    {
-        return mPassNumber;
-    }
-	//-----------------------------------------------------------------------------
-    void AutoParamDataSource::setPassNumber(const int passNumber)
-    {
-        mPassNumber = passNumber;
-    }
-	//-----------------------------------------------------------------------------
-    void AutoParamDataSource::incPassNumber(void)
-    {
-        ++mPassNumber;
-    }
-	//-----------------------------------------------------------------------------
-
+	
 }
 

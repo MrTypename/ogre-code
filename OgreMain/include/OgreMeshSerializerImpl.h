@@ -75,7 +75,6 @@ namespace Ogre {
         virtual void writeMesh(const Mesh* pMesh);
         virtual void writeSubMesh(const SubMesh* s);
         virtual void writeSubMeshOperation(const SubMesh* s);
-        virtual void writeSubMeshTextureAliases(const SubMesh* s);
         virtual void writeGeometry(const VertexData* pGeom);
         virtual void writeSkeletonLink(const String& skelName);
         virtual void writeMeshBoneAssignment(const VertexBoneAssignment& assign);
@@ -86,9 +85,6 @@ namespace Ogre {
         virtual void writeLodUsageGenerated(const Mesh* pMesh, const MeshLodUsage& usage, unsigned short lodNum);
         virtual void writeBoundsInfo(const Mesh* pMesh);
         virtual void writeEdgeList(const Mesh* pMesh);
-		virtual void writeAnimation(const Animation* anim);
-		virtual void writeAnimationTrack(const VertexAnimationTrack* track);
-		virtual void writeKeyframe(const VertexKeyFrame* kf, size_t vertexCount);
 
         virtual size_t calcMeshSize(const Mesh* pMesh);
         virtual size_t calcSubMeshSize(const SubMesh* pSub);
@@ -100,18 +96,12 @@ namespace Ogre {
         virtual size_t calcEdgeListSize(const Mesh* pMesh);
         virtual size_t calcEdgeListLodSize(const EdgeData* data, bool isManual);
         virtual size_t calcEdgeGroupSize(const EdgeData::EdgeGroup& group);
-		virtual size_t calcAnimationSize(const Animation* anim);
-		virtual size_t calcAnimationTrackSize(const VertexAnimationTrack* track);
-		virtual size_t calcKeyframeSize(const VertexKeyFrame* kf, size_t vertexCount);
-        virtual size_t calcSubMeshTextureAliasesSize(const SubMesh* pSub);
-
 
         virtual void readTextureLayer(DataStreamPtr& stream, Mesh* pMesh, MaterialPtr& pMat);
         virtual void readSubMeshNameTable(DataStreamPtr& stream, Mesh* pMesh);
         virtual void readMesh(DataStreamPtr& stream, Mesh* pMesh);
         virtual void readSubMesh(DataStreamPtr& stream, Mesh* pMesh);
         virtual void readSubMeshOperation(DataStreamPtr& stream, Mesh* pMesh, SubMesh* sub);
-        virtual void readSubMeshTextureAlias(DataStreamPtr& stream, Mesh* pMesh, SubMesh* sub);
         virtual void readGeometry(DataStreamPtr& stream, Mesh* pMesh, VertexData* dest);
         virtual void readGeometryVertexDeclaration(DataStreamPtr& stream, Mesh* pMesh, VertexData* dest);
         virtual void readGeometryVertexElement(DataStreamPtr& stream, Mesh* pMesh, VertexData* dest);
@@ -128,10 +118,7 @@ namespace Ogre {
             unsigned short lodNum, MeshLodUsage& usage);
         virtual void readBoundsInfo(DataStreamPtr& stream, Mesh* pMesh);
         virtual void readEdgeList(DataStreamPtr& stream, Mesh* pMesh);
-		virtual void readAnimation(DataStreamPtr& stream, Mesh* pMesh);
-		virtual void readAnimationTrack(DataStreamPtr& stream, Animation* anim, 
-			Mesh* pMesh);
-		virtual void readKeyFrame(DataStreamPtr& stream, VertexAnimationTrack* track);
+
 
 
         /// Flip an entire vertex buffer from little endian
@@ -145,7 +132,6 @@ namespace Ogre {
 
 
     };
-
 
     /** Class for providing backwards-compatibility for loading version 1.2 of the .mesh format. */
     class _OgrePrivate MeshSerializerImpl_v1_2 : public MeshSerializerImpl

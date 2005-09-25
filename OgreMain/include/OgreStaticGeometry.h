@@ -372,6 +372,8 @@ namespace Ogre {
 			};
 			/// Parent static geometry
 			StaticGeometry* mParent;
+			/// Generated name
+			String mName;
 			/// Scene manager link
 			SceneManager* mSceneMgr;
 			/// Scene node
@@ -398,6 +400,8 @@ namespace Ogre {
 			mutable LightList mLightList;
 			/// The last frame that this light list was updated in
 			mutable ulong mLightListUpdated;
+			/// Hidden because of distance?
+			bool mBeyondFarDistance;
 			/// Edge list, used if stencil shadow casting is enabled 
 			EdgeData* mEdgeList;
 			/// List of shadow renderables
@@ -421,13 +425,13 @@ namespace Ogre {
 			uint32 getID(void) const { return mRegionID; }
 			/// Get the centre point of the region
 			const Vector3& getCentre(void) const { return mCentre; }
+			const String& getName(void) const;
 			const String& getMovableType(void) const;
 			void _notifyCurrentCamera(Camera* cam);
 			const AxisAlignedBox& getBoundingBox(void) const;
 			Real getBoundingRadius(void) const;
 			void _updateRenderQueue(RenderQueue* queue);
 			bool isVisible(void) const;
-			uint32 getTypeFlags(void) const;
 
 			typedef VectorIterator<LODBucketList> LODIterator;
 			/// Get an iterator over the LODs in this region

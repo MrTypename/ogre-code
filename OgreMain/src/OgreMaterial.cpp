@@ -109,9 +109,10 @@ namespace Ogre {
 
 		// Also copy LOD information
 		mLodDistances = rhs.mLodDistances;
-
-        mCompilationRequired = rhs.mCompilationRequired; 
-        //assert(mIsLoaded == rhs.mIsLoaded);
+        mCompilationRequired = rhs.mCompilationRequired;
+        // illumination passes are not compiled right away so
+        // mIsLoaded state should still be the same as the original material
+        assert(mIsLoaded == rhs.mIsLoaded);
 
 	    return *this;
     }
@@ -234,26 +235,6 @@ namespace Ogre {
     {
         assert (index < mTechniques.size() && "Index out of bounds.");
         return mTechniques[index];
-    }
-    //-----------------------------------------------------------------------
-    Technique* Material::getTechnique(const String& name)
-    {
-        Techniques::iterator i    = mTechniques.begin();
-        Techniques::iterator iend = mTechniques.end();
-        Technique* foundTechnique = 0;
-
-        // iterate through techniques to find a match
-        while (i != iend)
-        {
-            if ( (*i)->getName() == name )
-            {
-                foundTechnique = (*i);
-                break;
-            }
-            ++i;
-        }
-
-        return foundTechnique;
     }
     //-----------------------------------------------------------------------	
     unsigned short Material::getNumTechniques(void) const
@@ -663,20 +644,4 @@ namespace Ogre {
         return LodDistanceIterator(mLodDistances.begin(), mLodDistances.end());
     }
 
-    //-----------------------------------------------------------------------
-    bool Material::applyTextureAliases(const AliasTextureNamePairList& aliasList, const bool apply) const
-    {
-        // iterate through all techniques and apply texture aliases
-		Techniques::const_iterator i, iend;
-		iend = mTechniques.end();
-        bool testResult = false;
-
-		for (i = mTechniques.begin(); i != iend; ++i)
-		{
-            if ((*i)->applyTextureAliases(aliasList, apply))
-                testResult = true;
-		}
-
-        return testResult;
-    }
 }
