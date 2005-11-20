@@ -463,7 +463,7 @@ void MilkshapePlugin::doExportMesh(msModel* pModel)
         // Now use Ogre's ability to reorganise the vertex buffers the best way
         Ogre::VertexDeclaration* newDecl = 
             ogreSubMesh->vertexData->vertexDeclaration->getAutoOrganisedDeclaration(
-                foundBoneAssignment, false);
+                foundBoneAssignment);
         Ogre::BufferUsageList bufferUsages;
         for (size_t u = 0; u <= newDecl->getMaxSource(); ++u)
             bufferUsages.push_back(Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY);
@@ -983,7 +983,7 @@ void MilkshapePlugin::doExportAnimations(msModel* pModel, Ogre::SkeletonPtr& ogr
 			msg = "Creating AnimationTrack for bone " + Ogre::StringConverter::toString(i);
             logMgr.logMessage(msg);
 
-            Ogre::NodeAnimationTrack *ogretrack = ogreanim->createNodeTrack(i, ogrebone);
+            Ogre::AnimationTrack *ogretrack = ogreanim->createTrack(i, ogrebone);
             logMgr.logMessage("Animation track created.");
 
             // OGRE uses keyframes which are both position and rotation
@@ -1014,7 +1014,7 @@ void MilkshapePlugin::doExportAnimations(msModel* pModel, Ogre::SkeletonPtr& ogr
                     // Adjust for start time, and for the fact that frames are numbered from 1
                     frameTime = currRotKey->fTime - currSplit.start;
                     realTime = frameTime / fps;
-                    Ogre::TransformKeyFrame *ogrekey = ogretrack->createNodeKeyFrame(realTime);
+                    Ogre::KeyFrame *ogrekey = ogretrack->createKeyFrame(realTime);
                     logMgr.logMessage("KeyFrame created");
 
                     Ogre::Vector3 kfPos(currPosKey->Position[0], currPosKey->Position[1], currPosKey->Position[2]);

@@ -8,12 +8,14 @@
 #include "OgreWin32GLSupport.h"
 #include "OgreGLTexture.h"
 #include "OgreWin32Window.h"
-#include <GL/wglext.h>
+
+#define HW_RTT
+
+#ifdef HW_RTT
 #include "OgreWin32RenderTexture.h"
+#endif
 
 using namespace Ogre;
-
-GLenum wglewContextInit (Ogre::GLSupport *glSupport);
 
 namespace Ogre {
 	Win32GLSupport::Win32GLSupport():
@@ -231,7 +233,7 @@ namespace Ogre {
 	{
 		ConfigOptionMap::iterator opt = mOptions.find("Display Frequency");
 		if (opt == mOptions.end())
-			OGRE_EXCEPT(999, "Can't find Display Frequency options!", "Win32GLSupport::newWindow");
+			OGRE_EXCEPT(999, "Can't find Colour Depth options!", "Win32GLSupport::newWindow");
 		unsigned int displayFrequency = StringConverter::parseUnsignedInt(opt->second.currentValue);
 
 		Win32Window* window = new Win32Window(*this);
@@ -256,9 +258,6 @@ namespace Ogre {
 		assert(mInitialWindow);
 		// First, initialise the normal extensions
 		GLSupport::initialiseExtensions();
-		// wglew init
-		wglewContextInit(this);
-
 		// Check for W32 specific extensions probe function
 		PFNWGLGETEXTENSIONSSTRINGARBPROC _wglGetExtensionsStringARB = 
 			(PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
@@ -279,12 +278,20 @@ namespace Ogre {
         }
 	}
 
+	void Win32GLSupport::initialiseCapabilities(RenderSystemCapabilities &caps) 
+	{
+		if( checkExtension("WGL_ARB_pbuffer") ) 
+		{
+			// If yes, add rendersystem flag RSC_HWRENDER_TO_TEXTURE	
+			caps.setCapability(RSC_HWRENDER_TO_TEXTURE);
+		}
+	}
 
 	void* Win32GLSupport::getProcAddress(const String& procname)
 	{
         	return (void*)wglGetProcAddress( procname.c_str() );
 	}
-/*
+
 	RenderTexture * Win32GLSupport::createRenderTexture( const String & name, 
 		unsigned int width, unsigned int height,
 		TextureType texType, PixelFormat internalFormat, 
@@ -301,7 +308,6 @@ namespace Ogre {
 			return new GLRenderTexture(name, width, height, texType, internalFormat, miscParams);
 	}
 
-*/
 	void Win32GLSupport::initialiseWGL()
 	{
 		// wglGetProcAddress does not work without an active OpenGL context,
@@ -398,20 +404,13 @@ namespace Ogre {
 				};
 				int formats[256];
 				unsigned int count;
-                // cheating here.  wglChoosePixelFormatARB procc address needed later on
-                // when a valid GL context does not exist and glew is not initialized yet.
-                __wglewChoosePixelFormatARB =
-                    (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-				__wglewChoosePixelFormatARB(hdc, iattr, 0, 256, formats, &count);
+				wglChoosePixelFormatARB(hdc, iattr, 0, 256, formats, &count);
 				
 				// determine what multisampling levels are offered
 				int query = WGL_SAMPLES_ARB, samples;
 				for (unsigned int i = 0; i < count; ++i)
 				{
-					PFNWGLGETPIXELFORMATATTRIBIVARBPROC _wglGetPixelFormatAttribivARB =
-						(PFNWGLGETPIXELFORMATATTRIBIVARBPROC)
-						wglGetProcAddress("wglGetPixelFormatAttribivARB");
-					if (_wglGetPixelFormatAttribivARB(hdc, formats[i],
+					if (wglGetPixelFormatAttribivARB(hdc, formats[i],
 													0, 1, &query, &samples))
 						mFSAALevels.push_back(samples);
 				}
@@ -468,10 +467,7 @@ namespace Ogre {
 			};
 
 			UINT nformats;
-            assert(__wglewChoosePixelFormatARB && "failed to get proc address for ChoosePixelFormatARB");
-            // ChoosePixelFormatARB proc address was obtained when setting up a dummy GL context in initialiseWGL()
-            // since glew hasn't been initialized yet, we have to cheat and use the previously obtained address
-			__wglewChoosePixelFormatARB(hdc, iattr, NULL, 1, &format, &nformats);
+			wglChoosePixelFormatARB(hdc, iattr, NULL, 1, &format, &nformats);
 		}
 		else
 		{
@@ -479,14 +475,5 @@ namespace Ogre {
 		}
 
 		return (format != 0 && SetPixelFormat(hdc, format, &pfd));
-	}
-
-	bool Win32GLSupport::supportsPBuffers()
-	{
-		return __WGLEW_ARB_pbuffer;
-	}
-    GLPBuffer *Win32GLSupport::createPBuffer(PixelComponentType format, size_t width, size_t height)
-	{
-		return new Win32PBuffer(format, width, height);
 	}
 }

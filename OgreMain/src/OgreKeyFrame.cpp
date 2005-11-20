@@ -26,7 +26,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreKeyFrame.h"
 #include "OgreAnimationTrack.h"
-#include "OgreHardwareBufferManager.h"
 
 namespace Ogre
 {
@@ -34,152 +33,51 @@ namespace Ogre
     KeyFrame::KeyFrame(const AnimationTrack* parent, Real time) 
         : mTime(time), mParentTrack(parent)
     {
+        mTranslate = Vector3::ZERO;
+        mScale.x = mScale.y = mScale.z = 1.0;
+        mRotate = Quaternion::IDENTITY;
     }
     //---------------------------------------------------------------------
     Real KeyFrame::getTime(void) const
     {
         return mTime;
     }
-	//---------------------------------------------------------------------
-	NumericKeyFrame::NumericKeyFrame(const AnimationTrack* parent, Real time)
-		:KeyFrame(parent, time)
-	{
-	}
-	//---------------------------------------------------------------------
-	const AnyNumeric& NumericKeyFrame::getValue(void) const
-	{
-		return mValue;
-	}
-	//---------------------------------------------------------------------
-	void NumericKeyFrame::setValue(const AnyNumeric& val)
-	{
-		mValue = val;
-	}
     //---------------------------------------------------------------------
-	TransformKeyFrame::TransformKeyFrame(const AnimationTrack* parent, Real time)
-		:KeyFrame(parent, time), mTranslate(Vector3::ZERO), 
-		mScale(Vector3::UNIT_SCALE), mRotate(Quaternion::IDENTITY) 
-	{
-	}
-	//---------------------------------------------------------------------
-    void TransformKeyFrame::setTranslate(const Vector3& trans)
+    void KeyFrame::setTranslate(const Vector3& trans)
     {
         mTranslate = trans;
         if (mParentTrack)
             mParentTrack->_keyFrameDataChanged();
     }
     //---------------------------------------------------------------------
-    const Vector3& TransformKeyFrame::getTranslate(void) const
+    const Vector3& KeyFrame::getTranslate(void) const
     {
         return mTranslate;
     }
     //---------------------------------------------------------------------
-    void TransformKeyFrame::setScale(const Vector3& scale)
+    void KeyFrame::setScale(const Vector3& scale)
     {
         mScale = scale;
         if (mParentTrack)
             mParentTrack->_keyFrameDataChanged();
     }
     //---------------------------------------------------------------------
-    const Vector3& TransformKeyFrame::getScale(void) const
+    const Vector3& KeyFrame::getScale(void) const
     {
         return mScale;
     }
     //---------------------------------------------------------------------
-    void TransformKeyFrame::setRotation(const Quaternion& rot)
+    void KeyFrame::setRotation(const Quaternion& rot)
     {
         mRotate = rot;
         if (mParentTrack)
             mParentTrack->_keyFrameDataChanged();
     }
     //---------------------------------------------------------------------
-    const Quaternion& TransformKeyFrame::getRotation(void) const
+    const Quaternion& KeyFrame::getRotation(void) const
     {
         return mRotate;
     }
-	//---------------------------------------------------------------------
-	VertexMorphKeyFrame::VertexMorphKeyFrame(const AnimationTrack* parent, Real time)
-		: KeyFrame(parent, time)
-	{
-	}
-	//---------------------------------------------------------------------
-	void VertexMorphKeyFrame::setVertexBuffer(const HardwareVertexBufferSharedPtr& buf)
-	{
-		mBuffer = buf;
-	}
-	//---------------------------------------------------------------------
-	const HardwareVertexBufferSharedPtr& 
-	VertexMorphKeyFrame::getVertexBuffer(void) const
-	{
-		return mBuffer;
-	}
-	//---------------------------------------------------------------------
-	VertexPoseKeyFrame::VertexPoseKeyFrame(const AnimationTrack* parent)
-		:KeyFrame(parent, 0.0f)
-	{
-	}
-	//---------------------------------------------------------------------
-	void VertexPoseKeyFrame::addVertex(size_t index, const Vector3& offset)
-	{
-		mVertexOffsetMap[index] = offset;
-		mBuffer.setNull();
-	}
-	//---------------------------------------------------------------------
-	void VertexPoseKeyFrame::removeVertex(size_t index)
-	{
-		VertexOffsetMap::iterator i = mVertexOffsetMap.find(index);
-		if (i != mVertexOffsetMap.end())
-		{
-			mVertexOffsetMap.erase(i);
-			mBuffer.setNull();
-		}
-	}
-	//---------------------------------------------------------------------
-	void VertexPoseKeyFrame::clearVertexOffsets(void)
-	{
-		mVertexOffsetMap.clear();
-		mBuffer.setNull();
-	}
-	//---------------------------------------------------------------------
-	VertexPoseKeyFrame::ConstVertexOffsetIterator 
-	VertexPoseKeyFrame::getVertexOffsetIterator(void) const
-	{
-		return ConstVertexOffsetIterator(mVertexOffsetMap.begin(), mVertexOffsetMap.end());
-	}
-	//---------------------------------------------------------------------
-	VertexPoseKeyFrame::VertexOffsetIterator 
-	VertexPoseKeyFrame::getVertexOffsetIterator(void)
-	{
-		return VertexOffsetIterator(mVertexOffsetMap.begin(), mVertexOffsetMap.end());
-	}
-	//---------------------------------------------------------------------
-	const HardwareVertexBufferSharedPtr& VertexPoseKeyFrame::_getHardwareVertexBuffer(size_t numVertices)
-	{
-		if (mBuffer.isNull())
-		{
-			// Create buffer
-			mBuffer = HardwareBufferManager::getSingleton().createVertexBuffer(
-				VertexElement::getTypeSize(VET_FLOAT3),
-				numVertices, HardwareBuffer::HBU_STATIC_WRITE_ONLY);
-
-			float* pFloat = static_cast<float*>(
-				mBuffer->lock(HardwareBuffer::HBL_DISCARD));
-			// initialise
-			memset(pFloat, 0, mBuffer->getSizeInBytes()); 
-			// Set each vertex
-			for (VertexOffsetMap::iterator i = mVertexOffsetMap.begin();
-				i != mVertexOffsetMap.end(); ++i)
-			{
-				float* pDst = pFloat + (3 * i->first);
-				*pDst++ = i->second.x;
-				*pDst++ = i->second.y;
-				*pDst++ = i->second.z;
-			}
-			mBuffer->unlock();
-		}
-		return mBuffer;
-	}
-
 
 }
 

@@ -209,7 +209,7 @@ void reorganiseVertexBuffers(const String& desc, Mesh& mesh, VertexData* vertexD
                 // Automatic
                 VertexDeclaration* newDcl = 
                     vertexData->vertexDeclaration->getAutoOrganisedDeclaration(
-                        mesh.hasSkeleton(), mesh.hasVertexAnimation());
+                        mesh.hasSkeleton());
                 copyElems(newDcl, &elemList);
                 HardwareBufferManager::getSingleton().destroyVertexDeclaration(newDcl);
                 anyChanges = true;

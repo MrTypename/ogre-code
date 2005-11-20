@@ -216,11 +216,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ResourceGroupManager::unloadResourceGroup(const String& name)
     {
-        unloadResourceGroup(name, false);
-    }
-    //-----------------------------------------------------------------------
-    void ResourceGroupManager::unloadResourceGroup(const String& name, bool reloadableOnly)
-    {
 		// Can only bulk-unload one group at a time (reasonable limitation I think)
 		OGRE_LOCK_AUTO_MUTEX
 
@@ -243,11 +238,7 @@ namespace Ogre {
 			for (LoadUnloadResourceList::iterator l = oi->second->begin();
 				l != oi->second->end(); ++l)
 			{
-				Resource* resource = l->get();
-				if (!reloadableOnly || resource->isReloadable())
-				{
-					resource->unload();
-				}
+				(*l)->unload();
 			}
 		}
 

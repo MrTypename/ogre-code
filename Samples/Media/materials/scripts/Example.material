@@ -712,22 +712,3 @@ material Examples/Rockwall
 	}
 }
 
-material Examples/Aureola
-{
-	technique
-	{
-		pass
-		{
-			lighting off
-			scene_blend alpha_blend
-			depth_write off
-			cull_hardware none
-
-			texture_unit
-			{
-				texture aureola.png
-				tex_address_mode clamp
-			}
-		}
-	}
-}

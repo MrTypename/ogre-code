@@ -347,26 +347,6 @@ public:
 	Texture*	createTexture(Ogre::TexturePtr& texture);
 
 
-	/*!
-	\brief
-	Set the size of the display in pixels.
-
-	You do not have to call this method under normal operation as the system
-	will automatically extract the size from the current view port.
-
-	\note
-	This method will cause the EventDisplaySizeChanged event to fire if the
-	display size has changed.
-
-	\param sz
-	Size object describing the size of the display.
-
-	\return
-	Nothing.
-	*/
-	void	setDisplaySize(const Size& sz);
-
-
 private:
 	/************************************************************************
 		Implementation Constants
@@ -455,7 +435,6 @@ private:
 	Ogre::SceneManager*			d_sceneMngr;		//!< The scene manager we are hooked into.
 	Ogre::LayerBlendModeEx		d_colourBlendMode;	//!< Controls colour blending mode used.
 	Ogre::LayerBlendModeEx		d_alphaBlendMode;	//!< Controls alpha blending mode used.
-	Ogre::TextureUnitState::UVWAddressingMode d_uvwAddressMode; 
 
 	CEGUIRQListener*			d_ourlistener;
 	bool						d_post_queue;		//!< true if we render after everything else in our queue.

@@ -39,7 +39,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreMeshManager.h"
 #include "OgreMaterial.h"
 #include "OgreTimer.h"
-#include "OgreHardwarePixelBuffer.h"
 
 namespace Ogre {
 
@@ -47,18 +46,20 @@ namespace Ogre {
 
     //-----------------------------------------------------------------------
     RenderSystem::RenderSystem()
-        : mActiveRenderTarget(0)
-        , mTextureManager(0)
-        , mCapabilities(0)
-        , mActiveViewport(0)
+    {
+        mActiveViewport = 0;
+		mActiveRenderTarget = NULL;
+        mTextureManager = 0;
+        mCapabilities = 0;
+        mVSync = true;
+		mWBuffer = false;
+
+
         // This means CULL clockwise vertices, i.e. front of poly is counter-clockwise
         // This makes it the same as OpenGL and other right-handed systems
-        , mCullingMode(CULL_CLOCKWISE)
-        , mVSync(true)
-		, mWBuffer(false)
-        , mInvertVertexWinding(false)
-        , mCurrentPassIterationCount(0)
-    {
+        mCullingMode = CULL_CLOCKWISE;
+        mInvertVertexWinding = false;
+
         // instanciate RenderSystemCapabilities
         mCapabilities = new RenderSystemCapabilities();
     }
@@ -113,21 +114,6 @@ namespace Ogre {
 
         return 0;
     }
-	//---------------------------------------------------------------------
-	RenderTexture * RenderSystem::createRenderTexture( const String & name, 
-		unsigned int width, unsigned int height,
-		TextureType texType, PixelFormat internalFormat, const NameValuePairList *miscParams )
-	{
-		/// Create a new 2D texture, and return surface to render to
-        TexturePtr mTexture = TextureManager::getSingleton().createManual( name, 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, texType, 
-			width, height, 0, internalFormat, TU_RENDERTARGET );
-            
-        // Ensure texture loaded and internal resources created
-        mTexture->load();
-
-        return mTexture->getBuffer()->getRenderTarget();
-	}
     //---------------------------------------------------------------------------------------------
     void RenderSystem::destroyRenderWindow(const String& name)
     {
@@ -191,9 +177,6 @@ namespace Ogre {
 
             mRenderTargets.erase( it );
         }
-        /// If detached render target is the active render target, reset active render target
-        if(ret == mActiveRenderTarget)
-            mActiveRenderTarget = 0;
 
         return ret;
     }
@@ -393,10 +376,6 @@ namespace Ogre {
         else
             val = op.vertexData->vertexCount;
 
-        // account for a pass having multiple iterations
-        if (mCurrentPassIterationCount > 1)
-            val *= mCurrentPassIterationCount;
-
         switch(op.operationType)
         {
 		case RenderOperation::OT_TRIANGLE_LIST:
@@ -436,27 +415,6 @@ namespace Ogre {
             target->_notifyCameraRemoved(cam);
         }
     }
-
-	//---------------------------------------------------------------------
-    bool RenderSystem::updatePassIterationRenderState(void)
-    {
-        if (mCurrentPassIterationCount <= 1)
-            return false;
-
-        --mCurrentPassIterationCount;
-        if (!mActiveVertexGpuProgramParameters.isNull())
-        {
-            mActiveVertexGpuProgramParameters->incPassIterationNumber();
-            bindGpuProgramPassIterationParameters(GPT_VERTEX_PROGRAM);
-        }
-        if (!mActiveVertexGpuProgramParameters.isNull())
-        {
-            mActiveFragmentGpuProgramParameters->incPassIterationNumber();
-            bindGpuProgramPassIterationParameters(GPT_FRAGMENT_PROGRAM);
-        }
-        return true;
-    }
-
 	//-----------------------------------------------------------------------
 	void RenderSystem::addListener(Listener* l)
 	{

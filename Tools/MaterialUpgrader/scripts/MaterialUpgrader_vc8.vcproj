@@ -5,6 +5,7 @@
 	Name="MaterialUpgrader"
 	ProjectGUID="{2BA1BBEE-CE27-48D6-A89D-EBAA81D40B6D}"
 	Keyword="Win32Proj"
+	SignManifests="true"
 	>
 	<Platforms>
 		<Platform
@@ -19,7 +20,7 @@
 			OutputDirectory="..\bin\$(ConfigurationName)"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
+			InheritedPropertySheets="UpgradeFromVC70.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -103,7 +104,7 @@
 			OutputDirectory="..\bin\$(ConfigurationName)"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
+			InheritedPropertySheets="UpgradeFromVC70.vsprops"
 			CharacterSet="2"
 			>
 			<Tool

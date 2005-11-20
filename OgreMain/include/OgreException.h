@@ -132,8 +132,7 @@ namespace Ogre {
             ERR_ITEM_NOT_FOUND,
             ERR_FILE_NOT_FOUND,
             ERR_INTERNAL_ERROR,
-            ERR_RT_ASSERTION_FAILED, 
-			ERR_NOT_IMPLEMENTED
+            ERR_RT_ASSERTION_FAILED
         };
 
         /** Default constructor.

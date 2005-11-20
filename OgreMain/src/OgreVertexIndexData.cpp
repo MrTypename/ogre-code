@@ -304,7 +304,7 @@ namespace Ogre {
         }
     }
 	//-----------------------------------------------------------------------
-	void VertexData::reorganiseBuffers(VertexDeclaration* newDeclaration, BufferUsageList bufferUsages)
+	void VertexData::reorganiseBuffers(VertexDeclaration* newDeclaration, const BufferUsageList& bufferUsages)
 	{
         // Firstly, close up any gaps in the buffer sources which might have arisen
         newDeclaration->closeGapsInSource();
@@ -312,35 +312,47 @@ namespace Ogre {
 		// Build up a list of both old and new elements in each buffer
 		unsigned short buf = 0;
 		std::vector<void*> oldBufferLocks;
+        std::vector<size_t> oldBufferVertexSizes;
 		std::vector<void*> newBufferLocks;
+        std::vector<size_t> newBufferVertexSizes;
 		VertexBufferBinding* newBinding = 
 			HardwareBufferManager::getSingleton().createVertexBufferBinding();
+        const VertexBufferBinding::VertexBufferBindingMap& oldBindingMap = vertexBufferBinding->getBindings();
+        VertexBufferBinding::VertexBufferBindingMap::const_iterator itBinding;
+
+        // Pre-allocate old buffer locks
+        if (!oldBindingMap.empty())
+        {
+            size_t count = oldBindingMap.rbegin()->first + 1;
+            oldBufferLocks.resize(count);
+            oldBufferVertexSizes.resize(count);
+        }
 		// Lock all the old buffers for reading
-		try 
-		{
-			while (1)
-			{
-				oldBufferLocks.push_back(
-					vertexBufferBinding->getBuffer(buf++)->lock(
-						HardwareBuffer::HBL_READ_ONLY));
-			}
-		}
-		catch(Exception&)
-		{
-			// Catch 'no buffer' exception and ignore
-		}
+        for (itBinding = oldBindingMap.begin(); itBinding != oldBindingMap.end(); ++itBinding)
+        {
+            assert(itBinding->second->getNumVertices() >= vertexCount);
+
+            oldBufferVertexSizes[itBinding->first] =
+                itBinding->second->getVertexSize();
+            oldBufferLocks[itBinding->first] =
+                itBinding->second->lock(
+                    HardwareBuffer::HBL_READ_ONLY);
+        }
 		
 		// Create new buffers and lock all for writing
 		buf = 0;
 		while (!newDeclaration->findElementsBySource(buf).empty())
 		{
+            size_t vertexSize = newDeclaration->getVertexSize(buf);
+
 			HardwareVertexBufferSharedPtr vbuf = 
 				HardwareBufferManager::getSingleton().createVertexBuffer(
-					newDeclaration->getVertexSize(buf),
+					vertexSize,
 					vertexCount, 
 					bufferUsages[buf]);
 			newBinding->setBinding(buf, vbuf);
 
+            newBufferVertexSizes.push_back(vertexSize);
 			newBufferLocks.push_back(
 				vbuf->lock(HardwareBuffer::HBL_DISCARD));
 			buf++;
@@ -381,10 +393,10 @@ namespace Ogre {
 				unsigned short newBufferNo = newElem->getSource();
 				void* pSrcBase = static_cast<void*>(
 					static_cast<unsigned char*>(oldBufferLocks[oldBufferNo])
-					+ v * vertexBufferBinding->getBuffer(oldBufferNo)->getVertexSize());
+					+ v * oldBufferVertexSizes[oldBufferNo]);
 				void* pDstBase = static_cast<void*>(
 					static_cast<unsigned char*>(newBufferLocks[newBufferNo])
-					+ v * newBinding->getBuffer(newBufferNo)->getVertexSize());
+					+ v * newBufferVertexSizes[newBufferNo]);
 				void *pSrc, *pDst;
 				oldElem->baseVertexPointerToElement(pSrcBase, &pSrc);
 				newElem->baseVertexPointerToElement(pDstBase, &pDst);
@@ -395,30 +407,14 @@ namespace Ogre {
 		}
 
 		// Unlock all buffers
-		buf = 0;
-		try 
-		{
-			while (1)
-			{
-				vertexBufferBinding->getBuffer(buf++)->unlock();
-			}
-		}
-		catch(Exception& )
-		{
-			// Catch 'no buffer' exception and ignore
-		}
-		buf = 0;
-		try 
-		{
-			while (1)
-			{
-				newBinding->getBuffer(buf++)->unlock();
-			}
-		}
-		catch(Exception& )
-		{
-			// Catch 'no buffer' exception and ignore
-		}
+        for (itBinding = oldBindingMap.begin(); itBinding != oldBindingMap.end(); ++itBinding)
+        {
+            itBinding->second->unlock();
+        }
+        for (buf = 0; buf < newBinding->getBufferCount(); ++buf)
+        {
+            newBinding->getBuffer(buf)->unlock();
+        }
 
 		// Delete old binding & declaration
 		HardwareBufferManager::getSingleton().
@@ -484,36 +480,6 @@ namespace Ogre {
         reorganiseBuffers(newDeclaration, usages);
 
     }
-	//-----------------------------------------------------------------------
-	void VertexData::allocateHardwareAnimationElements(ushort count)
-	{
-		// Find first free texture coord set
-		unsigned short texCoord = 0;
-		const VertexDeclaration::VertexElementList& vel = vertexDeclaration->getElements();
-		for (VertexDeclaration::VertexElementList::const_iterator i = vel.begin(); 
-			i != vel.end(); ++i)
-		{
-			const VertexElement& el = *i;
-			if (el.getSemantic() == VES_TEXTURE_COORDINATES)
-			{
-				++texCoord;
-			}
-		}
-		assert(texCoord <= OGRE_MAX_TEXTURE_COORD_SETS);
-
-		// Increase to correct size
-		for (ushort c = hwAnimationDataList.size(); c < count; ++c)
-		{
-			// Create a new 3D texture coordinate set
-			HardwareAnimationData data;
-			data.targetVertexElement = &(vertexDeclaration->addElement(
-				vertexBufferBinding->getNextIndex(), 0, VET_FLOAT3, VES_TEXTURE_COORDINATES, texCoord++));
-
-			hwAnimationDataList.push_back(data);
-			// Vertex buffer will not be bound yet, we expect this to be done by the
-			// caller when it becomes appropriate (e.g. through a VertexAnimationTrack)
-		}
-	}
     //-----------------------------------------------------------------------
 	//-----------------------------------------------------------------------
 	IndexData::IndexData()
@@ -548,250 +514,5 @@ namespace Ogre {
 		dest->indexStart = indexStart;
 		return dest;
 	}
-    //-----------------------------------------------------------------------
-    //-----------------------------------------------------------------------
-	// Local Utility class for vertex cache optimizer
-	class Triangle
-    {
-    public:
-		enum EdgeMatchType {
-			AB, BC, CA, ANY, NONE
-		};
-
-		union {
-			struct {
-				uint32 a, b, c;		
-			};
-			uint32 val[3];
-		};
-
-		inline Triangle()
-		{
-		}
-
-		inline Triangle( uint32 ta, uint32 tb, uint32 tc ) 
-			: a( ta ), b( tb ), c( tc )
-		{
-		}
-
-		inline Triangle( uint32 t[3] )
-			: a( t[0] ), b( t[1] ), c( t[2] )
-		{
-		}
-
-		inline Triangle( const Triangle& t )
-			: a( t.a ), b( t.b ), c( t.c )
-		{
-		}
-
-		inline bool sharesEdge(const Triangle& t) const
-		{
-			return(	a == t.a && b == t.c ||
-					a == t.b && b == t.a ||
-					a == t.c && b == t.b ||
-					b == t.a && c == t.c ||
-					b == t.b && c == t.a ||
-					b == t.c && c == t.b ||
-					c == t.a && a == t.c ||
-					c == t.b && a == t.a ||
-					c == t.c && a == t.b );
-		}
-
-		inline bool sharesEdge(const uint32 ea, const uint32 eb, const Triangle& t) const
-		{
-			return(	ea == t.a && eb == t.c ||
-					ea == t.b && eb == t.a ||
-					ea == t.c && eb == t.b );	
-		}
-
-		inline bool sharesEdge(const EdgeMatchType edge, const Triangle& t) const
-		{
-			if (edge == AB)
-				return sharesEdge(a, b, t);
-			else if (edge == BC)
-				return sharesEdge(b, c, t);
-			else if (edge == CA)
-				return sharesEdge(c, a, t);
-			else
-				return (edge == ANY) == sharesEdge(t);
-		}
-
-		inline EdgeMatchType endoSharedEdge(const Triangle& t) const
-		{
-			if (sharesEdge(a, b, t)) return AB;
-			if (sharesEdge(b, c, t)) return BC;
-			if (sharesEdge(c, a, t)) return CA;
-			return NONE;
-		}
-
-		inline EdgeMatchType exoSharedEdge(const Triangle& t) const
-		{
-			return t.endoSharedEdge(*this);
-		}
-
-		inline void shiftClockwise()
-		{
-			uint32 t = a;
-			a = c;
-			c = b;
-			b = t;
-		}
-
-		inline void shiftCounterClockwise()
-		{
-			uint32 t = a;
-			a = b;
-			b = c;
-			c = t;
-		}
-	};
-    //-----------------------------------------------------------------------
-    //-----------------------------------------------------------------------
-	void IndexData::optimiseVertexCacheTriList(void)
-	{
-		if (indexBuffer->isLocked()) return;
-
-		void *buffer = indexBuffer->lock(HardwareBuffer::HBL_NORMAL);
-
-		Triangle* triangles;
-		uint32 *dest;
-
-		size_t nIndexes = indexCount;
-		size_t nTriangles = nIndexes / 3;
-		size_t i, j;
-		uint16 *source;
-
-		if (indexBuffer->getType() == HardwareIndexBuffer::IT_16BIT)
-		{
-			triangles = new Triangle[nTriangles];
-			source = (uint16 *)buffer;
-			dest = (uint32 *)triangles;
-			for (i = 0; i < nIndexes; ++i) dest[i] = source[i];
-		}
-		else
-			triangles = (Triangle*)buffer;
-
-		// sort triangles based on shared edges
-		uint32 *destlist = new uint32[nTriangles];
-		unsigned char *visited = new unsigned char[nTriangles];
-
-		for (i = 0; i < nTriangles; ++i) visited[i] = 0;
-
-		uint32 start = 0, ti = 0, destcount = 0;
-
-		bool found = false;
-		for (i = 0; i < nTriangles; ++i)
-		{
-			if (found)
-				found = false;
-			else
-			{
-				while (visited[start++]);
-				ti = start - 1;
-			}
-
-			destlist[destcount++] = ti;
-			visited[ti] = 1;
-
-			for (j = start; j < nTriangles; ++j)
-			{
-				if (visited[j]) continue;
-				
-				if (triangles[ti].sharesEdge(triangles[j]))
-				{
-					found = true;
-					ti = static_cast<uint32>(j);
-					break;
-				}
-			}
-		}
-
-		if (indexBuffer->getType() == HardwareIndexBuffer::IT_16BIT)
-		{
-			// reorder the indexbuffer
-			j = 0;
-			for (i = 0; i < nTriangles; ++i)
-			{
-				Triangle *t = &triangles[destlist[i]];
-				source[j++] = t->a;
-				source[j++] = t->b;
-				source[j++] = t->c;
-			}
-			delete[] triangles;
-		}
-		else
-		{
-			uint32 *reflist = new uint32[nTriangles];
-
-			// fill the referencebuffer
-			for (i = 0; i < nTriangles; ++i)
-				reflist[destlist[i]] = static_cast<uint32>(i);
-			
-			// reorder the indexbuffer
-			for (i = 0; i < nTriangles; ++i)
-			{
-				j = destlist[i];
-				if (i == j) continue; // do not move triangle
-
-				// swap triangles
-
-				Triangle t = triangles[i];
-				triangles[i] = triangles[j];
-				triangles[j] = t;
-
-				// change reference
-				destlist[reflist[i]] = static_cast<uint32>(j);
-				// destlist[i] = i; // not needed, it will not be used
-			}
-
-			delete[] reflist;
-		}
-
-		delete[] destlist;
-		delete[] visited;
-					
-		indexBuffer->unlock();
-	}
-	//-----------------------------------------------------------------------
-	//-----------------------------------------------------------------------
-	void VertexCacheProfiler::profile(const HardwareIndexBufferSharedPtr indexBuffer) {
-		if (indexBuffer->isLocked()) return;
-
-		uint16 *shortbuffer = (uint16 *)indexBuffer->lock(HardwareBuffer::HBL_READ_ONLY);
-
-		if (indexBuffer->getType() == HardwareIndexBuffer::IT_16BIT)
-			for (unsigned int i = 0; i < indexBuffer->getNumIndexes(); ++i)
-				inCache(shortbuffer[i]);
-		else
-		{
-			uint32 *buffer = (uint32 *)shortbuffer;
-			for (unsigned int i = 0; i < indexBuffer->getNumIndexes(); ++i)
-				inCache(buffer[i]);
-		}
-
-		indexBuffer->unlock();
-	}
-
-	//-----------------------------------------------------------------------
-	bool VertexCacheProfiler::inCache(unsigned int index)
-	{
-		for (unsigned int i = 0; i < buffersize; ++i)
-		{
-			if (index == cache[i])
-			{
-				hit++;
-				return true;
-			}
-		}
-
-		miss++;
-		cache[tail++] = index;
-		tail %= size;
-
-		if (buffersize < size) buffersize++;
-
-		return false;
-	}
-	
 
 }

@@ -84,6 +84,7 @@ namespace Ogre {
         int mMaxKey;
         int mMouseX, mMouseY;
         int mMouseRelativeX, mMouseRelativeY, mMouseRelativeZ;
+        Real mScale;
         Uint8 mMouseKeys;
         bool _visible;
 		

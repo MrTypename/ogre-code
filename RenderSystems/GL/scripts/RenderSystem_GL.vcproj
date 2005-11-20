@@ -145,9 +145,6 @@
 				RelativePath="..\src\OgreGLEngineDll.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreGLFBORenderTexture.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreGLGpuNvparseProgram.cpp">
 			</File>
 			<File
@@ -172,16 +169,10 @@
 				RelativePath="..\src\OgreGLHardwareVertexBuffer.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreGLPBRenderTexture.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreGLPixelFormat.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreGLRenderSystem.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreGLRenderTexture.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreGLSupport.cpp">
@@ -205,13 +196,7 @@
 				RelativePath="..\src\OgreWin32Window.cpp">
 			</File>
 			<File
-				RelativePath="..\src\glew.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreGLFBOMultiRenderTarget.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreGLFrameBufferObject.cpp">
+				RelativePath="..\src\glprocs.c">
 			</File>
 			<Filter
 				Name="nvparse"
@@ -392,9 +377,6 @@
 				RelativePath="..\include\OgreGLDefaultHardwareBufferManager.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreGLFBORenderTexture.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreGLGpuNvparseProgram.h">
 			</File>
 			<File
@@ -419,12 +401,6 @@
 				RelativePath="..\include\OgreGLHardwareVertexBuffer.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreGLPBRenderTexture.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreGLPBuffer.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreGLPixelFormat.h">
 			</File>
 			<File
@@ -432,9 +408,6 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreGLRenderSystem.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreGLRenderTexture.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreGLSupport.h">
@@ -473,22 +446,13 @@
 				RelativePath="..\..\..\Dependencies\include\GL\gl.h">
 			</File>
 			<File
-				RelativePath="..\include\GL\glew.h">
-			</File>
-			<File
 				RelativePath="..\..\..\Dependencies\include\GL\glext.h">
 			</File>
 			<File
 				RelativePath="..\..\..\Dependencies\include\GL\glxext.h">
 			</File>
 			<File
-				RelativePath="..\include\GL\wglew.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreGLFBOMultiRenderTarget.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreGLFrameBufferObject.h">
+				RelativePath="..\..\..\Dependencies\include\GL\wglext.h">
 			</File>
 			<Filter
 				Name="glsl"

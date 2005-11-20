@@ -112,6 +112,7 @@ namespace Ogre {
 		bool mUseKeyboard, mUseMouse;
 
 		/* For mouse buffered mode. */
+		Real mScale;
 		Real getScaled(DWORD dwVal) const;
 
 		/* For keyboard immediate mode. */

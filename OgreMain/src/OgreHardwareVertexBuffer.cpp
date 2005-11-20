@@ -414,8 +414,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    VertexDeclaration* VertexDeclaration::getAutoOrganisedDeclaration(
-		bool skeletalAnimation, bool vertexAnimation)
+    VertexDeclaration* VertexDeclaration::getAutoOrganisedDeclaration(bool animated)
     {
         VertexDeclaration* newDecl = this->clone();
         // Set all sources to the same buffer (for now)
@@ -430,28 +429,24 @@ namespace Ogre {
         }
         newDecl->sort();
         // Now sort out proper buffer assignments and offsets
-        size_t offset = 0;
+        size_t offset0 = 0;
+        size_t offset1 = 0;
         c = 0;
-		unsigned short buffer = 0;
         for (i = elems.begin(); i != elems.end(); ++i, ++c)
         {
             const VertexElement& elem = *i;
-			if (vertexAnimation && elem.getSemantic() == VES_NORMAL)
-			{
-				// For morph animation, we need positions on their own
-				++buffer;
-				offset = 0;
-			}
-            if ((skeletalAnimation || vertexAnimation) &&
+            if (animated && 
                 elem.getSemantic() != VES_POSITION && elem.getSemantic() != VES_NORMAL)
             {
-				// All animated meshes have to split after normal
-				++buffer;
-				offset = 0;
+                // Animated meshes have pos & norm in buffer 0, everything else in 1
+                newDecl->modifyElement(c, 1, offset1, elem.getType(), elem.getSemantic(), elem.getIndex());
+                offset1 += elem.getSize();
             }
-			newDecl->modifyElement(c, buffer, offset, 
-				elem.getType(), elem.getSemantic(), elem.getIndex());
-			offset += elem.getSize();
+            else
+            {
+                newDecl->modifyElement(c, 0, offset0, elem.getType(), elem.getSemantic(), elem.getIndex());
+                offset0 += elem.getSize();
+            }
         }
 
         return newDecl;

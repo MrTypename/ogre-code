@@ -3,7 +3,6 @@ INCLUDES = $(STLPORT_CFLAGS) $(FT2_CFLAGS) -I$(top_srcdir)/OgreMain/include -DOG
 lib_LTLIBRARIES=libOgreMain.la
 
 libOgreMain_la_SOURCES = OgreAnimation.cpp \
-						 OgreAnimable.cpp \
                          OgreAnimationState.cpp \
                          OgreAnimationTrack.cpp \
                          OgreArchiveManager.cpp \
@@ -26,7 +25,6 @@ libOgreMain_la_SOURCES = OgreAnimation.cpp \
                          OgreCursor.cpp \
                          OgreDataStream.cpp \
                          OgreDefaultHardwareBufferManager.cpp \
-						 OgreDefaultSceneQueries.cpp \
                          OgreDynLib.cpp \
                          OgreDynLibManager.cpp \
                          OgreEdgeListBuilder.cpp \
@@ -60,7 +58,6 @@ libOgreMain_la_SOURCES = OgreAnimation.cpp \
                          OgreLight.cpp \
                          OgreLog.cpp \
                          OgreLogManager.cpp \
-						 OgreManualObject.cpp \
                          OgreMaterial.cpp \
                          OgreMaterialManager.cpp \
                          OgreMaterialSerializer.cpp \
@@ -149,16 +146,7 @@ libOgreMain_la_SOURCES = OgreAnimation.cpp \
                          OgreVertexIndexData.cpp \
                          OgreViewport.cpp \
                          OgreWireBoundingBox.cpp \
-                         OgreZip.cpp \
-                         OgreCompositionPass.cpp \
-                         OgreCompositionTargetPass.cpp \
-                         OgreCompositionTechnique.cpp \
-                         OgreCompositor.cpp \
-                         OgreCompositorChain.cpp \
-                         OgreCompositorInstance.cpp \
-                         OgreCompositorManager.cpp \
-                         OgreCompositorSerializer.cpp
-
+                         OgreZip.cpp
 
 if USE_DEVIL
 libOgreMain_la_SOURCES +=OgreILImageCodec.cpp \

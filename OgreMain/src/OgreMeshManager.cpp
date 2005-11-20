@@ -658,11 +658,11 @@ namespace Ogre
                 vec.z = (-sin((1-dist) * (PI/2)) * params.curvature) + params.curvature;
 
                 // Transform by orientation and distance
-                Vector3 pos = xform * vec;
+                vec = xform * vec;
                 // Assign to geometry
-                *pFloat++ = pos.x;
-                *pFloat++ = pos.y;
-                *pFloat++ = pos.z;
+                *pFloat++ = vec.x;
+                *pFloat++ = vec.y;
+                *pFloat++ = vec.z;
 
                 // Record bounds
                 if (first)
@@ -685,10 +685,9 @@ namespace Ogre
                     //   so I'm not going to mess with it for now. 
 
                     // Default normal is along unit Z
-                    //vec = Vector3::UNIT_Z;
+                    vec = Vector3::UNIT_Z;
                     // Rotate
                     vec = rot * vec;
-					vec.normalise();
 
                     *pFloat++ = vec.x;
                     *pFloat++ = vec.y;

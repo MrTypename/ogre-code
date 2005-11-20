@@ -36,9 +36,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreMaterial.h"
 #include "OgreTechnique.h"
 #include "OgrePass.h"
-#include "OgreAnimation.h"
-#include "OgreAnimationTrack.h"
-#include "OgreKeyFrame.h"
 
 #if OGRE_COMPILER == OGRE_COMPILER_MSVC
 // Disable conversion warnings, we do a lot of them, intentionally
@@ -178,11 +175,6 @@ namespace Ogre {
 			LogManager::getSingleton().logMessage("Edge lists exported");
 		}
 
-		// Write morph animation 
-		if (pMesh->hasVertexAnimation())
-		{
-			writeAnimations(pMesh);
-		}
     }
     //---------------------------------------------------------------------
 	// Added by DrEvil
@@ -247,11 +239,6 @@ namespace Ogre {
         {
             writeGeometry(s->vertexData);
         }
-
-        // end of sub mesh chunk
-
-        // write out texture alias chunks
-        writeSubMeshTextureAliases(s);
         
         // Operation type
         writeSubMeshOperation(s);
@@ -273,30 +260,6 @@ namespace Ogre {
 
 
     }
-
-    //---------------------------------------------------------------------
-    void MeshSerializerImpl::writeSubMeshTextureAliases(const SubMesh* s)
-    {
-        size_t chunkSize;
-        AliasTextureNamePairList::const_iterator i;
-
-		LogManager::getSingleton().logMessage("Exporting submesh texture aliases...");
-
-        // iterate through texture aliases and write them out as a chunk
-        for (i = s->mTextureAliases.begin(); i != s->mTextureAliases.end(); ++i)
-        {
-            // calculate chunk size based on string length + 1.  Add 1 for the line feed.
-            chunkSize = STREAM_OVERHEAD_SIZE + i->first.length() + i->second.length() + 2;
-			writeChunkHeader(M_SUBMESH_TEXTURE_ALIAS, chunkSize);
-            // write out alias name
-            writeString(i->first);
-            // write out texture name
-            writeString(i->second);
-        }
-
-		LogManager::getSingleton().logMessage("Submesh texture aliases exported.");
-    }
-
     //---------------------------------------------------------------------
     void MeshSerializerImpl::writeSubMeshOperation(const SubMesh* sm)
     {
@@ -409,8 +372,8 @@ namespace Ogre {
 		Mesh::SubMeshNameMap::const_iterator it = pMesh->mSubMeshNameMap.begin();		
 		while(it != pMesh->mSubMeshNameMap.end())
 		{
-			// size of the index + header size for each element chunk
-			size += STREAM_OVERHEAD_SIZE + sizeof(uint16);
+			// size of the index
+			size += sizeof(uint16);
 			// name
 			size += it->first.length() + 1;
 
@@ -454,13 +417,6 @@ namespace Ogre {
 		{
 			size += calcEdgeListSize(pMesh);
 		}
-
-		// Animations
-		for (unsigned short a = 0; a < pMesh->getNumAnimations(); ++a)
-		{
-			Animation* anim = pMesh->getAnimation(a);
-			size += calcAnimationSize(anim);
-		}
 		
 		return size;
     }
@@ -487,41 +443,12 @@ namespace Ogre {
             size += calcGeometrySize(pSub->vertexData);
         }
 
-        size += calcSubMeshTextureAliasesSize(pSub);
-        size += calcSubMeshOperationSize(pSub);
-
-        // Bone assignments
-        if (!pSub->mBoneAssignments.empty())
-        {
-            SubMesh::VertexBoneAssignmentList::const_iterator vi;
-            for (vi = pSub->mBoneAssignments.begin(); 
-                 vi != pSub->mBoneAssignments.end(); ++vi)
-            {
-                size += calcBoneAssignmentSize();
-            }
-        }
-
         return size;
     }
     //---------------------------------------------------------------------
     size_t MeshSerializerImpl::calcSubMeshOperationSize(const SubMesh* pSub)
     {
         return STREAM_OVERHEAD_SIZE + sizeof(uint16);
-    }
-    //---------------------------------------------------------------------
-    size_t MeshSerializerImpl::calcSubMeshTextureAliasesSize(const SubMesh* pSub)
-    {
-        size_t chunkSize = 0;
-        AliasTextureNamePairList::const_iterator i;
-
-        // iterate through texture alias map and calc size of strings
-        for (i = pSub->mTextureAliases.begin(); i != pSub->mTextureAliases.end(); ++i)
-        {
-            // calculate chunk size based on string length + 1.  Add 1 for the line feed.
-            chunkSize += STREAM_OVERHEAD_SIZE + i->first.length() + i->second.length() + 2;
-        }
-
-        return chunkSize;
     }
     //---------------------------------------------------------------------
     size_t MeshSerializerImpl::calcGeometrySize(const VertexData* vertexData)
@@ -761,8 +688,7 @@ namespace Ogre {
 				 streamID == M_MESH_LOD ||
                  streamID == M_MESH_BOUNDS ||
 				 streamID == M_SUBMESH_NAME_TABLE ||
-				 streamID == M_EDGE_LISTS ||
-				 streamID == M_ANIMATIONS))
+				 streamID == M_EDGE_LISTS))
             {
                 switch(streamID)
                 {
@@ -808,9 +734,6 @@ namespace Ogre {
                 case M_EDGE_LISTS:
                     readEdgeList(stream, pMesh);
                     break;
-				case M_ANIMATIONS:
-					readAnimations(stream, pMesh);
-					break;
 					
                 }
 
@@ -837,6 +760,7 @@ namespace Ogre {
         // char* materialName
         String materialName = readString(stream);
         sm->setMaterialName(materialName);
+
         // bool useSharedVertices
         readBools(stream,&sm->useSharedVertices, 1);
 
@@ -896,14 +820,13 @@ namespace Ogre {
         }
 
 
-        // Find all bone assignments, submesh operation, and texture aliases (if present) 
+        // Find all bone assignments (if present) 
         if (!stream->eof())
         {
             streamID = readChunk(stream);
             while(!stream->eof() &&
                 (streamID == M_SUBMESH_BONE_ASSIGNMENT ||
-                 streamID == M_SUBMESH_OPERATION ||
-                 streamID == M_SUBMESH_TEXTURE_ALIAS))
+                 streamID == M_SUBMESH_OPERATION))
             {
                 switch(streamID)
                 {
@@ -912,9 +835,6 @@ namespace Ogre {
                     break;
                 case M_SUBMESH_BONE_ASSIGNMENT:
                     readSubMeshBoneAssignment(stream, pMesh, sm);
-                    break;
-                case M_SUBMESH_TEXTURE_ALIAS:
-                    readSubMeshTextureAlias(stream, pMesh, sm);
                     break;
                 }
 
@@ -941,13 +861,6 @@ namespace Ogre {
         unsigned short opType;
         readShorts(stream, &opType, 1);
         sm->operationType = static_cast<RenderOperation::OperationType>(opType);
-    }
-    //---------------------------------------------------------------------
-    void MeshSerializerImpl::readSubMeshTextureAlias(DataStreamPtr& stream, Mesh* pMesh, SubMesh* sub)
-    {
-        String aliasName = readString(stream);
-        String textureName = readString(stream);
-        sub->addTextureAlias(aliasName, textureName);
     }
     //---------------------------------------------------------------------
     void MeshSerializerImpl::writeSkeletonLink(const String& skelName)
@@ -1746,378 +1659,7 @@ namespace Ogre {
 
         pMesh->mEdgeListsBuilt = true;
 	}
-	//---------------------------------------------------------------------
-	size_t MeshSerializerImpl::calcAnimationsSize(const Mesh* pMesh)
-	{
-		size_t size = STREAM_OVERHEAD_SIZE;
-
-		for (unsigned short a = 0; a < pMesh->getNumAnimations(); ++a)
-		{
-			Animation* anim = pMesh->getAnimation(a);
-			size += calcAnimationSize(anim);
-		}
-		return size;
-
-	}
-	//---------------------------------------------------------------------
-	size_t MeshSerializerImpl::calcAnimationSize(const Animation* anim)
-	{
-		size_t size = STREAM_OVERHEAD_SIZE;
-		// char* name
-		size += anim->getName().length() + 1;
-
-		// float length
-		size += sizeof(float);
-
-		Animation::VertexTrackIterator trackIt = anim->getVertexTrackIterator();
-		while (trackIt.hasMoreElements())
-		{
-			VertexAnimationTrack* vt = trackIt.getNext();
-			size += calcAnimationTrackSize(vt);
-		}
-
-		return size;
-	}
-	//---------------------------------------------------------------------
-	size_t MeshSerializerImpl::calcAnimationTrackSize(const VertexAnimationTrack* track)
-	{
-		size_t size = STREAM_OVERHEAD_SIZE;
-		// uint16 type
-		size += sizeof(uint16);
-		// unsigned short target		// 0 for shared geometry, 
-		size += sizeof(unsigned short);
-
-		if (track->getAnimationType() == VAT_MORPH)
-		{
-			for (unsigned short i = 0; i < track->getNumKeyFrames(); ++i)
-			{
-				VertexMorphKeyFrame* kf = track->getVertexMorphKeyFrame(i);
-				size += calcMorphKeyframeSize(kf, track->getAssociatedVertexData()->vertexCount);
-			}
-		}
-		else
-		{
-			VertexPoseKeyFrame* kf = track->getVertexPoseKeyFrame();
-			size += calcPoseKeyframeSize(kf);
-		}
-		return size;
-	}
-	//---------------------------------------------------------------------
-	size_t MeshSerializerImpl::calcMorphKeyframeSize(const VertexMorphKeyFrame* kf, 
-		size_t vertexCount)
-	{
-		size_t size = STREAM_OVERHEAD_SIZE;
-		// float time
-		size += sizeof(float);
-		// bool isOriginalGeometry  // point at original geometry?
-		size += sizeof(bool);
-		// float x,y,z
-		size += sizeof(float) * 3 * vertexCount;
-
-		return size;
-	}
-	//---------------------------------------------------------------------
-	size_t MeshSerializerImpl::calcPoseKeyframeSize(const VertexPoseKeyFrame* kf)
-	{
-		size_t size = STREAM_OVERHEAD_SIZE;
-
-		size_t eachVertexSize = calcPoseVertexSize();
-
-		size += eachVertexSize * kf->getVertexOffsets().size();
-
-		return size;
-
-	}
-	//---------------------------------------------------------------------
-	size_t MeshSerializerImpl::calcPoseVertexSize(void)
-	{
-		size_t size = STREAM_OVERHEAD_SIZE;
-		// unsigned long vertexIndex
-		size += sizeof(uint32);
-		// float xoffset, yoffset, zoffset
-		size += sizeof(float) * 3;
-
-		return size;
-	}
-	//---------------------------------------------------------------------
-	void MeshSerializerImpl::writeAnimations(const Mesh* pMesh)
-	{
-		writeChunkHeader(M_ANIMATIONS, calcAnimationsSize(pMesh));
-
-		for (unsigned short a = 0; a < pMesh->getNumAnimations(); ++a)
-		{
-			Animation* anim = pMesh->getAnimation(a);
-			LogManager::getSingleton().logMessage("Exporting animation " + anim->getName());
-			writeAnimation(anim);
-			LogManager::getSingleton().logMessage("Animation exported.");
-		}
-	}
-	//---------------------------------------------------------------------
-	void MeshSerializerImpl::writeAnimation(const Animation* anim)
-	{
-		writeChunkHeader(M_ANIMATION, calcAnimationSize(anim));
-		// char* name
-		writeString(anim->getName());
-		// float length
-		float len = anim->getLength();
-		writeFloats(&len, 1);
-		Animation::VertexTrackIterator trackIt = anim->getVertexTrackIterator();
-		while (trackIt.hasMoreElements())
-		{
-			VertexAnimationTrack* vt = trackIt.getNext();
-			writeAnimationTrack(vt);
-		}
-
-
-	}
     //---------------------------------------------------------------------
-	void MeshSerializerImpl::writeAnimationTrack(const VertexAnimationTrack* track)
-	{
-		writeChunkHeader(M_ANIMATION_TRACK, calcAnimationTrackSize(track));
-		// unsigned short type			// 1 == morph, 2 == pose
-		uint16 animType = (uint16)track->getAnimationType();
-		writeShorts(&animType, 1);
-		// unsigned short target
-		uint16 target = track->getHandle();
-		writeShorts(&target, 1);
-
-		if (track->getAnimationType() == VAT_MORPH)
-		{
-			for (unsigned short i = 0; i < track->getNumKeyFrames(); ++i)
-			{
-				VertexMorphKeyFrame* kf = track->getVertexMorphKeyFrame(i);
-				writeMorphKeyframe(kf, track->getAssociatedVertexData()->vertexCount);
-			}
-		}
-		else // VAT_POSE
-		{
-			writePoseKeyframe(track->getVertexPoseKeyFrame());
-		}
-
-	}
-	//---------------------------------------------------------------------
-	void MeshSerializerImpl::writeMorphKeyframe(const VertexMorphKeyFrame* kf, size_t vertexCount)
-	{
-		writeChunkHeader(M_ANIMATION_MORPH_KEYFRAME, calcMorphKeyframeSize(kf, vertexCount));
-		// float time
-		float timePos = kf->getTime();
-		writeFloats(&timePos, 1);
-		// float x,y,z			// repeat by number of vertices in original geometry
-		float* pSrc = static_cast<float*>(
-			kf->getVertexBuffer()->lock(HardwareBuffer::HBL_READ_ONLY));
-		writeFloats(pSrc, vertexCount * 3);
-		kf->getVertexBuffer()->unlock();
-	}
-	//---------------------------------------------------------------------
-	void MeshSerializerImpl::writePoseKeyframe(const VertexPoseKeyFrame* kf)
-	{
-		writeChunkHeader(M_ANIMATION_POSE_KEYFRAME, calcPoseKeyframeSize(kf));
-		
-		size_t vertexSize = calcPoseVertexSize();
-		VertexPoseKeyFrame::ConstVertexOffsetIterator vit = kf->getVertexOffsetIterator();
-		while (vit.hasMoreElements())
-		{
-			uint32 vertexIndex = (uint32)vit.peekNextKey();
-			Vector3 offset = vit.getNext();
-			writeChunkHeader(M_ANIMATION_POSE_VERTEX, vertexSize);
-			// unsigned long vertexIndex
-			writeInts(&vertexIndex, 1);
-			// float xoffset, yoffset, zoffset
-			writeFloats(offset.val, 3);
-		}
-
-	}
-	//---------------------------------------------------------------------
-	void MeshSerializerImpl::readAnimations(DataStreamPtr& stream, Mesh* pMesh)
-	{
-		unsigned short streamID;
-
-		// Find all substreams 
-		if (!stream->eof())
-		{
-			streamID = readChunk(stream);
-			while(!stream->eof() &&
-				(streamID == M_ANIMATION))
-			{
-				switch(streamID)
-				{
-				case M_ANIMATION:
-					readAnimation(stream, pMesh);
-					break;
-
-				}
-
-				if (!stream->eof())
-				{
-					streamID = readChunk(stream);
-				}
-
-			}
-			if (!stream->eof())
-			{
-				// Backpedal back to start of stream
-				stream->skip(-STREAM_OVERHEAD_SIZE);
-			}
-		}
-
-
-	}
-	//---------------------------------------------------------------------
-	void MeshSerializerImpl::readAnimation(DataStreamPtr& stream, Mesh* pMesh)
-	{
-
-		// char* name
-		String name = readString(stream);
-		// float length
-		float len;
-		readFloats(stream, &len, 1);
-
-		Animation* anim = pMesh->createAnimation(name, len);
-
-		// tracks
-		unsigned short streamID;
-
-		if (!stream->eof())
-		{
-			streamID = readChunk(stream);
-			while(!stream->eof() &&
-				streamID == M_ANIMATION_TRACK)
-			{
-				switch(streamID)
-				{
-				case M_ANIMATION_TRACK:
-					readAnimationTrack(stream, anim, pMesh);
-					break;
-				};
-				if (!stream->eof())
-				{
-					streamID = readChunk(stream);
-				}
-
-			}
-			if (!stream->eof())
-			{
-				// Backpedal back to start of stream
-				stream->skip(-STREAM_OVERHEAD_SIZE);
-			}
-		}
-	}
-	//---------------------------------------------------------------------
-	void MeshSerializerImpl::readAnimationTrack(DataStreamPtr& stream, 
-		Animation* anim, Mesh* pMesh)
-	{
-		// ushort type
-		uint16 inAnimType;
-		readShorts(stream, &inAnimType, 1);
-		VertexAnimationType animType = (VertexAnimationType)inAnimType;
-
-		// unsigned short target
-		uint16 target;
-		readShorts(stream, &target, 1);
-		
-		VertexAnimationTrack* track = anim->createVertexTrack(target, 
-			pMesh->getVertexDataByTrackHandle(target), animType);
-
-		// keyframes
-		unsigned short streamID;
-
-		if (!stream->eof())
-		{
-			streamID = readChunk(stream);
-			while(!stream->eof() &&
-				(streamID == M_ANIMATION_MORPH_KEYFRAME ||
-				 streamID == M_ANIMATION_POSE_KEYFRAME))
-			{
-				switch(streamID)
-				{
-				case M_ANIMATION_MORPH_KEYFRAME:
-					readMorphKeyFrame(stream, track);
-					break;
-				case M_ANIMATION_POSE_KEYFRAME:
-					readPoseKeyFrame(stream, track);
-					break;
-				};
-				if (!stream->eof())
-				{
-					streamID = readChunk(stream);
-				}
-
-			}
-			if (!stream->eof())
-			{
-				// Backpedal back to start of stream
-				stream->skip(-STREAM_OVERHEAD_SIZE);
-			}
-		}
-
-	}
-	//---------------------------------------------------------------------
-	void MeshSerializerImpl::readMorphKeyFrame(DataStreamPtr& stream, VertexAnimationTrack* track)
-	{
-		// float time
-		float timePos;
-		readFloats(stream, &timePos, 1);
-
-		VertexMorphKeyFrame* kf = track->createVertexMorphKeyFrame(timePos);
-
-		// Create buffer, allow read and use shadow buffer
-		size_t vertexCount = track->getAssociatedVertexData()->vertexCount;
-		HardwareVertexBufferSharedPtr vbuf = 
-			HardwareBufferManager::getSingleton().createVertexBuffer(
-				VertexElement::getTypeSize(VET_FLOAT3), vertexCount, 
-				HardwareBuffer::HBU_STATIC, true);
-		// float x,y,z			// repeat by number of vertices in original geometry
-		float* pDst = static_cast<float*>(
-			vbuf->lock(HardwareBuffer::HBL_DISCARD));
-		readFloats(stream, pDst, vertexCount * 3);
-		vbuf->unlock();
-		kf->setVertexBuffer(vbuf);
-
-	}
-	//---------------------------------------------------------------------
-	void MeshSerializerImpl::readPoseKeyFrame(DataStreamPtr& stream, VertexAnimationTrack* track)
-	{
-		// Create keyframe
-		VertexPoseKeyFrame* kf = track->createVertexPoseKeyFrame();
-
-		unsigned short streamID;
-
-		if (!stream->eof())
-		{
-			streamID = readChunk(stream);
-			while(!stream->eof() &&
-				streamID == M_ANIMATION_POSE_VERTEX)
-			{
-				switch(streamID)
-				{
-				case M_ANIMATION_POSE_VERTEX:
-					// create vertex offset
-					uint32 vertIndex;
-					Vector3 offset;
-					// unsigned long vertexIndex
-					readInts(stream, &vertIndex, 1);
-					// float xoffset, yoffset, zoffset
-					readFloats(stream, offset.val, 3);
-
-					kf->addVertex(vertIndex, offset);
-
-					break;
-				};
-				if (!stream->eof())
-				{
-					streamID = readChunk(stream);
-				}
-
-			}
-			if (!stream->eof())
-			{
-				// Backpedal back to start of stream
-				stream->skip(-STREAM_OVERHEAD_SIZE);
-			}
-		}
-
-	}
-	//---------------------------------------------------------------------
     //---------------------------------------------------------------------
     //---------------------------------------------------------------------
     MeshSerializerImpl_v1_2::MeshSerializerImpl_v1_2()

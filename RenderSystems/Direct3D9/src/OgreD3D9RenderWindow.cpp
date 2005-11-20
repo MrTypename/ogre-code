@@ -109,13 +109,7 @@ namespace Ogre
 
 	D3D9RenderWindow::~D3D9RenderWindow()
 	{
-		// access and update device through driver, realse only primary
-		if (!mIsSwapChain) 
-		{
-			LPDIRECT3DDEVICE9 mpD3DDevice = mDriver->getD3DDevice();
-			SAFE_RELEASE( mpD3DDevice );
-			mDriver->setD3DDevice( NULL );
-		}
+		destroyD3DResources();
 	}
 
 	bool D3D9RenderWindow::_checkMultiSampleQuality(D3DMULTISAMPLE_TYPE type, DWORD *outQuality, D3DFORMAT format, UINT adapterNum, D3DDEVTYPE deviceType, BOOL fullScreen)
@@ -832,7 +826,7 @@ namespace Ogre
 		SAFE_RELEASE(pSurf);
 	}
 	//-----------------------------------------------------------------------------
-	void D3D9RenderWindow::update(bool swap)
+	void D3D9RenderWindow::update(void)
 	{
 		D3D9RenderSystem* rs = static_cast<D3D9RenderSystem*>(
 			Root::getSingleton().getRenderSystem());
@@ -913,6 +907,6 @@ namespace Ogre
 			}
 
 		}
-		RenderWindow::update(swap);
+		RenderWindow::update();
 	}
 }

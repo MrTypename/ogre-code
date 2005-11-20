@@ -70,32 +70,22 @@ namespace Ogre {
         void writeGeometry(TiXmlElement* mParentNode, const VertexData* pData);
         void writeSkeletonLink(TiXmlElement* mMeshNode, const String& skelName);
         void writeBoneAssignment(TiXmlElement* mBoneAssignNode, const VertexBoneAssignment* assign);
-        void writeTextureAliases(TiXmlElement* mSubmeshesNode, const SubMesh* s);
 		void writeLodInfo(TiXmlElement* mMeshNode, const Mesh* pMesh);
 		void writeLodUsageManual(TiXmlElement* usageNode, unsigned short levelNum, 
 			const MeshLodUsage& usage);
 		void writeLodUsageGenerated(TiXmlElement* usageNode, unsigned short levelNum,  
 			const MeshLodUsage& usage, const Mesh* pMesh);
         void writeSubMeshNames(TiXmlElement* mMeshNode, const Mesh* m);
-		void writeAnimations(TiXmlElement* meshNode, const Mesh* m);
-		void writeMorphKeyFrames(TiXmlElement* trackNode, const VertexAnimationTrack* track);
-		void writePose(TiXmlElement* trackNode, const VertexAnimationTrack* track);
 
         void readSubMeshes(TiXmlElement* mSubmeshesNode);
         void readGeometry(TiXmlElement* mGeometryNode, VertexData* pData);
         void readSkeletonLink(TiXmlElement* mSkelNode);
         void readBoneAssignments(TiXmlElement* mBoneAssignmentsNode);
         void readBoneAssignments(TiXmlElement* mBoneAssignmentsNode, SubMesh* sm);
-        void readTextureAliases(TiXmlElement* mTextureAliasesNode, SubMesh* sm);
 		void readLodInfo(TiXmlElement*  lodNode);
 		void readLodUsageManual(TiXmlElement* manualNode, unsigned short index);
 		void readLodUsageGenerated(TiXmlElement* genNode, unsigned short index);
 		void readSubMeshNames(TiXmlElement* mMeshNamesNode, Mesh* sm);
-		void readAnimations(TiXmlElement* mAnimationsNode, Mesh *m);
-		void readTracks(TiXmlElement* tracksNode, Mesh *m, Animation* anim);
-		void readMorphKeyFrames(TiXmlElement* keyframesNode, VertexAnimationTrack* track, 
-			size_t vertexCount);
-		void readPose(TiXmlElement* keyframesNode, VertexAnimationTrack* track);
 
 
     };

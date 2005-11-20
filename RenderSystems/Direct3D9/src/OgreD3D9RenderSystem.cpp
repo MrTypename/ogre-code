@@ -44,11 +44,23 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreHighLevelGpuProgramManager.h"
 #include "OgreD3D9HardwareOcclusionQuery.h"
 #include "OgreFrustum.h"
-#include "OgreD3D9MultiRenderTarget.h"
+
 
 
 namespace Ogre 
 {
+
+    const Matrix4 PROJECTIONCLIPSPACE2DTOIMAGESPACE_PERSPECTIVE(
+        0.5,    0,  0, -0.5, 
+          0, -0.5,  0, -0.5, 
+          0,    0,  0,   -1,
+          0,    0,  0,    1);
+
+    const Matrix4 PROJECTIONCLIPSPACE2DTOIMAGESPACE_ORTHO(
+        -0.5,   0,  0, -0.5, 
+           0, 0.5,  0, -0.5, 
+           0,   0,  0,   -1,
+           0,   0,  0,    1);
 
 	//---------------------------------------------------------------------
 	D3D9RenderSystem::D3D9RenderSystem( HINSTANCE hInstance )
@@ -134,7 +146,7 @@ namespace Ogre
 	//---------------------------------------------------------------------
 	const String& D3D9RenderSystem::getName() const
 	{
-		static String strName( "Direct3D9 Rendering Subsystem");
+		static String strName( "Direct3D9 Rendering SubSystem");
 		return strName;
 	}
 	//---------------------------------------------------------------------
@@ -543,9 +555,6 @@ namespace Ogre
 		{
 			HRESULT hr = mpD3DDevice->SetStreamSource(i, NULL, 0, 0);
 		}
-		// Clean up depth stencil surfaces
-		_cleanupDepthStencils();
-
 		RenderSystem::shutdown();
 		SAFE_DELETE( mDriverList );
 		mActiveD3DDriver = NULL;
@@ -755,20 +764,10 @@ namespace Ogre
 		// We always support rendertextures bigger than the frame buffer
         mCapabilities->setCapability(RSC_HWRENDER_TO_TEXTURE);
 
-		// Number of render targets
-		mCapabilities->setNumMultiRenderTargets(std::min((ushort)mCaps.NumSimultaneousRTs, (ushort)OGRE_MAX_MULTIPLE_RENDER_TARGETS));
-
-		//
-		if(mCaps.PrimitiveMiscCaps & D3DPMISCCAPS_MRTINDEPENDENTBITDEPTHS)
-		{
-			LogManager::getSingleton().logMessage("Multiple render targets with independent bit depths supported");
-
-		}
-
 		Log* defaultLog = LogManager::getSingleton().getDefaultLog();
 		if (defaultLog)
 		{
-			mCapabilities->log(defaultLog);
+	        mCapabilities->log(defaultLog);
 		}
     }
     //---------------------------------------------------------------------
@@ -954,14 +953,30 @@ namespace Ogre
             mCapabilities->setCapability(RSC_FRAGMENT_PROGRAM);
         }
     }
-	//-----------------------------------------------------------------------
-	MultiRenderTarget * D3D9RenderSystem::createMultiRenderTarget(const String & name)
+    //---------------------------------------------------------------------
+	RenderTexture * D3D9RenderSystem::createRenderTexture( const String & name, 
+		unsigned int width, unsigned int height,
+		TextureType texType, PixelFormat internalFormat, const NameValuePairList *miscParams )
 	{
-		MultiRenderTarget *retval;
-		retval = new D3D9MultiRenderTarget(name);
-		attachRenderTarget(*retval);
-
-		return retval;
+		// Log a message
+		std::stringstream ss;
+		ss << "D3D9RenderSystem::createRenderTexture \"" << name << "\", " <<
+			width << "x" << height << " texType=" << texType <<
+			" internalFormat=" << PixelUtil::getFormatName(internalFormat) << " ";
+		if(miscParams)
+		{
+			ss << "miscParams: ";
+			NameValuePairList::const_iterator it;
+			for(it=miscParams->begin(); it!=miscParams->end(); ++it)
+			{
+				ss << it->first << "=" << it->second << " ";
+			}
+		}
+		LogManager::getSingleton().logMessage(ss.str());
+		// Create render texture
+		D3D9RenderTexture *rt = new D3D9RenderTexture( name, width, height, texType, internalFormat, miscParams );
+		attachRenderTarget( *rt );
+		return rt;
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::destroyRenderTarget(const String& name)
@@ -1001,27 +1016,6 @@ namespace Ogre
 	{
 		*pDest = colour.getAsARGB();
 	}
-    //---------------------------------------------------------------------
-    void D3D9RenderSystem::_convertProjectionMatrix(const Matrix4& matrix,
-        Matrix4& dest, bool forGpuProgram)
-    {
-        dest = matrix;
-
-        // Convert depth range from [-1,+1] to [0,1]
-        dest[2][0] = (dest[2][0] + dest[3][0]) / 2;
-        dest[2][1] = (dest[2][1] + dest[3][1]) / 2;
-        dest[2][2] = (dest[2][2] + dest[3][2]) / 2;
-        dest[2][3] = (dest[2][3] + dest[3][3]) / 2;
-
-        if (!forGpuProgram)
-        {
-            // Convert right-handed to left-handed
-            dest[0][2] = -dest[0][2];
-            dest[1][2] = -dest[1][2];
-            dest[2][2] = -dest[2][2];
-            dest[3][2] = -dest[3][2];
-        }
-    }
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_makeProjectionMatrix(const Radian& fovy, Real aspect, Real nearPlane, 
         Real farPlane, Matrix4& dest, bool forGpuProgram)
@@ -1220,13 +1214,7 @@ namespace Ogre
 		D3DXMATRIX d3dMat = D3D9Mappings::makeD3DXMatrix( m );
 
 		if( mActiveRenderTarget->requiresTextureFlipping() )
-        {
-            // Invert transformed y
-            d3dMat._12 = - d3dMat._12;
 			d3dMat._22 = - d3dMat._22;
-            d3dMat._32 = - d3dMat._32;
-            d3dMat._42 = - d3dMat._42;
-        }
 
 		HRESULT hr;
 		if( FAILED( hr = mpD3DDevice->SetTransform( D3DTS_PROJECTION, &d3dMat ) ) )
@@ -1352,12 +1340,13 @@ namespace Ogre
 	void D3D9RenderSystem::_setTextureMatrix( size_t stage, const Matrix4& xForm )
 	{
 		HRESULT hr;
+		D3DXMATRIX d3dMatId; // ident. matrix in D3DX format
 		D3DXMATRIX d3dMat; // the matrix we'll maybe apply
 		Matrix4 newMat = xForm; // the matrix we'll apply after conv. to D3D format
-		// Cache texcoord calc method to register
-		TexCoordCalcMethod autoTexCoordType = mTexStageDesc[stage].autoTexCoordType;
+		// make the ident. matrix in D3D format
+		D3DXMatrixIdentity(&d3dMatId);
 
-		if (autoTexCoordType == TEXCALC_ENVIRONMENT_MAP)
+		if (mTexStageDesc[stage].autoTexCoordType == TEXCALC_ENVIRONMENT_MAP)
         {
             if (mCaps.VertexProcessingCaps & D3DVTXPCAPS_TEXGEN_SPHEREMAP)
             {
@@ -1381,7 +1370,7 @@ namespace Ogre
 		}
 
         // If this is a cubic reflection, we need to modify using the view matrix
-        if (autoTexCoordType == TEXCALC_ENVIRONMENT_MAP_REFLECTION)
+        if (mTexStageDesc[stage].autoTexCoordType == TEXCALC_ENVIRONMENT_MAP_REFLECTION)
         {
             // Get transposed 3x3
             // We want to transpose since that will invert an orthonormal matrix ie rotation
@@ -1409,7 +1398,7 @@ namespace Ogre
             newMat = newMat.concatenate(ogreViewTransposed);
         }
 
-        if (autoTexCoordType == TEXCALC_PROJECTIVE_TEXTURE)
+        if (mTexStageDesc[stage].autoTexCoordType == TEXCALC_PROJECTIVE_TEXTURE)
         {
             // Derive camera space to projector space transform
             // To do this, we need to undo the camera view matrix, then 
@@ -1417,90 +1406,39 @@ namespace Ogre
             newMat = mViewMatrix.inverse();
             newMat = mTexStageDesc[stage].frustum->getViewMatrix() * newMat;
             newMat = mTexStageDesc[stage].frustum->getProjectionMatrix() * newMat;
-            newMat = Matrix4::CLIPSPACE2DTOIMAGESPACE * newMat;
+            if (mTexStageDesc[stage].frustum->getProjectionType() == PT_PERSPECTIVE)
+            {
+                newMat = PROJECTIONCLIPSPACE2DTOIMAGESPACE_PERSPECTIVE * newMat;
+            }
+            else
+            {
+                newMat = PROJECTIONCLIPSPACE2DTOIMAGESPACE_ORTHO * newMat;
+            }
             newMat = xForm * newMat;
-        }
 
-		// need this if texture is a cube map, to invert D3D's z coord
-		if (autoTexCoordType != TEXCALC_NONE &&
-            autoTexCoordType != TEXCALC_PROJECTIVE_TEXTURE)
-		{
-            newMat[2][0] = -newMat[2][0];
-            newMat[2][1] = -newMat[2][1];
-            newMat[2][2] = -newMat[2][2];
-            newMat[2][3] = -newMat[2][3];
-		}
+        }
 
         // convert our matrix to D3D format
 		d3dMat = D3D9Mappings::makeD3DXMatrix(newMat);
 
-		// set the matrix if it's not the identity
-		if (!D3DXMatrixIsIdentity(&d3dMat))
+		// need this if texture is a cube map, to invert D3D's z coord
+		if (mTexStageDesc[stage].autoTexCoordType != TEXCALC_NONE &&
+            mTexStageDesc[stage].autoTexCoordType != TEXCALC_PROJECTIVE_TEXTURE)
 		{
-            /* It's seems D3D automatically add a texture coordinate with value 1,
-            and fill up the remaining texture coordinates with 0 for the input
-            texture coordinates before pass to texture coordinate transformation.
+			d3dMat._13 = -d3dMat._13;
+			d3dMat._23 = -d3dMat._23;
+			d3dMat._33 = -d3dMat._33;
+			d3dMat._43 = -d3dMat._43;
+		}
 
-               NOTE: It's difference with D3DDECLTYPE enumerated type expand in
-            DirectX SDK documentation!
-
-               So we should prepare the texcoord transform, make the transformation
-            just like standardized vector expand, thus, fill w with value 1 and
-            others with 0.
-            */
-            if (autoTexCoordType == TEXCALC_NONE)
-            {
-                /* FIXME: The actually input texture coordinate dimensions should
-                be determine by texture coordinate vertex element. Now, just trust
-                user supplied texture type matchs texture coordinate vertex element.
-                */
-                if (mTexStageDesc[stage].texType == D3D9Mappings::D3D_TEX_TYPE_NORMAL)
-                {
-                    /* It's 2D input texture coordinate:
-
-                      texcoord in vertex buffer     D3D expanded to     We are adjusted to
-                                                -->                 -->
-                                (u, v)               (u, v, 1, 0)          (u, v, 0, 1)
-                    */
-                    std::swap(d3dMat._31, d3dMat._41);
-                    std::swap(d3dMat._32, d3dMat._42);
-                    std::swap(d3dMat._33, d3dMat._43);
-                    std::swap(d3dMat._34, d3dMat._44);
-                }
-            }
-            else
-            {
-                // All texgen generate 3D input texture coordinates.
-            }
-
+		// set the matrix if it's not the identity
+		if (d3dMat != d3dMatId)
+		{
 			// tell D3D the dimension of tex. coord.
-			int texCoordDim = D3DTTFF_DISABLE;
-            if (autoTexCoordType == TEXCALC_PROJECTIVE_TEXTURE)
+			int texCoordDim;
+            if (mTexStageDesc[stage].autoTexCoordType == TEXCALC_PROJECTIVE_TEXTURE)
             {
-                /* We want texcoords (u, v, w, q) always get divided by q, but D3D
-                projected texcoords is divided by the last element (in the case of
-                2D texcoord, is w). So we tweak the transform matrix, transform the
-                texcoords with w and q swapped: (u, v, q, w), and then D3D will
-                divide u, v by q. The w and q just ignored as it wasn't used by
-                rasterizer.
-                */
-			    switch (mTexStageDesc[stage].texType)
-			    {
-			    case D3D9Mappings::D3D_TEX_TYPE_NORMAL:
-                    std::swap(d3dMat._13, d3dMat._14);
-                    std::swap(d3dMat._23, d3dMat._24);
-                    std::swap(d3dMat._33, d3dMat._34);
-                    std::swap(d3dMat._43, d3dMat._44);
-
-                    texCoordDim = D3DTTFF_PROJECTED | D3DTTFF_COUNT3;
-                    break;
-
-			    case D3D9Mappings::D3D_TEX_TYPE_CUBE:
-			    case D3D9Mappings::D3D_TEX_TYPE_VOLUME:
-                    // Yes, we support 3D projective texture.
-				    texCoordDim = D3DTTFF_PROJECTED | D3DTTFF_COUNT4;
-                    break;
-                }
+                texCoordDim = D3DTTFF_PROJECTED | D3DTTFF_COUNT3;
             }
             else
             {
@@ -1512,7 +1450,6 @@ namespace Ogre
 			    case D3D9Mappings::D3D_TEX_TYPE_CUBE:
 			    case D3D9Mappings::D3D_TEX_TYPE_VOLUME:
 				    texCoordDim = D3DTTFF_COUNT3;
-                    break;
 			    }
             }
 
@@ -1532,21 +1469,21 @@ namespace Ogre
 				OGRE_EXCEPT( hr, "Error setting texture matrix", "D3D9RenderSystem::_setTextureMatrix" );
 
 			// set the identity matrix
+			D3DXMatrixIdentity( &d3dMat );
 			hr = mpD3DDevice->SetTransform( (D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0 + stage), &d3dMat );
 			if( FAILED( hr ) )
 				OGRE_EXCEPT( hr, "Error setting texture matrix", "D3D9RenderSystem::_setTextureMatrix" );
 		}
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setTextureAddressingMode( size_t stage, 
-		const TextureUnitState::UVWAddressingMode& uvw )
+	void D3D9RenderSystem::_setTextureAddressingMode( size_t stage, TextureUnitState::TextureAddressingMode tam )
 	{
 		HRESULT hr;
-		if( FAILED( hr = __SetSamplerState( stage, D3DSAMP_ADDRESSU, D3D9Mappings::get(uvw.u) ) ) )
+		if( FAILED( hr = __SetSamplerState( stage, D3DSAMP_ADDRESSU, D3D9Mappings::get(tam) ) ) )
 			OGRE_EXCEPT( hr, "Failed to set texture addressing mode for U", "D3D9RenderSystem::_setTextureAddressingMode" );
-		if( FAILED( hr = __SetSamplerState( stage, D3DSAMP_ADDRESSV, D3D9Mappings::get(uvw.v) ) ) )
+		if( FAILED( hr = __SetSamplerState( stage, D3DSAMP_ADDRESSV, D3D9Mappings::get(tam) ) ) )
 			OGRE_EXCEPT( hr, "Failed to set texture addressing mode for V", "D3D9RenderSystem::_setTextureAddressingMode" );
-		if( FAILED( hr = __SetSamplerState( stage, D3DSAMP_ADDRESSW, D3D9Mappings::get(uvw.w) ) ) )
+		if( FAILED( hr = __SetSamplerState( stage, D3DSAMP_ADDRESSW, D3D9Mappings::get(tam) ) ) )
 			OGRE_EXCEPT( hr, "Failed to set texture addressing mode for W", "D3D9RenderSystem::_setTextureAddressingMode" );
 	}
 	//---------------------------------------------------------------------
@@ -1974,35 +1911,21 @@ namespace Ogre
 			RenderTarget* target;
 			target = vp->getTarget();
 
-			// Retrieve render surfaces (up to OGRE_MAX_MULTIPLE_RENDER_TARGETS)
-			LPDIRECT3DSURFACE9 pBack[OGRE_MAX_MULTIPLE_RENDER_TARGETS];
-			memset(pBack, 0, sizeof(pBack));
+			LPDIRECT3DSURFACE9 pBack = NULL;
 			target->getCustomAttribute( "DDBACKBUFFER", &pBack );
-			if (!pBack[0])
+			if (!pBack)
 				return;
 
 			LPDIRECT3DSURFACE9 pDepth = NULL;
 			target->getCustomAttribute( "D3DZBUFFER", &pDepth );
 			if (!pDepth)
+				return;
+			
+			hr = mpD3DDevice->SetRenderTarget(0, pBack);
+			if (FAILED(hr))
 			{
-				/// No depth buffer provided, use our own
-				/// Request a depth stencil that is compatible with the format, multisample type and
-				/// dimensions of the render target.
-				D3DSURFACE_DESC srfDesc;
-				if(FAILED(pBack[0]->GetDesc(&srfDesc)))
-					return; // ?
-				pDepth = _getDepthStencilFor(srfDesc.Format, srfDesc.MultiSampleType, srfDesc.Width, srfDesc.Height);
-			}
-			// Bind render targets
-			uint count = mCapabilities->numMultiRenderTargets();
-			for(uint x=0; x<count; ++x)
-			{
-				hr = mpD3DDevice->SetRenderTarget(x, pBack[x]);
-				if (FAILED(hr))
-				{
-					String msg = DXGetErrorDescription9(hr);
-					OGRE_EXCEPT( hr, "Failed to setRenderTarget : " + msg, "D3D9RenderSystem::_setViewport" );
-				}
+				String msg = DXGetErrorDescription9(hr);
+				OGRE_EXCEPT( hr, "Failed to setRenderTarget : " + msg, "D3D9RenderSystem::_setViewport" );
 			}
 			hr = mpD3DDevice->SetDepthStencilSurface(pDepth);
 			if (FAILED(hr))
@@ -2242,34 +2165,25 @@ namespace Ogre
 				OGRE_EXCEPT( hr, "Failed to set index buffer", "D3D9RenderSystem::_render" );
             }
 
-            do
-            {
-                // do indexed draw operation
-			    hr = mpD3DDevice->DrawIndexedPrimitive(
-                    primType, 
-                    static_cast<INT>(op.vertexData->vertexStart), 
-                    0, // Min vertex index - assume we can go right down to 0 
-                    static_cast<UINT>(op.vertexData->vertexCount), 
-                    static_cast<UINT>(op.indexData->indexStart), 
-                    static_cast<UINT>(primCount)
-                    );
-
-            } while (updatePassIterationRenderState());
+			// do indexed draw operation
+			hr = mpD3DDevice->DrawIndexedPrimitive(
+                primType, 
+                static_cast<INT>(op.vertexData->vertexStart), 
+                0, // Min vertex index - assume we can go right down to 0 
+                static_cast<UINT>(op.vertexData->vertexCount), 
+                static_cast<UINT>(op.indexData->indexStart), 
+                static_cast<UINT>(primCount)
+                );
 		}
 		else
         {
-            // nfz: gpu_iterate
-            do
-            {
-                // Unindexed, a little simpler!
-			    hr = mpD3DDevice->DrawPrimitive(
-                    primType, 
-                    static_cast<UINT>(op.vertexData->vertexStart), 
-                    static_cast<UINT>(primCount)
-                    ); 
-
-            } while (updatePassIterationRenderState());
-        } 
+            // Unindexed, a little simpler!
+			hr = mpD3DDevice->DrawPrimitive(
+                primType, 
+                static_cast<UINT>(op.vertexData->vertexStart), 
+                static_cast<UINT>(primCount)
+                ); 
+        }
 
 		if( FAILED( hr ) )
 		{
@@ -2319,7 +2233,6 @@ namespace Ogre
         switch(gptype)
         {
         case GPT_VERTEX_PROGRAM:
-            mActiveVertexGpuProgramParameters.setNull();
             hr = mpD3DDevice->SetVertexShader(NULL);
             if (FAILED(hr))
             {
@@ -2328,7 +2241,6 @@ namespace Ogre
             }
             break;
         case GPT_FRAGMENT_PROGRAM:
-            mActiveFragmentGpuProgramParameters.setNull();
             hr = mpD3DDevice->SetPixelShader(NULL);
             if (FAILED(hr))
             {
@@ -2350,7 +2262,6 @@ namespace Ogre
         switch(gptype)
         {
         case GPT_VERTEX_PROGRAM:
-            mActiveVertexGpuProgramParameters = params;
             // Bind floats
             if (params->hasRealConstantParams())
             {
@@ -2364,7 +2275,7 @@ namespace Ogre
                         if (FAILED(hr = mpD3DDevice->SetVertexShaderConstantF(
                             index, e->val, 1)))
                         {
-                            OGRE_EXCEPT(hr, "Unable to upload vertex shader float parameters", 
+                            OGRE_EXCEPT(hr, "Unable to upload shader float parameters", 
                                 "D3D9RenderSystem::bindGpuProgramParameters");
                         }
                     }
@@ -2385,7 +2296,7 @@ namespace Ogre
                         if (FAILED(hr = mpD3DDevice->SetVertexShaderConstantI(
                             index, e->val, 1)))
                         {
-                            OGRE_EXCEPT(hr, "Unable to upload vertex shader float parameters", 
+                            OGRE_EXCEPT(hr, "Unable to upload shader float parameters", 
                                 "D3D9RenderSystem::bindGpuProgramParameters");
                         }
                     }
@@ -2395,7 +2306,6 @@ namespace Ogre
             }
             break;
         case GPT_FRAGMENT_PROGRAM:
-            mActiveFragmentGpuProgramParameters = params;
             // Bind floats
             if (params->hasRealConstantParams())
             {
@@ -2419,7 +2329,7 @@ namespace Ogre
                         if (FAILED(hr = mpD3DDevice->SetPixelShaderConstantF(
                             index, e->val, 1)))
                         {
-                            OGRE_EXCEPT(hr, "Unable to upload pixel shader float parameters", 
+                            OGRE_EXCEPT(hr, "Unable to upload shader float parameters", 
                                 "D3D9RenderSystem::bindGpuProgramParameters");
                         }
                     }
@@ -2440,7 +2350,7 @@ namespace Ogre
                         if (FAILED(hr = mpD3DDevice->SetPixelShaderConstantI(
                             index, e->val, 1)))
                         {
-                            OGRE_EXCEPT(hr, "Unable to upload pixel shader float parameters", 
+                            OGRE_EXCEPT(hr, "Unable to upload shader float parameters", 
                                 "D3D9RenderSystem::bindGpuProgramParameters");
                         }
                     }
@@ -2450,43 +2360,6 @@ namespace Ogre
             }
             break;
         };
-    }
-	//---------------------------------------------------------------------
-    void D3D9RenderSystem::bindGpuProgramPassIterationParameters(GpuProgramType gptype)
-    {
-
-        HRESULT hr;
-        GpuProgramParameters::RealConstantEntry* realEntry;
-
-        switch(gptype)
-        {
-        case GPT_VERTEX_PROGRAM:
-            realEntry = mActiveVertexGpuProgramParameters->getPassIterationEntry();
-            if (realEntry)
-            {
-                if (FAILED(hr = mpD3DDevice->SetVertexShaderConstantF(
-                        mActiveVertexGpuProgramParameters->getPassIterationEntryIndex(), realEntry->val, 1)))
-                {
-                    OGRE_EXCEPT(hr, "Unable to upload vertex shader multi pass parameters", 
-                    "D3D9RenderSystem::bindGpuProgramMultiPassParameters");
-                }
-            }
-            break;
-
-        case GPT_FRAGMENT_PROGRAM:
-            realEntry = mActiveFragmentGpuProgramParameters->getPassIterationEntry();
-            if (realEntry)
-            {
-                if (FAILED(hr = mpD3DDevice->SetPixelShaderConstantF(
-                        mActiveFragmentGpuProgramParameters->getPassIterationEntryIndex(), realEntry->val, 1)))
-                {
-                    OGRE_EXCEPT(hr, "Unable to upload pixel shader multi pass parameters", 
-                    "D3D9RenderSystem::bindGpuProgramMultiPassParameters");
-                }
-            }
-            break;
-
-        }
     }
     //---------------------------------------------------------------------
     void D3D9RenderSystem::setClipPlanes(const PlaneList& clipPlanes)
@@ -2732,9 +2605,6 @@ namespace Ogre
 	{
 		// Release all non-managed resources
 
-		// Cleanup depth stencils
-		_cleanupDepthStencils();
-
 		// We have to deal with non-managed textures and vertex buffers
 		// GPU programs don't have to be restored
 		static_cast<D3D9TextureManager*>(mTextureManager)->releaseDefaultPoolResources();
@@ -2763,9 +2633,6 @@ namespace Ogre
 				"Cannot reset device! " + getErrorDescription(hr), 
 				"D3D9RenderWindow::restoreLostDevice" );
 		}
-
-		// will have lost basic states
-		mBasicStatesInitialised = false;
 
 		// recreate additional swap chains
 		for (sw = mSecondaryWindows.begin(); sw != mSecondaryWindows.end(); ++sw)
@@ -2802,121 +2669,4 @@ namespace Ogre
 		fireEvent("DeviceLost");
 	}
 
-	//---------------------------------------------------------------------
-	// Formats to try, in decreasing order of preference
-	D3DFORMAT ddDepthStencilFormats[]={
-		D3DFMT_D24FS8,
-		D3DFMT_D24S8,
-		D3DFMT_D24X4S4,
-		D3DFMT_D24X8,
-		D3DFMT_D15S1,
-		D3DFMT_D16,
-		D3DFMT_D32
-	};
-#define NDSFORMATS (sizeof(ddDepthStencilFormats)/sizeof(D3DFORMAT))
-	
-	D3DFORMAT D3D9RenderSystem::_getDepthStencilFormatFor(D3DFORMAT fmt)
-	{
-		/// Check if result is cached
-		DepthStencilHash::iterator i = mDepthStencilHash.find((unsigned int)fmt);
-		if(i != mDepthStencilHash.end())
-			return i->second;
-		/// If not, probe with CheckDepthStencilMatch
-		D3DFORMAT dsfmt = D3DFMT_UNKNOWN;
-
-		/// Get description of primary render target
-		LPDIRECT3DSURFACE9 mSurface = mPrimaryWindow->getRenderSurface();
-		D3DSURFACE_DESC srfDesc;
-
-		if(!FAILED(mSurface->GetDesc(&srfDesc)))
-		{
-			/// Probe all depth stencil formats
-			/// Break on first one that matches
-			for(size_t x=0; x<NDSFORMATS; ++x)
-			{
-                // Verify that the depth format exists
-                if (mpD3D->CheckDeviceFormat(
-                    mActiveD3DDriver->getAdapterNumber(),
-                    D3DDEVTYPE_HAL,
-                    srfDesc.Format,
-                    D3DUSAGE_DEPTHSTENCIL,
-                    D3DRTYPE_SURFACE,
-                    ddDepthStencilFormats[x]) != D3D_OK)
-                {
-                    continue;
-                }
-                // Verify that the depth format is compatible
-				if(mpD3D->CheckDepthStencilMatch(
-					mActiveD3DDriver->getAdapterNumber(),
-					D3DDEVTYPE_HAL, srfDesc.Format,
-					fmt, ddDepthStencilFormats[x]) == D3D_OK)
-				{
-					dsfmt = ddDepthStencilFormats[x];
-					break;
-				}
-			}
-		}
-		/// Cache result
-		mDepthStencilHash[(unsigned int)fmt] = dsfmt;
-		return dsfmt;
-	}
-	IDirect3DSurface9* D3D9RenderSystem::_getDepthStencilFor(D3DFORMAT fmt, D3DMULTISAMPLE_TYPE multisample, size_t width, size_t height)
-	{
-		D3DFORMAT dsfmt = _getDepthStencilFormatFor(fmt);
-		if(dsfmt == D3DFMT_UNKNOWN)
-			return 0;
-		IDirect3DSurface9 *surface = 0;
-
-		/// Check if result is cached
-		ZBufferFormat zbfmt(dsfmt, multisample);
-		ZBufferHash::iterator i = mZBufferHash.find(zbfmt);
-		if(i != mZBufferHash.end())
-		{
-			/// Check if size is larger or equal
-			if(i->second.width >= width && i->second.height >= height)
-			{
-				surface = i->second.surface;
-			} 
-			else
-			{
-				/// If not, destroy current buffer
-				i->second.surface->Release();
-				mZBufferHash.erase(i);
-			}
-		}
-		if(!surface)
-		{
-			/// If not, create the depthstencil surface
-			HRESULT hr = mpD3DDevice->CreateDepthStencilSurface( 
-				width, 
-				height, 
-				dsfmt, 
-				multisample, 
-				NULL, 
-				TRUE,  // discard true or false?
-				&surface, 
-				NULL);
-			if(FAILED(hr))
-			{
-				String msg = DXGetErrorDescription9(hr);
-				OGRE_EXCEPT( hr, "Error CreateDepthStencilSurface : " + msg, "D3D9RenderSystem::_getDepthStencilFor" );
-			}
-			/// And cache it
-			ZBufferRef zb;
-			zb.surface = surface;
-			zb.width = width;
-			zb.height = height;
-			mZBufferHash[zbfmt] = zb;
-		}
-		return surface;
-	}
-	void D3D9RenderSystem::_cleanupDepthStencils()
-	{
-		for(ZBufferHash::iterator i = mZBufferHash.begin(); i != mZBufferHash.end(); ++i)
-		{
-			/// Release buffer
-			i->second.surface->Release();
-		}
-		mZBufferHash.clear();
-	}
 }

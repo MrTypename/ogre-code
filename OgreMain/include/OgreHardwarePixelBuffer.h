@@ -33,7 +33,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreImage.h"
 
 namespace Ogre {
-
     /** Specialisation of HardwareBuffer for a pixel buffer. The
     	HardwarePixelbuffer abstracts an 1D, 2D or 3D quantity of pixels
     	stored by the rendering API. The buffer can be located on the card
@@ -61,12 +60,6 @@ namespace Ogre {
 
         /// Internal implementation of unlock(), must be overridden in subclasses
         // virtual void unlockImpl(void) = 0;
-
-		/** Notify TextureBuffer of destruction of render target.
-			Called by RenderTexture when destroyed.
-		*/
-		virtual void _clearSliceRTT(size_t zoffset);
-		friend class RenderTexture;
     public:
         /// Should be called by HardwareBufferManager
         HardwarePixelBuffer(size_t mWidth, size_t mHeight, size_t mDepth,
@@ -107,26 +100,32 @@ namespace Ogre {
         	@param srcBox	Image::Box describing the source region in src
         	@param dstBox	Image::Box describing the destination region in this buffer
 			@remarks The source and destination regions dimensions don't have to match, in which
-		   	case scaling is done. This scaling is generally done using a bilinear filter in hardware,
-            but it is faster to pass the source image in the right dimensions.
+		   	case scaling is done. This scaling is done in software for some render systems, 
+			thus for realtime usage it is recommended to pass the source image in the right dimensions.
 			@note Only call this function when both  buffers are unlocked. 
          */        
-        virtual void blit(const HardwarePixelBufferSharedPtr &src, const Image::Box &srcBox, const Image::Box &dstBox);
+        virtual void blit(HardwarePixelBuffer *src, const Image::Box &srcBox, const Image::Box &dstBox);
 
 		/** Convience function that blits the entire source pixel buffer to this buffer. 
 			If source and destination dimensions don't match, scaling is done.
 			@param src		PixelBox containing the source pixels and format in memory
 			@note Only call this function when the buffer is unlocked. 
 		*/
-		void blit(const HardwarePixelBufferSharedPtr &src); 
+		void blit(HardwarePixelBuffer *src)
+		{
+			blit(src, 
+				Box(0,0,0,src->getWidth(),src->getHeight(),src->getDepth()), 
+				Box(0,0,0,mWidth,mHeight,mDepth)
+			);
+		}
 		
 		/** Copies a region from normal memory to a region of this pixelbuffer. The source
 			image can be in any pixel format supported by OGRE, and in any size. 
 		   	@param src		PixelBox containing the source pixels and format in memory
 		   	@param dstBox	Image::Box describing the destination region in this buffer
-            @remarks The source and destination regions dimensions don't have to match, in which
-            case scaling is done. This scaling is generally done using a bilinear filter in hardware,
-            but it is faster to pass the source image in the right dimensions.
+		   	@remarks The source and destination regions dimensions don't have to match, in which
+		   	case scaling is done. This scaling is done in software for some render systems, 
+			so for realtime usage it is recommended to pass the source image in the right dimensions.
 			@note Only call this function when the buffer is unlocked. 
 		*/
 		virtual void blitFromMemory(const PixelBox &src, const Image::Box &dstBox) = 0;
@@ -159,15 +158,6 @@ namespace Ogre {
 		{
 			blitToMemory(Box(0,0,0,mWidth,mHeight,mDepth), dst);
 		}
-        
-        /** Get a render target for this PixelBuffer, or a slice of it. The texture this
-            was acquired from must have TU_RENDERTARGET set, otherwise it is possible to
-            render to it and this method will throw an ERR_RENDERSYSTEM exception.
-            @param slice    Which slice
-            @returns A pointer to the render target. This pointer has the lifespan of this
-            PixelBuffer.
-        */
-        virtual RenderTexture *getRenderTarget(size_t slice=0);
         
         /// Gets the width of this buffer
         size_t getWidth() const { return mWidth; }

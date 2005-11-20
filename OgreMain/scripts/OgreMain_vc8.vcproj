@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="windows-1250"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
@@ -19,7 +19,7 @@
 			OutputDirectory="..\lib\$(ConfigurationName)"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)\VCProjectDefaults\UpgradeFromVC70.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -48,6 +48,7 @@
 				RuntimeLibrary="3"
 				BufferSecurityCheck="true"
 				EnableFunctionLevelLinking="true"
+				FloatingPointModel="2"
 				DisableLanguageExtensions="false"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="OgreStableHeaders.h"
@@ -66,7 +67,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib zziplibd.lib zdll.lib freetype2110_D.lib devil.lib ilu.lib ilut.lib"
+				AdditionalDependencies="kernel32.lib user32.lib zziplibd.lib zdll.lib freetype2110_D.lib devil.lib ilu.lib"
 				OutputFile="$(OutDir)/OgreMain_d.dll"
 				Version="0.99"
 				LinkIncremental="2"
@@ -112,7 +113,7 @@
 			OutputDirectory="..\lib\$(ConfigurationName)"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)\VCProjectDefaults\UpgradeFromVC70.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -145,6 +146,7 @@
 				RuntimeLibrary="2"
 				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
+				FloatingPointModel="2"
 				DisableLanguageExtensions="false"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="OgreStableHeaders.h"
@@ -163,7 +165,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib zziplib.lib zdll.lib freetype2110.lib devil.lib ilu.lib ilut.lib"
+				AdditionalDependencies="kernel32.lib user32.lib zziplib.lib zdll.lib freetype2110.lib devil.lib ilu.lib"
 				OutputFile="$(OutDir)/OgreMain.dll"
 				Version="0.99"
 				LinkIncremental="1"
@@ -171,7 +173,7 @@
 				AdditionalLibraryDirectories="..\..\Dependencies\lib\$(ConfigurationName)"
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames=""
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="false"
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -213,10 +215,6 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm"
 			>
-			<File
-				RelativePath="..\src\OgreAnimable.cpp"
-				>
-			</File>
 			<File
 				RelativePath="..\src\OgreAnimation.cpp"
 				>
@@ -282,38 +280,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgreCompositionPass.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreCompositionTargetPass.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreCompositionTechnique.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreCompositor.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreCompositorChain.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreCompositorInstance.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreCompositorManager.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreCompositorSerializer.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\src\OgreConfigFile.cpp"
 				>
 			</File>
@@ -339,10 +305,6 @@
 			</File>
 			<File
 				RelativePath="..\src\OgreDefaultHardwareBufferManager.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreDefaultSceneQueries.cpp"
 				>
 			</File>
 			<File
@@ -487,10 +449,6 @@
 			</File>
 			<File
 				RelativePath="..\src\OgreLogManager.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreManualObject.cpp"
 				>
 			</File>
 			<File
@@ -881,10 +839,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OgreAnimable.h"
-				>
-			</File>
-			<File
 				RelativePath="..\include\OgreAnimation.h"
 				>
 			</File>
@@ -894,10 +848,6 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreAnimationTrack.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreAny.h"
 				>
 			</File>
 			<File
@@ -966,38 +916,6 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreCommon.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreCompositionPass.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreCompositionTargetPass.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreCompositionTechnique.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreCompositor.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreCompositorChain.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreCompositorInstance.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreCompositorManager.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreCompositorSerializer.h"
 				>
 			</File>
 			<File
@@ -1221,10 +1139,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OgreManualObject.h"
-				>
-			</File>
-			<File
 				RelativePath="..\include\OgreMaterial.h"
 				>
 			</File>
@@ -1426,10 +1340,6 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreQuaternion.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreRadixSort.h"
 				>
 			</File>
 			<File

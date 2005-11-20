@@ -32,7 +32,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreTechnique.h"
 #include "OgrePass.h"
 #include "OgreMaterialManager.h"
-#include "OgreRadixSort.h"
 
 namespace Ogre {
 
@@ -69,11 +68,11 @@ namespace Ogre {
             bool _OgreExport operator()(const Pass* a, const Pass* b) const
             {
                 // Sort by passHash, which is pass, then texture unit changes
-                uint32 hasha = a->getHash();
-                uint32 hashb = b->getHash();
+                unsigned long hasha = a->getHash();
+                unsigned long hashb = b->getHash();
                 if (hasha == hashb)
                 {
-                    // Must differentTransparentQueueItemLessiate by pointer incase 2 passes end up with the same hash
+                    // Must differentiate by pointer incase 2 passes end up with the same hash
                     return a < b;
                 }
                 else
@@ -82,16 +81,10 @@ namespace Ogre {
                 }
             }
         };
-        /// Comparator to order transparent object passes using std::stable_sort
-		struct TransparentQueueItemLess
+        /// Comparator to order transparent object passes
+        struct TransparentQueueItemLess
         {
             const Camera* camera;
-
-            TransparentQueueItemLess(const Camera* cam)
-                : camera(cam)
-            {
-            }
-
             bool _OgreExport operator()(const RenderablePass& a, const RenderablePass& b) const
             {
                 if (a.renderable == b.renderable)
@@ -143,39 +136,6 @@ namespace Ogre {
 
 		/// Transparent list
 		TransparentRenderablePassList mTransparentPasses;
-
-		/// Functor for accessing sort value 1 for radix sort (Pass)
-		struct TransparentSortFunctor1
-		{
-			uint32 operator()(const RenderablePass& p) const
-            {
-                return p.pass->getHash();
-            }
-		};
-
-        /// Radix sorter for accessing sort value 1 (Pass)
-		static RadixSort<TransparentRenderablePassList, RenderablePass, uint32> msRadixSorter1;
-
-		/// Functor for descending sort value 2 for radix sort (distance)
-		struct TransparentSortFunctor2
-		{
-			const Camera* camera;
-
-            TransparentSortFunctor2(const Camera* cam)
-                : camera(cam)
-            {
-            }
-
-			float operator()(const RenderablePass& p) const
-            {
-                // Sort DESCENDING by depth (ie far objects first), use negative distance
-                // here because radix sorter always dealing with accessing sort
-                return static_cast<float>(- p.renderable->getSquaredViewDepth(camera));
-            }
-		};
-
-        /// Radix sorter for descending sort value 2 (distance)
-		static RadixSort<TransparentRenderablePassList, RenderablePass, float> msRadixSorter2;
 
         /// Totally empties and destroys a solid pass map
         void destroySolidPassMap(SolidRenderablePassMap& passmap);

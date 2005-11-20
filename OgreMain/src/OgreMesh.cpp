@@ -35,8 +35,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreException.h"
 #include "OgreMeshManager.h"
 #include "OgreEdgeListBuilder.h"
-#include "OgreAnimation.h"
-#include "OgreAnimationTrack.h"
 
 namespace Ogre {
     //-----------------------------------------------------------------------
@@ -92,9 +90,7 @@ namespace Ogre {
         mPreparedForShadowVolumes(false),
         mEdgeListsBuilt(false),
         mAutoBuildEdgeLists(true), // will be set to false by serializers of 1.30 and above
-		mSharedVertexDataAnimationType(VAT_NONE),
-		mAnimationTypesDirty(true),
-		sharedVertexData(0)
+        sharedVertexData(0)
     {
 
         setSkeletonName("");
@@ -165,7 +161,6 @@ namespace Ogre {
 	{
 		OGRE_LOCK_AUTO_MUTEX
 
-
 		// Overridden to ensure edge lists get built from manual or
 		// loaded meshes
 		Resource::load();
@@ -183,7 +178,6 @@ namespace Ogre {
 				buildEdgeList();
 			}
 		}
-
 	}
 	//-----------------------------------------------------------------------
     void Mesh::loadImpl()
@@ -195,13 +189,7 @@ namespace Ogre {
         DataStreamPtr stream = 
             ResourceGroupManager::getSingleton().openResource(mName, mGroup);
         serializer.importMesh(stream, this);
-        
-        /* check all submeshes to see if their materials should be
-           updated.  If the submesh has texture aliases that match those
-           found in the current material then a new material is created using
-           the textures from the submesh.
-        */
-        updateMaterialForAllSubMeshes();
+
     }
 
     //-----------------------------------------------------------------------
@@ -225,8 +213,12 @@ namespace Ogre {
         removeLodLevels();
         mPreparedForShadowVolumes = false;
 
-		// remove all animations
-		removeAllAnimations();
+        // Clear bone assignments
+        mBoneAssignments.clear();
+        mBoneAssignmentsOutOfDate = false;
+
+        // Removes reference to skeleton
+        setSkeletonName(StringUtil::BLANK);
     }
 
     //-----------------------------------------------------------------------
@@ -262,8 +254,6 @@ namespace Ogre {
             {
                 // Copy unique vertex data
 				newSub->vertexData = (*subi)->vertexData->clone();
-                // Copy unique index map
-                newSub->blendIndexToBoneIndexMap = (*subi)->blendIndexToBoneIndexMap;
             }
 
             // Copy index data
@@ -272,8 +262,6 @@ namespace Ogre {
             // Copy any bone assignments
             newSub->mBoneAssignments = (*subi)->mBoneAssignments;
             newSub->mBoneAssignmentsOutOfDate = (*subi)->mBoneAssignmentsOutOfDate;
-            // Copy texture aliases
-            newSub->mTextureAliases = (*subi)->mTextureAliases;
 
             // Copy lod face lists
             newSub->mLodFaceList.reserve((*subi)->mLodFaceList.size());
@@ -284,11 +272,10 @@ namespace Ogre {
             }
         }
 
-        // Copy shared geometry and index map, if any
+        // Copy shared geometry, if any
         if (sharedVertexData)
         {
             newMesh->sharedVertexData = sharedVertexData->clone();
-            newMesh->sharedBlendIndexToBoneIndexMap = sharedBlendIndexToBoneIndexMap;
         }
 
 		// Copy submesh names
@@ -423,33 +410,22 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void Mesh::_initAnimationState(AnimationStateSet* animSet)
     {
-		if (hasSkeleton())
-		{
-			// Delegate to Skeleton
-			assert(!mSkeleton.isNull() && "Skeleton not present");
-			mSkeleton->_initAnimationState(animSet);
+        // Delegate to Skeleton
+        assert(!mSkeleton.isNull() && "Skeleton not present");
+        mSkeleton->_initAnimationState(animSet);
 
-			// Take the opportunity to update the compiled bone assignments
-			if (mBoneAssignmentsOutOfDate)
-				_compileBoneAssignments();
+        // Take the opportunity to update the compiled bone assignments
+        if (mBoneAssignmentsOutOfDate)
+            _compileBoneAssignments();
 
-			SubMeshList::iterator i;
-			for (i = mSubMeshList.begin(); i != mSubMeshList.end(); ++i)
-			{
-				if ((*i)->mBoneAssignmentsOutOfDate)
-				{
-					(*i)->_compileBoneAssignments();
-				}
-			}
-		}
-
-		for (AnimationList::iterator i = mAnimationsList.begin(); 
-			i != mAnimationsList.end(); ++i)
-		{
-			animSet->createAnimationState(i->second->getName(), 0.0, 
-				i->second->getLength());
-		}
-
+        SubMeshList::iterator i;
+        for (i = mSubMeshList.begin(); i != mSubMeshList.end(); ++i)
+        {
+            if ((*i)->mBoneAssignmentsOutOfDate)
+            {
+                (*i)->_compileBoneAssignments();
+            }
+        }
     }
     //-----------------------------------------------------------------------
     typedef std::multimap<Real, Mesh::VertexBoneAssignmentList::iterator> WeightIteratorMap;
@@ -550,52 +526,14 @@ namespace Ogre {
         }
 
         compileBoneAssignments(mBoneAssignments, maxBones, 
-            sharedBlendIndexToBoneIndexMap, sharedVertexData);
-
+            sharedVertexData);
         mBoneAssignmentsOutOfDate = false;
-    }
-    //---------------------------------------------------------------------
-    void Mesh::buildIndexMap(const VertexBoneAssignmentList& boneAssignments,
-        IndexMap& boneIndexToBlendIndexMap, IndexMap& blendIndexToBoneIndexMap)
-    {
-        if (boneAssignments.empty())
-        {
-            // Just in case
-            boneIndexToBlendIndexMap.clear();
-            blendIndexToBoneIndexMap.clear();
-            return;
-        }
 
-        typedef std::set<unsigned short> BoneIndexSet;
-        BoneIndexSet usedBoneIndices;
-
-        // Collect actually used bones
-        VertexBoneAssignmentList::const_iterator itVBA, itendVBA;
-        itendVBA = boneAssignments.end();
-        for (itVBA = boneAssignments.begin(); itVBA != itendVBA; ++itVBA)
-        {
-            usedBoneIndices.insert(itVBA->second.boneIndex);
-        }
-
-        // Allocate space for index map
-        blendIndexToBoneIndexMap.resize(usedBoneIndices.size());
-        boneIndexToBlendIndexMap.resize(*usedBoneIndices.rbegin() + 1);
-
-        // Make index map between bone index and blend index
-        BoneIndexSet::const_iterator itBoneIndex, itendBoneIndex;
-        unsigned short blendIndex = 0;
-        itendBoneIndex = usedBoneIndices.end();
-        for (itBoneIndex = usedBoneIndices.begin(); itBoneIndex != itendBoneIndex; ++itBoneIndex, ++blendIndex)
-        {
-            boneIndexToBlendIndexMap[*itBoneIndex] = blendIndex;
-            blendIndexToBoneIndexMap[blendIndex] = *itBoneIndex;
-        }
     }
     //---------------------------------------------------------------------
     void Mesh::compileBoneAssignments(        
         const VertexBoneAssignmentList& boneAssignments,
         unsigned short numBlendWeightsPerVertex, 
-        IndexMap& blendIndexToBoneIndexMap,
         VertexData* targetVertexData)
     {
         // Create or reuse blend weight / indexes buffer
@@ -604,11 +542,6 @@ namespace Ogre {
         VertexDeclaration* decl = targetVertexData->vertexDeclaration;
         VertexBufferBinding* bind = targetVertexData->vertexBufferBinding;
         unsigned short bindIndex;
-
-        // Build the index map brute-force. It's possible to store the index map
-        // in .mesh, but maybe trivial.
-        IndexMap boneIndexToBlendIndexMap;
-        buildIndexMap(boneAssignments, boneIndexToBlendIndexMap, blendIndexToBoneIndexMap);
 
         const VertexElement* testElem = 
             decl->findElementBySemantic(VES_BLEND_INDICES);
@@ -695,7 +628,7 @@ namespace Ogre {
                 {
                     // If so, write weight
                     *pWeight++ = i->second.weight;
-                    *pIndex++ = boneIndexToBlendIndexMap[i->second.boneIndex];
+                    *pIndex++ = i->second.boneIndex;
                     ++i;
                 }
                 else
@@ -804,7 +737,7 @@ namespace Ogre {
 						mMeshLodUsageList[index].manualMesh->getEdgeList(0);
 				}
 			}
-			catch (Exception& )
+			catch (Exception& e)
 			{	
 				StringUtil::StrStreamType str;
 				str << "Error while loading manual LOD level " 
@@ -1521,7 +1454,6 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void Mesh::softwareVertexBlend(const VertexData* sourceVertexData, 
         const VertexData* targetVertexData, const Matrix4* pMatrices, 
-        const unsigned short* pIndexMap,
         bool blendNormals)
     {
         // Source vectors
@@ -1702,7 +1634,7 @@ namespace Ogre {
                 if (*pBlendWeight != 0.0) 
                 {
                     // Blend position, use 3x4 matrix
-                    const Matrix4& mat = pMatrices[pIndexMap[*pBlendIdx]];
+                    const Matrix4& mat = pMatrices[*pBlendIdx];
                     accumVecPos.x += 
                         (mat[0][0] * sourceVec.x + 
                          mat[0][1] * sourceVec.y + 
@@ -1808,82 +1740,6 @@ namespace Ogre {
 
 
     }
-	//---------------------------------------------------------------------
-	void Mesh::softwareVertexMorph(Real t, 
-		const HardwareVertexBufferSharedPtr& b1, 
-		const HardwareVertexBufferSharedPtr& b2, 
-		VertexData* targetVertexData)
-	{
-		float* pb1 = static_cast<float*>(b1->lock(HardwareBuffer::HBL_READ_ONLY));
-		float* pb2 = static_cast<float*>(b2->lock(HardwareBuffer::HBL_READ_ONLY));
-		
-		const VertexElement* posElem = 
-			targetVertexData->vertexDeclaration->findElementBySemantic(VES_POSITION);
-		assert(posElem);
-		HardwareVertexBufferSharedPtr destBuf = 
-			targetVertexData->vertexBufferBinding->getBuffer(
-				posElem->getSource());
-		assert(posElem->getSize() == destBuf->getVertexSize() && 
-			"Positions must be in a buffer on their own for morphing");
-		float* pdst = static_cast<float*>(
-			destBuf->lock(HardwareBuffer::HBL_DISCARD));
-		for (size_t i = 0; i < targetVertexData->vertexCount; ++i)
-		{
-			// x
-			*pdst++ = *pb1 + t*(*pb2 - *pb1) ;
-			++pb1; ++pb2;
-			// y
-			*pdst++ = *pb1 + t*(*pb2 - *pb1) ;
-			++pb1; ++pb2;
-			// z
-			*pdst++ = *pb1 + t*(*pb2 - *pb1) ;
-			++pb1; ++pb2;
-		}
-
-		destBuf->unlock();
-		b1->unlock();
-		b2->unlock();
-	}
-	//---------------------------------------------------------------------
-	void Mesh::softwareVertexPoseBlend(Real weight, 
-		const std::map<size_t, Vector3>& vertexOffsetMap,
-		VertexData* targetVertexData)
-	{
-		// Do nothing if no weight
-		if (weight == 0.0f)
-			return;
-
-		const VertexElement* posElem = 
-			targetVertexData->vertexDeclaration->findElementBySemantic(VES_POSITION);
-		assert(posElem);
-		HardwareVertexBufferSharedPtr destBuf = 
-			targetVertexData->vertexBufferBinding->getBuffer(
-			posElem->getSource());
-		assert(posElem->getSize() == destBuf->getVertexSize() && 
-			"Positions must be in a buffer on their own for pose blending");
-
-		// Have to lock in normal mode since this is incremental
-		float* pBase = static_cast<float*>(
-			destBuf->lock(HardwareBuffer::HBL_NORMAL));
-
-		// Iterate over affected vertices
-		for (std::map<size_t, Vector3>::const_iterator i = vertexOffsetMap.begin();
-			i != vertexOffsetMap.end(); ++i)
-		{
-			// Adjust pointer
-			float *pdst = pBase + i->first*3;
-			
-			*pdst = *pdst + (i->second.x * weight);
-			++pdst;
-			*pdst = *pdst + (i->second.y * weight);
-			++pdst;
-			*pdst = *pdst + (i->second.z * weight);
-			++pdst;
-
-		}
-
-		destBuf->unlock();
-	}
     //---------------------------------------------------------------------
 	size_t Mesh::calculateSize(void) const
 	{
@@ -1922,208 +1778,6 @@ namespace Ogre {
 		}
 		return ret;
 	}
-	//-----------------------------------------------------------------------------
-	bool Mesh::hasVertexAnimation(void) const
-	{
-		return !mAnimationsList.empty();
-	}
-	//---------------------------------------------------------------------
-	VertexAnimationType Mesh::getSharedVertexDataAnimationType(void) const
-	{
-		if (mAnimationTypesDirty)
-		{
-			_determineAnimationTypes();
-		}
 
-		return mSharedVertexDataAnimationType;
-	}
-	//---------------------------------------------------------------------
-	void Mesh::_determineAnimationTypes(void) const
-	{
-		// Don't check flag here; since detail checks on track changes are not
-		// done, allow caller to force if they need to
-
-		// Initialise all types to nothing
-		mSharedVertexDataAnimationType = VAT_NONE;
-		for (SubMeshList::const_iterator i = mSubMeshList.begin();
-			i != mSubMeshList.end(); ++i)
-		{
-			(*i)->mVertexAnimationType = VAT_NONE;
-		}
-
-		// Scan all animations and determine the type of animation tracks
-		// relating to each vertex data
-		for(AnimationList::const_iterator ai = mAnimationsList.begin();
-			ai != mAnimationsList.end(); ++ai)
-		{
-			Animation* anim = ai->second;
-			Animation::VertexTrackIterator vit = anim->getVertexTrackIterator();
-			while (vit.hasMoreElements())
-			{
-				VertexAnimationTrack* track = vit.getNext();
-				ushort handle = track->getHandle();
-				if (handle == 0)
-				{
-					// shared data
-					if (mSharedVertexDataAnimationType != VAT_NONE && 
-						mSharedVertexDataAnimationType != track->getAnimationType())
-					{
-						// Mixing of morph and pose animation on same data is not allowed
-						OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
-							"Animation tracks for shared vertex data on mesh " 
-							+ mName + " try to mix vertex animation types, which is "
-							"not allowed.", 
-							"Mesh::_determineAnimationTypes");
-					}
-					mSharedVertexDataAnimationType = track->getAnimationType();
-				}
-				else
-				{
-					// submesh index (-1)
-					SubMesh* sm = getSubMesh(handle-1);
-					if (sm->mVertexAnimationType != VAT_NONE && 
-						sm->mVertexAnimationType != track->getAnimationType())
-					{
-						// Mixing of morph and pose animation on same data is not allowed
-						OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
-							"Animation tracks for dedicated vertex data " 
-							+ StringConverter::toString(handle-1) + " on mesh " 
-							+ mName + " try to mix vertex animation types, which is "
-							"not allowed.", 
-							"Mesh::_determineAnimationTypes");
-					}
-					sm->mVertexAnimationType = track->getAnimationType();
-				
-				}
-			}
-		}
-
-		mAnimationTypesDirty = false;
-	}
-	//---------------------------------------------------------------------
-	Animation* Mesh::createAnimation(const String& name, Real length)
-	{
-		// Check name not used
-		if (mAnimationsList.find(name) != mAnimationsList.end())
-		{
-			OGRE_EXCEPT(
-				Exception::ERR_DUPLICATE_ITEM,
-				"An animation with the name " + name + " already exists",
-				"Mesh::createAnimation");
-		}
-
-		Animation* ret = new Animation(name, length);
-
-		// Add to list
-		mAnimationsList[name] = ret;
-
-		// Mark animation types dirty
-		mAnimationTypesDirty = true;
-
-		return ret;
-
-	}
-	//---------------------------------------------------------------------
-	Animation* Mesh::getAnimation(const String& name) const
-	{
-		Animation* ret = _getAnimationImpl(name);
-		if (!ret)
-		{
-			OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, 
-				"No animation entry found named " + name, 
-				"Mesh::getAnimation");
-		}
-
-		return ret;
-	}
-	//---------------------------------------------------------------------
-	Animation* Mesh::getAnimation(unsigned short index) const
-	{
-		// If you hit this assert, then the index is out of bounds.
-		assert( index < mAnimationsList.size() );
-
-		AnimationList::const_iterator i = mAnimationsList.begin();
-
-		std::advance(i, index);
-
-		return i->second;
-
-	}
-	//---------------------------------------------------------------------
-	unsigned short Mesh::getNumAnimations(void) const
-	{
-		return mAnimationsList.size();
-	}
-	//---------------------------------------------------------------------
-	bool Mesh::hasAnimation(const String& name)
-	{
-		return _getAnimationImpl(name) != 0;
-	}
-	//---------------------------------------------------------------------
-	Animation* Mesh::_getAnimationImpl(const String& name) const
-	{
-		Animation* ret = 0;
-		AnimationList::const_iterator i = mAnimationsList.find(name);
-
-		if (i != mAnimationsList.end())
-		{
-			ret = i->second;
-		}
-
-		return ret;
-
-	}
-	//---------------------------------------------------------------------
-	void Mesh::removeAnimation(const String& name)
-	{
-		AnimationList::iterator i = mAnimationsList.find(name);
-
-		if (i == mAnimationsList.end())
-		{
-			OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, "No animation entry found named " + name, 
-				"Mesh::getAnimation");
-		}
-
-		delete i->second;
-
-		mAnimationsList.erase(i);
-
-		mAnimationTypesDirty = true;
-	}
-	//---------------------------------------------------------------------
-	void Mesh::removeAllAnimations(void)
-	{
-		AnimationList::iterator i = mAnimationsList.begin();
-		for (; i != mAnimationsList.end(); ++i)
-		{
-			delete i->second;
-		}
-		mAnimationsList.clear();
-		mAnimationTypesDirty = true;
-	}
-	//---------------------------------------------------------------------
-	VertexData* Mesh::getVertexDataByTrackHandle(unsigned short handle)
-	{
-		if (handle == 0)
-		{
-			return sharedVertexData;
-		}
-		else
-		{
-			return getSubMesh(handle-1)->vertexData;
-		}
-	}
-
-	//---------------------------------------------------------------------
-	void Mesh::updateMaterialForAllSubMeshes(void)
-	{
-        // iterate through each sub mesh and request the submesh to update its material
-        std::vector<SubMesh*>::iterator subi;
-        for (subi = mSubMeshList.begin(); subi != mSubMeshList.end(); ++subi)
-        {
-            (*subi)->updateMaterialUsingTextureAliases();
-        }
-
-    }
 }
 

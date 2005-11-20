@@ -50,8 +50,6 @@ VolumeRenderable::~VolumeRenderable()
 
 void VolumeRenderable::_notifyCurrentCamera( Camera* cam )
 {
-	MovableObject::_notifyCurrentCamera(cam);
-
 	// Fake orientation toward camera
 	Vector3 zVec = getParentNode()->_getDerivedPosition() - cam->getDerivedPosition();
 	zVec.normalise();

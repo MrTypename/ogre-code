@@ -30,55 +30,23 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreRenderTarget.h"
 
 namespace Ogre
-{    
-    /** This class represents a RenderTarget that renders to a Texture. There is no 1 on 1
-        relation between Textures and RenderTextures, as there can be multiple 
-        RenderTargets rendering to different mipmaps, faces (for cubemaps) or slices (for 3D textures)
-        of the same Texture.
-    */
-    class _OgreExport RenderTexture: public RenderTarget
+{
+    class _OgreExport RenderTexture : public RenderTarget
     {
     public:
-        RenderTexture(HardwarePixelBuffer *buffer, size_t zoffset);
-        virtual ~RenderTexture();
+        RenderTexture( const String & name, uint width, uint height, TextureType texType = TEX_TYPE_2D,  PixelFormat format = PF_R8G8B8);
+        ~RenderTexture();
+    protected:
+		RenderTexture() {};
 
-		void writeContentsToFile( const String & filename );
+		virtual void firePostUpdate();
+		virtual void _copyToTexture() = 0;
+
 	protected:
-		HardwarePixelBuffer *mBuffer;
-		size_t mZOffset;
+		/// The texture that gets accesses by the rest of the API.
+        TexturePtr mTexture;
+        PixelFormat mInternalFormat;
     };
-
-	/** This class represents a render target that renders to multiple RenderTextures
-		at once. Surfaces can be bound and unbound at will, as long as the following constraints
-		are met:
-		- All bound surfaces have the same size
-		- All bound surfaces have the same internal format 
-		- Target 0 is bound
-	*/
-	class _OgreExport MultiRenderTarget: public RenderTarget
-	{
-	public:
-		MultiRenderTarget(const String &name);
-
-		/** Bind a surface to a certain attachment point.
-            @param attachment	0 .. mCapabilities->numMultiRenderTargets()-1
-			@param target		RenderTexture to bind.
-
-			It does not bind the surface and fails with an exception (ERR_INVALIDPARAMS) if:
-			- Not all bound surfaces have the same size
-			- Not all bound surfaces have the same internal format 
-		*/
-		virtual void bindSurface(size_t attachment, RenderTexture *target)=0;
-
-		/** Unbind attachment.
-		*/
-		virtual void unbindSurface(size_t attachment)=0; 
-
-		/** Error throwing implementation, it's not possible to write a MultiRenderTarget
-			to disk. 
-		*/
-		virtual void writeContentsToFile( const String & filename );
-	};
 }
 
 #endif

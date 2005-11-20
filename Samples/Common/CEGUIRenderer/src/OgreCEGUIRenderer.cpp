@@ -444,7 +444,7 @@ void OgreCEGUIRenderer::initRenderStates(void)
 	d_render_sys->_setTextureCoordCalculation(0, TEXCALC_NONE);
 	d_render_sys->_setTextureCoordSet(0, 0);
 	d_render_sys->_setTextureUnitFiltering(0, FO_LINEAR, FO_LINEAR, FO_POINT);
-	d_render_sys->_setTextureAddressingMode(0, d_uvwAddressMode);
+	d_render_sys->_setTextureAddressingMode(0, TextureUnitState::TAM_CLAMP);
 	d_render_sys->_setTextureMatrix(0, Matrix4::IDENTITY);
 	d_render_sys->_setAlphaRejectSettings(CMPF_ALWAYS_PASS, 0);
 	d_render_sys->_setTextureBlendMode(0, d_colourBlendMode);
@@ -679,8 +679,6 @@ void OgreCEGUIRenderer::constructor_impl(Ogre::RenderWindow* window, Ogre::Rende
 	d_sorted		= true;
 	d_ogre_root		= Root::getSingletonPtr();
 	d_render_sys	= d_ogre_root->getRenderSystem();
-    // set ID string
-    d_identifierString = "CEGUI::OgreRenderer - Official Ogre based renderer module for CEGUI";
 
 	// Create and initialise the Ogre specific parts required for use in rendering later.
     // Main GUI
@@ -712,10 +710,6 @@ void OgreCEGUIRenderer::constructor_impl(Ogre::RenderWindow* window, Ogre::Rende
 	d_alphaBlendMode.source1	= Ogre::LBS_TEXTURE;
 	d_alphaBlendMode.source2	= Ogre::LBS_DIFFUSE;
 	d_alphaBlendMode.operation	= Ogre::LBX_MODULATE;
-
-	d_uvwAddressMode.u = Ogre::TextureUnitState::TAM_CLAMP;
-	d_uvwAddressMode.v = Ogre::TextureUnitState::TAM_CLAMP;
-	d_uvwAddressMode.w = Ogre::TextureUnitState::TAM_CLAMP;
 }
 
 
@@ -742,21 +736,6 @@ ResourceProvider* OgreCEGUIRenderer::createResourceProvider(void)
 {
     d_resourceProvider = new OgreCEGUIResourceProvider();
     return d_resourceProvider;
-}
-
-/*************************************************************************
-Set the size of the display in pixels.	
-*************************************************************************/
-void OgreCEGUIRenderer::setDisplaySize(const Size& sz)
-{
-	if (d_display_area.getSize() != sz)
-	{
-		d_display_area.setSize(sz);
-
-		EventArgs args;
-		fireEvent(EventDisplaySizeChanged, args, EventNamespace);
-	}
-
 }
 
 /*************************************************************************

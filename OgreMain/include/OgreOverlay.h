@@ -214,7 +214,7 @@ namespace Ogre {
 #endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Gets the rotation applied to this overlay, in degrees.*/
-        const Radian &getRotate(void) const { return mRotate; }
+        Radian getRotate(void) const { return mRotate; }
 
         /** Adds the passed in angle to the rotation applied to this overlay. */
         void rotate(const Radian& angle);

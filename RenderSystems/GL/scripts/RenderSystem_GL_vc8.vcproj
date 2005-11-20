@@ -1,9 +1,10 @@
-<?xml version="1.0" encoding="windows-1250"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="RenderSystem_GL"
 	ProjectGUID="{7D0A20FE-40A6-4E64-AD26-5E34AE391DF4}"
+	RootNamespace="RenderSystem_GL"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -19,7 +20,7 @@
 			OutputDirectory="..\bin\$(ConfigurationName)"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)\VCProjectDefaults\UpgradeFromVC70.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -46,6 +47,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				EnableFunctionLevelLinking="true"
+				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -107,7 +109,7 @@
 			OutputDirectory="..\bin\$(ConfigurationName)"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)\VCProjectDefaults\UpgradeFromVC70.vsprops"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
@@ -140,6 +142,7 @@
 				RuntimeLibrary="2"
 				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
+				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -206,7 +209,7 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm"
 			>
 			<File
-				RelativePath="..\src\glew.cpp"
+				RelativePath="..\src\glprocs.c"
 				>
 			</File>
 			<File
@@ -227,18 +230,6 @@
 			</File>
 			<File
 				RelativePath="..\src\OgreGLEngineDll.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreGLFBOMultiRenderTarget.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreGLFBORenderTexture.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreGLFrameBufferObject.cpp"
 				>
 			</File>
 			<File
@@ -274,19 +265,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgreGLPBRenderTexture.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\src\OgreGLPixelFormat.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\src\OgreGLRenderSystem.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreGLRenderTexture.cpp"
 				>
 			</File>
 			<File
@@ -547,10 +530,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\GL\glew.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\Dependencies\include\GL\glext.h"
 				>
 			</File>
@@ -564,18 +543,6 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreGLDefaultHardwareBufferManager.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreGLFBOMultiRenderTarget.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreGLFBORenderTexture.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreGLFrameBufferObject.h"
 				>
 			</File>
 			<File
@@ -611,14 +578,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OgreGLPBRenderTexture.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreGLPBuffer.h"
-				>
-			</File>
-			<File
 				RelativePath="..\include\OgreGLPixelFormat.h"
 				>
 			</File>
@@ -628,10 +587,6 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreGLRenderSystem.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreGLRenderTexture.h"
 				>
 			</File>
 			<File
@@ -679,7 +634,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\GL\wglew.h"
+				RelativePath="..\..\..\Dependencies\include\GL\wglext.h"
 				>
 			</File>
 			<Filter

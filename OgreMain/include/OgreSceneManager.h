@@ -75,19 +75,14 @@ namespace Ogre {
      */
     class _OgreExport SceneManager
     {
+		friend class DefaultIntersectionSceneQuery; 
+	    friend class DefaultRaySceneQuery;
+	    friend class DefaultSphereSceneQuery;
+	    friend class DefaultAxisAlignedBoxSceneQuery;
+        friend class DefaultPlaneBoundedVolumeListSceneQuery;
     public:
-        /// Query type mask which will be used for world geometry @see SceneQuery
-        static uint32 WORLD_GEOMETRY_TYPE_MASK;
-		/// Query type mask which will be used for entities @see SceneQuery
-		static uint32 ENTITY_TYPE_MASK;
-		/// Query type mask which will be used for effects like billboardsets / particle systems @see SceneQuery
-		static uint32 FX_TYPE_MASK;
-		/// Query type mask which will be used for StaticGeometry  @see SceneQuery
-		static uint32 STATICGEOMETRY_TYPE_MASK;
-		/// Query type mask which will be used for lights  @see SceneQuery
-		static uint32 LIGHT_TYPE_MASK;
-		/// User type mask limit
-		static uint32 USER_TYPE_MASK_LIMIT;
+        /// Query mask which will be used for world geometry @see SceneQuery
+        static unsigned long WORLD_GEOMETRY_QUERY_MASK;
         /** Comparator for material map, for sorting materials into render order (e.g. transparent last).
         */
         struct materialLess
@@ -144,6 +139,25 @@ namespace Ogre {
         /** Central list of cameras - for easy memory management and lookup.
         */
         CameraList mCameras;
+
+        typedef std::map<String, Light* > SceneLightList;
+
+        /** Central list of lights - for easy memory management and lookup.
+        */
+        SceneLightList mLights;
+
+
+        typedef std::map<String, Entity* > EntityList;
+
+        /** Central list of entities - for easy memory management and lookup.
+        */
+        EntityList mEntities;
+
+        typedef std::map<String, BillboardSet* > BillboardSetList;
+
+        /** Central list of billboard sets - for easy memory management and lookup.
+        */
+        BillboardSetList mBillboardSets;
 
 		typedef std::map<String, StaticGeometry* > StaticGeometryList;
 		StaticGeometryList mStaticGeometryList;
@@ -203,18 +217,11 @@ namespace Ogre {
 		SpecialCaseRenderQueueMode mSpecialCaseQueueMode;
 		RenderQueueGroupID mWorldGeometryRenderQueue;
 
-		typedef std::map<String, MovableObject*> MovableObjectMap;
-		typedef std::map<String, MovableObjectMap*> MovableObjectCollectionMap;
-		MovableObjectCollectionMap mMovableObjectCollectionMap;
-		MovableObjectMap* getMovableObjectMap(const String& typeName);
-
         /** Internal method for initialising the render queue.
         @remarks
             Subclasses can use this to install their own RenderQueue implementation.
         */
         virtual void initRenderQueue(void);
-        /** Retrieves the internal render queue. */
-        virtual RenderQueue* getRenderQueue(void);
         /** Internal method for setting up the renderstate for a rendering pass.
             @param
                 pass The Pass details to set.
@@ -353,11 +360,10 @@ namespace Ogre {
         unsigned short mShadowTextureSize;
         unsigned short mShadowTextureCount;
 		PixelFormat mShadowTextureFormat;
-        typedef std::vector<TexturePtr> ShadowTextureList;
+        typedef std::vector<RenderTexture*> ShadowTextureList;
         ShadowTextureList mShadowTextures;
-        Texture* mCurrentShadowTexture;
+        RenderTexture* mCurrentShadowTexture;
 		bool mShadowUseInfiniteFarPlane;
-
         /** Internal method for locating a list of lights which could be affecting the frustum. 
         @remarks
             Custom scene managers are encouraged to override this method to make use of their
@@ -407,9 +413,6 @@ namespace Ogre {
 		GpuProgramParametersSharedPtr mShadowTextureCustomReceiverVPParams;
 		bool mShadowTextureCasterVPDirty;
 		bool mShadowTextureReceiverVPDirty;
-
-		/// Visibility mask used to show / hide objects
-		uint32 mVisibilityMask;
 
 
         GpuProgramParametersSharedPtr mInfiniteExtrusionParams;
@@ -485,6 +488,7 @@ namespace Ogre {
 		*/
 		virtual void renderTransparentShadowCasterObjects(const RenderPriorityGroup::TransparentRenderablePassList& objs, 
 			bool doLightIteration, const LightList* manualLightList = 0);
+
     public:
         /** Default constructor.
         */
@@ -515,18 +519,18 @@ namespace Ogre {
             @param
                 cam Pointer to the camera to remove
         */
-        virtual void destroyCamera(Camera *cam);
+        virtual void removeCamera(Camera *cam);
 
         /** Removes a camera from the scene.
             @remarks
                 This method removes an camera from the scene based on the
                 camera's name rather than a pointer.
         */
-        virtual void destroyCamera(const String& name);
+        virtual void removeCamera(const String& name);
 
         /** Removes (and destroys) all cameras from the scene.
         */
-        virtual void destroyAllCameras(void);
+        virtual void removeAllCameras(void);
 
         /** Creates a light for use in the scene.
             @remarks
@@ -548,16 +552,16 @@ namespace Ogre {
             @remarks
                 Any pointers held to this light after calling this method will be invalid.
         */
-        virtual void destroyLight(const String& name);
+        virtual void removeLight(const String& name);
 
         /** Removes the light from the scene and destroys it based on a pointer.
             @remarks
                 Any pointers held to this light after calling this method will be invalid.
         */
-        virtual void destroyLight(Light* light);
+        virtual void removeLight(Light* light);
         /** Removes and destroys all lights in the scene.
         */
-        virtual void destroyAllLights(void);
+        virtual void removeAllLights(void);
 
         /** Populate a light list with an ordered set of the lights which are closest
         to the position specified.
@@ -685,7 +689,7 @@ namespace Ogre {
             @see
                 SceneManager::clearScene
         */
-        virtual void destroyEntity(Entity* ent);
+        virtual void removeEntity(Entity* ent);
 
         /** Removes & destroys an Entity from the SceneManager by name.
             @warning
@@ -695,7 +699,7 @@ namespace Ogre {
             @see
                 SceneManager::clearScene
         */
-        virtual void destroyEntity(const String& name);
+        virtual void removeEntity(const String& name);
 
         /** Removes & destroys all Entities.
             @warning
@@ -706,26 +710,8 @@ namespace Ogre {
             @see
                 SceneManager::clearScene
         */
-        virtual void destroyAllEntities(void);
+        virtual void removeAllEntities(void);
 
-        /** Create a ManualObject, an object which you populate with geometry
-			manually through a GL immediate-mode style interface.
-        @param
-            name The name to be given to the object (must be unique).
-        */
-        virtual ManualObject* createManualObject(const String& name);
-        /** Retrieves a pointer to the named ManualObject. */
-        virtual ManualObject* getManualObject(const String& name);
-
-        /** Removes & destroys a ManualObject from the SceneManager.
-        */
-        virtual void destroyManualObject(ManualObject* obj);
-		/** Removes & destroys a ManualObject from the SceneManager.
-		*/
-		virtual void destroyManualObject(const String& name);
-		/** Removes & destroys all ManualObjects from the SceneManager.
-		*/
-		virtual void destroyAllManualObjects(void);
         /** Empties the entire scene, inluding all SceneNodes, Entities, Lights, 
             BillboardSets etc. Cameras are not deleted at this stage since
             they are still referenced by viewports, which are not destroyed during
@@ -762,26 +748,11 @@ namespace Ogre {
                 SceneManager cannot handle any sort of world geometry and so will always
                 throw an exception. However subclasses like BspSceneManager can load
                 particular types of world geometry e.g. "q3dm1.bsp".
+            @par
+                World geometry will be loaded via the 'common' resource paths and archives set in the
+                ResourceManager class.
         */
         virtual void setWorldGeometry(const String& filename);
-
-        /** Sets the source of the 'world' geometry, i.e. the large, mainly 
-			static geometry making up the world e.g. rooms, landscape etc.
-            @remarks
-                Depending on the type of SceneManager (subclasses will be 
-				specialised for particular world geometry types) you have 
-				requested via the Root or SceneManagerEnumerator classes, you 
-				can pass a stream to this method and it will attempt to load 
-				the world-level geometry for use. If the manager can only 
-				handle one input format the typeName parameter is not required.
-				The stream passed will be read (and it's state updated). 
-			@param stream Data stream containing data to load
-			@param typeName String identifying the type of world geometry
-				contained in the stream - not required if this manager only 
-				supports one type of world geometry.
-        */
-		virtual void setWorldGeometry(DataStreamPtr& stream, 
-			const String& typeName = StringUtil::BLANK);
 
         /** Estimate the number of loading stages required to load the named
             world geometry. 
@@ -797,20 +768,6 @@ namespace Ogre {
         */
         virtual size_t estimateWorldGeometry(const String& filename) { return 0; }
 
-        /** Estimate the number of loading stages required to load the named
-            world geometry. 
-        @remarks
-			Operates just like the version of this method which takes a
-			filename, but operates on a stream instead. Note that since the
-			stream is updated, you'll need to reset the stream or reopen it
-			when it comes to loading it for real.
-		@param stream Data stream containing data to load
-		@param typeName String identifying the type of world geometry
-			contained in the stream - not required if this manager only 
-			supports one type of world geometry.
-		*/		
-        virtual size_t estimateWorldGeometry(DataStreamPtr& stream, 
-			const String& typeName = StringUtil::BLANK) { return 0; }
         /** Asks the SceneManager to provide a suggested viewpoint from which the scene should be viewed.
             @remarks
                 Typically this method returns the origin unless a) world geometry has been loaded using
@@ -1201,7 +1158,7 @@ namespace Ogre {
                 to a SceneNode. It may be safer to wait to clear the whole
                 scene. If you are unsure, use clearScene.
         */
-        virtual void destroyBillboardSet(BillboardSet* set);
+        virtual void removeBillboardSet(BillboardSet* set);
 
         /** Removes & destroys an BillboardSet from the SceneManager by name.
             @warning
@@ -1209,7 +1166,7 @@ namespace Ogre {
                 to a SceneNode. It may be safer to wait to clear the whole
                 scene. If you are unsure, use clearScene.
         */
-        virtual void destroyBillboardSet(const String& name);
+        virtual void removeBillboardSet(const String& name);
 
         /** Removes & destroys all BillboardSets.
         @warning
@@ -1220,7 +1177,7 @@ namespace Ogre {
         @see
         SceneManager::clearScene
         */
-        virtual void destroyAllBillboardSets(void);
+        virtual void removeAllBillboardSets(void);
 
         /** Tells the SceneManager whether it should render the SceneNodes which 
             make up the scene as well as the objects in the scene.
@@ -1230,8 +1187,6 @@ namespace Ogre {
             the orientation of the nodes.
         */
         virtual void setDisplaySceneNodes(bool display);
-        /** Returns true if all scene nodes axis are to be displayed */
-        virtual bool getDisplaySceneNodes(void) const {return mDisplayNodes;}
 
         /** Creates an animation which can be used to animate scene nodes.
         @remarks
@@ -1332,6 +1287,18 @@ namespace Ogre {
         virtual void manualRender(RenderOperation* rend, Pass* pass, Viewport* vp, 
             const Matrix4& worldMatrix, const Matrix4& viewMatrix, const Matrix4& projMatrix, 
             bool doBeginEndFrame = false) ;
+
+        /** Retrieves the internal render queue, for advanced users only.
+        @remarks
+            The render queue is mainly used internally to manage the scene object 
+			rendering queue, it also exports some methods to allow advanced users 
+			to configure the behavior of rendering process.
+            Most methods provided by RenderQueue are supposed to be used 
+			internally only, you should reference to the RenderQueue API for 
+			more information. Do not access this directly unless you know what 
+			you are doing.
+        */
+        virtual RenderQueue* getRenderQueue(void);
 
         /** Registers a new RenderQueueListener which will be notified when render queues
             are processed.
@@ -1494,12 +1461,27 @@ namespace Ogre {
         /** Destroys a scene query of any type. */
         virtual void destroyQuery(SceneQuery* query);
 
+        typedef MapIterator<SceneLightList> LightIterator;
+        typedef MapIterator<EntityList> EntityIterator;
         typedef MapIterator<CameraList> CameraIterator;
+        typedef MapIterator<BillboardSetList> BillboardSetIterator;
         typedef MapIterator<AnimationList> AnimationIterator;
 
+        /** Returns a specialised MapIterator over all lights in the scene. */
+        LightIterator getLightIterator(void) {
+            return LightIterator(mLights.begin(), mLights.end());
+        }
+        /** Returns a specialised MapIterator over all entities in the scene. */
+        EntityIterator getEntityIterator(void) {
+            return EntityIterator(mEntities.begin(), mEntities.end());
+        }
         /** Returns a specialised MapIterator over all cameras in the scene. */
         CameraIterator getCameraIterator(void) {
             return CameraIterator(mCameras.begin(), mCameras.end());
+        }
+        /** Returns a specialised MapIterator over all BillboardSets in the scene. */
+        BillboardSetIterator getBillboardSetIterator(void) {
+            return BillboardSetIterator(mBillboardSets.begin(), mBillboardSets.end());
         }
         /** Returns a specialised MapIterator over all animations in the scene. */
         AnimationIterator getAnimationIterator(void) {
@@ -1507,7 +1489,7 @@ namespace Ogre {
         }
         /** Returns a specialised MapIterator over all animation states in the scene. */
         AnimationStateIterator getAnimationStateIterator(void) {
-            return mAnimationStates.getAnimationStateIterator();
+            return AnimationStateIterator(mAnimationStates.begin(), mAnimationStates.end());
         }
 
         /** Sets the general shadow technique to be used in this scene.
@@ -1818,100 +1800,13 @@ namespace Ogre {
 		/** Retrieve a previously created StaticGeometry instance. */
 		virtual StaticGeometry* getStaticGeometry(const String& name) const;
 		/** Remove & destroy a StaticGeometry instance. */
-		virtual void destroyStaticGeometry(StaticGeometry* geom);
+		virtual void removeStaticGeometry(StaticGeometry* geom);
 		/** Remove & destroy a StaticGeometry instance. */
-		virtual void destroyStaticGeometry(const String& name);
+		virtual void removeStaticGeometry(const String& name);
 		/** Remove & destroy all StaticGeometry instances. */
-		virtual void destroyAllStaticGeometry(void);
+		virtual void removeAllStaticGeometry(void);
 
-
-		/** Create a movable object of the type specified.
-		@remarks
-			This is the generalised form of MovableObject creation where you can
-			create a MovableObject of any specialised type generically, including
-			any new types registered using plugins.
-		@param name The name to give the object. Must be unique within type.
-		@param typeName The type of object to create
-		@param params Optional name/value pair list to give extra parameters to
-			the created object.
-		*/
-		virtual MovableObject* createMovableObject(const String& name, 
-			const String& typeName, const NameValuePairList* params = 0);
-		/** Destroys a MovableObject with the name specified, of the type specified.
-		@remarks
-			The MovableObject will automatically detach itself from any nodes
-			on destruction.
-		*/
-		virtual void destroyMovableObject(const String& name, const String& typeName);
-		/** Destroys a MovableObject.
-		@remarks
-			The MovableObject will automatically detach itself from any nodes
-			on destruction.
-		*/
-		virtual void destroyMovableObject(MovableObject* m);
-		/** Destroy all MovableObjects of a given type. */
-		virtual void destroyAllMovableObjectsByType(const String& typeName);
-		/** Destroy all MovableObjects. */
-		virtual void destroyAllMovableObjects(void);
-		/** Get a reference to a previously created MovableObject. */
-		virtual MovableObject* getMovableObject(const String& name, const String& typeName);
-		typedef MapIterator<MovableObjectMap> MovableObjectIterator;
-		/** Get an iterator over all MovableObect instances of a given type. */
-		virtual MovableObjectIterator getMovableObjectIterator(const String& typeName);
-		/** Inject a MovableObject instance created externally.
-		@remarks
-			This method 'injects' a MovableObject instance created externally into
-			the MovableObject instance registry held in the SceneManager. You
-			might want to use this if you have a MovableObject which you don't
-			want to register a factory for; for example a MovableObject which 
-			cannot be generally constructed by clients. 
-		@note
-			It is important that the MovableObject has a unique name for the type,
-			and that its getMovableType() method returns a proper type name.
-		*/
-		virtual void injectMovableObject(MovableObject* m);
-		/** Extract a previously injected MovableObject.
-		@remarks
-			Essentially this does the same as destroyMovableObject, but only
-			removes the instance from the internal lists, it does not attempt
-			to destroy it.
-		*/
-		virtual void extractMovableObject(const String& name, const String& typeName);
-		/** Extract a previously injected MovableObject.
-		@remarks
-			Essentially this does the same as destroyMovableObject, but only
-			removes the instance from the internal lists, it does not attempt
-			to destroy it.
-		*/
-		virtual void extractMovableObject(MovableObject* m);
-		/** Extract all injected MovableObjects of a given type.
-		@remarks
-			Essentially this does the same as destroyAllMovableObjectsByType, 
-			but only removes the instances from the internal lists, it does not 
-			attempt to destroy them.
-		*/
-		virtual void extractAllMovableObjectsByType(const String& typeName);
-
-		/** Sets a mask which is bitwise 'and'ed with objects own visibility masks
-			to determine if the object is visible.
-		*/
-		virtual void setVisibilityMask(uint32 vmask) { mVisibilityMask = vmask; }
-
-		/** Gets a mask which is bitwise 'and'ed with objects own visibility masks
-			to determine if the object is visible.
-		*/
-		virtual uint32 getVisibilityMask(void) { return mVisibilityMask; }
-
-		/** Render something as if it came from the current queue.
-			@param pass		Material pass to use for setting up this quad.
-			@param rend		Renderable to render
-		 */
-		void _injectRenderWithPass(Pass *pass, Renderable *rend);
-
-		/** Get the rendersystem subclass to which the output of this Scene Manager
-			gets sent
-		*/
-		RenderSystem *getDestinationRenderSystem();
+		
     };
 
     /** Default implementation of IntersectionSceneQuery. */

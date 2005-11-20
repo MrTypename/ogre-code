@@ -57,8 +57,7 @@ namespace Ogre {
     protected:
         Technique* mParent;
         unsigned short mIndex; // pass index
-        String mName; // optional name for the pass
-        uint32 mHash; // pass hash
+        unsigned long mHash; // pass hash
         //-------------------------------------------------------------------------
         // Colour properties, only applicable in fixed-function passes
         ColourValue mAmbient;
@@ -101,7 +100,7 @@ namespace Ogre {
         /// Max simultaneous lights
         unsigned short mMaxSimultaneousLights;
 		/// Run this pass once per light?
-		bool mIteratePerLight;
+		bool mRunOncePerLight;
         // Should it only be run for a certain light type?
         bool mRunOnlyForOneLightType;
         Light::LightTypes mOnlyLightType;
@@ -133,8 +132,6 @@ namespace Ogre {
 		GpuProgramUsage *mFragmentProgramUsage;
         // Is this pass queued for deletion?
         bool mQueuedForDeletion;
-        // number of pass iterations to perform
-        size_t mPassIterationCount;
 	public:
 		typedef std::set<Pass*> PassSet;
     protected:
@@ -153,27 +150,15 @@ namespace Ogre {
 
         /// Returns true if this pass is programmable ie includes either a vertex or fragment program.
         bool isProgrammable(void) const { return mVertexProgramUsage || mFragmentProgramUsage; }
+
         /// Returns true if this pass uses a programmable vertex pipeline
         bool hasVertexProgram(void) const { return mVertexProgramUsage != NULL; }
+
         /// Returns true if this pass uses a programmable fragment pipeline
         bool hasFragmentProgram(void) const { return mFragmentProgramUsage != NULL; }
-        /// Returns true if this pass uses a shadow caster vertex program
-        bool hasShadowCasterVertexProgram(void) const { return mShadowCasterVertexProgramUsage != NULL; }
-        /// Returns true if this pass uses a shadow caster vertex program
-        bool hasShadowReceiverVertexProgram(void) const { return mShadowReceiverVertexProgramUsage != NULL; }
-
 
         /// Gets the index of this Pass in the parent Technique
         unsigned short getIndex(void) const { return mIndex; }
-        /* Set the name of the pass
-        @remarks
-        The name of the pass is optional.  Its usefull in material scripts where a material could inherit
-        from another material and only want to modify a particalar pass.
-        */
-        void setName(const String& name);
-        /// get the name of the pass
-        const String& getName(void) const { return mName; }
-
         /** Sets the ambient colour reflectance properties of this pass.
         @remarks
         The base colour of a pass is determined by how much red, green and blue light is reflects
@@ -326,27 +311,11 @@ namespace Ogre {
         Applies to both fixed-function and programmable passes.
         */
         TextureUnitState* createTextureUnitState( const String& textureName, unsigned short texCoordSet = 0);
-		/** Adds the passed in TextureUnitState, to the existing Pass. 
-        @param
-        state The Texture Unit State to be attached to this pass.  It must not be attached to another pass.
-        @note
-            Throws an exception if the TextureUnitState is attached to another Pass.*/
+		/** Adds the passed in TextureUnitState, to the existing Pass. */
 		void addTextureUnitState(TextureUnitState* state);
         /** Retrieves a pointer to a texture unit state so it may be modified.
         */
         TextureUnitState* getTextureUnitState(unsigned short index);
-        /** Retrieves the Texture Unit State matching name.
-            Returns 0 if name match is not found.
-        */
-        TextureUnitState* getTextureUnitState(const String& name);
-
-        /**  Retrieve the index of the Texture Unit State in the pass.
-        @param
-        state The Texture Unit State this is attached to this pass.
-        @note
-            Throws an exception if the state is not attached to the pass.
-        */
-        unsigned short getTextureUnitStateIndex(const TextureUnitState* state);
 
         typedef VectorIterator<TextureUnitStates> TextureUnitStateIterator;
         /** Get an iterator over the TextureUnitStates contained in this Pass. */
@@ -673,19 +642,17 @@ namespace Ogre {
         /** Gets the alpha reject value. See setAlphaRejectSettings for more information.
         */
 		unsigned char getAlphaRejectValue(void) const { return mAlphaRejectVal; }
-        /** Sets whether or not this pass should iterate per light which
+        /** Sets whether or not this pass should be run once per light which
 		    can affect the object being rendered.
 		@remarks
 			The default behaviour for a pass (when this option is 'false'), is 
-			for a pass to be rendered only once (or the number of times set in 
-			setPassIterationCount), with all the lights which could
+			for a pass to be rendered only once, with all the lights which could
 			affect this object set at the same time (up to the maximum lights
 			allowed in the render system, which is typically 8). 
 		@par
 			Setting this option to 'true' changes this behaviour, such that 
 			instead of trying to issue render this pass once per object, it
-			is run <b>per light</b> which can affect this object, the number of
-			times set in setPassIterationCount (default is once). In
+			is run once <b>per light</b> which can affect this object. In
 			this case, only light index 0 is ever used, and is a different light
 			every time the pass is issued, up to the total number of lights
 			which is affecting this object. This has 2 advantages:
@@ -710,14 +677,14 @@ namespace Ogre {
             of light, other light types will be ignored.
         @param lightType The single light type which will be considered for this pass
 		*/
-        void setIteratePerLight(bool enabled, 
+        void setRunOncePerLight(bool enabled, 
             bool onlyForOneLightType = true, Light::LightTypes lightType = Light::LT_POINT);
 
         /** Does this pass run once for every light in range? */
-		bool getIteratePerLight(void) const { return mIteratePerLight; }
-        /** Does this pass run only for a single light type (if getIteratePerLight is true). */
+		bool getRunOncePerLight(void) const { return mRunOncePerLight; }
+        /** Does this pass run only for a single light type (if getRunOncePerLight is true). */
         bool getRunOnlyForOneLightType(void) const { return mRunOnlyForOneLightType; }
-        /** Gets the single light type this pass runs for if  getIteratePerLight and 
+        /** Gets the single light type this pass runs for if  getRunOncePerLight and 
             getRunOnlyForOneLightType are both true. */
         Light::LightTypes getOnlyLightType() const { return mOnlyLightType; }
 		
@@ -754,9 +721,9 @@ namespace Ogre {
 		/** Gets the name of the vertex program used by this pass. */
 		const String& getVertexProgramName(void) const;
         /** Gets the vertex program parameters used by this pass. */
-        GpuProgramParametersSharedPtr getVertexProgramParameters(void) const;
+        GpuProgramParametersSharedPtr getVertexProgramParameters(void);
 		/** Gets the vertex program used by this pass, only available after _load(). */
-		const GpuProgramPtr& getVertexProgram(void) const;
+		const GpuProgramPtr& getVertexProgram(void);
 
 
         /** Sets the details of the vertex program to use when rendering as a 
@@ -799,10 +766,10 @@ namespace Ogre {
         /** Gets the name of the vertex program used by this pass when rendering shadow casters. */
         const String& getShadowCasterVertexProgramName(void) const;
         /** Gets the vertex program parameters used by this pass when rendering shadow casters. */
-        GpuProgramParametersSharedPtr getShadowCasterVertexProgramParameters(void) const;
+        GpuProgramParametersSharedPtr getShadowCasterVertexProgramParameters(void);
         /** Gets the vertex program used by this pass when rendering shadow casters, 
             only available after _load(). */
-        const GpuProgramPtr& getShadowCasterVertexProgram(void) const;
+        const GpuProgramPtr& getShadowCasterVertexProgram(void);
 
         /** Sets the details of the vertex program to use when rendering as a 
             shadow receiver.
@@ -840,10 +807,10 @@ namespace Ogre {
         /** Gets the name of the vertex program used by this pass when rendering shadow receivers. */
         const String& getShadowReceiverVertexProgramName(void) const;
         /** Gets the vertex program parameters used by this pass when rendering shadow receivers. */
-        GpuProgramParametersSharedPtr getShadowReceiverVertexProgramParameters(void) const;
+        GpuProgramParametersSharedPtr getShadowReceiverVertexProgramParameters(void);
         /** Gets the vertex program used by this pass when rendering shadow receivers, 
         only available after _load(). */
-        const GpuProgramPtr& getShadowReceiverVertexProgram(void) const;
+        const GpuProgramPtr& getShadowReceiverVertexProgram(void);
 
 
 		/** Sets the details of the fragment program to use.
@@ -871,9 +838,9 @@ namespace Ogre {
 		/** Gets the name of the fragment program used by this pass. */
 		const String& getFragmentProgramName(void) const;
 		/** Gets the vertex program parameters used by this pass. */
-		GpuProgramParametersSharedPtr getFragmentProgramParameters(void) const;
+		GpuProgramParametersSharedPtr getFragmentProgramParameters(void);
 		/** Gets the vertex program used by this pass, only available after _load(). */
-		const GpuProgramPtr& getFragmentProgram(void) const;
+		const GpuProgramPtr& getFragmentProgram(void);
 
 		/** Splits this Pass to one which can be handled in the number of
 			texture units specified.
@@ -901,7 +868,7 @@ namespace Ogre {
             using firstly its index (so that all passes are rendered in order), then
             by the textures which it's TextureUnitState instances are using.
         */
-        uint32 getHash(void) const;
+        unsigned long getHash(void) const;
 		/// Mark the hash as dirty
 		void _dirtyHash(void);
         /** Internal method for recalculating the hash.
@@ -965,37 +932,6 @@ namespace Ogre {
         */
         bool isAmbientOnly(void) const;
 
-        /** set the number of iterations that this pass
-        should perform when doing fast multi pass operation.
-        @remarks
-            Only applicable for programmable passes.
-        @param count number of iterations to perform fast multi pass operations.
-            A value greater than 0 will cause the pass to be executed count number of
-            times without changing the render state.  This is very usefull for passes
-            that use programmable shaders that have to iterate more than once but don't
-            need a render state change.  Using multi pass can dramatically speed up rendering
-            for materials that do things like fur, blur.
-            A value of 0 turns off multi pass operation and the pass does
-            the normal pass operation.
-        */
-        void setPassIterationCount(const size_t count) { mPassIterationCount = count; }
-
-        /** Gets the multi pass count value.
-        */
-        size_t getPassIterationCount(void) const { return mPassIterationCount; }
-
-        /** Applies texture names to Texture Unit State with matching texture name aliases.
-            All Texture Unit States within the pass are checked.
-            If matching texture aliases are found then true is returned.
-
-        @param
-            aliasList is a map container of texture alias, texture name pairs
-        @param
-            apply set true to apply the texture aliases else just test to see if texture alias matches are found.
-        @return
-            True if matching texture aliases were found in the pass.
-        */
-        bool applyTextureAliases(const AliasTextureNamePairList& aliasList, const bool apply = true) const;
         
     };
 

@@ -295,13 +295,14 @@ namespace Ogre
 				Key: "externalWindowHandle" [API specific]
 				Description: External window handle, for embedding the OGRE context
 				Values: positive integer for W32 (HWND handle)
-				        posint:posint:posint for GLX (display:screen:windowHandle)
+				        poslong:posint:poslong (display*:screen:windowHandle) or
+				        poslong:posint:poslong:poslong (display*:screen:windowHandle:XVisualInfo*) for GLX
 				Default: 0 (None)
 				**
 				Key: "parentWindowHandle" [API specific]
 				Description: Parent window handle, for embedding the OGRE context
 				Values: positive integer for W32 (HWND handle)
-				        posint:posint:posint for GLX (display:screen:windowHandle)
+				        poslong:posint:poslong for GLX (display*:screen:windowHandle)
 				Default: 0 (None)
 				**
 				Key: "FSAA"
@@ -344,7 +345,19 @@ namespace Ogre
 				The type of texture; defaults to TEX_TYPE_2D
 			@param internalFormat
 				The internal format of the texture; defaults to PF_X8R8G8B8
-			@param miscParams This parameter is ignored.
+			@param miscParams A NameValuePairList describing the other parameters for the new rendering window.
+					Unrecognised parameters will be ignored silently.
+					These values might be platform dependent, but these are present for all platorms unless
+					indicated otherwise:
+				**
+				Key: "FSAA"
+				Description: Full screen antialiasing factor
+				Values: 0,2,4,6,...
+				Default: 0
+				**
+				Key: "depth"
+				Description: Depth in case of render-to-texture TEX_3D
+				Values: positive integers
 			@returns
 				On succes, a pointer to a new platform-dependernt, RenderTexture-derived
 				class is returned. On failiure, NULL is returned.
@@ -354,20 +367,10 @@ namespace Ogre
 				size for the texture. Depending on the hardware driver or the underlying
 				API, these values might change when the texture is created. The same applies
 				to the internalFormat parameter.
-            @deprecated
-                This method is deprecated, and exists only for backward compatibility. You can create
-                arbitrary rendertextures with the TextureManager::createManual call with usage
-                TU_RENDERTEXTURE.
 		*/
-		RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height,
+		virtual RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height,
 		 	TextureType texType = TEX_TYPE_2D, PixelFormat internalFormat = PF_X8R8G8B8, 
-			const NameValuePairList *miscParams = 0 ); 
-
-		/**	Create a MultiRenderTarget, which is a render target that renders to multiple RenderTextures
-			at once. Surfaces can be bound and unbound at will.
-			This fails if mCapabilities->numMultiRenderTargets() is smaller than 2.
-		*/
-		virtual MultiRenderTarget * createMultiRenderTarget(const String & name) = 0; 
+			const NameValuePairList *miscParams = 0 ) = 0; 
 
         /** Destroys a render window */
         virtual void destroyRenderWindow(const String& name);
@@ -553,7 +556,7 @@ namespace Ogre
 		virtual void _setTextureLayerAnisotropy(size_t unit, unsigned int maxAnisotropy) = 0;
 
 		/** Sets the texture addressing mode for a texture unit.*/
-        virtual void _setTextureAddressingMode(size_t unit, const TextureUnitState::UVWAddressingMode& uvw) = 0;
+        virtual void _setTextureAddressingMode(size_t unit, TextureUnitState::TextureAddressingMode tam) = 0;
 
         /** Sets the texture coordinate transformation matrix for a texture unit.
             @param unit Texture unit to affect
@@ -698,15 +701,6 @@ namespace Ogre
         @param pDest Pointer to location to put the result.
         */
         virtual void convertColourValue(const ColourValue& colour, uint32* pDest) = 0;
-
-        /** Converts a uniform projection matrix to suitable for this render system.
-        @remarks
-            Because different APIs have different requirements (some incompatible) for the
-            projection matrix, this method allows each to implement their own correctly and pass
-            back a generic OGRE matrix for storage in the engine.
-        */
-        virtual void _convertProjectionMatrix(const Matrix4& matrix,
-            Matrix4& dest, bool forGpuProgram = false) = 0;
 
         /** Builds a perspective projection matrix suitable for this render system.
         @remarks
@@ -864,12 +858,8 @@ namespace Ogre
         */
         virtual void bindGpuProgram(GpuProgram* prg) = 0;
 
-        /** Bind Gpu program parameters.
-        */
+        /** Bind Gpu program parameters. */
         virtual void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params) = 0;
-   		/** Only binds Gpu program parameters used for passes that have more than one iteration rendering
-        */
-        virtual void bindGpuProgramPassIterationParameters(GpuProgramType gptype) = 0;
         /** Unbinds GpuPrograms of a given GpuProgramType.
         @remarks
             This returns the pipeline to fixed-function processing for this type.
@@ -964,12 +954,6 @@ namespace Ogre
         @see Renderable::useIdentityView, Renderable::useIdentityProjection
         */
         virtual Real getMaximumDepthInputValue(void) = 0;
-        /** set the current multi pass count value.  This must be set prior to 
-            calling _render() if multiple renderings of the same pass state are 
-            required.
-        @param count Number of times to render the current state.
-        */
-        void setCurrentPassIterationCount(const size_t count) { mCurrentPassIterationCount = count; }
 
 		/** Defines a listener on the custom events that this render system 
 			can raise.
@@ -1021,9 +1005,6 @@ namespace Ogre
 		RenderTargetPriorityMap mPrioritisedRenderTargets;
 		/** The Active render target. */
 		RenderTarget * mActiveRenderTarget;
-        /** The Active GPU programs and gpu program parameters*/
-        GpuProgramParametersSharedPtr mActiveVertexGpuProgramParameters;
-        GpuProgramParametersSharedPtr mActiveFragmentGpuProgramParameters;
 
         // Texture manager
         // A concrete class of this will be created and
@@ -1052,15 +1033,6 @@ namespace Ogre
 		ColourValue mManualBlendColours[OGRE_MAX_TEXTURE_LAYERS][2];
 
         bool mInvertVertexWinding;
-
-        /// number of times to render the current state
-        size_t mCurrentPassIterationCount;
-
-        /** updates pass iteration rendering state including bound gpu program parameter
-            pass iteration auto constant entry
-        @returns True if more iterations are required
-        */
-        bool updatePassIterationRenderState(void);
 
 		/// List of names of events this rendersystem may raise
 		StringVector mEventNames;

@@ -26,11 +26,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreRenderQueueSortingGrouping.h"
 
 namespace Ogre {
-    // Init statics
-    RadixSort<RenderPriorityGroup::TransparentRenderablePassList,
-        RenderPriorityGroup::RenderablePass, uint32> RenderPriorityGroup::msRadixSorter1;
-    RadixSort<RenderPriorityGroup::TransparentRenderablePassList,
-        RenderPriorityGroup::RenderablePass, float> RenderPriorityGroup::msRadixSorter2;
 
     //-----------------------------------------------------------------------
     void RenderPriorityGroup::destroySolidPassMap(SolidRenderablePassMap& passmap)
@@ -234,30 +229,11 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void RenderPriorityGroup::sort(const Camera* cam)
     {
-		// We can either use a stable_sort and the 'less' implementation,
-		// or a 2-pass radix sort (once by pass, then by distance, since
-		// radix sorting is inherently stable this will work)
-		// We use stable_sort if the number of items is 512 or less, since
-		// the complexity of the radix sort is approximately O(10N), since 
-		// each sort is O(5N) (1 pass histograms, 4 passes sort)
-		// Since stable_sort has a worst-case performance of O(N(logN)^2)
-		// the performance tipping point is from about 1500 items, but in
-		// stable_sorts best-case scenario O(NlogN) it would be much higher.
-		// Take a stab at 2000 items.
-		
-		if (mTransparentPasses.size() > 2000)
-		{
-			// sort by pass
-			msRadixSorter1.sort(mTransparentPasses, TransparentSortFunctor1());
-			// sort by depth
-			msRadixSorter2.sort(mTransparentPasses, TransparentSortFunctor2(cam));
-		}
-		else
-		{
-	        std::stable_sort(
-				mTransparentPasses.begin(), mTransparentPasses.end(), 
-            	TransparentQueueItemLess(cam));
-		}
+        TransparentQueueItemLess transFunctor;
+        transFunctor.camera = cam;
+
+        std::stable_sort(mTransparentPasses.begin(), mTransparentPasses.end(), 
+            transFunctor);
     }
     //-----------------------------------------------------------------------
     void RenderPriorityGroup::clear(void)

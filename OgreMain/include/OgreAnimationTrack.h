@@ -29,8 +29,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgrePrerequisites.h"
 #include "OgreSimpleSpline.h"
 #include "OgreRotationalSpline.h"
-#include "OgreKeyFrame.h"
-#include "OgreAnimable.h"
 
 namespace Ogre 
 {
@@ -57,18 +55,17 @@ namespace Ogre
     {
     public:
         /// Constructor
-        AnimationTrack(Animation* parent, unsigned short handle);
+        AnimationTrack(Animation* parent);
+        /// Constructor, associates with a Node
+        AnimationTrack(Animation* parent, Node* targetNode);
 
         virtual ~AnimationTrack();
 
-		/** Get the handle associated with this track. */
-		unsigned short getHandle(void) const { return mHandle; }
-
         /** Returns the number of keyframes in this animation. */
-        virtual unsigned short getNumKeyFrames(void) const;
+        unsigned short getNumKeyFrames(void) const;
 
         /** Returns the KeyFrame at the specified index. */
-        virtual KeyFrame* getKeyFrame(unsigned short index) const;
+        KeyFrame* getKeyFrame(unsigned short index) const;
 
         /** Gets the 2 KeyFrame objects which are active at the time given, and the blend value between them.
         @remarks
@@ -91,7 +88,7 @@ namespace Ogre
             value is, e.g. 0.0 for exactly at 1, 0.25 for a quarter etc. By definition the range of this 
             value is:  0.0 <= returnValue < 1.0 .
         */
-        virtual Real getKeyFramesAtTime(Real timePos, KeyFrame** keyFrame1, KeyFrame** keyFrame2,
+        Real getKeyFramesAtTime(Real timePos, KeyFrame** keyFrame1, KeyFrame** keyFrame2,
             unsigned short* firstKeyIndex = 0) const;
 
         /** Creates a new KeyFrame and adds it to this animation at the given time index.
@@ -101,13 +98,13 @@ namespace Ogre
             for you, so you don't need to create this one, just access it using getKeyFrame(0);
         @param timePos The time from which this KeyFrame will apply.
         */
-        virtual KeyFrame* createKeyFrame(Real timePos);
+        KeyFrame* createKeyFrame(Real timePos);
 
         /** Removes a KeyFrame by it's index. */
-        virtual void removeKeyFrame(unsigned short index);
+        void removeKeyFrame(unsigned short index);
 
         /** Removes all the KeyFrames from this track. */
-        virtual void removeAllKeyFrames(void);
+        void removeAllKeyFrames(void);
 
 
         /** Gets a KeyFrame object which contains the interpolated transforms at the time index specified.
@@ -117,355 +114,73 @@ namespace Ogre
             keyframes to produce smooth movement, and this method allows you to do this easily.
             In animation terminology this is called 'tweening'. 
         @param timeIndex The time (in relation to the whole animation sequence)
-        @param kf Keyframe object to store results
+        @returns A new keyframe object containing the interpolated transforms. Note that the
+            position and scaling transforms are linearly interpolated (lerp), whilst the rotation is
+            spherically linearly interpolated (slerp) for the most natural result.
         */
-        virtual void getInterpolatedKeyFrame(Real timeIndex, KeyFrame* kf) const = 0;
+        KeyFrame getInterpolatedKeyFrame(Real timeIndex) const;
 
-        /** Applies an animation track to the designated target.
+        /** Applies an animation track at a certain position to the target node.
+        @remarks
+            When a track has bee associated with a target node, you can eaisly apply the animation
+            to the target by calling this method.
         @param timePos The time position in the animation to apply.
         @param weight The influence to give to this track, 1.0 for full influence, less to blend with
           other animations.
-		@param acculumate Don't make weights relative to overall weights applied, 
-			make them absolute and just add.
 	    @param scale The scale to apply to translations and scalings, useful for 
 			adapting an animation to a different size target.
         */
-        virtual void apply(Real timePos, Real weight = 1.0, bool accumulate = false, 
-			Real scale = 1.0f) = 0;
+        void apply(Real timePos, Real weight = 1.0, bool accumulate = false, 
+			Real scale = 1.0f);
+
+        /** Returns a pointer to the associated Node object (if any). */
+        Node* getAssociatedNode(void) const;
+
+        /** Sets the associated Node object which will be automatically affected by calls to 'apply'. */
+        void setAssociatedNode(Node* node);
+
+        /** As the 'apply' method but applies to a specified Node instead of associated node. */
+        void applyToNode(Node* node, Real timePos, Real weight = 1.0, 
+			bool accumulate = false, Real scale = 1.0f);
+		
+		/** Sets the method of rotation calculation */
+		void setUseShortestRotationPath(bool useShortestPath);
+		
+		/** Gets the method of rotation calculation */
+		bool getUseShortestRotationPath() const;
 
         /** Internal method used to tell the track that keyframe data has been 
             changed, which may cause it to rebuild some internal data. */
-		virtual void _keyFrameDataChanged(void) const {}
-
-    protected:
-        typedef std::vector<KeyFrame*> KeyFrameList;
-        KeyFrameList mKeyFrames;
-        Real mMaxKeyFrameTime;
-        Animation* mParent;
-		unsigned short mHandle;
-
-		/// Create a keyframe implementation - must be overridden
-		virtual KeyFrame* createKeyFrameImpl(Real time) = 0;
-
-
-    };
-
-	/** Specialised AnimationTrack for dealing with generic animable values.
-	*/
-	class _OgreExport NumericAnimationTrack : public AnimationTrack
-	{
-	public:
-		/// Constructor
-		NumericAnimationTrack(Animation* parent, unsigned short handle);
-		/// Constructor, associates with an AnimableValue
-		NumericAnimationTrack(Animation* parent, unsigned short handle, 
-			AnimableValuePtr& target);
-
-        /** Creates a new KeyFrame and adds it to this animation at the given time index.
-        @remarks
-            It is better to create KeyFrames in time order. Creating them out of order can result 
-            in expensive reordering processing. Note that a KeyFrame at time index 0.0 is always created
-            for you, so you don't need to create this one, just access it using getKeyFrame(0);
-        @param timePos The time from which this KeyFrame will apply.
-        */
-        virtual NumericKeyFrame* createNumericKeyFrame(Real timePos);
-
-		/// @copydoc AnimationTrack::getInterpolatedKeyFrame
-		void getInterpolatedKeyFrame(Real timeIndex, KeyFrame* kf) const;
-
-		/// @copydoc AnimationTrack::apply
-		void apply(Real timePos, Real weight = 1.0, bool accumulate = false, 
-			Real scale = 1.0f);
-
-        /** Applies an animation track to a given animable value.
-		@param anim The AnimableValue to which to apply the animation
-        @param timePos The time position in the animation to apply.
-        @param weight The influence to give to this track, 1.0 for full influence, less to blend with
-          other animations.
-	    @param scale The scale to apply to translations and scalings, useful for 
-			adapting an animation to a different size target.
-        */
-		void applyToAnimable(const AnimableValuePtr& anim, Real timePos, 
-			Real weight = 1.0, Real scale = 1.0f);
-
-		/** Returns a pointer to the associated animable object (if any). */
-		virtual const AnimableValuePtr& getAssociatedAnimable(void) const;
-
-		/** Sets the associated animable object which will be automatically 
-			affected by calls to 'apply'. */
-		virtual void setAssociatedAnimable(const AnimableValuePtr& val);
-
-		/** Returns the KeyFrame at the specified index. */
-		NumericKeyFrame* getNumericKeyFrame(unsigned short index) const;
-
-
-	protected:
-		/// Target to animate
-		AnimableValuePtr mTargetAnim;
-
-		/// @copydoc AnimationTrack::createKeyFrameImpl
-		KeyFrame* createKeyFrameImpl(Real time);
-
-
-	};
-
-	/** Specialised AnimationTrack for dealing with node transforms.
-	*/
-	class _OgreExport NodeAnimationTrack : public AnimationTrack
-	{
-	public:
-		/// Constructor
-		NodeAnimationTrack(Animation* parent, unsigned short handle);
-		/// Constructor, associates with a Node
-		NodeAnimationTrack(Animation* parent, unsigned short handle, 
-			Node* targetNode);
-        /** Creates a new KeyFrame and adds it to this animation at the given time index.
-        @remarks
-            It is better to create KeyFrames in time order. Creating them out of order can result 
-            in expensive reordering processing. Note that a KeyFrame at time index 0.0 is always created
-            for you, so you don't need to create this one, just access it using getKeyFrame(0);
-        @param timePos The time from which this KeyFrame will apply.
-        */
-        virtual TransformKeyFrame* createNodeKeyFrame(Real timePos);
-		/** Returns a pointer to the associated Node object (if any). */
-		virtual Node* getAssociatedNode(void) const;
-
-		/** Sets the associated Node object which will be automatically affected by calls to 'apply'. */
-		virtual void setAssociatedNode(Node* node);
-
-		/** As the 'apply' method but applies to a specified Node instead of associated node. */
-		virtual void applyToNode(Node* node, Real timePos, Real weight = 1.0, 
-			bool accumulate = false, Real scale = 1.0f);
-
-		/** Sets the method of rotation calculation */
-		virtual void setUseShortestRotationPath(bool useShortestPath);
-
-		/** Gets the method of rotation calculation */
-		virtual bool getUseShortestRotationPath() const;
-
-		/// @copydoc AnimationTrack::getInterpolatedKeyFrame
-		void getInterpolatedKeyFrame(Real timeIndex, KeyFrame* kf) const;
-
-		/// @copydoc AnimationTrack::apply
-		void apply(Real timePos, Real weight = 1.0, bool accumulate = false, 
-			Real scale = 1.0f);
-
-		/// @copydoc AnimationTrack::_keyFrameDataChanged
-		void _keyFrameDataChanged(void) const;
-
-		/** Returns the KeyFrame at the specified index. */
-		virtual TransformKeyFrame* getNodeKeyFrame(unsigned short index) const;
-
+        void _keyFrameDataChanged(void) const;
 
 		/** Method to determine if this track has any KeyFrames which are
 			doing anything useful - can be used to determine if this track
 			can be optimised out.
 		*/
-		virtual bool hasNonZeroKeyFrames(void) const;
+		bool hasNonZeroKeyFrames(void) const;
 
 		/** Optimise the current track by removing any duplicate keyframes. */
-		virtual void optimise(void);
+		void optimise(void);
+    protected:
+        typedef std::vector<KeyFrame*> KeyFrameList;
+        KeyFrameList mKeyFrames;
+        Real mMaxKeyFrameTime;
+        Animation* mParent;
+        Node* mTargetNode;
 
-	protected:
-		/// Specialised keyframe creation
-		KeyFrame* createKeyFrameImpl(Real time);
-		// Flag indicating we need to rebuild the splines next time
-		virtual void buildInterpolationSplines(void) const;
+        // Flag indicating we need to rebuild the splines next time
+        void buildInterpolationSplines(void) const;
 
-		Node* mTargetNode;
-		// Prebuilt splines, must be mutable since lazy-update in const method
-		mutable bool mSplineBuildNeeded;
-		mutable SimpleSpline mPositionSpline;
-		mutable SimpleSpline mScaleSpline;
-		mutable RotationalSpline mRotationSpline;
+        // Prebuilt splines, must be mutable since lazy-update in const method
+        mutable bool mSplineBuildNeeded;
+        mutable SimpleSpline mPositionSpline;
+        mutable SimpleSpline mScaleSpline;
+        mutable RotationalSpline mRotationSpline;
 		/// Defines if rotation is done using shortest path
 		mutable bool mUseShortestRotationPath ;
+      
 
-
-	};
-
-	/** Type of vertex animation.
-		Vertex animation comes in 2 types, morph and pose. The reason
-		for the 2 types is that we have 2 different potential goals - to encapsulate
-		a complete, flowing morph animation with multiple keyframes (a typical animation,
-		but implemented by having snapshots of the vertex data at each keyframe), 
-		or to represent a single pose change, for example a facial expression. 
-		Whilst both could in fact be implemented using the same system, we choose
-		to separate them since the requirements and limitations of each are quite
-		different.
-	@par
-		With morph animation, we have a whole series of poses which must be 
-		interpolated, e.g. a running animation implemented as morph targets. 
-		We choose not to support blending between multiple
-		morph animations - this is beccause we like to support all features in
-		hardware if possible, and blending of multiple morph animations requires
-		(2*animations + 1) position vertex buffers. This is because to support
-		blending all the positions have to be stored as offsets rather than snapshots,
-		so to interpolate you need the previous keyframe, the next keyframe and
-		the original vertex data. This clearly becomes infeasible very quickly
-		when trying to implement this in a vertex shader - and really if you're
-		wanting to do blended animation with multiple sets of tracks you should
-		be using skeletal animation. By only supporting one active morph animation
-		at once, the buffer requirements reduce to just 2 - snapshots of 2 keyframes
-		of absolute position data. 
-	@par
-		Pose animation is different - it is not a sequence of keyframes, but a
-		single target pose per track. For simplicity this is implemented as a
-		single keyframe, but the data inside it is stored as an offset to the 
-		base vertex data rather than as absolute data. This is because the
-		primary reason for pose animation is to be able to blend multiple
-		weighted poses - for example multiple expressions in facial animation.
-		Whilst each track doesn't need interpolation within itself, it will be
-		blended with other tracks for the same submesh. Since there is only one
-		keyframe, the vertex buffer requirements for hardware interpolation are
-		only (animations + 1), which is more manageable. 
-	@par
-		So, by partitioning the vertex animation approaches into 2, we keep the
-		techniques viable for hardware acceleration whilst still allowing all 
-		the useful techniques to be available. Note that morph animation cannot
-		be blended with other types of vertex animation (pose animation or other
-		morph animation); pose animation can be blended with other pose animation
-		though, and both types can be combined with skeletal animation.
-	*/
-	enum VertexAnimationType
-	{
-		/// No animation
-		VAT_NONE = 0,
-		/// Morph animation is made up of many interpolated snapshot keyframes
-		VAT_MORPH = 1,
-		/// Pose animation is made up of a single delta pose keyframe
-		VAT_POSE = 2
-	};
-
-	/** Specialised AnimationTrack for dealing with changing vertex position information.
-	@remarks
-		Vertex animation tracks come in 2 types, morph and pose tracks. The reason
-		for the 2 types is that we have 2 different potential goals - to encapsulate
-		a complete, flowing morph animation with multiple keyframes (a typical animation,
-		but implemented by having snapshots of the vertex data at each keyframe), 
-		or to represent a single pose change, for example a facial expression. 
-		Whilst both could in fact be implemented using the same system, we choose
-		to separate them since the requirements and limitations of each are quite
-		different.
-	@par
-		With morph animation, we have a whole series of poses which must be 
-		interpolated, e.g. a running animation implemented as morph targets. 
-		We choose not to support blending between multiple
-		morph animations - this is beccause we like to support all features in
-		hardware if possible, and blending of multiple morph animations requires
-		(2*animations + 1) position vertex buffers. This is because to support
-		blending all the positions have to be stored as offsets rather than snapshots,
-		so to interpolate you need the previous keyframe, the next keyframe and
-		the original vertex data. This clearly becomes infeasible very quickly
-		when trying to implement this in a vertex shader - and really if you're
-		wanting to do blended animation with multiple sets of tracks you should
-		be using skeletal animation. By only supporting one active morph animation
-		at once, the buffer requirements reduce to just 2 - snapshots of 2 keyframes
-		of absolute position data. 
-	@par
-		Pose animation is different - it is not a sequence of keyframes, but a
-		single target pose per track. For simplicity this is implemented as a
-		single keyframe, but the data inside it is stored as an offset to the 
-		base vertex data rather than as absolute data. This is because the
-		primary reason for pose animation is to be able to blend multiple
-		weighted poses - for example multiple expressions in facial animation.
-		Whilst each track doesn't need interpolation within itself, it will be
-		blended with other tracks for the same submesh. Since there is only one
-		keyframe, the vertex buffer requirements for hardware interpolation are
-		only (animations + 1), which is more manageable. 
-	@par
-		So, by partitioning the vertex animation approaches into 2, we keep the
-		techniques viable for hardware acceleration whilst still allowing all 
-		the useful techniques to be available. Note that morph animation cannot
-		be blended with other types of vertex animation (pose animation or other
-		morph animation); pose animation can be blended with other pose animation
-		though, and both types can be combined with skeletal animation.
-	*/
-	class _OgreExport VertexAnimationTrack : public AnimationTrack
-	{
-	public:
-		/** The target animation mode */
-		enum TargetMode
-		{
-			/// Interpolate vertex positions in software
-			TM_SOFTWARE, 
-			/** Bind keyframe 1 to position, and keyframe 2 to a texture coordinate
-				for interpolation in hardware */
-			TM_HARDWARE
-		};
-		/// Constructor
-		VertexAnimationTrack(Animation* parent, unsigned short handle, VertexAnimationType animType);
-		/// Constructor, associates with target VertexData and temp buffer (for software)
-		VertexAnimationTrack(Animation* parent, unsigned short handle, VertexAnimationType animType, 
-			VertexData* targetData, TargetMode target = TM_SOFTWARE);
-
-		/** Get the type of vertex animation we're performing. */
-		VertexAnimationType getAnimationType(void) const { return mAnimationType; }
-
-		/** Creates a new morph KeyFrame and adds it to this animation at the given time index.
-		@remarks
-		It is better to create KeyFrames in time order. Creating them out of order can result 
-		in expensive reordering processing. Note that a KeyFrame at time index 0.0 is always created
-		for you, so you don't need to create this one, just access it using getKeyFrame(0);
-		@param timePos The time from which this KeyFrame will apply.
-		*/
-		virtual VertexMorphKeyFrame* createVertexMorphKeyFrame(Real timePos);
-
-		/** Creates the single pose KeyFrame and adds it to this animation.
-		@remarks
-			Only a single pose keyframe is allowed since these are optimised
-			for interpolating between poses in different animations rather 
-			than between keyframes in the same animation.
-		*/
-		virtual VertexPoseKeyFrame* createVertexPoseKeyFrame(void);
-
-		/** This method in fact does nothing, since interpolation is not performed
-			inside the keyframes for this type of track. 
-		*/
-		void getInterpolatedKeyFrame(Real timeIndex, KeyFrame* kf) const {}
-
-		/// @copydoc AnimationTrack::apply
-		void apply(Real timePos, Real weight = 1.0, bool accumulate = false, 
-			Real scale = 1.0f);
-
-		/** As the 'apply' method but applies to specified VertexData instead of 
-			associated data. */
-		virtual void applyToVertexData(VertexData* data, 
-			Real timePos, Real weight = 1.0, ushort animIndex = 0);
-
-
-		/** Returns the morph KeyFrame at the specified index. */
-		VertexMorphKeyFrame* getVertexMorphKeyFrame(unsigned short index) const;
-
-		/** Returns the single pose KeyFrame in the track. */
-		VertexPoseKeyFrame* getVertexPoseKeyFrame(void) const;
-
-		/** Sets the associated VertexData which this track will update. */
-		void setAssociatedVertexData(VertexData* data) { mTargetVertexData = data; }
-		/** Gets the associated VertexData which this track will update. */
-		VertexData* getAssociatedVertexData(void) const { return mTargetVertexData; }
-
-		/// Set the target mode
-		void setTargetMode(TargetMode m) { mTargetMode = m; }
-		/// Get the target mode
-		TargetMode getTargetMode(void) const { return mTargetMode; }
-
-
-	protected:
-		/// Animation type
-		VertexAnimationType mAnimationType;
-		/// Target to animate
-		VertexData* mTargetVertexData;
-		/// Mode to apply
-		TargetMode mTargetMode;
-
-		/// @copydoc AnimationTrack::createKeyFrameImpl
-		KeyFrame* createKeyFrameImpl(Real time);
-
-
-	};
-
-
+    };
 }
 
 #endif

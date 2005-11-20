@@ -37,10 +37,9 @@ http://www.gnu.org/copyleft/lesser.txt.
 namespace Ogre {
 
 GLXInput::GLXInput()
-		: InputReader()
-		{
+		: InputReader(),
+		mMouseSpeed(0.002f) {
 	mEventQueue = 0;
-	mMouseScale = 0.002f;
 
 	_key_map.insert(InputKeyMap::value_type(XK_Escape,KC_ESCAPE));
 	_key_map.insert(InputKeyMap::value_type(XK_1, KC_1));
@@ -323,8 +322,8 @@ void GLXInput::capture() {
 	if(hasMouseMoved && mUseBufferedMouse) {
 		// Send mouse moved event to application and move cursor.
 		mouseMoved();
-		mCursor->addToX(mMouseState.Xrel * mMouseScale);
-		mCursor->addToY(mMouseState.Yrel * mMouseScale);
+		mCursor->addToX(mMouseState.Xrel * mMouseSpeed);
+		mCursor->addToY(mMouseState.Yrel * mMouseSpeed);
 	}
 
 }

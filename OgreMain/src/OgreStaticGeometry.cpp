@@ -163,7 +163,6 @@ namespace Ogre {
 			// Calculate the region centre
 			Vector3 centre = getRegionCentre(x, y, z);
 			ret = new Region(this, str.str(), mOwner, index, centre);
-			mOwner->injectMovableObject(ret);
 			ret->setVisible(mVisible);
 			ret->setCastShadows(mCastShadows);
 			if (mRenderQueueIDSet)
@@ -568,7 +567,6 @@ namespace Ogre {
 		for (RegionMap::iterator i = mRegionMap.begin(); 
 			i != mRegionMap.end(); ++i)
 		{
-			mOwner->extractMovableObject(i->second);
 			delete i->second;
 		}
 		mRegionMap.clear();
@@ -668,9 +666,9 @@ namespace Ogre {
 	//--------------------------------------------------------------------------
 	StaticGeometry::Region::Region(StaticGeometry* parent, const String& name, 
 		SceneManager* mgr, uint32 regionID, const Vector3& centre) 
-		: MovableObject(name), mParent(parent), mSceneMgr(mgr), mNode(0), 
+		: mParent(parent), mName(name), mSceneMgr(mgr), mNode(0), 
 		mRegionID(regionID), mCentre(centre), mBoundingRadius(0.0f), 
-		mCurrentLod(0), mLightListUpdated(0),
+		mCurrentLod(0), mLightListUpdated(0), mBeyondFarDistance(false),
 		mEdgeList(0), mVertexProgramInUse(false)
 	{
 		// First LOD mandatory, and always from 0
@@ -703,11 +701,6 @@ namespace Ogre {
 
 		// no need to delete queued meshes, these are managed in StaticGeometry
 
-	}
-	//--------------------------------------------------------------------------
-	uint32 StaticGeometry::Region::getTypeFlags(void) const
-	{
-		return SceneManager::STATICGEOMETRY_TYPE_MASK;
 	}
 	//--------------------------------------------------------------------------
 	void StaticGeometry::Region::assign(QueuedSubMesh* qmesh)
@@ -816,6 +809,11 @@ namespace Ogre {
 		}
 
 
+	}
+	//--------------------------------------------------------------------------
+	const String& StaticGeometry::Region::getName(void) const
+	{
+		return mName;
 	}
 	//--------------------------------------------------------------------------
 	const String& StaticGeometry::Region::getMovableType(void) const

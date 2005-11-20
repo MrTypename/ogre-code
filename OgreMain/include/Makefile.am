@@ -1,10 +1,8 @@
 pkginclude_HEADERS = Ogre.h \
 OgreArchive.h \
-OgreAnimable.h \
 OgreAnimation.h \
 OgreAnimationState.h \
 OgreAnimationTrack.h \
-OgreAny.h \
 OgreArchiveFactory.h \
 OgreArchiveManager.h \
 OgreAutoParamDataSource.h \
@@ -72,7 +70,6 @@ OgreKeyTarget.h \
 OgreLight.h \
 OgreLog.h \
 OgreLogManager.h \
-OgreManualObject.h \
 OgreMaterial.h \
 OgreMaterialManager.h \
 OgreMaterialSerializer.h \
@@ -124,7 +121,6 @@ OgrePrerequisites.h \
 OgreProfiler.h \
 OgreProgressiveMesh.h \
 OgreQuaternion.h \
-OgreRadixSort.h \
 OgreRay.h \
 OgreRectangle.h \
 OgreRectangle2D.h \
@@ -193,12 +189,4 @@ OgreVertexIndexData.h \
 OgreViewport.h \
 OgreWireBoundingBox.h \
 OgreZip.h \
-OgreCompositor.h \
-OgreCompositorChain.h \
-OgreCompositorInstance.h \
-OgreCompositorManager.h \
-OgreCompositorSerializer.h \
-OgreCompositionTechnique.h \
-OgreCompositionPass.h \
-OgreCompositionTargetPass.h \
 asm_math.h

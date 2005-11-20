@@ -36,7 +36,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreProgressiveMesh.h"
 #include "OgreHardwareVertexBuffer.h"
 #include "OgreSkeleton.h"
-#include "OgreAnimationTrack.h"
 
 
 namespace Ogre {
@@ -91,7 +90,6 @@ namespace Ogre {
         typedef std::multimap<size_t, VertexBoneAssignment> VertexBoneAssignmentList;
         typedef MapIterator<VertexBoneAssignmentList> BoneAssignmentIterator;
         typedef std::vector<SubMesh*> SubMeshList;
-        typedef std::vector<unsigned short> IndexMap;
 
     protected:
         /** A list of submeshes which make up this mesh.
@@ -128,14 +126,14 @@ namespace Ogre {
         /// Flag indicating that bone assignments need to be recompiled
         bool mBoneAssignmentsOutOfDate;
 
-        /** Build the index map between bone index and blend index */
-        void buildIndexMap(const VertexBoneAssignmentList& boneAssignments,
-            IndexMap& boneIndexToBlendIndexMap, IndexMap& blendIndexToBoneIndexMap);
         /** Compile bone assignments into blend index and weight buffers. */
         void compileBoneAssignments(const VertexBoneAssignmentList& boneAssignments,
             unsigned short numBlendWeightsPerVertex, 
-            IndexMap& blendIndexToBoneIndexMap,
             VertexData* targetVertexData);
+        /** Software blending oriented bone assignment compilation */
+        void compileBoneAssignmentsSoftware(const VertexBoneAssignmentList& boneAssignments,
+            unsigned short numBlendWeightsPerVertex, VertexData* targetVertexData);
+
 
 		bool mIsLodManual;
 		ushort mNumLods;
@@ -152,23 +150,12 @@ namespace Ogre {
         bool mEdgeListsBuilt;
         bool mAutoBuildEdgeLists;
 
-		/// Storage of morph animations, lookup by name
-		typedef std::map<String, Animation*> AnimationList;
-		AnimationList mAnimationsList;
-		/// The vertex animation type associated with the shared vertex data
-		mutable VertexAnimationType mSharedVertexDataAnimationType;
-		/// Do we need to scan animations for animation types?
-		mutable bool mAnimationTypesDirty;
-
-
         /// @copydoc Resource::loadImpl
         void loadImpl(void);
         /// @copydoc Resource::unloadImpl
         void unloadImpl(void);
 		/// @copydoc Resource::calculateSize
 		size_t calculateSize(void) const;
-
-
 
     public:
         /** Default constructor - used by MeshManager
@@ -235,28 +222,6 @@ namespace Ogre {
         */
         VertexData *sharedVertexData;
 
-        /** Shared index map for translating blend index to bone index.
-            @remarks
-                This index map can be shared among multiple submeshes. SubMeshes might not have
-                their own IndexMap, they might share this one.
-            @par
-                We collect actually used bones of all bone assignments, and build the
-                blend index in 'packed' form, then the range of the blend index in vertex
-                data VES_BLEND_INDICES element is continuous, with no gaps. Thus, by
-                minimising the world matrix array constants passing to GPU, we can support
-                more bones for a mesh when hardware skinning is used. The hardware skinning
-                support limit is applied to each set of vertex data in the mesh, in other words, the
-                hardware skinning support limit is applied only to the actually used bones of each
-                SubMeshes, not all bones across the entire Mesh.
-            @par
-                Because the blend index is different to the bone index, therefore, we use
-                the index map to translate the blend index to bone index.
-            @par
-                The use of shared or non-shared index map is determined when
-                model data is converted to the OGRE .mesh format.
-        */
-        IndexMap sharedBlendIndexToBoneIndexMap;
-
         /** Makes a copy of this mesh object and gives it a new name.
             @remarks
                 This is useful if you want to tweak an existing mesh without affecting the original one. The
@@ -309,11 +274,7 @@ namespace Ogre {
         /** Returns true if this Mesh has a linked Skeleton. */
         bool hasSkeleton(void) const;
 
-		/** Returns whether or not this mesh has some kind of vertex animation. 
-		*/
-		bool hasVertexAnimation(void) const;
-
-		/** Gets a pointer to any linked Skeleton. 
+        /** Gets a pointer to any linked Skeleton. 
         @returns Weak reference to the skeleton - copy this if you want to hold a strong pointer.
         */
         const SkeletonPtr& getSkeleton(void) const;
@@ -624,49 +585,12 @@ namespace Ogre {
             Note that the layout of the source and target position / normal 
             buffers must be identical, ie they must use the same buffer indexes
         @param pMatrices Pointer to an array of matrices to be used to blend
-        @param pIndexMap Pointer to an array of indices to translate blend indices
-            in the sourceVertexData to the index of pMatrices
         @param blendNormals If true, normals are blended as well as positions
         */
         static void softwareVertexBlend(const VertexData* sourceVertexData, 
             const VertexData* targetVertexData, const Matrix4* pMatrices, 
-            const unsigned short* pIndexMap,
             bool blendNormals);
 
-        /** Performs a software vertex morph, of the kind used for
-            morph animation although it can be used for other purposes. 
-        @remarks
-			This function will linearly interpolate positions between two
-			source buffers, into a third buffer.
-        @param t Parametric distance between the start and end buffer positions
-        @param b1 Vertex buffer containing VET_FLOAT3 entries for the start positions
-		@param b2 Vertex buffer containing VET_FLOAT3 entries for the end positions
-		@param targetVertexData VertexData destination; assumed to have a separate position
-			buffer already bound, and the number of vertices must agree with the
-			number in start and end
-		*/
-        static void softwareVertexMorph(Real t, 
-            const HardwareVertexBufferSharedPtr& b1, 
-			const HardwareVertexBufferSharedPtr& b2, 
-			VertexData* targetVertexData);
-
-        /** Performs a software vertex pose blend, of the kind used for
-            morph animation although it can be used for other purposes. 
-        @remarks
-			This function will apply a weighted offset to the positions in the 
-			incoming vertex data (therefore this is a read/write operation, and 
-			if you expect to call it more than once with the same data, then
-			you would be best to suppress hardware uploads of the position buffer
-			for the duration)
-        @param weight Parametric weight to scale the offsets by
-		@param vertexOffsetMap Potentially sparse map of vertex index -> offset
-		@param targetVertexData VertexData destination; assumed to have a separate position
-			buffer already bound, and the number of vertices must agree with the
-			number in start and end
-		*/
-		static void softwareVertexPoseBlend(Real weight, 
-			const std::map<size_t, Vector3>& vertexOffsetMap,
-			VertexData* targetVertexData);
         /** Gets a reference to the optional name assignments of the SubMeshes. */
         const SubMeshNameMap& getSubMeshNameMap(void) const { return mSubMeshNameMap; }
 
@@ -686,69 +610,6 @@ namespace Ogre {
             they are not already provided.
         */
         bool getAutoBuildEdgeLists(void) const { return mAutoBuildEdgeLists; }
-
-		/** Gets the type of vertex animation the shared vertex data of this mesh supports.
-		*/
-		virtual VertexAnimationType getSharedVertexDataAnimationType(void) const;
-
-		/** Creates a new Animation object for vertex animating this mesh. 
-        @param name The name of this animation
-        @param length The length of the animation in seconds
-        */
-        virtual Animation* createAnimation(const String& name, Real length);
-
-        /** Returns the named vertex Animation object. 
-		@param name The name of the animation
-		*/
-        virtual Animation* getAnimation(const String& name) const;
-
-		/** Internal access to the named vertex Animation object - returns null 
-			if it does not exist. 
-		@param name The name of the animation
-		*/
-		virtual Animation* _getAnimationImpl(const String& name) const;
-
-		/** Returns whether this mesh contains the named vertex animation. */
-		virtual bool hasAnimation(const String& name);
-
-        /** Removes vertex Animation from this mesh. */
-        virtual void removeAnimation(const String& name);
-
-		/** Gets the number of morph animations in this mesh. */
-		virtual unsigned short getNumAnimations(void) const;
-
-		/** Gets a single morph animation by index. 
-		*/
-		virtual Animation* getAnimation(unsigned short index) const;
-
-		/** Removes all morph Animations from this mesh. */
-		virtual void removeAllAnimations(void);
-		/** Gets a pointer to a vertex data element based on a morph animation 
-			track handle.
-		@remarks
-			0 means the shared vertex data, 1+ means a submesh vertex data (index+1)
-		*/
-		VertexData* getVertexDataByTrackHandle(unsigned short handle);
-        /** Iterates through all submeshes and requests them 
-            to apply their texture aliases to the material they use.
-        @remarks
-            The submesh will only apply texture aliases to the material if matching
-            texture alias names are found in the material.  If a match is found, the
-            submesh will automatically clone the original material and then apply its
-            texture to the new material.
-        @par
-            This method is normally called by the protected method loadImpl when a 
-            mesh if first loaded.
-        */
-  		void updateMaterialForAllSubMeshes(void);
-
-		/** Internal method which, if animation types have not been determined,
-			scans any vertex animations and determines the type for each set of
-			vertex data (cannot have 2 different types).
-		*/
-		void _determineAnimationTypes(void) const;
-		/** Are the derived animation types out of date? */
-		bool _getAnimationTypesDirty(void) const { return mAnimationTypesDirty; }
 
 
     };

@@ -32,7 +32,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreRenderOperation.h"
 #include "OgreVertexBoneAssignment.h"
 #include "OgreProgressiveMesh.h"
-#include "OgreAnimationTrack.h"
 
 namespace Ogre {
 
@@ -77,28 +76,6 @@ namespace Ogre {
 
         /// Face index data
         IndexData *indexData;
-
-        /** Dedicated index map for translate blend index to bone index (only valid if useSharedVertices = false).
-            @remarks
-                This data is completely owned by this submesh.
-            @par
-                We collect actually used bones of all bone assignments, and build the
-                blend index in 'packed' form, then the range of the blend index in vertex
-                data VES_BLEND_INDICES element is continuous, with no gaps. Thus, by
-                minimising the world matrix array constants passing to GPU, we can support
-                more bones for a mesh when hardware skinning is used. The hardware skinning
-                support limit is applied to each set of vertex data in the mesh, in other words, the
-                hardware skinning support limit is applied only to the actually used bones of each
-                SubMeshes, not all bones across the entire Mesh.
-            @par
-                Because the blend index is different to the bone index, therefore, we use
-                the index map to translate the blend index to bone index.
-            @par
-                The use of shared or non-shared index map is determined when
-                model data is converted to the OGRE .mesh format.
-        */
-        typedef std::vector<unsigned short> IndexMap;
-        IndexMap blendIndexToBoneIndexMap;
 
         ProgressiveMesh::LODFaceList mLodFaceList;
 
@@ -154,55 +131,6 @@ namespace Ogre {
 
         /** Must be called once to compile bone assignments into geometry buffer. */
         void _compileBoneAssignments(void);
-
-        typedef ConstMapIterator<AliasTextureNamePairList> AliasTextureIterator;
-        /** Gets an constant iterator to access all texture alias names assigned to this submesh. 
-
-        */
-        AliasTextureIterator getAliasTextureIterator(void) const;
-        /** Adds the alias or replaces an existing one and associates the texture name to it.
-        @remarks
-          The submesh uses the texture alias to replace textures used in the material applied
-          to the submesh.
-        @param
-            aliasName is the name of the alias.
-        @param
-            textureName is the name of the texture to be associated with the alias
-
-        */
-        void addTextureAlias(const String& aliasName, const String& textureName);
-        /** Remove a specific texture alias name from the sub mesh
-        @param
-            aliasName is the name of the alias to be removed.  If it is not found 
-            then it is ignored.
-        */
-        void removeTextureAlias(const String& aliasName);
-        /** removes all texture aliases from the sub mesh
-        */
-        void removeAllTextureAliases(void);
-        /** returns true if the sub mesh has texture aliases
-        */
-        bool hasTextureAliases(void) const { return !mTextureAliases.empty(); }
-        /** Gets the number of texture aliases assigned to the sub mesh.
-        */
-        size_t getTextureAliasCount(void) const { return mTextureAliases.size(); }
-
-        /**  The current material used by the submesh is copied into a new material
-            and the submesh's texture aliases are applied if the current texture alias
-            names match those found in the original material.
-        @remarks
-            The submesh's texture aliases must be setup prior to calling this method.
-            If a new material has to be created, the subMesh autogenerates the new name.
-            The new name is the old name + "_" + number.
-        @return 
-            True if texture aliases were applied and a new material was created.
-        */
-        bool updateMaterialUsingTextureAliases(void);
-
-		/** Get the type of any vertex animation used by dedicated geometry.
-		*/
-		VertexAnimationType getVertexAnimationType(void) const;
-
     protected:
 
         /// Name of the material this SubMesh uses.
@@ -211,17 +139,11 @@ namespace Ogre {
         /// Is there a material yet?
         bool mMatInitialised;
 
-        /// paired list of texture aliases and texture names
-        AliasTextureNamePairList mTextureAliases;
-
+       
         VertexBoneAssignmentList mBoneAssignments;
 
         /// Flag indicating that bone assignments need to be recompiled
         bool mBoneAssignmentsOutOfDate;
-
-		/// Type of vertex animation for dedicated vertex data (populated by Mesh)
-		mutable VertexAnimationType mVertexAnimationType;
-
 
         /// Internal method for removing LOD data
         void removeLodLevels(void);

@@ -209,14 +209,6 @@ namespace Ogre {
         virtual Animation* getAnimation(const String& name, 
 			const LinkedSkeletonAnimationSource** linker = 0) const;
 
-		/// Internal accessor for animations (returns null if animation does not exist)
-		Animation* _getAnimationImpl(const String& name, 
-			const LinkedSkeletonAnimationSource** linker = 0) const;
-
-
-		/** Returns whether this skeleton contains the named animation. */
-		virtual bool hasAnimation(const String& name);
-
         /** Removes an Animation from this skeleton. */
         virtual void removeAnimation(const String& name);
 
@@ -233,6 +225,9 @@ namespace Ogre {
         */
         virtual void setAnimationState(const AnimationStateSet& animSet);
 
+        /** Gets the last animation state of this skeleton. */
+        virtual const AnimationStateSet& getAnimationState(void) const;
+        
 
         /** Initialise an animation set suitable for use with this skeleton. 
         @remarks
@@ -266,7 +261,7 @@ namespace Ogre {
 
 
 		/** Gets the animation blending mode which this skeleton will use. */
-        virtual SkeletonAnimationBlendMode getBlendMode() const;
+        virtual SkeletonAnimationBlendMode getBlendMode();
         /** Sets the animation blending mode this skeleton will use. */
 		virtual void setBlendMode(SkeletonAnimationBlendMode state);
 
@@ -342,6 +337,9 @@ namespace Ogre {
         /// Storage of animations, lookup by name
         typedef std::map<String, Animation*> AnimationList;
         AnimationList mAnimationsList;
+
+        /// Saved version of last animation
+        AnimationStateSet mLastAnimationState;
 
 		/// List of references to other skeletons to use animations from 
 		mutable LinkedSkeletonAnimSourceList mLinkedSkeletonAnimSourceList;

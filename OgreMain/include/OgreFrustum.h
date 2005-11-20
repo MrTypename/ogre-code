@@ -72,10 +72,6 @@ namespace Ogre
         Real mNearDist;
         /// x/y viewport ratio - default 1.3333
         Real mAspect;
-        /// Off-axis frustum center offset - default (0.0, 0.0)
-        Vector2 mFrustumOffset;
-        /// Focal length of frustum (for stereo rendering, defaults to 1.0)
-        Real mFocalLength;
 
         /// The 6 main clipping planes
         mutable Plane mFrustumPlanes[6];
@@ -84,33 +80,29 @@ namespace Ogre
         mutable Quaternion mLastParentOrientation;
         mutable Vector3 mLastParentPosition;
 
-        /// Pre-calced projection matrix for the specific render system
-        mutable Matrix4 mProjMatrixRS;
-        /// Pre-calced standard projection matrix but with render system depth range
-        mutable Matrix4 mProjMatrixRSDepth;
-        /// Pre-calced standard projection matrix
+        /// Pre-calced projection matrix
         mutable Matrix4 mProjMatrix;
+        /// Pre-calced standard projection matrix
+        mutable Matrix4 mStandardProjMatrix;
         /// Pre-calced view matrix
         mutable Matrix4 mViewMatrix;
         /// Something's changed in the frustrum shape?
         mutable bool mRecalcFrustum;
         /// Something re the view pos has changed
         mutable bool mRecalcView;
-        /// Something re the frustum planes has changed
-        mutable bool mRecalcFrustumPlanes;
-        /// Something re the world space corners has changed
-        mutable bool mRecalcWorldSpaceCorners;
-        /// Something re the vertex data has changed
-        mutable bool mRecalcVertexData;
+
+
+        /** Temp coefficient values calculated from a frustum change,
+            used when establishing the frustum planes when the view changes
+        */
+        mutable Real mCoeffL[2], mCoeffR[2], mCoeffB[2], mCoeffT[2];
+
+
 
 		
         // Internal functions for calcs
-        virtual void calcProjectionParameters(Real& left, Real& right, Real& bottom, Real& top) const;
         virtual void updateFrustum(void) const;
         virtual void updateView(void) const;
-        virtual void updateFrustumPlanes(void) const;
-        virtual void updateWorldSpaceCorners(void) const;
-        virtual void updateVertexData(void) const;
         virtual bool isViewOutOfDate(void) const;
         virtual bool isFrustumOutOfDate(void) const;
         /// Signal to update frustum information.
@@ -238,60 +230,16 @@ namespace Ogre
         */
         virtual Real getAspectRatio(void) const;
 
-        /** Sets frustum offsets, used in stereo rendering.
-            @remarks
-                You can set both horizontal and vertical plane offsets of "eye"; in
-                stereo rendering frustum is moved in horizontal plane. To be able to
-                render from two "eyes" you'll need two cameras rendering on two
-                RenderTargets.
-            @par
-                The frustum offsets is in world coordinates, and default to (0, 0) - no offsets.
-            @param
-                offset The horizontal and vertical plane offsets.
-        */
-        virtual void setFrustumOffset(const Vector2& offset);
-
-        /** Sets frustum offsets, used in stereo rendering.
-            @remarks
-                You can set both horizontal and vertical plane offsets of "eye"; in
-                stereo rendering frustum is moved in horizontal plane. To be able to
-                render from two "eyes" you'll need two cameras rendering on two
-                RenderTargets.
-            @par
-                The frustum offsets is in world coordinates, and default to (0, 0) - no offsets.
-            @param
-                horizontal The horizontal plane offset.
-            @param
-                vertical The vertical plane offset.
-        */
-        virtual void setFrustumOffset(Real horizontal = 0.0, Real vertical = 0.0);
-
-        /** Retreives the frustum offsets.
-        */
-        virtual const Vector2& getFrustumOffset() const;
-
-        /** Sets frustum focal length (used in stereo rendering).
-            @param
-                focalLength The distance to the focal plane from the frustum in world coordinates.
-        */
-        virtual void setFocalLength(Real focalLength = 1.0);
-
-        /** Returns focal length of frustum.
-        */
-        virtual Real getFocalLength() const;
-
-        /** Gets the projection matrix for this frustum adjusted for the current
-			rendersystem specifics (may be right or left-handed, depth range
-			may vary).
+        /** Gets the projection matrix for this frustum. Mainly for use by OGRE internally.
         @remarks
             This method retrieves the rendering-API dependent version of the projection
             matrix. If you want a 'typical' projection matrix then use 
-            getProjectionMatrix.
+            getStandardProjectionMatrix.
 
         */
-        virtual const Matrix4& getProjectionMatrixRS(void) const;
-        /** Gets the depth-adjusted projection matrix for the current rendersystem,
-			but one which still conforms to right-hand rules.
+        virtual const Matrix4& getProjectionMatrix(void) const;
+        /** Gets the 'standard' projection matrix for this frustum, ie the 
+        projection matrix which conforms to standard right-handed rules.
         @remarks
             This differs from the rendering-API dependent getProjectionMatrix
             in that it always returns a right-handed projection matrix result 
@@ -301,27 +249,11 @@ namespace Ogre
             GL uses [-1,1], and the range must be kept the same between programmable
             and fixed-function pipelines.
         */
-        virtual const Matrix4& getProjectionMatrixWithRSDepth(void) const;
-        /** Gets the normal projection matrix for this frustum, ie the 
-        projection matrix which conforms to standard right-handed rules and
-        uses depth range [-1,+1].
-        @remarks
-            This differs from the rendering-API dependent getRenderSystemProjectionMatrix
-            in that it always returns a right-handed projection matrix with depth
-            range [-1,+1], result no matter what rendering API is being used - this
-            is required for some uniform algebra for example.
-        */
-        virtual const Matrix4& getProjectionMatrix(void) const;
+        virtual const Matrix4& getStandardProjectionMatrix(void) const;
 
         /** Gets the view matrix for this frustum. Mainly for use by OGRE internally.
         */
         virtual const Matrix4& getViewMatrix(void) const;
-
-        /** Retrieves the clipping planes of the frustum.
-        @remarks
-            The clipping planes are ordered as declared in enumerate constants FrustumPlane.
-        */
-        virtual const Plane* getFrustumPlanes(void) const;
 
         /** Retrieves a specified plane of the frustum.
             @remarks
@@ -380,6 +312,9 @@ namespace Ogre
 
         /** Overridden from MovableObject */
         const String& getMovableType(void) const;
+
+        /** Overridden from MovableObject */
+        const String& getName(void) const;
 
         /** Overridden from MovableObject */
         void _notifyCurrentCamera(Camera* cam);

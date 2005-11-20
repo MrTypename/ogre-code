@@ -88,6 +88,10 @@ namespace Ogre {
         */
         ~Light();
 
+        /** Returns the name of this light (cannot be modified).
+        */
+        const String& getName(void) const;
+
         /** Sets the type of light - see LightTypes for more info.
         */
         void setType(LightTypes type);
@@ -256,17 +260,8 @@ namespace Ogre {
         */
         Real getSpotlightFalloff(void) const;
 
-		/** Sets the angle covered by the spotlights inner cone.
-		*/
-		void setSpotlightInnerAngle(const Radian& val);
-
-		/** Sets the angle covered by the spotlights outer cone.
-		*/
-		void setSpotlightOuterAngle(const Radian& val);
-
-		/** Sets the falloff between the inner and outer cones of the spotlight.
-		*/
-		void setSpotlightFalloff(Real val);
+        /** Overridden from MovableObject */
+        void _notifyCurrentCamera(Camera* cam);
 
         /** Overridden from MovableObject */
         const AxisAlignedBox& getBoundingBox(void) const;
@@ -312,7 +307,7 @@ namespace Ogre {
             the reference returned is to a shared volume which will be 
             reused across calls to this method.
         */
-        virtual const PlaneBoundedVolume& _getNearClipVolume(const Camera* const cam) const;
+        const PlaneBoundedVolume& _getNearClipVolume(const Camera* const cam) const;
 
         /** Internal method for calculating the clip volumes outside of the 
             frustum which can be used to determine which objects are casting
@@ -320,24 +315,16 @@ namespace Ogre {
         @remarks Each of the volumes is a pyramid for a point/spot light and
             a cuboid for a directional light. 
         */
-        virtual const PlaneBoundedVolumeList& _getFrustumClipVolumes(const Camera* const cam) const;
+        const PlaneBoundedVolumeList& _getFrustumClipVolumes(const Camera* const cam) const;
 
-		/// Override to return specific type flag
-		uint32 getTypeFlags(void) const;
 
-		/// @copydoc AnimableObject::createAnimableValue
-		AnimableValuePtr createAnimableValue(const String& valueName);
 
-    protected:
+    private:
         /// internal method for synchronising with parent node (if any)
-        virtual void update(void) const;
+        void update(void) const;
+        String mName;
 
-		/// @copydoc AnimableObject::getAnimableDictionaryName
-		const String& getAnimableDictionaryName(void) const;
-		/// @copydoc AnimableObject::initialiseAnimableDictionary
-		void initialiseAnimableDictionary(StringVector& vec) const;
-
-		LightTypes mLightType;
+        LightTypes mLightType;
         Vector3 mPosition;
         ColourValue mDiffuse;
         ColourValue mSpecular;
@@ -369,22 +356,5 @@ namespace Ogre {
 
 
     };
-
-	/** Factory object for creating Light instances */
-	class _OgreExport LightFactory : public MovableObjectFactory
-	{
-	protected:
-		MovableObject* createInstanceImpl( const String& name, const NameValuePairList* params);
-	public:
-		LightFactory() {}
-		~LightFactory() {}
-
-		static String FACTORY_TYPE_NAME;
-
-		const String& getType(void) const;
-		void destroyInstance( MovableObject* obj);  
-
-	};
-
 } // Namespace
 #endif

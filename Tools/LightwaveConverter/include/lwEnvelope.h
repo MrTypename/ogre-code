@@ -1,3 +1,4 @@
+
 #ifndef _LWENVELOPE_H_
 #define _LWENVELOPE_H_
 
