@@ -77,7 +77,7 @@ namespace Ogre {
 
         /** Default destructor.
         */
-        virtual ~Viewport();
+        ~Viewport();
 
         /** Notifies the viewport of a possible change in dimensions.
             @remarks
@@ -209,53 +209,6 @@ namespace Ogre {
             viewport. */
         bool getOverlaysEnabled(void) const;
 
-        /** Tells this viewport whether it should display skies.
-        @remarks
-            Skies are layers which appear on background of the scene. They are created via
-            SceneManager::setSkyBox, SceneManager::setSkyPlane and SceneManager::setSkyDome and
-            every viewport displays these by default. However, you probably don't want this if
-            you're using multiple viewports, because one of them is probably a picture-in-picture
-            which is not supposed to have skies of it's own. In this case you can turn off skies
-            on this viewport by calling this method.
-        @param enabled If true, any skies are displayed, if false they are not.
-        */
-        void setSkiesEnabled(bool enabled);
-
-        /** Returns whether or not skies (created in the SceneManager) are displayed in this
-            viewport. */
-        bool getSkiesEnabled(void) const;
-
-        /** Tells this viewport whether it should display shadows.
-        @remarks
-            This setting enables you to disable shadow rendering for a given viewport. The global
-			shadow technique set on SceneManager still controls the type and nature of shadows,
-			but this flag can override the setting so that no shadows are rendered for a given
-			viewport to save processing time where they are not required.
-        @param enabled If true, any shadows are displayed, if false they are not.
-        */
-        void setShadowsEnabled(bool enabled);
-
-        /** Returns whether or not shadows (defined in the SceneManager) are displayed in this
-            viewport. */
-        bool getShadowsEnabled(void) const;
-
-		/** Sets the use of a custom RenderQueueInvocationSequence for
-			rendering this target.
-		@remarks
-			RenderQueueInvocationSequence instances are managed through Root. By
-			setting this, you are indicating that you wish this RenderTarget to
-			be updated using a custom sequence of render queue invocations, with
-			potentially customised ordering and render state options. You should
-			create the named sequence through Root first, then set the name here.
-		@param The name of the RenderQueueInvocationSequence to use. If you
-			specify a blank string, behaviour will return to the defaul render
-			queue management.
-		*/
-		virtual void setRenderQueueInvocationSequenceName(const String& sequenceName);
-		/** Gets the name of the render queue invocation sequence for this target. */
-		virtual const String& getRenderQueueInvocationSequenceName(void) const;
-		/// Get the invocation sequence - will return null if using standard
-		RenderQueueInvocationSequence* _getRenderQueueInvocationSequence(void);
 
     protected:
         Camera* mCamera;
@@ -271,11 +224,6 @@ namespace Ogre {
         bool mClearEveryFrame;
         bool mUpdated;
         bool mShowOverlays;
-        bool mShowSkies;
-		bool mShowShadows;
-		// Render queue invocation sequence name
-		String mRQSequenceName;
-		RenderQueueInvocationSequence* mRQSequence;
     };
 
 }

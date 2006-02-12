@@ -223,7 +223,7 @@ public:
 	~WaterCircle()
 	{
 		MeshManager::getSingleton().remove(mesh->getHandle());
-		sceneMgr->destroyEntity(entity->getName());
+		sceneMgr->removeEntity(entity->getName());
 		static_cast<SceneNode*> (sceneMgr->getRootSceneNode())->removeChild(node->getName());
 	}
 	void animate(Real timeSinceLastFrame)
@@ -586,13 +586,13 @@ protected:
 
         // set up spline animation of light node
         Animation* anim = mSceneMgr->createAnimation("WaterLight", 20);
-		NodeAnimationTrack *track ;
-        TransformKeyFrame *key ;
+		AnimationTrack *track ;
+        KeyFrame *key ;
 		// create a random spline for light
-		track = anim->createNodeTrack(0, lightNode);
-		key = track->createNodeKeyFrame(0);
+		track = anim->createTrack(0, lightNode);
+		key = track->createKeyFrame(0);
 		for(int ff=1;ff<=19;ff++) {
-			key = track->createNodeKeyFrame(ff);
+			key = track->createKeyFrame(ff);
 			Vector3 lpos (
 				rand()%(int)PLANE_SIZE , //- PLANE_SIZE/2,
 				rand()%300+100,
@@ -600,7 +600,7 @@ protected:
 				);
 			key->setTranslate(lpos);
 		}
-		key = track->createNodeKeyFrame(20);
+		key = track->createKeyFrame(20);
 		
         // Create a new animation state to track this
         mAnimState = mSceneMgr->createAnimationState("WaterLight");

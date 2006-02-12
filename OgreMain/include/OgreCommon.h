@@ -141,48 +141,32 @@ namespace Ogre {
         /// Gradual steady increase from min to max over the period with an instant return to min at the end.
         WFT_SAWTOOTH,
         /// Gradual steady decrease from max to min over the period, with an instant return to max at the end.
-        WFT_INVERSE_SAWTOOTH,
-		/// Pulse Width Modulation. Works like WFT_SQUARE, except the high to low transition is controlled by duty cycle. 
-		/// With a duty cycle of 50% (0.5) will give the same output as WFT_SQUARE.
-		WFT_PWM
+        WFT_INVERSE_SAWTOOTH
     };
 
-    /** The polygon mode to use when rasterising. */
-    enum PolygonMode
+    /** The broad type of detail for rendering. */
+    enum SceneDetailLevel
     {
 		/// Only points are rendered.
-        PM_POINTS = 1,
+        SDL_POINTS = 1,
 		/// Wireframe models are rendered.
-        PM_WIREFRAME = 2,
+        SDL_WIREFRAME = 2,
 		/// Solid polygons are rendered.
-        PM_SOLID = 3
+        SDL_SOLID = 3
     };
 
     /** An enumeration of broad shadow techniques */
     enum ShadowTechnique
     {
         /** No shadows */
-        SHADOWTYPE_NONE = 0x00,
-		/** Mask for additive shadows (not for direct use, use  SHADOWTYPE_ enum instead)
-		*/
-		SHADOWDETAILTYPE_ADDITIVE = 0x01,
-		/** Mask for modulative shadows (not for direct use, use  SHADOWTYPE_ enum instead)
-		*/
-		SHADOWDETAILTYPE_MODULATIVE = 0x02,
-		/** Mask for stencil shadows (not for direct use, use  SHADOWTYPE_ enum instead)
-		*/
-		SHADOWDETAILTYPE_STENCIL = 0x10,
-		/** Mask for texture shadows (not for direct use, use  SHADOWTYPE_ enum instead)
-		*/
-		SHADOWDETAILTYPE_TEXTURE = 0x20,
-		
+        SHADOWTYPE_NONE,
         /** Stencil shadow technique which renders all shadow volumes as
             a modulation after all the non-transparent areas have been 
             rendered. This technique is considerably less fillrate intensive 
             than the additive stencil shadow approach when there are multiple
             lights, but is not an accurate model. 
         */
-        SHADOWTYPE_STENCIL_MODULATIVE = 0x12,
+        SHADOWTYPE_STENCIL_MODULATIVE,
         /** Stencil shadow technique which renders each light as a separate
             additive pass to the scene. This technique can be very fillrate
             intensive because it requires at least 2 passes of the entire
@@ -190,22 +174,12 @@ namespace Ogre {
             accurate model than the modulative stencil approach and this is
             especially apparant when using coloured lights or bump mapping.
         */
-        SHADOWTYPE_STENCIL_ADDITIVE = 0x11,
+        SHADOWTYPE_STENCIL_ADDITIVE,
         /** Texture-based shadow technique which involves a monochrome render-to-texture
             of the shadow caster and a projection of that texture onto the 
             shadow receivers as a modulative pass. 
         */
-        SHADOWTYPE_TEXTURE_MODULATIVE = 0x22,
-		
-        /** Texture-based shadow technique which involves a monochrome render-to-texture
-            of the shadow caster and a projection of that texture onto the 
-            shadow receivers, built up per light as additive passes. 
-			This technique can be very fillrate intensive because it requires numLights + 2 
-			passes of the entire scene. However, it is a more accurate model than the 
-			modulative approach and this is especially apparant when using coloured lights 
-			or bump mapping.
-        */
-        SHADOWTYPE_TEXTURE_ADDITIVE = 0x21,
+        SHADOWTYPE_TEXTURE_MODULATIVE
     };
 
     /** An enumeration describing which material properties should track the vertex colours */
@@ -226,46 +200,32 @@ namespace Ogre {
 	/// Name / value parameter pair (first = name, second = value)
 	typedef std::map<String, String> NameValuePairList;
 
-    /// Alias / Texture name pair (first = alias, second = texture name)
-    typedef std::map<String, String> AliasTextureNamePairList;
-
-        template< typename T > struct TRect
-        {
-          T left, top, right, bottom;
-          TRect() {}
-          TRect( T const & l, T const & t, T const & r, T const & b )
-            : left( l ), top( t ), right( r ), bottom( b )
-          {
-          }
-          TRect( TRect const & o )
-            : left( o.left ), top( o.top ), right( o.right ), bottom( o.bottom )
-          {
-          }
-          TRect & operator=( TRect const & o )
-          {
-            left = o.left;
-            top = o.top;
-            right = o.right;
-            bottom = o.bottom;
-            return *this;
-          }
-          T width() const
-          {
-            return right - left;
-          }
-          T height() const
-          {
-            return bottom - top;
-          }
-        };
-
-        /** Structure used to define a rectangle in a 2-D floating point space.
-        */
-        typedef TRect<float> FloatRect;
-
         /** Structure used to define a rectangle in a 2-D integer space.
         */
-        typedef TRect< long > Rect;
+        struct Rect
+        {
+            long left, top, right, bottom;
+
+            Rect()
+            {
+            }
+            Rect( long l, long t, long r, long b )
+            {
+                left = l;
+                top = t;   
+                right = r;
+                bottom = b;                
+            }
+            Rect& operator = ( const Rect& other )
+            {
+                left = other.left;
+                top = other.top;
+                right = other.right;
+                bottom = other.bottom;       
+
+                return *this;
+            }
+        };
 
         /** Structure used to define a box in a 3-D integer space.
          	Note that the left, top, and front edges are included but the right, 

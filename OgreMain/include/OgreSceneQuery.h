@@ -111,8 +111,7 @@ namespace Ogre {
         };
     protected:
         SceneManager* mParentSceneMgr;
-        uint32 mQueryMask;
-		uint32 mQueryTypeMask;
+        unsigned long mQueryMask;
         std::set<WorldFragmentType> mSupportedWorldFragments;
         WorldFragmentType mWorldFragmentType;
     
@@ -130,23 +129,11 @@ namespace Ogre {
             MovableObject::getQueryFlags value is non-zero. The application will
             have to decide what each of the bits means.
         */
-        virtual void setQueryMask(uint32 mask);
+        virtual void setQueryMask(unsigned long mask);
         /** Returns the current mask for this query. */
-        virtual uint32 getQueryMask(void) const;
+        virtual unsigned long getQueryMask(void) const;
 
-        /** Sets the type mask for results of this query.
-        @remarks
-            This method allows you to set a 'type mask' to limit the results of this
-            query to certain types of objects. Whilst setQueryMask deals with flags
-			set per instance of object, this method deals with setting a mask on 
-			flags set per type of object. Both may exclude an object from query
-			results.
-        */
-        virtual void setQueryTypeMask(uint32 mask);
-        /** Returns the current mask for this query. */
-        virtual uint32 getQueryTypeMask(void) const;
-
-		/** Tells the query what kind of world geometry to return from queries;
+        /** Tells the query what kind of world geometry to return from queries;
             often the full renderable geometry is not what is needed. 
         @remarks
             The application receiving the world geometry is expected to know 
@@ -360,7 +347,7 @@ namespace Ogre {
         }
 
     };
-    typedef std::vector<RaySceneQueryResultEntry> RaySceneQueryResult;
+    typedef std::list<RaySceneQueryResultEntry> RaySceneQueryResult;
 
     /** Specialises the SceneQuery class for querying along a ray. */
     class _OgreExport RaySceneQuery : public SceneQuery, public RaySceneQueryListener
@@ -369,7 +356,7 @@ namespace Ogre {
         Ray mRay;
         bool mSortByDistance;
         ushort mMaxResults;
-        RaySceneQueryResult mResult;
+        RaySceneQueryResult* mLastResult;
 
     public:
         RaySceneQuery(SceneManager* mgr);
@@ -424,7 +411,7 @@ namespace Ogre {
         /** Gets the results of the last query that was run using this object, provided
             the query was executed using the collection-returning version of execute. 
         */
-        virtual RaySceneQueryResult& getLastResults(void);
+        virtual RaySceneQueryResult& getLastResults(void) const;
         /** Clears the results of the last query execution.
         @remarks
             You only need to call this if you specifically want to free up the memory

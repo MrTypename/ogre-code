@@ -32,7 +32,6 @@ namespace Ogre {
     typedef uint32 RGBA;
     typedef uint32 ARGB;
     typedef uint32 ABGR;
-	typedef uint32 BGRA;
 
     /** Class representing colour.
 	    @remarks
@@ -78,11 +77,7 @@ namespace Ogre {
 	    */
 	    ARGB getAsARGB(void) const;
 
-		/** Retrieves colour as BGRA.
-		*/
-		BGRA getAsBGRA(void) const;
-
-		/** Retrieves colours as ABGR */
+	    /** Retrieves colours as ABGR */
 	    ABGR getAsABGR(void) const;
 
 	    /** Sets colour as RGBA.
@@ -92,10 +87,6 @@ namespace Ogre {
 	    /** Sets colour as ARGB.
 	    */
         void setAsARGB(const ARGB val);
-
-		/** Sets colour as BGRA.
-		*/
-		void setAsBGRA(const BGRA val);
 
 	    /** Sets colour as ABGR.
 	    */
@@ -233,22 +224,6 @@ namespace Ogre {
             return *this;
         }
 
-		/** Set a colour value from Hue, Saturation and Brightness.
-		@param hue Hue value, scaled to the [0,1] range as opposed to the 0-360
-		@param saturation Saturation level, [0,1]
-		@param brightness Brightness level, [0,1]
-		*/
-		void setHSB(Real hue, Real saturation, Real brightness);
-
-
-		/** Function for writing to a stream.
-		*/
-		inline _OgreExport friend std::ostream& operator <<
-			( std::ostream& o, const ColourValue& c )
-		{
-			o << "ColourValue(" << c.r << ", " << c.g << ", " << c.b << ", " << c.a << ")";
-			return o;
-		}
 
     };
 

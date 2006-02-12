@@ -185,10 +185,6 @@ namespace Ogre {
         Technique* createTechnique(void);
         /** Gets the indexed technique. */
         Technique* getTechnique(unsigned short index);
-        /** searches for the named technique.
-            Return 0 if technique with name is not found
-        */
-        Technique* getTechnique(const String& name);
 		/** Retrieves the number of techniques. */
         unsigned short getNumTechniques(void) const;
         /** Removes the technique at the given index. */		
@@ -268,17 +264,6 @@ namespace Ogre {
         // The following methods are to make migration from previous versions simpler
         // and to make code easier to write when dealing with simple materials
         // They set the properties which have been moved to Pass for all Techniques and all Passes
-
-        /** Sets the point size properties for every Pass in every Technique.
-        @note
-            This property has been moved to the Pass class, which is accessible via the 
-            Technique. For simplicity, this method allows you to set these properties for 
-            every current Technique, and for every current Pass within those Techniques. If 
-            you need more precision, retrieve the Technique and Pass instances and set the
-            property there.
-        @see Pass::setPointSize
-        */
-        void setPointSize(Real ps);
 
         /** Sets the ambient colour reflectance properties for every Pass in every Technique.
         @note
@@ -574,19 +559,6 @@ namespace Ogre {
             // call superclass
             Resource::touch();
         }
-        
-        /** Applies texture names to Texture Unit State with matching texture name aliases.
-            All techniques, passes, and Texture Unit States within the material are checked.
-            If matching texture aliases are found then true is returned.
-
-        @param
-            aliasList is a map container of texture alias, texture name pairs
-        @param
-            apply set true to apply the texture aliases else just test to see if texture alias matches are found.
-        @return
-            True if matching texture aliases were found in the material.
-        */
-        bool applyTextureAliases(const AliasTextureNamePairList& aliasList, const bool apply = true) const;
 
 	    /** Gets the compilation status of the material.
         @return True if the material needs recompilation.

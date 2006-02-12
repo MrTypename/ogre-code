@@ -39,7 +39,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreParticleAffectorFactory.h"
 #include "OgreParticleSystemRenderer.h"
 #include "OgreMaterialManager.h"
-#include "OgreSceneManager.h"
 
 namespace Ogre {
     // Init statics
@@ -49,27 +48,13 @@ namespace Ogre {
     ParticleSystem::CmdQuota ParticleSystem::msQuotaCmd;
     ParticleSystem::CmdWidth ParticleSystem::msWidthCmd;
     ParticleSystem::CmdRenderer ParticleSystem::msRendererCmd;
-	ParticleSystem::CmdSorted ParticleSystem::msSortedCmd;
-	ParticleSystem::CmdLocalSpace ParticleSystem::msLocalSpaceCmd;
-
-    RadixSort<ParticleSystem::ActiveParticleList, Particle*, float> ParticleSystem::mRadixSorter;
-
-    Real ParticleSystem::msDefaultIterationInterval = 0;
 
     //-----------------------------------------------------------------------
     ParticleSystem::ParticleSystem() 
-      : mBoundsAutoUpdate(true),
-        mBoundsUpdateTime(10.0f),
-        mUpdateRemainTime(0),
+      : mBoundsAutoUpdate(true), mBoundsUpdateTime(10.0f),
         mResourceGroupName(ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME),
-        mIsRendererConfigured(false),
-        mSpeedFactor(1.0f),
-        mIterationInterval(msDefaultIterationInterval),
-        mSorted(false),
-        mLocalSpace(false),
-        mRenderer(0),
-        mCullIndividual(false),
-        mPoolSize(0)
+        mIsRendererConfigured(false), mSpeedFactor(1.0f), mRenderer(0),
+        mCullIndividual(false), mPoolSize(0)
     {
         initParameters();
         mAABB.setExtents(-1, -1, -1, 1, 1, 1);
@@ -85,20 +70,11 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     ParticleSystem::ParticleSystem(const String& name, const String& resourceGroup)
-      : MovableObject(name),
-        mBoundsAutoUpdate(true),
-        mBoundsUpdateTime(10.0f),
-        mUpdateRemainTime(0),
-        mResourceGroupName(resourceGroup),
-        mIsRendererConfigured(false),
-        mSpeedFactor(1.0f),
-        mIterationInterval(msDefaultIterationInterval),
-        mSorted(false),
-        mLocalSpace(false),
-        mRenderer(0), 
-		mCullIndividual(false),
-        mPoolSize(0)
+      : mBoundsAutoUpdate(true), mBoundsUpdateTime(10.0f),
+        mResourceGroupName(resourceGroup), mIsRendererConfigured(false),
+		mSpeedFactor(1.0f), mRenderer(0), mCullIndividual(false), mPoolSize(0)
     {
+        mName = name;
         setDefaultDimensions( 100, 100 );
         setMaterialName( "BaseWhite" );
         // Default to 10 particles, expect app to specify (will only be increased, not decreased)
@@ -239,8 +215,6 @@ namespace Ogre {
         setMaterialName(rhs.mMaterialName);
         setDefaultDimensions(rhs.mDefaultWidth, rhs.mDefaultHeight);
         mCullIndividual = rhs.mCullIndividual;
-		mSorted = rhs.mSorted;
-		mLocalSpace = rhs.mLocalSpace;
 
         setRenderer(rhs.getRendererName());
         // Copy settings
@@ -287,31 +261,12 @@ namespace Ogre {
 		// Only update if attached to a node
 		if (mParentNode)
 		{
-            if (mIterationInterval > 0)
-            {
-                mUpdateRemainTime += timeElapsed;
-
-                while (mUpdateRemainTime >= mIterationInterval)
-                {
-			        // Update existing particles
-        	        _expire(mIterationInterval);
-        	        _triggerAffectors(mIterationInterval);
-        	        _applyMotion(mIterationInterval);
-			        // Emit new particles
-        	        _triggerEmitters(mIterationInterval);
-
-                    mUpdateRemainTime -= mIterationInterval;
-                }
-            }
-            else
-            {
-			    // Update existing particles
-        	    _expire(timeElapsed);
-        	    _triggerAffectors(timeElapsed);
-        	    _applyMotion(timeElapsed);
-			    // Emit new particles
-        	    _triggerEmitters(timeElapsed);
-            }
+			// Update existing particles
+        	_expire(timeElapsed);
+        	_triggerAffectors(timeElapsed);
+        	_applyMotion(timeElapsed);
+			// Emit new particles
+        	_triggerEmitters(timeElapsed);
 
             if (!mBoundsAutoUpdate && mBoundsUpdateTime > 0.0f)
                 mBoundsUpdateTime -= timeElapsed; // count down 
@@ -397,14 +352,9 @@ namespace Ogre {
                 (*itEmit)->_initParticle(p);
 
 				// Translate position & direction into world space
-				if (!mLocalSpace)
-				{
-					p->position  = 
-						(mParentNode->_getDerivedOrientation() * p->position) 
-						+ mParentNode->_getDerivedPosition();
-					p->direction = 
-						(mParentNode->_getDerivedOrientation() * p->direction);
-				}
+                // Maybe make emitter do this?
+                p->position  = (mParentNode->_getDerivedOrientation() * p->position) + mParentNode->_getDerivedPosition();
+                p->direction = (mParentNode->_getDerivedOrientation() * p->direction);
 
 				// apply partial frame motion to this particle
             	p->position += (p->direction * timePoint);
@@ -487,7 +437,8 @@ namespace Ogre {
     {
         // Fast creation (don't use superclass since emitter will init)
         Particle* p = mFreeParticles.front();
-        mActiveParticles.splice(mActiveParticles.end(), mFreeParticles, mFreeParticles.begin());
+        mFreeParticles.pop_front();
+        mActiveParticles.push_back(p);
 
         p->_notifyOwner(this);
 
@@ -502,6 +453,62 @@ namespace Ogre {
             mRenderer->_updateRenderQueue(queue, mActiveParticles, mCullIndividual);
         }
     }
+    /*
+    //-----------------------------------------------------------------------
+    void ParticleSystem::genBillboardAxes(const Camera& cam, Vector3* pX, Vector3 *pY, const Billboard* pBill)    
+    {
+        // Orientation different from BillboardSet
+        // Billboards are in world space (to decouple them from emitters in node space)
+        Quaternion camQ;
+
+        switch (mBillboardType)
+        {
+        case BBT_POINT:
+            // Get camera world axes for X and Y (depth is irrelevant)
+            // No inverse transform
+            camQ = cam.getDerivedOrientation();
+            *pX = camQ * Vector3::UNIT_X;
+            *pY = camQ * Vector3::UNIT_Y;
+           
+            break;
+        case BBT_ORIENTED_COMMON:
+             // Y-axis is common direction
+            // X-axis is cross with camera direction 
+            *pY = mCommonDirection;
+            *pX = cam.getDerivedDirection().crossProduct(*pY);
+           
+            break;
+        case BBT_ORIENTED_SELF:
+            // Y-axis is direction
+            // X-axis is cross with camera direction 
+
+            // Scale direction first
+            *pY = (pBill->mDirection * 0.01);
+            *pX = cam.getDerivedDirection().crossProduct(*pY);
+
+            break;
+        }
+
+    }
+    //-----------------------------------------------------------------------
+    void ParticleSystem::getWorldTransforms(Matrix4* xform) const
+    {
+        // Particles are already in world space
+        *xform = Matrix4::IDENTITY;
+
+    }
+    //-----------------------------------------------------------------------
+    const Quaternion& ParticleSystem::getWorldOrientation(void) const
+    {
+        return mParentNode->_getDerivedOrientation();
+    }
+    //-----------------------------------------------------------------------
+    const Vector3& ParticleSystem::getWorldPosition(void) const
+    {
+        return mParentNode->_getDerivedPosition();
+    }
+    //-----------------------------------------------------------------------
+    */
     void ParticleSystem::initParameters(void)
     {
         if (createParamDictionary("ParticleSystem"))
@@ -538,16 +545,6 @@ namespace Ogre {
 				PT_STRING),
 				&msRendererCmd);
 
-			dict->addParameter(ParameterDef("sorted", 
-				"Sets whether particles should be sorted relative to the camera. ",
-				PT_BOOL),
-				&msSortedCmd);
-
-			dict->addParameter(ParameterDef("local_space", 
-				"Sets whether particles should be kept in local space rather than "
-				"emitted into world space. ",
-				PT_BOOL),
-				&msLocalSpaceCmd);
         }
     }
     //-----------------------------------------------------------------------
@@ -594,7 +591,7 @@ namespace Ogre {
             mWorldAABB.setExtents(min, max);
 
 
-            // We've may have put particles in world space to decouple them from the
+            // We've already put particles in world space to decouple them from the
             // node transform, so reverse transform back since we're expected to 
             // provide a local AABB
             Vector3 temp;
@@ -606,10 +603,7 @@ namespace Ogre {
             for (int i = 0; i < 8; ++i)
             {
                 // Reverse transform corner
-				if (mLocalSpace)
-                    temp = corner[i];
-                else
-                    temp = invQ * (corner[i] - t);
+                temp = invQ * (corner[i] - t);
                 min.makeFloor(temp);
                 max.makeCeil(temp);
             }
@@ -634,7 +628,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     const String& ParticleSystem::getMovableType(void) const
     {
-        return ParticleSystemFactory::FACTORY_TYPE_NAME;
+        static String mType = "ParticleSystem";
+        return mType;
     }
     //-----------------------------------------------------------------------
     void ParticleSystem::_notifyParticleResized(void)
@@ -693,14 +688,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ParticleSystem::_notifyCurrentCamera(Camera* cam)
     {
-		MovableObject::_notifyCurrentCamera(cam);
-
-        if (mSorted)
-		{
-			_sortParticles(cam);
-		}
-
-		if (mRenderer)
+        if (mRenderer)
         {
 			if (!mIsRendererConfigured)
 				configureRenderer();
@@ -742,8 +730,6 @@ namespace Ogre {
         // Remove all active instances
         mActiveParticles.clear(); 
 
-        // Reset update remain time
-        mUpdateRemainTime = 0;
     }
     //-----------------------------------------------------------------------
     void ParticleSystem::setRenderer(const String& rendererName)
@@ -797,7 +783,6 @@ namespace Ogre {
             mRenderer->_setMaterial(mat);
 			if (mRenderQueueIDSet)
 				mRenderer->setRenderQueueGroup(mRenderQueueID);
-			mRenderer->setKeepParticlesInLocalSpace(mLocalSpace);
             mIsRendererConfigured = true;
         }
     }
@@ -870,46 +855,13 @@ namespace Ogre {
         mBoundsUpdateTime = stopIn;
     }
 	//-----------------------------------------------------------------------
-	void ParticleSystem::setRenderQueueGroup(uint8 queueID)
+	void ParticleSystem::setRenderQueueGroup(RenderQueueGroupID queueID)
 	{
 		MovableObject::setRenderQueueGroup(queueID);
 		if (mRenderer)
 		{
 			mRenderer->setRenderQueueGroup(queueID);
 		}
-	}
-	//-----------------------------------------------------------------------
-	void ParticleSystem::setKeepParticlesInLocalSpace(bool keepLocal)
-	{
-		mLocalSpace = keepLocal;
-		if (mRenderer)
-		{
-			mRenderer->setKeepParticlesInLocalSpace(keepLocal);
-		}
-	}
-	//-----------------------------------------------------------------------
-	void ParticleSystem::_sortParticles(Camera* cam)
-	{
-		Quaternion camQ = cam->getDerivedOrientation();
-		if (mLocalSpace)
-		{
-			// transform the camera orientation into local space
-			camQ = mParentNode->_getDerivedOrientation().Inverse() * camQ;
-		}
-
-        SortFunctor sortFunctor;
-		sortFunctor.sortDir = camQ * Vector3::UNIT_Z;
-
-		mRadixSorter.sort(mActiveParticles, sortFunctor);
-	}
-	float ParticleSystem::SortFunctor::operator()(Particle* p) const
-	{
-		return sortDir.dotProduct(p->position);
-	}
-	//-----------------------------------------------------------------------
-	uint32 ParticleSystem::getTypeFlags(void) const
-	{
-		return SceneManager::FX_TYPE_MASK;
 	}
     //-----------------------------------------------------------------------
     String ParticleSystem::CmdCull::doGet(const void* target) const
@@ -973,28 +925,6 @@ namespace Ogre {
     {
         static_cast<ParticleSystem*>(target)->setRenderer(val);
     }
-	//-----------------------------------------------------------------------
-	String ParticleSystem::CmdSorted::doGet(const void* target) const
-	{
-		return StringConverter::toString(
-			static_cast<const ParticleSystem*>(target)->getSortingEnabled());
-	}
-	void ParticleSystem::CmdSorted::doSet(void* target, const String& val)
-	{
-		static_cast<ParticleSystem*>(target)->setSortingEnabled(
-			StringConverter::parseBool(val));
-	}
-	//-----------------------------------------------------------------------
-	String ParticleSystem::CmdLocalSpace::doGet(const void* target) const
-	{
-		return StringConverter::toString(
-			static_cast<const ParticleSystem*>(target)->getKeepParticlesInLocalSpace());
-	}
-	void ParticleSystem::CmdLocalSpace::doSet(void* target, const String& val)
-	{
-		static_cast<ParticleSystem*>(target)->setKeepParticlesInLocalSpace(
-			StringConverter::parseBool(val));
-	}
     //-----------------------------------------------------------------------
     ParticleAffector::~ParticleAffector() 
     {

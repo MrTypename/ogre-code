@@ -347,29 +347,29 @@ protected:
 		// Spline it for nice curves
 		anim->setInterpolationMode(Animation::IM_SPLINE);
 		// Create a track to animate the camera's node
-		NodeAnimationTrack* track = anim->createNodeTrack(0, mLightNode);
+		AnimationTrack* track = anim->createTrack(0, mLightNode);
 		// Setup keyframes
-		TransformKeyFrame* key = track->createNodeKeyFrame(0); // A startposition
+		KeyFrame* key = track->createKeyFrame(0); // A startposition
 		key->setTranslate(Vector3(300,550,-300));
-		key = track->createNodeKeyFrame(2);//B
+		key = track->createKeyFrame(2);//B
 		key->setTranslate(Vector3(150,600,-250));
-		key = track->createNodeKeyFrame(4);//C
+		key = track->createKeyFrame(4);//C
 		key->setTranslate(Vector3(-150,650,-100));
-		key = track->createNodeKeyFrame(6);//D
+		key = track->createKeyFrame(6);//D
 		key->setTranslate(Vector3(-400,500,-200));
-		key = track->createNodeKeyFrame(8);//E
+		key = track->createKeyFrame(8);//E
 		key->setTranslate(Vector3(-200,500,-400));
-		key = track->createNodeKeyFrame(10);//F
+		key = track->createKeyFrame(10);//F
 		key->setTranslate(Vector3(-100,450,-200));
-		key = track->createNodeKeyFrame(12);//G
+		key = track->createKeyFrame(12);//G
 		key->setTranslate(Vector3(-100,400,180));
-		key = track->createNodeKeyFrame(14);//H
+		key = track->createKeyFrame(14);//H
 		key->setTranslate(Vector3(0,250,600));
-		key = track->createNodeKeyFrame(16);//I
+		key = track->createKeyFrame(16);//I
 		key->setTranslate(Vector3(100,650,100));
-		key = track->createNodeKeyFrame(18);//J
+		key = track->createKeyFrame(18);//J
 		key->setTranslate(Vector3(250,600,0));
-		key = track->createNodeKeyFrame(20);//K == A
+		key = track->createKeyFrame(20);//K == A
 		key->setTranslate(Vector3(300,550,-300));
 		// Create a new animation state to track this
 		mAnimState = mSceneMgr->createAnimationState("LightTrack");

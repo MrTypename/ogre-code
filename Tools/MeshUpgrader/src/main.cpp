@@ -28,13 +28,11 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreMeshSerializer.h"
 #include "OgreSkeletonSerializer.h"
 #include "OgreDefaultHardwareBufferManager.h"
-#include "OgreHardwareVertexBuffer.h"
 
 #include <iostream>
 #include <sys/stat.h>
 
 using namespace std;
-using namespace Ogre;
 
 void help(void)
 {
@@ -42,19 +40,8 @@ void help(void)
     cout << endl << "OgreMeshUpgrader: Upgrades .mesh files to the latest version." << endl;
     cout << "Provided for OGRE by Steve Streeting 2004" << endl << endl;
     cout << "Usage: OgreMeshUpgrader [-e] sourcefile [destfile] " << endl;
-	cout << "-i             = Interactive mode, prompt for options" << endl;
-	cout << "-l lodlevels   = number of LOD levels" << endl;
-	cout << "-d loddist     = distance increment to reduce LOD" << endl;
-	cout << "-p lodpercent  = Percentage triangle reduction amount per LOD" << endl;
-	cout << "-f lodnumtris  = Fixed vertex reduction per LOD" << endl;
     cout << "-e         = DON'T generate edge lists (for stencil shadows)" << endl;
     cout << "-t         = Generate tangents (for normal mapping)" << endl;
-	cout << "-r         = DON'T reorganise buffers to recommended format" << endl;
-	cout << "-d3d       = Convert to D3D colour formats" << endl;
-	cout << "-gl        = Convert to GL colour formats" << endl;
-	cout << "-srcd3d    = Interpret ambiguous colours as D3D style" << endl;
-	cout << "-srcgl     = Interpret ambiguous colours as GL style" << endl;
-	cout << "-E endian  = Set endian mode 'big' 'little' or 'native' (default)" << endl;
     cout << "sourcefile = name of file to convert" << endl;
     cout << "destfile   = optional name of file to write to. If you don't" << endl;
     cout << "             specify this OGRE overwrites the existing file." << endl;
@@ -62,25 +49,10 @@ void help(void)
     cout << endl;
 }
 
-struct UpgradeOptions
-{
-	bool interactive;
-	bool suppressEdgeLists;
-	bool generateTangents;
-	bool dontReorganise;
-	bool destColourFormatSet;
-	VertexElementType destColourFormat;
-	bool srcColourFormatSet;
-	VertexElementType srcColourFormat;
-	unsigned short numLods;
-	Real lodDist;
-	Real lodPercent;
-	size_t lodFixed;
-	bool usePercent;
-	Serializer::Endian endian;
 
-};
 
+
+using namespace Ogre;
 
 // Crappy globals
 // NB some of these are not directly used, but are required to
@@ -94,98 +66,6 @@ SkeletonSerializer* skeletonSerializer;
 DefaultHardwareBufferManager *bufferManager;
 ResourceGroupManager* rgm;
 MeshManager* meshMgr;
-UpgradeOptions opts;
-
-void parseOpts(UnaryOptionList& unOpts, BinaryOptionList& binOpts)
-{
-	opts.interactive = false;
-	opts.suppressEdgeLists = false;
-	opts.generateTangents = false;
-	opts.dontReorganise = false;
-	opts.endian = Serializer::ENDIAN_NATIVE;
-	opts.destColourFormatSet = false;
-	opts.srcColourFormatSet = false;
-
-	opts.lodDist = 500;
-	opts.lodFixed = 0;
-	opts.lodPercent = 20;
-	opts.numLods = 0;
-	opts.usePercent = true;
-
-
-	UnaryOptionList::iterator ui = unOpts.find("-e");
-	opts.suppressEdgeLists = ui->second;
-	ui = unOpts.find("-t");
-	opts.generateTangents = ui->second;
-	ui = unOpts.find("-i");
-	opts.interactive = ui->second;
-	ui = unOpts.find("-r");
-	opts.dontReorganise = ui->second;
-	ui = unOpts.find("-d3d");
-	if (ui->second)
-	{
-		opts.destColourFormatSet = true;
-		opts.destColourFormat = VET_COLOUR_ARGB;
-	}
-	ui = unOpts.find("-gl");
-	if (ui->second)
-	{
-		opts.destColourFormatSet = true;
-		opts.destColourFormat = VET_COLOUR_ABGR;
-	}
-	ui = unOpts.find("-srcd3d");
-	if (ui->second)
-	{
-		opts.srcColourFormatSet = true;
-		opts.srcColourFormat = VET_COLOUR_ARGB;
-	}
-	ui = unOpts.find("-srcgl");
-	if (ui->second)
-	{
-		opts.srcColourFormatSet = true;
-		opts.srcColourFormat = VET_COLOUR_ABGR;
-	}
-
-
-	BinaryOptionList::iterator bi = binOpts.find("-l");
-	if (!bi->second.empty())
-	{
-		opts.numLods = StringConverter::parseInt(bi->second);
-	}
-
-	bi = binOpts.find("-d");
-	if (!bi->second.empty())
-	{
-		opts.lodDist = StringConverter::parseReal(bi->second);
-	}
-
-	bi = binOpts.find("-p");
-	if (!bi->second.empty())
-	{
-		opts.lodPercent = StringConverter::parseReal(bi->second);
-		opts.usePercent = true;
-	}
-
-
-	bi = binOpts.find("-f");
-	if (!bi->second.empty())
-	{
-		opts.lodFixed = StringConverter::parseInt(bi->second);
-		opts.usePercent = false;
-	}
-
-	bi = binOpts.find("-E");
-	if (!bi->second.empty())
-	{
-	    if (bi->second == "big")
-            opts.endian = Serializer::ENDIAN_BIG;
-	    else if (bi->second == "little")
-            opts.endian = Serializer::ENDIAN_LITTLE;
-	    else 
-            opts.endian = Serializer::ENDIAN_NATIVE;
-    }
-
-}
 
 String describeSemantic(VertexElementSemantic sem)
 {
@@ -329,7 +209,7 @@ void reorganiseVertexBuffers(const String& desc, Mesh& mesh, VertexData* vertexD
                 // Automatic
                 VertexDeclaration* newDcl = 
                     vertexData->vertexDeclaration->getAutoOrganisedDeclaration(
-                        mesh.hasSkeleton(), mesh.hasVertexAnimation());
+                        mesh.hasSkeleton());
                 copyElems(newDcl, &elemList);
                 HardwareBufferManager::getSingleton().destroyVertexDeclaration(newDcl);
                 anyChanges = true;
@@ -434,24 +314,7 @@ void reorganiseVertexBuffers(Mesh& mesh)
 {
 	if (mesh.sharedVertexData)
 	{
-		if (opts.interactive)
-			reorganiseVertexBuffers("Shared Geometry", mesh, mesh.sharedVertexData);
-		else
-		{
-			// Automatic
-			VertexDeclaration* newDcl = 
-				mesh.sharedVertexData->vertexDeclaration->getAutoOrganisedDeclaration(
-				mesh.hasSkeleton(), mesh.hasVertexAnimation());
-			if (*newDcl != *(mesh.sharedVertexData->vertexDeclaration))
-			{
-				// Usages don't matter here since we're onlly exporting
-				BufferUsageList bufferUsages;
-				for (size_t u = 0; u <= newDcl->getMaxSource(); ++u)
-					bufferUsages.push_back(HardwareBuffer::HBU_STATIC_WRITE_ONLY);
-				mesh.sharedVertexData->reorganiseBuffers(newDcl, bufferUsages);
-			}
-
-		}
+		reorganiseVertexBuffers("Shared Geometry", mesh, mesh.sharedVertexData);
 	}
 
     Mesh::SubMeshIterator smIt = mesh.getSubMeshIterator();
@@ -461,342 +324,13 @@ void reorganiseVertexBuffers(Mesh& mesh)
 		SubMesh* sm = smIt.getNext();
 		if (!sm->useSharedVertices)
 		{
-			if (opts.interactive)
-			{
-				StringUtil::StrStreamType str;
-				str << "SubMesh " << idx++; 
-				reorganiseVertexBuffers(str.str(), mesh, sm->vertexData);
-			}
-			else
-			{
-				// Automatic
-				VertexDeclaration* newDcl = 
-					sm->vertexData->vertexDeclaration->getAutoOrganisedDeclaration(
-					mesh.hasSkeleton(), mesh.hasVertexAnimation());
-				if (*newDcl != *(sm->vertexData->vertexDeclaration))
-				{
-					// Usages don't matter here since we're onlly exporting
-					BufferUsageList bufferUsages;
-					for (size_t u = 0; u <= newDcl->getMaxSource(); ++u)
-						bufferUsages.push_back(HardwareBuffer::HBU_STATIC_WRITE_ONLY);
-					sm->vertexData->reorganiseBuffers(newDcl, bufferUsages);
-				}
-				
-			}
+			StringUtil::StrStreamType str;
+			str << "SubMesh " << idx++; 
+			reorganiseVertexBuffers(str.str(), mesh, sm->vertexData);
 		}
 	}
 }
 
-
-void vertexBufferReorg(Mesh& mesh)
-{
-	String response;
-
-	if (opts.interactive)
-	{
-
-		// Check to see whether we would like to reorganise vertex buffers
-		std::cout << "\nWould you like to reorganise the vertex buffers for this mesh?";
-		while (response.empty())
-		{
-			cin >> response;
-			StringUtil::toLowerCase(response);
-			if (response == "y")
-			{
-				reorganiseVertexBuffers(mesh);
-			}
-			else if (response == "n")
-			{
-				// Do nothing
-			}
-			else
-			{
-				response = "";
-			}
-		}
-	}
-	else if (!opts.dontReorganise)
-	{
-		reorganiseVertexBuffers(mesh);
-	}
-
-}
-
-void buildLod(Mesh* mesh)
-{	
-	String response;
-
-	// Prompt for LOD generation?
-	bool genLod = false;
-	bool askLodDtls = false;
-	if (!opts.interactive) // derive from params if in batch mode
-	{
-		askLodDtls = false;
-		if (opts.numLods == 0)
-		{
-			genLod = false;
-		}
-		else
-		{
-			genLod = true;
-		}
-	}
-	else if(opts.numLods == 0) // otherwise only ask if not specified on command line
-	{
-		if (mesh->getNumLodLevels() > 1)
-		{
-			std::cout << "\nXML already contains level-of detail information.\n"
-				"Do you want to: (u)se it, (r)eplace it, or (d)rop it?";
-			while (response == "")
-			{
-				cin >> response;
-				StringUtil::toLowerCase(response);
-				if (response == "u")
-				{
-					// Do nothing
-				}
-				else if (response == "d")
-				{
-					mesh->removeLodLevels();
-				}
-				else if (response == "r")
-				{
-					genLod = true;
-					askLodDtls = true;
-
-				}
-				else
-				{
-					response = "";
-				}
-			}// while response == ""
-		}
-		else // no existing LOD
-		{
-			std::cout << "\nWould you like to generate LOD information? (y/n)";
-			while (response == "")
-			{
-				cin >> response;
-				StringUtil::toLowerCase(response);
-				if (response == "n")
-				{
-					// Do nothing
-				}
-				else if (response == "y")
-				{
-					genLod = true;
-					askLodDtls = true;
-				}
-			}
-		}
-	}
-
-	if (genLod)
-	{
-		unsigned short numLod;
-		ProgressiveMesh::VertexReductionQuota quota;
-		Real reduction;
-		Mesh::LodDistanceList distanceList;
-
-		if (askLodDtls)
-		{
-			cout << "\nHow many extra LOD levels would you like to generate?";
-			cin >> numLod;
-
-			cout << "\nWhat unit of reduction would you like to use:" <<
-				"\n(f)ixed or (p)roportional?";
-			cin >> response;
-			StringUtil::toLowerCase(response);
-			if (response == "f")
-			{
-				quota = ProgressiveMesh::VRQ_CONSTANT;
-				cout << "\nHow many vertices should be removed at each LOD?";
-			}
-			else
-			{
-				quota = ProgressiveMesh::VRQ_PROPORTIONAL;
-				cout << "\nWhat percentage of remaining vertices should be removed "
-					"\at each LOD (e.g. 50)?";
-			}
-			cin >> reduction;
-			if (quota == ProgressiveMesh::VRQ_PROPORTIONAL)
-			{
-				// Percentage -> parametric
-				reduction = reduction * 0.01f;
-			}
-
-			cout << "\nEnter the distance for each LOD to come into effect.";
-
-			Real distance;
-			for (unsigned short iLod = 0; iLod < numLod; ++iLod)
-			{
-				cout << "\nLOD Level " << (iLod+1) << ":";
-				cin >> distance;
-				distanceList.push_back(distance);
-			}
-		}
-		else
-		{
-			numLod = opts.numLods;
-			quota = opts.usePercent? 
-				ProgressiveMesh::VRQ_PROPORTIONAL : ProgressiveMesh::VRQ_CONSTANT;
-			if (opts.usePercent)
-			{
-				reduction = opts.lodPercent * 0.01f;
-			}
-			else
-			{
-				reduction = opts.lodFixed;
-			}
-			Real currDist = 0;
-			for (unsigned short iLod = 0; iLod < numLod; ++iLod)
-			{
-				currDist += opts.lodDist;
-				distanceList.push_back(currDist);
-			}
-
-		}
-
-		mesh->generateLodLevels(distanceList, quota, reduction);
-	}
-
-}
-
-void checkColour(VertexData* vdata, bool &hasColour, bool &hasAmbiguousColour,
-	VertexElementType& originalType)
-{
-	const VertexDeclaration::VertexElementList& elemList = vdata->vertexDeclaration->getElements();
-	for (VertexDeclaration::VertexElementList::const_iterator i = elemList.begin();
-		i != elemList.end(); ++i)
-	{
-		const VertexElement& elem = *i;
-		switch (elem.getType())
-		{
-		case VET_COLOUR:
-			hasAmbiguousColour = true;
-		case VET_COLOUR_ABGR:
-		case VET_COLOUR_ARGB:
-			hasColour = true;
-			originalType = elem.getType();
-		default:
-			// do nothing
-			;
-		};
-	}
-
-}
-
-void resolveColourAmbiguities(Mesh* mesh)
-{
-	// Check what we're dealing with 
-	bool hasColour = false;
-	bool hasAmbiguousColour = false;
-	VertexElementType originalType;
-	if (mesh->sharedVertexData)
-	{
-		checkColour(mesh->sharedVertexData, hasColour, hasAmbiguousColour, originalType);
-	}
-	for (unsigned short i = 0; i < mesh->getNumSubMeshes(); ++i)
-	{
-		SubMesh* sm = mesh->getSubMesh(i);
-		if (sm->useSharedVertices == false)
-		{
-			checkColour(sm->vertexData, hasColour, hasAmbiguousColour, originalType);
-		}
-	}
-
-	String response;
-	if (hasAmbiguousColour)
-	{
-		if (opts.srcColourFormatSet)
-		{
-			originalType = opts.srcColourFormat;
-		}
-		else
-		{
-			// unknown input colour, have to ask
-			std::cout << "\nYour mesh has vertex colours but I don't know whether they were generated\n"
-				<< "using GL or D3D ordering. Please indicate which was used when the mesh was\n"
-				<< "created (type 'gl' or 'd3d').\n";
-			while (response.empty())
-			{
-				cin >> response;
-				StringUtil::toLowerCase(response);
-				if (response == "d3d")
-				{
-					originalType = VET_COLOUR_ARGB;
-				}
-				else if (response == "gl")
-				{
-					originalType = VET_COLOUR_ABGR;
-				}
-				else
-				{
-					response = "";
-				}
-			}
-		}
-	}
-
-	// Ask what format we want to save in
-	VertexElementType desiredType;
-	if (hasColour)
-	{
-		if (opts.destColourFormatSet)
-		{
-			desiredType = opts.destColourFormat;
-		}
-		else
-		{
-			if (opts.interactive)
-			{
-
-				response = "";
-				std::cout << "\nYour mesh has vertex colours, which can be stored in one of two layouts,\n"
-					<< "each of which will be slightly faster to load in a different render system.\n"
-					<< "Do you want to prefer Direct3D (d3d) or OpenGL (gl)?\n";
-				while (response.empty())
-				{
-					cin >> response;
-					StringUtil::toLowerCase(response);
-					if (response == "d3d")
-					{
-						desiredType = VET_COLOUR_ARGB;
-					}
-					else if (response == "gl")
-					{
-						desiredType = VET_COLOUR_ABGR;
-					}
-					else
-					{
-						response = "";
-					}
-				}
-			}
-			else
-			{
-				// 'do no harm'
-				return;
-			}
-		}
-
-	}
-
-	if (mesh->sharedVertexData)
-	{
-		mesh->sharedVertexData->convertPackedColour(originalType, desiredType);
-	}
-	for (unsigned short i = 0; i < mesh->getNumSubMeshes(); ++i)
-	{
-		SubMesh* sm = mesh->getSubMesh(i);
-		if (sm->useSharedVertices == false)
-		{
-			sm->vertexData->convertPackedColour(originalType, desiredType);
-		}
-	}
-
-
-}
 
 int main(int numargs, char** args)
 {
@@ -824,22 +358,9 @@ int main(int numargs, char** args)
     UnaryOptionList unOptList;
     BinaryOptionList binOptList;
 
-	unOptList["-i"] = false;
     unOptList["-e"] = false;
     unOptList["-t"] = false;
-	unOptList["-r"] = false;
-	unOptList["-gl"] = false;
-	unOptList["-d3d"] = false;
-	unOptList["-srcgl"] = false;
-	unOptList["-srcd3d"] = false;
-	binOptList["-l"] = "";
-	binOptList["-d"] = "";
-	binOptList["-p"] = "";
-	binOptList["-f"] = "";
-	binOptList["-E"] = "";
-
     int startIdx = findCommandLineOpts(numargs, args, unOptList, binOptList);
-	parseOpts(unOptList, binOptList);
 
     String source(args[startIdx]);
 
@@ -878,62 +399,154 @@ int main(int numargs, char** args)
 
 	String response;
 
-	vertexBufferReorg(mesh);
-
-	// Deal with VET_COLOUR ambiguities
-	resolveColourAmbiguities(&mesh);
+	// Check to see whether we would like to reorganise vertex buffers
+    std::cout << "\nWould you like to reorganise the vertex buffers for this mesh?";
+	while (response.empty())
+	{
+		cin >> response;
+		StringUtil::toLowerCase(response);
+		if (response == "y")
+		{
+			reorganiseVertexBuffers(mesh);
+		}
+		else if (response == "n")
+		{
+			// Do nothing
+		}
+		else
+		{
+			response = "";
+		}
+	}
 	
-	buildLod(&mesh);
+    // Prompt for LOD generation
+    bool genLod = false;
+    response = "";
+    if (mesh.getNumLodLevels() > 1)
+    {
+        std::cout << "\nMesh already contains level-of detail information.\n"
+            "Do you want to: (u)se it, (r)eplace it, or (d)rop it?";
+        while (response.empty())
+        {
+            cin >> response;
+			StringUtil::toLowerCase(response);
+            if (response == "u")
+            {
+                // Do nothing
+            }
+            else if (response == "d")
+            {
+                mesh.removeLodLevels();
+            }
+            else if (response == "r")
+            {
+                genLod = true;
+            }
+            else
+            {
+                response = "";
+            }
+        }// while response == ""
+    }
+    else // no existing LOD
+    {
+        std::cout << "\nWould you like to generate LOD information? (y/n)";
+        while (response == "")
+        {
+            cin >> response;
+			StringUtil::toLowerCase(response);
+            if (response == "n")
+            {
+                // Do nothing
+            }
+            else if (response == "y")
+            {
+                genLod = true;
+            }
+        }
+    }
+
+    if (genLod)
+    {
+        unsigned short numLod;
+        ProgressiveMesh::VertexReductionQuota quota;
+        Real reduction;
+
+        cout << "\nHow many extra LOD levels would you like to generate?";
+        cin >> numLod;
+
+        cout << "\nWhat unit of reduction would you like to use:"
+            "\n(f)ixed or (p)roportional?";
+        cin >> response;
+		StringUtil::toLowerCase(response);
+        if (response == "f")
+        {
+            quota = ProgressiveMesh::VRQ_CONSTANT;
+            cout << "\nHow many vertices should be removed at each LOD?";
+        }
+        else
+        {
+            quota = ProgressiveMesh::VRQ_PROPORTIONAL;
+            cout << "\nWhat proportion of remaining vertices should be removed " <<
+                "at each LOD (e.g. 0.5)?";
+        }
+        cin >> reduction;
+
+        cout << "\nEnter the distance for each LOD to come into effect.";
+
+        Real distance;
+        Mesh::LodDistanceList distanceList;
+        for (unsigned short iLod = 0; iLod < numLod; ++iLod)
+        {
+            cout << "\nLOD Level " << (iLod+1) << ":";
+            cin >> distance;
+            distanceList.push_back(distance);
+        }
+
+        mesh.generateLodLevels(distanceList, quota, reduction);
+    }
 
     // Make sure we generate edge lists, provided they are not deliberately disabled
-    if (!opts.suppressEdgeLists)
+    UnaryOptionList::iterator ui = unOptList.find("-e");
+
+    if (!ui->second)
     {
         cout << "\nGenerating edge lists.." << std::endl;
         mesh.buildEdgeList();
     }
-	else
-	{
-		mesh.freeEdgeList();
-	}
 
     // Generate tangents?
-    if (opts.generateTangents)
+    ui = unOptList.find("-t");
+    bool generateTangents = ui->second;
+    if (generateTangents)
     {
         unsigned short srcTex, destTex;
         bool existing = mesh.suggestTangentVectorBuildParams(srcTex, destTex);
         if (existing)
         {
-			if (opts.interactive)
-			{
-				std::cout << "\nThis mesh appears to already have a set of 3D texture coordinates, " <<
-					"which would suggest tangent vectors have already been calculated. Do you really " <<
-					"want to generate new tangent vectors (may duplicate)? (y/n)";
-				while (response == "")
-				{
-					cin >> response;
-					StringUtil::toLowerCase(response);
-					if (response == "y")
-					{
-						// Do nothing
-					}
-					else if (response == "n")
-					{
-						opts.generateTangents = false;
-					}
-					else
-					{
-						response = "";
-					}
-				}
-			}
-			else
-			{
-				// safe
-				opts.generateTangents = false;
-			}
+            std::cout << "\nThis mesh appears to already have a set of 3D texture coordinates, " <<
+                "which would suggest tangent vectors have already been calculated. Do you really " <<
+                "want to generate new tangent vectors (may duplicate)? (y/n)";
+            while (response == "")
+            {
+                cin >> response;
+                StringUtil::toLowerCase(response);
+                if (response == "y")
+                {
+                    // Do nothing
+                }
+                else if (response == "n")
+                {
+                    generateTangents = false;
+                }
+                else
+                {
+                    response = "";
+                }
+            }
 
         }
-        if (opts.generateTangents)
+        if (generateTangents)
         {
             cout << "Generating tangent vectors...." << std::endl;
             mesh.buildTangentVectors(srcTex, destTex);
@@ -942,7 +555,7 @@ int main(int numargs, char** args)
 
 
 
-    meshSerializer->exportMesh(&mesh, dest, opts.endian);
+    meshSerializer->exportMesh(&mesh, dest);
     
 
 

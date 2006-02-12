@@ -48,9 +48,6 @@ Enhancements 2003 - 2004 (C) The OGRE Team
 #include "OgreTerrainVertexProgram.h"
 #include "OgreTerrainPage.h"
 #include "OgreLogManager.h"
-#include "OgreResourceGroupManager.h"
-#include "OgreMaterialManager.h"
-#include <fstream>
 
 #define TERRAIN_MATERIAL_NAME "TerrainSceneManager/Terrain"
 
@@ -97,13 +94,13 @@ namespace Ogre
     {
     }
     //-------------------------------------------------------------------------
-    void TerrainSceneManager::loadConfig(DataStreamPtr& stream)
+    void TerrainSceneManager::loadConfig(const String& filename)
     {
         /* Set up the options */
         ConfigFile config;
         String val;
 
-        config.load( stream );
+        config.load( filename );
 
         val = config.getSetting( "DetailTile" );
         if ( !val.empty() )
@@ -448,29 +445,6 @@ namespace Ogre
     //-------------------------------------------------------------------------
     void TerrainSceneManager::setWorldGeometry( const String& filename )
     {
-		// try to open in the current folder first
-		std::ifstream fs;
-		fs.open(filename.c_str());
-		if (fs)
-		{
-			// Wrap as a stream
-			DataStreamPtr stream(
-				new FileStreamDataStream(filename, &fs, false));
-			setWorldGeometry(stream);
-		}
-		else
-		{
-			// otherwise try resource system
-			DataStreamPtr stream = 
-				ResourceGroupManager::getSingleton().openResource(filename, 
-					ResourceGroupManager::getSingleton().getWorldResourceGroupName());
-				
-			setWorldGeometry(stream);
-		}
-	}
-    //-------------------------------------------------------------------------
-    void TerrainSceneManager::setWorldGeometry(DataStreamPtr& stream, const String& typeName )
-    {
         // Clear out any existing world resources (if not default)
         if (ResourceGroupManager::getSingleton().getWorldResourceGroupName() != 
             ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME)
@@ -480,7 +454,7 @@ namespace Ogre
         }
         mTerrainPages.clear();
         // Load the configuration
-        loadConfig(stream);
+        loadConfig(filename);
 
         // Resize the octree, allow for 1 page for now
         float max_x = mOptions.scale.x * mOptions.pageSize;
@@ -936,7 +910,7 @@ namespace Ogre
         return PageSourceIterator(mPageSources.begin(), mPageSources.end());
     }
 	//-------------------------------------------------------------------------
-	void TerrainSceneManager::setWorldGeometryRenderQueue(uint8 qid)
+	void TerrainSceneManager::setWorldGeometryRenderQueue(RenderQueueGroupID qid)
 	{
 		for (TerrainPage2D::iterator pi = mTerrainPages.begin(); 
 			pi != mTerrainPages.end(); ++pi)

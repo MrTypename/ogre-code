@@ -1,5 +1,5 @@
-SUBDIRS = include bin
+SUBDIRS = include
 
-if HAVE_CEGUI
+if BUILD_CEGUI_SAMPLE
 SUBDIRS += CEGUIRenderer
 endif

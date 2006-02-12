@@ -24,7 +24,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 // Original free version by:
 // Magic Software, Inc.
-// http://www.geometrictools.com/
+// http://www.magic-software.com
 // Copyright (c) 2000, All Rights Reserved
 
 #ifndef __MovablePlane_H__
@@ -49,6 +49,7 @@ namespace Ogre {
     class _OgreExport MovablePlane : public Plane, public MovableObject
     {
     protected:
+        String mName;
         mutable Plane mDerivedPlane;
         mutable Vector3 mLastTranslate;
         mutable Quaternion mLastRotate;
@@ -73,6 +74,8 @@ namespace Ogre {
         Real getBoundingRadius(void) const { return Math::POS_INFINITY; }
         /// Overridden from MovableObject
         void _updateRenderQueue(RenderQueue* queue) { /* do nothing */}
+        /// Overridden from MovableObject
+        const String& getName(void) const;
         /// Overridden from MovableObject
         const String& getMovableType(void) const;
         /// Get the derived plane as transformed by its parent node. 

@@ -45,7 +45,6 @@ namespace Ogre {
         Real mFrameTime;
 		Real mTimeFactor;
 		Real mElapsedTime;
-		Real mFrameDelay;
 
     public:
         FrameTimeControllerValue();
@@ -55,8 +54,6 @@ namespace Ogre {
         void setValue(Real value);
 		Real getTimeFactor(void) const;
 		void setTimeFactor(Real tf);
-		Real getFrameDelay(void) const;
-		void setFrameDelay(Real fd);
 		Real getElapsedTime(void) const;
 		void setElapsedTime(Real elapsedTime);
     };
@@ -158,26 +155,7 @@ namespace Ogre {
     // Controller functions
     //-----------------------------------------------------------------------
 
-	/** Predefined controller function which just passes through the original source
-	directly to dest.
-	*/
-	class _OgreExport PassthroughControllerFunction : public ControllerFunction<Real>
-	{
-	public:
-		/** Constructor.
-		@param
-		sequenceTime The amount of time in seconds it takes to loop through the whole animation sequence.
-		@param
-		timeOffset The offset in seconds at which to start (default is start at 0)
-		*/
-		PassthroughControllerFunction(bool deltaInput = false);
-
-		/** Overriden function.
-		*/
-		Real calculate(Real source);
-	};
-
-	/** Predefined controller function for dealing with animation.
+    /** Predefined controller function for dealing with animation.
     */
     class _OgreExport AnimationControllerFunction : public ControllerFunction<Real>
     {
@@ -198,7 +176,7 @@ namespace Ogre {
         Real calculate(Real source);
     };
 
-	//-----------------------------------------------------------------------
+    //-----------------------------------------------------------------------
     /** Predefined controller function which simply scales an input to an output value.
     */
     class _OgreExport ScaleControllerFunction : public ControllerFunction<Real>
@@ -231,7 +209,6 @@ namespace Ogre {
             - frequency - the speed of the wave in cycles per second
             - phase - the offset of the start of the wave, e.g. 0.5 to start half-way through the wave
             - amplitude - scales the output so that instead of lying within [0,1] it lies within [0,1] * amplitude
-			- duty cycle - the active width of a PWM signal
         @par
             Note that for simplicity of integration with the rest of the controller insfrastructure, the output of
             the wave is parametric i.e. 0..1, rather than the typical wave output of [-1,1]. To compensate for this, the
@@ -249,7 +226,6 @@ namespace Ogre {
         Real mFrequency;
         Real mPhase;
         Real mAmplitude;
-		Real mDutyCycle;
 
         /** Overridden from ControllerFunction. */
         Real getAdjustedInput(Real input);
@@ -259,10 +235,8 @@ namespace Ogre {
             @param
                 deltaInput If true, signifies that the input will be a delta value such that the function should
                 add it to an internal counter before calculating the output.
-			@param
-				dutyCycle Used in PWM mode to specify the pulse width.
         */
-        WaveformControllerFunction(WaveformType wType, Real base = 0, Real frequency = 1, Real phase = 0, Real amplitude = 1, bool deltaInput = true, Real dutyCycle = 0.5);
+        WaveformControllerFunction(WaveformType wType, Real base = 0, Real frequency = 1, Real phase = 0, Real amplitude = 1, bool deltaInput = true);
 
         /** Overriden function.
         */

@@ -63,6 +63,7 @@ public:
 	virtual bool getMouseButton( uchar button ) const;
 
 private:
+	float mMouseSpeed;	// Speed of mouse
 	CARD32 mHiddenCursor;
 
 	// Map of X keys -> Ogre keys

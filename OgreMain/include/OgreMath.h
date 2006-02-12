@@ -160,7 +160,7 @@ namespace Ogre
             math approximations.
         @note
             <br>This is based on MgcMath.h from
-            <a href="http://www.geometrictools.com/">Wild Magic</a>.
+            <a href="http://www.magic-software.com">Wild Magic</a>.
     */
     class _OgreExport Math 
     {
@@ -342,20 +342,28 @@ namespace Ogre
        /** Convert from degrees to the current AngleUnit. */
        static Real DegreesToAngleUnits(Real degrees);
 
-       /** Checks whether a given point is inside a triangle, in a
+       /** Checks wether a given point is inside a triangle, in a
             2-dimensional (Cartesian) space.
             @remarks
                 The vertices of the triangle must be given in either
                 trigonometrical (anticlockwise) or inverse trigonometrical
                 (clockwise) order.
             @param
-                p The point.
+                px The X-coordinate of the point.
             @param
-                a The triangle's first vertex.
+                py The Y-coordinate of the point.
             @param
-                b The triangle's second vertex.
+                ax The X-coordinate of the triangle's first vertex.
             @param
-                c The triangle's third vertex.
+                ay The Y-coordinate of the triangle's first vertex.
+            @param
+                bx The X-coordinate of the triangle's second vertex.
+            @param
+                by The Y-coordinate of the triangle's second vertex.
+            @param
+                cx The X-coordinate of the triangle's third vertex.
+            @param
+                cy The Y-coordinate of the triangle's third vertex.
             @returns
                 If the point resides in the triangle, <b>true</b> is
                 returned.
@@ -363,35 +371,8 @@ namespace Ogre
                 If the point is outside the triangle, <b>false</b> is
                 returned.
         */
-        static bool pointInTri2D(const Vector2& p, const Vector2& a, 
-			const Vector2& b, const Vector2& c);
+        static bool pointInTri2D( Real px, Real pz, Real ax, Real az, Real bx, Real bz, Real cx, Real cz );
 
-       /** Checks whether a given 3D point is inside a triangle.
-       @remarks
-            The vertices of the triangle must be given in either
-            trigonometrical (anticlockwise) or inverse trigonometrical
-            (clockwise) order, and the point must be guaranteed to be in the
-			same plane as the triangle
-        @param
-            p The point.
-        @param
-            a The triangle's first vertex.
-        @param
-            b The triangle's second vertex.
-        @param
-            c The triangle's third vertex.
-		@param 
-			normal The triangle plane's normal (passed in rather than calculated
-				on demand since the callermay already have it)
-        @returns
-            If the point resides in the triangle, <b>true</b> is
-            returned.
-        @par
-            If the point is outside the triangle, <b>false</b> is
-            returned.
-        */
-        static bool pointInTri3D(const Vector3& p, const Vector3& a, 
-			const Vector3& b, const Vector3& c, const Vector3& normal);
         /** Ray / plane intersection, returns boolean result and distance. */
         static std::pair<bool, Real> intersects(const Ray& ray, const Plane& plane);
 
@@ -400,84 +381,7 @@ namespace Ogre
             bool discardInside = true);
         
         /** Ray / box intersection, returns boolean result and distance. */
-        static std::pair<bool, Real> intersects(const Ray& ray, const AxisAlignedBox& box);
-
-        /** Ray / box intersection, returns boolean result and two intersection distance.
-        @param
-            ray The ray.
-        @param
-            box The box.
-        @param
-            d1 A real pointer to retrieve the near intersection distance
-                from the ray origin, maybe <b>null</b> which means don't care
-                about the near intersection distance.
-        @param
-            d2 A real pointer to retrieve the far intersection distance
-                from the ray origin, maybe <b>null</b> which means don't care
-                about the far intersection distance.
-        @returns
-            If the ray is intersects the box, <b>true</b> is returned, and
-            the near intersection distance is return by <i>d1</i>, the
-            far intersection distance is return by <i>d2</i>. Guarantee
-            <b>0</b> <= <i>d1</i> <= <i>d2</i>.
-        @par
-            If the ray isn't intersects the box, <b>false</b> is returned, and
-            <i>d1</i> and <i>d2</i> is unmodified.
-        */
-        static bool intersects(const Ray& ray, const AxisAlignedBox& box,
-            Real* d1, Real* d2);
-
-        /** Ray / triangle intersection, returns boolean result and distance.
-        @param
-            ray The ray.
-        @param
-            a The triangle's first vertex.
-        @param
-            b The triangle's second vertex.
-        @param
-            c The triangle's third vertex.
-		@param 
-			normal The triangle plane's normal (passed in rather than calculated
-				on demand since the callermay already have it), doesn't need
-                normalised since we don't care.
-        @param
-            positiveSide Intersect with "positive side" of the triangle
-        @param
-            negativeSide Intersect with "negative side" of the triangle
-        @returns
-            If the ray is intersects the triangle, a pair of <b>true</b> and the
-            distance between intersection point and ray origin returned.
-        @par
-            If the ray isn't intersects the triangle, a pair of <b>false</b> and
-            <b>0</b> returned.
-        */
-        static std::pair<bool, Real> intersects(const Ray& ray, const Vector3& a,
-            const Vector3& b, const Vector3& c, const Vector3& normal,
-            bool positiveSide = true, bool negativeSide = true);
-
-        /** Ray / triangle intersection, returns boolean result and distance.
-        @param
-            ray The ray.
-        @param
-            a The triangle's first vertex.
-        @param
-            b The triangle's second vertex.
-        @param
-            c The triangle's third vertex.
-        @param
-            positiveSide Intersect with "positive side" of the triangle
-        @param
-            negativeSide Intersect with "negative side" of the triangle
-        @returns
-            If the ray is intersects the triangle, a pair of <b>true</b> and the
-            distance between intersection point and ray origin returned.
-        @par
-            If the ray isn't intersects the triangle, a pair of <b>false</b> and
-            <b>0</b> returned.
-        */
-        static std::pair<bool, Real> intersects(const Ray& ray, const Vector3& a,
-            const Vector3& b, const Vector3& c,
-            bool positiveSide = true, bool negativeSide = true);
+        static std::pair<bool, Real> intersects(const Ray& ray, const AxisAlignedBox& sphere);
 
         /** Sphere / box intersection test. */
         static bool intersects(const Sphere& sphere, const AxisAlignedBox& box);

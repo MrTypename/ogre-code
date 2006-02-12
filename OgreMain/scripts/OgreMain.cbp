@@ -83,17 +83,7 @@
 				</ExtraCommands>
 			</Target>
 		</Build>
-		<Compiler>
-			<Add option="-W"/>
-		</Compiler>
 		<Unit filename="..\include\Ogre.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreAnimable.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
@@ -115,13 +105,6 @@
 			<Option target="Release"/>
 		</Unit>
 		<Unit filename="..\include\OgreAnimationTrack.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreAny.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
@@ -164,13 +147,6 @@
 			<Option target="Release"/>
 		</Unit>
 		<Unit filename="..\include\OgreBillboard.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreBillboardChain.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
@@ -241,62 +217,6 @@
 			<Option target="Release"/>
 		</Unit>
 		<Unit filename="..\include\OgreCommon.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreCompositionPass.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreCompositionTargetPass.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreCompositionTechnique.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreCompositor.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreCompositorChain.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>		
-		<Unit filename="..\include\OgreCompositorInstance.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreCompositorManager.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreCompositorSerializer.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
@@ -668,13 +588,6 @@
 			<Option target="Release"/>
 		</Unit>
 		<Unit filename="..\include\OgreLogManager.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreManualObject.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
@@ -1066,13 +979,6 @@
 			<Option target="Debug"/>
 			<Option target="Release"/>
 		</Unit>
-		<Unit filename="..\include\OgreRenderQueueInvocation.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
 		<Unit filename="..\include\OgreRenderQueueListener.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
@@ -1158,13 +1064,6 @@
 			<Option target="Release"/>
 		</Unit>
 		<Unit filename="..\include\OgreResourceManager.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreRibbonTrail.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
@@ -1542,11 +1441,6 @@
 			<Option target="Debug"/>
 			<Option target="Release"/>
 		</Unit>
-		<Unit filename="..\src\OgreAnimable.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
 		<Unit filename="..\src\OgreAnimation.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="Debug"/>
@@ -1578,11 +1472,6 @@
 			<Option target="Release"/>
 		</Unit>
 		<Unit filename="..\src\OgreBillboard.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\src\OgreBillboardChain.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="Debug"/>
 			<Option target="Release"/>
@@ -1632,41 +1521,6 @@
 			<Option target="Debug"/>
 			<Option target="Release"/>
 		</Unit>
-		<Unit filename="..\src\OgreCompositionPass.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\src\OgreCompositionTargetPass.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\src\OgreCompositionTechnique.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\src\OgreCompositor.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\src\OgreCompositorInstance.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\src\OgreCompositorManager.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\src\OgreCompositorSerializer.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
 		<Unit filename="..\src\OgreConfigFile.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="Debug"/>
@@ -1698,16 +1552,6 @@
 			<Option target="Release"/>
 		</Unit>
 		<Unit filename="..\src\OgreDefaultHardwareBufferManager.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\src\OgreDefaultSceneQueries.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\src\OgreDefaultSceneQueries.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="Debug"/>
 			<Option target="Release"/>
@@ -1888,11 +1732,6 @@
 			<Option target="Release"/>
 		</Unit>
 		<Unit filename="..\src\OgreLogManager.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\src\OgreManualObject.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="Debug"/>
 			<Option target="Release"/>
@@ -2107,11 +1946,6 @@
 			<Option target="Debug"/>
 			<Option target="Release"/>
 		</Unit>
-		<Unit filename="..\src\OgreRenderQueueInvocation.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
 		<Unit filename="..\src\OgreRenderQueueSortingGrouping.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="Debug"/>
@@ -2158,11 +1992,6 @@
 			<Option target="Release"/>
 		</Unit>
 		<Unit filename="..\src\OgreResourceManager.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\src\OgreRibbonTrail.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="Debug"/>
 			<Option target="Release"/>

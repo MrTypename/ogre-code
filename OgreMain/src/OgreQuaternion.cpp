@@ -26,7 +26,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 // NOTE THAT THIS FILE IS BASED ON MATERIAL FROM:
 
 // Magic Software, Inc.
-// http://www.geometrictools.com
+// http://www.magic-software.com
 // Copyright (c) 2000, All Rights Reserved
 //
 // Source code from Magic Software is supplied under the terms of a license
@@ -35,7 +35,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 // the Magic Software web site.  This file is subject to the license
 //
 // FREE SOURCE CODE
-// http://www.geometrictools.com/License/WildMagic3License.pdf
+// http://www.magic-software.com/License/free.pdf
 
 #include "OgreQuaternion.h"
 
@@ -206,7 +206,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     Vector3 Quaternion::xAxis(void) const
     {
-        //Real fTx  = 2.0*x;
+        Real fTx  = 2.0*x;
         Real fTy  = 2.0*y;
         Real fTz  = 2.0*z;
         Real fTwy = fTy*w;
@@ -402,13 +402,13 @@ namespace Ogre {
     Vector3 Quaternion::operator* (const Vector3& v) const
     {
 		// nVidia SDK implementation
-		Vector3 uv, uuv;
+		Vector3 uv, uuv; 
 		Vector3 qvec(x, y, z);
-		uv = qvec.crossProduct(v);
-		uuv = qvec.crossProduct(uv);
-		uv *= (2.0f * w);
-		uuv *= 2.0f;
-
+		uv = qvec.crossProduct(v); 
+		uuv = qvec.crossProduct(uv); 
+		uv *= (2.0f * w); 
+		uuv *= 2.0f; 
+		
 		return v + uv + uuv;
 
     }
@@ -421,7 +421,7 @@ namespace Ogre {
 		return (Math::Abs(angle.valueRadians()) <= tolerance.valueRadians())
             || Math::RealEqual(angle.valueRadians(), Math::PI, tolerance.valueRadians());
 
-
+		
 	}
     //-----------------------------------------------------------------------
     Quaternion Quaternion::Slerp (Real fT, const Quaternion& rkP,
@@ -519,7 +519,7 @@ namespace Ogre {
 		return Radian(Math::ASin(-2*(x*z - w*y)));
 	}
     //-----------------------------------------------------------------------
-    Quaternion Quaternion::nlerp(Real fT, const Quaternion& rkP,
+    Quaternion Quaternion::nlerp(Real fT, const Quaternion& rkP, 
         const Quaternion& rkQ, bool shortestPath)
     {
 		Quaternion result;

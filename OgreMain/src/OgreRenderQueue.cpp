@@ -34,19 +34,13 @@ http://www.gnu.org/copyleft/lesser.txt.
 namespace Ogre {
 
     //---------------------------------------------------------------------
-    RenderQueue::RenderQueue()
-        : mSplitPassesByLightingType(false)
-		, mSplitNoShadowPasses(false)
-        , mShadowCastersCannotBeReceivers(false)
+    RenderQueue::RenderQueue() : mSplitPassesByLightingType(false), mSplitNoShadowPasses(false)
     {
         // Create the 'main' queue up-front since we'll always need that
         mGroups.insert(
             RenderQueueGroupMap::value_type(
                 RENDER_QUEUE_MAIN, 
-                new RenderQueueGroup(this,
-                    mSplitPassesByLightingType,
-                    mSplitNoShadowPasses,
-                    mShadowCastersCannotBeReceivers)
+                new RenderQueueGroup(this, mSplitPassesByLightingType, mSplitNoShadowPasses)
                 )
             );
 
@@ -77,7 +71,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void RenderQueue::addRenderable(Renderable* pRend, uint8 groupID, ushort priority)
+    void RenderQueue::addRenderable(Renderable* pRend, RenderQueueGroupID groupID, ushort priority)
     {
         // Find group
         RenderQueueGroup* pGroup = getQueueGroup(groupID);
@@ -113,7 +107,7 @@ namespace Ogre {
         return QueueGroupIterator(mGroups.begin(), mGroups.end());
     }
     //-----------------------------------------------------------------------
-    void RenderQueue::addRenderable(Renderable* pRend, uint8 groupID)
+    void RenderQueue::addRenderable(Renderable* pRend, RenderQueueGroupID groupID)
     {
         addRenderable(pRend, groupID, mDefaultRenderablePriority);
     }
@@ -123,12 +117,12 @@ namespace Ogre {
         addRenderable(pRend, mDefaultQueueGroup, mDefaultRenderablePriority);
     }
     //-----------------------------------------------------------------------
-    uint8 RenderQueue::getDefaultQueueGroup(void) const
+    RenderQueueGroupID RenderQueue::getDefaultQueueGroup(void) const
     {
         return mDefaultQueueGroup;
     }
     //-----------------------------------------------------------------------
-    void RenderQueue::setDefaultQueueGroup(uint8 grp)
+    void RenderQueue::setDefaultQueueGroup(RenderQueueGroupID grp)
     {
         mDefaultQueueGroup = grp;
     }
@@ -145,7 +139,7 @@ namespace Ogre {
 	
 	
 	//-----------------------------------------------------------------------
-	RenderQueueGroup* RenderQueue::getQueueGroup(uint8 groupID)
+	RenderQueueGroup* RenderQueue::getQueueGroup(RenderQueueGroupID groupID)
 	{
 		// Find group
 		RenderQueueGroupMap::iterator groupIt;
@@ -155,10 +149,7 @@ namespace Ogre {
 		if (groupIt == mGroups.end())
 		{
 			// Insert new
-			pGroup = new RenderQueueGroup(this,
-                mSplitPassesByLightingType,
-                mSplitNoShadowPasses,
-                mShadowCastersCannotBeReceivers);
+			pGroup = new RenderQueueGroup(this, mSplitPassesByLightingType, mSplitNoShadowPasses);
 			mGroups.insert(RenderQueueGroupMap::value_type(groupID, pGroup));
 		}
 		else
@@ -195,19 +186,6 @@ namespace Ogre {
             i->second->setSplitNoShadowPasses(split);
         }
     }
-	//-----------------------------------------------------------------------
-	void RenderQueue::setShadowCastersCannotBeReceivers(bool ind)
-	{
-		mShadowCastersCannotBeReceivers = ind;
-
-		RenderQueueGroupMap::iterator i, iend;
-		i = mGroups.begin();
-		iend = mGroups.end();
-		for (; i != iend; ++i)
-		{
-			i->second->setShadowCastersCannotBeReceivers(ind);
-		}
-	}
 
 }
 

@@ -53,12 +53,8 @@ namespace Ogre {
     {
     }
     //---------------------------------------------------------------------
-    void SkeletonSerializer::exportSkeleton(const Skeleton* pSkeleton, 
-		const String& filename, Endian endianMode)
+    void SkeletonSerializer::exportSkeleton(const Skeleton* pSkeleton, const String& filename)
     {
-		// Decide on endian mode
-		determineEndianness(endianMode);
-
         String msg;
         mpfFile = fopen(filename.c_str(), "wb");
 
@@ -101,10 +97,8 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void SkeletonSerializer::importSkeleton(DataStreamPtr& stream, Skeleton* pSkel)
     {
-		// Determine endianness (must be the first thing we do!)
-		determineEndianness(stream);
 
-		// Check header
+        // Check header
         readFileHeader(stream);
 
         unsigned short streamID;
@@ -170,11 +164,6 @@ namespace Ogre {
         writeObject(pBone->getPosition());
         // Quaternion orientation           : orientation of this bone relative to parent 
         writeObject(pBone->getOrientation());
-        // Vector3 scale                    : scale of this bone relative to parent 
-        if (pBone->getScale() != Vector3::UNIT_SCALE)
-        {
-            writeObject(pBone->getScale());
-        }
     }
     //---------------------------------------------------------------------
     void SkeletonSerializer::writeBoneParent(const Skeleton* pSkel, 
@@ -201,7 +190,7 @@ namespace Ogre {
         writeFloats(&len, 1);
 
         // Write all tracks
-        Animation::NodeTrackIterator trackIt = anim->getNodeTrackIterator();
+        Animation::TrackIterator trackIt = anim->getTrackIterator();
         while(trackIt.hasMoreElements())
         {
             writeAnimationTrack(pSkel, trackIt.getNext());
@@ -210,7 +199,7 @@ namespace Ogre {
     }
     //---------------------------------------------------------------------
     void SkeletonSerializer::writeAnimationTrack(const Skeleton* pSkel, 
-        const NodeAnimationTrack* track)
+        const AnimationTrack* track)
     {
         writeChunkHeader(SKELETON_ANIMATION_TRACK, calcAnimationTrackSize(pSkel, track));
 
@@ -222,13 +211,13 @@ namespace Ogre {
         // Write all keyframes
         for (unsigned short i = 0; i < track->getNumKeyFrames(); ++i)
         {
-            writeKeyFrame(pSkel, track->getNodeKeyFrame(i));
+            writeKeyFrame(pSkel, track->getKeyFrame(i));
         }
 
     }
     //---------------------------------------------------------------------
     void SkeletonSerializer::writeKeyFrame(const Skeleton* pSkel, 
-        const TransformKeyFrame* key)
+        const KeyFrame* key)
     {
 
         writeChunkHeader(SKELETON_ANIMATION_TRACK_KEYFRAME, 
@@ -242,36 +231,10 @@ namespace Ogre {
         // Vector3 translate            : Translation to apply at this keyframe
         writeObject(key->getTranslate());
         // Vector3 scale                : Scale to apply at this keyframe
-        if (key->getScale() != Vector3::UNIT_SCALE)
-        {
-            writeObject(key->getScale());
-        }
+        writeObject(key->getScale());
     }
     //---------------------------------------------------------------------
     size_t SkeletonSerializer::calcBoneSize(const Skeleton* pSkel, 
-        const Bone* pBone)
-    {
-        size_t size = STREAM_OVERHEAD_SIZE;
-
-        // handle
-        size += sizeof(unsigned short);
-
-        // position
-        size += sizeof(float) * 3;
-
-        // orientation
-        size += sizeof(float) * 4;
-
-        // scale
-        if (pBone->getScale() != Vector3::UNIT_SCALE)
-        {
-            size += sizeof(float) * 3;
-        }
-
-        return size;
-    }
-    //---------------------------------------------------------------------
-    size_t SkeletonSerializer::calcBoneSizeWithoutScale(const Skeleton* pSkel, 
         const Bone* pBone)
     {
         size_t size = STREAM_OVERHEAD_SIZE;
@@ -312,7 +275,7 @@ namespace Ogre {
         size += sizeof(float);
 
         // Nested animation tracks
-		Animation::NodeTrackIterator trackIt = pAnim->getNodeTrackIterator();
+		Animation::TrackIterator trackIt = pAnim->getTrackIterator();
 		while(trackIt.hasMoreElements())
 		{
             size += calcAnimationTrackSize(pSkel, trackIt.getNext());
@@ -322,7 +285,7 @@ namespace Ogre {
     }
     //---------------------------------------------------------------------
     size_t SkeletonSerializer::calcAnimationTrackSize(const Skeleton* pSkel, 
-        const NodeAnimationTrack* pTrack)
+        const AnimationTrack* pTrack)
     {
         size_t size = STREAM_OVERHEAD_SIZE;
 
@@ -332,14 +295,14 @@ namespace Ogre {
         // Nested keyframes
         for (unsigned short i = 0; i < pTrack->getNumKeyFrames(); ++i)
         {
-            size += calcKeyFrameSize(pSkel, pTrack->getNodeKeyFrame(i));
+            size += calcKeyFrameSize(pSkel, pTrack->getKeyFrame(i));
         }
 
         return size;
     }
     //---------------------------------------------------------------------
     size_t SkeletonSerializer::calcKeyFrameSize(const Skeleton* pSkel, 
-        const TransformKeyFrame* pKey)
+        const KeyFrame* pKey)
     {
         size_t size = STREAM_OVERHEAD_SIZE;
 
@@ -350,24 +313,6 @@ namespace Ogre {
         // Vector3 translate            : Translation to apply at this keyframe
         size += sizeof(float) * 3;
         // Vector3 scale                : Scale to apply at this keyframe
-        if (pKey->getScale() != Vector3::UNIT_SCALE)
-        {
-            size += sizeof(float) * 3;
-        }
-
-        return size;
-    }
-    //---------------------------------------------------------------------
-    size_t SkeletonSerializer::calcKeyFrameSizeWithoutScale(const Skeleton* pSkel, 
-        const TransformKeyFrame* pKey)
-    {
-        size_t size = STREAM_OVERHEAD_SIZE;
-
-        // float time                    : The time position (seconds)
-        size += sizeof(float);
-        // Quaternion rotate            : Rotation to apply at this keyframe
-        size += sizeof(float) * 4;
-        // Vector3 translate            : Translation to apply at this keyframe
         size += sizeof(float) * 3;
 
         return size;
@@ -392,13 +337,6 @@ namespace Ogre {
         Quaternion q;
         readObject(stream, q);
         pBone->setOrientation(q);
-        // Do we have scale?
-        if (mCurrentstreamLen > calcBoneSizeWithoutScale(pSkel, pBone))
-        {
-            Vector3 scale;
-            readObject(stream, scale);
-            pBone->setScale(scale);
-        }
     }
     //---------------------------------------------------------------------
     void SkeletonSerializer::readBoneParent(DataStreamPtr& stream, Skeleton* pSkel)
@@ -469,7 +407,7 @@ namespace Ogre {
         Bone *targetBone = pSkel->getBone(boneHandle);
 
         // Create track
-        NodeAnimationTrack* pTrack = anim->createNodeTrack(boneHandle, targetBone);
+        AnimationTrack* pTrack = anim->createTrack(boneHandle, targetBone);
 
         // Keep looking for nested keyframes
         if (!stream->eof())
@@ -496,14 +434,14 @@ namespace Ogre {
 
     }
     //---------------------------------------------------------------------
-    void SkeletonSerializer::readKeyFrame(DataStreamPtr& stream, NodeAnimationTrack* track, 
+    void SkeletonSerializer::readKeyFrame(DataStreamPtr& stream, AnimationTrack* track, 
         Skeleton* pSkel)
     {
         // float time                    : The time position (seconds)
         float time;
         readFloats(stream, &time, 1);
 
-        TransformKeyFrame *kf = track->createNodeKeyFrame(time);
+        KeyFrame *kf = track->createKeyFrame(time);
 
         // Quaternion rotate            : Rotation to apply at this keyframe
         Quaternion rot;
@@ -514,7 +452,7 @@ namespace Ogre {
         readObject(stream, trans);
         kf->setTranslate(trans);
         // Do we have scale?
-        if (mCurrentstreamLen > calcKeyFrameSizeWithoutScale(pSkel, kf))
+        if (mCurrentstreamLen == calcKeyFrameSize(pSkel, kf))
         {
             Vector3 scale;
             readObject(stream, scale);

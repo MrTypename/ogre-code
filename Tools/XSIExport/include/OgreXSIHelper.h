@@ -46,7 +46,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreSingleton.h"
 #include "OgreVector3.h"
 #include "OgreQuaternion.h"
-#include "OgreHardwareVertexBuffer.h"
 
 #define OGRE_XSI_NUM_MESH_STEPS 200
 
@@ -107,9 +106,14 @@ inline Ogre::Quaternion XSItoOgre(const XSI::MATH::CQuaternion& xsiQuat)
 
 inline Ogre::RGBA XSItoOgre(const XSI::CVertexColor& xsiColour)
 {
-	Ogre::ColourValue col(xsiColour.r, xsiColour.g, xsiColour.b, xsiColour.a);
-	return Ogre::VertexElement::convertColourValue(col, 
-		Ogre::VertexElement::getBestColourVertexElementType());
+    Ogre::uint32 ret = 0;
+    ret += xsiColour.a << 24;
+    ret += xsiColour.r << 16;
+    ret += xsiColour.g << 8;
+    ret += xsiColour.b;
+
+    return ret;
+
 }
 
 inline void LogOgreAndXSI(const Ogre::String& msg)
@@ -192,18 +196,21 @@ namespace Ogre {
 	typedef std::map<String,DeformerEntry*> DeformerMap;
 
 
-	/** An entry for animation; allows the userto split the timeline into 
+	/** An entry for an animation; allows the userto split the timeline into 
 		multiple separate animations. 
 	*/
 	struct AnimationEntry
 	{
 		String animationName;
-		long startFrame; 
-		long endFrame; 
-		double ikSampleInterval; // skeletal only
+		long startFrame; // -1 if 'from start'
+		long endFrame; // -1 if 'to end'
+		XSI::ActionSource source;
+		std::set<long> frames;
+		bool ikSample;
+		double ikSampleInterval;
 	};
-	/// List of animations
-	typedef std::list<AnimationEntry> AnimationList;
+	/// Map from deformer name to deformer entry
+	typedef std::vector<AnimationEntry> AnimationList;
 
 	/** Record of an XSI GL shader material. */
 	struct MaterialEntry

@@ -33,7 +33,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreLogManager.h"
 #include "OgreTextureManager.h"
 #include "OgreRoot.h"
-#include "OgreMaterialManager.h"
 
 namespace Ogre {
 

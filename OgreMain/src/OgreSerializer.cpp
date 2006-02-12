@@ -37,72 +37,16 @@ namespace Ogre {
     /// stream overhead = ID + size
     const size_t STREAM_OVERHEAD_SIZE = sizeof(uint16) + sizeof(uint32);
     const uint16 HEADER_STREAM_ID = 0x1000;
-    const uint16 OTHER_ENDIAN_HEADER_STREAM_ID = 0x0010;
     //---------------------------------------------------------------------
     Serializer::Serializer()
     {
         // Version number
         mVersion = "[Serializer_v1.00]";
-		mFlipEndian = false;
     }
     //---------------------------------------------------------------------
     Serializer::~Serializer()
     {
     }
-    //---------------------------------------------------------------------
-	void Serializer::determineEndianness(DataStreamPtr& stream)
-	{
-		if (stream->tell() != 0)
-		{
-			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS,
-				"Can only determine the endianness of the input stream if it "
-				"is at the start", "Serializer::determineEndianness");
-		}
-				
-		uint16 dest;
-		// read header id manually (no conversion)
-        stream->read(&dest, sizeof(uint16));
-		// skip back
-		stream->skip(-sizeof(uint16));
-		if (dest == HEADER_STREAM_ID)
-		{
-			mFlipEndian = false;
-		}
-		else if (dest == OTHER_ENDIAN_HEADER_STREAM_ID)
-		{
-			mFlipEndian = true;
-		}
-		else
-		{
-			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS,
-				"Can't find a header chunk to determine endianness",
-				"Serializer::determineEndianness");
-		}
-	}
-    //---------------------------------------------------------------------
-	void Serializer::determineEndianness(Endian requestedEndian)
-	{
-		switch(requestedEndian)
-		{
-		case ENDIAN_NATIVE:
-			mFlipEndian = false;
-			break;
-		case ENDIAN_BIG:
-#if OGRE_ENDIAN == OGRE_ENDIAN_BIG
-			mFlipEndian = false;
-#else
-			mFlipEndian = true;
-#endif
-			break;
-		case ENDIAN_LITTLE:
-#if OGRE_ENDIAN == OGRE_ENDIAN_BIG
-			mFlipEndian = true;
-#else
-			mFlipEndian = false;
-#endif
-			break;
-		}
-	}
     //---------------------------------------------------------------------
     void Serializer::writeFileHeader(void)
     {
@@ -122,8 +66,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void Serializer::writeFloats(const float* const pFloat, size_t count)
     {
-		if (mFlipEndian)
-		{
+#	if OGRE_ENDIAN == OGRE_ENDIAN_BIG
             float * pFloatToWrite = (float *)malloc(sizeof(float) * count);
             memcpy(pFloatToWrite, pFloat, sizeof(float) * count);
             
@@ -131,11 +74,9 @@ namespace Ogre {
             writeData(pFloatToWrite, sizeof(float), count);
             
             free(pFloatToWrite);
-		}
-		else
-		{
+# 	else
             writeData(pFloat, sizeof(float), count);
-		}
+#	endif
     }
     //---------------------------------------------------------------------
     void Serializer::writeFloats(const double* const pDouble, size_t count)
@@ -146,22 +87,18 @@ namespace Ogre {
 		{
 			tmp[i] = static_cast<float>(pDouble[i]);
 		}
-		if(mFlipEndian)
-		{
+#	if OGRE_ENDIAN == OGRE_ENDIAN_BIG
             flipToLittleEndian(tmp, sizeof(float), count);
             writeData(tmp, sizeof(float), count);
-		}
-		else
-		{
+# 	else
             writeData(tmp, sizeof(float), count);
-		}
+#	endif
 		delete [] tmp;
     }
     //---------------------------------------------------------------------
     void Serializer::writeShorts(const uint16* const pShort, size_t count = 1)
     {
-		if(mFlipEndian)
-		{
+#	if OGRE_ENDIAN == OGRE_ENDIAN_BIG
             unsigned short * pShortToWrite = (unsigned short *)malloc(sizeof(unsigned short) * count);
             memcpy(pShortToWrite, pShort, sizeof(unsigned short) * count);
             
@@ -169,17 +106,14 @@ namespace Ogre {
             writeData(pShortToWrite, sizeof(unsigned short), count);
             
             free(pShortToWrite);
-		}
-		else
-		{
+# 	else
             writeData(pShort, sizeof(unsigned short), count);
-		}
+#	endif
     }
     //---------------------------------------------------------------------
     void Serializer::writeInts(const uint32* const pInt, size_t count = 1)
     {
-		if(mFlipEndian)
-		{
+#	if OGRE_ENDIAN == OGRE_ENDIAN_BIG
             unsigned int * pIntToWrite = (unsigned int *)malloc(sizeof(unsigned int) * count);
             memcpy(pIntToWrite, pInt, sizeof(unsigned int) * count);
             
@@ -187,11 +121,9 @@ namespace Ogre {
             writeData(pIntToWrite, sizeof(unsigned int), count);
             
             free(pIntToWrite);
-		}
-		else
-		{
+# 	else
             writeData(pInt, sizeof(unsigned int), count);
-		}
+#	endif
     }
     //---------------------------------------------------------------------
     //---------------------------------------------------------------------
@@ -362,18 +294,16 @@ namespace Ogre {
 
     void Serializer::flipToLittleEndian(void* pData, size_t size, size_t count)
     {
-		if(mFlipEndian)
-		{
-	        flipEndian(pData, size, count);
-		}
+#	if OGRE_ENDIAN == OGRE_ENDIAN_BIG
+        flipEndian(pData, size, count);
+#	endif
     }
     
     void Serializer::flipFromLittleEndian(void* pData, size_t size, size_t count)
     {
-		if(mFlipEndian)
-		{
-	        flipEndian(pData, size, count);
-		}
+#	if OGRE_ENDIAN == OGRE_ENDIAN_BIG
+        flipEndian(pData, size, count);
+#	endif
     }
     
     void Serializer::flipEndian(void * pData, size_t size, size_t count)

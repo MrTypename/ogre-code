@@ -28,6 +28,7 @@
 					<Add option="-DPLUGIN_ParticleFX_EXPORTS"/>
 					<Add directory="..\include"/>
 					<Add directory="..\..\..\OgreMain\include"/>
+					<Add directory="..\..\..\Dependencies\zlib\include"/>
 					<Add directory="..\..\..\Dependencies\include"/>
 				</Compiler>
 				<Linker>
@@ -151,34 +152,6 @@
 			<Option target="Release"/>
 		</Unit>
 		<Unit filename="..\include\OgreCylinderEmitterFactory.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreDeflectorPlaneAffector.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreDeflectorPlaneAffectorFactory.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreDirectionRandomiserAffector.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\include\OgreDirectionRandomiserAffectorFactory.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
@@ -328,16 +301,6 @@
 			<Option target="Release"/>
 		</Unit>
 		<Unit filename="..\src\OgreCylinderEmitter.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\src\OgreDeflectorPlaneAffector.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="Debug"/>
-			<Option target="Release"/>
-		</Unit>
-		<Unit filename="..\src\OgreDirectionRandomiserAffector.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="Debug"/>
 			<Option target="Release"/>

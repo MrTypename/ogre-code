@@ -90,8 +90,8 @@ namespace Ogre
 		static DWORD get(CullingMode cm, bool flip);
 		/// return a D3D9 equivalent for a Ogre FogMode value
 		static D3DFOGMODE get(FogMode fm);
-		/// return a D3D9 equivalent for a Ogre PolygonMode value
-		static D3DFILLMODE get(PolygonMode level);
+		/// return a D3D9 equivalent for a Ogre SceneDetailLevel value
+		static D3DFILLMODE get(SceneDetailLevel level);
 		/// return a D3D9 equivalent for a Ogre StencilOperation value
 		static DWORD get(StencilOperation op, bool invert = false);
 		/// return a D3D9 state type for Ogre FilterType value
@@ -115,12 +115,6 @@ namespace Ogre
         // Convert matrix from D3D style
         static Matrix4 D3D9Mappings::convertD3DXMatrix( const D3DXMATRIX& mat );
 
-		/// utility method, convert D3D9 pixel format to Ogre pixel format
-		static PixelFormat _getPF(D3DFORMAT d3dPF);
-		/// utility method, convert Ogre pixel format to D3D9 pixel format
-		static D3DFORMAT _getPF(PixelFormat ogrePF);
-		/// utility method, find closest Ogre pixel format that D3D9 can support
-		static PixelFormat _getClosestSupportedPF(PixelFormat ogrePF);
 	};
 }
 #endif

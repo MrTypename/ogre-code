@@ -52,12 +52,11 @@ String mAtheneMaterials[NUM_ATHENE_MATERIALS] =
     "Examples/Athene/NormalMapped",
     "Examples/Athene/Basic"
 };
-#define NUM_SHADOW_TECH 5
+#define NUM_SHADOW_TECH 4
 String mShadowTechDescriptions[NUM_SHADOW_TECH] = 
 {
     "Stencil Shadows (Additive)",
     "Stencil Shadows (Modulative)",
-	"Texture Shadows (Additive)",
     "Texture Shadows (Modulative)",
     "None"
 };
@@ -65,7 +64,6 @@ ShadowTechnique mShadowTech[NUM_SHADOW_TECH] =
 {
     SHADOWTYPE_STENCIL_ADDITIVE,
     SHADOWTYPE_STENCIL_MODULATIVE,
-	SHADOWTYPE_TEXTURE_ADDITIVE,
     SHADOWTYPE_TEXTURE_MODULATIVE,
     SHADOWTYPE_NONE
 };
@@ -185,7 +183,6 @@ public:
             mLight->setAttenuation(8000,1,0.0005,0);
             break;
         case SHADOWTYPE_TEXTURE_MODULATIVE:
-		case SHADOWTYPE_TEXTURE_ADDITIVE:
             // Change fixed point light to spotlight
             // Fixed light, dim
             mSunLight->setCastShadows(true);
@@ -321,29 +318,29 @@ protected:
         // Spline it for nice curves
         anim->setInterpolationMode(Animation::IM_SPLINE);
         // Create a track to animate the camera's node
-        NodeAnimationTrack* track = anim->createNodeTrack(0, mLightNode);
+        AnimationTrack* track = anim->createTrack(0, mLightNode);
         // Setup keyframes
-        TransformKeyFrame* key = track->createNodeKeyFrame(0); // A startposition
+        KeyFrame* key = track->createKeyFrame(0); // A startposition
         key->setTranslate(Vector3(300,250,-300));
-        key = track->createNodeKeyFrame(2);//B
+        key = track->createKeyFrame(2);//B
         key->setTranslate(Vector3(150,300,-250));
-        key = track->createNodeKeyFrame(4);//C
+        key = track->createKeyFrame(4);//C
         key->setTranslate(Vector3(-150,350,-100));
-        key = track->createNodeKeyFrame(6);//D
+        key = track->createKeyFrame(6);//D
         key->setTranslate(Vector3(-400,200,-200));
-        key = track->createNodeKeyFrame(8);//E
+        key = track->createKeyFrame(8);//E
         key->setTranslate(Vector3(-200,200,-400));
-        key = track->createNodeKeyFrame(10);//F
+        key = track->createKeyFrame(10);//F
         key->setTranslate(Vector3(-100,150,-200));
-        key = track->createNodeKeyFrame(12);//G
+        key = track->createKeyFrame(12);//G
         key->setTranslate(Vector3(-100,75,180));
-        key = track->createNodeKeyFrame(14);//H
+        key = track->createKeyFrame(14);//H
         key->setTranslate(Vector3(0,250,300));
-        key = track->createNodeKeyFrame(16);//I
+        key = track->createKeyFrame(16);//I
         key->setTranslate(Vector3(100,350,100));
-        key = track->createNodeKeyFrame(18);//J
+        key = track->createKeyFrame(18);//J
         key->setTranslate(Vector3(250,300,0));
-        key = track->createNodeKeyFrame(20);//K == A
+        key = track->createKeyFrame(20);//K == A
         key->setTranslate(Vector3(300,250,-300));
         // Create a new animation state to track this
         mAnimState = mSceneMgr->createAnimationState("LightTrack");
@@ -364,6 +361,8 @@ protected:
         SceneNode* node;
         node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
         mAthene = mSceneMgr->createEntity( "athene", "athene.mesh" );
+        //mAnimState = pEnt->getAnimationState("Walk");
+        //mAnimState->setEnabled(true);
         mAthene->setMaterialName(mAtheneMaterials[mCurrentAtheneMaterial]);
         node->attachObject( mAthene );
         node->translate(0,-20, 0);
@@ -373,24 +372,32 @@ protected:
 
         node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
         pEnt = mSceneMgr->createEntity( "col1", "column.mesh" );
+        //mAnimState = pEnt->getAnimationState("Walk");
+        //mAnimState->setEnabled(true);
         pEnt->setMaterialName("Examples/Rockwall");
         node->attachObject( pEnt );
         node->translate(200,0, -200);
 
         node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
         pEnt = mSceneMgr->createEntity( "col2", "column.mesh" );
+        //mAnimState = pEnt->getAnimationState("Walk");
+        //mAnimState->setEnabled(true);
         pEnt->setMaterialName("Examples/Rockwall");
         node->attachObject( pEnt );
         node->translate(200,0, 200);
 
         node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
         pEnt = mSceneMgr->createEntity( "col3", "column.mesh" );
+        //mAnimState = pEnt->getAnimationState("Walk");
+        //mAnimState->setEnabled(true);
         pEnt->setMaterialName("Examples/Rockwall");
         node->attachObject( pEnt );
         node->translate(-200,0, -200);
 
         node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
         pEnt = mSceneMgr->createEntity( "col4", "column.mesh" );
+        //mAnimState = pEnt->getAnimationState("Walk");
+        //mAnimState->setEnabled(true);
         pEnt->setMaterialName("Examples/Rockwall");
         node->attachObject( pEnt );
         node->translate(-200,0, 200);

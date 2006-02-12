@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="windows-1250"?>
+<?xml version="1.0" encoding = "windows-1250"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="7.00"
 	Name="RenderSystem_GL"
 	ProjectGUID="{7D0A20FE-40A6-4E64-AD26-5E34AE391DF4}"
 	Keyword="Win32Proj">
@@ -60,13 +60,7 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
 				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
@@ -128,24 +122,13 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
 				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 	</Configurations>
-	<References>
-	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm">
-			<File
-				RelativePath="..\src\glew.cpp">
-			</File>
 			<File
 				RelativePath="..\src\OgreGLATIFSInit.cpp">
 			</File>
@@ -160,15 +143,6 @@
 			</File>
 			<File
 				RelativePath="..\src\OgreGLEngineDll.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreGLFBOMultiRenderTarget.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreGLFBORenderTexture.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreGLFrameBufferObject.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreGLGpuNvparseProgram.cpp">
@@ -195,16 +169,10 @@
 				RelativePath="..\src\OgreGLHardwareVertexBuffer.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreGLPBRenderTexture.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreGLPixelFormat.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreGLRenderSystem.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreGLRenderTexture.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreGLSupport.cpp">
@@ -226,6 +194,9 @@
 			</File>
 			<File
 				RelativePath="..\src\OgreWin32Window.cpp">
+			</File>
+			<File
+				RelativePath="..\src\glprocs.c">
 			</File>
 			<Filter
 				Name="nvparse"
@@ -400,31 +371,10 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc">
 			<File
-				RelativePath="..\..\..\Dependencies\include\GL\gl.h">
-			</File>
-			<File
-				RelativePath="..\include\GL\glew.h">
-			</File>
-			<File
-				RelativePath="..\..\..\Dependencies\include\GL\glext.h">
-			</File>
-			<File
-				RelativePath="..\..\..\Dependencies\include\GL\glxext.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreGLContext.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreGLDefaultHardwareBufferManager.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreGLFBOMultiRenderTarget.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreGLFBORenderTexture.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreGLFrameBufferObject.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreGLGpuNvparseProgram.h">
@@ -451,12 +401,6 @@
 				RelativePath="..\include\OgreGLHardwareVertexBuffer.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreGLPBRenderTexture.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreGLPBuffer.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreGLPixelFormat.h">
 			</File>
 			<File
@@ -464,9 +408,6 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreGLRenderSystem.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreGLRenderTexture.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreGLSupport.h">
@@ -502,7 +443,16 @@
 				RelativePath="..\include\OgreWin32Window.h">
 			</File>
 			<File
-				RelativePath="..\include\GL\wglew.h">
+				RelativePath="..\..\..\Dependencies\include\GL\gl.h">
+			</File>
+			<File
+				RelativePath="..\..\..\Dependencies\include\GL\glext.h">
+			</File>
+			<File
+				RelativePath="..\..\..\Dependencies\include\GL\glxext.h">
+			</File>
+			<File
+				RelativePath="..\..\..\Dependencies\include\GL\wglext.h">
 			</File>
 			<Filter
 				Name="glsl"

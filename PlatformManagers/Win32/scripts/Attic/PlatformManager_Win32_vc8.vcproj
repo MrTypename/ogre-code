@@ -65,7 +65,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="OgreMain_d.lib dxguid.lib dinput8.lib dinput.lib"
+				AdditionalDependencies="OgreMain_d.lib dxguid.lib dinput8.lib dinput.lib user32.lib kernel32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib"
 				OutputFile="$(OutDir)/PlatformManager_Win32.dll"
 				Version="0.99"
 				LinkIncremental="2"
@@ -162,7 +162,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="OgreMain.lib dxguid.lib dinput8.lib dinput.lib"
+				AdditionalDependencies="OgreMain.lib dxguid.lib dinput8.lib dinput.lib user32.lib kernel32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib"
 				OutputFile="$(OutDir)/PlatformManager_Win32.dll"
 				Version="0.99"
 				LinkIncremental="1"

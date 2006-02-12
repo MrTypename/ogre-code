@@ -361,7 +361,6 @@ namespace Ogre
                 returned vector will be on the side from which the arc from 'this'
                 to rkVector is anticlockwise, e.g. UNIT_Y.crossProduct(UNIT_Z) 
                 = UNIT_X, whilst UNIT_Z.crossProduct(UNIT_Y) = -UNIT_X.
-				This is because OGRE uses a right-handed coordinate system.
             @par
                 For a clearer explanation, look a the left and the bottom edges
                 of your monitor's screen. Assume that the first vector is the
@@ -521,13 +520,10 @@ namespace Ogre
         /** Gets the shortest arc quaternion to rotate this vector to the destination
             vector. 
         @remarks
-            If you call this with a dest vector that is close to the inverse
-            of this vector, we will rotate 180 degrees around the 'fallbackAxis'
-			(if specified, or a generated axis if not) since in this case 
-			ANY axis of rotation is valid. 
+            Don't call this if you think the dest vector can be close to the inverse
+            of this vector, since then ANY axis of rotation is ok. 
         */
-        Quaternion getRotationTo(const Vector3& dest, 
-			const Vector3& fallbackAxis = Vector3::ZERO) const
+        Quaternion getRotationTo(const Vector3& dest) const
         {
             // Based on Stan Melax's article in Game Programming Gems
             Quaternion q;
@@ -545,33 +541,27 @@ namespace Ogre
             {
                 return Quaternion::IDENTITY;
             }
+			// NB if the crossProduct approaches zero, we get unstable because ANY axis will do
+			// when v0 == -v1
+			if (c.isZeroLength())
+			{
+				Vector3 axis = Vector3::UNIT_X.crossProduct(*this);
+				if (axis.isZeroLength()) // pick another if colinear
+					axis = Vector3::UNIT_Y.crossProduct(*this);
+				axis.normalise();
+				Quaternion ret;
+				ret.FromAngleAxis(Radian(Math::PI), axis);
+				return ret;
+			}
             Real s = Math::Sqrt( (1+d)*2 );
-			if (s < 1e-6f)
-			{
-				if (fallbackAxis != Vector3::ZERO)
-				{
-					// rotate 180 degrees about the fallback axis
-					q.FromAngleAxis(Radian(Math::PI), fallbackAxis);
-				}
-				else
-				{
-					// Generate an axis
-					Vector3 axis = Vector3::UNIT_X.crossProduct(*this);
-					if (axis.isZeroLength()) // pick another if colinear
-						axis = Vector3::UNIT_Y.crossProduct(*this);
-					axis.normalise();
-					q.FromAngleAxis(Radian(Math::PI), axis);
-				}
-			}
-			else
-			{
-	            Real invs = 1 / s;
+            assert (s != 0 && "Divide by zero!");
+            Real invs = 1 / s;
 
-    	        q.x = c.x * invs;
-        	    q.y = c.y * invs;
-            	q.z = c.z * invs;
-            	q.w = s * 0.5;
-			}
+
+            q.x = c.x * invs;
+            q.y = c.y * invs;
+            q.z = c.z * invs;
+            q.w = s * 0.5;
             return q;
         }
 

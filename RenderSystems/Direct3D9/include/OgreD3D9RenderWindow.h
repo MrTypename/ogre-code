@@ -70,7 +70,7 @@ namespace Ogre
 		{ return &md3dpp; }
 
 		/// @copydoc RenderTarget::update
-		void update(bool swap);
+		void update();
 
 		/** Create (or recreate) the D3D device or SwapChain for this window.
 		*/
@@ -80,8 +80,6 @@ namespace Ogre
 		*/
 		void destroyD3DResources();
 	
-		/// Accessor for render surface
-		LPDIRECT3DSURFACE9 getRenderSurface() { return mpRenderSurface; }
 	protected:
 		HINSTANCE mInstance;			// Process instance
 		D3D9Driver *mDriver;			// D3D9 driver

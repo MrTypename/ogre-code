@@ -28,8 +28,6 @@
 					<Add option="-DPLATFORMMANAGER_WIN32_EXPORTS"/>
 					<Add directory="..\include"/>
 					<Add directory="..\..\..\OgreMain\include"/>
-					<Add directory="..\misc"/>
-					<Add directory="..\..\..\Dependencies\include"/>
 				</Compiler>
 				<ResourceCompiler>
 					<Add directory="..\misc"/>

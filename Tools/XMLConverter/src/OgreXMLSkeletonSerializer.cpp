@@ -127,12 +127,10 @@ namespace Ogre {
 			TiXmlElement* posElem = bonElem->FirstChildElement("position");
 			TiXmlElement* rotElem = bonElem->FirstChildElement("rotation");
 			TiXmlElement* axisElem = rotElem->FirstChildElement("axis");
-            TiXmlElement* scaleElem = bonElem->FirstChildElement("scale");
 			
 			Vector3 pos;
 			Vector3 axis;
 			Radian angle ;
-            Vector3 scale;
 
 			pos.x = StringConverter::parseReal(posElem->Attribute("x"));
 			pos.y = StringConverter::parseReal(posElem->Attribute("y"));
@@ -144,43 +142,6 @@ namespace Ogre {
 			axis.y = StringConverter::parseReal(axisElem->Attribute("y"));
 			axis.z = StringConverter::parseReal(axisElem->Attribute("z"));
 			
-            // Optional scale
-            if (scaleElem)
-            {
-                // Uniform scale or per axis?
-                const char* factorAttrib = scaleElem->Attribute("factor");
-                if (factorAttrib)
-                {
-                    // Uniform scale
-                    Real factor = StringConverter::parseReal(factorAttrib);
-                    scale = Vector3(factor, factor, factor);
-                }
-                else
-                {
-                    // axis scale
-                    scale = Vector3::UNIT_SCALE;
-                    const char* factorString = scaleElem->Attribute("x");
-                    if (factorString)
-                    {
-                        scale.x = StringConverter::parseReal(factorString);
-                    }
-                    factorString = scaleElem->Attribute("y");
-                    if (factorString)
-                    {
-                        scale.y = StringConverter::parseReal(factorString);
-                    }
-                    factorString = scaleElem->Attribute("z");
-                    if (factorString)
-                    {
-                        scale.z = StringConverter::parseReal(factorString);
-                    }
-                }
-            }
-            else
-            {
-                scale = Vector3::UNIT_SCALE;
-            }
-
 			/*LogManager::getSingleton().logMessage("bone " + name + " : position("
 				+ StringConverter::toString(pos.x) + "," + StringConverter::toString(pos.y) + "," + StringConverter::toString(pos.z) + ")"
 				+ " - angle: " + StringConverter::toString(angle) +" - axe: "
@@ -192,7 +153,6 @@ namespace Ogre {
 			btmp -> setPosition(pos);
 			quat.FromAngleAxis(angle,axis);
 			btmp -> setOrientation(quat) ;
-            btmp -> setScale(scale);
 
         } // bones
     }
@@ -221,7 +181,7 @@ namespace Ogre {
 	void XMLSkeletonSerializer::readAnimations(Skeleton* skel, TiXmlElement* mAnimNode) {
 		
 		Animation * anim ;
-		NodeAnimationTrack * track ;
+		AnimationTrack * track ;
 		LogManager::getSingleton().logMessage("XMLSkeletonSerializer: Reading Animations data...");
 
 		for (TiXmlElement* animElem = mAnimNode->FirstChildElement("animation"); animElem != 0; animElem = animElem->NextSiblingElement())
@@ -245,7 +205,7 @@ namespace Ogre {
 
 				//LogManager::getSingleton().logMessage("Track sur le bone: " + boneName );
 
-				track = anim->createNodeTrack(trackIndex++,skel->getBone(boneName));
+				track = anim->createTrack(trackIndex++,skel->getBone(boneName));
 				readKeyFrames(track, trackElem->FirstChildElement("keyframes"));
 			}
 			
@@ -254,9 +214,9 @@ namespace Ogre {
 
 	}
 	//---------------------------------------------------------------------
-	void XMLSkeletonSerializer::readKeyFrames(NodeAnimationTrack* track, TiXmlElement* mKeyfNode) {
+	void XMLSkeletonSerializer::readKeyFrames(AnimationTrack* track, TiXmlElement* mKeyfNode) {
 		
-		TransformKeyFrame* kf ;
+		KeyFrame* kf ;
 		Quaternion q ;
 
 		for (TiXmlElement* keyfElem = mKeyfNode->FirstChildElement("keyframe"); keyfElem != 0; keyfElem = keyfElem->NextSiblingElement())
@@ -268,7 +228,7 @@ namespace Ogre {
 
             // Get time and create keyframe
 			time = StringConverter::parseReal(keyfElem->Attribute("time"));
-			kf = track->createNodeKeyFrame(time);
+			kf = track->createKeyFrame(time);
             // Optional translate
 			TiXmlElement* transElem = keyfElem->FirstChildElement("translate");
             if (transElem)
@@ -486,16 +446,6 @@ namespace Ogre {
         axisNode->SetAttribute("y", StringConverter::toString(axis.y));
         axisNode->SetAttribute("z", StringConverter::toString(axis.z));
 
-        // Scale optional
-        Vector3 scale = pBone->getScale();
-        if (scale != Vector3::UNIT_SCALE)
-        {
-            TiXmlElement* scaleNode =
-                boneElem->InsertEndChild(TiXmlElement("scale"))->ToElement();
-            scaleNode->SetAttribute("x", StringConverter::toString(scale.x));
-            scaleNode->SetAttribute("y", StringConverter::toString(scale.y));
-            scaleNode->SetAttribute("z", StringConverter::toString(scale.z));
-        }
 
 
     }
@@ -534,7 +484,7 @@ namespace Ogre {
         TiXmlElement* tracksNode = 
             animNode->InsertEndChild(TiXmlElement("tracks"))->ToElement();
 
-        Animation::NodeTrackIterator trackIt = anim->getNodeTrackIterator();
+        Animation::TrackIterator trackIt = anim->getTrackIterator();
         while (trackIt.hasMoreElements())
         {
             writeAnimationTrack(tracksNode, trackIt.getNext());
@@ -543,7 +493,7 @@ namespace Ogre {
     }
     //---------------------------------------------------------------------
     void XMLSkeletonSerializer::writeAnimationTrack(TiXmlElement* tracksNode, 
-        const NodeAnimationTrack* track)
+        const AnimationTrack* track)
     {
         TiXmlElement* trackNode = 
             tracksNode->InsertEndChild(TiXmlElement("track"))->ToElement();
@@ -560,12 +510,11 @@ namespace Ogre {
             trackNode->InsertEndChild(TiXmlElement("keyframes"))->ToElement();
         for (unsigned short i = 0; i < track->getNumKeyFrames(); ++i)
         {
-            writeKeyFrame(keysNode, track->getNodeKeyFrame(i));
+            writeKeyFrame(keysNode, track->getKeyFrame(i));
         }
     }
     //---------------------------------------------------------------------
-    void XMLSkeletonSerializer::writeKeyFrame(TiXmlElement* keysNode, 
-		const TransformKeyFrame* key)
+    void XMLSkeletonSerializer::writeKeyFrame(TiXmlElement* keysNode, const KeyFrame* key)
     {
         TiXmlElement* keyNode = 
             keysNode->InsertEndChild(TiXmlElement("keyframe"))->ToElement();
@@ -592,16 +541,13 @@ namespace Ogre {
         axisNode->SetAttribute("y", StringConverter::toString(axis.y));
         axisNode->SetAttribute("z", StringConverter::toString(axis.z));
 
-        // Scale optional
-        if (key->getScale() != Vector3::UNIT_SCALE)
-        {
-            TiXmlElement* scaleNode = 
-                keyNode->InsertEndChild(TiXmlElement("scale"))->ToElement();
+        
+        TiXmlElement* scaleNode = 
+            keyNode->InsertEndChild(TiXmlElement("scale"))->ToElement();
 
-            scaleNode->SetAttribute("x", StringConverter::toString(key->getScale().x));
-            scaleNode->SetAttribute("y", StringConverter::toString(key->getScale().y));
-            scaleNode->SetAttribute("z", StringConverter::toString(key->getScale().z));
-        }
+        scaleNode->SetAttribute("x", StringConverter::toString(key->getScale().x));
+        scaleNode->SetAttribute("y", StringConverter::toString(key->getScale().y));
+        scaleNode->SetAttribute("z", StringConverter::toString(key->getScale().z));
 
     }
     //---------------------------------------------------------------------

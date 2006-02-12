@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="windows-1250"?>
+<?xml version="1.0" encoding = "windows-1250"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="7.00"
 	Name="XMLConverter"
 	ProjectGUID="{B4FB6BCF-FA5A-42C2-9FA5-F1653B95ADE3}"
 	Keyword="Win32Proj">
@@ -18,7 +18,6 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/Zm150"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\include;..\..\..\OgreMain\include;..\..\..\Dependencies\include"
 				PreprocessorDefinitions="TIXML_USE_STL;"
@@ -57,13 +56,7 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
 				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
@@ -113,35 +106,21 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
 				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 	</Configurations>
-	<References>
-	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm">
 			<File
-				RelativePath="..\src\main.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="/Zm150"/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\src\OgreXMLMeshSerializer.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreXMLSkeletonSerializer.cpp">
+			</File>
+			<File
+				RelativePath="..\src\main.cpp">
 			</File>
 			<File
 				RelativePath="..\src\tinystr.cpp">

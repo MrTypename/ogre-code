@@ -91,9 +91,7 @@ namespace Ogre {
         /// as LBX_BLEND_DIFFUSE_ALPHA but use a constant manual blend value (0.0-1.0)
         LBX_BLEND_MANUAL,
         /// dotproduct of color1 and color2 
-        LBX_DOTPRODUCT,
-        /// use interpolated color values from vertices to scale source1, then add source2 scaled by (1-color)
-        LBX_BLEND_DIFFUSE_COLOUR
+        LBX_DOTPRODUCT
     };
 
     /** List of valid sources of values for blending operations used
@@ -145,7 +143,7 @@ namespace Ogre {
         ColourValue colourArg2;
         /// Manual alpha value for manual source1
         Real alphaArg1;
-        /// Manual alpha value for manual source2
+        /// Manual colour value for manual source1
         Real alphaArg2;
         /// Manual blending factor
         Real factor;
@@ -212,9 +210,7 @@ namespace Ogre {
         /// Add the texture values to the existing scene content
         SBT_ADD,
 		/// Multiply the 2 colours together
-		SBT_MODULATE,
-        /// The default blend mode where source replaces destination
-        SBT_REPLACE
+		SBT_MODULATE
         // TODO : more
     };
 

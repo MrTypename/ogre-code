@@ -132,11 +132,11 @@ namespace OgreRefApp {
                 that behaviour, allowing you to make the camera just render a
                 wireframe view, for example.
         */
-        void setPolygonMode(PolygonMode sd);
+        void setDetailLevel(SceneDetailLevel sd);
 
         /** Retrieves the level of detail that the camera will render.
         */
-        PolygonMode getPolygonMode(void) const;
+        SceneDetailLevel getDetailLevel(void) const;
 
         /** Sets the camera's direction vector.
             @remarks

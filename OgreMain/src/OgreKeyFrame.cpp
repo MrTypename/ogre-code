@@ -26,7 +26,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreKeyFrame.h"
 #include "OgreAnimationTrack.h"
-#include "OgreHardwareBufferManager.h"
 
 namespace Ogre
 {
@@ -34,147 +33,51 @@ namespace Ogre
     KeyFrame::KeyFrame(const AnimationTrack* parent, Real time) 
         : mTime(time), mParentTrack(parent)
     {
+        mTranslate = Vector3::ZERO;
+        mScale.x = mScale.y = mScale.z = 1.0;
+        mRotate = Quaternion::IDENTITY;
     }
     //---------------------------------------------------------------------
     Real KeyFrame::getTime(void) const
     {
         return mTime;
     }
-	//---------------------------------------------------------------------
-	NumericKeyFrame::NumericKeyFrame(const AnimationTrack* parent, Real time)
-		:KeyFrame(parent, time)
-	{
-	}
-	//---------------------------------------------------------------------
-	const AnyNumeric& NumericKeyFrame::getValue(void) const
-	{
-		return mValue;
-	}
-	//---------------------------------------------------------------------
-	void NumericKeyFrame::setValue(const AnyNumeric& val)
-	{
-		mValue = val;
-	}
     //---------------------------------------------------------------------
-	TransformKeyFrame::TransformKeyFrame(const AnimationTrack* parent, Real time)
-		:KeyFrame(parent, time), mTranslate(Vector3::ZERO), 
-		mScale(Vector3::UNIT_SCALE), mRotate(Quaternion::IDENTITY) 
-	{
-	}
-	//---------------------------------------------------------------------
-    void TransformKeyFrame::setTranslate(const Vector3& trans)
+    void KeyFrame::setTranslate(const Vector3& trans)
     {
         mTranslate = trans;
         if (mParentTrack)
             mParentTrack->_keyFrameDataChanged();
     }
     //---------------------------------------------------------------------
-    const Vector3& TransformKeyFrame::getTranslate(void) const
+    const Vector3& KeyFrame::getTranslate(void) const
     {
         return mTranslate;
     }
     //---------------------------------------------------------------------
-    void TransformKeyFrame::setScale(const Vector3& scale)
+    void KeyFrame::setScale(const Vector3& scale)
     {
         mScale = scale;
         if (mParentTrack)
             mParentTrack->_keyFrameDataChanged();
     }
     //---------------------------------------------------------------------
-    const Vector3& TransformKeyFrame::getScale(void) const
+    const Vector3& KeyFrame::getScale(void) const
     {
         return mScale;
     }
     //---------------------------------------------------------------------
-    void TransformKeyFrame::setRotation(const Quaternion& rot)
+    void KeyFrame::setRotation(const Quaternion& rot)
     {
         mRotate = rot;
         if (mParentTrack)
             mParentTrack->_keyFrameDataChanged();
     }
     //---------------------------------------------------------------------
-    const Quaternion& TransformKeyFrame::getRotation(void) const
+    const Quaternion& KeyFrame::getRotation(void) const
     {
         return mRotate;
     }
-	//---------------------------------------------------------------------
-	VertexMorphKeyFrame::VertexMorphKeyFrame(const AnimationTrack* parent, Real time)
-		: KeyFrame(parent, time)
-	{
-	}
-	//---------------------------------------------------------------------
-	void VertexMorphKeyFrame::setVertexBuffer(const HardwareVertexBufferSharedPtr& buf)
-	{
-		mBuffer = buf;
-	}
-	//---------------------------------------------------------------------
-	const HardwareVertexBufferSharedPtr& 
-	VertexMorphKeyFrame::getVertexBuffer(void) const
-	{
-		return mBuffer;
-	}
-	//---------------------------------------------------------------------
-	VertexPoseKeyFrame::VertexPoseKeyFrame(const AnimationTrack* parent, Real time)
-		:KeyFrame(parent, time)
-	{
-	}
-	//---------------------------------------------------------------------
-	void VertexPoseKeyFrame::addPoseReference(ushort poseIndex, Real influence)
-	{
-		mPoseRefs.push_back(PoseRef(poseIndex, influence));
-	}
-	//---------------------------------------------------------------------
-	void VertexPoseKeyFrame::updatePoseReference(ushort poseIndex, Real influence)
-	{
-		for (PoseRefList::iterator i = mPoseRefs.begin(); i != mPoseRefs.end(); ++i)
-		{
-			if (i->poseIndex == poseIndex)
-			{
-				i->influence = influence;
-				return;
-			}
-		}
-		// if we got here, we didn't find it
-		addPoseReference(poseIndex, influence);
-
-	}
-	//---------------------------------------------------------------------
-	void VertexPoseKeyFrame::removePoseReference(ushort poseIndex)
-	{
-		for (PoseRefList::iterator i = mPoseRefs.begin(); i != mPoseRefs.end(); ++i)
-		{
-			if (i->poseIndex == poseIndex)
-			{
-				mPoseRefs.erase(i);
-				return;
-			}
-		}
-	}
-	//---------------------------------------------------------------------
-	void VertexPoseKeyFrame::removeAllPoseReferences(void)
-	{
-		mPoseRefs.clear();
-	}
-	//---------------------------------------------------------------------
-	const VertexPoseKeyFrame::PoseRefList& 
-	VertexPoseKeyFrame::getPoseReferences(void) const
-	{
-		return mPoseRefs;
-	}
-	//---------------------------------------------------------------------
-	VertexPoseKeyFrame::PoseRefIterator 
-	VertexPoseKeyFrame::getPoseReferenceIterator(void)
-	{
-		return PoseRefIterator(mPoseRefs.begin(), mPoseRefs.end());
-	}
-	//---------------------------------------------------------------------
-	VertexPoseKeyFrame::ConstPoseRefIterator 
-	VertexPoseKeyFrame::getPoseReferenceIterator(void) const
-	{
-		return ConstPoseRefIterator(mPoseRefs.begin(), mPoseRefs.end());
-	}
-	//---------------------------------------------------------------------
-
 
 }
 

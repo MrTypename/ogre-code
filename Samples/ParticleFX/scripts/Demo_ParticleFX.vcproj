@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="windows-1250"?>
+<?xml version="1.0" encoding = "windows-1250"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="7.00"
 	Name="Demo_ParticleFX"
 	ProjectGUID="{74204563-3B14-42A3-B9E6-8E3201D571BC}"
 	Keyword="Win32Proj">
@@ -57,13 +57,7 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
 				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
@@ -122,17 +116,9 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
 				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 	</Configurations>
-	<References>
-	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
@@ -140,13 +126,13 @@
 			<File
 				RelativePath="..\src\ParticleFX.cpp">
 			</File>
-			<Filter
-				Name="Header Files"
-				Filter="h;hpp;hxx;hm;inl;inc">
-				<File
-					RelativePath="..\include\ParticleFX.h">
-				</File>
-			</Filter>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl;inc">
+			<File
+				RelativePath="..\include\ParticleFX.h">
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

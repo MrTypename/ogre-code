@@ -5,6 +5,7 @@
 #include "Ogre.h"
 #include "OgreMeshSerializer.h"
 #include "OgreSkeletonSerializer.h"
+#include "OgreDataChunk.h"
 #include "OgreDefaultHardwareBufferManager.h"
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_LINUX
@@ -15,7 +16,6 @@
 #include "time.h"
 
 LogManager* logMgr;
-ResourceGroupManager* resourceGroupMgr;
 Math* mth;
 MaterialManager* matMgr;
 SkeletonManager* skelMgr;
@@ -23,7 +23,7 @@ MeshManager* meshMgr;
 MeshSerializer* meshSerializer;
 MaterialSerializer* materialSerializer;
 SkeletonSerializer* skeletonSerializer;
-DefaultHardwareBufferManager* bufferMgr;
+DefaultHardwareBufferManager *bufferManager;
 
 bool flags[NUMFLAGS] =
 {
@@ -32,8 +32,6 @@ bool flags[NUMFLAGS] =
 	true,  // shared geometry
 	false, // layers
 	false, // generate LOD
-	true,  // generate edge lists
-	true,  // generate tangents
 	true,  // use fixed method
 	true,  // materials
 	false, // RenameMaterials
@@ -376,7 +374,7 @@ int make_filespec( char *spec, char *subdir, char *fullname )
 
 void help( char *filename )
 {
-	cout << "lwo2mesh v0.89b (2005.02.09) by Dennis Verbeek." << nl
+	cout << "lwo2mesh v0.89a (2004.10.05) by Dennis Verbeek." << nl
 		<< "Converts a Lightwave object to an Ogre mesh." << nl
 		<< "Please send any feedback to: dennis.verbeek@chello.nl" << nl << nl
 #if OGRE_PLATFORM == OGRE_PLATFORM_LINUX
@@ -652,8 +650,6 @@ int main( int argc, char *argv[] )
 	if (!flags[InfoOnly])
 	{
 		logMgr = new LogManager();
-		logMgr->createLog("lwo2mesh.log", true);
-		resourceGroupMgr = new ResourceGroupManager();
 		mth = new Math();
 		matMgr = new MaterialManager();
 		matMgr->initialise();
@@ -662,7 +658,7 @@ int main( int argc, char *argv[] )
 		meshSerializer = new MeshSerializer();
 		materialSerializer = new MaterialSerializer();
 		skeletonSerializer = new SkeletonSerializer();
-		bufferMgr = new DefaultHardwareBufferManager(); // needed because we don't have a rendersystem
+		bufferManager = new DefaultHardwareBufferManager(); // needed because we don't have a rendersystem
 	}
 
 	if ( strchr(source, '*') ) 
@@ -713,7 +709,7 @@ int main( int argc, char *argv[] )
 	}
 	else
 	{
-		delete bufferMgr;
+		delete bufferManager;
 		delete skeletonSerializer;
 		delete materialSerializer;
 		delete meshSerializer;
@@ -721,7 +717,6 @@ int main( int argc, char *argv[] )
 		delete skelMgr;
 		delete matMgr;
 		delete mth;
-		delete resourceGroupMgr;
 		delete logMgr;
 	}
 

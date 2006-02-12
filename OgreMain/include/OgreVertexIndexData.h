@@ -60,19 +60,6 @@ namespace Ogre {
 		/// The number of vertices used in this operation
 		size_t vertexCount;
 
-
-		/// Struct used to hold hardware morph / pose vertex data information
-		struct HardwareAnimationData
-		{
-			const VertexElement* targetVertexElement;
-			Real parametric;
-		};
-		typedef std::vector<HardwareAnimationData> HardwareAnimationDataList;
-		/// VertexElements used for hardware morph / pose animation
-		HardwareAnimationDataList hwAnimationDataList;
-		/// Number of hardware animation data items used
-		size_t hwAnimDataItemsUsed;
-		
 		/** Clones this vertex data, potentially including replicating any vertex buffers.
 		@remarks The caller is expected to delete the returned pointer when ready
 		*/
@@ -150,31 +137,6 @@ namespace Ogre {
 		*/
 		void reorganiseBuffers(VertexDeclaration* newDeclaration);
 
-		/** Convert all packed colour values (VET_COLOUR_*) in buffers used to
-			another type.
-		@param srcType The source colour type to assume if the ambiguous VET_COLOUR
-			is encountered.
-		@param destType The destination colour type, must be VET_COLOUR_ABGR or
-			VET_COLOUR_ARGB.
-		*/
-		void convertPackedColour(VertexElementType srcType, VertexElementType destType);
-
-
-		/** Allocate elements to serve a holder of morph / pose target data 
-			for hardware morphing / pose blending.
-		@remarks
-			This method will allocate the given number of 3D texture coordinate 
-			sets for use as a morph target or target pose offset (3D position).
-			These elements will be saved in hwAnimationDataList.
-			It will also assume that the source of these new elements will be new
-			buffers which are not bound at this time, so will start the sources to 
-			1 higher than the current highest binding source. The caller is
-			expected to bind these new buffers when appropriate. For morph animation
-			the original position buffer will be the 'from' keyframe data, whilst
-			for pose animation it will be the original vertex data.
-		*/
-		void allocateHardwareAnimationElements(ushort count);
-
 
 
 	};
@@ -203,59 +165,9 @@ namespace Ogre {
 		@remarks The caller is expected to delete the returned pointer when finished
 		*/
 		IndexData* clone(bool copyData = true) const;
-
-		/** Re-order the indexes in this index data structure to be more
-			vertex cache friendly; that is to re-use the same vertices as close
-			together as possible. 
-		@remarks
-			Can only be used for index data which consists of triangle lists.
-			It would in fact be pointless to use it on triangle strips or fans
-			in any case.
-		*/
-		void optimiseVertexCacheTriList(void);
-	
 	};
 
-	/** Vertex cache profiler.
-	@remarks
-		Utility class for evaluating the effectiveness of the use of the vertex
-		cache by a given index buffer.
-	*/
-	class _OgreExport VertexCacheProfiler
-    {
-		public:
-			enum CacheType {
-				FIFO, LRU
-			};
 
-			VertexCacheProfiler(unsigned int cachesize = 16, CacheType cachetype = FIFO )
-				: size ( cachesize ), type ( cachetype ), tail (0), buffersize (0), hit (0), miss (0)
-			{
-				cache = new uint32[size];
-			};
-
-			~VertexCacheProfiler()
-			{
-				delete[] cache;
-			}
-
-			void profile(const HardwareIndexBufferSharedPtr indexBuffer);
-			void reset() { hit = 0; miss = 0; tail = 0; buffersize = 0; };
-			void flush() { tail = 0; buffersize = 0; };
-
-			unsigned int getHits() { return hit; };
-			unsigned int getMisses() { return miss; };
-			unsigned int getSize() { return size; };
-		private:
-			unsigned int size;
-			uint32 *cache;
-			CacheType type;
-
-			unsigned int tail, buffersize;
-			unsigned int hit, miss;
-
-			bool inCache(unsigned int index);
-	};
 }
 #endif
 

@@ -3,14 +3,12 @@ INCLUDES = $(STLPORT_CFLAGS) $(FT2_CFLAGS) -I$(top_srcdir)/OgreMain/include -DOG
 lib_LTLIBRARIES=libOgreMain.la
 
 libOgreMain_la_SOURCES = OgreAnimation.cpp \
-						 OgreAnimable.cpp \
                          OgreAnimationState.cpp \
                          OgreAnimationTrack.cpp \
                          OgreArchiveManager.cpp \
 						 OgreAutoParamDataSource.cpp \
                          OgreAxisAlignedBox.cpp \
                          OgreBillboard.cpp \
-						 OgreBillboardChain.cpp \
                          OgreBillboardParticleRenderer.cpp \
                          OgreBillboardSet.cpp \
                          OgreBitwise.cpp \
@@ -27,7 +25,6 @@ libOgreMain_la_SOURCES = OgreAnimation.cpp \
                          OgreCursor.cpp \
                          OgreDataStream.cpp \
                          OgreDefaultHardwareBufferManager.cpp \
-						 OgreDefaultSceneQueries.cpp \
                          OgreDynLib.cpp \
                          OgreDynLibManager.cpp \
                          OgreEdgeListBuilder.cpp \
@@ -61,7 +58,6 @@ libOgreMain_la_SOURCES = OgreAnimation.cpp \
                          OgreLight.cpp \
                          OgreLog.cpp \
                          OgreLogManager.cpp \
-						 OgreManualObject.cpp \
                          OgreMaterial.cpp \
                          OgreMaterialManager.cpp \
                          OgreMaterialSerializer.cpp \
@@ -97,14 +93,12 @@ libOgreMain_la_SOURCES = OgreAnimation.cpp \
                          OgrePatchSurface.cpp \
                          OgrePlane.cpp \
                          OgrePlatformManager.cpp \
-						 OgrePose.cpp \
                          OgrePredefinedControllers.cpp \
 						 OgreProfiler.cpp \
                          OgreProgressiveMesh.cpp \
                          OgreQuaternion.cpp \
 						 OgreRectangle2D.cpp \
                          OgreRenderQueue.cpp \
-						 OgreRenderQueueInvocation.cpp \
 						 OgreRenderQueueSortingGrouping.cpp \
                          OgreRenderSystem.cpp \
                          OgreRenderSystemCapabilities.cpp \
@@ -115,7 +109,6 @@ libOgreMain_la_SOURCES = OgreAnimation.cpp \
                          OgreResourceBackgroundQueue.cpp \
                          OgreResourceGroupManager.cpp \
                          OgreResourceManager.cpp \
-						 OgreRibbonTrail.cpp \
                          OgreRoot.cpp \
                          OgreRotationSpline.cpp \
                          OgreSceneManager.cpp \
@@ -153,16 +146,7 @@ libOgreMain_la_SOURCES = OgreAnimation.cpp \
                          OgreVertexIndexData.cpp \
                          OgreViewport.cpp \
                          OgreWireBoundingBox.cpp \
-                         OgreZip.cpp \
-                         OgreCompositionPass.cpp \
-                         OgreCompositionTargetPass.cpp \
-                         OgreCompositionTechnique.cpp \
-                         OgreCompositor.cpp \
-                         OgreCompositorChain.cpp \
-                         OgreCompositorInstance.cpp \
-                         OgreCompositorManager.cpp \
-                         OgreCompositorSerializer.cpp
-
+                         OgreZip.cpp
 
 if USE_DEVIL
 libOgreMain_la_SOURCES +=OgreILImageCodec.cpp \
@@ -170,8 +154,7 @@ libOgreMain_la_SOURCES +=OgreILImageCodec.cpp \
                          OgreILUtil.cpp
 endif
 
-platformdir = $(libdir)
 libOgreMain_la_LIBADD= $(STLPORT_LIBS) $(FT2_LIBS) $(ZZIPLIB_LIBS) $(OGRE_THREAD_LIBS)
-libOgreMain_la_LDFLAGS = $(SHARED_FLAGS) -version-info @OGREMAIN_VERSION_INFO@ -Wl,-rpath,$(platformdir)
+libOgreMain_la_LDFLAGS = $(SHARED_FLAGS) -version-info @OGREMAIN_VERSION_INFO@
 #-Wl,--version-script=$(top_srcdir)/OgreMain/src/ogremain.map
 

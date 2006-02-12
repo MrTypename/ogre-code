@@ -40,7 +40,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreLogManager.h"
 #include "OgreTechnique.h"
 #include "OgrePass.h"
-#include "OgreMaterialManager.h"
 
 
 #include <fstream>
@@ -77,13 +76,6 @@ namespace Ogre {
     size_t BspSceneManager::estimateWorldGeometry(const String& filename)
     {
         return BspLevel::calculateLoadingStages(filename);
-        
-    }
-    //-----------------------------------------------------------------------
-    size_t BspSceneManager::estimateWorldGeometry(DataStreamPtr& stream, 
-		const String& typeName)
-    {
-        return BspLevel::calculateLoadingStages(stream);
         
     }
     //-----------------------------------------------------------------------
@@ -129,34 +121,6 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void BspSceneManager::setWorldGeometry(DataStreamPtr& stream, 
-		const String& typeName)
-    {
-        mLevel.setNull();
-
-        // Load using resource manager
-        mLevel = BspResourceManager::getSingleton().load(stream, 
-			ResourceGroupManager::getSingleton().getWorldResourceGroupName());
-
-        // Init static render operation
-        mRenderOp.vertexData = mLevel->mVertexData;
-        // index data is per-frame
-        mRenderOp.indexData = new IndexData();
-        mRenderOp.indexData->indexStart = 0;
-        mRenderOp.indexData->indexCount = 0;
-        // Create enough index space to render whole level
-        mRenderOp.indexData->indexBuffer = HardwareBufferManager::getSingleton()
-            .createIndexBuffer(
-                HardwareIndexBuffer::IT_32BIT, // always 32-bit
-                mLevel->mNumIndexes, 
-                HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE, false);
-
-        mRenderOp.operationType = RenderOperation::OT_TRIANGLE_LIST;
-        mRenderOp.useIndexes = true;
-
-
-    }
-    //-----------------------------------------------------------------------
     void BspSceneManager::_findVisibleObjects(Camera* cam, bool onlyShadowCasters)
     {
         // Clear unique list of movables for this frame
@@ -181,8 +145,8 @@ namespace Ogre {
         // no world transform required
         mDestRenderSystem->_setWorldMatrix(Matrix4::IDENTITY);
         // Set view / proj
-        mDestRenderSystem->_setViewMatrix(mCameraInProgress->getViewMatrix(true));
-        mDestRenderSystem->_setProjectionMatrix(mCameraInProgress->getProjectionMatrixRS());
+        mDestRenderSystem->_setViewMatrix(mCameraInProgress->getViewMatrix());
+        mDestRenderSystem->_setProjectionMatrix(mCameraInProgress->getProjectionMatrix());
 
         // For each material in turn, cache rendering data & render
         MaterialFaceGroupMap::const_iterator mati;
@@ -216,7 +180,7 @@ namespace Ogre {
 
             while (pit.hasMoreElements())
             {
-                _setPass(pit.getNext());
+                setPass(pit.getNext());
 
                 mDestRenderSystem->_render(mRenderOp);
 
@@ -667,7 +631,6 @@ namespace Ogre {
                 const MovableObject* aObj = *a;
                 // Skip this object if collision not enabled
                 if (!(aObj->getQueryFlags() & mQueryMask) ||
-					!(aObj->getTypeFlags() & mQueryTypeMask) ||
 					!aObj->isInScene())
                     continue;
 
@@ -680,7 +643,6 @@ namespace Ogre {
                         const MovableObject* bObj = *b;
                         // Apply mask to b (both must pass)
                         if ((bObj->getQueryFlags() & mQueryMask) && 
-							(bObj->getTypeFlags() & mQueryTypeMask) && 
 							bObj->isInScene())
                         {
                             const AxisAlignedBox& box1 = aObj->getWorldBoundingBox();
@@ -696,7 +658,7 @@ namespace Ogre {
                     }
                 }
                 // Check object against brushes
-                if (mQueryTypeMask & SceneManager::WORLD_GEOMETRY_TYPE_MASK)
+                if (mQueryMask & SceneManager::WORLD_GEOMETRY_QUERY_MASK)
                 {
                     const BspNode::NodeBrushList& brushes = leaf->getSolidBrushes();
                     BspNode::NodeBrushList::const_iterator bi, biend;
@@ -843,8 +805,7 @@ namespace Ogre {
             // cast away constness, constness of node is nothing to do with objects
             MovableObject* obj = const_cast<MovableObject*>(*i);
             // Skip this object if not enabled
-            if(!(obj->getQueryFlags() & mQueryMask) ||
-				!((obj->getTypeFlags() & mQueryTypeMask)))
+            if((obj->getQueryFlags() & mQueryMask) == 0)
                 continue;
 
             // check we haven't reported this one already
@@ -866,7 +827,7 @@ namespace Ogre {
 
 
         // Check ray against brushes
-        if (mQueryTypeMask & SceneManager::WORLD_GEOMETRY_TYPE_MASK)
+        if (mQueryMask & SceneManager::WORLD_GEOMETRY_QUERY_MASK)
         {
             const BspNode::NodeBrushList& brushList = leaf->getSolidBrushes();
             BspNode::NodeBrushList::const_iterator bi, biend;

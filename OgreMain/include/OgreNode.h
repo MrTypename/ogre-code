@@ -65,29 +65,6 @@ namespace Ogre {
         typedef MapIterator<ChildNodeMap> ChildNodeIterator;
 		typedef ConstMapIterator<ChildNodeMap> ConstChildNodeIterator;
 
-		/** Listener which gets called back on Node events.
-		*/
-		class _OgreExport Listener
-		{
-		public:
-			Listener() {}
-			virtual ~Listener() {}
-			/** Called when a node gets updated.
-			@remarks
-				Note that this happens when the node's derived update happens,
-				not every time a method altering it's state occurs. There may 
-				be several state-changing calls but only one of these calls, 
-				when the node graph is fully updated.
-			*/
-			virtual void nodeUpdated(const Node* node) {}
-			/** Node is being destroyed */
-			virtual void nodeDestroyed(const Node* node) {};
-			/** Node has been attached to a parent */
-			virtual void nodeAttached(const Node* node) {};
-			/** Node has been detached from a parent */
-			virtual void nodeDetached(const Node* node) {};
-		};
-
     protected:
         /// Pointer to parent node
         Node* mParent;
@@ -211,12 +188,6 @@ namespace Ogre {
         /// Cached derived transform as a 4x4 matrix
         mutable Matrix4 mCachedTransform;
         mutable bool mCachedTransformOutOfDate;
-
-		/** Node listener - only one allowed (no list) for size & performance reasons. */
-		Listener* mListener;
-
-		typedef std::vector<Node*> QueuedUpdates;
-		static QueuedUpdates msQueuedUpdates;
 
 
     public:
@@ -584,18 +555,7 @@ namespace Ogre {
         */
         virtual void _update(bool updateChildren, bool parentHasChanged);
 
-        /** Sets a listener for this Node.
-		@remarks
-			Note for size and performance reasons only one listener per node is
-			allowed.
-		*/
-		virtual void setListener(Listener* listener) { mListener = listener; }
-		
-		/** Gets the current listener for this Node.
-		*/
-		virtual Listener* getListener(void) const { return mListener; }
-		
-		/** Overridden from Renderable.
+        /** Overridden from Renderable.
         @remarks
             This is only used if the SceneManager chooses to render the node. This option can be set
             for SceneNodes at SceneManager::setDisplaySceneNodes, and for entities based on skeletal 
@@ -666,28 +626,12 @@ namespace Ogre {
         @remarks
             This not only tags the node state as being 'dirty', it also requests it's parent to 
             know about it's dirtiness so it will get an update next time.
-		@param forceParentUpdate Even if the node thinks it has already told it's
-			parent, tell it anyway
         */
-        virtual void needUpdate(bool forceParentUpdate = false);
-        /** Called by children to notify their parent that they need an update. 
-		@param forceParentUpdate Even if the node thinks it has already told it's
-			parent, tell it anyway
-		*/
-        virtual void requestUpdate(Node* child, bool forceParentUpdate = false);
+        virtual void needUpdate();
+        /** Called by children to notify their parent that they need an update. */
+        virtual void requestUpdate(Node* child);
         /** Called by children to notify their parent that they no longer need an update. */
         virtual void cancelUpdate(Node* child);
-
-		/** Queue a 'needUpdate' call to a node safely.
-		@ramarks
-			You can't call needUpdate() during the scene graph update, e.g. in
-			response to a Node::Listener hook, because the graph is already being 
-			updated, and update flag changes cannot be made reliably in that context. 
-			Call this method if you need to queue a needUpdate call in this case.
-		*/
-		static void queueNeedUpdate(Node* n);
-		/** Process queued 'needUpdate' calls. */
-		static void processQueuedUpdates(void);
 
         /** @copydoc Renderable::getLights */
         const LightList& getLights(void) const;

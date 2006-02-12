@@ -203,15 +203,15 @@
 				RelativePath="..\src\ParticleFX.cpp"
 				>
 			</File>
-			<Filter
-				Name="Header Files"
-				Filter="h;hpp;hxx;hm;inl;inc"
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl;inc"
+			>
+			<File
+				RelativePath="..\include\ParticleFX.h"
 				>
-				<File
-					RelativePath="..\include\ParticleFX.h"
-					>
-				</File>
-			</Filter>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

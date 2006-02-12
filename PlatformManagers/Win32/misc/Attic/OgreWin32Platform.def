@@ -9,4 +9,3 @@ EXPORTS
 	destroyPlatformErrorDialog
 	destroyPlatformInputReader
 	destroyTimer
-	messagePump

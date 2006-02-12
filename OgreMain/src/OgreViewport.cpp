@@ -29,27 +29,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreRenderTarget.h"
 #include "OgreCamera.h"
 #include "OgreMath.h"
-#include "OgreRoot.h"
-
 
 namespace Ogre {
     //---------------------------------------------------------------------
     Viewport::Viewport(Camera* cam, RenderTarget* target, Real left, Real top, Real width, Real height, int ZOrder)
-        : mCamera(cam)
-        , mTarget(target)
-        , mRelLeft(left)
-        , mRelTop(top)
-        , mRelWidth(width)
-        , mRelHeight(height)
-        // Actual dimensions will update later
-        , mZOrder(ZOrder)
-        , mBackColour(ColourValue::Black)
-        , mClearEveryFrame(true)
-        , mUpdated(false)
-        , mShowOverlays(true)
-        , mShowSkies(true)
-		, mShowShadows(true)
-		, mRQSequence(0)
     {
 
 		StringUtil::StrStreamType msg;
@@ -60,9 +43,24 @@ namespace Ogre {
 			<< "L: " << left << " T: " << top << " W: " << width << " H: " << height
 			<< " ZOrder: " << ZOrder;
         LogManager::getSingleton().logMessage(msg.str());
+        mCamera = cam;
+        mTarget = target;
+
+        mRelLeft = left;
+        mRelTop = top;
+        mRelWidth = width;
+        mRelHeight = height;
+        mZOrder = ZOrder;
+
+        mBackColour = ColourValue::Black;
+        mClearEveryFrame = true;
+
 
         // Calculate actual dimensions
         _updateDimensions();
+
+        mUpdated = true;
+        mShowOverlays = true;
 
         // notify camera
         cam->_notifyViewport(this);
@@ -237,50 +235,4 @@ namespace Ogre {
     {
         return mShowOverlays;
     }
-    //---------------------------------------------------------------------
-    void Viewport::setSkiesEnabled(bool enabled)
-    {
-        mShowSkies = enabled;
-    }
-    //---------------------------------------------------------------------
-    bool Viewport::getSkiesEnabled(void) const
-    {
-        return mShowSkies;
-    }
-    //---------------------------------------------------------------------
-    void Viewport::setShadowsEnabled(bool enabled)
-    {
-        mShowShadows = enabled;
-    }
-    //---------------------------------------------------------------------
-    bool Viewport::getShadowsEnabled(void) const
-    {
-        return mShowShadows;
-    }
-	//-----------------------------------------------------------------------
-	void Viewport::setRenderQueueInvocationSequenceName(const String& sequenceName)
-	{
-		mRQSequenceName = sequenceName;
-		if (mRQSequenceName.empty())
-		{
-			mRQSequence = 0;
-		}
-		else
-		{
-			mRQSequence = 
-				Root::getSingleton().getRenderQueueInvocationSequence(mRQSequenceName);
-		}
-	}
-	//-----------------------------------------------------------------------
-	const String& Viewport::getRenderQueueInvocationSequenceName(void) const
-	{
-		return mRQSequenceName;
-	}
-	//-----------------------------------------------------------------------
-	RenderQueueInvocationSequence* Viewport::_getRenderQueueInvocationSequence(void)
-	{
-		return mRQSequence;
-	}
-	//-----------------------------------------------------------------------
-
 }

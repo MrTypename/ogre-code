@@ -45,7 +45,6 @@ namespace Ogre {
 			GLint  mLocation;
 			bool isReal;
 			GLsizei mElementCount;
-            GLint mArraySize;
 		};
 
         typedef std::vector<UniformReference> UniformReferenceList;
@@ -59,8 +58,6 @@ namespace Ogre {
 		GLhandleARB mGLHandle;
 		/// flag indicating that the program object has been successfully linked
 		GLint		mLinked;
-        /// flag indicating skeletal animation is being performed
-        bool mSkeletalAnimation;
 
 		/// build uniform references from active named uniforms
 		void buildUniformReferences(void);
@@ -78,29 +75,8 @@ namespace Ogre {
 		normally called by GLSLGpuProgram::bindParameters() just before rendering occurs.
 		*/
 		void updateUniforms(GpuProgramParametersSharedPtr params);
-		/** updates program object uniforms using data from pass iteration GpuProgramParamters.
-		normally called by GLSLGpuProgram::bindMultiPassParameters() just before multi pass rendering occurs.
-		*/
-		void updatePassIterationUniforms(GpuProgramParametersSharedPtr params);
 		/// get the GL Handle for the program object
 		GLhandleARB getGLHandle(void) const { return mGLHandle; }
-        /** Sets whether the linked program includes the required instructions
-        to perform skeletal animation. 
-        @remarks
-        If this is set to true, OGRE will not blend the geometry according to 
-        skeletal animation, it will expect the vertex program to do it.
-        */
-        void setSkeletalAnimationIncluded(bool included) 
-        { mSkeletalAnimation = included; }
-
-        /** Returns whether the linked program includes the required instructions
-            to perform skeletal animation. 
-        @remarks
-            If this returns true, OGRE will not blend the geometry according to 
-            skeletal animation, it will expect the vertex program to do it.
-        */
-        bool isSkeletalAnimationIncluded(void) const { return mSkeletalAnimation; }
-
 	};
 
 }

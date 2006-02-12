@@ -116,16 +116,8 @@ namespace Ogre {
             /// Texture mirrors (flips) at joins over 1.0
             TAM_MIRROR,
             /// Texture clamps at 1.0
-            TAM_CLAMP,
-            /// Texture coordinates outside the range [0.0, 1.0] are set to the border colour
-            TAM_BORDER
+            TAM_CLAMP
         };
-
-		/** Texture addressing mode for each texture coordinate. */
-		struct UVWAddressingMode
-		{
-			TextureAddressingMode u, v, w;
-		};
 
         /** Enum identifying the frame indexes for faces of a cube map (not the composite 3D type.
         */
@@ -154,9 +146,6 @@ namespace Ogre {
             const Frustum* frustum;
         };
 
-        /** Texture effects in a multimap paired array
-        */
-        typedef std::multimap<TextureEffectType, TextureEffect> EffectMap;
 
         /** Default constructor.
         */
@@ -356,36 +345,12 @@ namespace Ogre {
         */
         unsigned int getCurrentFrame(void) const;
 
-        /** Gets the name of the texture associated with a frame number.
-            Throws an exception if frameNumber exceeds the number of stored frames.
+        /** Gets the name of the texture associated with a frame.
         @note
         Applies to both fixed-function and programmable pipeline.
         */
         const String& getFrameTextureName(unsigned int frameNumber) const;
 
-        /** Sets the name of the texture associated with a frame.
-        @param name The name of the texture
-        @param frameNumber The frame the texture name is to be placed in
-        @note
-        Throws an exception if frameNumber exceeds the number of stored frames.
-        Applies to both fixed-function and programmable pipeline.
-        */
-        void setFrameTextureName(const String& name, unsigned int frameNumber);
-
-        /** Add a Texture name to the end of the frame container.
-        @param name The name of the texture
-        @note
-        Applies to both fixed-function and programmable pipeline.
-        */
-        void addFrameTextureName(const String& name);
-        /** deletes a specific texture frame.  The texture used is not deleted but the
-            texture will no longer be used by the Texture Unit.  An exception is raised
-            if the frame number exceeds the number of actual frames.
-        @param frameNumber The frame number of the texture to be deleted.
-        @note
-        Applies to both fixed-function and programmable pipeline.
-        */
-        void deleteFrameTextureName(const size_t frameNumber);
         /** Gets the number of frames for a texture.
         @note
         Applies to both fixed-function and programmable pipeline.
@@ -532,58 +497,21 @@ namespace Ogre {
         // get texture rotation effects angle value
         const Radian& getTextureRotate(void) const;
 
-        /** Gets the texture addressing mode for a given coordinate, 
-		 	i.e. what happens at uv values above 1.0.
+        /** Gets the texture addressing mode, i.e. what happens at uv values above 1.0.
         @note
-        	The default is TAM_WRAP i.e. the texture repeats over values of 1.0.
+        The default is TAM_WRAP i.e. the texture repeats over values of 1.0.
         */
-        const UVWAddressingMode& getTextureAddressingMode(void) const;
+        TextureAddressingMode getTextureAddressingMode(void) const;
 
         /** Sets the texture addressing mode, i.e. what happens at uv values above 1.0.
         @note
         The default is TAM_WRAP i.e. the texture repeats over values of 1.0.
-		@note This is a shortcut method which sets the addressing mode for all
-			coordinates at once; you can also call the more specific method
-			to set the addressing mode per coordinate.
         @note
         This applies for both the fixed-function and programmable pipelines.
         */
         void setTextureAddressingMode( TextureAddressingMode tam);
 
-        /** Sets the texture addressing mode, i.e. what happens at uv values above 1.0.
-        @note
-        The default is TAM_WRAP i.e. the texture repeats over values of 1.0.
-        @note
-        This applies for both the fixed-function and programmable pipelines.
-		*/
-        void setTextureAddressingMode( TextureAddressingMode u, 
-			TextureAddressingMode v, TextureAddressingMode w);
-
-        /** Sets the texture addressing mode, i.e. what happens at uv values above 1.0.
-        @note
-        The default is TAM_WRAP i.e. the texture repeats over values of 1.0.
-        @note
-        This applies for both the fixed-function and programmable pipelines.
-		*/
-        void setTextureAddressingMode( const UVWAddressingMode& uvw);
-
-        /** Sets the texture border colour.
-        @note
-            The default is ColourValue::Black, and this value only used when addressing mode
-            is TAM_BORDER.
-        @note
-            This applies for both the fixed-function and programmable pipelines.
-		*/
-        void setTextureBorderColour(const ColourValue& colour);
-
-        /** Sets the texture border colour.
-        @note
-            The default is ColourValue::Black, and this value only used when addressing mode
-            is TAM_BORDER.
-		*/
-        const ColourValue& getTextureBorderColour(void) const;
-
-		/** Setting advanced blending options.
+        /** Setting advanced blending options.
         @remarks
         This is an extended version of the TextureUnitState::setColourOperation method which allows
         extremely detailed control over the blending applied between this and earlier layers.
@@ -876,7 +804,7 @@ namespace Ogre {
         void setBlank(void);
 
         // get texture effects in a multimap paired array
-        const EffectMap& getEffects(void) const;
+        std::multimap<TextureEffectType, TextureEffect> getEffects(void) const;
         // get the animated-texture animation duration
         Real getAnimationDuration(void) const;
 
@@ -917,7 +845,7 @@ namespace Ogre {
         unsigned int getTextureAnisotropy() const;
 
         /// Gets the parent Pass object
-        Pass* getParent(void) const { return mParent; }
+        Pass* getParent(void) { return mParent; }
 
 		/** Internal method for loading this object as part of Material::load */
 		void _load(void);
@@ -931,46 +859,20 @@ namespace Ogre {
         /** Tells the class that it needs recompilation. */
         void _notifyNeedsRecompile(void);
 
-        /** Set the name of the Texture Unit State
-        @remarks
-            The name of the Texture Unit State is optional.  Its usefull in material scripts where a material could inherit
-            from another material and only want to modify a particalar Texture Unit State.
-        */
-        void setName(const String& name);
-        /// get the name of the Texture Unit State
-        const String& getName(void) const { return mName; }
-
-        /** Set the alias name used for texture frame names
-        @param name can be any sequence of characters and does not have to be unique           
-        */
-        void setTextureNameAlias(const String& name);
-        /** gets the Texture Name Alias of the Texture Unit.
-        */
-        const String& getTextureNameAlias(void) const { return mTextureNameAlias;}
-
-        /** Applies texture names to Texture Unit State with matching texture name aliases.
-            If no matching aliases are found then the TUS state does not change.
-        @remarks
-            Cubic, 1d, 2d, and 3d textures are determined from current state of the Texture Unit.
-            Assumes animated frames are sequentially numbered in the name.
-            If matching texture aliases are found then true is returned.
-
-        @param
-            aliasList is a map container of texture alias, texture name pairs
-        @param
-            apply set true to apply the texture aliases else just test to see if texture alias matches are found.
-        @return
-            True if matching texture aliases were found in the Texture Unit State.
-        */
-        bool applyTextureAliases(const AliasTextureNamePairList& aliasList, const bool apply = true);
-
 		/** Notify this object that its parent has changed */
 		void _notifyParent(Pass* parent);
+
+
 	
 protected:
         // State
-        /// The current animation frame.
+#define OGRE_MAX_TEXTURE_FRAMES 32
+
+        /// Number of frames of animation, or frames making up cubic
+        unsigned int mNumFrames;        
+        /// The xurrent animation frame.
         unsigned int mCurrentFrame;
+        // String mFrames[OGRE_MAX_TEXTURE_FRAMES] is at the end of the class                
 
         /// Duration of animation in seconds
         Real mAnimDuration;            
@@ -980,8 +882,7 @@ protected:
 		int mTextureSrcMipmaps; // Request number of mipmaps
 
         unsigned int mTextureCoordSetIndex;
-        UVWAddressingMode mAddressMode;
-        ColourValue mBorderColour;
+        TextureAddressingMode mAddressMode;                
 
         LayerBlendModeEx colourBlendMode;
         SceneBlendFactor colourBlendFallbackSrc;
@@ -1017,9 +918,9 @@ protected:
         // Complex members (those that can't be copied using memcpy) are at the end to 
         // allow for fast copying of the basic members.
         //
-        std::vector<String> mFrames;
-        String mName;               // optional name for the TUS
-        String mTextureNameAlias;       // optional alias for texture frames
+        String mFrames[OGRE_MAX_TEXTURE_FRAMES]; // Names of frames
+
+        typedef std::multimap<TextureEffectType, TextureEffect> EffectMap;
         EffectMap mEffects;
         //-----------------------------------------------------------------------------
 

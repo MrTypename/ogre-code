@@ -116,10 +116,6 @@ namespace Ogre {
             ushort mFragmentProgramConstantIntCount;           
             /// The number of boolean constants fragment programs support
             ushort mFragmentProgramConstantBoolCount;
-			/// The number of simultaneous render targets supported
-			ushort mNumMultiRenderTargets;
-			/// The maximum point size
-			Real mMaxPointSize;
 
     	public:	
             RenderSystemCapabilities ();
@@ -144,12 +140,6 @@ namespace Ogre {
             {
                 mNumVertexBlendMatrices = num;
             }
-
-			/// The number of simultaneous render targets supported
-			void setNumMultiRenderTargets(ushort num)
-			{
-				mNumMultiRenderTargets = num;
-			}
 
             ushort getNumWorldMatricies(void) const
             { 
@@ -188,12 +178,6 @@ namespace Ogre {
             {
                 return mNumVertexBlendMatrices;
             }
-
-			/// The number of simultaneous render targets supported
-			ushort numMultiRenderTargets(void) const
-			{
-				return mNumMultiRenderTargets;
-			}
 
             /** Adds a capability flag to mCapabilities
             */
@@ -298,17 +282,6 @@ namespace Ogre {
             {
                 mFragmentProgramConstantBoolCount = c;           
             }
-			/// Maximum point screen size in pixels
-			void setMaxPointSize(Real s)
-			{
-				mMaxPointSize = s;
-			}
-			/// Maximum point screen size in pixels
-			Real getMaxPointSize(void) const
-			{
-				return mMaxPointSize;
-			}
-
 
             /** Write the capabilities to the pass in Log */
             void log(Log* pLog);

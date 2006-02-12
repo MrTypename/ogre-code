@@ -43,24 +43,12 @@ namespace Ogre {
         Serializer();
         virtual ~Serializer();
 
-		/// The endianness of written files
-		enum Endian
-		{
-			/// Use the platform native endian
-			ENDIAN_NATIVE,
-			/// Use big endian (0x1000 is serialised as 0x10 0x00)
-			ENDIAN_BIG,
-			/// Use little endian (0x1000 is serialised as 0x00 0x10)
-			ENDIAN_LITTLE
-		};
-
 
     protected:
 
         uint32 mCurrentstreamLen;
         FILE* mpfFile;
         String mVersion;
-		bool mFlipEndian; // default to native endian, derive from header
 
         // Internal methods
         virtual void writeFileHeader(void);
@@ -96,11 +84,6 @@ namespace Ogre {
         
         virtual void flipEndian(void * pData, size_t size, size_t count);
         virtual void flipEndian(void * pData, size_t size);
-
-		/// Determine the endianness of the incoming stream compared to native
-		virtual void determineEndianness(DataStreamPtr& stream);
-		/// Determine the endianness to write with based on option
-		virtual void determineEndianness(Endian requestedEndian);
     };
 
 }

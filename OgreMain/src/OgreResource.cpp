@@ -67,13 +67,6 @@ namespace Ogre
 			}
 			else
 			{
-				if (mGroup == ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME)
-				{
-					// Derive resource group
-					changeGroupOwnership(
-						ResourceGroupManager::getSingleton()
-							.findGroupContainingResource(mName));
-				}
 				loadImpl();
 			}
 			// Calculate resource size
@@ -85,17 +78,6 @@ namespace Ogre
 				mCreator->_notifyResourceLoaded(this);
 		}
 
-	}
-	//-----------------------------------------------------------------------
-	void Resource::changeGroupOwnership(const String& newGroup)
-	{
-		if (mGroup != newGroup)
-		{
-			String oldGroup = mGroup;
-			mGroup = newGroup;
-			ResourceGroupManager::getSingleton()
-				._notifyResourceGroupChanged(oldGroup, this);
-		}
 	}
 	//-----------------------------------------------------------------------
 	void Resource::unload(void) 

@@ -39,7 +39,6 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/Zm150"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\include;..\..\Common\include;..\..\..\OgreMain\include;..\..\..\Dependencies\include;..\..\..\Dependencies\include\CEGUI;..\..\Common\CEGUIRenderer\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;"
@@ -203,14 +202,6 @@
 			<File
 				RelativePath="..\src\Gui.cpp"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="/Zm150"
-					/>
-				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter

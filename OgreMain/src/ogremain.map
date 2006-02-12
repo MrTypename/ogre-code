@@ -13,7 +13,6 @@
             Ogre::Ca*;
             Ogre::Codec::[^C]*;
             Ogre::Co[lp]*;
-			Ogre::Composit*;
             Ogre::Conf*;
             Ogre::ControllerManager::*;
             Ogre::Cu*;
@@ -56,7 +55,6 @@
             Ogre::MeshSerializer::*;
             Ogre::Mou*;
             Ogre::Mov*;
-            Ogre::MultiRenderTarget::*;
             Ogre::N*;
             Ogre::O*;
             Ogre::PanelOverlayElementFactory*;
@@ -100,7 +98,7 @@
             Ogre::TextAreaOverlayElement::[^C]*;
             Ogre::TextAreaOverlayElementFactory*;
             Ogre::Texture*;
-            Ogre::T[ir]*;
+            Ogre::Ti*;
             Ogre::U*;
             Ogre::Vector[234]*;
             Ogre::Ver*;
@@ -174,9 +172,6 @@
         _ZT[ISV]N4Ogre31TexCoordModifierControllerValueE;
         _ZT[ISV]N4Ogre[0-9][0-9][U-W]*;
         _ZT[ISV]N4Ogre10ZipArchiveE;
-        _ZT[ISV]N4Ogre17MultiRenderTargetE;
-        _ZT[ISV]N4Ogre[0-9]Composit*E;
-        _ZT[ISV]N4Ogre[1-9][0-9]Composit*E;
 		_ZT[ISV]N4Ogre8TagPointE;
         _ZT[ISV]N4Ogre16MemoryDataStreamE;
 

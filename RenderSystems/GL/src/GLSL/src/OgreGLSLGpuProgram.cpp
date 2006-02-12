@@ -51,8 +51,6 @@ namespace Ogre {
 			mProgramID = ++mFragmentShaderCount;
 		}
 
-        // transfer skeletal animation status from parent
-        mSkeletalAnimation = mGLSLProgram->isSkeletalAnimationIncluded();
 		// there is nothing to load
 		mLoadFromFile = false;
 
@@ -118,16 +116,6 @@ namespace Ogre {
 		GLSLLinkProgram* linkProgram = GLSLLinkProgramManager::getSingleton().getActiveLinkProgram();
 		// pass on parameters from params to program object uniforms
 		linkProgram->updateUniforms( params );
-		
-	}
-
-	//-----------------------------------------------------------------------------
-	void GLSLGpuProgram::bindProgramPassIterationParameters(GpuProgramParametersSharedPtr params)
-	{
-		// activate the link program object
-		GLSLLinkProgram* linkProgram = GLSLLinkProgramManager::getSingleton().getActiveLinkProgram();
-		// pass on parameters from params to program object uniforms
-		linkProgram->updatePassIterationUniforms( params );
 		
 	}
 

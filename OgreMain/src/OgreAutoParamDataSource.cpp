@@ -30,8 +30,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreRenderTarget.h"
 #include "OgreControllerManager.h"
 #include "OgreMath.h"
-#include "OgreRoot.h"
-#include "OgreRenderSystem.h"
 
 namespace Ogre {
     const Matrix4 PROJECTIONCLIPSPACE2DTOIMAGESPACE_PERSPECTIVE(
@@ -43,8 +41,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     AutoParamDataSource::AutoParamDataSource()
         : mWorldMatrixDirty(true),
-         mViewMatrixDirty(true),
-         mProjMatrixDirty(true),
          mWorldViewMatrixDirty(true),
          mViewProjMatrixDirty(true),
          mWorldViewProjMatrixDirty(true),
@@ -75,13 +71,10 @@ namespace Ogre {
     {
 		mCurrentRenderable = rend;
 		mWorldMatrixDirty = true;
-        mViewMatrixDirty = true;
-        mProjMatrixDirty = true;
 		mWorldViewMatrixDirty = true;
         mViewProjMatrixDirty = true;
 		mWorldViewProjMatrixDirty = true;
 		mInverseWorldMatrixDirty = true;
-        mInverseViewMatrixDirty = true;
 		mInverseWorldViewMatrixDirty = true;
 		mInverseTransposeWorldMatrixDirty = true;
 		mInverseTransposeWorldViewMatrixDirty = true;
@@ -91,8 +84,6 @@ namespace Ogre {
     void AutoParamDataSource::setCurrentCamera(const Camera* cam)
     {
         mCurrentCamera = cam;
-        mViewMatrixDirty = true;
-        mProjMatrixDirty = true;
         mWorldViewMatrixDirty = true;
         mViewProjMatrixDirty = true;
         mWorldViewProjMatrixDirty = true;
@@ -143,15 +134,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     const Matrix4& AutoParamDataSource::getViewMatrix(void) const
     {
-        if (mViewMatrixDirty)
-        {
-            if (mCurrentRenderable && mCurrentRenderable->useIdentityView())
-                mViewMatrix = Matrix4::IDENTITY;
-            else
-                mViewMatrix = mCurrentCamera->getViewMatrix(true);
-            mViewMatrixDirty = false;
-        }
-        return mViewMatrix;
+        return mCurrentCamera->getViewMatrix();
     }
     //-----------------------------------------------------------------------------
     const Matrix4& AutoParamDataSource::getViewProjectionMatrix(void) const
@@ -166,30 +149,13 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     const Matrix4& AutoParamDataSource::getProjectionMatrix(void) const
     {
-        if (mProjMatrixDirty)
+        // NB use API-independent projection matrix since GPU programs
+        // bypass the API-specific handedness and use right-handed coords
+        mProjectionMatrix = mCurrentCamera->getStandardProjectionMatrix();
+        if (mCurrentRenderTarget && mCurrentRenderTarget->requiresTextureFlipping())
         {
-            // NB use API-independent projection matrix since GPU programs
-            // bypass the API-specific handedness and use right-handed coords
-            if (mCurrentRenderable && mCurrentRenderable->useIdentityProjection())
-            {
-                // Use identity projection matrix, still need to take RS depth into account.
-                RenderSystem* rs = Root::getSingleton().getRenderSystem();
-                rs->_convertProjectionMatrix(Matrix4::IDENTITY, mProjectionMatrix, true);
-            }
-            else
-            {
-                mProjectionMatrix = mCurrentCamera->getProjectionMatrixWithRSDepth();
-            }
-            if (mCurrentRenderTarget && mCurrentRenderTarget->requiresTextureFlipping())
-            {
-                // Because we're not using setProjectionMatrix, this needs to be done here
-                // Invert transformed y
-                mProjectionMatrix[1][0] = -mProjectionMatrix[1][0];
-                mProjectionMatrix[1][1] = -mProjectionMatrix[1][1];
-                mProjectionMatrix[1][2] = -mProjectionMatrix[1][2];
-                mProjectionMatrix[1][3] = -mProjectionMatrix[1][3];
-            }
-            mProjMatrixDirty = false;
+            // Because we're not using setProjectionMatrix, this needs to be done here
+            mProjectionMatrix[1][1] = -mProjectionMatrix[1][1];
         }
         return mProjectionMatrix;
     }
@@ -313,27 +279,6 @@ namespace Ogre {
 		
 	}
     //-----------------------------------------------------------------------------
-    void AutoParamDataSource::setFog(FogMode mode, const ColourValue& colour,
-        Real expDensity, Real linearStart, Real linearEnd)
-    {
-        (void)mode; // ignored
-        mFogColour = colour;
-        mFogParams.x = expDensity;
-        mFogParams.y = linearStart;
-        mFogParams.z = linearEnd;
-        mFogParams.w = 1 / (linearEnd - linearStart);
-    }
-    //-----------------------------------------------------------------------------
-    const ColourValue& AutoParamDataSource::getFogColour(void) const
-    {
-        return mFogColour;
-    }
-    //-----------------------------------------------------------------------------
-    const Vector4& AutoParamDataSource::getFogParams(void) const
-    {
-        return mFogParams;
-    }
-    //-----------------------------------------------------------------------------
     void AutoParamDataSource::setTextureProjector(const Frustum* frust)
     {
         mCurrentTextureProjector = frust;
@@ -347,7 +292,7 @@ namespace Ogre {
         {
             mTextureViewProjMatrix = 
                 PROJECTIONCLIPSPACE2DTOIMAGESPACE_PERSPECTIVE * 
-                mCurrentTextureProjector->getProjectionMatrixWithRSDepth() * 
+                mCurrentTextureProjector->getStandardProjectionMatrix() * 
 				mCurrentTextureProjector->getViewMatrix();
             mTextureViewProjMatrixDirty = false;
         }
@@ -595,21 +540,6 @@ namespace Ogre {
 		return mCurrentCamera->getFarClipDistance(); 
 	}
 	//-----------------------------------------------------------------------------
-    int AutoParamDataSource::getPassNumber(void) const
-    {
-        return mPassNumber;
-    }
-	//-----------------------------------------------------------------------------
-    void AutoParamDataSource::setPassNumber(const int passNumber)
-    {
-        mPassNumber = passNumber;
-    }
-	//-----------------------------------------------------------------------------
-    void AutoParamDataSource::incPassNumber(void)
-    {
-        ++mPassNumber;
-    }
-	//-----------------------------------------------------------------------------
-
+	
 }
 

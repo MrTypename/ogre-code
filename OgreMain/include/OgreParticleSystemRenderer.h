@@ -88,12 +88,7 @@ namespace Ogre {
 		/** Sets which render queue group this renderer should target with it's
 			output.
 		*/
-		virtual void setRenderQueueGroup(uint8 queueID) = 0;
-
-		/** Setting carried over from ParticleSystem.
-		*/
-		virtual void setKeepParticlesInLocalSpace(bool keepLocal) = 0;
-
+		virtual void setRenderQueueGroup(RenderQueueGroupID queueID) = 0;
 
 
     };

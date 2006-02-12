@@ -174,7 +174,7 @@ namespace Ogre {
 			the same vertex & index format is stored. It also acts as the 
 			renderable.
 		*/
-		class _OgreExport GeometryBucket :	public Renderable
+		class _OgreExport GeometryBucket : public Renderable
 		{
 		protected:
 			/// Geometry which has been queued up pre-build (not for deallocation)
@@ -274,7 +274,7 @@ namespace Ogre {
 			/// Build
 			void build(bool stencilShadows);
 			/// Add children to the render queue
-			void addRenderables(RenderQueue* queue, uint8 group, 
+			void addRenderables(RenderQueue* queue, RenderQueueGroupID group, 
 				Real camSquaredDist);
 			/// Get the material for this bucket
 			const MaterialPtr& getMaterial(void) const { return mMaterial; }
@@ -321,7 +321,7 @@ namespace Ogre {
 			/// Build
 			void build(bool stencilShadows);
 			/// Add children to the render queue
-			void addRenderables(RenderQueue* queue, uint8 group, 
+			void addRenderables(RenderQueue* queue, RenderQueueGroupID group, 
 				Real camSquaredDistance);
 			/// Iterator over the materials in this LOD
 			typedef MapIterator<MaterialBucketMap> MaterialIterator;
@@ -372,6 +372,8 @@ namespace Ogre {
 			};
 			/// Parent static geometry
 			StaticGeometry* mParent;
+			/// Generated name
+			String mName;
 			/// Scene manager link
 			SceneManager* mSceneMgr;
 			/// Scene node
@@ -398,6 +400,8 @@ namespace Ogre {
 			mutable LightList mLightList;
 			/// The last frame that this light list was updated in
 			mutable ulong mLightListUpdated;
+			/// Hidden because of distance?
+			bool mBeyondFarDistance;
 			/// Edge list, used if stencil shadow casting is enabled 
 			EdgeData* mEdgeList;
 			/// List of shadow renderables
@@ -421,13 +425,13 @@ namespace Ogre {
 			uint32 getID(void) const { return mRegionID; }
 			/// Get the centre point of the region
 			const Vector3& getCentre(void) const { return mCentre; }
+			const String& getName(void) const;
 			const String& getMovableType(void) const;
 			void _notifyCurrentCamera(Camera* cam);
 			const AxisAlignedBox& getBoundingBox(void) const;
 			Real getBoundingRadius(void) const;
 			void _updateRenderQueue(RenderQueue* queue);
 			bool isVisible(void) const;
-			uint32 getTypeFlags(void) const;
 
 			typedef VectorIterator<LODBucketList> LODIterator;
 			/// Get an iterator over the LODs in this region
@@ -468,7 +472,7 @@ namespace Ogre {
 		Vector3 mOrigin;
 		bool mVisible;
         /// The render queue to use when rendering this object
-        uint8 mRenderQueueID;
+        RenderQueueGroupID mRenderQueueID;
 		/// Flags whether the RenderQueue's default should be used.
 		bool mRenderQueueIDSet;
 
@@ -719,10 +723,10 @@ namespace Ogre {
             See RenderQueue for more details.
         @param queueID Enumerated value of the queue group to use.
         */
-        virtual void setRenderQueueGroup(uint8 queueID);
+        virtual void setRenderQueueGroup(RenderQueueGroupID queueID);
 
         /** Gets the queue group for this entity, see setRenderQueueGroup for full details. */
-        virtual uint8 getRenderQueueGroup(void) const;
+        virtual RenderQueueGroupID getRenderQueueGroup(void) const;
 		
 		/// Iterator for iterating over contained regions
 		typedef MapIterator<RegionMap> RegionIterator;

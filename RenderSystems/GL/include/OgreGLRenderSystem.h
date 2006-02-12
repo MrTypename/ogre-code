@@ -80,7 +80,6 @@ namespace Ogre {
         void makeGLMatrix(GLfloat gl_matrix[16], const Matrix4& m);
  
         GLint getBlendMode(SceneBlendFactor ogreBlend) const;
-		GLint getTextureAddressingMode(TextureUnitState::TextureAddressingMode tam) const;
 
         void setLights();
 
@@ -106,8 +105,8 @@ namespace Ogre {
 
         // check if the GL system has already been initialized
         bool mGLInitialized;
-        // Initialise GL system and capabilities
-        void initGL(RenderTarget *primary);
+        // Initialise GL context
+        void initGL(void);
 
         HardwareBufferManager* mHardwareBufferManager;
         GLGpuProgramManager* mGpuProgramManager;
@@ -119,17 +118,15 @@ namespace Ogre {
         GLGpuProgram* mCurrentVertexProgram;
         GLGpuProgram* mCurrentFragmentProgram;
 
-		/* The main GL context */
+        /* The main GL context */
         GLContext *mMainContext;
         /* The current GL context */
         GLContext *mCurrentContext;
-
-        /** Manager object for Frame Buffer Objects.
-            0 if hardware does not support this extension. (direct render to texture via
-            GL_EXT_framebuffer_object. This is preferable to pbuffers, which depend on the
-            GL support used and are generally unwieldy and slow.
-        */
-        GLRTTManager *mRTTManager;
+        /* Type that maps render targets to contexts */
+        typedef std::map<RenderTarget*,GLContext*> ContextMap;
+        /* Map of render target -> context mappings. This is used to find the
+         * GL context for a certain render target */
+        ContextMap mContextMap;
     public:
         // Default constructor / destructor
         GLRenderSystem();
@@ -184,8 +181,10 @@ namespace Ogre {
 		RenderWindow* createRenderWindow(const String &name, unsigned int width, unsigned int height, 
 			bool fullScreen, const NameValuePairList *miscParams = 0);
 
-		/// @copydoc RenderSystem::createMultiRenderTarget
-		virtual MultiRenderTarget * createMultiRenderTarget(const String & name); 
+		/// @copydoc RenderSystem::createRenderTexture
+		RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height,
+		 	TextureType texType = TEX_TYPE_2D, PixelFormat internalFormat = PF_X8R8G8B8, 
+			const NameValuePairList *miscParams = 0 ); 
 		
         /** See
           RenderSystem
@@ -199,7 +198,7 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        VertexElementType getColourVertexElementType(void) const;
+        void convertColourValue(const ColourValue& colour, uint32* pDest);
         /** See
           RenderSystem
          */
@@ -234,15 +233,6 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-		void _setPointParameters(Real size, bool attenuationEnabled, 
-			Real constant, Real linear, Real quadratic, Real minSize, Real maxSize);
-        /** See
-          RenderSystem
-         */
-		void _setPointSpritesEnabled(bool enabled);
-        /** See
-          RenderSystem
-         */
         void _setTexture(size_t unit, bool enabled, const String &texname);
         /** See
           RenderSystem
@@ -260,11 +250,7 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _setTextureAddressingMode(size_t stage, const TextureUnitState::UVWAddressingMode& uvw);
-        /** See
-          RenderSystem
-         */
-        void _setTextureBorderColour(size_t stage, const ColourValue& colour);
+        void _setTextureAddressingMode(size_t stage, TextureUnitState::TextureAddressingMode tam);
         /** See
           RenderSystem
          */
@@ -324,11 +310,6 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _convertProjectionMatrix(const Matrix4& matrix,
-            Matrix4& dest, bool forGpuProgram = false);
-        /** See
-          RenderSystem
-         */
         void _makeProjectionMatrix(const Radian& fovy, Real aspect, Real nearPlane, Real farPlane, 
             Matrix4& dest, bool forGpuProgram = false);
         /** See
@@ -357,7 +338,7 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _setPolygonMode(PolygonMode level);
+        void _setRasterisationMode(SceneDetailLevel level);
         /** See
           RenderSystem
          */
@@ -402,10 +383,6 @@ namespace Ogre {
           RenderSystem
          */
         void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params);
-		/** See
-		RenderSystem
-		*/
-		void bindGpuProgramPassIterationParameters(GpuProgramType gptype);
         /** See
           RenderSystem
          */
@@ -426,8 +403,9 @@ namespace Ogre {
         // ----------------------------------
         // GLRenderSystem specific members
         // ----------------------------------
-        /** One time initialization for the RenderState of a context. Things that
-            only need to be set once, like the LightingModel can be defined here.
+        /**
+         * One time initialization for the RenderState of a context. Things that
+         * only need to be set once, like the LightingModel can be defined here.
          */
         void _oneTimeContextInitialization();
         /** Switch GL context, dealing with involved internal cached states too
@@ -437,16 +415,19 @@ namespace Ogre {
          * Set current render target to target, enabling its GL context if needed
          */
         void _setRenderTarget(RenderTarget *target);
-        /** Unregister a render target->context mapping. If the context of target 
-            is the current context, change the context to the main context so it
-            can be destroyed safely. 
-            
-            @note This is automatically called by the destructor of 
-            GLContext.
+        /**
+         * Register a render target->context mapping.
          */
-        void _unregisterContext(GLContext *context);
-        /** Get the main context. This is generally the context with which 
-            a new context wants to share buffers and textures.
+        void _registerContext(RenderTarget *target, GLContext *context);
+        /**
+         * Unregister a render target->context mapping. If the context of target 
+         * is the current context, change the context to the main context so it
+         * can be destroyed safely.
+         */
+        void _unregisterContext(RenderTarget *target);
+        /**
+         * Get the main context. This is generally the context with which 
+         * a new context wants to share buffers and textures.
          */
         GLContext *_getMainContext();
     };

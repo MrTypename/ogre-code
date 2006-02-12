@@ -24,7 +24,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 // Original free version by:
 // Magic Software, Inc.
-// http://www.geometrictools.com/
+// http://www.magic-software.com
 // Copyright (c) 2000, All Rights Reserved
 
 #ifndef __Plane_H__
@@ -86,16 +86,7 @@ namespace Ogre {
         void redefine(const Vector3& rkPoint0, const Vector3& rkPoint1,
             const Vector3& rkPoint2);
 
-		/** Project a vector onto the plane. 
-		@remarks This gives you the element of the input vector that is perpendicular 
-			to the normal of the plane. You can get the element which is parallel
-			to the normal of the plane by subtracting the result of this method
-			from the original vector, since parallel + perpendicular = original.
-		@param v The input vector
-		*/
-		Vector3 projectVector(const Vector3& v);
-
-		Vector3 normal;
+        Vector3 normal;
         Real d;
         /// Comparison operator
         bool operator==(const Plane& rhs) const

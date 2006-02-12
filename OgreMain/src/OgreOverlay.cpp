@@ -279,7 +279,7 @@ namespace Ogre {
             mRootNode->setOrientation(cam->getDerivedOrientation());
             mRootNode->_update(true, false);
             // Set up the default queue group for the objects about to be added
-            uint8 oldgrp = queue->getDefaultQueueGroup();
+            RenderQueueGroupID oldgrp = queue->getDefaultQueueGroup();
             ushort oldPriority = queue-> getDefaultRenderablePriority();
             queue->setDefaultQueueGroup(RENDER_QUEUE_OVERLAY);
             queue->setDefaultRenderablePriority((mZOrder*100)-1);

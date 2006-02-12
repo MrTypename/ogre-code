@@ -33,8 +33,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     Billboard::Billboard():
         mOwnDimensions(false),
-        mUseTexcoordRect(false),
-        mTexcoordIndex(0),
 		mPosition(Vector3::ZERO),
         mDirection(Vector3::ZERO),        
         mParentSet(0),
@@ -48,22 +46,18 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     Billboard::Billboard(const Vector3& position, BillboardSet* owner, const ColourValue& colour)
-        : mOwnDimensions(false)
-        , mUseTexcoordRect(false)
-        , mTexcoordIndex(0)
-        , mPosition(position)
-        , mDirection(Vector3::ZERO)
-        , mParentSet(owner)
-        , mColour(colour)
-        , mRotation(0)
     {
+        mPosition = position;
+        mOwnDimensions = false;
+        mParentSet = owner;
+        mColour = colour;
     }
     //-----------------------------------------------------------------------
     void Billboard::setRotation(const Radian& rotation)
     {
         mRotation = rotation;
         if (mRotation != Radian(0))
-            mParentSet->_notifyBillboardRotated();
+            mParentSet->_notifyBillboardTextureCoordsModified();
     }
     //-----------------------------------------------------------------------
     void Billboard::setPosition(const Vector3& position)
@@ -120,23 +114,8 @@ namespace Ogre {
     {
         return mHeight;
     }
-    //-----------------------------------------------------------------------
-    void Billboard::setTexcoordIndex(uint16 texcoordIndex)
-    {
-        mTexcoordIndex = texcoordIndex;
-        mUseTexcoordRect = false;
-    }
-    //-----------------------------------------------------------------------
-    void Billboard::setTexcoordRect(const FloatRect& texcoordRect)
-    {
-        mTexcoordRect = texcoordRect;
-        mUseTexcoordRect = true;
-    }
-    //-----------------------------------------------------------------------
-    void Billboard::setTexcoordRect(Real u0, Real v0, Real u1, Real v1)
-    {
-        setTexcoordRect(FloatRect(u0, v0, u1, v1));
-    }
+
+
 
 
 }

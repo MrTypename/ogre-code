@@ -58,7 +58,6 @@ namespace Ogre {
         bool mIsSupported;
         IlluminationPassesState mIlluminationPassesCompilationPhase;
         unsigned short mLodIndex;
-        String mName; // optional name for the technique
 
         /// Internal method for clearing illumination pass list
         void clearIlluminationPasses(void);
@@ -93,20 +92,12 @@ namespace Ogre {
         Pass* createPass(void);
         /** Retrieves the Pass with the given index. */
         Pass* getPass(unsigned short index);
-        /** Retrieves the Pass matching name.
-            Returns 0 if name match is not found.
-        */
-        Pass* getPass(const String& name);
         /** Retrieves the number of passes. */
         unsigned short getNumPasses(void) const;
         /** Removes the Pass with the given index. */
         void removePass(unsigned short index);
         /** Removes all Passes from this Technique. */
         void removeAllPasses(void);
-        /** Move a pass from source index to destination index.
-            If successful then returns true.
-        */
-        bool movePass(const unsigned short sourceIndex, const unsigned short destinationIndex);
         typedef VectorIterator<Passes> PassIterator;
         /** Gets an iterator over the passes in this Technique. */
         const PassIterator getPassIterator(void);
@@ -148,16 +139,6 @@ namespace Ogre {
         // The following methods are to make migration from previous versions simpler
         // and to make code easier to write when dealing with simple materials
         // They set the properties which have been moved to Pass for all Techniques and all Passes
-
-        /** Sets the point size properties for every Pass in this Technique.
-        @note
-            This property actually exists on the Pass class. For simplicity, this method allows 
-            you to set these properties for every current Pass within this Technique. If 
-            you need more precision, retrieve the Pass instance and set the
-            property there.
-        @see Pass::setPointSize
-        */
-        void setPointSize(Real ps);
 
         /** Sets the ambient colour reflectance properties for every Pass in every Technique.
         @note
@@ -417,29 +398,6 @@ namespace Ogre {
 
         /** Is depth checking going to occur on this technique? */
         bool isDepthCheckEnabled(void) const;
-
-        /** Set the name of the technique.
-        @remarks
-        The use of technique name is optional.  Its usefull in material scripts where a material could inherit
-        from another material and only want to modify a particalar technique.
-        */
-        void setName(const String& name);
-        /// Gets the name of the technique
-        const String& getName(void) const { return mName; }
-
-        /** Applies texture names to Texture Unit State with matching texture name aliases.
-            All passes, and Texture Unit States within the technique are checked.
-            If matching texture aliases are found then true is returned.
-
-        @param
-            aliasList is a map container of texture alias, texture name pairs
-        @param
-            apply set true to apply the texture aliases else just test to see if texture alias matches are found.
-        @return
-            True if matching texture aliases were found in the Technique.
-        */
-        bool applyTextureAliases(const AliasTextureNamePairList& aliasList, const bool apply = true) const;
-
 
     };
 

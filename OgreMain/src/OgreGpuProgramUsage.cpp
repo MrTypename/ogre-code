@@ -40,8 +40,7 @@ namespace Ogre
 	{
 		mType = oth.mType;
 		mProgram = oth.mProgram;
-        // nfz: parameters should be copied not just use a shared ptr to the original
-		mParameters =  GpuProgramParametersSharedPtr(new GpuProgramParameters(*oth.mParameters));
+		mParameters =  oth.mParameters;
 	}
 	//-----------------------------------------------------------------------------
 	void GpuProgramUsage::setProgramName(const String& name, bool resetParams)

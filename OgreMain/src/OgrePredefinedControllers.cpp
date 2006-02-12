@@ -41,24 +41,14 @@ namespace Ogre
         Root::getSingleton().addFrameListener(this);
         mFrameTime = 0;
 		mTimeFactor = 1;
-		mFrameDelay = 0;
         mElapsedTime = 0;
 
     }
     //-----------------------------------------------------------------------
     bool FrameTimeControllerValue::frameStarted(const FrameEvent &evt)
     {
-		if(mFrameDelay) 
-		{
-			// Fixed frame time
-			mFrameTime = mFrameDelay;
-			mTimeFactor =  mFrameDelay / evt.timeSinceLastFrame;
-		}
-		else 
-		{
-			// Save the time value after applying time factor
-			mFrameTime = mTimeFactor * evt.timeSinceLastFrame;
-		}
+        // Save the time value after applying time factor
+        mFrameTime = mTimeFactor * evt.timeSinceLastFrame;
         // Accumulate the elapsed time
         mElapsedTime += mFrameTime;
         return true;
@@ -84,20 +74,7 @@ namespace Ogre
 	}
 	//-----------------------------------------------------------------------
 	void FrameTimeControllerValue::setTimeFactor(Real tf) {
-		if(tf >= 0) 
-		{
-			mTimeFactor = tf;
-			mFrameDelay = 0;
-		}
-	}
-	//-----------------------------------------------------------------------
-	Real FrameTimeControllerValue::getFrameDelay(void) const {
-		return mFrameDelay;
-	}
-	//-----------------------------------------------------------------------
-	void FrameTimeControllerValue::setFrameDelay(Real fd) {
-		mTimeFactor = 0;
-		mFrameDelay = fd;
+		if(tf >= 0) mTimeFactor = tf;
 	}
     //-----------------------------------------------------------------------
     Real FrameTimeControllerValue::getElapsedTime(void) const
@@ -226,19 +203,6 @@ namespace Ogre
 		v4.x = val;
 		mParams->setConstant(mParamIndex, v4);
 	}
-	//-----------------------------------------------------------------------
-	// PassthroughControllerFunction
-	//-----------------------------------------------------------------------
-	PassthroughControllerFunction::PassthroughControllerFunction(bool delta) 
-		: ControllerFunction<Real>(delta)
-	{
-	}
-	//-----------------------------------------------------------------------
-	Real PassthroughControllerFunction::calculate(Real source)
-	{
-		return getAdjustedInput(source);
-
-	}
     //-----------------------------------------------------------------------
     // AnimationControllerFunction
     //-----------------------------------------------------------------------
@@ -276,7 +240,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     // WaveformControllerFunction
     //-----------------------------------------------------------------------
-    WaveformControllerFunction::WaveformControllerFunction(WaveformType wType, Real base,  Real frequency, Real phase, Real amplitude, bool delta, Real dutyCycle)
+    WaveformControllerFunction::WaveformControllerFunction(WaveformType wType, Real base,  Real frequency, Real phase, Real amplitude, bool delta)
         :ControllerFunction<Real>(delta)
     {
         mWaveType = wType;
@@ -285,7 +249,7 @@ namespace Ogre
         mPhase = phase;
         mAmplitude = amplitude;
         mDeltaCount = phase;
-		mDutyCycle = dutyCycle;
+
     }
     //-----------------------------------------------------------------------
     Real WaveformControllerFunction::getAdjustedInput(Real input)
@@ -340,12 +304,6 @@ namespace Ogre
         case WFT_INVERSE_SAWTOOTH:
             output = -((input * 2) - 1);
             break;
-		case WFT_PWM:
-			if( input <= mDutyCycle )
-				output = 1.0;
-			else
-				output = -1.0;
-			break;
         }
 
         // Scale output into 0..1 range and then by base + amplitude

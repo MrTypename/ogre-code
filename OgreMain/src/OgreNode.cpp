@@ -36,59 +36,38 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreCamera.h"
 
 namespace Ogre {
-
+    
     unsigned long Node::msNextGeneratedNameExt = 1;
-	Node::QueuedUpdates Node::msQueuedUpdates;
     //-----------------------------------------------------------------------
     Node::Node()
-		:mParent(0),
-		mNeedParentUpdate(false),
-		mNeedChildUpdate(false),
-		mParentNotified(false),
-		mOrientation(Quaternion::IDENTITY),
-		mPosition(Vector3::ZERO),
-		mScale(Vector3::UNIT_SCALE),
-		mInheritScale(true),
-		mDerivedOrientation(Quaternion::IDENTITY),
-		mDerivedPosition(Vector3::ZERO),
-		mDerivedScale(Vector3::UNIT_SCALE),
-		mInitialPosition(Vector3::ZERO),
-		mInitialOrientation(Quaternion::IDENTITY),
-		mInitialScale(Vector3::UNIT_SCALE),
-		mAccumAnimWeight(0.0f),
-		mCachedTransformOutOfDate(true),
-		mListener(0)
     {
+        mParent = 0;
+        mOrientation = mInitialOrientation = mDerivedOrientation = Quaternion::IDENTITY;
+        mPosition = mInitialPosition = mDerivedPosition = Vector3::ZERO;
+        mScale = mInitialScale = mDerivedScale = Vector3::UNIT_SCALE;
+        mInheritScale = true;
+		mParentNotified = false ;
+
         // Generate a name
 		StringUtil::StrStreamType str;
 		str << "Unnamed_" << msNextGeneratedNameExt++;
         mName = str.str();
+        mAccumAnimWeight = 0.0f;
 
         needUpdate();
 
     }
     //-----------------------------------------------------------------------
-	Node::Node(const String& name) : Renderable(),
-		mParent(0),
-		mNeedParentUpdate(false),
-		mNeedChildUpdate(false),
-		mParentNotified(false),
-		mName(name),
-		mOrientation(Quaternion::IDENTITY),
-		mPosition(Vector3::ZERO),
-		mScale(Vector3::UNIT_SCALE),
-		mInheritScale(true),
-		mDerivedOrientation(Quaternion::IDENTITY),
-		mDerivedPosition(Vector3::ZERO),
-		mDerivedScale(Vector3::UNIT_SCALE),
-		mInitialPosition(Vector3::ZERO),
-		mInitialOrientation(Quaternion::IDENTITY),
-		mInitialScale(Vector3::UNIT_SCALE),
-		mAccumAnimWeight(0.0f),
-		mCachedTransformOutOfDate(true),
-		mListener(0)
-
+	Node::Node(const String& name) : Renderable()
     {
+        mName = name;
+        mParent = 0;
+        mOrientation = mInitialOrientation = mDerivedOrientation = Quaternion::IDENTITY;
+        mPosition = mInitialPosition = mDerivedPosition = Vector3::ZERO;
+        mScale = mInitialScale = mDerivedScale = Vector3::UNIT_SCALE;
+        mInheritScale = true;
+        mAccumAnimWeight = 0.0f;
+		mParentNotified = false ;
 
         needUpdate();
 
@@ -97,16 +76,10 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     Node::~Node()
     {
-		// Call listener (note, only called if there's something to do)
-		if (mListener)
-		{
-			mListener->nodeDestroyed(this);
-		}
-
 		removeAllChildren();
 		if(mParent)
-			mParent->removeChild(this);
-	}
+			mParent->removeChild(this); 
+	}    
     //-----------------------------------------------------------------------
     Node* Node::getParent(void) const
     {
@@ -116,22 +89,10 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void Node::setParent(Node* parent)
     {
-		bool different = (parent != mParent);
-
         mParent = parent;
         // Request update from parent
 		mParentNotified = false ;
         needUpdate();
-
-		// Call listener (note, only called if there's something to do)
-		if (mListener && different)
-		{
-			if (mParent)
-				mListener->nodeAttached(this);
-			else
-				mListener->nodeDetached(this);
-		}
-
     }
 
     //-----------------------------------------------------------------------
@@ -139,9 +100,9 @@ namespace Ogre {
     {
         if (mCachedTransformOutOfDate)
         {
-            // Use derived values
-            makeTransform(
-                _getDerivedPosition(), _getDerivedScale(),
+            // Use derived values 
+            makeTransform( 
+                _getDerivedPosition(), _getDerivedScale(), 
                 _getDerivedOrientation(), mCachedTransform);
             mCachedTransformOutOfDate = false;
         }
@@ -152,7 +113,7 @@ namespace Ogre {
     {
 		// always clear information about parent notification
 		mParentNotified = false ;
-
+		
         // Short circuit the off case
         if (!updateChildren && !mNeedParentUpdate && !mNeedChildUpdate && !parentHasChanged )
         {
@@ -166,13 +127,6 @@ namespace Ogre {
             // Update transforms from parent
             _updateFromParent();
 			mNeedParentUpdate = false;
-
-			// Call listener (note, only called if there's something to do)
-			if (mListener)
-			{
-				mListener->nodeUpdated(this);
-			}
-
 		}
 
 		if (mNeedChildUpdate || parentHasChanged)
@@ -245,7 +199,7 @@ namespace Ogre {
         }
 
         mCachedTransformOutOfDate = true;
-
+        
 
     }
     //-----------------------------------------------------------------------
@@ -272,7 +226,7 @@ namespace Ogre {
     void Node::addChild(Node* child)
     {
         assert(!child->mParent);
-
+        
         mChildren.insert(ChildNodeMap::value_type(child->getName(), child));
         child->setParent(this);
 
@@ -308,13 +262,13 @@ namespace Ogre {
 
             mChildren.erase(i);
             ret->setParent(NULL);
-            return ret;
+            return ret;            
         }
         else
         {
             OGRE_EXCEPT(
-                Exception::ERR_INVALIDPARAMS,
-                "Child index out of bounds.",
+                Exception::ERR_INVALIDPARAMS, 
+                "Child index out of bounds.", 
                 "Node::getChild" );
         }
         return 0;
@@ -406,7 +360,7 @@ namespace Ogre {
     void Node::translate(const Vector3& d, TransformSpace relativeTo)
     {
         Vector3 adjusted;
-        switch(relativeTo)
+        switch(relativeTo) 
         {
         case TS_LOCAL:
             // position is relative to parent so transform downwards
@@ -416,7 +370,7 @@ namespace Ogre {
             // position is relative to parent so transform upwards
             if (mParent)
             {
-                mPosition += mParent->_getDerivedOrientation().Inverse() * d;
+                mPosition += mParent->_getDerivedOrientation().Inverse() * d; 
             }
             else
             {
@@ -475,7 +429,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void Node::rotate(const Quaternion& q, TransformSpace relativeTo)
     {
-        switch(relativeTo)
+        switch(relativeTo) 
         {
         case TS_PARENT:
             // Rotations are normally relative to local axes, transform up
@@ -483,7 +437,7 @@ namespace Ogre {
             break;
         case TS_WORLD:
             // Rotations are normally relative to local axes, transform up
-            mOrientation = mOrientation * _getDerivedOrientation().Inverse()
+            mOrientation = mOrientation * _getDerivedOrientation().Inverse() 
                 * q * _getDerivedOrientation();
             break;
         case TS_LOCAL:
@@ -582,7 +536,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void Node::makeTransform(const Vector3& position, const Vector3& scale, const Quaternion& orientation,
+    void Node::makeTransform(const Vector3& position, const Vector3& scale, const Quaternion& orientation, 
         Matrix4& destMatrix) const
     {
         destMatrix = Matrix4::IDENTITY;
@@ -604,7 +558,7 @@ namespace Ogre {
         destMatrix.setTrans(position);
     }
     //-----------------------------------------------------------------------
-    void Node::makeInverseTransform(const Vector3& position, const Vector3& scale, const Quaternion& orientation,
+    void Node::makeInverseTransform(const Vector3& position, const Vector3& scale, const Quaternion& orientation, 
         Matrix4& destMatrix)
     {
         destMatrix = Matrix4::IDENTITY;
@@ -617,7 +571,7 @@ namespace Ogre {
         invScale.z = 1 / scale.z;
 
         Quaternion invRot = orientation.Inverse();
-
+        
         // Because we're inverting, order is translation, rotation, scale
         // So make translation relative to scale & rotation
         invTranslate.x *= invScale.x; // scale
@@ -663,7 +617,7 @@ namespace Ogre {
         static SubMesh* pSubMesh = 0;
         if (!pSubMesh)
         {
-            MeshPtr pMesh = MeshManager::getSingleton().load("axes.mesh",
+            MeshPtr pMesh = MeshManager::getSingleton().load("axes.mesh", 
 				ResourceGroupManager::BOOTSTRAP_RESOURCE_GROUP_NAME);
             pSubMesh = pMesh->getSubMesh(0);
         }
@@ -769,7 +723,7 @@ namespace Ogre {
 		return ConstChildNodeIterator(mChildren.begin(), mChildren.end());
 	}
     //-----------------------------------------------------------------------
-    void Node::_weightedTransform(Real weight, const Vector3& translate,
+    void Node::_weightedTransform(Real weight, const Vector3& translate, 
        const Quaternion& rotate, const Vector3& scale)
     {
         // If no previous transforms, we can just apply
@@ -785,11 +739,11 @@ namespace Ogre {
             // Blend with existing
             Real factor = weight / (mAccumAnimWeight + weight);
             mTransFromInitial += (translate - mTransFromInitial) * factor;
-            mRotFromInitial =
+            mRotFromInitial = 
                 Quaternion::Slerp(factor, mRotFromInitial, rotate);
             // For scale, find delta from 1.0, factor then add back before applying
             Vector3 scaleDiff = (scale - Vector3::UNIT_SCALE) * factor;
-            mScaleFromInitial = mScaleFromInitial *
+            mScaleFromInitial = mScaleFromInitial * 
                 (scaleDiff + Vector3::UNIT_SCALE);
             mAccumAnimWeight += weight;
 
@@ -811,17 +765,26 @@ namespace Ogre {
         return diff.squaredLength();
     }
     //-----------------------------------------------------------------------
-    void Node::needUpdate(bool forceParentUpdate)
+    void Node::needUpdate()
     {
+        // If we're already going to update everything this doesn't matter
+        /* FIX: removed because this causes newly created nodes
+                which already have mNeedUpdate == true not to notify parent when 
+                added!
+        if (mNeedUpdate)
+        {
+            return;
+        }
+        */
 
         mNeedParentUpdate = true;
 		mNeedChildUpdate = true;
         mCachedTransformOutOfDate = true;
 
         // Make sure we're not root and parent hasn't been notified before
-        if (mParent && (!mParentNotified || forceParentUpdate))
+        if (mParent && !mParentNotified)
         {
-            mParent->requestUpdate(this, forceParentUpdate);
+            mParent->requestUpdate(this);
 			mParentNotified = true ;
         }
 
@@ -829,19 +792,18 @@ namespace Ogre {
         mChildrenToUpdate.clear();
     }
     //-----------------------------------------------------------------------
-    void Node::requestUpdate(Node* child, bool forceParentUpdate)
+    void Node::requestUpdate(Node* child)
     {
         // If we're already going to update everything this doesn't matter
         if (mNeedChildUpdate)
         {
             return;
         }
-
+            
         mChildrenToUpdate.insert(child);
         // Request selective update of me, if we didn't do it before
-        if (mParent && (!mParentNotified || forceParentUpdate))
-		{
-            mParent->requestUpdate(this, forceParentUpdate);
+        if (mParent && !mParentNotified) {
+            mParent->requestUpdate(this);
 			mParentNotified = true ;
 		}
 
@@ -858,23 +820,6 @@ namespace Ogre {
 			mParentNotified = false ;
         }
     }
-	//-----------------------------------------------------------------------
-	void Node::queueNeedUpdate(Node* n)
-	{
-		msQueuedUpdates.push_back(n);
-	}
-	//-----------------------------------------------------------------------
-	void Node::processQueuedUpdates(void)
-	{
-		for (QueuedUpdates::iterator i = msQueuedUpdates.begin();
-			i != msQueuedUpdates.end(); ++i)
-		{
-			// Update, and force parent update since chances are we've ended
-			// up with some mixed state in there due to re-entrancy
-			(*i)->needUpdate(true);
-		}
-		msQueuedUpdates.clear();
-	}
     //-----------------------------------------------------------------------
     const LightList& Node::getLights(void) const
     {

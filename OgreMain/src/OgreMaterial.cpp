@@ -236,26 +236,6 @@ namespace Ogre {
         assert (index < mTechniques.size() && "Index out of bounds.");
         return mTechniques[index];
     }
-    //-----------------------------------------------------------------------
-    Technique* Material::getTechnique(const String& name)
-    {
-        Techniques::iterator i    = mTechniques.begin();
-        Techniques::iterator iend = mTechniques.end();
-        Technique* foundTechnique = 0;
-
-        // iterate through techniques to find a match
-        while (i != iend)
-        {
-            if ( (*i)->getName() == name )
-            {
-                foundTechnique = (*i);
-                break;
-            }
-            ++i;
-        }
-
-        return foundTechnique;
-    }
     //-----------------------------------------------------------------------	
     unsigned short Material::getNumTechniques(void) const
     {
@@ -400,17 +380,6 @@ namespace Ogre {
 			++lastIndex;
 			lastTechnique = bi->second;
 		}
-    }
-    //-----------------------------------------------------------------------
-    void Material::setPointSize(Real ps)
-    {
-        Techniques::iterator i, iend;
-        iend = mTechniques.end();
-        for (i = mTechniques.begin(); i != iend; ++i)
-        {
-            (*i)->setPointSize(ps);
-        }
-
     }
     //-----------------------------------------------------------------------
     void Material::setAmbient(Real red, Real green, Real blue)
@@ -675,20 +644,4 @@ namespace Ogre {
         return LodDistanceIterator(mLodDistances.begin(), mLodDistances.end());
     }
 
-    //-----------------------------------------------------------------------
-    bool Material::applyTextureAliases(const AliasTextureNamePairList& aliasList, const bool apply) const
-    {
-        // iterate through all techniques and apply texture aliases
-		Techniques::const_iterator i, iend;
-		iend = mTechniques.end();
-        bool testResult = false;
-
-		for (i = mTechniques.begin(); i != iend; ++i)
-		{
-            if ((*i)->applyTextureAliases(aliasList, apply))
-                testResult = true;
-		}
-
-        return testResult;
-    }
 }

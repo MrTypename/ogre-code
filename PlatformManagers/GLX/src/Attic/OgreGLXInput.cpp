@@ -37,10 +37,9 @@ http://www.gnu.org/copyleft/lesser.txt.
 namespace Ogre {
 
 GLXInput::GLXInput()
-		: InputReader()
-		{
+		: InputReader(),
+		mMouseSpeed(0.002f) {
 	mEventQueue = 0;
-	mMouseScale = 0.002f;
 
 	_key_map.insert(InputKeyMap::value_type(XK_Escape,KC_ESCAPE));
 	_key_map.insert(InputKeyMap::value_type(XK_1, KC_1));
@@ -160,10 +159,6 @@ void GLXInput::initialise(RenderWindow* pWindow, bool useKeyboard, bool useMouse
 	pWindow->getCustomAttribute("GLXWINDOW", &mWindow);
 	pWindow->getCustomAttribute("GLXDISPLAY", &mDisplay);
 
-	//Change input mask to reflect the fact that we want input events (the rendersystem only requests window
-	//events)
-	XSelectInput(mDisplay, mWindow, StructureNotifyMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask );
-
 	// Create hidden cursor
 	// X offers no standard support for this so we need to create a blank pixmap.
 	Pixmap blank_pixmap = XCreatePixmap(mDisplay, mWindow, 1, 1, 1);
@@ -212,7 +207,7 @@ void GLXInput::capture() {
 
 		// Give window a shot as processing the event
 		// TODO: call for every window
-		w->injectXEvent(event);
+		w->processEvent(event);
 
 		int button_mask = -1;
 		int button_bits = 0;
@@ -327,8 +322,8 @@ void GLXInput::capture() {
 	if(hasMouseMoved && mUseBufferedMouse) {
 		// Send mouse moved event to application and move cursor.
 		mouseMoved();
-		mCursor->addToX(mMouseState.Xrel * mMouseScale);
-		mCursor->addToY(mMouseState.Yrel * mMouseScale);
+		mCursor->addToX(mMouseState.Xrel * mMouseSpeed);
+		mCursor->addToY(mMouseState.Yrel * mMouseSpeed);
 	}
 
 }

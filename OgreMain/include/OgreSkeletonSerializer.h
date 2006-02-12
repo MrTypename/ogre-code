@@ -57,10 +57,8 @@ namespace Ogre {
             and animations it uses to a .skeleton file.
         @param pSkeleton Weak reference to the Skeleton to export
         @param filename The destination filename
-		@param endianMode The endian mode to write in
         */
-        void exportSkeleton(const Skeleton* pSkeleton, const String& filename,
-			Endian endianMode = ENDIAN_NATIVE);
+        void exportSkeleton(const Skeleton* pSkeleton, const String& filename);
 
         /** Imports Skeleton and animation data from a .skeleton file DataStream.
         @remarks
@@ -79,8 +77,8 @@ namespace Ogre {
         void writeBone(const Skeleton* pSkel, const Bone* pBone);
         void writeBoneParent(const Skeleton* pSkel, unsigned short boneId, unsigned short parentId);
         void writeAnimation(const Skeleton* pSkel, const Animation* anim);
-        void writeAnimationTrack(const Skeleton* pSkel, const NodeAnimationTrack* track);
-        void writeKeyFrame(const Skeleton* pSkel, const TransformKeyFrame* key);
+        void writeAnimationTrack(const Skeleton* pSkel, const AnimationTrack* track);
+        void writeKeyFrame(const Skeleton* pSkel, const KeyFrame* key);
 		void writeSkeletonAnimationLink(const Skeleton* pSkel, 
 			const LinkedSkeletonAnimationSource& link);
 
@@ -89,16 +87,14 @@ namespace Ogre {
         void readBoneParent(DataStreamPtr& stream, Skeleton* pSkel);
         void readAnimation(DataStreamPtr& stream, Skeleton* pSkel);
         void readAnimationTrack(DataStreamPtr& stream, Animation* anim, Skeleton* pSkel);
-        void readKeyFrame(DataStreamPtr& stream, NodeAnimationTrack* track, Skeleton* pSkel);
+        void readKeyFrame(DataStreamPtr& stream, AnimationTrack* track, Skeleton* pSkel);
 		void readSkeletonAnimationLink(DataStreamPtr& stream, Skeleton* pSkel);
 
         size_t calcBoneSize(const Skeleton* pSkel, const Bone* pBone);
-        size_t calcBoneSizeWithoutScale(const Skeleton* pSkel, const Bone* pBone);
         size_t calcBoneParentSize(const Skeleton* pSkel);
         size_t calcAnimationSize(const Skeleton* pSkel, const Animation* pAnim);
-        size_t calcAnimationTrackSize(const Skeleton* pSkel, const NodeAnimationTrack* pTrack);
-        size_t calcKeyFrameSize(const Skeleton* pSkel, const TransformKeyFrame* pKey);
-        size_t calcKeyFrameSizeWithoutScale(const Skeleton* pSkel, const TransformKeyFrame* pKey);
+        size_t calcAnimationTrackSize(const Skeleton* pSkel, const AnimationTrack* pTrack);
+        size_t calcKeyFrameSize(const Skeleton* pSkel, const KeyFrame* pKey);
 		size_t calcSkeletonAnimationLinkSize(const Skeleton* pSkel, 
 			const LinkedSkeletonAnimationSource& link);
 

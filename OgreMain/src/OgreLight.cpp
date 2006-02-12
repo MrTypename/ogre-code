@@ -28,58 +28,66 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreException.h"
 #include "OgreSceneNode.h"
 #include "OgreCamera.h"
-#include "OgreSceneManager.h"
+
 
 namespace Ogre {
+    String Light::msMovableType = "Light";
+
     //-----------------------------------------------------------------------
     Light::Light()
-		: mLightType(LT_POINT),
-          mPosition(Vector3::ZERO),
-          mDiffuse(ColourValue::White),
-          mSpecular(ColourValue::Black),
-          mDirection(Vector3::UNIT_Z),
-		  mSpotOuter(Degree(40.0f)),
-          mSpotInner(Degree(30.0f)),
-          mSpotFalloff(1.0f),
-		  mRange(100000),
-		  mAttenuationConst(1.0f),
-		  mAttenuationLinear(0.0f),
-          mAttenuationQuad(0.0f),
-		  mPowerScale(1.0f),
-          mDerivedPosition(Vector3::ZERO),
-          mDerivedDirection(Vector3::UNIT_Z)
     {
         // Default to point light, white diffuse light, linear attenuation, fair range
+        mLightType = LT_POINT;
+        mDiffuse = ColourValue::White;
+        mSpecular = ColourValue::Black;
+        mRange = 5000;
+        mAttenuationConst = 1.0f;
+        mAttenuationLinear = 0.0f;
+        mAttenuationQuad = 0.0f;
 
+        // Center in world, direction irrelevant but set anyway
+        mPosition = mDerivedPosition = Vector3::ZERO;
+        mDirection = mDerivedPosition = Vector3::UNIT_Z;
         mParentNode = NULL;
+
         mLocalTransformDirty = false;
 
     }
     //-----------------------------------------------------------------------
-	Light::Light(const String& name) : MovableObject(name),
-        mLightType(LT_POINT),
-        mPosition(Vector3::ZERO),
-        mDiffuse(ColourValue::White),
-        mSpecular(ColourValue::Black),
-        mDirection(Vector3::UNIT_Z),
-		mSpotOuter(Degree(40.0f)),
-        mSpotInner(Degree(30.0f)),
-        mSpotFalloff(1.0f),
-		mRange(100000),
-		mAttenuationConst(1.0f),
-		mAttenuationLinear(0.0f),
-        mAttenuationQuad(0.0f),
-		mPowerScale(1.0f),
-        mDerivedPosition(Vector3::ZERO),
-        mDerivedDirection(Vector3::UNIT_Z)
+    Light::Light(const String& name)
     {
+        mName = name;
 
+        // Default to point light, white diffuse light, linear attenuation, fair range
+        mLightType = LT_POINT;
+        mDiffuse = ColourValue::White;
+        mSpecular = ColourValue::Black;
+        mRange = 100000;
+        mAttenuationConst = 1.0f;
+        mAttenuationLinear = 0.0f;
+        mAttenuationQuad = 0.0f;
+
+        // Center in world, direction irrelevant but set anyway
+        mPosition = Vector3::ZERO;
+        mDirection = Vector3::UNIT_Z;
+
+        // Default some spot values
+        mSpotInner = Degree(30.0f);
+        mSpotOuter = Degree(40.0f);
+        mSpotFalloff = 1.0f;
         mParentNode = NULL;
+
 
     }
     //-----------------------------------------------------------------------
     Light::~Light()
     {
+    }
+    //-----------------------------------------------------------------------
+    const String& Light::getName(void) const
+    {
+        return mName;
+
     }
     //-----------------------------------------------------------------------
     void Light::setType(LightTypes type)
@@ -143,21 +151,6 @@ namespace Ogre {
         mSpotOuter = outerAngle;
         mSpotFalloff = falloff;
     }
-	//-----------------------------------------------------------------------
-	void Light::setSpotlightInnerAngle(const Radian& val)
-	{
-		mSpotInner = val;
-	}
-	//-----------------------------------------------------------------------
-	void Light::setSpotlightOuterAngle(const Radian& val)
-	{
-		mSpotOuter = val;
-	}
-	//-----------------------------------------------------------------------
-	void Light::setSpotlightFalloff(Real val)
-	{
-		mSpotFalloff = val;
-	}
     //-----------------------------------------------------------------------
     const Radian& Light::getSpotlightInnerAngle(void) const
     {
@@ -237,16 +230,6 @@ namespace Ogre {
         return mAttenuationQuad;
     }
     //-----------------------------------------------------------------------
-	void Light::setPowerScale(Real power)
-	{
-		mPowerScale = power;
-	}
-    //-----------------------------------------------------------------------
-	Real Light::getPowerScale(void) const
-	{
-		return mPowerScale;
-	}
-    //-----------------------------------------------------------------------
     void Light::update(void) const
     {
         if (mParentNode)
@@ -272,6 +255,11 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
+    void Light::_notifyCurrentCamera(Camera* cam)
+    {
+        // Do nothing
+    }
+    //-----------------------------------------------------------------------
     const AxisAlignedBox& Light::getBoundingBox(void) const
     {
         // Null, lights are not visible
@@ -286,7 +274,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     const String& Light::getMovableType(void) const
     {
-		return LightFactory::FACTORY_TYPE_NAME;
+        return msMovableType;
     }
     //-----------------------------------------------------------------------
     const Vector3& Light::getDerivedPosition(void) const
@@ -508,218 +496,6 @@ namespace Ogre {
 
         return mFrustumClipVolumes;
     }
-	//-----------------------------------------------------------------------
-	uint32 Light::getTypeFlags(void) const
-	{
-		return SceneManager::LIGHT_TYPE_MASK;
-	}
-	//-----------------------------------------------------------------------
-	const String& Light::getAnimableDictionaryName(void) const
-	{
-		return LightFactory::FACTORY_TYPE_NAME;
-	}
-	//-----------------------------------------------------------------------
-	void Light::initialiseAnimableDictionary(StringVector& vec) const
-	{
-		vec.push_back("diffuseColour");
-		vec.push_back("specularColour");
-		vec.push_back("attenuation");
-		vec.push_back("spotlightInner");
-		vec.push_back("spotlightOuter");
-		vec.push_back("spotlightFalloff");
-
-	}
-	//-----------------------------------------------------------------------
-	class LightDiffuseColourValue : public AnimableValue
-	{
-	protected:
-		Light* mLight;
-	public:
-		LightDiffuseColourValue(Light* l) :AnimableValue(COLOUR) 
-		{ mLight = l; }
-		void setValue(const ColourValue& val)
-		{
-			mLight->setDiffuseColour(val);
-		}
-		void applyDeltaValue(const ColourValue& val)
-		{
-			setValue(mLight->getDiffuseColour() + val);
-		}
-		void setCurrentStateAsBaseValue(void)
-		{
-			setAsBaseValue(mLight->getDiffuseColour());
-		}
-
-	};
-	//-----------------------------------------------------------------------
-	class LightSpecularColourValue : public AnimableValue
-	{
-	protected:
-		Light* mLight;
-	public:
-		LightSpecularColourValue(Light* l) :AnimableValue(COLOUR) 
-		{ mLight = l; }
-		void setValue(const ColourValue& val)
-		{
-			mLight->setSpecularColour(val);
-		}
-		void applyDeltaValue(const ColourValue& val)
-		{
-			setValue(mLight->getSpecularColour() + val);
-		}
-		void setCurrentStateAsBaseValue(void)
-		{
-			setAsBaseValue(mLight->getSpecularColour());
-		}
-
-	};
-	//-----------------------------------------------------------------------
-	class LightAttenuationValue : public AnimableValue
-	{
-	protected:
-		Light* mLight;
-	public:
-		LightAttenuationValue(Light* l) :AnimableValue(VECTOR4) 
-		{ mLight = l; }
-		void setValue(const Vector4& val)
-		{
-			mLight->setAttenuation(val.x, val.y, val.z, val.w);
-		}
-		void applyDeltaValue(const Vector4& val)
-		{
-			setValue(mLight->getAs4DVector() + val);
-		}
-		void setCurrentStateAsBaseValue(void)
-		{
-			setAsBaseValue(mLight->getAs4DVector());
-		}
-
-	};
-	//-----------------------------------------------------------------------
-	class LightSpotlightInnerValue : public AnimableValue
-	{
-	protected:
-		Light* mLight;
-	public:
-		LightSpotlightInnerValue(Light* l) :AnimableValue(REAL) 
-		{ mLight = l; }
-		void setValue(Real val)
-		{
-			mLight->setSpotlightInnerAngle(Radian(val));
-		}
-		void applyDeltaValue(const Real& val)
-		{
-			setValue(mLight->getSpotlightInnerAngle().valueRadians() + val);
-		}
-		void setCurrentStateAsBaseValue(void)
-		{
-			setAsBaseValue(mLight->getSpotlightInnerAngle().valueRadians());
-		}
-
-	};
-	//-----------------------------------------------------------------------
-	class LightSpotlightOuterValue : public AnimableValue
-	{
-	protected:
-		Light* mLight;
-	public:
-		LightSpotlightOuterValue(Light* l) :AnimableValue(REAL) 
-		{ mLight = l; }
-		void setValue(Real val)
-		{
-			mLight->setSpotlightOuterAngle(Radian(val));
-		}
-		void applyDeltaValue(const Real& val)
-		{
-			setValue(mLight->getSpotlightOuterAngle().valueRadians() + val);
-		}
-		void setCurrentStateAsBaseValue(void)
-		{
-			setAsBaseValue(mLight->getSpotlightOuterAngle().valueRadians());
-		}
-
-	};
-	//-----------------------------------------------------------------------
-	class LightSpotlightFalloffValue : public AnimableValue
-	{
-	protected:
-		Light* mLight;
-	public:
-		LightSpotlightFalloffValue(Light* l) :AnimableValue(REAL) 
-		{ mLight = l; }
-		void setValue(Real val)
-		{
-			mLight->setSpotlightFalloff(val);
-		}
-		void applyDeltaValue(const Real& val)
-		{
-			setValue(mLight->getSpotlightFalloff() + val);
-		}
-		void setCurrentStateAsBaseValue(void)
-		{
-			setAsBaseValue(mLight->getSpotlightFalloff());
-		}
-
-	};
-	//-----------------------------------------------------------------------
-	AnimableValuePtr Light::createAnimableValue(const String& valueName)
-	{
-		if (valueName == "diffuseColour")
-		{
-			return AnimableValuePtr(
-				new LightDiffuseColourValue(this));
-		}
-		else if(valueName == "specularColour")
-		{
-			return AnimableValuePtr(
-				new LightSpecularColourValue(this));
-		}
-		else if (valueName == "attenuation")
-		{
-			return AnimableValuePtr(
-				new LightAttenuationValue(this));
-		}
-		else if (valueName == "spotlightInner")
-		{
-			return AnimableValuePtr(
-				new LightSpotlightInnerValue(this));
-		}
-		else if (valueName == "spotlightOuter")
-		{
-			return AnimableValuePtr(
-				new LightSpotlightOuterValue(this));
-		}
-		else if (valueName == "spotlightFalloff")
-		{
-			return AnimableValuePtr(
-				new LightSpotlightFalloffValue(this));
-		}
-		else
-		{
-			return MovableObject::createAnimableValue(valueName);
-		}
-	}
-	//-----------------------------------------------------------------------
-	//-----------------------------------------------------------------------
-	String LightFactory::FACTORY_TYPE_NAME = "Light";
-	//-----------------------------------------------------------------------
-	const String& LightFactory::getType(void) const
-	{
-		return FACTORY_TYPE_NAME;
-	}
-	//-----------------------------------------------------------------------
-	MovableObject* LightFactory::createInstanceImpl( const String& name, 
-		const NameValuePairList* params)
-	{
-
-		return new Light(name);
-
-	}
-	//-----------------------------------------------------------------------
-	void LightFactory::destroyInstance( MovableObject* obj)
-	{
-		delete obj;
-	}
 
 
 

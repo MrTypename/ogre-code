@@ -427,27 +427,6 @@ material Examples/Flare2
 		}
 	}
 }
-material Examples/FlarePointSprite
-{
-	technique
-	{
-		pass
-		{
-			lighting off
-			scene_blend add
-			depth_write off
-
-			point_sprites on
-			point_size 2
-			point_size_attenuation on
-
-			texture_unit
-			{
-				texture flare.png
-			}
-		}
-	}
-}
 
 material Examples/Droplet
 {
@@ -733,96 +712,6 @@ material Examples/Rockwall
 	}
 }
 
-material Examples/Aureola
-{
-	technique
-	{
-		pass
-		{
-			lighting off
-			scene_blend alpha_blend
-			depth_write off
-			cull_hardware none
-
-			texture_unit
-			{
-				texture aureola.png
-				tex_address_mode clamp
-			}
-		}
-	}
-}
-
-// Test hardware morph animation
-material Examples/HardwareMorphAnimation
-{
-	technique
-	{
-		pass
-		{
-			
-			vertex_program_ref Ogre/HardwareMorphAnimation
-			{
-				// all default
-			}
-
-			texture_unit
-			{
-				tex_coord_set 0
-				colour_op_ex source1 src_current src_current
-			}
-			// need to define these texture units otherwise GL won't use the uv sets			
-			texture_unit
-			{
-				tex_coord_set 1
-				// also need to set blending to ignore texture which is GL warning texture
-				colour_op_ex source1 src_current src_current
-			}
-			texture_unit
-			{
-				tex_coord_set 2
-				colour_op_ex source1 src_current src_current
-			}
-		
-		}
-	}
-}
-
-// Test hardware pose animation
-material Examples/HardwarePoseAnimation
-{
-	technique
-	{
-		pass
-		{
-			
-			vertex_program_ref Ogre/HardwarePoseAnimation
-			{
-				// all default
-			}
-			texture_unit
-			{
-				tex_coord_set 0
-				colour_op_ex source1 src_current src_current
-			}
-			// need to define these texture units otherwise GL won't use the uv sets			
-			texture_unit
-			{
-				tex_coord_set 1
-				// also need to set blending to ignore texture which is GL warning texture
-				colour_op_ex source1 src_current src_current
-			}
-			texture_unit
-			{
-				tex_coord_set 2
-				colour_op_ex source1 src_current src_current
-			}
-
-		
-		}
-	}
-}
-
 material RustyBarrel
 {
 	technique
@@ -862,22 +751,4 @@ material WoodPallet
 	}
 }
 
-material Examples/LightRibbonTrail
-{
-	technique
-	{
-		pass
-		{
-			lighting off
-			scene_blend add
-			depth_write off
 
-			texture_unit
-			{
-				texture ribbonband.png 1d
-				tex_address_mode clamp
-				filtering none
-			}
-		}
-	}
-}

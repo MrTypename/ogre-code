@@ -327,9 +327,9 @@ namespace Ogre {
             static LightList ll;
             return ll;
         }
-		bool getPolygonModeOverrideable(void) const
+		bool getRenderDetailOverrideable(void) const
 		{
-			return mParent->getPolygonModeOverrideable();
+			return mParent->getRenderDetailOverrideable();
 		}
     };
 

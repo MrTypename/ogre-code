@@ -28,8 +28,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgrePrerequisites.h"
 #include "OgreSharedPtr.h"
 #include "OgreDataStream.h"
-#include "OgreIteratorWrappers.h"
-#include "OgreStringVector.h"
 
 namespace Ogre {
 
@@ -62,8 +60,6 @@ namespace Ogre {
         };
         typedef SharedPtr<CodecData> CodecDataPtr;
 
-        typedef ConstMapIterator<CodecList> CodecIterator;
-
     public:
     	virtual ~Codec();
     	
@@ -80,15 +76,6 @@ namespace Ogre {
         {
             ms_mapCodecs.erase(pCodec->getType());
         }
-
-        /** Gets the iterator for the registered codecs. */
-        static CodecIterator getCodecIterator(void)
-        {
-            return CodecIterator(ms_mapCodecs.begin(), ms_mapCodecs.end());
-        }
-
-        /** Gets the file extension list for the registered codecs. */
-        static StringVector getExtensions(void);
 
         /** Gets the codec registered for the passed in file extension. */
         static Codec* getCodec(const String& extension);
@@ -118,10 +105,6 @@ namespace Ogre {
         /** Returns the type of the codec as a String
         */
         virtual String getType() const = 0;
-
-        /** Returns the type of the data that supported by this codec as a String
-        */
-        virtual String getDataType() const = 0;
     };
 
 } // namespace

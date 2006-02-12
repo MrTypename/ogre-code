@@ -32,7 +32,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreParticleIterator.h"
 #include "OgreStringInterface.h"
 #include "OgreMovableObject.h"
-#include "OgreRadixSort.h"
 
 namespace Ogre {
 
@@ -96,20 +95,6 @@ namespace Ogre {
             String doGet(const void* target) const;
             void doSet(void* target, const String& val);
         };
-		/** Command object for sorting (see ParamCommand).*/
-		class CmdSorted : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
-		/** Command object for local space (see ParamCommand).*/
-		class CmdLocalSpace : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
 
         /// Default constructor required for STL creation in manager
         ParticleSystem();
@@ -332,6 +317,9 @@ namespace Ogre {
         */
         virtual void _updateRenderQueue(RenderQueue* queue);
 
+        /** Overridden from MovableObject */
+        const String& getName(void) const { return mName; }
+
         /** Fast-forwards this system by the required number of seconds.
         @remarks
             This method allows you to fast-forward a system so that it effectively looks like
@@ -360,31 +348,6 @@ namespace Ogre {
 		*/
 		Real getSpeedFactor(void) const { return mSpeedFactor; }
 
-        /** Sets a 'iteration interval' on this particle system.
-        @remarks
-            Particle system update interval based on elapsed frame time will cause difference
-            behavior between low frame-rate and high frame-rate. By use this interval, you can
-            control the particle system update in a fixed interval, keep behavior as same as
-            possible, no matter what frame-rate it is.
-        @par
-            When iteration interval set to zero, means update based on elapsed frame time, otherwise
-            each iteration will take the given interval, repeat until eat up all elapsed frame time.
-        @param
-            iterationInterval The iteration interval, default to zero.
-        */
-        void setIterationInterval(Real iterationInterval) { mIterationInterval = iterationInterval; }
-
-        /** Gets a 'iteration interval' on this particle system.
-        */
-        Real getIterationInterval(void) const { return mIterationInterval; }
-
-		/** Set the default iteration interval for all future ParticleSystem instances.
-		*/
-        static void setDefaultIterationInterval(Real iterationInterval) { msDefaultIterationInterval = iterationInterval; }
-
-		/** Get the default iteration interval for all future ParticleSystem instances.
-		*/
-        static Real getDefaultIterationInterval(void) { return msDefaultIterationInterval; }
 
         /** Overridden from MovableObject */
         const String& getMovableType(void) const;
@@ -453,17 +416,7 @@ namespace Ogre {
 		void _notifyOrigin(const String& origin) { mOrigin = origin; }
 
 		/** @copydoc MovableObject::setRenderQueueGroup */
-		void setRenderQueueGroup(uint8 queueID);
-
-		/** Set whether or not particles are sorted according to the camera.
-		@remarks
-			Enabling sorting alters the order particles are sent to the renderer.
-			When enabled, particles are sent to the renderer in order of 
-			furthest distance from the camera.
-		*/
-		void setSortingEnabled(bool enabled) { mSorted = enabled; }
-		/// Gets whether particles are sorted relative to the camera.
-		bool getSortingEnabled(void) const { return mSorted; }
+		void setRenderQueueGroup(RenderQueueGroupID queueID);
 
         /** Set the (initial) bounds of the particle system manually. 
         @remarks
@@ -494,22 +447,6 @@ namespace Ogre {
         */
         void setBoundsAutoUpdated(bool autoUpdate, Real stopIn = 0.0f);
 
-		/** Sets whether particles (and any affector effects) remain relative 
-			to the node the particle system is attached to.
-		@remarks
-			By defalt particles are in world space once emitted, so they are not
-			affected by movement in the parent node of the particle system. This
-			makes the most sense when dealing with completely independent particles, 
-			but if you want to constrain them to follow local motion too, you
-			can set this to true.
-		*/
-		void setKeepParticlesInLocalSpace(bool keepLocal);
-
-		/** Gets whether particles (and any affector effects) remain relative 
-			to the node the particle system is attached to.
-		*/
-		bool getKeepParticlesInLocalSpace(void) const { return mLocalSpace; }
-
         /** Internal method for updating the bounds of the particle system.
         @remarks
             This is called automatically for a period of time after the system's
@@ -525,8 +462,6 @@ namespace Ogre {
         */
         void _updateBounds(void);
 
-		/// Override to return specific type flag
-		uint32 getTypeFlags(void) const;
     protected:
 
         /// Command objects
@@ -536,19 +471,18 @@ namespace Ogre {
         static CmdQuota msQuotaCmd;
         static CmdWidth msWidthCmd;
         static CmdRenderer msRendererCmd;
-		static CmdSorted msSortedCmd;
-		static CmdLocalSpace msLocalSpaceCmd;
 
 
         AxisAlignedBox mAABB;
         Real mBoundingRadius;
         bool mBoundsAutoUpdate;
         Real mBoundsUpdateTime;
-        Real mUpdateRemainTime;
 
         /// World AABB, only used to compare world-space positions to calc bounds
         AxisAlignedBox mWorldAABB;
 
+        /// Name of the system; used for location in the scene.
+        String mName;
         /// Name of the resource group to use to load materials
         String mResourceGroupName;
         /// Name of the material to use
@@ -563,27 +497,12 @@ namespace Ogre {
         Real mDefaultHeight;
 		/// Speed factor
 		Real mSpeedFactor;
-        /// Iteration interval
-        Real mIterationInterval;
-		/// Particles sorted according to camera?
-		bool mSorted;
-		/// Particles in local space?
-		bool mLocalSpace;
 
         typedef std::list<Particle*> ActiveParticleList;
-        typedef std::list<Particle*> FreeParticleList;
+        typedef std::deque<Particle*> FreeParticleQueue;
         typedef std::vector<Particle*> ParticlePool;
 
-		/// Sorting functor
-		struct SortFunctor
-		{
-			Vector3 sortDir;
-			float operator()(Particle* p) const;
-		};
-
-		static RadixSort<ActiveParticleList, Particle*, float> mRadixSorter;
-
-		/** Active particle list.
+        /** Active particle list.
             @remarks
                 This is a linked list of pointers to particles in the particle pool.
             @par
@@ -599,11 +518,10 @@ namespace Ogre {
                 This contains a list of the particles free for use as new instances
                 as required by the set. Particle instances are preconstructed up 
                 to the estimated size in the mParticlePool vector and are 
-                referenced on this deque at startup. As they get used this list
-                reduces, as they get released back to to the set they get added
-				back to the list.
+                referenced on this deque at startup. As they get used this deque
+                reduces, as they get released back to to the set they get added back to the deque.
         */
-        FreeParticleList mFreeParticles;
+        FreeParticleQueue mFreeParticles;
 
         /** Pool of particle instances for use and reuse in the active particle list.
             @remarks
@@ -634,8 +552,6 @@ namespace Ogre {
 		/// Optional origin of this particle system (eg script name)
 		String mOrigin;
 
-        /// Default iteration interval
-        static Real msDefaultIterationInterval;
 
         /** Internal method used to expire dead particles. */
         void _expire(Real timeElapsed);
@@ -648,9 +564,6 @@ namespace Ogre {
 
         /** Applies the effects of affectors. */
         void _triggerAffectors(Real timeElapsed);
-
-		/** Sort the particles in the system **/
-		void _sortParticles(Camera* cam);
 
         /** Resize the internal pool of particles. */
         void increasePool(size_t size);
@@ -665,6 +578,7 @@ namespace Ogre {
 		void createVisualParticles(size_t poolstart, size_t poolend);
 		/// Internal method for destroying ParticleVisualData instances for the pool
 		void destroyVisualParticles(size_t poolstart, size_t poolend);
+
 
     };
 

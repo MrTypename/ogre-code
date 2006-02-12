@@ -5,6 +5,7 @@
 	Name="MeshUpgrader"
 	ProjectGUID="{6B3CABED-0D07-4AF0-8931-929B9B28BA8B}"
 	Keyword="Win32Proj"
+	SignManifests="true"
 	>
 	<Platforms>
 		<Platform
@@ -19,7 +20,7 @@
 			OutputDirectory="..\bin\$(ConfigurationName)"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
+			InheritedPropertySheets="UpgradeFromVC70.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -103,7 +104,7 @@
 			OutputDirectory="..\bin\$(ConfigurationName)"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
+			InheritedPropertySheets="UpgradeFromVC70.vsprops"
 			CharacterSet="2"
 			>
 			<Tool

@@ -43,7 +43,6 @@ struct XmlOptions
     String dest;
     String sourceExt;
     String destExt;
-    String logFile;
     bool interactiveMode;
     unsigned short numLods;
     Real lodDist;
@@ -54,10 +53,6 @@ struct XmlOptions
     bool generateTangents;
     bool reorganiseBuffers;
 	bool optimiseAnimations;
-	bool quietMode;
-	bool d3d;
-	bool gl;
-	Serializer::Endian endian;
 };
 
 void help(void)
@@ -77,11 +72,6 @@ void help(void)
     cout << "-r             = DON'T reorganise vertex buffers to OGRE recommended format." << endl;
     cout << "-t             = Generate tangents (for normal mapping)" << endl;
     cout << "-o             = DON'T optimise out redundant tracks & keyframes" << endl;
-	cout << "-d3d           = Prefer D3D packed colour formats (default on Windows)" << endl;
-	cout << "-gl            = Prefer GL packed colour formats (default on non-Windows)" << endl;
-	cout << "-E endian      = Set endian mode 'big' 'little' or 'native' (default)" << endl;
-	cout << "-q             = Quiet mode, less output" << endl;
-    cout << "-log filename  = name of the log file (default: 'OgreXMLConverter.log')" << endl;
     cout << "sourcefile     = name of file to convert" << endl;
     cout << "destfile       = optional name of file to write to. If you don't" << endl;
     cout << "                 specify this OGRE works it out through the extension " << endl;
@@ -107,8 +97,6 @@ XmlOptions parseArgs(int numArgs, char **args)
     opts.generateTangents = false;
     opts.reorganiseBuffers = true;
 	opts.optimiseAnimations = true;
-	opts.quietMode = false;
-	opts.endian = Serializer::ENDIAN_NATIVE;
 
     // ignore program name
     char* source = 0;
@@ -123,27 +111,16 @@ XmlOptions parseArgs(int numArgs, char **args)
     unOpt["-r"] = false;
     unOpt["-t"] = false;
     unOpt["-o"] = false;
-	unOpt["-q"] = false;
-	unOpt["-d3d"] = false;
-	unOpt["-gl"] = false;
     binOpt["-l"] = "";
     binOpt["-d"] = "";
     binOpt["-p"] = "";
     binOpt["-f"] = "";
-    binOpt["-E"] = "";
-    binOpt["-log"] = "OgreXMLConverter.log";
 
     int startIndex = findCommandLineOpts(numArgs, args, unOpt, binOpt);
     UnaryOptionList::iterator ui;
     BinaryOptionList::iterator bi;
 
-	ui = unOpt.find("-q");
-	if (ui->second)
-	{
-		opts.quietMode = true;
-	}
-
-	ui = unOpt.find("-i");
+    ui = unOpt.find("-i");
     if (ui->second)
     {
         opts.interactiveMode = true;
@@ -200,38 +177,7 @@ XmlOptions parseArgs(int numArgs, char **args)
             opts.lodFixed = StringConverter::parseInt(bi->second);
             opts.usePercent = false;
         }
-
-        bi = binOpt.find("-log");
-        if (!bi->second.empty())
-        {
-            opts.logFile = bi->second;
-        }
-
-        bi = binOpt.find("-E");
-        if (!bi->second.empty())
-        {
-            if (bi->second == "big")
-                opts.endian = Serializer::ENDIAN_BIG;
-            else if (bi->second == "little")
-                opts.endian = Serializer::ENDIAN_LITTLE;
-            else 
-                opts.endian = Serializer::ENDIAN_NATIVE;
-        }
-
-		ui = unOpt.find("-d3d");
-		if (ui->second)
-		{
-			opts.d3d = true;
-		}
-
-		ui = unOpt.find("-gl");
-		if (ui->second)
-		{
-			opts.gl = true;
-			opts.d3d = false;
-		}
-
-	}
+    }
     // Source / dest
     if (numArgs > startIndex)
         source = args[startIndex];
@@ -275,39 +221,35 @@ XmlOptions parseArgs(int numArgs, char **args)
 	StringUtil::toLowerCase(ext);
     opts.destExt = ext;
 
-    if (!opts.quietMode) 
-	{
-        cout << endl;
-        cout << "-- OPTIONS --" << endl;
-        cout << "source file      = " << opts.source << endl;
-        cout << "destination file = " << opts.dest << endl;
-            cout << "log file         = " << opts.logFile << endl;
-        cout << "interactive mode = " << StringConverter::toString(opts.interactiveMode) << endl;
-        if (opts.numLods == 0)
+    cout << endl;
+    cout << "-- OPTIONS --" << endl;
+    cout << "source file      = " << opts.source << endl;
+    cout << "destination file = " << opts.dest << endl;
+    cout << "interactive mode = " << StringConverter::toString(opts.interactiveMode) << endl;
+    if (opts.numLods == 0)
+    {
+        cout << "lod levels       = none (or use existing)" << endl;
+    }
+    else
+    {
+        cout << "lod levels       = " << opts.numLods << endl;
+        cout << "lod distance     = " << opts.lodDist << endl;
+        if (opts.usePercent)
         {
-            cout << "lod levels       = none (or use existing)" << endl;
+            cout << "lod reduction    = " << opts.lodPercent << "%" << endl;
         }
         else
         {
-            cout << "lod levels       = " << opts.numLods << endl;
-            cout << "lod distance     = " << opts.lodDist << endl;
-            if (opts.usePercent)
-            {
-                cout << "lod reduction    = " << opts.lodPercent << "%" << endl;
-            }
-            else
-            {
-                cout << "lod reduction    = " << opts.lodFixed << " verts" << endl;
-            }
+            cout << "lod reduction    = " << opts.lodFixed << " verts" << endl;
         }
-        cout << "Generate edge lists  = " << opts.generateEdgeLists << endl;
-        cout << "Generate tangents = " << opts.generateTangents << endl;
-        cout << "Reorganise vertex buffers = " << opts.reorganiseBuffers << endl;
-    	cout << "Optimise animations = " << opts.optimiseAnimations << endl;
-    	
-        cout << "-- END OPTIONS --" << endl;
-        cout << endl;
     }
+    cout << "Generate edge lists  = " << opts.generateEdgeLists << endl;
+    cout << "Generate tangents = " << opts.generateTangents << endl;
+    cout << "Reorganise vertex buffers = " << opts.reorganiseBuffers << endl;
+	cout << "Optimise animations = " << opts.optimiseAnimations << endl;
+	
+    cout << "-- END OPTIONS --" << endl;
+    cout << endl;
 
 
     return opts;
@@ -363,13 +305,7 @@ void XMLToBinary(XmlOptions opts)
         delete doc;
         MeshPtr newMesh = MeshManager::getSingleton().createManual("conversion", 
             ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		VertexElementType colourElementType;
-		if (opts.d3d)
-			colourElementType = VET_COLOUR_ARGB;
-		else
-			colourElementType = VET_COLOUR_ABGR;
-
-        xmlMeshSerializer->importMesh(opts.source, colourElementType, newMesh.getPointer());
+        xmlMeshSerializer->importMesh(opts.source, newMesh.getPointer());
 
         // Re-jig the buffers?
         if (opts.reorganiseBuffers)
@@ -381,7 +317,7 @@ void XMLToBinary(XmlOptions opts)
                 // Automatic
                 VertexDeclaration* newDcl = 
                     newMesh->sharedVertexData->vertexDeclaration->getAutoOrganisedDeclaration(
-                        newMesh->hasSkeleton(), newMesh->hasVertexAnimation());
+                        newMesh->hasSkeleton());
                 if (*newDcl != *(newMesh->sharedVertexData->vertexDeclaration))
                 {
                     // Usages don't matter here since we're onlly exporting
@@ -402,7 +338,7 @@ void XMLToBinary(XmlOptions opts)
                     // Automatic
                     VertexDeclaration* newDcl = 
                         sm->vertexData->vertexDeclaration->getAutoOrganisedDeclaration(
-                            newMesh->hasSkeleton(), newMesh->hasVertexAnimation());
+                            newMesh->hasSkeleton());
                     if (*newDcl != *(sm->vertexData->vertexDeclaration))
                     {
                         // Usages don't matter here since we're onlly exporting
@@ -594,10 +530,7 @@ void XMLToBinary(XmlOptions opts)
 
         if (opts.generateEdgeLists)
         {
-            if (!opts.quietMode) 
-			{
-                std::cout << "Generating edge lists...." << std::endl;
-            }
+            std::cout << "Generating edge lists...." << std::endl;
             newMesh->buildEdgeList();
         }
 
@@ -631,16 +564,13 @@ void XMLToBinary(XmlOptions opts)
             }
             if (opts.generateTangents)
             {
-                if (!opts.quietMode) 
-				{
-                    std::cout << "Generating tangent vectors...." << std::endl;
-                }
+                std::cout << "Generating tangent vectors...." << std::endl;
                 newMesh->buildTangentVectors(srcTex, destTex);
             }
         }
 
 
-        meshSerializer->exportMesh(newMesh.getPointer(), opts.dest, opts.endian);
+        meshSerializer->exportMesh(newMesh.getPointer(), opts.dest);
     }
     else if (!stricmp(root->Value(), "skeleton"))
     {
@@ -652,7 +582,7 @@ void XMLToBinary(XmlOptions opts)
 		{
 			newSkel->optimiseAllAnimations();
 		}
-        skeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest, opts.endian);
+        skeletonSerializer->exportSkeleton(newSkel.getPointer(), opts.dest);
     }
 
 
@@ -688,10 +618,8 @@ int main(int numargs, char** args)
         return -1;
     }
 
-    XmlOptions opts = parseArgs(numargs, args);
-
     logMgr = new LogManager();
-	logMgr->createLog(opts.logFile, false, !opts.quietMode); 
+	logMgr->createLog("OgreXMLConverter.log"); 
     rgm = new ResourceGroupManager();
     mth = new Math();
     meshMgr = new MeshManager();
@@ -705,6 +633,10 @@ int main(int numargs, char** args)
     bufferManager = new DefaultHardwareBufferManager(); // needed because we don't have a rendersystem
 
 
+
+    logMgr->createLog("OgreXMLConverter.log");
+
+    XmlOptions opts = parseArgs(numargs, args);
 
     if (opts.sourceExt == "mesh")
     {

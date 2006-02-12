@@ -164,18 +164,13 @@ namespace Ogre {
 		OGRE_AUTO_MUTEX // public to allow external locking
 		/// Default resource group name
 		static String DEFAULT_RESOURCE_GROUP_NAME;
-        /// Internal resource group name (should be used by OGRE internal only)
-        static String INTERNAL_RESOURCE_GROUP_NAME;
 		/// Bootstrap resource group name (min OGRE resources)
 		static String BOOTSTRAP_RESOURCE_GROUP_NAME;
-		/// Special resource group name which causes resource group to be automatically determined based on searching for the resource in all groups.
-		static String AUTODETECT_RESOURCE_GROUP_NAME;
         /// Nested struct defining a resource declaration
         struct ResourceDeclaration
         {
             String resourceName;
             String resourceType;
-            ManualResourceLoader* loader;
 			NameValuePairList parameters;
         };
         /// List of resource declarations
@@ -259,8 +254,6 @@ namespace Ogre {
 		void dropGroupContents(ResourceGroup* grp);
 		/** Delete a group for shutdown - don't notify ResourceManagers. */
 		void deleteGroup(ResourceGroup* grp);
-		/// Internal find method for auto groups
-		ResourceGroup* findGroupContainingResourceImpl(const String& filename);
 		/// Internal event firing method
 		void fireResourceGroupScriptingStarted(const String& groupName, size_t scriptCount);
 		/// Internal event firing method
@@ -293,16 +286,8 @@ namespace Ogre {
             resources used for the level of a game. There is always one predefined
             resource group called ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, 
 			which is typically used to hold all resources which do not need to 
-			be unloaded until shutdown. There is another predefined resource
-            group called ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME too,
-            which should be used by OGRE internal only, the resources created
-            in this group aren't supposed to modify, unload or remove by user.
-            You can create additional ones so that you can control the life of
-            your resources in whichever way you wish.
-			There is one other predefined value, 
-			ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME; using this 
-			causes the group name to be derived at load time by searching for 
-			the resource in the resource locations of each group in turn.
+			be unloaded until shutdown. You can create additional ones so that 
+			you can control the life of your resources in whichever way you wish.
         @par
             Once you have defined a resource group, resources which will be loaded
 			as part of it are defined in one of 3 ways:
@@ -398,28 +383,8 @@ namespace Ogre {
             will be in an unloaded state. If you want to remove them entirely,
             you should use clearResourceGroup or destroyResourceGroup.
         @param name The name to of the resource group to unload.
-        @param reloadableOnly If set to true, only unload the resource that is
-            reloadable. Because some resources isn't reloadable, they will be
-            unloaded but can't load them later. Thus, you might not want to them
-            unloaded. Or, you might unload all of them, and then populate them
-            manually later.
-            @see Resource::isReloadable for resource is reloadable.
         */
-        void unloadResourceGroup(const String& name, bool reloadableOnly = true);
-
-		/** Unload all resources which are not referenced by any other object.
-		@remarks
-			This method behaves like unloadResourceGroup, except that it only
-			unloads resources in the group which are not in use, ie not referenced
-			by other objects. This allows you to free up some memory selectively
-			whilst still keeping the group around (and the resources present,
-			just not using much memory).
-		@param name The name of the group to check for unreferenced resources
-		@param reloadableOnly If true (the default), only unloads resources
-			which can be subsequently automatically reloaded
-		*/
-		void unloadUnreferencedResourcesInGroup(const String& name, 
-			bool reloadableOnly = true);
+        void unloadResourceGroup(const String& name);
 
 		/** Clears a resource group. 
 		@remarks
@@ -438,6 +403,7 @@ namespace Ogre {
         @param name The name of the resource group to destroy.
         */
         void destroyResourceGroup(const String& name);
+
 
         /** Method to add a resource location to for a given resource group. 
         @remarks
@@ -503,48 +469,6 @@ namespace Ogre {
         void declareResource(const String& name, const String& resourceType,
             const String& groupName = DEFAULT_RESOURCE_GROUP_NAME,
 			const NameValuePairList& loadParameters = NameValuePairList());
-        /** Declares a resource to be a part of a resource group, allowing you
-            to load and unload it as part of the group.
-        @remarks
-            By declaring resources before you attempt to use them, you can
-            more easily control the loading and unloading of those resources
-            by their group. Declaring them also allows them to be enumerated,
-            which means events can be raised to indicate the loading progress
-            (@see ResourceGroupListener). Note that another way of declaring
-            resources is to use a script specific to the resource type, if
-            available (e.g. .material).
-        @par
-            Declared resources are not created as Resource instances (and thus
-            are not available through their ResourceManager) until initialiseResourceGroup
-            is called, at which point all declared resources will become created
-            (but unloaded) Resource instances, along with any resources declared
-            in scripts in resource locations associated with the group.
-        @param name The resource name.
-        @param resourceType The type of the resource. Ogre comes preconfigured with
-            a number of resource types:
-            <ul>
-            <li>Font</li>
-            <li>GpuProgram</li>
-            <li>HighLevelGpuProgram</li>
-            <li>Material</li>
-            <li>Mesh</li>
-            <li>Skeleton</li>
-            <li>Texture</li>
-            </ul>
-            .. but more can be added by plugin ResourceManager classes.
-        @param groupName The name of the group to which it will belong.
-        @param loader Pointer to a ManualResourceLoader implementation which will
-            be called when the Resource wishes to load. If supplied, the resource
-            is manually loaded, otherwise it'll loading from file automatic.
-            @note We don't support declare manually loaded resource without loader
-                here, since it's meaningless.
-        @param loadParameters A list of name / value pairs which supply custom
-            parameters to the resource which will be required before it can
-            be loaded. These are specific to the resource type.
-        */
-        void declareResource(const String& name, const String& resourceType,
-            const String& groupName, ManualResourceLoader* loader,
-            const NameValuePairList& loadParameters = NameValuePairList());
         /** Undeclare a resource.
 		@remarks
 			Note that this will not cause it to be unloaded
@@ -566,19 +490,11 @@ namespace Ogre {
 			find() method if you need to.
 		@param groupName The name of the resource group; this determines which 
 			locations are searched. 
-		@param searchGroupsIfNotFound If true, if the resource is not found in 
-			the group specified, other groups will be searched. If you're
-			loading a real Resource using this option, you <strong>must</strong>
-			also provide the resourceBeingLoaded parameter to enable the 
-			group membership to be changed
-		@param resourceBeingLoaded Optional pointer to the resource being 
-			loaded, which you should supply if you want
 		@returns Shared pointer to data stream containing the data, will be
 			destroyed automatically when no longer referenced
 		*/
 		DataStreamPtr openResource(const String& resourceName, 
-			const String& groupName = DEFAULT_RESOURCE_GROUP_NAME,
-			bool searchGroupsIfNotFound = true, Resource* resourceBeingLoaded = 0);
+			const String& groupName = DEFAULT_RESOURCE_GROUP_NAME);
 
 		/** Open all resources matching a given pattern (which can contain
 			the character '*' as a wildcard), and return a collection of 
@@ -625,19 +541,6 @@ namespace Ogre {
         @param filename Fully qualified name of the file to test for
         */
         bool resourceExists(const String& group, const String& filename);
-
-        /** Find out if the named file exists in a group. 
-        @param group Pointer to the resource group
-        @param filename Fully qualified name of the file to test for
-        */
-        bool resourceExists(ResourceGroup* group, const String& filename);
-		/** Find the group in which a resource exists.
-		@param filename Fully qualified name of the file the resource should be
-			found as
-		@returns Name of the resource group the resource was found in. An
-			exception is thrown if the group could not be determined.
-		*/
-		const String& findGroupContainingResource(const String& filename);
 
         /** Find all files matching a given pattern in a group and get 
         some detailed information about them.
@@ -738,10 +641,6 @@ namespace Ogre {
 		@param res Weak reference to resource
 		*/
 		void _notifyResourceRemoved(ResourcePtr& res);
-
-		/** Internale method to notify the group manager that a resource has
-			changed group (only applicable for autodetect group) */
-		void _notifyResourceGroupChanged(const String& oldGroup, Resource* res);
 
 		/** Internal method called by ResourceManager when all resources 
 			for that manager are removed.

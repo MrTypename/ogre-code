@@ -25,7 +25,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 // NOTE THAT THIS FILE IS BASED ON MATERIAL FROM:
 
 // Magic Software, Inc.
-// http://www.geometrictools.com/
+// http://www.magic-software.com
 // Copyright (c) 2000, All Rights Reserved
 //
 // Source code from Magic Software is supplied under the terms of a license
@@ -34,7 +34,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 // the Magic Software web site.  This file is subject to the license
 //
 // FREE SOURCE CODE
-// http://www.geometrictools.com/License/WildMagic3License.pdf
+// http://www.magic-software.com/License/free.pdf
 
 #ifndef __Quaternion_H__
 #define __Quaternion_H__
@@ -91,11 +91,6 @@ namespace Ogre {
         {
             this->FromAxes(akAxis);
         }
-		/// Construct a quaternion from 4 manual w/x/y/z values
-		inline Quaternion(Real* valptr)
-		{
-			memcpy(val, valptr, sizeof(Real)*4);
-		}
 
         void FromRotationMatrix (const Matrix3& kRot);
         void ToRotationMatrix (Matrix3& kRot) const;
@@ -202,13 +197,7 @@ namespace Ogre {
         static const Quaternion ZERO;
         static const Quaternion IDENTITY;
 
-        union
-		{
-			struct {
-				Real w, x, y, z;
-			};
-			Real val[4];
-		};
+        Real w, x, y, z;
 
         /** Function for writing to a stream. Outputs "Quaternion(w, x, y, z)" with w,x,y,z
             being the member values of the quaternion.

@@ -97,8 +97,6 @@ namespace Ogre {
         bool isSupported(void) const;
         /// Overridden from GpuProgram
         GpuProgramParametersSharedPtr createParameters(void);
-        /// Overridden from GpuProgram
-        const String& getLanguage(void) const;
     };
 }
 

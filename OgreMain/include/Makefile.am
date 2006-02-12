@@ -1,16 +1,13 @@
 pkginclude_HEADERS = Ogre.h \
 OgreArchive.h \
-OgreAnimable.h \
 OgreAnimation.h \
 OgreAnimationState.h \
 OgreAnimationTrack.h \
-OgreAny.h \
 OgreArchiveFactory.h \
 OgreArchiveManager.h \
 OgreAutoParamDataSource.h \
 OgreAxisAlignedBox.h \
 OgreBillboard.h \
-OgreBillboardChain.h \
 OgreBillboardParticleRenderer.h \
 OgreBillboardSet.h \
 OgreBitwise.h \
@@ -73,7 +70,6 @@ OgreKeyTarget.h \
 OgreLight.h \
 OgreLog.h \
 OgreLogManager.h \
-OgreManualObject.h \
 OgreMaterial.h \
 OgreMaterialManager.h \
 OgreMaterialSerializer.h \
@@ -119,26 +115,24 @@ OgrePlane.h \
 OgrePlaneBoundedVolume.h \
 OgrePlatform.h \
 OgrePlatformManager.h \
-OgrePose.h \
 OgrePositionTarget.h \
 OgrePredefinedControllers.h \
 OgrePrerequisites.h \
 OgreProfiler.h \
 OgreProgressiveMesh.h \
 OgreQuaternion.h \
-OgreRadixSort.h \
 OgreRay.h \
 OgreRectangle.h \
 OgreRectangle2D.h \
 OgreRenderOperation.h \
 OgreRenderQueue.h \
-OgreRenderQueueInvocation.h \
 OgreRenderQueueListener.h \
 OgreRenderQueueSortingGrouping.h \
 OgreRenderSystem.h \
 OgreRenderSystemCapabilities.h \
 OgreRenderTarget.h \
 OgreRenderTargetListener.h \
+OgreRenderTargetTexture.h \
 OgreRenderTexture.h \
 OgreRenderWindow.h \
 OgreRenderable.h \
@@ -146,7 +140,6 @@ OgreResource.h \
 OgreResourceBackgroundQueue.h \
 OgreResourceGroupManager.h \
 OgreResourceManager.h \
-OgreRibbonTrail.h \
 OgreRoot.h \
 OgreRotationalSpline.h \
 OgreSceneManager.h \
@@ -196,12 +189,4 @@ OgreVertexIndexData.h \
 OgreViewport.h \
 OgreWireBoundingBox.h \
 OgreZip.h \
-OgreCompositor.h \
-OgreCompositorChain.h \
-OgreCompositorInstance.h \
-OgreCompositorManager.h \
-OgreCompositorSerializer.h \
-OgreCompositionTechnique.h \
-OgreCompositionPass.h \
-OgreCompositionTargetPass.h \
 asm_math.h

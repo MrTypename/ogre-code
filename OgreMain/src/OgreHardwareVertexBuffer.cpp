@@ -29,8 +29,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreStringConverter.h"
 #include "OgreHardwareBufferManager.h"
 #include "OgreDefaultHardwareBufferManager.h"
-#include "OgreRoot.h"
-#include "OgreRenderSystem.h"
 
 namespace Ogre {
 
@@ -84,8 +82,6 @@ namespace Ogre {
 		switch(etype)
 		{
 		case VET_COLOUR:
-		case VET_COLOUR_ABGR:
-		case VET_COLOUR_ARGB:
 			return sizeof(RGBA);
 		case VET_FLOAT1:
 			return sizeof(float);
@@ -114,8 +110,6 @@ namespace Ogre {
 		switch (etype)
 		{
 		case VET_COLOUR:
-		case VET_COLOUR_ABGR:
-		case VET_COLOUR_ARGB:
 			return 1;
 		case VET_FLOAT1:
 			return 1;
@@ -181,56 +175,6 @@ namespace Ogre {
 		OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Invalid base type", 
 			"VertexElement::multiplyTypeCount");
 	}
-	//--------------------------------------------------------------------------
-	VertexElementType VertexElement::getBestColourVertexElementType(void)
-	{
-		// Use the current render system to determine if possible
-		if (Root::getSingletonPtr() && Root::getSingletonPtr()->getRenderSystem())
-		{
-			return Root::getSingleton().getRenderSystem()->getColourVertexElementType();
-		}
-		else
-		{
-			// We can't know the specific type right now, so pick a type
-			// based on platform
-#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-			return VET_COLOUR_ARGB; // prefer D3D format on windows
-#else
-			return VET_COLOUR_ABGR; // prefer GL format on everything else
-#endif
-
-		}
-	}
-	//--------------------------------------------------------------------------
-	void VertexElement::convertColourValue(VertexElementType srcType, 
-		VertexElementType dstType, uint32* ptr)
-	{
-		if (srcType == dstType)
-			return;
-
-		// Conversion between ARGB and ABGR is always a case of flipping R/B
-		*ptr = 
-		   ((*ptr&0x00FF0000)>>16)|((*ptr&0x000000FF)<<16)|(*ptr&0xFF00FF00);				
-	}
-	//--------------------------------------------------------------------------
-	uint32 VertexElement::convertColourValue(const ColourValue& src, 
-		VertexElementType dst)
-	{
-		switch(dst)
-		{
-#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-        default:
-#endif
-		case VET_COLOUR_ARGB:
-			return src.getAsARGB();
-#if OGRE_PLATFORM != OGRE_PLATFORM_WIN32
-        default:
-#endif
-		case VET_COLOUR_ABGR: 
-			return src.getAsABGR();
-		};
-
-	}
 	//-----------------------------------------------------------------------------
 	VertexElementType VertexElement::getBaseType(VertexElementType multiType)
 	{
@@ -243,10 +187,6 @@ namespace Ogre {
 				return VET_FLOAT1;
 			case VET_COLOUR:
 				return VET_COLOUR;
-			case VET_COLOUR_ABGR:
-				return VET_COLOUR_ABGR;
-			case VET_COLOUR_ARGB:
-				return VET_COLOUR_ARGB;
 			case VET_SHORT1:
 			case VET_SHORT2:
 			case VET_SHORT3:
@@ -276,11 +216,6 @@ namespace Ogre {
         size_t offset, VertexElementType theType,
         VertexElementSemantic semantic, unsigned short index)
     {
-		// Refine colour type to a specific type
-		if (theType == VET_COLOUR)
-		{
-			theType = VertexElement::getBestColourVertexElementType();
-		}
         mElementList.push_back(
             VertexElement(source, offset, theType, semantic, index)
             );
@@ -340,11 +275,6 @@ namespace Ogre {
 			}
 		}
     }
-	//-----------------------------------------------------------------------------
-	void VertexDeclaration::removeAllElements(void)
-	{
-		mElementList.clear();
-	}
     //-----------------------------------------------------------------------------
     void VertexDeclaration::modifyElement(unsigned short elem_index, 
         unsigned short source, size_t offset, VertexElementType theType,
@@ -484,8 +414,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    VertexDeclaration* VertexDeclaration::getAutoOrganisedDeclaration(
-		bool skeletalAnimation, bool vertexAnimation)
+    VertexDeclaration* VertexDeclaration::getAutoOrganisedDeclaration(bool animated)
     {
         VertexDeclaration* newDecl = this->clone();
         // Set all sources to the same buffer (for now)
@@ -500,28 +429,24 @@ namespace Ogre {
         }
         newDecl->sort();
         // Now sort out proper buffer assignments and offsets
-        size_t offset = 0;
+        size_t offset0 = 0;
+        size_t offset1 = 0;
         c = 0;
-		unsigned short buffer = 0;
         for (i = elems.begin(); i != elems.end(); ++i, ++c)
         {
             const VertexElement& elem = *i;
-			if (vertexAnimation && elem.getSemantic() == VES_NORMAL)
-			{
-				// For morph animation, we need positions on their own
-				++buffer;
-				offset = 0;
-			}
-            if ((skeletalAnimation || vertexAnimation) &&
+            if (animated && 
                 elem.getSemantic() != VES_POSITION && elem.getSemantic() != VES_NORMAL)
             {
-				// All animated meshes have to split after normal
-				++buffer;
-				offset = 0;
+                // Animated meshes have pos & norm in buffer 0, everything else in 1
+                newDecl->modifyElement(c, 1, offset1, elem.getType(), elem.getSemantic(), elem.getIndex());
+                offset1 += elem.getSize();
             }
-			newDecl->modifyElement(c, buffer, offset, 
-				elem.getType(), elem.getSemantic(), elem.getIndex());
-			offset += elem.getSize();
+            else
+            {
+                newDecl->modifyElement(c, 0, offset0, elem.getType(), elem.getSemantic(), elem.getIndex());
+                offset0 += elem.getSize();
+            }
         }
 
         return newDecl;
@@ -594,11 +519,6 @@ namespace Ogre {
 				"VertexBufferBinding::getBuffer");
 		}
 		return i->second;
-	}
-	//-----------------------------------------------------------------------------
-	bool VertexBufferBinding::isBufferBound(unsigned short index)
-	{
-		return mBindingMap.find(index) != mBindingMap.end();
 	}
     //-----------------------------------------------------------------------------
     HardwareVertexBufferSharedPtr::HardwareVertexBufferSharedPtr(HardwareVertexBuffer* buf)

@@ -60,14 +60,11 @@ namespace Ogre {
         mutable Matrix4 mInverseTransposeWorldViewMatrix;
         mutable Vector4 mCameraPositionObjectSpace;
         mutable Matrix4 mTextureViewProjMatrix;
-        mutable Matrix4 mViewMatrix;
         mutable Matrix4 mProjectionMatrix;
 		mutable Real mDirLightExtrusionDistance;
         mutable Vector4 mCameraPosition;
-
+		
         mutable bool mWorldMatrixDirty;
-        mutable bool mViewMatrixDirty;
-        mutable bool mProjMatrixDirty;
         mutable bool mWorldViewMatrixDirty;
         mutable bool mViewProjMatrixDirty;
         mutable bool mWorldViewProjMatrixDirty;
@@ -80,9 +77,6 @@ namespace Ogre {
         mutable bool mCameraPositionDirty;
         mutable bool mTextureViewProjMatrixDirty;
 		mutable ColourValue mAmbientLight;
-        mutable ColourValue mFogColour;
-        mutable Vector4 mFogParams;
-        mutable int mPassNumber;
 
         const Renderable* mCurrentRenderable;
         const Camera* mCurrentCamera;
@@ -129,9 +123,6 @@ namespace Ogre {
         const Light& getLight(size_t index) const;
 		void setAmbientLightColour(const ColourValue& ambient);
 		const ColourValue& getAmbientLightColour(void) const;
-        void setFog(FogMode mode, const ColourValue& colour, Real expDensity, Real linearStart, Real linearEnd);
-        const ColourValue& getFogColour(void) const;
-        const Vector4& getFogParams(void) const;
         const Matrix4& getTextureViewProjMatrix(void) const;
         const RenderTarget* getCurrentRenderTarget(void) const;
         const Renderable* getCurrentRenderable(void) const;
@@ -175,9 +166,6 @@ namespace Ogre {
 		Real getFOV() const;
 		Real getNearClipDistance() const;
 		Real getFarClipDistance() const;
-        int getPassNumber(void) const;
-        void setPassNumber(const int passNumber);
-        void incPassNumber(void);
     };
 }
 

@@ -92,7 +92,7 @@ void destroyQuadRenderOp(Ogre::RenderOperation &d_render_op,
 /*************************************************************************
 	Constructor
 *************************************************************************/
-OgreCEGUIRenderer::OgreCEGUIRenderer(Ogre::RenderWindow* window, Ogre::uint8 queue_id, bool post_queue, uint max_quads, Ogre::SceneType scene_type)
+OgreCEGUIRenderer::OgreCEGUIRenderer(Ogre::RenderWindow* window, Ogre::RenderQueueGroupID queue_id, bool post_queue, uint max_quads, Ogre::SceneType scene_type)
 {
 	constructor_impl(window, queue_id, post_queue, max_quads);
 
@@ -104,7 +104,7 @@ OgreCEGUIRenderer::OgreCEGUIRenderer(Ogre::RenderWindow* window, Ogre::uint8 que
 /*************************************************************************
 	Constructor (specifying scene manager)
 *************************************************************************/
-OgreCEGUIRenderer::OgreCEGUIRenderer(Ogre::RenderWindow* window, Ogre::uint8 queue_id, bool post_queue, uint max_quads, Ogre::SceneManager* scene_manager)
+OgreCEGUIRenderer::OgreCEGUIRenderer(Ogre::RenderWindow* window, Ogre::RenderQueueGroupID queue_id, bool post_queue, uint max_quads, Ogre::SceneManager* scene_manager)
 {
 	constructor_impl(window, queue_id, post_queue, max_quads);
 
@@ -438,13 +438,13 @@ void OgreCEGUIRenderer::initRenderStates(void)
 	d_render_sys->unbindGpuProgram(GPT_FRAGMENT_PROGRAM);
 	d_render_sys->unbindGpuProgram(GPT_VERTEX_PROGRAM);
 	d_render_sys->setShadingType(SO_GOURAUD);
-	d_render_sys->_setPolygonMode(PM_SOLID);
+	d_render_sys->_setRasterisationMode(SDL_SOLID);
 
 	// initialise texture settings
 	d_render_sys->_setTextureCoordCalculation(0, TEXCALC_NONE);
 	d_render_sys->_setTextureCoordSet(0, 0);
 	d_render_sys->_setTextureUnitFiltering(0, FO_LINEAR, FO_LINEAR, FO_POINT);
-	d_render_sys->_setTextureAddressingMode(0, d_uvwAddressMode);
+	d_render_sys->_setTextureAddressingMode(0, TextureUnitState::TAM_CLAMP);
 	d_render_sys->_setTextureMatrix(0, Matrix4::IDENTITY);
 	d_render_sys->_setAlphaRejectSettings(CMPF_ALWAYS_PASS, 0);
 	d_render_sys->_setTextureBlendMode(0, d_colourBlendMode);
@@ -648,7 +648,7 @@ void OgreCEGUIRenderer::setTargetSceneManager(Ogre::SceneManager* scene_manager)
 /*************************************************************************
 	Set the target render queue for GUI rendering.	
 *************************************************************************/
-void OgreCEGUIRenderer::setTargetRenderQueue(Ogre::uint8 queue_id, bool post_queue)
+void OgreCEGUIRenderer::setTargetRenderQueue(Ogre::RenderQueueGroupID queue_id, bool post_queue)
 {
 	d_queue_id		= queue_id;
 	d_post_queue	= post_queue;
@@ -665,7 +665,7 @@ void OgreCEGUIRenderer::setTargetRenderQueue(Ogre::uint8 queue_id, bool post_que
 /*************************************************************************
 	perform main work of the constructor
 *************************************************************************/
-void OgreCEGUIRenderer::constructor_impl(Ogre::RenderWindow* window, Ogre::uint8 queue_id, bool post_queue, uint max_quads)
+void OgreCEGUIRenderer::constructor_impl(Ogre::RenderWindow* window, Ogre::RenderQueueGroupID queue_id, bool post_queue, uint max_quads)
 {
 	using namespace Ogre;
 
@@ -679,8 +679,6 @@ void OgreCEGUIRenderer::constructor_impl(Ogre::RenderWindow* window, Ogre::uint8
 	d_sorted		= true;
 	d_ogre_root		= Root::getSingletonPtr();
 	d_render_sys	= d_ogre_root->getRenderSystem();
-    // set ID string
-    d_identifierString = "CEGUI::OgreRenderer - Official Ogre based renderer module for CEGUI";
 
 	// Create and initialise the Ogre specific parts required for use in rendering later.
     // Main GUI
@@ -712,10 +710,6 @@ void OgreCEGUIRenderer::constructor_impl(Ogre::RenderWindow* window, Ogre::uint8
 	d_alphaBlendMode.source1	= Ogre::LBS_TEXTURE;
 	d_alphaBlendMode.source2	= Ogre::LBS_DIFFUSE;
 	d_alphaBlendMode.operation	= Ogre::LBX_MODULATE;
-
-	d_uvwAddressMode.u = Ogre::TextureUnitState::TAM_CLAMP;
-	d_uvwAddressMode.v = Ogre::TextureUnitState::TAM_CLAMP;
-	d_uvwAddressMode.w = Ogre::TextureUnitState::TAM_CLAMP;
 }
 
 
@@ -745,26 +739,10 @@ ResourceProvider* OgreCEGUIRenderer::createResourceProvider(void)
 }
 
 /*************************************************************************
-Set the size of the display in pixels.	
-*************************************************************************/
-void OgreCEGUIRenderer::setDisplaySize(const Size& sz)
-{
-	if (d_display_area.getSize() != sz)
-	{
-		d_display_area.setSize(sz);
-
-		EventArgs args;
-		fireEvent(EventDisplaySizeChanged, args, EventNamespace);
-	}
-
-}
-
-/*************************************************************************
 	Callback from Ogre invoked before other stuff in our target queue
 	is rendered
 *************************************************************************/
-void CEGUIRQListener::renderQueueStarted(Ogre::uint8 id, const Ogre::String& invocation, 
-										 bool& skipThisQueue)
+void CEGUIRQListener::renderQueueStarted(Ogre::RenderQueueGroupID id, bool& skipThisQueue)
 {
 	if ((!d_post_queue) && (d_queue_id == id))
 	{
@@ -778,7 +756,7 @@ void CEGUIRQListener::renderQueueStarted(Ogre::uint8 id, const Ogre::String& inv
 Callback from Ogre invoked after other stuff in our target queue
 is rendered
 *************************************************************************/
-void CEGUIRQListener::renderQueueEnded(Ogre::uint8 id, const Ogre::String& invocation, bool& repeatThisQueue)
+void CEGUIRQListener::renderQueueEnded(Ogre::RenderQueueGroupID id, bool& repeatThisQueue)
 {
 	if ((d_post_queue) && (d_queue_id == id))
 	{

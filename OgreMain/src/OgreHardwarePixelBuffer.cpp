@@ -102,7 +102,7 @@ namespace Ogre
 
     //-----------------------------------------------------------------------------    
 
-    void HardwarePixelBuffer::blit(const HardwarePixelBufferSharedPtr &src, const Image::Box &srcBox, const Image::Box &dstBox)
+    void HardwarePixelBuffer::blit(HardwarePixelBuffer *src, const Image::Box &srcBox, const Image::Box &dstBox)
 	{
 		if(isLocked() || src->isLocked())
 		{
@@ -110,7 +110,7 @@ namespace Ogre
 				"Source and destination buffer may not be locked!",
 				"HardwarePixelBuffer::blit");
 		}
-		if(src.getPointer() == this)
+		if(src == this)
 		{
 			OGRE_EXCEPT( Exception::ERR_INVALIDPARAMS,
                 "Source must not be the same object",
@@ -142,15 +142,8 @@ namespace Ogre
 		unlock();
 		src->unlock();
 	}
-    //-----------------------------------------------------------------------------       
-    void HardwarePixelBuffer::blit(const HardwarePixelBufferSharedPtr &src)
-    {
-        blit(src, 
-            Box(0,0,0,src->getWidth(),src->getHeight(),src->getDepth()), 
-            Box(0,0,0,mWidth,mHeight,mDepth)
-        );
-    }
-    //-----------------------------------------------------------------------------    
+
+
 	void HardwarePixelBuffer::readData(size_t offset, size_t length, void* pDest)
 	{
 		// TODO
@@ -168,14 +161,6 @@ namespace Ogre
 				"Writing a byte range is not implemented. Use blitFromMemory.",
 				"HardwarePixelBuffer::writeData");
 	}
-    //-----------------------------------------------------------------------------    
-    
-    RenderTexture *HardwarePixelBuffer::getRenderTarget(size_t)
-    {
-        OGRE_EXCEPT(Exception::UNIMPLEMENTED_FEATURE,
-				"Not yet implemented for this rendersystem.",
-				"HardwarePixelBuffer::getRenderTarget");
-    }
 
     //-----------------------------------------------------------------------------    
     
@@ -183,11 +168,6 @@ namespace Ogre
         : SharedPtr<HardwarePixelBuffer>(buf)
     {
 
-    }   
-	//-----------------------------------------------------------------------------    
-
-	void HardwarePixelBuffer::_clearSliceRTT(size_t zoffset)
-	{
-	}
+    }    
 
 };

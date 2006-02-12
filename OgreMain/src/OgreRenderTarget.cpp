@@ -36,10 +36,11 @@ http://www.gnu.org/copyleft/lesser.txt.
 namespace Ogre {
 
     RenderTarget::RenderTarget()
-		:mPriority(OGRE_DEFAULT_RT_GROUP),
-		mActive(true),
-		mAutoUpdate(true)
     {
+        // Default to no stats display
+        mActive = true;
+        mAutoUpdate = true;
+        mPriority = OGRE_DEFAULT_RT_GROUP;
         mTimer = Root::getSingleton().getTimer();
         resetStatistics();
     }
@@ -138,18 +139,15 @@ namespace Ogre {
 
         mViewportList.insert(ViewportList::value_type(ZOrder, vp));
 
-		fireViewportAdded(vp);
-
         return vp;
     }
-	//-----------------------------------------------------------------------
+
     void RenderTarget::removeViewport(int ZOrder)
     {
         ViewportList::iterator it = mViewportList.find(ZOrder);
 
         if (it != mViewportList.end())
         {
-			fireViewportRemoved((*it).second);
             delete (*it).second;
             mViewportList.erase(ZOrder);
         }
@@ -388,34 +386,6 @@ namespace Ogre {
             (*i)->postViewportUpdate(evt);
         }
     }
-	//-----------------------------------------------------------------------
-	void RenderTarget::fireViewportAdded(Viewport* vp)
-	{
-		RenderTargetViewportEvent evt;
-		evt.source = vp;
-
-		RenderTargetListenerList::iterator i, iend;
-		i = mListeners.begin();
-		iend = mListeners.end();
-		for(; i != iend; ++i)
-		{
-			(*i)->viewportAdded(evt);
-		}
-	}
-	//-----------------------------------------------------------------------
-	void RenderTarget::fireViewportRemoved(Viewport* vp)
-	{
-		RenderTargetViewportEvent evt;
-		evt.source = vp;
-
-		RenderTargetListenerList::iterator i, iend;
-		i = mListeners.begin();
-		iend = mListeners.end();
-		for(; i != iend; ++i)
-		{
-			(*i)->viewportRemoved(evt);
-		}
-	}
     //-----------------------------------------------------------------------
     String RenderTarget::writeContentsToTimestampedFile(const String& filenamePrefix, const String& filenameSuffix)
     {
@@ -466,10 +436,6 @@ namespace Ogre {
         // RenderWindow will override and return true for the primary window
         return false;
     }
-    //-----------------------------------------------------------------------
-    RenderTarget::Impl *RenderTarget::_getImpl()
-    {
-        return 0;
-    }
+
 
 }        

@@ -68,13 +68,6 @@ namespace Ogre {
                     // unsigned int vertexIndex;
                     // unsigned short boneIndex;
                     // float weight;
-    			// Optional chunk that matches a texture name to an alias
-                // a texture alias is sent to the submesh material to use this texture name
-                // instead of the one in the texture unit with a matching alias name
-                M_SUBMESH_TEXTURE_ALIAS = 0x4200, // Repeating section
-                    // char* aliasName;
-                    // char* textureName;
-
             M_GEOMETRY          = 0x5000, // NB this chunk is embedded within M_MESH and M_SUBMESH
                 // unsigned int vertexCount
 				M_GEOMETRY_VERTEX_DECLARATION = 0x5100,
@@ -153,35 +146,7 @@ namespace Ogre {
                                 // unsigned long  vertIndex[2]
                                 // unsigned long  sharedVertIndex[2]
                                 // bool degenerate
-
-			// Optional poses section, referred to by pose keyframes
-			M_POSES = 0xC000,
-				M_POSE = 0xC100,
-					// char* name (may be blank)
-					// unsigned short target	// 0 for shared geometry, 
-												// 1+ for submesh index + 1
-					M_POSE_VERTEX = 0xC111,
-						// unsigned long vertexIndex
-						// float xoffset, yoffset, zoffset
-			// Optional vertex animation chunk
-			M_ANIMATIONS = 0xD000, 
-				M_ANIMATION = 0xD100,
-				// char* name
-				// float length
-				M_ANIMATION_TRACK = 0xD110,
-					// unsigned short type			// 1 == morph, 2 == pose
-					// unsigned short target		// 0 for shared geometry, 
-													// 1+ for submesh index + 1
-					M_ANIMATION_MORPH_KEYFRAME = 0xD111,
-						// float time
-						// float x,y,z			// repeat by number of vertices in original geometry
-					M_ANIMATION_POSE_KEYFRAME = 0xD112,
-						// float time
-						M_ANIMATION_POSE_REF = 0xD113, // repeat for number of referenced poses
-							// unsigned short poseIndex 
-							// float influence
-
-		
+					
 	
 	/* Version 1.2 of the .mesh fornmat (deprecated)
 	enum MeshChunkID {
@@ -258,7 +223,6 @@ namespace Ogre {
 				M_SUBMESH_NAME_TABLE_ELEMENT,
 	                // short index
                     // char* name
-
 	*/
     };
 } // namespace

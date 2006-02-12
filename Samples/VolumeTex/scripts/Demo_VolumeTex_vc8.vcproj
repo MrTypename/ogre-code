@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="Demo_VolumeTex"
-	ProjectGUID="{724B4906-44BE-49FB-B1C8-E02AAAC0780C}"
+	ProjectGUID="{E779DB4B-06BE-4453-A4DA-87646D7F1505}"
 	Keyword="Win32Proj"
 	>
 	<Platforms>

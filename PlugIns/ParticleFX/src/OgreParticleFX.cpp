@@ -41,8 +41,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreColourInterpolatorAffectorFactory.h"
 #include "OgreScaleAffectorFactory.h"
 #include "OgreRotationAffectorFactory.h"
-#include "OgreDirectionRandomiserAffectorFactory.h"
-#include "OgreDeflectorPlaneAffectorFactory.h"
 
 namespace Ogre {
 
@@ -123,18 +121,7 @@ namespace Ogre {
         ParticleSystemManager::getSingleton().addAffectorFactory(pAffFact);
         affectorFactories.push_back(pAffFact);
 
-
-		// DirectionRandomiserAffector
-		pAffFact = new DirectionRandomiserAffectorFactory();
-		ParticleSystemManager::getSingleton().addAffectorFactory(pAffFact);
-		affectorFactories.push_back(pAffFact);
-
-		// DeflectorPlaneAffector
-		pAffFact = new DeflectorPlaneAffectorFactory();
-		ParticleSystemManager::getSingleton().addAffectorFactory(pAffFact);
-		affectorFactories.push_back(pAffFact);
-
-	}
+    }
     //-----------------------------------------------------------------------
     void destroyParticleFactories(void)
     {

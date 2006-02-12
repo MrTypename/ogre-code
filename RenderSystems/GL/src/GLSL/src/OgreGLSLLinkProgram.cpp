@@ -24,18 +24,18 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 
 #include "OgreGLSLExtSupport.h"
+#include "OgreGpuProgram.h"
 #include "OgreGLSLLinkProgram.h"
 
 namespace Ogre {
 
 	//-----------------------------------------------------------------------
 
-	GLSLLinkProgram::GLSLLinkProgram(void)
-        : mUniformRefsBuilt(false)
-        , mLinked(false)
+	GLSLLinkProgram::GLSLLinkProgram(void) : mLinked(false),
+		mUniformRefsBuilt(false)
 	{
 			checkForGLSLError( "GLSLLinkProgram::GLSLLinkProgram", "Error prior to Creating GLSL Program Object", 0 );
-		    mGLHandle = glCreateProgramObjectARB();
+		    mGLHandle = glCreateProgramObjectARB_ptr();
 			checkForGLSLError( "GLSLLinkProgram::GLSLLinkProgram", "Error Creating GLSL Program Object", 0 );
 
 	}
@@ -43,7 +43,7 @@ namespace Ogre {
 	//-----------------------------------------------------------------------
 	GLSLLinkProgram::~GLSLLinkProgram(void)
 	{
-		glDeleteObjectARB(mGLHandle);
+		glDeleteObjectARB_ptr(mGLHandle);
 
 	}
 
@@ -52,16 +52,8 @@ namespace Ogre {
 	{
 		if (!mLinked)
 		{
-            // if performing skeletal animation (hardware skinning) then bind default vertex attribute names
-            // note that attribute binding has to occur prior to final link of shader objects
-            if (mSkeletalAnimation)
-            {
-                glBindAttribLocationARB(mGLHandle, 7, "BlendIndex");
-                glBindAttribLocationARB(mGLHandle, 1, "BlendWeight");
-            }
-
-			glLinkProgramARB( mGLHandle );
-			glGetObjectParameterivARB( mGLHandle, GL_OBJECT_LINK_STATUS_ARB, &mLinked );
+			glLinkProgramARB_ptr( mGLHandle );
+			glGetObjectParameterivARB_ptr( mGLHandle, GL_OBJECT_LINK_STATUS_ARB, &mLinked );
 			// force logging and raise exception if not linked
 			checkForGLSLError( "GLSLLinkProgram::Activate",
 				"Error linking GLSL Program Object", mGLHandle, !mLinked, !mLinked );
@@ -75,7 +67,7 @@ namespace Ogre {
 
 		if (mLinked)
 		{
-		    glUseProgramObjectARB( mGLHandle );
+		    glUseProgramObjectARB_ptr( mGLHandle );
 		}
 	}
 
@@ -85,24 +77,25 @@ namespace Ogre {
 		if (!mUniformRefsBuilt)
 		{
 			// scan through the active uniforms and add them to the reference list
-			GLint uniformCount;
-
+			GLint    uniformCount;
+			GLint  size;
+			//GLenum type;
 			#define BUFFERSIZE 100
 			char   uniformName[BUFFERSIZE];
 			//GLint location;
 			UniformReference newUniformReference;
 
 			// get the number of active uniforms
-			glGetObjectParameterivARB(mGLHandle, GL_OBJECT_ACTIVE_UNIFORMS_ARB,
+			glGetObjectParameterivARB_ptr(mGLHandle, GL_OBJECT_ACTIVE_UNIFORMS_ARB,
 					&uniformCount);
 
 			// Loop over each of the active uniforms, and add them to the reference container
 			// only do this for user defined uniforms, ignore built in gl state uniforms
 			for (int index = 0; index < uniformCount; index++)
 			{
-				glGetActiveUniformARB(mGLHandle, index, BUFFERSIZE, NULL, &newUniformReference.mArraySize, &newUniformReference.mType, uniformName);
-				// don't add built in uniforms
-				newUniformReference.mLocation = glGetUniformLocationARB(mGLHandle, uniformName);
+				glGetActiveUniformARB_ptr(mGLHandle, index, BUFFERSIZE, NULL, &size, &newUniformReference.mType, uniformName);
+				// don't add built in uniforms 
+				newUniformReference.mLocation = glGetUniformLocationARB_ptr(mGLHandle, uniformName);
 				if (newUniformReference.mLocation >= 0)
 				{
 					// user defined uniform found, add it to the reference list
@@ -153,22 +146,6 @@ namespace Ogre {
 						newUniformReference.isReal = false;
 						newUniformReference.mElementCount = 4;
 						break;
-
-                    case GL_FLOAT_MAT2_ARB:
-						newUniformReference.isReal = true;
-						newUniformReference.mElementCount = 4;
-						break;
-
-                    case GL_FLOAT_MAT3_ARB:
-						newUniformReference.isReal = true;
-						newUniformReference.mElementCount = 9;
-						break;
-
-                    case GL_FLOAT_MAT4_ARB:
-						newUniformReference.isReal = true;
-						newUniformReference.mElementCount = 16;
-						break;
-
 					}// end switch
 
 					mUniformReferences.push_back(newUniformReference);
@@ -183,9 +160,6 @@ namespace Ogre {
 	//-----------------------------------------------------------------------
 	void GLSLLinkProgram::updateUniforms(GpuProgramParametersSharedPtr params)
 	{
-        // float array buffer used to pass arrays to GL
-        static float floatBuffer[256];
-
 		// iterate through uniform reference list and update uniform values
 		UniformReferenceIterator currentUniform = mUniformReferences.begin();
 		UniformReferenceIterator endUniform = mUniformReferences.end();
@@ -202,59 +176,25 @@ namespace Ogre {
 				currentRealConstant = params->getNamedRealConstantEntry( currentUniform->mName );
 				if (currentRealConstant != NULL)
 				{
-					if (currentRealConstant->isSet)
+					if (currentRealConstant->isSet) 
 					{
 						switch (currentUniform->mElementCount)
 						{
 						case 1:
-							glUniform1fvARB( currentUniform->mLocation, 1, currentRealConstant->val );
+							glUniform1fvARB_ptr( currentUniform->mLocation, 1, currentRealConstant->val );
 							break;
 
 						case 2:
-							glUniform2fvARB( currentUniform->mLocation, 1, currentRealConstant->val );
+							glUniform2fvARB_ptr( currentUniform->mLocation, 1, currentRealConstant->val );
 							break;
 
 						case 3:
-							glUniform3fvARB( currentUniform->mLocation, 1, currentRealConstant->val );
+							glUniform3fvARB_ptr( currentUniform->mLocation, 1, currentRealConstant->val );
 							break;
 
 						case 4:
-                            {
-                                if (currentUniform->mType == GL_FLOAT_MAT2_ARB)
-                                {
-                                    glUniformMatrix2fvARB( currentUniform->mLocation, 1, GL_TRUE, currentRealConstant->val);
-                                }
-                                else
-                                {
-							        glUniform4fvARB( currentUniform->mLocation, 1, currentRealConstant->val );
-                                }
-                            }
+							glUniform4fvARB_ptr( currentUniform->mLocation, 1, currentRealConstant->val );
 							break;
-
-                        case 9:
-                            {
-                                //float mat[9];
-                                // assume that the 3x3 matrix is packed
-                                memcpy(floatBuffer, currentRealConstant++->val, sizeof(float) * 4);
-                                memcpy(floatBuffer + 4, currentRealConstant++->val, sizeof(float) * 4);
-                                memcpy(floatBuffer + 4, currentRealConstant->val, sizeof(float) );
-
-                                glUniformMatrix3fvARB( currentUniform->mLocation, 1, GL_TRUE, floatBuffer);
-                                break;
-                            }
-
-                        case 16:
-                            {
-                                //float mat[16];
-                                memcpy(floatBuffer, currentRealConstant++->val, sizeof(float) * 4);
-                                memcpy(floatBuffer + 4, currentRealConstant++->val, sizeof(float) * 4);
-                                memcpy(floatBuffer + 8, currentRealConstant++->val, sizeof(float) * 4);
-                                memcpy(floatBuffer + 12, currentRealConstant++->val, sizeof(float) * 4);
-
-                                glUniformMatrix4fvARB( currentUniform->mLocation, 1, GL_TRUE, floatBuffer);
-                                break;
-                            }
-
 
 						} // end switch
 					}
@@ -265,24 +205,24 @@ namespace Ogre {
 				currentIntConstant = params->getNamedIntConstantEntry( currentUniform->mName );
 				if (currentIntConstant != NULL)
 				{
-					if (currentIntConstant->isSet)
+					if (currentIntConstant->isSet) 
 					{
 						switch (currentUniform->mElementCount)
 						{
 						case 1:
-							glUniform1ivARB( currentUniform->mLocation, 1, (const GLint*)currentIntConstant->val );
+							glUniform1ivARB_ptr( currentUniform->mLocation, 1, (const GLint*)currentIntConstant->val );
 							break;
 
 						case 2:
-							glUniform2ivARB( currentUniform->mLocation, 1, (const GLint*)currentIntConstant->val );
+							glUniform2ivARB_ptr( currentUniform->mLocation, 1, (const GLint*)currentIntConstant->val );
 							break;
 
 						case 3:
-							glUniform3ivARB( currentUniform->mLocation, 1, (const GLint*)currentIntConstant->val );
+							glUniform3ivARB_ptr( currentUniform->mLocation, 1, (const GLint*)currentIntConstant->val );
 							break;
 
 						case 4:
-							glUniform4ivARB( currentUniform->mLocation, 1, (const GLint*)currentIntConstant->val );
+							glUniform4ivARB_ptr( currentUniform->mLocation, 1, (const GLint*)currentIntConstant->val );
 							break;
 						} // end switch
 					}
@@ -297,38 +237,5 @@ namespace Ogre {
 		} // end while
 	}
 
-	//-----------------------------------------------------------------------
-	void GLSLLinkProgram::updatePassIterationUniforms(GpuProgramParametersSharedPtr params)
-	{
-		// iterate through uniform reference list and update pass iteration uniform values
-		UniformReferenceIterator currentUniform = mUniformReferences.begin();
-		UniformReferenceIterator endUniform = mUniformReferences.end();
 
-		GpuProgramParameters::RealConstantEntry* currentRealConstant;
-		//GpuProgramParameters::IntConstantEntry* currentIntConstant;
-
-        currentRealConstant = params->getPassIterationEntry();
-        if (currentRealConstant)
-        {
-            // need to find the uniform that matches the multi pass entry
-		    while (currentUniform != endUniform)
-		    {
-			    // get the index in the parameter real list
-
-			    if (currentUniform->isReal)
-			    {
-
-				    if (currentRealConstant == params->getNamedRealConstantEntry( currentUniform->mName ))
-				    {
-                        glUniform1fvARB( currentUniform->mLocation, 1, currentRealConstant->val );
-                        // there will only be one multipass entry
-                        return;
-                    }
-                }
-			    // get the next uniform
-			    ++currentUniform;
-            }
-        }
-
-    }
 } // namespace Ogre

@@ -53,8 +53,6 @@ namespace Ogre {
     class PointEmitterFactory;
     class LinearForceAffector;
     class LinearForceAffectorFactory;
-	class DirectionRandomiserAffectorFactory;
-	class DeflectorPlaneAffectorFactory;
 
 
 

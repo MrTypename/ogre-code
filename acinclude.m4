@@ -173,7 +173,7 @@ AC_DEFUN([OGRE_GET_CONFIG_TOOLKIT],
   dnl Do the extra checks per type here
   case $OGRE_CFGTK in 
     gtk)
-      PKG_CHECK_MODULES(CFGTK_DEPS, gtkmm-2.4 libglademm-2.4);;
+      PKG_CHECK_MODULES(CFGTK_DEPS, gtkmm-2.0 libglademm-2.0);;
   esac
 
   AC_SUBST(CFGTK_DEPS_CFLAGS)
@@ -205,7 +205,7 @@ AC_DEFUN([OGRE_GET_PLATFORM],
       PLATFORM_LIBS=$SDL_LIBS
       ;;
     gtk)
-      PKG_CHECK_MODULES(PLATFORM, gtkglextmm-1.0 libglademm-2.4);;
+      PKG_CHECK_MODULES(PLATFORM, gtkglextmm-1.0 libglademm-2.0);;
     GLX)
       AC_CHECK_HEADERS([X11/Intrinsic.h],, [AC_MSG_ERROR("libxt headers not found")])
       AC_CHECK_HEADERS([X11/Xaw/Command.h],, [AC_MSG_ERROR("libxaw headers not found")])
@@ -439,11 +439,11 @@ AC_DEFUN([OGRE_CHECK_CEGUI], [
                          Samples/Gui/src/Makefile])
         AC_SUBST(CEGUI_CFLAGS)
         AC_SUBST(CEGUI_LIBS)
-        AC_MSG_RESULT([CEGUI available, Gui and FacialAnimation samples will be built])
+        AC_MSG_RESULT([CEGUI available, Gui sample will be built])
     else
-        AC_MSG_RESULT([CEGUI not available, Gui and FacialAnimation samples will not be built])
+        AC_MSG_RESULT([CEGUI not available, Gui sample will not be built])
     fi
-    AM_CONDITIONAL([HAVE_CEGUI], [test x$build_cegui_sample = xtrue])
+    AM_CONDITIONAL([BUILD_CEGUI_SAMPLE], [test x$build_cegui_sample = xtrue])
 ])
 
 AC_DEFUN([OGRE_CHECK_DOUBLE],

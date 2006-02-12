@@ -44,7 +44,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 namespace Ogre
 {
     typedef std::vector<RenderSystem*> RenderSystemList;
-	
+
     /** The root class of the Ogre system.
         @remarks
             The Ogre::Root class represents a starting point for the client
@@ -99,29 +99,9 @@ namespace Ogre
         Profiler* mProfiler;
         HighLevelGpuProgramManager* mHighLevelGpuProgramManager;
 		ExternalTextureSourceManager* mExternalTextureSourceManager;
-        CompositorManager* mCompositorManager;      
         unsigned long mCurrentFrame;
-		Real mFrameSmoothingTime;
 
         std::vector<DynLib*> mPluginLibs;
-
-		typedef std::map<String, MovableObjectFactory*> MovableObjectFactoryMap;
-		MovableObjectFactoryMap mMovableObjectFactoryMap;
-		uint32 mNextMovableObjectTypeFlag;
-		// stock movable factories
-		MovableObjectFactory* mEntityFactory;
-		MovableObjectFactory* mLightFactory;
-		MovableObjectFactory* mBillboardSetFactory;
-		MovableObjectFactory* mManualObjectFactory;
-		MovableObjectFactory* mBillboardChainFactory;
-		MovableObjectFactory* mRibbonTrailFactory;
-
-		typedef std::map<String, RenderQueueInvocationSequence*> RenderQueueInvocationSequenceMap;
-		RenderQueueInvocationSequenceMap mRQSequenceMap;
-
-		/// Are we initialised yet?
-		bool mIsInitialised;
-
         /** Method reads a plugins configuration file and instantiates all
             plugins.
             @param
@@ -129,10 +109,6 @@ namespace Ogre
                 Defaults to "plugins.cfg".
         */
         void loadPlugins( const String& pluginsfile = "plugins.cfg" );
-		/** Initialise all loaded plugins - allows plugins to perform actions
-			once the renderer is initialised.
-		*/
-		void initialisePlugins();
 		/** Shuts down all loaded plugins - allows things to be tidied up whilst
 			all plugins are still loaded.
 		*/
@@ -245,14 +221,6 @@ namespace Ogre
         */
         RenderSystemList* getAvailableRenderers(void);
 
-        /** Retrieve a pointer to the render system by the given name
-            @param
-                name Name of the render system intend to retrieve.
-            @returns
-                A pointer to the render system, <b>NULL</b> if no found.
-        */
-        RenderSystem* getRenderSystemByName(const String& name);
-
         /** Sets the rendering subsystem to be used.
             @remarks
                 This method indicates to OGRE which rendering system is to be
@@ -292,9 +260,6 @@ namespace Ogre
                 requested, otherwise <b>NULL</b>.
         */
 	    RenderWindow* initialise(bool autoCreateWindow, const String& windowTitle = "OGRE Render Window");
-
-		/** Returns whether the system is initialised or not. */
-		bool isInitialised(void) const { return mIsInitialised; }
 
         /** Gets a reference to a SceneManager object.
             @remarks
@@ -639,7 +604,7 @@ namespace Ogre
         @remarks
             This is only intended for internal use.
         */
-        void _setCurrentSceneManager(SceneManager* sm);
+        void _setCurrentSceneManager(SceneManager* sm) { mCurrentSceneManager = sm; }
 
         /** Internal method used for updating all RenderTarget objects (windows, 
             renderable textures etc) which are set to auto-update.
@@ -651,34 +616,6 @@ namespace Ogre
             individual RenderTarget instances using their own update() method.
         */
         void _updateAllRenderTargets(void);
-
-		/** Create a new RenderQueueInvocationSequence, useful for linking to
-			Viewport instances to perform custom rendering.
-		@param name The name to give the new sequence
-		*/
-		RenderQueueInvocationSequence* createRenderQueueInvocationSequence(
-			const String& name);
-
-		/** Get a RenderQueueInvocationSequence. 
-		@param name The name to identify the sequence
-		*/
-		RenderQueueInvocationSequence* getRenderQueueInvocationSequence(
-			const String& name);
-
-		/** Destroy a RenderQueueInvocationSequence. 
-		@remarks
-			You must ensure that no Viewports are using this sequence.
-		@param name The name to identify the sequence
-		*/
-		void destroyRenderQueueInvocationSequence(
-			const String& name);
-
-		/** Destroy all RenderQueueInvocationSequences. 
-		@remarks
-			You must ensure that no Viewports are using custom sequences.
-		@param name The name to identify the sequence
-		*/
-		void destroyAllRenderQueueInvocationSequences(void);
 
         /** Override standard Singleton retrieval.
             @remarks
@@ -723,60 +660,6 @@ namespace Ogre
 		*/
 		void clearEventTimes(void);
 
-		/** Sets the period over which OGRE smooths out fluctuations in frame times.
-		@remarks
-			OGRE by default gives you the raw frame time, but can optionally
-			smooths it out over several frames, in order to reduce the 
-			noticeable effect of occasional hiccups in framerate.
-			These smoothed values are passed back as parameters to FrameListener
-			calls.
-		@par
-			This method allow you to tweak the smoothing period, and is expressed
-			in seconds. Setting it to 0 will result in completely unsmoothed
-			frame times (the default).
-		*/
-		void setFrameSmoothingPeriod(Real period) { mFrameSmoothingTime = period; }
-		/** Gets the period over which OGRE smooths out fluctuations in frame times. */
-		Real getFrameSmoothingPeriod(void) const { return mFrameSmoothingTime; }
-
-		/** Register a new MovableObjectFactory which will create new MovableObject
-			instances of a particular type, as identified by the getType() method.
-		@remarks
-			Plugin creators can create subclasses of MovableObjectFactory which 
-			construct custom subclasses of MovableObject for insertion in the 
-			scene. This is the primary way that plugins can make custom objects
-			available.
-		@param fact Pointer to the factory instance
-		@param overrideExisting Set this to true to override any existing 
-			factories which are registered for the same type. You should only
-			change this if you are very sure you know what you're doing. 
-		*/
-		void addMovableObjectFactory(MovableObjectFactory* fact, 
-			bool overrideExisting = false);
-		/** Removes a previously registered MovableObjectFactory.
-		@remarks
-			All instances of objects created by this factory will be destroyed
-			before removing the factory (by calling back the factories 
-			'destroyInstance' method). The plugin writer is responsible for actually
-			destroying the factory.
-		*/
-		void removeMovableObjectFactory(MovableObjectFactory* fact);
-		/// Checks whether a factory is registered for a given MovableObject type
-		bool hasMovableObjectFactory(const String& typeName) const;
-		/// Get a MovableObjectFactory for the given type
-		MovableObjectFactory* getMovableObjectFactory(const String& typeName);
-		/** Allocate the next MovableObject type flag.
-		@remarks
-			This is done automatically if MovableObjectFactory::requestTypeFlags
-			returns true; don't call this manually unless you're sure you need to.
-		*/
-		uint32 _allocateNextMovableObjectTypeFlag(void);
-
-		typedef ConstMapIterator<MovableObjectFactoryMap> MovableObjectFactoryIterator;
-		/** Return an iterator over all the MovableObjectFactory instances currently
-			registered.
-		*/
-		MovableObjectFactoryIterator getMovableObjectFactoryIterator(void) const;
     };
 } // Namespace Ogre
 #endif

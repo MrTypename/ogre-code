@@ -28,25 +28,26 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreMesh.h"
 #include "OgreException.h"
 #include "OgreMeshManager.h"
-#include "OgreMaterialManager.h"
-#include "OgreStringConverter.h"
 
 namespace Ogre {
     //-----------------------------------------------------------------------
     SubMesh::SubMesh()
-        : useSharedVertices(true)
-        , operationType(RenderOperation::OT_TRIANGLE_LIST)
-        , vertexData(0)
-        , mMatInitialised(false)
-        , mBoneAssignmentsOutOfDate(false)
-		, mVertexAnimationType(VAT_NONE)
     {
+		useSharedVertices = true;
+		vertexData = NULL;
 		indexData = new IndexData();
+        mMatInitialised = false;
+        mBoneAssignmentsOutOfDate = false;
+        operationType = RenderOperation::OT_TRIANGLE_LIST;
+
     }
     //-----------------------------------------------------------------------
     SubMesh::~SubMesh()
     {
-        delete vertexData;
+        if (vertexData)
+        {
+            delete vertexData;
+        }
 		delete indexData;
 
 		removeLodLevels();
@@ -70,9 +71,9 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void SubMesh::_getRenderOperation(RenderOperation& ro, ushort lodIndex)
+    void SubMesh::_getRenderOperation(RenderOperation& ro, ushort lodIndex) 
     {
-
+        
 		// SubMeshes always use indexes
         ro.useIndexes = true;
 		if (lodIndex > 0 && static_cast< size_t >( lodIndex - 1 ) < mLodFaceList.size())
@@ -110,7 +111,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void SubMesh::_compileBoneAssignments(void)
     {
-        unsigned short maxBones =
+        unsigned short maxBones = 
             parent->_rationaliseBoneAssignments(vertexData->vertexCount, mBoneAssignments);
 
         if (maxBones == 0)
@@ -119,8 +120,19 @@ namespace Ogre {
             return;
         }
 
-        parent->compileBoneAssignments(mBoneAssignments, maxBones,
-            blendIndexToBoneIndexMap, vertexData);
+        parent->compileBoneAssignments(mBoneAssignments, maxBones, 
+            vertexData);
+
+        /*
+        if (parent->mUseSoftwareBlending)
+        {
+            parent->compileBoneAssignmentsSoftware(mBoneAssignments, maxBones, vertexData);
+        }
+        else
+        {
+            parent->compileBoneAssignmentsHardware(mBoneAssignments, maxBones, vertexData);
+        }
+        */
 
         mBoneAssignmentsOutOfDate = false;
     }
@@ -129,65 +141,6 @@ namespace Ogre {
     {
         return BoneAssignmentIterator(mBoneAssignments.begin(),
             mBoneAssignments.end());
-    }
-    //---------------------------------------------------------------------
-    SubMesh::AliasTextureIterator SubMesh::getAliasTextureIterator(void) const
-    {
-        return AliasTextureIterator(mTextureAliases.begin(),
-            mTextureAliases.end());
-    }
-    //---------------------------------------------------------------------
-    void SubMesh::addTextureAlias(const String& aliasName, const String& textureName)
-    {
-        mTextureAliases[aliasName] = textureName;
-    }
-    //---------------------------------------------------------------------
-    void SubMesh::removeTextureAlias(const String& aliasName)
-    {
-        mTextureAliases.erase(aliasName);
-    }
-    //---------------------------------------------------------------------
-    void SubMesh::removeAllTextureAliases(void)
-    {
-        mTextureAliases.clear();
-    }
-    //---------------------------------------------------------------------
-    bool SubMesh::updateMaterialUsingTextureAliases(void)
-    {
-        bool newMaterialCreated = false;
-        // if submesh has texture aliases
-        // ask the material manager if the current summesh material exists
-        if (hasTextureAliases() && MaterialManager::getSingleton().resourceExists(mMaterialName))
-        {
-            // get the current submesh material
-            MaterialPtr material = MaterialManager::getSingleton().getByName( mMaterialName );
-            // get test result for if change will occur when the texture aliases are applied
-            if (material->applyTextureAliases(mTextureAliases, false))
-            {
-                // material textures will be changed so copy material,
-                // new material name is old material name + index
-                // check with material manager and find a unique name
-                size_t index = 0;
-                String newMaterialName = mMaterialName + "_" + StringConverter::toString(index);
-                while (MaterialManager::getSingleton().resourceExists(newMaterialName))
-                {
-                    // increment index for next name
-                    newMaterialName = mMaterialName + "_" + StringConverter::toString(++index);
-                }
-
-                Ogre::MaterialPtr newMaterial = Ogre::MaterialManager::getSingleton().create(
-                    newMaterialName, material->getGroup());
-                // copy parent material details to new material
-                material->copyDetailsTo(newMaterial);
-                // apply texture aliases to new material
-                newMaterial->applyTextureAliases(mTextureAliases);
-                // place new material name in submesh
-                setMaterialName(newMaterialName);
-                newMaterialCreated = true;
-            }
-        }
-
-        return newMaterialCreated;
     }
     //---------------------------------------------------------------------
     void SubMesh::removeLodLevels(void)
@@ -202,15 +155,7 @@ namespace Ogre {
         mLodFaceList.clear();
 
     }
-	//---------------------------------------------------------------------
-	VertexAnimationType SubMesh::getVertexAnimationType(void) const
-	{
-		if(parent->_getAnimationTypesDirty())
-		{
-			parent->_determineAnimationTypes();
-		}
-		return mVertexAnimationType;
-	}
+
 
 
 }
