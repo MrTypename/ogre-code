@@ -1,0 +1,13 @@
+void morningskybox_fp (
+	float2 uv : TEXCOORD0,
+	out float4 colour : COLOR,
+
+	uniform sampler2D tex : register(s0) )
+{
+	colour = tex2D(tex, uv);
+
+	// blow out the light a bit
+	colour *= 1.7;
+}
+
+
