@@ -65,9 +65,13 @@ namespace Ogre {
 		// Pass
 		"<Pass> ::= 'pass' <PassTypes> '{' {<PassOptions>} '}' \n"
 		"<PassTypes> ::= 'render_quad' | 'clear' | 'stencil' | 'render_scene' \n"
-		"<PassOptions> ::= <PassMaterial> | <PassInput> | <ClearSection> | <StencilSection> \n"
+		"<PassOptions> ::= <PassFirstRenderQueue> | <PassLastRenderQueue> | \n"
+		"    <PassIdentifier> | <PassMaterial> | <PassInput> | <ClearSection> | <StencilSection> \n"
 		"<PassMaterial> ::= 'material' <Label> \n"
 		"<PassInput> ::= 'input' <#id> <Label> \n"
+		"<PassFirstRenderQueue> ::= 'first_render_queue' <#queue> \n"
+		"<PassLastRenderQueue> ::= 'last_render_queue' <#queue> \n"
+		"<PassIdentifier> ::= 'identifier' <#id> \n"
 		// clear
 		"<ClearSection> ::= -'clear' -'{' {<ClearOptions>} -'}' \n"
 		"<ClearOptions> ::= <Buffers> | <ColourValue> | <DepthValue> | <StencilValue> \n"
@@ -112,6 +116,8 @@ namespace Ogre {
 	//-----------------------------------------------------------------------
 	CompositorScriptCompiler::CompositorScriptCompiler(void)
 	{
+        // set default group resource name
+        mScriptContext.groupName = ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME;
 	}
 	//-----------------------------------------------------------------------
 	CompositorScriptCompiler::~CompositorScriptCompiler(void)
@@ -162,6 +168,7 @@ namespace Ogre {
 		addLexemeTokenAction("material", ID_MATERIAL, &CompositorScriptCompiler::parseMaterial);
 		addLexemeTokenAction("first_render_queue", ID_FIRST_RQ, &CompositorScriptCompiler::parseFirstRenderQueue);
 		addLexemeTokenAction("last_render_queue", ID_LAST_RQ, &CompositorScriptCompiler::parseLastRenderQueue);
+		addLexemeTokenAction("identifier", ID_IDENTIFIER, &CompositorScriptCompiler::parseIdentifier);
 		// clear
 		addLexemeTokenAction("buffers", ID_CLR_BUFF, &CompositorScriptCompiler::parseClearBuffers);
 		addLexemeTokenAction("colour", ID_CLR_COLOUR);
@@ -345,7 +352,7 @@ namespace Ogre {
             textureDef->height = static_cast<size_t>(getNextTokenValue());
         }
         // get pixel factor
-        switch (getNextToken().tokenID)
+        switch (getNextTokenID())
         {
         case ID_PF_A8R8G8B8:
             textureDef->format = PF_A8R8G8B8;
@@ -452,7 +459,7 @@ namespace Ogre {
 		assert(mScriptContext.target);
         mScriptContext.pass = mScriptContext.target->createPass();
         CompositionPass::PassType passType = CompositionPass::PT_RENDERQUAD;
-        switch (getNextToken().tokenID)
+        switch (getNextTokenID())
         {
         case ID_RENDER_QUAD:
             passType = CompositionPass::PT_RENDERQUAD;
@@ -498,6 +505,12 @@ namespace Ogre {
 		mScriptContext.pass->setLastRenderQueue(static_cast<uint8>(getNextTokenValue()));
 	}
 	//-----------------------------------------------------------------------
+	void CompositorScriptCompiler::parseIdentifier(void)
+	{
+		assert(mScriptContext.pass);
+		mScriptContext.pass->setIdentifier(static_cast<uint32>(getNextTokenValue()));
+	}
+	//-----------------------------------------------------------------------
     void CompositorScriptCompiler::parseClearBuffers(void)
     {
 		assert(mScriptContext.pass);
@@ -506,7 +519,7 @@ namespace Ogre {
 
 		while (getRemainingTokensForAction() > 0)
 		{
-		    switch (getNextToken().tokenID)
+		    switch (getNextTokenID())
 		    {
             case ID_CLR_COLOUR:
                 bufferFlags |= FBT_COLOUR;
@@ -601,7 +614,7 @@ namespace Ogre {
 	{
 	    StencilOperation sop = SOP_KEEP;
 
-        switch (getNextToken().tokenID)
+        switch (getNextTokenID())
         {
         case ID_ST_KEEP:
             sop = SOP_KEEP;
@@ -645,7 +658,7 @@ namespace Ogre {
 	{
 	    CompareFunction compFunc = CMPF_ALWAYS_PASS;
 
-        switch (getNextToken().tokenID)
+        switch (getNextTokenID())
         {
         case ID_ST_ALWAYS_FAIL:
             compFunc = CMPF_ALWAYS_FAIL;

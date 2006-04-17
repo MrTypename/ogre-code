@@ -140,7 +140,8 @@ namespace Ogre {
             _no_token_ = SystemTokenBase,
             _character_,
             _value_,
-            _no_space_skip_
+            _no_space_skip_,
+            _insert_token_
         };
 
 	    enum BNF_ID {BNF_UNKOWN = 0,
@@ -217,7 +218,7 @@ namespace Ogre {
 	    /// Active token que, definitions, rules currntly being used by parser
         TokenState* mActiveTokenState;
         /// the location within the token instruction container where pass 2 is
-        size_t mPass2TokenQuePosition;
+        mutable size_t mPass2TokenQuePosition;
         /** the que position of the previous token that had an action.
             A token's action is fired on the next token having an action.
         */
@@ -231,6 +232,7 @@ namespace Ogre {
 
 	    size_t mCurrentLine; /// current line number in source being tokenized
         size_t mCharPos;     /// position in current line in source being tokenized
+        size_t mErrorCharPos; /// character position in source where last error occured
 
 	    /// storage container for constants defined in source
         /// container uses Token index as a key associated with a float constant
@@ -288,19 +290,38 @@ namespace Ogre {
             the instruction pointer is still moved passed the unknown token.  The subclass should catch the exception,
             provide an error message, and attempt recovery.
 
-        @param expectedTokenID if set then if tokenID does not match then an exception is raised
+        @param expectedTokenID if greater than 0 then an exception is raised if tokenID does not match.
         */
-        const TokenInst& getNextToken(const size_t expectedTokenID = 0);
-        /** Gets the current token from the instruction que.
+        const TokenInst& getNextToken(const size_t expectedTokenID = 0) const
+        {
+            skipToken();
+            return getCurrentToken(expectedTokenID);
+        }
+        /** Gets the current token from the instruction que.  If an unkown token is found then an exception is raised.
+            The subclass should catch the exception, provide an error message, and attempt recovery.
+
+        @param expectedTokenID if greater than 0 then an exception is raised if tokenID does not match.
+
         */
-        const TokenInst& getCurrentToken(void);
+        const TokenInst& getCurrentToken(const size_t expectedTokenID = 0) const;
         /** If a next token instruction exist then test if its token ID matches.
             This method is usefull for peeking ahead during pass 2 to see if a certain
             token exists.
         @param expectedTokenID is the ID of the token to match.
         */
-        bool testNextTokenID(const size_t expectedTokenID);
-        /**
+        bool testNextTokenID(const size_t expectedTokenID) const;
+
+        /** If a current token instruction exist then test if its token ID matches.
+        @param expectedTokenID is the ID of the token to match.
+        */
+        bool testCurrentTokenID(const size_t expectedTokenID) const
+        {
+            return mActiveTokenState->tokenQue[mPass2TokenQuePosition].tokenID == expectedTokenID;
+        }
+        /** skip to the next token in the pass2 queue.
+        */
+        void skipToken(void) const;
+        /** go back to the previous token in the pass2 queue.
         */
         void replaceToken(void);
         /** Gets the next token's associated floating point value in the instruction que that was parsed from the
@@ -308,13 +329,49 @@ namespace Ogre {
             the instruction pointer is still moved passed the unknown token.  The subclass should catch the exception,
             provide an error message, and attempt recovery.
         */
-        float getNextTokenValue(void);
+        float getNextTokenValue(void) const
+        {
+            skipToken();
+            return getCurrentTokenValue();
+        }
+        /** Gets the current token's associated floating point value in the instruction que that was parsed from the
+            text source.  If an unkown token is found or no associated value was found then an exception is raised.
+            The subclass should catch the exception, provide an error message, and attempt recovery.
+        */
+        float getCurrentTokenValue(void) const;
         /** Gets the next token's associated text label in the instruction que that was parsed from the
             text source.  If an unkown token is found or no associated label was found then an exception is raised but
             the instruction pointer is still moved passed the unknown token.  The subclass should catch the exception,
             provide an error message, and attempt recovery.
         */
-        const String& getNextTokenLabel(void);
+        const String& getNextTokenLabel(void) const
+        {
+            skipToken();
+            return getCurrentTokenLabel();
+        }
+        /** Gets the next token's associated text label in the instruction que that was parsed from the
+            text source.  If an unkown token is found or no associated label was found then an exception is raised.
+            The subclass should catch the exception, provide an error message, and attempt recovery.
+        */
+        const String& getCurrentTokenLabel(void) const;
+        /** Get the next token's ID value.
+        */
+        size_t getNextTokenID(void) const { return getNextToken().tokenID; }
+        /** Get the current token's ID value.
+        */
+        size_t getCurrentTokenID(void) const { return getCurrentToken().tokenID; }
+        /** Get the next token's lexeme string.  Handy when you don't want the ID but want the string
+            representation.
+        */
+        const String& getNextTokenLexeme(void) const
+        {
+            skipToken();
+            return getCurrentTokenLexeme();
+        }
+        /** Get the current token's lexeme string.  Handy when you don't want the ID but want the string
+            representation.
+        */
+        const String& getCurrentTokenLexeme(void) const;
         /** Gets the number of tokens waiting in the instruction que that need to be processed by an token action in pass 2.
         */
         size_t getPass2TokenQueCount(void) const;
@@ -436,8 +493,10 @@ namespace Ogre {
 	    /** Get the text representation of the rule path.  This is a good way to way to visually verify
 	    that the BNF grammer did compile correctly.
 	    @param ruleID is the index into the rule path.
+	    @param level is the number of levels a non-terminal will expand to. Defaults to 0 if not set which
+            will cause non-terminals to not expand.
 	    */
-	    String getBNFGrammerTextFromRulePath(size_t ruleID);
+	    String getBNFGrammerTextFromRulePath(size_t ruleID, const size_t level = 0);
 
 
     private:
@@ -469,7 +528,8 @@ namespace Ogre {
         void extractSet(const OperationType pendingRuleOp);
         /// Extract a numeric constant from the token que and add it to the current rule expression
         void extractNumericConstant(const OperationType pendingRuleOp);
-        String getLexemeText(size_t& ruleID);
+        /// get the lexem text of a rule.
+        String getLexemeText(size_t& ruleID, const size_t level = 0);
 
     public:
 
@@ -495,7 +555,7 @@ namespace Ogre {
 
         /** get the name of the BNF grammer.
         */
-        virtual const String& getClientGrammerName(void) = 0;
+        virtual const String& getClientGrammerName(void) const = 0;
 
     };
 
