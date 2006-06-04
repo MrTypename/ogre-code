@@ -617,37 +617,32 @@ public:
     }
     virtual bool frameStarted(const FrameEvent& evt)
     {
-		// Call default
-		if( ExampleFrameListener::frameStarted(evt) == false )
-			return false;
-
 		tm += evt.timeSinceLastFrame / timeDensity ;
 
 		if (noiseOn)
 			updateNoise();
 
-		return true;
+        // Call default
+        return ExampleFrameListener::frameStarted(evt);
     }
 	virtual bool processUnbufferedKeyInput(const FrameEvent& evt)
     {
-		using namespace OIS;
-
 		bool retval = ExampleFrameListener::processUnbufferedKeyInput(evt);
 
 		Real changeSpeed = evt.timeSinceLastFrame ;
 		
 		// adjust keyboard speed with SHIFT (increase) and CONTROL (decrease)
-		if (mKeyboard->isKeyDown(KC_LSHIFT) || mKeyboard->isKeyDown(KC_RSHIFT)) {
+		if (mInputDevice->isKeyDown(KC_LSHIFT) || mInputDevice->isKeyDown(KC_RSHIFT)) {
 			changeSpeed *= 10.0f ;
 		}
-		if (mKeyboard->isKeyDown(KC_LCONTROL)) { 
+		if (mInputDevice->isKeyDown(KC_LCONTROL)) { 
 			changeSpeed /= 10.0f ;
 		}
 		
 #define ADJUST_RANGE(_value,_keyPlus,_keyMinus,_minVal,_maxVal,_change,_macro) {\
-	if (mKeyboard->isKeyDown(_keyPlus)) \
+	if (mInputDevice->isKeyDown(_keyPlus)) \
 		{ _value+=_change ; if (_value>=_maxVal) _value = _maxVal ; _macro ; } ; \
-	if (mKeyboard->isKeyDown(_keyMinus)) \
+	if (mInputDevice->isKeyDown(_keyMinus)) \
 		{ _value-=_change; if (_value<=_minVal) _value = _minVal ; _macro ; } ; \
 }
 		
@@ -658,7 +653,7 @@ public:
 		ADJUST_RANGE(timeDensity, KC_6, KC_5, 1, 10, 1.0f*changeSpeed, updateInfoTimeDensity()) ;
 
 #define SWITCH_VALUE(_key,_timeDelay, _macro) { \
-		if (mKeyboard->isKeyDown(_key) && timeoutDelay==0) { \
+		if (mInputDevice->isKeyDown(_key) && timeoutDelay==0) { \
 			timeoutDelay = _timeDelay ; _macro ;} }
 	
 		timeoutDelay-=evt.timeSinceLastFrame ;

@@ -49,7 +49,6 @@ namespace OgreMayaExporter
 /***** load data *****/
 	MStatus Submesh::loadMaterial(MObject& shader,MStringArray& uvsets,ParamList& params)
 	{
-		int i;
 		MPlug plug;
 		MPlugArray srcplugarray;
 		bool foundShader = false;
@@ -59,7 +58,7 @@ namespace OgreMayaExporter
 		MFnDependencyNode shadingGroup(shader);
 		plug = shadingGroup.findPlug("surfaceShader");
 		plug.connectedTo(srcplugarray,true,false,&stat);
-		for (i=0; i<srcplugarray.length() && !foundShader; i++)
+		for (int i=0; i<srcplugarray.length() && !foundShader; i++)
 		{
 			if (srcplugarray[i].node().hasFn(MFn::kLambert))
 			{
@@ -67,71 +66,31 @@ namespace OgreMayaExporter
 				foundShader = true;
 			}
 		}
-		if (foundShader)
-		{
-			std::cout << "Found material: " << pShader->name().asChar() << "\n";
-			std::cout.flush();
-			//check if this material has already been created
-			//fix material name, adding the requested prefix
-			MString tmpStr = params.matPrefix;
-			if (tmpStr != "")
-				tmpStr += "/";
-			tmpStr += pShader->name();
-			MStringArray tmpStrArray;
-			tmpStr.split(':',tmpStrArray);
-			MString name = "";
-			for (i=0; i<tmpStrArray.length(); i++)
-			{
-				name += tmpStrArray[i];
-				if (i < tmpStrArray.length()-1)
-					name += "_";
-			}
-			Material* pMaterial = MaterialSet::getSingleton().getMaterial(name);
-			//if the material has already been created, update the pointer
-			if (pMaterial)
-				m_pMaterial = pMaterial;
-			//else create it and add it to the material set
-			else
-			{
-				pMaterial = new Material();
-				pMaterial->load(pShader,uvsets,params);
-				m_pMaterial = pMaterial;
-				MaterialSet::getSingleton().addMaterial(pMaterial);
-			}
-			//delete temporary shader
-			delete pShader;
-		}
+		std::cout << "Found material: " << pShader->name().asChar() << "\n";
+		//check if this material has already been created
+		Material* pMaterial = MaterialSet::getSingleton().getMaterial(pShader->name());
+		//if the material has already been created, update the pointer
+		if (pMaterial)
+			m_pMaterial = pMaterial;
+		//else create it and add it to the material set
 		else
 		{
-			std::cout << "Unsupported material, replacing with default lambert\n";
-			std::cout.flush();
-			m_pMaterial = MaterialSet::getSingleton().getDefaultMaterial();
+			pMaterial = new Material();
+			pMaterial->load(pShader,uvsets,params);
+			m_pMaterial = pMaterial;
+			MaterialSet::getSingleton().addMaterial(pMaterial);
 		}
-		
+		//delete temporary shader
+		delete pShader;
 		//loading complete
 		return MS::kSuccess;
 	}
 
-<<<<<<< submesh.cpp
-	MStatus Submesh::load(const MDagPath& dag,std::vector<face>& faces, std::vector<vertexInfo>& vertInfo, MPointArray& points, 
-=======
-	MStatus Submesh::load(std::vector<face>& faces, std::vector<vertexInfo>& vertInfo, MPointArray& points, 
->>>>>>> 1.5
+	MStatus Submesh::load(std::vector<face>& faces, std::vector<vertexInfo>& vertInfo, MFloatPointArray& points, 
 		MFloatVectorArray& normals, MStringArray& texcoordsets,ParamList& params,bool opposite)
 	{
-<<<<<<< submesh.cpp
-		//save the dag path of the maya node from which this submesh will be created
-		m_dagPath = dag;
-		int i,j,k;
-		std::cout << "Loading submesh associated to material: " << m_pMaterial->name().asChar() << "...";
-		std::cout.flush();
-=======
-		int i,j,k;
-		std::cout << "Loading submesh associated to material: " << m_pMaterial->name().asChar() << "...";
-		std::cout.flush();
->>>>>>> 1.5
 		//save uvsets info
-		for (i=m_uvsets.size(); i<texcoordsets.length(); i++)
+		for (int i=m_uvsets.size(); i<texcoordsets.length(); i++)
 		{
 			uvset uv;
 			uv.size = 2;
@@ -160,54 +119,26 @@ namespace OgreMayaExporter
 			// otherwise we create a vertex buffer for this submesh
 			else
 			{	// faces are triangles, so retrieve index of the three vertices
-				for (j=0; j<3; j++)
+				for (int j=0; j<3; j++)
 				{
 					vertex v;
 					vertexInfo vInfo = vertInfo[faces[i].v[j]];
-<<<<<<< submesh.cpp
-					// save vertex coordinates (rescale to desired length unit)
-					MPoint point = points[vInfo.pointIdx] * params.lum;
-					if (fabs(point.x) < PRECISION)
-						point.x = 0;
-					if (fabs(point.y) < PRECISION)
-						point.y = 0;
-					if (fabs(point.z) < PRECISION)
-						point.z = 0;
-					v.x = point.x;
-					v.y = point.y;
-					v.z = point.z;
-=======
-					// save vertex coordinates (rescale to desired length unit)
-					MPoint point = points[vInfo.pointIdx];
-					if (fabs(point.x) < PRECISION)
-						point.x = 0;
-					if (fabs(point.y) < PRECISION)
-						point.y = 0;
-					if (fabs(point.z) < PRECISION)
-						point.z = 0;
-					v.x = point.x * params.lum;
-					v.y = point.y * params.lum;
-					v.z = point.z * params.lum;
->>>>>>> 1.5
+					// save vertex coordinates
+					v.x = points[vInfo.pointIdx].x;
+					v.y = points[vInfo.pointIdx].y;
+					v.z = points[vInfo.pointIdx].z;
 					// save vertex normal
-					MFloatVector normal = normals[vInfo.normalIdx];
-					if (fabs(normal.x) < PRECISION)
-						normal.x = 0;
-					if (fabs(normal.y) < PRECISION)
-						normal.y = 0;
-					if (fabs(normal.z) < PRECISION)
-						normal.z = 0;
 					if (opposite)
 					{
-						v.n.x = -normal.x;
-						v.n.y = -normal.y;
-						v.n.z = -normal.z;
+						v.n.x = -normals[vInfo.normalIdx].x;
+						v.n.y = -normals[vInfo.normalIdx].y;
+						v.n.z = -normals[vInfo.normalIdx].z;
 					}
 					else
 					{
-						v.n.x = normal.x;
-						v.n.y = normal.y;
-						v.n.z = normal.z;
+						v.n.x = normals[vInfo.normalIdx].x;
+						v.n.y = normals[vInfo.normalIdx].y;
+						v.n.z = normals[vInfo.normalIdx].z;
 					}
 					v.n.normalize();
 					// save vertex color
@@ -216,7 +147,7 @@ namespace OgreMayaExporter
 					v.b = vInfo.b;
 					v.a = vInfo.a;
 					// save vertex bone assignements
-					for (k=0; k<vInfo.vba.size(); k++)
+					for (int k=0; k<vInfo.vba.size(); k++)
 					{
 						vba newVba;
 						newVba.jointIdx = vInfo.jointIds[k];
@@ -232,8 +163,6 @@ namespace OgreMayaExporter
 						newTexCoords.w = 0;
 						v.texcoords.push_back(newTexCoords);
 					}
-					// save vertex index in maya mesh, to retrieve future positions of the same vertex
-					v.index = vInfo.pointIdx;
 					// add newly created vertex to vertex list
 					m_vertices.push_back(v);
 					if (opposite)	// reverse order of face vertices to get correct culling
@@ -249,61 +178,12 @@ namespace OgreMayaExporter
 			m_use32bitIndexes = true;
 		else
 			m_use32bitIndexes = false;
-<<<<<<< submesh.cpp
-		std::cout << "DONE\n";
-		std::cout.flush();
 		return MS::kSuccess;
 	}
-
-
-	// Load a keyframe for this submesh
-	MStatus Submesh::loadKeyframe(Track& t,float time,ParamList& params)
-	{
-		int i;
-		// create a new keyframe
-		vertexKeyframe k;
-		// set keyframe time
-		k.time = time;
-		// get the mesh Fn
-		MFnMesh mesh(m_dagPath);
-		// get vertex positions
-		MFloatPointArray points;
-		if (params.exportWorldCoords)
-			mesh.getPoints(points,MSpace::kWorld);
-		else
-			mesh.getPoints(points,MSpace::kObject);
-		// calculate vertex offsets
-		for (i=0; i<m_vertices.size(); i++)
-		{
-			vertexPosition pos;
-			vertex v = m_vertices[i];
-			pos.x = points[v.index].x;
-			pos.y = points[v.index].y;
-			pos.z = points[v.index].z;
-			if (fabs(pos.x) < PRECISION)
-					pos.x = 0;
-			if (fabs(pos.y) < PRECISION)
-				pos.y = 0;
-			if (fabs(pos.z) < PRECISION)
-				pos.z = 0;
-			k.positions.push_back(pos);
-		}
-		// add keyframe to given track
-		t.addVertexKeyframe(k);
-		// keyframe successfully loaded
-=======
-		std::cout << "DONE\n";
-		std::cout.flush();
->>>>>>> 1.5
-		return MS::kSuccess;
-	}
-
-
 
 /***** write data *****/
 	MStatus Submesh::writeXML(ParamList &params)
 	{
-		int i;
 		// Start submesh description
 		params.outMesh << "\t\t<submesh ";
 		// Write material name
@@ -327,7 +207,7 @@ namespace OgreMayaExporter
 
 		// Write submesh polygons
 		params.outMesh << "\t\t\t<faces count=\"" << m_faces.size() << "\">\n";
-		for (i=0; i<m_faces.size(); i++)
+		for (int i=0; i<m_faces.size(); i++)
 		{
 			params.outMesh << "\t\t\t\t<face v1=\"" << m_faces[i].v[0] << "\" v2=\"" << m_faces[i].v[1] << "\" "
 				<< "v3=\"" << m_faces[i].v[2] << "\"/>\n";

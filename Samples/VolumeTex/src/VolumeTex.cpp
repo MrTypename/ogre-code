@@ -123,30 +123,28 @@ public:
 
     bool frameStarted( const FrameEvent& evt )
     {
-	using namespace OIS;
-	static float mTimeUntilNextToggle = 0.0f;
-        if( ExampleFrameListener::frameStarted( evt ) == false )
-		return false;
+		static float mTimeUntilNextToggle = 0.0f;
+        bool bOK = ExampleFrameListener::frameStarted( evt );
 		
 		mTimeUntilNextToggle -= evt.timeSinceLastFrame;
 		
-        if( (mKeyboard->isKeyDown( KC_1 ) || mKeyboard->isKeyDown( KC_2 )) 
+        if( (mInputDevice->isKeyDown( KC_1 ) || mInputDevice->isKeyDown( KC_2 )) 
 				&& mTimeUntilNextToggle <= 0) {
-        	global_real += mKeyboard->isKeyDown( KC_1 )? -0.1f : 0.1f;
+        	global_real += mInputDevice->isKeyDown( KC_1 )? -0.1f : 0.1f;
 			generate();
 			mTimeUntilNextToggle = 0.5;
 			updateInfoParamReal();
 		}
-		 if( (mKeyboard->isKeyDown( KC_3 ) || mKeyboard->isKeyDown( KC_4 )) 
+		 if( (mInputDevice->isKeyDown( KC_3 ) || mInputDevice->isKeyDown( KC_4 )) 
 				&& mTimeUntilNextToggle <= 0) {
-        	global_imag += mKeyboard->isKeyDown( KC_3 )? -0.1f : 0.1f;
+        	global_imag += mInputDevice->isKeyDown( KC_3 )? -0.1f : 0.1f;
 			generate();
 			mTimeUntilNextToggle = 0.5;
 			updateInfoParamImag();
 		}
-		if( (mKeyboard->isKeyDown( KC_5 ) || mKeyboard->isKeyDown( KC_6 )) 
+		if( (mInputDevice->isKeyDown( KC_5 ) || mInputDevice->isKeyDown( KC_6 )) 
 				&& mTimeUntilNextToggle <= 0) {
-        	global_theta += mKeyboard->isKeyDown( KC_5 )? -0.1f : 0.1f;
+        	global_theta += mInputDevice->isKeyDown( KC_5 )? -0.1f : 0.1f;
 			generate();
 			mTimeUntilNextToggle = 0.5;
 			updateInfoParamTheta();
@@ -158,7 +156,7 @@ public:
 		//fnode->roll(Degree(evt.timeSinceLastFrame * 20.0f));
 		static_cast<ThingRenderable*>(trend)->addTime(evt.timeSinceLastFrame * 0.05f);
 		mOgreAnimState->addTime(evt.timeSinceLastFrame);
-        return true;
+        return bOK;
     }
 	~VolumeTexFrameListener()
 	{

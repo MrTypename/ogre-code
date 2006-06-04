@@ -31,7 +31,7 @@ LGPL like the rest of the engine.
 
 #define KEY_PRESSED(_key,_timeDelay, _macro) \
 { \
-    if (mKeyboard->isKeyDown(_key) && timeDelay <= 0) \
+    if (mInputDevice->isKeyDown(_key) && timeDelay <= 0) \
     { \
 		timeDelay = _timeDelay; \
         _macro ; \
@@ -166,8 +166,7 @@ public:
 
 	bool frameStarted(const FrameEvent& evt)
 	{
-		if( ExampleFrameListener::frameStarted(evt) == false )
-			return false;
+		bool ok = ExampleFrameListener::frameStarted(evt);        
 
 		static Real timeDelay = 0;
 		timeDelay -= evt.timeSinceLastFrame;
@@ -175,15 +174,19 @@ public:
 		if (mAnimState)
 			mAnimState->addTime(evt.timeSinceLastFrame);
 
-		KEY_PRESSED(OIS::KC_B, 1, 
+		KEY_PRESSED(KC_B, 1, 
 			mShowBBs = !mShowBBs;
 			mSceneManager->showBoundingBoxes(mShowBBs);
 			)
 
 		waveGrass(evt.timeSinceLastFrame);
 
-		return true;
+		return ok;
 	}
+
+
+
+
 };
 
 
