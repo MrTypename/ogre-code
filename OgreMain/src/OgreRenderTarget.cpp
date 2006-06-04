@@ -30,6 +30,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreException.h"
 #include "OgreLogManager.h"
 #include "OgreRenderTargetListener.h"
+#include "OgrePlatformManager.h"
 #include "OgreRoot.h"
 
 namespace Ogre {

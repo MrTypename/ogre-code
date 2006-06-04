@@ -232,44 +232,42 @@ public:
 
     bool frameStarted( const FrameEvent& evt )
     {
-	using namespace OIS;
-        if( ExampleFrameListener::frameStarted( evt ) == false )
-		return false;
+        bool bOK = ExampleFrameListener::frameStarted( evt );
 		
-        if( mKeyboard->isKeyDown( KC_1 ) ) {
+        if( mInputDevice->isKeyDown( KC_1 ) ) {
         	k -= FROMFLOAT(0.005f*evt.timeSinceLastFrame);
 			updateInfoParamK();
 		}
-        if( mKeyboard->isKeyDown( KC_2 ) ) {
+        if( mInputDevice->isKeyDown( KC_2 ) ) {
         	k += FROMFLOAT(0.005f*evt.timeSinceLastFrame);
 			updateInfoParamK();
 		}
-        if( mKeyboard->isKeyDown( KC_3 ) ) {
+        if( mInputDevice->isKeyDown( KC_3 ) ) {
         	F -= FROMFLOAT(0.005f*evt.timeSinceLastFrame);
 			updateInfoParamF();
 		}
-        if( mKeyboard->isKeyDown( KC_4 ) ) {
+        if( mInputDevice->isKeyDown( KC_4 ) ) {
         	F += FROMFLOAT(0.005f*evt.timeSinceLastFrame);
 			updateInfoParamF();
 		}
-        if( mKeyboard->isKeyDown( KC_5 ) ) {
+        if( mInputDevice->isKeyDown( KC_5 ) ) {
         	hdiv0 -= FROMFLOAT(0.005f*evt.timeSinceLastFrame);
 			updateInfoParamA0();
 		}
-        if( mKeyboard->isKeyDown( KC_6 ) ) {
+        if( mInputDevice->isKeyDown( KC_6 ) ) {
         	hdiv0 += FROMFLOAT(0.005f*evt.timeSinceLastFrame);
 			updateInfoParamA0();
 		}
-        if( mKeyboard->isKeyDown( KC_7 ) ) {
+        if( mInputDevice->isKeyDown( KC_7 ) ) {
         	hdiv1 -= FROMFLOAT(0.005f*evt.timeSinceLastFrame);
 			updateInfoParamA1();
 		}
-        if( mKeyboard->isKeyDown( KC_8 ) ) {
+        if( mInputDevice->isKeyDown( KC_8 ) ) {
         	hdiv1 += FROMFLOAT(0.005f*evt.timeSinceLastFrame);
 			updateInfoParamA1();
 		}
 
-		if( mKeyboard->isKeyDown( KC_0 ) && !rpressed ) {
+		if( mInputDevice->isKeyDown( KC_0 ) && !rpressed ) {
 			// Reset 0
 			resetReactor();
 			fireUpReactor();
@@ -282,7 +280,7 @@ public:
 		buildTexture();
 		swim->addTime(evt.timeSinceLastFrame);
 
-        return true;
+        return bOK;
     }
 
 	virtual ~DynTexFrameListener(void)

@@ -4,7 +4,6 @@
 #include "mayaExportLayer.h"
 #include "paramList.h"
 #include "materialSet.h"
-#include "animation.h"
 
 namespace OgreMayaExporter
 {
@@ -16,13 +15,13 @@ namespace OgreMayaExporter
 	/***** structure for texture coordinates *****/
 	typedef struct texcoordstag
 	{
-		float u, v, w;				//texture coordinates	
+		double u, v, w;				//texture coordinates	
 	} texcoords;
 
 	/***** structure for vertex bone assignements *****/
 	typedef struct vbatag
 	{
-		float weight;	//weight
+		double weight;	//weight
 		int jointIdx;	//index of associated joint
 	} vba;
 
@@ -34,7 +33,6 @@ namespace OgreMayaExporter
 		float r,g,b,a;						//vertex colour
 		std::vector<texcoords> texcoords;	//vertex texture coordinates
 		std::vector<vba> vbas;				//vertex bone assignements
-		long index;							//vertex index in the maya mesh to which this vertex refers
 	} vertex;
 
 	/***** structure for vertex info *****/
@@ -60,8 +58,6 @@ namespace OgreMayaExporter
 	/***** array of face infos *****/
 	typedef std::vector<face> faceArray;
 
-
-
 	/***** Class Submesh *****/
 	class Submesh
 	{
@@ -74,10 +70,8 @@ namespace OgreMayaExporter
 		void clear();
 		//load data
 		MStatus loadMaterial(MObject& shader,MStringArray& uvsets,ParamList& params);
-		MStatus load(const MDagPath& dag,std::vector<face>& faces, std::vector<vertexInfo>& vertInfo, MPointArray& points,
+		MStatus load(std::vector<face>& faces, std::vector<vertexInfo>& vertInfo, MFloatPointArray& points,
 			MFloatVectorArray& normals, MStringArray& texcoordsets,ParamList& params,bool opposite = false); 
-		//load a keyframe for the whole mesh
-		MStatus loadKeyframe(Track& t,float time,ParamList& params);
 		//get number of triangles composing the submesh
 		long numTriangles();
 		//get number of vertices
@@ -97,7 +91,6 @@ namespace OgreMayaExporter
 		std::vector<face> m_faces;
 		std::vector<uvset> m_uvsets;
 		bool m_use32bitIndexes;
-		MDagPath m_dagPath;
 	};
 
 }; // end of namespace

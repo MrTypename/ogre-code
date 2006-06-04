@@ -91,8 +91,6 @@ public:
 
     bool frameStarted(const FrameEvent& evt)
     {
-	if( ExampleFrameListener::frameStarted(evt) == false )
-		return false;
 
 		std::vector<AnimationState*>::iterator animi;
 		for (animi = mAnimStateList.begin(); animi != mAnimStateList.end(); ++animi)
@@ -100,7 +98,8 @@ public:
 			(*animi)->addTime(evt.timeSinceLastFrame);
 		}
 
-        return true;
+        // Call superclass
+        return ExampleFrameListener::frameStarted(evt);
     }
 };
 

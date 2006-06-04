@@ -1,8 +1,6 @@
 #ifndef _MAYAEXPORTLAYER_H
 #define _MAYAEXPORTLAYER_H
 
-#define PRECISION 0.0001
-
 #include <maya/MAngle.h>
 #include <maya/MFnTransform.h>
 #include <maya/MItDag.h>
