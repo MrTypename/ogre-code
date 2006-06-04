@@ -36,12 +36,13 @@ public:
 
     bool frameStarted(const FrameEvent& evt)
     {
-	if( ExampleFrameListener::frameStarted(evt) == false )
-		return false;
 
         mAnimState->addTime(evt.timeSinceLastFrame);
 
-        return true;
+        // Call default
+        return ExampleFrameListener::frameStarted(evt);
+        
+
     }
 };
 

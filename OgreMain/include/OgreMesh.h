@@ -623,20 +623,6 @@ namespace Ogre {
 		/** Returns whether this mesh has an attached edge list. */
 		bool isEdgeListBuilt(void) const { return mEdgeListsBuilt; }
 
-        /** Prepare matrices for software indexed vertex blend.
-            @remarks
-                This function organise bone indexed matrices to blend indexed matrices,
-                so software vertex blending can access to the matrix via blend index
-                directly.
-            @param blendMatrices Pointer to an array of matrix pointers to store
-                prepared results, which indexed by blend index
-            @param boneMatrices Pointer to an array of matrices to be used to blend,
-                which indexed by bone index
-            @param indexMap The index map used to translate blend index to bone index
-        */
-        static void prepareMatricesForVertexBlend(const Matrix4** blendMatrices,
-            const Matrix4* boneMatrices, const IndexMap& indexMap);
-
         /** Performs a software indexed vertex blend, of the kind used for
             skeletal animation although it can be used for other purposes. 
         @remarks
@@ -649,15 +635,14 @@ namespace Ogre {
             and normal buffers which will be updated with the blended versions.
             Note that the layout of the source and target position / normal 
             buffers must be identical, ie they must use the same buffer indexes
-        @param blendMatrices Pointer to an array of matrix pointers to be used to blend,
-            indexed by blend indices in the sourceVertexData
-        @param numMatrices Number of matrices in the blendMatrices, it might be used
-            as a hint for optimisation.
+        @param pMatrices Pointer to an array of matrices to be used to blend
+        @param pIndexMap Pointer to an array of indices to translate blend indices
+            in the sourceVertexData to the index of pMatrices
         @param blendNormals If true, normals are blended as well as positions
         */
         static void softwareVertexBlend(const VertexData* sourceVertexData, 
-            const VertexData* targetVertexData,
-            const Matrix4* const* blendMatrices, size_t numMatrices,
+            const VertexData* targetVertexData, const Matrix4* pMatrices, 
+            const unsigned short* pIndexMap,
             bool blendNormals);
 
         /** Performs a software vertex morph, of the kind used for
