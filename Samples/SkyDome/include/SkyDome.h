@@ -52,26 +52,26 @@ public:
         if(!ExampleFrameListener::frameStarted(evt))
             return false;
         
-        if (mKeyboard->isKeyDown(OIS::KC_H) && timeDelay <= 0)
+        if (mInputDevice->isKeyDown(KC_H) && timeDelay <= 0)
         {
             mCurvature += 1;
             timeDelay = 0.1;
             updateSky = true;
         }
-        if (mKeyboard->isKeyDown(OIS::KC_G) && timeDelay <= 0)
+        if (mInputDevice->isKeyDown(KC_G) && timeDelay <= 0)
         {
             mCurvature -= 1;
             timeDelay = 0.1;
             updateSky = true;
         }
 
-        if (mKeyboard->isKeyDown(OIS::KC_U) && timeDelay <= 0)
+        if (mInputDevice->isKeyDown(KC_U) && timeDelay <= 0)
         {
             mTiling += 1;
             timeDelay = 0.1;
             updateSky = true;
         }
-        if (mKeyboard->isKeyDown(OIS::KC_Y) && timeDelay <= 0)
+        if (mInputDevice->isKeyDown(KC_Y) && timeDelay <= 0)
         {
             mTiling -= 1;
             timeDelay = 0.1;
@@ -89,6 +89,10 @@ public:
         return true;
 
     }
+
+
+
+
 };
 
 class SkyDomeApplication : public ExampleApplication

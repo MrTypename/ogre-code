@@ -32,7 +32,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreException.h"
 #include "OgreWin32GLSupport.h"
 #include "OgreWin32Context.h"
-#include "OgreWindowEventUtilities.h"
 
 namespace Ogre {
 
@@ -193,7 +192,7 @@ namespace Ogre {
 			}
 
 			// register class and create window
-			WNDCLASS wc = { CS_OWNDC, WindowEventUtilities::_WndProc, 0, 0, hInst,
+			WNDCLASS wc = { CS_OWNDC, WndProc, 0, 0, hInst,
 				LoadIcon(NULL, IDI_APPLICATION), LoadCursor(NULL, IDC_ARROW),
 				(HBRUSH)GetStockObject(BLACK_BRUSH), NULL, "OgreGLWindow" };
 			RegisterClass(&wc);
@@ -201,8 +200,6 @@ namespace Ogre {
 			// Pass pointer to self as WM_CREATE parameter
 			mHWnd = CreateWindowEx(dwStyleEx, "OgreGLWindow", title.c_str(),
 				dwStyle, mLeft, mTop, outerw, outerh, parent, 0, hInst, this);
-
-			WindowEventUtilities::_addRenderWindow(this);
 
 			StringUtil::StrStreamType str;
 			str << "Created Win32Window '"
@@ -296,15 +293,11 @@ namespace Ogre {
 		}
 		if (!mIsExternal)
 		{
-			WindowEventUtilities::_removeRenderWindow(this);
-
 			if (mIsFullScreen)
 				ChangeDisplaySettings(NULL, 0);
 			DestroyWindow(mHWnd);
 		}
-
 		mActive = false;
-		mClosed = true;
 		mHDC = 0; // no release thanks to CS_OWNDC wndclass style
 		mHWnd = 0;
 	}
@@ -419,12 +412,94 @@ namespace Ogre {
 		delete [] pBuffer;
 	}
 
+	// Window procedure callback
+	// This is a static member, so applies to all windows but we store the
+	// Win32Window instance in the window data GetWindowLog/SetWindowLog
+	LRESULT Win32Window::WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
+	{
+
+		if (uMsg == WM_CREATE)
+		{
+			// Store pointer to Win32Window in user data area
+			SetWindowLongPtr(hWnd, GWLP_USERDATA,
+				(LONG)(((LPCREATESTRUCT)lParam)->lpCreateParams));
+			return 0;
+		}
+
+		// look up window instance
+		// note: it is possible to get a WM_SIZE before WM_CREATE
+		Win32Window* win = (Win32Window*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		if (!win)
+			return DefWindowProc(hWnd, uMsg, wParam, lParam);
+
+		switch( uMsg )
+		{
+		case WM_ACTIVATE:
+			if (win->mIsFullScreen)
+			{
+				if (LOWORD(wParam) == WA_INACTIVE)
+				{
+					win->mActive = false;
+					ChangeDisplaySettings(NULL, 0);
+					ShowWindow(hWnd, SW_SHOWMINNOACTIVE);
+				}
+				else
+				{
+					win->mActive = true;
+					ShowWindow(hWnd, SW_SHOWNORMAL);
+
+					DEVMODE dm;
+					dm.dmSize = sizeof(DEVMODE);
+					dm.dmBitsPerPel = win->mColourDepth;
+					dm.dmPelsWidth = win->mWidth;
+					dm.dmPelsHeight = win->mHeight;
+					dm.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+					if (win->mDisplayFrequency)
+					{
+						dm.dmDisplayFrequency = win->mDisplayFrequency;
+						dm.dmFields |= DM_DISPLAYFREQUENCY;
+					}
+					ChangeDisplaySettings(&dm, CDS_FULLSCREEN);
+				}
+			}
+			break;
+
+		case WM_ENTERSIZEMOVE:
+			win->mSizing = true;
+			break;
+
+		case WM_EXITSIZEMOVE:
+			win->windowMovedOrResized();
+			win->mSizing = false;
+			break;
+
+		case WM_MOVE:
+		case WM_SIZE:
+			if (!win->mSizing)
+				win->windowMovedOrResized();
+			break;
+
+		case WM_GETMINMAXINFO:
+			// Prevent the window from going smaller than some minimu size
+			((MINMAXINFO*)lParam)->ptMinTrackSize.x = 100;
+			((MINMAXINFO*)lParam)->ptMinTrackSize.y = 100;
+			break;
+
+		case WM_CLOSE:
+			win->destroy(); // will call DestroyWindow
+			win->mClosed = true;
+			return 0;
+		}
+
+		return DefWindowProc( hWnd, uMsg, wParam, lParam );
+	}
+
 	void Win32Window::getCustomAttribute( const String& name, void* pData )
 	{
 		if( name == "GLCONTEXT" ) {
 			*static_cast<GLContext**>(pData) = mContext;
 			return;
-		} else if( name == "WINDOW" )
+		} else if( name == "HWND" )
 		{
 			HWND *pHwnd = (HWND*)pData;
 			*pHwnd = getWindowHandle();
@@ -432,34 +507,4 @@ namespace Ogre {
 		} 
 	}
 
-	void Win32Window::setActive( bool state )
-	{
-		mActive = state;
-
-		if( mIsFullScreen )
-		{
-			if( state == false )
-			{	//Restore Desktop
-				ChangeDisplaySettings(NULL, 0);
-				ShowWindow(mHWnd, SW_SHOWMINNOACTIVE);
-			}
-			else
-			{	//Restore App
-				ShowWindow(mHWnd, SW_SHOWNORMAL);
-
-				DEVMODE dm;
-				dm.dmSize = sizeof(DEVMODE);
-				dm.dmBitsPerPel = mColourDepth;
-				dm.dmPelsWidth = mWidth;
-				dm.dmPelsHeight = mHeight;
-				dm.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-				if (mDisplayFrequency)
-				{
-					dm.dmDisplayFrequency = mDisplayFrequency;
-					dm.dmFields |= DM_DISPLAYFREQUENCY;
-				}
-				ChangeDisplaySettings(&dm, CDS_FULLSCREEN);
-			}
-		}
-	}
 }

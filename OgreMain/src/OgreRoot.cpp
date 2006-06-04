@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 The OGRE Team
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -47,6 +47,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreErrorDialog.h"
 #include "OgreConfigDialog.h"
 #include "OgreStringConverter.h"
+#include "OgrePlatformManager.h"
 #include "OgreArchiveManager.h"
 #include "OgreZip.h"
 #include "OgreFileSystem.h"
@@ -73,8 +74,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreExternalTextureSourceManager.h"
 #include "OgreCompositorManager.h"
 
-#include "OgreWindowEventUtilities.h"
-
 namespace Ogre {
     //-----------------------------------------------------------------------
     template<> Root* Singleton<Root>::ms_Singleton = 0;
@@ -88,7 +87,7 @@ namespace Ogre {
     }
 
     typedef void (*DLL_START_PLUGIN)(void);
-    typedef void (*DLL_INIT_PLUGIN)(void);
+	typedef void (*DLL_INIT_PLUGIN)(void);
     typedef void (*DLL_STOP_PLUGIN)(void);
 
 
@@ -100,7 +99,7 @@ namespace Ogre {
 
         Root::getSingleton().shutdown();
 
-        ErrorDialog* dlg = new ErrorDialog();
+        ErrorDialog* dlg = PlatformManager::getSingleton().createErrorDialog();
 
         Exception* e = Exception::getLastException();
 
@@ -111,6 +110,7 @@ namespace Ogre {
 
         // Abort
         exit(-1);
+
     }
 
     void Root::termHandler()
@@ -172,7 +172,11 @@ namespace Ogre {
         // ..particle system manager
         mParticleManager = new ParticleSystemManager();
 
-        mTimer = new Timer();
+        // Platform manager
+        mPlatformManager = new PlatformManager();
+
+        // Timer
+        mTimer = mPlatformManager->createTimer();
 
         // Overlay manager
         mOverlayManager = new OverlayManager();
@@ -285,8 +289,9 @@ namespace Ogre {
 		delete mBillboardChainFactory;
 		delete mRibbonTrailFactory;
 
-	delete mTimer;
 
+        mPlatformManager->destroyTimer(mTimer);
+        delete mPlatformManager;
         delete mDynLibManager;
         delete mLogManager;
 
@@ -395,12 +400,14 @@ namespace Ogre {
         ConfigDialog* dlg;
         bool isOk;
 
-        dlg = new ConfigDialog();
+        dlg = mPlatformManager->createConfigDialog();
 
         isOk = dlg->display();
 
-	delete dlg;
+        mPlatformManager->destroyConfigDialog(dlg);
+
         return isOk;
+
     }
 
     //-----------------------------------------------------------------------
@@ -714,10 +721,10 @@ namespace Ogre {
 
         while( !mQueuedEnd )
         {
-			//Pump messages in all registered RenderWindow windows
-			WindowEventUtilities::messagePump();
+            //Allow platform to pump/create/etc messages/events once per frame
+            mPlatformManager->messagePump(mAutoWindow);
 
-			if (!renderOneFrame())
+            if (!renderOneFrame())
                 break;
         }
     }
@@ -731,7 +738,6 @@ namespace Ogre {
 
         return _fireFrameEnded();
     }
-
     //-----------------------------------------------------------------------
     void Root::shutdown(void)
     {

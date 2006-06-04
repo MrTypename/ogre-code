@@ -1,5 +1,4 @@
 #include "skeleton.h"
-#include <maya/MFnMatrixData.h>
 
 namespace OgreMayaExporter
 {
@@ -8,7 +7,6 @@ namespace OgreMayaExporter
 	{
 		m_joints.clear();
 		m_animations.clear();
-		m_restorePose = "";
 	}
 
 
@@ -24,7 +22,6 @@ namespace OgreMayaExporter
 	{
 		m_joints.clear();
 		m_animations.clear();
-		m_restorePose = "";
 	}
 
 
@@ -32,11 +29,10 @@ namespace OgreMayaExporter
 	MStatus Skeleton::load(MFnSkinCluster* pSkinCluster,ParamList& params)
 	{
 		MStatus stat;
-		//check for valid skin cluster pointer
+		//update skin cluster pointer
 		if (!pSkinCluster)
 		{
 			std::cout << "Could not load skeleton data, no skin cluster specified\n";
-			std::cout.flush();
 			return MS::kFailure;
 		}
 		//retrieve and load joints from the skin cluster
@@ -44,10 +40,10 @@ namespace OgreMayaExporter
 		MDagPathArray influenceDags;
 		int numInfluenceObjs = pSkinCluster->influenceObjects(influenceDags,&stat);
 		std::cout << "num influence objects: " << numInfluenceObjs << "\n";
-		std::cout.flush();
 		for (int i=0; i<numInfluenceObjs; i++)
 		{
 			jointDag = influenceDags[i];
+			std::cout << "influence object " << i << ": " << jointDag.fullPathName().asChar() << "\n";
 			if (influenceDags[i].hasFn(MFn::kJoint))
 			{
 				//retrieve root joint
@@ -66,65 +62,53 @@ namespace OgreMayaExporter
 					if (rootDag.partialPathName() == m_joints[j].name)
 					{
 						skip = true;
+						std::cout << "joint already loaded: skipped\n";
 					}
 				}
 				//load joints data from root
 				if (!skip)
 				{
-					// load the skeleton
-					std::cout <<  "Loading skeleton with root: " << rootDag.fullPathName().asChar() << "...\n";
-					std::cout.flush();
-					// save current selection list
+					std::cout <<  "Loading skeleton with root: " << rootDag.partialPathName().asChar() << "...\n";
 					MSelectionList selectionList;
 					MGlobal::getActiveSelectionList(selectionList);
-					// select the root joint dag
-					MGlobal::selectByName(rootDag.fullPathName(),MGlobal::kReplaceList);
-					//save current pose (if no pose has been saved yet)
-					if (m_restorePose == "")
+					// Set Neutral Pose
+					//check if we want the skin bind pose
+					if (params.neutralPoseFrame == NPT_BINDPOSE)
 					{
-						MString poseName;
-						MGlobal::executeCommand("dagPose -s",poseName,true);
-						m_restorePose = poseName;
+						// Note: we reset to the bind pose, then get current matrix
+						// if bind pose could not be restored we use the current pose as a bind pose
+						MGlobal::selectByName(jointDag.partialPathName(),MGlobal::kReplaceList);
+						MGlobal::executeCommand("dagPose -r -g -bp");
 					}
-					//set the skeleton to the desired neutral pose
-					switch(params.neutralPoseType)
+					//check if we want specified frame as neutral pose
+					else if (params.neutralPoseType == NPT_FRAME)
 					{
-<<<<<<< skeleton.cpp
-					case NPT_FRAME:
-						MAnimControl::setCurrentTime((float)params.neutralPoseFrame);
-						break;
-					case NPT_BINDPOSE:
-						//disable constraints, IK, etc...
-						MGlobal::executeCommand("doEnableNodeItems false all",true);
-						// Note: we reset to the bind pose
-						MGlobal::executeCommand("dagPose -r -g -bp",true);
-						break;
-=======
-					case NPT_FRAME:
-						MAnimControl::setCurrentTime((double)params.neutralPoseFrame);
-						break;
-					case NPT_BINDPOSE:
-						//disable constraints, IK, etc...
-						MGlobal::executeCommand("doEnableNodeItems false all",true);
-						// Note: we reset to the bind pose
-						MGlobal::executeCommand("dagPose -r -g -bp",true);
-						break;
->>>>>>> 1.6
+						//set time to desired time
+						MTime npTime = (double)params.neutralPoseFrame;
+						MAnimControl::setCurrentTime(npTime.as(MTime::kSeconds));
 					}
+					
 					//load joints data
-					stat = loadJoint(rootDag,NULL,params,pSkinCluster);
+					stat = loadJoint(rootDag,NULL,params);
 					if (MS::kSuccess == stat)
-					{
 						std::cout << "OK\n";
-						std::cout.flush();
-					}
 					else
-					{
 						std::cout << "Failed\n";
-						std::cout.flush();
+
+					/*
+					//restore skeleton to neutral pose
+					if (params.neutralPoseFrame == 1)
+					{
+						MGlobal::executeCommand("dagPose -r -g -bp");
+						MGlobal::setActiveSelectionList(selectionList,MGlobal::kReplaceList);
 					}
-					//restore selection list
-					MGlobal::setActiveSelectionList(selectionList,MGlobal::kReplaceList);
+					else if (params.neutralPoseType == 2)
+					{
+						//set time to desired time
+						MTime npTime = (double)params.neutralPoseFrame;
+						MAnimControl::setCurrentTime(npTime.as(MTime::kSeconds));
+					}
+					*/
 				}
 			}
 		}
@@ -134,9 +118,8 @@ namespace OgreMayaExporter
 
 
 	// Load a joint
-	MStatus Skeleton::loadJoint(MDagPath& jointDag,joint* parent,ParamList& params,MFnSkinCluster* pSkinCluster)
+	MStatus Skeleton::loadJoint(MDagPath& jointDag,joint* parent,ParamList& params)
 	{
-		MStatus stat;
 		int i;
 		joint newJoint;
 		joint* parentJoint = parent;
@@ -146,18 +129,11 @@ namespace OgreMayaExporter
 		{
 			MFnIkJoint jointFn(jointDag);
 			// Display info
-			std::cout << "Loading joint: " << jointFn.fullPathName().asChar();
-			std::cout.flush();
+			std::cout << "Loading joint: " << jointFn.partialPathName().asChar();
 			if (parent)
-			{
 				std::cout << " (parent: " << parent->name.asChar() << ")\n";
-				std::cout.flush();
-			}
 			else
-			{
 				std::cout << "\n";
-				std::cout.flush();
-			}
 			// Get parent index
 			int idx=-1;
 			if (parent)
@@ -168,24 +144,32 @@ namespace OgreMayaExporter
 						idx=i;
 				}
 			}
-			// Get world bind matrix
-			MMatrix bindMatrix = jointDag.inclusiveMatrix();;
-			// Calculate local bind matrix
+			// Get joint matrix
+			MMatrix bindMatrix = jointDag.inclusiveMatrix();
+			// Calculate scaling factor inherited by parent
+			double scale[3];
+			if (parent)
+			{
+				MTransformationMatrix M(parent->worldMatrix);
+				M.getScale(scale,MSpace::kWorld);
+			}
+			else
+			{
+				scale[0] = 1;
+				scale[1] = 1;
+				scale[2] = 1;
+			}
+			// Calculate Local Matrix
 			MMatrix localMatrix;
 			if (parent)
-				localMatrix = bindMatrix * parent->bindMatrix.inverse();
+				localMatrix = bindMatrix * parent->worldMatrix.inverse();
 			else
 			{	// root node of skeleton
-				localMatrix = bindMatrix;
+				if (params.exportWorldCoords)
+					localMatrix = bindMatrix;
+				else
+					localMatrix = bindMatrix * jointDag.exclusiveMatrix().inverse();
 			}
-			// Get translation
-			MVector translation = ((MTransformationMatrix)localMatrix).translation(MSpace::kPostTransform);
-			if (fabs(translation.x) < PRECISION)
-				translation.x = 0;
-			if (fabs(translation.y) < PRECISION)
-				translation.y = 0;
-			if (fabs(translation.z) < PRECISION)
-				translation.z = 0;
 			// Calculate rotation data
 			double qx,qy,qz,qw;
 			((MTransformationMatrix)localMatrix).getRotationQuaternion(qx,qy,qz,qw);
@@ -193,15 +177,7 @@ namespace OgreMayaExporter
 			MVector axis;
 			double theta;
 			rotation.getAxisAngle(axis,theta);
-			if (fabs(axis.x) < PRECISION)
-				axis.x = 0;
-			if (fabs(axis.y) < PRECISION)
-				axis.y = 0;
-			if (fabs(axis.z) < PRECISION)
-				axis.z = 0;
 			axis.normalize();
-			if (fabs(theta) < PRECISION)
-				theta = 0;
 			if (axis.length() < 0.5)
 			{
 				axis.x = 0;
@@ -209,49 +185,32 @@ namespace OgreMayaExporter
 				axis.z = 0;
 				theta = 0;
 			}
-			// Get joint scale
-			double scale[3];
-			((MTransformationMatrix)localMatrix).getScale(scale,MSpace::kPostTransform);
-			if (fabs(scale[0]) < PRECISION)
-				scale[0] = 0;
-			if (fabs(scale[1]) < PRECISION)
-				scale[1] = 0;
-			if (fabs(scale[2]) < PRECISION)
-				scale[2] = 0;
 			// Set joint info
 			newJoint.name = jointFn.partialPathName();
 			newJoint.id = m_joints.size();
 			newJoint.parentIndex = idx;
-			newJoint.bindMatrix = bindMatrix;
+			newJoint.worldMatrix = bindMatrix;
 			newJoint.localMatrix = localMatrix;
-			newJoint.posx = translation.x * params.lum;
-			newJoint.posy = translation.y * params.lum;
-			newJoint.posz = translation.z * params.lum;
+			newJoint.posx = localMatrix(3,0) * scale[0];
+			newJoint.posy = localMatrix(3,1) * scale[1];
+			newJoint.posz = localMatrix(3,2) * scale[2];
 			newJoint.angle = theta;
 			newJoint.axisx = axis.x;
 			newJoint.axisy = axis.y;
 			newJoint.axisz = axis.z;
-			newJoint.scalex = 1;
-			newJoint.scaley = 1;
-			newJoint.scalez = 1;
 			newJoint.jointDag = jointDag;
 			m_joints.push_back(newJoint);
-			// If root is a root joint, save it's index in the roots list
-			if (idx < 0)
-			{
-				m_roots.push_back(m_joints.size() - 1);
-			}
 			// Get pointer to newly created joint
 			parentJoint = &newJoint;
 		}
-		// Load child joints
+		// Load children joints
 		for (i=0; i<jointDag.childCount();i++)
 		{
 			MObject child;
 			child = jointDag.child(i);
 			MDagPath childDag = jointDag;
 			childDag.push(child);
-			loadJoint(childDag,parentJoint,params,pSkinCluster);
+			loadJoint(childDag,parentJoint,params);
 		}
 		return MS::kSuccess;
 	}
@@ -260,90 +219,70 @@ namespace OgreMayaExporter
 	// Load animations
 	MStatus Skeleton::loadAnims(ParamList& params)
 	{
-		//enable constraints, IK, etc...
-		MGlobal::executeCommand("doEnableNodeItems true all",true);
 		MStatus stat;
 		int i;
-		// save current time for later restore
-		MTime curTime = MAnimControl::currentTime();
 		std::cout << "Loading joint animations...\n";
-		std::cout.flush();
+		// save current time for later restore
+		double curtime = MAnimControl::currentTime().as(MTime::kSeconds);
 		// clear animations list
 		m_animations.clear();
-		// load skeleton animation clips for the whole skeleton
-		for (i=0; i<params.skelClipList.size(); i++)
+		// load animation clips for the whole skeleton
+		for (i=0; i<params.clipList.size(); i++)
 		{
-			stat = loadClip(params.skelClipList[i].name,params.skelClipList[i].start,
-				params.skelClipList[i].stop,params.skelClipList[i].rate,params);
+			stat = loadClip(params.clipList[i].name,params.clipList[i].start,
+				params.clipList[i].stop,params.clipList[i].rate,params);
 			if (stat == MS::kSuccess)
-			{
 				std::cout << "Clip successfully loaded\n";
-				std::cout.flush();
-			}
 			else
-			{
 				std::cout << "Failed loading clip\n";
-				std::cout.flush();
-			}
 		}
 		//restore current time
-		MAnimControl::setCurrentTime(curTime);
+		MAnimControl::setCurrentTime(MTime(curtime,MTime::kSeconds));
 		return MS::kSuccess;
 	}
 
+	
 	// Load an animation clip
-	MStatus Skeleton::loadClip(MString clipName,float start,float stop,float rate,ParamList& params)
+	MStatus Skeleton::loadClip(MString clipName,double start,double stop,double rate,ParamList& params)
 	{
 		MStatus stat;
 		int i,j;
 		MString msg;
-<<<<<<< skeleton.cpp
-		std::vector<float> times;
-		// if skeleton has no joints we can't load the clip
-=======
 		std::vector<double> times;
-		// if skeleton has no joints we can't load the clip
->>>>>>> 1.6
+		// if skeleton has no joint we can't load the clip
 		if (m_joints.size() < 0)
 			return MS::kFailure;
 		// display clip name
 		std::cout << "clip \"" << clipName.asChar() << "\"\n";
-		std::cout.flush();
 		// calculate times from clip sample rate
 		times.clear();
-		for (float t=start; t<stop; t+=rate)
+		for (double t=start; t<stop; t+=rate)
 			times.push_back(t);
 		times.push_back(stop);
 		// get animation length
-<<<<<<< skeleton.cpp
-		float length=0;
-		if (times.size() >= 0)
-=======
 		double length=0;
-		if (times.size() >= 0)
->>>>>>> 1.6
+		if (times.size() > 0)
 			length = times[times.size()-1] - times[0];
-		if (length < 0)
+		// check if clip length is >0
+		if (length <= 0)
 		{
-			std::cout << "invalid time range for the clip, we skip it\n";
-			std::cout.flush();
+			std::cout << "the clip has 0 length, we skip it\n";
 			return MS::kFailure;
 		}
 		// create the animation
-		Animation a;
-		a.m_name = clipName.asChar();
-		a.m_tracks.clear();
-		a.m_length = length;
+		animation a;
+		a.name = clipName.asChar();
+		a.tracks.clear();
+		a.length = length;
 		m_animations.push_back(a);
 		int animIdx = m_animations.size() - 1;
 		// create a track for current clip for all joints
-		std::vector<Track> animTracks;
+		std::vector<track> animTracks;
 		for (i=0; i<m_joints.size(); i++)
 		{
-			Track t;
-			t.m_type = TT_SKELETON;
-			t.m_bone = m_joints[i].name;
-			t.m_skeletonKeyframes.clear();
+			track t;
+			t.bone = m_joints[i].name;
+			t.keyframes.clear();
 			animTracks.push_back(t);
 		}
 		// evaluate animation curves at selected times
@@ -354,79 +293,63 @@ namespace OgreMayaExporter
 			//load a keyframe for every joint at current time
 			for (j=0; j<m_joints.size(); j++)
 			{
-				skeletonKeyframe key = loadKeyframe(m_joints[j],times[i]-times[0],params);
+				keyframe key = loadKeyframe(m_joints[j],times[i]-times[0],params);
 				//add keyframe to joint track
-				animTracks[j].addSkeletonKeyframe(key);
+				animTracks[j].keyframes.push_back(key);
 			}
 		}
 		// add created tracks to current clip
 		for (i=0; i<animTracks.size(); i++)
 		{
-			m_animations[animIdx].addTrack(animTracks[i]);
+			m_animations[animIdx].tracks.push_back(animTracks[i]);
 		}
 		// display info
-<<<<<<< skeleton.cpp
-		std::cout << "length: " << m_animations[animIdx].m_length << "\n";
-		std::cout << "num keyframes: " << animTracks[0].m_skeletonKeyframes.size() << "\n";
-		std::cout.flush();
-=======
 		std::cout << "length: " << m_animations[animIdx].length << "\n";
 		std::cout << "num keyframes: " << animTracks[0].keyframes.size() << "\n";
-		std::cout.flush();
->>>>>>> 1.6
 		// clip successfully loaded
 		return MS::kSuccess;
 	}
 
+	
 	// Load a keyframe for a given joint at current time
-	skeletonKeyframe Skeleton::loadKeyframe(joint& j,float time,ParamList& params)
+	keyframe Skeleton::loadKeyframe(joint& j,double time,ParamList& params)
 	{
+		MFnIkJoint jointFn(j.jointDag);
+		MTransformationMatrix matrix;
 		MVector position;
+		double scale[3];
+		scale[0] = 1; scale[1] = 1; scale[2] = 1;
 		int parentIdx = j.parentIndex;
-		// Get joint matrix
-		MMatrix worldMatrix = j.jointDag.inclusiveMatrix();
-		// Calculate Local Matrix
-		MMatrix localMatrix;
+		//get joint matrix at current time
+		matrix = j.jointDag.inclusiveMatrix();
 		if (parentIdx >= 0)
 		{
-			// Get parent joint
-			MDagPath parentDag = m_joints[parentIdx].jointDag;
-			localMatrix = worldMatrix * parentDag.inclusiveMatrixInverse();
+			//calculate inherited scale factor
+			((MTransformationMatrix)j.jointDag.exclusiveMatrix()).getScale(scale,MSpace::kWorld);
+			//calculate relative matrix
+			matrix = j.jointDag.inclusiveMatrix() * j.jointDag.exclusiveMatrixInverse();
 		}
 		else
-		{	// Root node of skeleton
-		if (params.exportWorldCoords)
-			localMatrix = worldMatrix;
-		else
-			localMatrix = worldMatrix * j.jointDag.exclusiveMatrixInverse();
+		{	// root joint
+			if (params.exportWorldCoords)
+				matrix = j.jointDag.inclusiveMatrix();
+			else
+				matrix = j.jointDag.inclusiveMatrix() * j.jointDag.exclusiveMatrixInverse();
 		}
-		// Get relative transformation matrix
-		MMatrix relMatrix = localMatrix * j.localMatrix.inverse();
-		// Get relative translation
-		MVector translation = ((MTransformationMatrix)localMatrix).translation(MSpace::kPostTransform) - 
-			((MTransformationMatrix)j.localMatrix).translation(MSpace::kPostTransform);
-		if (fabs(translation.x) < PRECISION)
-			translation.x = 0;
-		if (fabs(translation.y) < PRECISION)
-			translation.y = 0;
-		if (fabs(translation.z) < PRECISION)
-			translation.z = 0;
-		// Get relative rotation
+		//calculate position of joint at given time
+		position.x = matrix.asMatrix()(3,0) * scale[0];
+		position.y = matrix.asMatrix()(3,1) * scale[1];
+		position.z = matrix.asMatrix()(3,2) * scale[2];
+		//get relative transformation matrix
+		matrix = matrix.asMatrix() * j.localMatrix.inverse();
+		//calculate rotation
 		double qx,qy,qz,qw;
-		((MTransformationMatrix)relMatrix).getRotationQuaternion(qx,qy,qz,qw);
+		((MTransformationMatrix)matrix).getRotationQuaternion(qx,qy,qz,qw);
 		MQuaternion rotation(qx,qy,qz,qw);
-		MVector axis;
 		double theta;
+		MVector axis;
 		rotation.getAxisAngle(axis,theta);
-		if (fabs(axis.x) < PRECISION)
-			axis.x = 0;
-		if (fabs(axis.y) < PRECISION)
-			axis.y = 0;
-		if (fabs(axis.z) < PRECISION)
-			axis.z = 0;
 		axis.normalize();
-		if (fabs(theta) < PRECISION)
-			theta = 0;
 		if (axis.length() < 0.5)
 		{
 			axis.x = 0;
@@ -434,55 +357,21 @@ namespace OgreMayaExporter
 			axis.z = 0;
 			theta = 0;
 		}
-		// Get relative scale
-		double scale[3];
-		((MTransformationMatrix)relMatrix).getScale(scale,MSpace::kPostTransform);
-		if (fabs(scale[0]) < PRECISION)
-			scale[0] = 0;
-		if (fabs(scale[1]) < PRECISION)
-			scale[1] = 0;
-		if (fabs(scale[2]) < PRECISION)
-			scale[2] = 0;
 		//create keyframe
-		skeletonKeyframe key;
+		keyframe key;
 		key.time = time;
-		key.tx = translation.x * params.lum;
-		key.ty = translation.y * params.lum;
-		key.tz = translation.z * params.lum;
+		key.tx = position.x - j.posx;
+		key.ty = position.y - j.posy;
+		key.tz = position.z - j.posz;
 		key.angle = theta;
 		key.axis_x = axis.x;
 		key.axis_y = axis.y;
 		key.axis_z = axis.z;
-		key.sx = scale[0];
-		key.sy = scale[1];
-		key.sz = scale[2];
+		key.sx = 1;
+		key.sy = 1;
+		key.sz = 1;
 		return key;
 	}
-
-
-	// Restore skeleton pose
-	void Skeleton::restorePose()
-	{
-		// save current selection list
-		MSelectionList selectionList;
-		MGlobal::getActiveSelectionList(selectionList);
-		int i;
-		for (i=0; i<m_roots.size(); i++)
-		{
-			MDagPath rootDag = m_joints[m_roots[i]].jointDag;
-			// select the root joint dag
-			MGlobal::selectByName(rootDag.fullPathName(),MGlobal::kReplaceList);
-			// restore pose
-			MString cmd = "dagPose -r -g -n \""+ m_restorePose;
-			cmd += "\"";
-			MGlobal::executeCommand(cmd,true);
-		}
-		//restore selection list
-		MGlobal::setActiveSelectionList(selectionList,MGlobal::kReplaceList);
-		//enable constraints, IK, etc...
-		MGlobal::executeCommand("doEnableNodeItems true all",true);
-	}
-
 
 
 	// Get joint list
@@ -492,30 +381,23 @@ namespace OgreMayaExporter
 	}
 
 
-
 	// Get animations
-	std::vector<Animation>& Skeleton::getAnimations()
+	std::vector<animation>& Skeleton::getAnimations()
 	{
 		return m_animations;
 	}
 
 
-
 	// Write skeleton data to Ogre XML file
 	MStatus Skeleton::writeXML(ParamList &params)
 	{
-<<<<<<< skeleton.cpp
-		int i,j,k;
-=======
-		int i;
->>>>>>> 1.6
 		// Start skeleton description
 		params.outSkeleton << "<skeleton>\n";
 
 		// Write bones list
 		params.outSkeleton << "\t<bones>\n";
 		// For each joint write it's description
-		for (i=0; i<m_joints.size(); i++)
+		for (int i=0; i<m_joints.size(); i++)
 		{
 			params.outSkeleton << "\t\t<bone id=\"" << m_joints[i].id << "\" name=\"" << m_joints[i].name.asChar() << "\">\n";
 			params.outSkeleton << "\t\t\t<position x=\"" << m_joints[i].posx << "\" y=\"" << m_joints[i].posy
@@ -524,8 +406,6 @@ namespace OgreMayaExporter
 			params.outSkeleton << "\t\t\t\t<axis x=\"" << m_joints[i].axisx << "\" y=\"" << m_joints[i].axisy
 				<< "\" z=\"" << m_joints[i].axisz << "\"/>\n";
 			params.outSkeleton << "\t\t\t</rotation>\n";
-			params.outSkeleton << "\t\t\t<scale x=\"" << m_joints[i].scalex << "\" y=\"" << m_joints[i].scaley
-				<< "\" z=\"" << m_joints[i].scalez << "\"/>\n";
 			params.outSkeleton << "\t\t</bone>\n";
 		}
 		params.outSkeleton << "\t</bones>\n";
@@ -543,40 +423,39 @@ namespace OgreMayaExporter
 		params.outSkeleton << "\t</bonehierarchy>\n";
 
 		// Write animations description
-		if (params.exportSkelAnims)
+		if (params.exportAnims)
 		{
 			params.outSkeleton << "\t<animations>\n";
 			// For every animation
 			for (i=0; i<m_animations.size(); i++)
 			{
 				// Write animation info
-				params.outSkeleton << "\t\t<animation name=\"" << m_animations[i].m_name.asChar() << "\" length=\"" << 
-					m_animations[i].m_length << "\">\n";
+				params.outSkeleton << "\t\t<animation name=\"" << m_animations[i].name.asChar() << "\" length=\"" << 
+					m_animations[i].length << "\">\n";
 				// Write tracks
 				params.outSkeleton << "\t\t\t<tracks>\n";
 				// Cycle through tracks
-				for (j=0; j<m_animations[i].m_tracks.size(); j++)
+				for (int j=0; j<m_animations[i].tracks.size(); j++)
 				{
-					Track t = m_animations[i].m_tracks[j];
-					params.outSkeleton << "\t\t\t\t<track bone=\"" << t.m_bone.asChar() << "\">\n";
+					track t = m_animations[i].tracks[j];
+					params.outSkeleton << "\t\t\t\t<track bone=\"" << t.bone.asChar() << "\">\n";
 					// Write track keyframes
 					params.outSkeleton << "\t\t\t\t\t<keyframes>\n";
-					for (k=0; k<t.m_skeletonKeyframes.size(); k++)
+					for (int k=0; k<t.keyframes.size(); k++)
 					{
-						skeletonKeyframe key = t.m_skeletonKeyframes[k];
 						// time
-						params.outSkeleton << "\t\t\t\t\t\t<keyframe time=\"" << key.time << "\">\n";
+						params.outSkeleton << "\t\t\t\t\t\t<keyframe time=\"" << t.keyframes[k].time << "\">\n";
 						// translation
-						params.outSkeleton << "\t\t\t\t\t\t\t<translate x=\"" << key.tx << "\" y=\"" <<
-							key.ty << "\" z=\"" << key.tz << "\"/>\n";
+						params.outSkeleton << "\t\t\t\t\t\t\t<translate x=\"" << t.keyframes[k].tx << "\" y=\"" <<
+							t.keyframes[k].ty << "\" z=\"" << t.keyframes[k].tz << "\"/>\n";
 						// rotation
-						params.outSkeleton << "\t\t\t\t\t\t\t<rotate angle=\"" << key.angle << "\">\n";
-						params.outSkeleton << "\t\t\t\t\t\t\t\t<axis x=\"" << key.axis_x << "\" y=\"" <<
-							key.axis_y << "\" z=\"" << key.axis_z << "\"/>\n";
+						params.outSkeleton << "\t\t\t\t\t\t\t<rotate angle=\"" << t.keyframes[k].angle << "\">\n";
+						params.outSkeleton << "\t\t\t\t\t\t\t\t<axis x=\"" << t.keyframes[k].axis_x << "\" y=\"" <<
+							t.keyframes[k].axis_y << "\" z=\"" << t.keyframes[k].axis_z << "\"/>\n";
 						params.outSkeleton << "\t\t\t\t\t\t\t</rotate>\n";
 						//scale
-						params.outSkeleton << "\t\t\t\t\t\t\t<scale x=\"" << key.sx << "\" y=\"" <<
-							key.sy << "\" z=\"" << key.sz << "\"/>\n";
+						params.outSkeleton << "\t\t\t\t\t\t\t<scale x=\"" << t.keyframes[k].sx << "\" y=\"" <<
+							t.keyframes[k].sy << "\" z=\"" << t.keyframes[k].sz << "\"/>\n";
 						params.outSkeleton << "\t\t\t\t\t\t</keyframe>\n";
 					}
 					params.outSkeleton << "\t\t\t\t\t</keyframes>\n";
