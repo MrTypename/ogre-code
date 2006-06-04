@@ -47,8 +47,8 @@ namespace Ogre
 		bool mClosed;			//Window has been closed
 		bool mVisible;			//Window is visible
 		bool mFullScreen;		//We are full screen
-		bool mTopLevel;			//This is false if the Ogre window is embedded
-		int mOldMode;			//Mode before switching to fullscreen
+        	bool mTopLevel;			// This is false if the Ogre window is embedded
+		int mOldMode;			// Mode before switching to fullscreen
 
 		GLXContext   *mContext;
 	public:
@@ -71,34 +71,59 @@ namespace Ogre
 		/** @copydoc see RenderWindow::isVisible */
 		bool isVisible(void) const;
 
-		/** @copydoc see RenderWindow::setVisible */
-		void setVisible(bool visible);
-
 		/** @copydoc see RenderWindow::reposition */
 		void reposition(int left, int top);
 
 		/** @copydoc see RenderWindow::resize */
 		void resize(unsigned int width, unsigned int height);
 
-		/** @copydoc see RenderWindow::windowMovedOrResized */
-		void windowMovedOrResized();
-
 		/** @copydoc see RenderWindow::swapBuffers */
 		void swapBuffers(bool waitForVSync);
 	
-		/** @copydoc see RenderTarget::writeContentsToFile */
+		/** @copydoc see RenderWindow::writeContentsToFile */
 		void writeContentsToFile(const String& filename);
 
 		/**
 		@remarks
 			* Get custom attribute; the following attributes are valid:
-			* WINDOW	The X Window associated with this
-			* DISPLAY	The X Display associated with this
-			* ATOM		The Delete Window signal
+			* GLXWINDOW	The X Window associated with this
+			* GLXDISPLAY	The X Display associated with this
 		*/
 		void getCustomAttribute(const String& name, void* pData);
 
+		/**
+		@remarks
+			Called every frame to update X Window status. Called form GLX PlatformManager::messagePump.
+			If you are not using startRendering, and do not want to use messagePump, call this method
+			to update the render window yourself.
+			Only X Events that match the Window ID of this window will be respconded to.
+		*/
+		virtual void injectXEvent(const XEvent &event);
+
 		bool requiresTextureFlipping() const { return false; }
+
+		/**
+		@remarks
+			Window covered/uncovered. Use this to inject an exposed event - this is only if you are
+			not sending Events (via PlatformManager::messagePump). This happens normally unless
+			you are creating your own windows.. In which case you control events
+		*/
+		void exposed(bool active) { mActive = active; }
+
+		/**
+		@remarks
+			Window rsize. Use this to inject a resize event - this is only if you are
+			not sending Events (via PlatformManager::messagePump). This happens normally unless
+			you are creating your own windows.. In which case you control events
+		*/
+		void resized(size_t width, size_t height);
+
+		/**
+		@remarks
+			Convience method for getting the XDisplay... You can also use the getCustomAttribute method,
+			this is just here for avoiding string creation just to get this (GLXPlatform)
+		*/
+		::Display* getXDisplay() { return mDisplay; }
 	};
 }
 

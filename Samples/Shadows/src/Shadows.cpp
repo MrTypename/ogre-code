@@ -145,7 +145,7 @@ public:
 Real timeDelay = 0;
 #define KEY_PRESSED(_key,_timeDelay, _macro) \
 { \
-    if (mKeyboard->isKeyDown(_key) && timeDelay <= 0) \
+    if (mInputDevice->isKeyDown(_key) && timeDelay <= 0) \
 { \
     timeDelay = _timeDelay; \
     _macro ; \
@@ -381,8 +381,6 @@ public:
 
     bool frameEnded(const FrameEvent& evt)
     {
-	using namespace OIS;
-
         if (timeDelay >= 0) 
             timeDelay -= evt.timeSinceLastFrame;
 
