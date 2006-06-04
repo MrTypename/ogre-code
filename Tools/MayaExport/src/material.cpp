@@ -42,24 +42,13 @@ namespace OgreMayaExporter
 	// Load material data
 	MStatus Material::load(MFnLambertShader* pShader,MStringArray& uvsets,ParamList& params)
 	{
-		int i;
 		MStatus stat;
 		clear();
 		//read material name, adding the requested prefix
-		MString tmpStr = params.matPrefix;
-		if (tmpStr != "")
-			tmpStr += "/";
-		tmpStr += pShader->name();
-		MStringArray tmpStrArray;
-		tmpStr.split(':',tmpStrArray);
-		m_name = "";
-		for (i=0; i<tmpStrArray.length(); i++)
-		{
-			m_name += tmpStrArray[i];
-			if (i < tmpStrArray.length()-1)
-				m_name += "_";
-		}
-
+		m_name = params.matPrefix;
+		if (m_name != "")
+			m_name += "/";
+		m_name += pShader->name();
 		//check if we want to export with lighting off option
 		m_lightingOff = params.lightingOff;
 
@@ -85,7 +74,7 @@ namespace OgreMayaExporter
 
 		// Check if material is textured
 		pShader->findPlug("color").connectedTo(colorSrcPlugs,true,false);
-		for (i=0; i<colorSrcPlugs.length(); i++)
+		for (int i=0; i<colorSrcPlugs.length(); i++)
 		{
 			if (colorSrcPlugs[i].node().hasFn(MFn::kFileTexture))
 			{
@@ -198,7 +187,6 @@ namespace OgreMayaExporter
 						if (MS::kSuccess != stat)
 						{
 							std::cout << "Error loading layered texture\n";
-							std::cout.flush();
 							delete pLayeredTexNode;
 							return MS::kFailure;
 						}
@@ -229,7 +217,6 @@ namespace OgreMayaExporter
 					if (MS::kSuccess != stat)
 					{
 						std::cout << "Error loading texture\n";
-						std::cout.flush();
 						return MS::kFailure;
 					}
 				}
@@ -248,7 +235,6 @@ namespace OgreMayaExporter
 	// Load texture data from a texture node
 	MStatus Material::loadTexture(MFnDependencyNode* pTexNode,TexOpType& opType,MStringArray& uvsets,ParamList& params)
 	{
-		int j;
 		texture tex;
 		// Get texture filename
 		MString filename, absFilename;
@@ -269,7 +255,7 @@ namespace OgreMayaExporter
 		pTexNode->findPlug("uvCoord").connectedTo(texSrcPlugs,true,false);
 		// Get place2dtexture node (if connected)
 		MFnDependencyNode* pPlace2dTexNode = NULL;
-		for (j=0; j<texSrcPlugs.length(); j++)
+		for (int j=0; j<texSrcPlugs.length(); j++)
 		{
 			if (texSrcPlugs[j].node().hasFn(MFn::kPlace2dTexture))
 			{

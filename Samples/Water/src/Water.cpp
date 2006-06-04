@@ -457,31 +457,24 @@ public:
  
     bool frameStarted(const FrameEvent& evt)
     {
-		using namespace OIS;
-
-		if( ExampleFrameListener::frameStarted(evt) == false )
-		{
-			// check if we are exiting, if so, clear static HardwareBuffers to avoid segfault
-			WaterCircle::clearStaticBuffers();
-			return false;
-		}
-
-		mAnimState->addTime(evt.timeSinceLastFrame);
+		bool retval = ExampleFrameListener::frameStarted(evt); 
+        mAnimState->addTime(evt.timeSinceLastFrame);
 		
 		// process keyboard events
+		mInputDevice->capture();
 		Real changeSpeed = evt.timeSinceLastFrame ;
 		
 		// adjust keyboard speed with SHIFT (increase) and CONTROL (decrease)
-		if (mKeyboard->isKeyDown(OIS::KC_LSHIFT) || mKeyboard->isKeyDown(OIS::KC_RSHIFT)) {
+		if (mInputDevice->isKeyDown(KC_LSHIFT) || mInputDevice->isKeyDown(KC_RSHIFT)) {
 			changeSpeed *= 10.0f ;
 		}
-		if (mKeyboard->isKeyDown(OIS::KC_LCONTROL)) { 
+		if (mInputDevice->isKeyDown(KC_LCONTROL)) { 
 			changeSpeed /= 10.0f ;
 		}
 		
 		// rain
 		processCircles(evt.timeSinceLastFrame);
-		if (mKeyboard->isKeyDown(OIS::KC_SPACE)) {
+		if (mInputDevice->isKeyDown(KC_SPACE)) {
 			particleEmitter->setEmissionRate(20.0f);
 		} else {
 			particleEmitter->setEmissionRate(0.0f);
@@ -489,10 +482,10 @@ public:
 		processParticles();
 
 		// adjust values (some macros for faster change		
-#define ADJUST_RANGE(_value,_plus,_minus,_minVal,_maxVal,_change,_macro) {\
-	if (mKeyboard->isKeyDown(_plus)) \
+#define ADJUST_RANGE(_value,_keyPlus,_keyMinus,_minVal,_maxVal,_change,_macro) {\
+	if (mInputDevice->isKeyDown(_keyPlus)) \
 		{ _value+=_change ; if (_value>=_maxVal) _value = _maxVal ; _macro ; } ; \
-	if (mKeyboard->isKeyDown(_minus)) \
+	if (mInputDevice->isKeyDown(_keyMinus)) \
 		{ _value-=_change; if (_value<=_minVal) _value = _minVal ; _macro ; } ; \
 }
 
@@ -511,7 +504,7 @@ public:
 			timeoutDelay = 0;
 
 #define SWITCH_VALUE(_key,_timeDelay, _macro) { \
-		if (mKeyboard->isKeyDown(_key) && timeoutDelay==0) { \
+		if (mInputDevice->isKeyDown(_key) && timeoutDelay==0) { \
 			timeoutDelay = _timeDelay ; _macro ;} }
 	
 		SWITCH_VALUE(KC_N, 0.5f, switchNormals());
@@ -524,7 +517,13 @@ public:
 			
 		waterMesh->updateMesh(evt.timeSinceLastFrame);
 			
-		return true;
+		// check if we are exiting, if so, clear static HardwareBuffers to avoid
+		// segfault
+		if (!retval)
+			WaterCircle::clearStaticBuffers();
+
+        // return result from default
+		return retval ;
     }
 };
 

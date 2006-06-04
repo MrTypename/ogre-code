@@ -11,20 +11,10 @@ namespace OgreMayaExporter
 	{
 	public:
 		//constructor
-		MaterialSet(){
-			//create a default material
-			m_pDefaultMat = new Material();
-			m_pDefaultMat->m_type = MT_LAMBERT;
-			m_pDefaultMat->m_name = "defaultLambert";
-			m_pDefaultMat->m_ambient = MColor(0,0,0,1);
-			m_pDefaultMat->m_emissive = MColor(0,0,0,1);
-			m_pDefaultMat->m_diffuse = MColor(0.5,0.5,0.5,1);
-		};
+		MaterialSet(){};
 		//destructor
 		~MaterialSet(){
 			clear();
-			if (m_pDefaultMat)
-				delete m_pDefaultMat;
 		}
 		//clear
 		void clear(){
@@ -55,11 +45,6 @@ namespace OgreMayaExporter
 			}
 			return NULL;
 		};
-		//get default material
-		Material* getDefaultMaterial()
-		{
-			return m_pDefaultMat;
-		};
 		//get material set
 		static MaterialSet& getSingleton(){
 			assert(ms_Singleton);  
@@ -87,7 +72,6 @@ namespace OgreMayaExporter
 
 	protected:
 		std::vector<Material*> m_materials;
-		Material* m_pDefaultMat;
 	};
 
 	template<> MaterialSet* Singleton<MaterialSet>::ms_Singleton = 0;
