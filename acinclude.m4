@@ -158,19 +158,54 @@ AC_DEFUN([OGRE_USE_STLPORT],
  AC_SUBST(STLPORT_LIBS)
 ])
 
+AC_DEFUN([OGRE_GET_CONFIG_TOOLKIT],
+[OGRE_CFGTK=cli
+ AC_ARG_WITH(cfgtk, 
+             AC_HELP_STRING([--with-cfgtk=TOOLKIT],
+                            [the toolkit for the config gui, currently cli or gtk]),
+             OGRE_CFGTK=$withval,
+             OGRE_CFGTK=cli)
+
+ 
+  CFGTK_DEPS_CFLAGS=""
+  CFGTK_DEPS_LIBS=""
+
+  dnl Do the extra checks per type here
+  case $OGRE_CFGTK in 
+    gtk)
+      PKG_CHECK_MODULES(CFGTK_DEPS, gtkmm-2.4 libglademm-2.4);;
+  esac
+
+  AC_SUBST(CFGTK_DEPS_CFLAGS)
+  AC_SUBST(CFGTK_DEPS_LIBS)
+  AC_SUBST(OGRE_CFGTK)
+])
+
 AC_DEFUN([OGRE_GET_PLATFORM],
 [OGRE_PLATFORM=GLX
  AC_ARG_WITH(platform, 
              AC_HELP_STRING([--with-platform=PLATFORM],
-                            [the platform to build, currently GLX or Win32]),
+                            [the platform to build, currently SDL, GLX, Win32 or gtk]),
              OGRE_PLATFORM=$withval,
              OGRE_PLATFORM=GLX)
+
+ 
+  if test ! -d ${srcdir}/PlatformManagers/$OGRE_PLATFORM; then
+    OGRE_PLATFORM=SDL
+  fi
 
   PLATFORM_CFLAGS=""
   PLATFORM_LIBS=""
 
   dnl Do the extra checks per type here
   case $OGRE_PLATFORM in 
+    SDL)
+      AM_PATH_SDL(1.2.6,,[AC_MSG_ERROR("--with-platform: SDL > 1.2.6 not found")])
+      PLATFORM_CFLAGS=$SDL_CFLAGS
+      PLATFORM_LIBS=$SDL_LIBS
+      ;;
+    gtk)
+      PKG_CHECK_MODULES(PLATFORM, gtkglextmm-1.0 libglademm-2.4);;
     GLX)
       AC_CHECK_HEADERS([X11/Intrinsic.h],, [AC_MSG_ERROR("libxt headers not found")])
       AC_CHECK_HEADERS([X11/Xaw/Command.h],, [AC_MSG_ERROR("libxaw headers not found")])
@@ -193,7 +228,7 @@ AC_DEFUN([OGRE_GET_GLSUPPORT],
 [OGRE_GLSUPPORT=none
  AC_ARG_WITH(gl-support, 
              AC_HELP_STRING([--with-gl-support=PLATFORM],
-                            [ The GLsupport to build (GLX or Win32). Defaults to the platform. Only set this if you know what you are doing. Use --with-platform otherwise.]),
+                            [ The GLsupport to build (SDL, GLX, Win32 or gtk). Defaults to the platform. Only set this if you know what you are doing. Use --with-platform otherwise.]),
              OGRE_GLSUPPORT=$withval,
              OGRE_GLSUPPORT=none)
 
@@ -205,12 +240,22 @@ AC_DEFUN([OGRE_GET_GLSUPPORT],
     # Uppercase/lowercase
     OGRE_GLSUPPORT=win32
   fi
+  if test ! -d ${srcdir}/RenderSystems/GL/src/$OGRE_GLSUPPORT; then
+    OGRE_GLSUPPORT=SDL
+  fi
 
   GLSUPPORT_CFLAGS=""
   GLSUPPORT_LIBS=""
 
   dnl Do the extra checks per type here
   case $OGRE_GLSUPPORT in 
+    SDL) AM_PATH_SDL(1.2.6,,[AC_MSG_ERROR("--with-gl-support: SDL > 1.2.6 not found")])
+      GLSUPPORT_CFLAGS=$SDL_CFLAGS
+      GLSUPPORT_LIBS=$SDL_LIBS;;
+    gtk) 
+    	PKG_CHECK_MODULES(GLSUPPORT, gtkglextmm-1.0)
+    	GLSUPPORT_LIBS="$GLSUPPORT_LIBS"
+    ;;
     GLX)
 	GLSUPPORT_CFLAGS="-I/usr/X11R6/include"
 	GLSUPPORT_LIBS="-L/usr/X11R6/lib -lX11 -lXext -lGL -lXrandr"
@@ -224,8 +269,10 @@ AC_DEFUN([OGRE_GET_GLSUPPORT],
   AC_SUBST(GLSUPPORT_CFLAGS)
   AC_SUBST(GLSUPPORT_LIBS)
   AC_SUBST(OGRE_GLSUPPORT)
-  AC_CONFIG_FILES([RenderSystems/GL/src/GLX/Makefile
-                   RenderSystems/GL/src/win32/Makefile])
+  AC_CONFIG_FILES([RenderSystems/GL/src/gtk/Makefile
+                   RenderSystems/GL/src/SDL/Makefile
+		   RenderSystems/GL/src/GLX/Makefile
+		   RenderSystems/GL/src/win32/Makefile])
 ])
 
 AC_DEFUN([OGRE_SETUP_FOR_TARGET],
@@ -345,7 +392,6 @@ AC_DEFUN([OGRE_CHECK_DEVIL],
               [build_il=$enableval],
               [build_il=yes])
 
-
 AM_CONDITIONAL(USE_DEVIL, test x$build_il = xyes)
 
 if test "x$build_il" = "xyes" ; then
@@ -365,34 +411,6 @@ fi
 
 
 ])
-
-AC_DEFUN([OGRE_CHECK_FREEIMAGE],
-[AC_ARG_ENABLE(freeimage,
-              AC_HELP_STRING([--disable-freeimage],
-                             [Don't use FreeImage for image loading. This is not recommended unless you provide your own image loading codecs.]),
-              [build_freeimage=$enableval],
-              [build_freeimage=yes])
-
-
-AM_CONDITIONAL(USE_FREEIMAGE, test x$build_freeimage = xyes)
-
-if test "x$build_freeimage" = "xyes" ; then
-	AC_CHECK_LIB(freeimage, FreeImage_Load,,AC_MSG_ERROR([
-****************************************************************
-* You do not have FreeImage installed.  This is required.      *
-* You may find it at http://freeimage.sourceforge.net/.        *
-* Note: You can also provide --disable-freeimage to the build  *
-* process to build without it. This is an advanced option      *
-* useful only if you provide your own image loading codecs.    *
-****************************************************************]))
-	AC_DEFINE([OGRE_NO_FREEIMAGE], [0], [Build freeimage])
-else
-	AC_DEFINE([OGRE_NO_FREEIMAGE], [1], [Build freeimage])
-fi
-
-
-])
-
 
 
 AC_DEFUN([OGRE_CHECK_PIC],
@@ -471,37 +489,4 @@ AC_MSG_CHECKING([whether to use threaded resource loading])
         ;;
     esac
     AC_SUBST(OGRE_THREAD_LIBS)
-])
-
-AC_DEFUN([OGRE_BUILD_DEMOS], [
-    AC_ARG_ENABLE(ogre_demos,
-        AC_HELP_STRING([--disable-ogre-demos], 
-            [Do not build Ogre demos (CEGUI Renderer - if enabled/disabled, is not affected by this]),
-            [build_ogre_demos=$enableval], [build_ogre_demos=yes])
-
-    if test "x$build_ogre_demos" = "xyes" ; then
-        PKG_CHECK_MODULES(OIS, OIS >= 0.6.0, [ois_found=yes],[ois_found=no])
-        AC_SUBST(OIS_CFLAGS)
-        AC_SUBST(OIS_LIBS)
-
-        if test "x$ois_found" = "xyes" ; then
-           ogre_demos_build=yes
-           AC_MSG_NOTICE([*** Ogre Demos will be built ***])
-        else
-          ogre_demos_build=no
-          AC_MSG_NOTICE([
-****************************************************************
-* You do not have OIS installed.  This is required to build    *
-* Ogre demos. You may find it at:                              *
-* http://www.sourceforge.net/projects/wgois.                   *
-* If you do not want to build the demos, you can safely ignore *
-* this.                                                        *
-****************************************************************])
-        fi
-    else
-        ogre_demos_build=no
-        AC_MSG_NOTICE([*** Building of Ogre demos disabled ***])
-    fi
-
-    AM_CONDITIONAL([OGRE_BUILDING_DEMOS], [test x$ogre_demos_build = xyes])
 ])

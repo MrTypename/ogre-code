@@ -24,7 +24,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 */
 #include "OgreStableHeaders.h"
 #include "OgreDefaultHardwareBufferManager.h"
-#include "OgreAlignedAllocator.h"
 
 namespace Ogre {
 
@@ -32,13 +31,12 @@ namespace Ogre {
 		HardwareBuffer::Usage usage)
         : HardwareVertexBuffer(vertexSize, numVertices, usage, true, false) // always software, never shadowed
 	{
-        // Allocate aligned memory for better SIMD processing friendly.
-        mpData = static_cast<unsigned char*>(AlignedMemory::allocate(mSizeInBytes));
+		mpData = new unsigned char[mSizeInBytes];
 	}
 	//-----------------------------------------------------------------------
     DefaultHardwareVertexBuffer::~DefaultHardwareVertexBuffer()
 	{
-		AlignedMemory::deallocate(mpData);
+		delete [] mpData;
 	}
 	//-----------------------------------------------------------------------
     void* DefaultHardwareVertexBuffer::lockImpl(size_t offset, size_t length, LockOptions options)

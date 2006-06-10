@@ -37,7 +37,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreAnimation.h"
 #include "OgreAnimationState.h"
 #include "OgreAnimationTrack.h"
-#include "OgreOptimisedUtil.h"
 
 namespace Ogre {
     //-----------------------------------------------------------------------
@@ -1551,23 +1550,16 @@ namespace Ogre {
         return getLodLevel(lodIndex).edgeData;
     }
     //---------------------------------------------------------------------
-    void Mesh::prepareMatricesForVertexBlend(const Matrix4** blendMatrices,
-        const Matrix4* boneMatrices, const IndexMap& indexMap)
-    {
-        assert(indexMap.size() <= 256);
-        IndexMap::const_iterator it, itend;
-        itend = indexMap.end();
-        for (it = indexMap.begin(); it != itend; ++it)
-        {
-            *blendMatrices++ = boneMatrices + *it;
-        }
-    }
-    //---------------------------------------------------------------------
     void Mesh::softwareVertexBlend(const VertexData* sourceVertexData,
-        const VertexData* targetVertexData,
-        const Matrix4* const* blendMatrices, size_t numMatrices,
+        const VertexData* targetVertexData, const Matrix4* pMatrices,
+        const unsigned short* pIndexMap,
         bool blendNormals)
     {
+        // Source vectors
+        Vector3 sourceVec, sourceNorm;
+        // Accumulation vectors
+        Vector3 accumVecPos, accumVecNorm;
+
         float *pSrcPos = 0;
         float *pSrcNorm = 0;
         float *pDestPos = 0;
@@ -1654,6 +1646,9 @@ namespace Ogre {
         srcElemBlendWeights->baseVertexPointerToElement(pBuffer, &pBlendWeight);
         unsigned short numWeightsPerVertex =
             VertexElement::getTypeCount(srcElemBlendWeights->getType());
+        // Adjust blend info strides, since it's specific
+        blendIdxStride -= numWeightsPerVertex * sizeof(*pBlendIdx);
+        blendWeightStride -= numWeightsPerVertex * sizeof(*pBlendWeight);
 
 
         // Lock destination buffers for writing
@@ -1673,17 +1668,108 @@ namespace Ogre {
             destElemNorm->baseVertexPointerToElement(pBuffer, &pDestNorm);
         }
 
-        OptimisedUtil::getImplementation()->softwareVertexSkinning(
-            pSrcPos, pDestPos,
-            pSrcNorm, pDestNorm,
-            pBlendWeight, pBlendIdx,
-            blendMatrices,
-            srcPosStride, destPosStride,
-            srcNormStride, destNormStride,
-            blendWeightStride, blendIdxStride,
-            numWeightsPerVertex,
-            targetVertexData->vertexCount);
+        // Loop per vertex
+        for (size_t vertIdx = 0; vertIdx < targetVertexData->vertexCount; ++vertIdx)
+        {
+            // Load source vertex elements
+            sourceVec.x = pSrcPos[0];
+            sourceVec.y = pSrcPos[1];
+            sourceVec.z = pSrcPos[2];
 
+            if (includeNormals)
+            {
+                sourceNorm.x = pSrcNorm[0];
+                sourceNorm.y = pSrcNorm[1];
+                sourceNorm.z = pSrcNorm[2];
+            }
+
+            // Load accumulators
+            accumVecPos = Vector3::ZERO;
+            accumVecNorm = Vector3::ZERO;
+
+            // Loop per blend weight
+            for (unsigned short blendIdx = 0;
+                blendIdx < numWeightsPerVertex; ++blendIdx)
+            {
+                // Blend by multiplying source by blend matrix and scaling by weight
+                // Add to accumulator
+                // NB weights must be normalised!!
+                Real weight = *pBlendWeight;
+                if (weight)
+                {
+                    // Blend position, use 3x4 matrix
+                    const Matrix4& mat = pMatrices[pIndexMap[*pBlendIdx]];
+                    accumVecPos.x +=
+                        (mat[0][0] * sourceVec.x +
+                         mat[0][1] * sourceVec.y +
+                         mat[0][2] * sourceVec.z +
+                         mat[0][3])
+                         * weight;
+                    accumVecPos.y +=
+                        (mat[1][0] * sourceVec.x +
+                         mat[1][1] * sourceVec.y +
+                         mat[1][2] * sourceVec.z +
+                         mat[1][3])
+                         * weight;
+                    accumVecPos.z +=
+                        (mat[2][0] * sourceVec.x +
+                         mat[2][1] * sourceVec.y +
+                         mat[2][2] * sourceVec.z +
+                         mat[2][3])
+                         * weight;
+                    if (includeNormals)
+                    {
+                        // Blend normal
+                        // We should blend by inverse transpose here, but because we're assuming the 3x3
+                        // aspect of the matrix is orthogonal (no non-uniform scaling), the inverse transpose
+                        // is equal to the main 3x3 matrix
+                        // Note because it's a normal we just extract the rotational part, saves us renormalising here
+                        accumVecNorm.x +=
+                            (mat[0][0] * sourceNorm.x +
+                             mat[0][1] * sourceNorm.y +
+                             mat[0][2] * sourceNorm.z)
+                             * weight;
+                        accumVecNorm.y +=
+                            (mat[1][0] * sourceNorm.x +
+                             mat[1][1] * sourceNorm.y +
+                             mat[1][2] * sourceNorm.z)
+                            * weight;
+                        accumVecNorm.z +=
+                            (mat[2][0] * sourceNorm.x +
+                             mat[2][1] * sourceNorm.y +
+                             mat[2][2] * sourceNorm.z)
+                            * weight;
+                    }
+
+                }
+                ++pBlendWeight;
+                ++pBlendIdx;
+            }
+
+
+            // Stored blended vertex in hardware buffer
+            pDestPos[0] = accumVecPos.x;
+            pDestPos[1] = accumVecPos.y;
+            pDestPos[2] = accumVecPos.z;
+
+            // Stored blended vertex in temp buffer
+            if (includeNormals)
+            {
+                // Normalise
+                accumVecNorm.normalise();
+                pDestNorm[0] = accumVecNorm.x;
+                pDestNorm[1] = accumVecNorm.y;
+                pDestNorm[2] = accumVecNorm.z;
+                pSrcNorm = reinterpret_cast<float*>(reinterpret_cast<char*>(pSrcNorm) + srcNormStride);
+                pDestNorm = reinterpret_cast<float*>(reinterpret_cast<char*>(pDestNorm) + destNormStride);
+            }
+
+            // Advance pointers
+            pSrcPos = reinterpret_cast<float*>(reinterpret_cast<char*>(pSrcPos) + srcPosStride);
+            pDestPos = reinterpret_cast<float*>(reinterpret_cast<char*>(pDestPos) + destPosStride);
+            pBlendWeight = reinterpret_cast<float*>(reinterpret_cast<char*>(pBlendWeight) + blendWeightStride);
+            pBlendIdx += blendIdxStride;
+        }
         // Unlock source buffers
         srcPosBuf->unlock();
         srcIdxBuf->unlock();
@@ -1722,10 +1808,18 @@ namespace Ogre {
 			"Positions must be in a buffer on their own for morphing");
 		float* pdst = static_cast<float*>(
 			destBuf->lock(HardwareBuffer::HBL_DISCARD));
-
-        OptimisedUtil::getImplementation()->softwareVertexMorph(
-            t, pb1, pb2, pdst,
-            targetVertexData->vertexCount);
+		for (size_t i = 0; i < targetVertexData->vertexCount; ++i)
+		{
+			// x
+			*pdst++ = *pb1 + t*(*pb2 - *pb1) ;
+			++pb1; ++pb2;
+			// y
+			*pdst++ = *pb1 + t*(*pb2 - *pb1) ;
+			++pb1; ++pb2;
+			// z
+			*pdst++ = *pb1 + t*(*pb2 - *pb1) ;
+			++pb1; ++pb2;
+		}
 
 		destBuf->unlock();
 		b1->unlock();

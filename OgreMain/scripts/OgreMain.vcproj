@@ -4,7 +4,6 @@
 	Version="7.10"
 	Name="OgreMain"
 	ProjectGUID="{35AFBABB-DF05-43DE-91A7-BB828A874015}"
-	RootNamespace="OgreMain"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -41,7 +40,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib zziplibd.lib zdll.lib freetype2110_D.lib devil.lib ilu.lib freeimaged.lib"
+				AdditionalDependencies="kernel32.lib user32.lib zziplibd.lib zdll.lib freetype2110_D.lib devil.lib ilu.lib"
 				OutputFile="$(OutDir)/OgreMain_d.dll"
 				Version="0.99"
 				LinkIncremental="2"
@@ -115,7 +114,7 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib zziplib.lib zdll.lib freetype2110.lib devil.lib  ilu.lib freeimage.lib"
+				AdditionalDependencies="kernel32.lib user32.lib zziplib.lib zdll.lib freetype2110.lib devil.lib  ilu.lib"
 				OutputFile="$(OutDir)/OgreMain.dll"
 				Version="0.99"
 				LinkIncremental="1"
@@ -161,9 +160,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm">
-			<File
-				RelativePath="..\src\OgreAlignedAllocator.cpp">
-			</File>
 			<File
 				RelativePath="..\src\OgreAnimable.cpp">
 			</File>
@@ -249,9 +245,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreCompositorSerializer.cpp">
 			</File>
 			<File
-				RelativePath="..\src\Win32\OgreConfigDialog.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreConfigFile.cpp">
 			</File>
 			<File
@@ -262,6 +255,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreControllerManager.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreCursor.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreDataStream.cpp">
@@ -283,15 +279,15 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreEntity.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="/Zm500"/>
-				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\src\Win32\OgreErrorDialog.cpp">
+				RelativePath="..\src\OgreEventDispatcher.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreEventProcessor.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreEventQueue.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreException.cpp">
@@ -310,9 +306,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreFontManager.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreFreeImageCodec.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreFrustum.cpp">
@@ -360,10 +353,19 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreImage.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreImageResampler.h">
+				RelativePath="..\src\OgreInput.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreInputEvent.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreKeyEvent.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreKeyFrame.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreKeyTarget.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreLight.cpp">
@@ -376,18 +378,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreManualObject.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="/Zm400"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="/Zm200"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\OgreMaterial.cpp">
@@ -426,28 +416,22 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreMeshSerializerImpl.cpp">
 			</File>
 			<File
+				RelativePath="..\src\OgreMouseEvent.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreMouseMotionTarget.cpp">
+			</File>
+			<File
+				RelativePath="..\src\OgreMouseTarget.cpp">
+			</File>
+			<File
 				RelativePath="..\src\OgreMovableObject.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="/Zm150"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\OgreMovablePlane.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreNode.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreOptimisedUtil.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreOptimisedUtilGeneral.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreOptimisedUtilSSE.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreOverlay.cpp">
@@ -463,12 +447,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreOverlayManager.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="/Zm300"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\OgrePanelOverlayElement.cpp">
@@ -501,16 +479,13 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgrePatchSurface.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgrePixelConversions.h">
-			</File>
-			<File
 				RelativePath="..\src\OgrePixelFormat.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgrePlane.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgrePlatformInformation.cpp">
+				RelativePath="..\src\OgrePlatformManager.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgrePose.cpp">
@@ -521,16 +496,13 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						AdditionalOptions="/Zm130"
-						UsePrecompiledHeader="1"
-						PrecompiledHeaderThrough="OgreStableHeaders.h"/>
+						UsePrecompiledHeader="1"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-						PrecompiledHeaderThrough="OgreStableHeaders.h"/>
+						UsePrecompiledHeader="1"/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -589,30 +561,12 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreRoot.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="/Zm200"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="/Zm150"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\OgreRotationSpline.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreSceneManager.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="/Zm135"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\OgreSceneManagerEnumerator.cpp">
@@ -631,9 +585,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreShadowVolumeExtrudeProgram.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreSIMDHelper.h">
 			</File>
 			<File
 				RelativePath="..\src\OgreSimpleRenderable.cpp">
@@ -658,12 +609,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreStaticGeometry.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="/Zm1000"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\OgreString.cpp">
@@ -702,7 +647,7 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreTextureUnitState.cpp">
 			</File>
 			<File
-				RelativePath="..\src\Win32\OgreTimer.cpp">
+				RelativePath="..\src\OgreTimer.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreUserDefinedObject.cpp">
@@ -723,9 +668,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreViewport.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreWindowEventUtilities.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreWireBoundingBox.cpp">
 			</File>
 			<File
@@ -740,9 +682,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\Ogre.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreAlignedAllocator.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreAnimable.h">
@@ -850,9 +789,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreConfigDialog.h">
 			</File>
 			<File
-				RelativePath="..\include\Win32\OgreConfigDialogImp.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreConfigFile.h">
 			</File>
 			<File
@@ -863,6 +799,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreControllerManager.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreCursor.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreDataStream.h">
@@ -889,7 +828,22 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreErrorDialog.h">
 			</File>
 			<File
-				RelativePath="..\include\Win32\OgreErrorDialogImp.h">
+				RelativePath="..\include\OgreEventDispatcher.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreEventFramework.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreEventListeners.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreEventProcessor.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreEventQueue.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreEventTarget.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreException.h">
@@ -914,9 +868,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreFrameListener.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreFreeImageCodec.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreFrustum.h">
@@ -970,10 +921,22 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreImageCodec.h">
 			</File>
 			<File
+				RelativePath="..\include\OgreInput.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreInputEvent.h">
+			</File>
+			<File
 				RelativePath="..\include\OgreIteratorWrappers.h">
 			</File>
 			<File
+				RelativePath="..\include\OgreKeyEvent.h">
+			</File>
+			<File
 				RelativePath="..\include\OgreKeyFrame.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreKeyTarget.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreLight.h">
@@ -1030,6 +993,15 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreMeshSerializerImpl.h">
 			</File>
 			<File
+				RelativePath="..\include\OgreMouseEvent.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreMouseMotionTarget.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreMouseTarget.h">
+			</File>
+			<File
 				RelativePath="..\include\OgreMovableObject.h">
 			</File>
 			<File
@@ -1040,9 +1012,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreNoMemoryMacros.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreOptimisedUtil.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreOverlay.h">
@@ -1117,10 +1086,13 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgrePlatform.h">
 			</File>
 			<File
-				RelativePath="..\include\OgrePlatformInformation.h">
+				RelativePath="..\include\OgrePlatformManager.h">
 			</File>
 			<File
 				RelativePath="..\include\OgrePose.h">
+			</File>
+			<File
+				RelativePath="..\include\OgrePositionTarget.h">
 			</File>
 			<File
 				RelativePath="..\include\OgrePredefinedControllers.h">
@@ -1321,9 +1293,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreTimer.h">
 			</File>
 			<File
-				RelativePath="..\include\Win32\OgreTimerImp.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreUserDefinedObject.h">
 			</File>
 			<File
@@ -1345,9 +1314,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreViewport.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreWindowEventUtilities.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreWireBoundingBox.h">
 			</File>
 			<File
@@ -1357,21 +1323,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
-			<File
-				RelativePath="..\src\Win32\ogre.ico">
-			</File>
-			<File
-				RelativePath="..\src\Win32\ogrelogo.bmp">
-			</File>
-			<File
-				RelativePath="..\src\Win32\OgreWin32Resources.rc">
-			</File>
-			<File
-				RelativePath="..\src\Win32\resource.h">
-			</File>
-			<File
-				RelativePath="..\src\Win32\winres.h">
-			</File>
 		</Filter>
 	</Files>
 	<Globals>

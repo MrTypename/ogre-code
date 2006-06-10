@@ -84,9 +84,9 @@ http://www.gnu.org/copyleft/lesser.txt
 namespace Ogre {
     // Define ogre version
     #define OGRE_VERSION_MAJOR 1
-    #define OGRE_VERSION_MINOR 3
-    #define OGRE_VERSION_PATCH 0
-    #define OGRE_VERSION_NAME "Eihort"
+    #define OGRE_VERSION_MINOR 2
+    #define OGRE_VERSION_PATCH 1
+    #define OGRE_VERSION_NAME "Dagon"
 
     #define OGRE_VERSION    ((OGRE_VERSION_MAJOR << 16) | (OGRE_VERSION_MINOR << 8) | OGRE_VERSION_PATCH)
 
@@ -200,16 +200,21 @@ namespace Ogre {
     class ColourValue;
     class ConfigDialog;
     template <typename T> class Controller;
-    template <typename T> class ControllerFunction;
+	template <typename T> class ControllerFunction;
     class ControllerManager;
     template <typename T> class ControllerValue;
-    class Degree;
+	class Cursor;
+	class Degree;
     class DynLib;
     class DynLibManager;
     class EdgeData;
     class EdgeListBuilder;
     class Entity;
     class ErrorDialog;
+	class EventDispatcher;
+	class EventProcessor;
+	class EventQueue;
+	class EventTarget;
     class ExternalTextureSourceManager;
     class Factory;
     class Font;
@@ -232,10 +237,15 @@ namespace Ogre {
 	class HighLevelGpuProgramManager;
 	class HighLevelGpuProgramFactory;
     class IndexData;
+	class InputEvent;
+    class InputReader;
     class IntersectionSceneQuery;
     class IntersectionSceneQueryListener;
     class Image;
+	class KeyEvent;
     class KeyFrame;
+	class KeyListener;
+	class KeyTarget;
     class Light;
     class Log;
     class LogManager;
@@ -255,6 +265,10 @@ namespace Ogre {
     class MeshManager;
     class MovableObject;
     class MovablePlane;
+	class MouseEvent;
+	class MouseListener;
+	class MouseMotionListener;
+	class MouseTarget;
     class Node;
 	class NodeAnimationTrack;
 	class NodeKeyFrame;
@@ -278,10 +292,11 @@ namespace Ogre {
     class Pass;
     class PatchMesh;
     class PixelBox;
+    class PlatformManager;
     class Plane;
     class PlaneBoundedVolume;
-    class Pose;
-    class PositionTarget;
+	class Pose;
+	class PositionTarget;
     class ProgressiveMesh;
     class Profile;
 	class Profiler;
