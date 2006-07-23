@@ -1,7 +1,7 @@
 \input texinfo   @c -*-texinfo-*-
 @c %**start of header
 @setfilename manual.info
-@settitle OGRE Manual v1.4.0 ('Eihort')
+@settitle OGRE Manual v1.2.2 ('Dagon')
 @c %**end of header
    
 @titlepage
@@ -1039,8 +1039,6 @@ Here are the attributes you can use in a 'texture_unit' section of a .material s
 @ref{wave_xform}
 @item
 @ref{transform}
-@item
-@ref{binding_type}
 @end itemize
 
 You can also use a nested 'texture_source' section in order to use a special add-in as a source of texture data, @xref{External Texture Sources} for details.
@@ -1126,14 +1124,6 @@ In both cases the final parameter means the following:
 @end table
 @*
 Default: none
-
-@anchor{binding_type}
-@subheading binding_type
-
-Tells this texture unit to bind to either the fragment processing unit or the vertex processing unit (for @ref{Vertex Texture Fetch}). @*@*
-
-Format: binding_type <vertex|fragment>
-Default: binding_type fragment
 
 @anchor{tex_coord_set}
 @subheading tex_coord_set
@@ -1598,13 +1588,6 @@ You can implement pose animation (blending between multiple poses based on weigh
 @end example
 Note that ALL submeshes must be assigned a material which implements this, and that if you combine skeletal animation with vertex animation (@xref{Animation}) then all techniques must be hardware accelerated for any to be.
 
-@subheading Vertex texture fetching in vertex programs
-If your vertex program makes use of @ref{Vertex Texture Fetch}, you should declare that with the 'uses_vertex_texture_fetch' directive. This is enough to tell Ogre that your program uses this feature and that hardware support for it should be checked.
-@example
-	uses_vertex_texture_fetch true
-@end example
-	
-
 @subheading Vertex Programs With Shadows
 When using shadows (@xref{Shadows}), the use of vertex programs can add some additional complexities, because Ogre can only automatically deal with everything when using the fixed-function pipeline. If you use vertex programs, and you are also using shadows, you may need to make some adjustments. @*@*
 
@@ -1881,28 +1864,6 @@ shadow_receiver_fragment_program_ref myShadowReceiverFragmentProgram
 }
 @end example
 You should pass the projected shadow coordinates from the custom vertex program. As for textures, texture unit 0 will always be the shadow texture. Any other textures which you bind in your pass will be carried across too, but will be moved up by 1 unit to make room for the shadow texture. Therefore your shadow receiver fragment program is likely to be the same as the bare lighting pass of your normal material, except that you insert an extra texture sampler at index 0, which you will use to adjust the result by (modulating diffuse and specular components).
-
-@node Vertex Texture Fetch
-@subsection Vertex Texture Fetch
-
-@subheading Introduction
-More recent generations of video card allow you to perform a read from a texture in the vertex program rather than just the fragment program, as is traditional. This allows you to, for example, read the contents of a texture and displace vertices based on the intensity of the colour contained within.@*@*
-
-@subheading Declaring the use of vertex texture fetching
-Since hardware support for vertex texture fetching is not ubiquitous, you should use the uses_vertex_texture_fetch (@xref{Vertex texture fetching in vertex programs}) directive when declaring your vertex programs which use vertex textures, so that if it is not supported, technique fallback can be enabled. This is not strictly necessary for DirectX-targetted shaders, since vertex texture fetching is only supported in vs_3_0, which can be stated as a required syntax in your shader definition, but for OpenGL (GLSL), there are cards which support GLSL but not vertex textures, so you should be explicit about your need for them.
-
-@subheading Render system texture binding differences
-Unfortunately the method for binding textures so that they are available to a vertex program is not well standardised. As at the time of writing, Shader Model 3.0 (SM3.0) hardware under DirectX9 include 4 separate sampler bindings for the purposes of vertex textures. OpenGL, on the other hand, is able to access vertex textures in GLSL (and in assembler through NV_vertex_program_3, although this is less popular), but the textures are shared with the fragment pipeline. I expect DirectX to move to the GL model with the advent of DirectX10, since a unified shader architecture implies sharing of texture resources between the two stages. As it is right now though, we're stuck with an inconsistent situation.@*@*
-
-To reflect this, you should use the @ref{binding_type} attribute in a texture unit to indicate which unit you are targetting with your texture - 'fragment' (the default) or 'vertex'. For render systems that don't have separate bindings, this actually does nothing. But for those that do, it will ensure your texture gets bound to the right processing unit.
-
-Note that whilst DirectX9 has separate bindings for the vertex and fragment pipelines, binding a texture to the vertex processing unit still uses up a 'slot' which is then not available for use in the fragment pipeline. I didn't manage to find this documented anywhere, but the nVidia samples certainly avoid binding a texture to the same index on both vertex and fragment units, and when I tried to do it, the texture did not appear correctly in the fragment unit, whilst it did as soon as I moved it into the next unit.
-
-@subheading Texture format limitations
-Again as at the time of writing, the types of texture you can use in a vertex program are limited to 1- or 4-component, full precision floating point formats. In code that equates to PF_FLOAT32_R or PF_FLOAT32_RGBA. No other formats are supported. In addition, the textures must be regular 2D textures (no cube or volume maps) and mipmapping and filtering is not supported, although you can perform filtering in your vertex program if you wish by sampling multiple times.
-
-@subheading Hardware limitations
-As at the time of writing (early Q3 2006), ATI do not support texture fetch in their current crop of cards (Radeon X1n00). nVidia do support it in both their 6n00 and 7n00 range. ATI support an alternative called 'Render to Vertex Buffer', but this is not standardised at this time and is very much different in its implementation, so cannot be considered to be a drop-in replacement. This is the case even though the Radeon X1n00 cards claim to support vs_3_0 (which requires vertex texture fetch).
 
 @include MaterialScriptCopy.inc
 

@@ -36,39 +36,42 @@ namespace Ogre {
 
     //-----------------------------------------------------------------------
     TextureUnitState::TextureUnitState(Pass* parent)
-        : mCurrentFrame(0)
-		, mAnimDuration(0)
-		, mCubic(false)
-		, mTextureType(TEX_TYPE_2D)
-		, mTextureSrcMipmaps(-1)
-		, mTextureCoordSetIndex(0)
-		, mBorderColour(ColourValue::Black)
-		, mIsBlank(true)
-		, mIsAlpha(false)
-		, mRecalcTexMatrix(false)
-		, mUMod(0)
-		, mVMod(0)
-		, mUScale(1)
-		, mVScale(1)
-		, mRotate(0)
-		, mTexModMatrix(Matrix4::IDENTITY)
-		, mMinFilter(FO_LINEAR)
-		, mMagFilter(FO_LINEAR)
-		, mMipFilter(FO_POINT)
-		, mMaxAniso(MaterialManager::getSingleton().getDefaultAnisotropy())
-		, mIsDefaultAniso(true)
-		, mIsDefaultFiltering(true)
-		, mBindingType(BT_FRAGMENT)
-		, mParent(parent)
-		, mAnimController(0)
+        : mParent(parent)
     {
-		mColourBlendMode.blendType = LBT_COLOUR;
-		mAlphaBlendMode.operation = LBX_MODULATE;
-		mAlphaBlendMode.blendType = LBT_ALPHA;
-		mAlphaBlendMode.source1 = LBS_TEXTURE;
-		mAlphaBlendMode.source2 = LBS_CURRENT;
-		setColourOperation(LBO_MODULATE);
-		setTextureAddressingMode(TAM_WRAP);
+        mIsBlank = true;
+		mIsAlpha = false;
+        colourBlendMode.blendType = LBT_COLOUR;
+        setColourOperation(LBO_MODULATE);
+        setTextureAddressingMode(TAM_WRAP);
+        mBorderColour = ColourValue::Black;
+
+        alphaBlendMode.operation = LBX_MODULATE;
+        alphaBlendMode.blendType = LBT_ALPHA;
+        alphaBlendMode.source1 = LBS_TEXTURE;
+        alphaBlendMode.source2 = LBS_CURRENT;
+		
+		//default filtering
+		mMinFilter = FO_LINEAR;
+		mMagFilter = FO_LINEAR;
+		mMipFilter = FO_POINT;
+		mMaxAniso = MaterialManager::getSingleton().getDefaultAnisotropy();
+        mIsDefaultAniso = true;
+        mIsDefaultFiltering = true;
+
+		mUMod = mVMod = 0;
+        mUScale = mVScale = 1;
+        mRotate = 0;
+        mTexModMatrix = Matrix4::IDENTITY;
+        mRecalcTexMatrix = false;
+
+        mAnimDuration = 0;
+        mAnimController = 0;
+        mCubic = false;
+        mTextureType = TEX_TYPE_2D;
+		mTextureSrcMipmaps = -1;
+        mTextureCoordSetIndex = 0;
+
+        mCurrentFrame = 0;
 
         mParent->_dirtyHash();
 
@@ -84,32 +87,39 @@ namespace Ogre {
 
     //-----------------------------------------------------------------------
     TextureUnitState::TextureUnitState( Pass* parent, const String& texName, unsigned int texCoordSet)
-		: mCurrentFrame(0)
-		, mAnimDuration(0)
-		, mCubic(false)
-		, mTextureType(TEX_TYPE_2D)
-		, mTextureSrcMipmaps(-1)
-		, mTextureCoordSetIndex(0)
-		, mBorderColour(ColourValue::Black)
-		, mIsBlank(true)
-		, mIsAlpha(false)
-		, mRecalcTexMatrix(false)
-		, mUMod(0)
-		, mVMod(0)
-		, mUScale(1)
-		, mVScale(1)
-		, mRotate(0)
-		, mTexModMatrix(Matrix4::IDENTITY)
-		, mMinFilter(FO_LINEAR)
-		, mMagFilter(FO_LINEAR)
-		, mMipFilter(FO_POINT)
-		, mMaxAniso(MaterialManager::getSingleton().getDefaultAnisotropy())
-		, mIsDefaultAniso(true)
-		, mIsDefaultFiltering(true)
-		, mBindingType(BT_FRAGMENT)
-		, mParent(parent)
-		, mAnimController(0)
+        :mParent(parent)
     {
+        mIsBlank = true;
+		mIsAlpha = false;
+        colourBlendMode.blendType = LBT_COLOUR;
+        setColourOperation(LBO_MODULATE);
+        setTextureAddressingMode(TAM_WRAP);
+        mBorderColour = ColourValue::Black;
+
+        alphaBlendMode.operation = LBX_MODULATE;
+        alphaBlendMode.blendType = LBT_ALPHA;
+        alphaBlendMode.source1 = LBS_TEXTURE;
+        alphaBlendMode.source2 = LBS_CURRENT;
+
+		//default filtering && anisotropy
+		mMinFilter = FO_LINEAR;
+		mMagFilter = FO_LINEAR;
+		mMipFilter = FO_POINT;
+		mMaxAniso = MaterialManager::getSingleton().getDefaultAnisotropy();
+        mIsDefaultAniso = true;
+        mIsDefaultFiltering = true;
+
+		mUMod = mVMod = 0;
+        mUScale = mVScale = 1;
+        mRotate = 0;
+        mAnimDuration = 0;
+        mAnimController = 0;
+        mTexModMatrix = Matrix4::IDENTITY;
+        mRecalcTexMatrix = false;
+
+        mCubic = false;
+        mTextureType = TEX_TYPE_2D;
+        mTextureCoordSetIndex = 0;
 
         setTextureName(texName);
         setTextureCoordSet(texCoordSet);
@@ -134,7 +144,6 @@ namespace Ogre {
         memcpy( this, &oth, (uchar *)(&oth.mFrames) - (uchar *)(&oth) );
         // copy complex members
         mFrames  = oth.mFrames;
-		mFramePtrs = oth.mFramePtrs;
         mName    = oth.mName;
         mEffects = oth.mEffects;
 
@@ -176,10 +185,7 @@ namespace Ogre {
         else
         {
             mFrames.resize(1);
-			mFramePtrs.resize(1);
             mFrames[0] = name;
-			mFramePtrs[0].setNull();
-			// defer load until used, so don't grab pointer yet
             mCurrentFrame = 0;
             mCubic = false;
             mTextureType = texType;
@@ -202,17 +208,6 @@ namespace Ogre {
         }
 
     }
-	//-----------------------------------------------------------------------
-	void TextureUnitState::setBindingType(TextureUnitState::BindingType bt)
-	{
-		mBindingType = bt;
-
-	}
-	//-----------------------------------------------------------------------
-	TextureUnitState::BindingType TextureUnitState::getBindingType(void) const
-	{
-		return mBindingType;
-	}
     //-----------------------------------------------------------------------
     void TextureUnitState::setCubicTextureName( const String& name, bool forUVW)
     {
@@ -244,8 +239,6 @@ namespace Ogre {
     void TextureUnitState::setCubicTextureName(const String* const names, bool forUVW)
     {
         mFrames.resize(forUVW ? 1 : 6);
-		// resize pointers, but don't populate until asked for
-        mFramePtrs.resize(forUVW ? 1 : 6);
         mCurrentFrame = 0;
         mCubic = true;
         mTextureType = forUVW ? TEX_TYPE_CUBE_MAP : TEX_TYPE_2D;
@@ -253,7 +246,6 @@ namespace Ogre {
         for (unsigned int i = 0; i < mFrames.size(); ++i)
         {
             mFrames[i] = names[i];
-			mFramePtrs[i].setNull();
         }
         // Tell parent we need recompiling, will cause reload too
         mParent->_notifyNeedsRecompile();
@@ -281,8 +273,6 @@ namespace Ogre {
         if (frameNumber < mFrames.size())
         {
             mFrames[frameNumber] = name;
-			// reset pointer (don't populate until requested)
-			mFramePtrs[frameNumber].setNull();	
 
             if (isLoaded())
             {
@@ -302,8 +292,6 @@ namespace Ogre {
     void TextureUnitState::addFrameTextureName(const String& name)
     {
         mFrames.push_back(name);
-		// Add blank pointer, load on demand
-		mFramePtrs.push_back(TexturePtr());
 
         // Load immediately if Material loaded
         if (isLoaded())
@@ -320,7 +308,6 @@ namespace Ogre {
         if (frameNumber < mFrames.size())
         {
             mFrames.erase(mFrames.begin() + frameNumber);
-            mFramePtrs.erase(mFramePtrs.begin() + frameNumber);
 
             if (mFrames.empty())
                 mIsBlank = true;
@@ -350,8 +337,6 @@ namespace Ogre {
         ext = name.substr(pos);
 
         mFrames.resize(numFrames);
-		// resize pointers, but don't populate until needed
-        mFramePtrs.resize(numFrames);
         mAnimDuration = duration;
         mCurrentFrame = 0;
         mCubic = false;
@@ -361,7 +346,6 @@ namespace Ogre {
 			StringUtil::StrStreamType str;
             str << baseName << "_" << i << ext;
             mFrames[i] = str.str();
-			mFramePtrs[i].setNull();
         }
 
         // Load immediately if Material loaded
@@ -377,8 +361,6 @@ namespace Ogre {
     void TextureUnitState::setAnimatedTextureName(const String* const names, unsigned int numFrames, Real duration)
     {
         mFrames.resize(numFrames);
-		// resize pointers, but don't populate until needed
-        mFramePtrs.resize(numFrames);
         mAnimDuration = duration;
         mCurrentFrame = 0;
         mCubic = false;
@@ -386,7 +368,6 @@ namespace Ogre {
         for (unsigned int i = 0; i < mFrames.size(); ++i)
         {
             mFrames[i] = names[i];
-			mFramePtrs[i].setNull();
         }
 
         // Load immediately if Material loaded
@@ -400,13 +381,21 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     std::pair< uint, uint > TextureUnitState::getTextureDimensions( unsigned int frame ) const
     {
-		
-		TexturePtr tex = _getTexturePtr(frame);
-	    if (tex.isNull())
-		    OGRE_EXCEPT( Exception::ERR_ITEM_NOT_FOUND, "Could not find texture " + mFrames[ frame ],
-		    "TextureUnitState::getTextureDimensions" );
+        if (frame < mFrames.size())
+        {
+            TexturePtr tex = TextureManager::getSingleton().getByName( mFrames[ frame ] );
 
-		return std::pair< uint, uint >( tex->getWidth(), tex->getHeight() );
+		    if (tex.isNull())
+			    OGRE_EXCEPT( Exception::ERR_ITEM_NOT_FOUND, "Could not find texture " + mFrames[ frame ],
+				    "TextureUnitState::getTextureDimensions" );
+            return std::pair< uint, uint >( tex->getWidth(), tex->getHeight() );
+        }
+        else // frame exceeds the number of frames stored
+        {
+		    OGRE_EXCEPT( Exception::ERR_ITEM_NOT_FOUND, "frame number exceeded number of stored frames" ,
+			    "TextureUnitState::getTextureDimensions" );
+        }
+
     }
     //-----------------------------------------------------------------------
     void TextureUnitState::setCurrentFrame(unsigned int frameNumber)
@@ -463,12 +452,12 @@ namespace Ogre {
         const ColourValue& arg2,
         Real manualBlend)
     {
-        mColourBlendMode.operation = op;
-        mColourBlendMode.source1 = source1;
-        mColourBlendMode.source2 = source2;
-        mColourBlendMode.colourArg1 = arg1;
-        mColourBlendMode.colourArg2 = arg2;
-        mColourBlendMode.factor = manualBlend;
+        colourBlendMode.operation = op;
+        colourBlendMode.source1 = source1;
+        colourBlendMode.source2 = source2;
+        colourBlendMode.colourArg1 = arg1;
+        colourBlendMode.colourArg2 = arg2;
+        colourBlendMode.factor = manualBlend;
     }
     //-----------------------------------------------------------------------
     void TextureUnitState::setColourOperation(LayerBlendOperation op)
@@ -499,8 +488,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void TextureUnitState::setColourOpMultipassFallback(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor)
     {
-        mColourBlendFallbackSrc = sourceFactor;
-        mColourBlendFallbackDest = destFactor;
+        colourBlendFallbackSrc = sourceFactor;
+        colourBlendFallbackDest = destFactor;
     }
     //-----------------------------------------------------------------------
     void TextureUnitState::setAlphaOperation(LayerBlendOperationEx op,
@@ -510,12 +499,12 @@ namespace Ogre {
         Real arg2,
         Real manualBlend)
     {
-        mAlphaBlendMode.operation = op;
-        mAlphaBlendMode.source1 = source1;
-        mAlphaBlendMode.source2 = source2;
-        mAlphaBlendMode.alphaArg1 = arg1;
-        mAlphaBlendMode.alphaArg2 = arg2;
-        mAlphaBlendMode.factor = manualBlend;
+        alphaBlendMode.operation = op;
+        alphaBlendMode.source1 = source1;
+        alphaBlendMode.source2 = source2;
+        alphaBlendMode.alphaArg1 = arg1;
+        alphaBlendMode.alphaArg2 = arg2;
+        alphaBlendMode.factor = manualBlend;
     }
     //-----------------------------------------------------------------------
     void TextureUnitState::addEffect(TextureEffect& effect)
@@ -581,22 +570,22 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     SceneBlendFactor TextureUnitState::getColourBlendFallbackSrc(void) const
     {
-        return mColourBlendFallbackSrc;
+        return colourBlendFallbackSrc;
     }
     //-----------------------------------------------------------------------
     SceneBlendFactor TextureUnitState::getColourBlendFallbackDest(void) const
     {
-        return mColourBlendFallbackDest;
+        return colourBlendFallbackDest;
     }
     //-----------------------------------------------------------------------
     const LayerBlendModeEx& TextureUnitState::getColourBlendMode(void) const
     {
-        return mColourBlendMode;
+        return colourBlendMode;
     }
     //-----------------------------------------------------------------------
     const LayerBlendModeEx& TextureUnitState::getAlphaBlendMode(void) const
     {
-        return mAlphaBlendMode;
+        return alphaBlendMode;
     }
     //-----------------------------------------------------------------------
     const TextureUnitState::UVWAddressingMode& 
@@ -851,7 +840,23 @@ namespace Ogre {
         // Load textures
         for (unsigned int i = 0; i < mFrames.size(); ++i)
         {
-			ensureLoaded(i);
+            if (!mFrames[i].empty())
+            {
+                // Ensure texture is loaded, specified number of mipmaps and priority
+                try {
+
+                    TextureManager::getSingleton().load(mFrames[i], 
+						mParent->getResourceGroup(), mTextureType, mTextureSrcMipmaps, 1.0f, mIsAlpha);
+                    mIsBlank = false;
+                }
+                catch (Exception &e) {
+                    String msg;
+                    msg = msg + "Error loading texture " + mFrames[i]  + 
+					". Texture layer will be blank. Loading the texture failed with the following exception: "+e.getFullDescription();
+                    LogManager::getSingleton().logMessage(msg);
+                    mIsBlank = true;
+                }
+            }
         }
         // Animation controller
         if (mAnimDuration != 0)
@@ -865,60 +870,6 @@ namespace Ogre {
         }
 
     }
-    //-----------------------------------------------------------------------
-	const TexturePtr& TextureUnitState::_getTexturePtr(void) const
-	{
-		return _getTexturePtr(mCurrentFrame);
-	}
-    //-----------------------------------------------------------------------
-	const TexturePtr& TextureUnitState::_getTexturePtr(size_t frame) const
-	{
-        if (frame < mFrames.size())
-        {
-			ensureLoaded(frame);
-			return mFramePtrs[frame];
-		}
-		else
-		{
-			// Silent fail with empty texture for internal method
-			static TexturePtr nullTexPtr;
-			return nullTexPtr;
-		}
-		
-	}
-    //-----------------------------------------------------------------------
-	void TextureUnitState::ensureLoaded(size_t frame) const
-	{
-		if (!mFrames[frame].empty())
-		{
-			// Ensure texture is loaded, specified number of mipmaps and
-			// priority
-			if (mFramePtrs[frame].isNull())
-			{
-				try {
-					mFramePtrs[frame] = 
-						TextureManager::getSingleton().load(mFrames[frame], 
-							mParent->getResourceGroup(), mTextureType, 
-							mTextureSrcMipmaps, 1.0f, mIsAlpha);
-					mIsBlank = false;
-				}
-				catch (Exception &e) {
-					String msg;
-					msg = msg + "Error loading texture " + mFrames[frame]  + 
-						". Texture layer will be blank. Loading the texture "
-						"failed with the following exception: " 
-						+ e.getFullDescription();
-					LogManager::getSingleton().logMessage(msg);
-					mIsBlank = true;
-				}	
-			}
-			else
-			{
-				// Just ensure existing pointer is loaded
-				mFramePtrs[frame]->load();
-			}
-		}
-	}
     //-----------------------------------------------------------------------
     void TextureUnitState::createAnimController(void)
     {

@@ -514,44 +514,22 @@ namespace Ogre
 
 
         /**
-          Sets the texture to bind to a given texture unit.
+          Sets the status of a single texture stage.
 
-          User processes would not normally call this direct unless rendering
-          primitives themselves.
+          Sets the details of a texture stage, to be used for all primitives
+          rendered afterwards. User processes would
+          not normally call this direct unless rendering
+          primitives themselves - the SubEntity class
+          is designed to manage materials for objects.
+          Note that this method is called by _setMaterial.
 
-          @param unit The index of the texture unit to modify. Multitexturing 
-		  	hardware can support multiple units (see 
-			RenderSystemCapabilites::getNumTextureUnits)
-          @param enabled Boolean to turn the unit on/off
-          @param texPtr Pointer to the texture to use.
-         */
-        virtual void _setTexture(size_t unit, bool enabled, 
-			const TexturePtr &texPtr) = 0;
-        /**
-          Sets the texture to bind to a given texture unit.
-
-          User processes would not normally call this direct unless rendering
-          primitives themselves.
-
-          @param unit The index of the texture unit to modify. Multitexturing 
-		  	hardware can support multiple units (see 
-			RenderSystemCapabilites::getNumTextureUnits)
+          @param unit The index of the texture unit to modify. Multitexturing hardware
+          can support multiple units (see RenderSystemCapabilites::numTextureUnits)
           @param enabled Boolean to turn the unit on/off
           @param texname The name of the texture to use - this should have
               already been loaded with TextureManager::load.
          */
-        virtual void _setTexture(size_t unit, bool enabled, const String &texname);
-
-		/** Binds a texture to a vertex sampler.
-		@remarks
-			Not all rendersystems support separate vertex samplers. For those that
-			do, you can set a texture for them, separate to the regular texture
-			samplers, using this method. For those that don't, you should use the
-			regular texture samplers which are shared between the vertex and
-			fragment units; calling this method will throw an exception.
-			@see RenderSystemCapabilites::getVertexTextureUnitsShared
-		*/
-		virtual void _setVertexTexture(size_t unit, const TexturePtr& tex);
+        virtual void _setTexture(size_t unit, bool enabled, const String &texname) = 0;
 
         /**
           Sets the texture coordinate set to use for a texture unit.

@@ -156,7 +156,7 @@ namespace Ogre {
         size_t imageMips = images[0]->getNumMipmaps();
 
 		if(imageMips > 0) {
-			mNumMipmaps = mNumRequestedMipmaps = images[0]->getNumMipmaps();
+			mNumMipmaps = images[0]->getNumMipmaps();
 			// Disable flag for auto mip generation
 			mUsage &= ~TU_AUTOMIPMAP;
 		}

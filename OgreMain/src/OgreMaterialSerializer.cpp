@@ -767,24 +767,6 @@ namespace Ogre
 		context.textureUnit->setTextureName(vecparams[0], tt, mips, isAlpha);
         return false;
     }
-	//---------------------------------------------------------------------
-	bool parseBindingType(String& params, MaterialScriptContext& context)
-	{
-		if (params == "fragment")
-		{
-			context.textureUnit->setBindingType(TextureUnitState::BT_FRAGMENT);
-		}
-		else if (params == "vertex")
-		{
-			context.textureUnit->setBindingType(TextureUnitState::BT_VERTEX);
-		}
-		else
-		{
-			logParseError("Invalid binding_type option - "+params+".",
-				context);
-		}
-		return false;
-	}
     //-----------------------------------------------------------------------
     bool parseAnimTexture(String& params, MaterialScriptContext& context)
     {
@@ -2241,7 +2223,6 @@ namespace Ogre
         context.programDef->supportsSkeletalAnimation = false;
 		context.programDef->supportsMorphAnimation = false;
 		context.programDef->supportsPoseAnimation = 0;
-		context.programDef->usesVertexTextureFetch = false;
 
 		// Get name and language code
 		StringVector vecparams = StringUtil::split(params, " \t");
@@ -2272,7 +2253,6 @@ namespace Ogre
 		context.programDef->supportsSkeletalAnimation = false;
 		context.programDef->supportsMorphAnimation = false;
 		context.programDef->supportsPoseAnimation = 0;
-		context.programDef->usesVertexTextureFetch = false;
 
 		// Get name and language code
 		StringVector vecparams = StringUtil::split(params, " \t");
@@ -2324,15 +2304,6 @@ namespace Ogre
 		// Source filename, preserve case
 		context.programDef->supportsPoseAnimation
 			= StringConverter::parseInt(params);
-
-		return false;
-	}
-	//-----------------------------------------------------------------------
-	bool parseProgramVertexTextureFetch(String& params, MaterialScriptContext& context)
-	{
-		// Source filename, preserve case
-		context.programDef->usesVertexTextureFetch
-			= StringConverter::parseBool(params);
 
 		return false;
 	}
@@ -2509,7 +2480,6 @@ namespace Ogre
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("texture", (ATTRIBUTE_PARSER)parseTexture));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("anim_texture", (ATTRIBUTE_PARSER)parseAnimTexture));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("cubic_texture", (ATTRIBUTE_PARSER)parseCubicTexture));
-		mTextureUnitAttribParsers.insert(AttribParserList::value_type("binding_type", (ATTRIBUTE_PARSER)parseBindingType));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("tex_coord_set", (ATTRIBUTE_PARSER)parseTexCoord));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("tex_address_mode", (ATTRIBUTE_PARSER)parseTexAddressMode));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("tex_border_colour", (ATTRIBUTE_PARSER)parseTexBorderColour));
@@ -2541,7 +2511,6 @@ namespace Ogre
         mProgramAttribParsers.insert(AttribParserList::value_type("includes_skeletal_animation", (ATTRIBUTE_PARSER)parseProgramSkeletalAnimation));
 		mProgramAttribParsers.insert(AttribParserList::value_type("includes_morph_animation", (ATTRIBUTE_PARSER)parseProgramMorphAnimation));
 		mProgramAttribParsers.insert(AttribParserList::value_type("includes_pose_animation", (ATTRIBUTE_PARSER)parseProgramPoseAnimation));
-		mProgramAttribParsers.insert(AttribParserList::value_type("uses_vertex_texture_fetch", (ATTRIBUTE_PARSER)parseProgramVertexTextureFetch));
         mProgramAttribParsers.insert(AttribParserList::value_type("default_params", (ATTRIBUTE_PARSER)parseDefaultParams));
 
         // Set up program default param attribute parsers
@@ -2865,8 +2834,6 @@ namespace Ogre
 		gp->setMorphAnimationIncluded(def->supportsMorphAnimation);
 		// Set pose animation option
 		gp->setPoseAnimationIncluded(def->supportsPoseAnimation);
-		// Set vertex texture usage
-		gp->setVertexTextureFetchRequired(def->usesVertexTextureFetch);
 		// set origin
 		gp->_notifyOrigin(mScriptContext.filename);
 
@@ -3771,25 +3738,6 @@ namespace Ogre
 				texEffect.arg2 = scrollAnimV;
 				writeScrollEffect(texEffect, pTex);
 			}
-
-			// Binding type
-			TextureUnitState::BindingType bt = pTex->getBindingType();
-			if (mDefaults ||
-				bt != TextureUnitState::BT_FRAGMENT)
-			{
-				writeAttribute(4, "binding_type");
-				switch(bt)
-				{
-				case TextureUnitState::BT_FRAGMENT:
-					writeValue("fragment");
-					break;
-				case TextureUnitState::BT_VERTEX:
-					writeValue("vertex");
-					break;
-				};
-		
-			}
-
         }
         endSection(3);
 
@@ -4414,12 +4362,6 @@ namespace Ogre
                             && (paramstr == "false"))
                             paramstr = "";
 						if ((currentParam->name == "includes_morph_animation")
-							&& (paramstr == "false"))
-							paramstr = "";
-						if ((currentParam->name == "includes_pose_animation")
-							&& (paramstr == "0"))
-							paramstr = "";
-						if ((currentParam->name == "uses_vertex_texture_fetch")
 							&& (paramstr == "false"))
 							paramstr = "";
 

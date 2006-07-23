@@ -35,11 +35,9 @@ public:
 
     bool frameStarted(const FrameEvent& evt)
     {
-	if( ExampleFrameListener::frameStarted(evt) == false )
-		return false;
-
         rotNode->yaw(Degree(evt.timeSinceLastFrame * 30));
-        return true;
+        // Call superclass
+        return ExampleFrameListener::frameStarted(evt);
     }
 };
 

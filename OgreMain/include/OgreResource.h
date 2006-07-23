@@ -68,25 +68,6 @@ namespace Ogre {
     {
 	public:
 		OGRE_AUTO_MUTEX // public to allow external locking
-		class Listener
-		{
-		public:
-		   	Listener() {}
-			virtual ~Listener() {}
-
-			/** Callback to indicate that background loading has completed.
-			@remarks
-				This callback is only relevant when a Resource has been
-				marked as background loaded (@see Resource::setBackgroundLoaded)
-				, and occurs when that loading has completed. The call itself
-				does not itself occur in the thread which is doing the loading;
-				when loading is complete a response indicator is placed with the
-				ResourceGroupManager, which will then be sent back to the 
-				listener as part of the application's primary frame loop thread.
-			*/
-			virtual void backgroundLoadingComplete(Resource* res) {}
-			
-		};
     protected:
 		/// Creator
 		ResourceManager* mCreator;
@@ -98,12 +79,6 @@ namespace Ogre {
         ResourceHandle mHandle;
 		/// Is the resource currently loaded?
         bool mIsLoaded;
-		/// Is this resource going to be background loaded? Only applicable for multithreaded
-		bool mIsBackgroundLoaded;
-		/// Is loading in progress
-		bool mIsLoadingInProgress;
-		/// Mutex to cover the status of loading
-		OGRE_MUTEX(mLoadStatusMutex)
 		/// The size of the resource in bytes
         size_t mSize;
 		/// Is this file manually loaded?
@@ -113,14 +88,10 @@ namespace Ogre {
 		/// Optional manual loader; if provided, data is loaded from here instead of a file
 		ManualResourceLoader* mLoader;
 
-		typedef std::list<Listener*> ListenerList;
-		ListenerList mListenerList;
-
 		/** Protected unnamed constructor to prevent default construction. 
 		*/
 		Resource() 
-			: mCreator(0), mHandle(0), mIsLoaded(false), mIsBackgroundLoaded(false),
-			mIsLoadingInProgress(false), mSize(0), mIsManual(0), mLoader(0)
+			: mCreator(0), mHandle(0), mIsLoaded(false), mSize(0), mIsManual(0), mLoader(0)
 		{ 
 		}
 
@@ -134,9 +105,6 @@ namespace Ogre {
 		virtual void unloadImpl(void) = 0;
 		/** Calculate the size of a resource; this will only be called after 'load' */
 		virtual size_t calculateSize(void) const = 0;
-
-		/// Queue the firing of background loading complete event
-		virtual void queueFireBackgroundLoadingComplete(void);
 
     public:
 		/** Standard constructor.
@@ -168,12 +136,10 @@ namespace Ogre {
 			If the resource is loaded from a file, loading is automatic. If not,
 			if for example this resource gained it's data from procedural calls
 			rather than loading from a file, then this resource will not reload 
-			on it's own.
-		@param backgroundThread Indicates whether the caller of this method is
-			the background resource loading thread. 
+			on it's own
 			
         */
-        virtual void load(bool backgroundThread = false);
+        virtual void load(void);
 
 		/** Reloads the resource, if it is already loaded.
 		@remarks
@@ -228,42 +194,9 @@ namespace Ogre {
         */
         bool isLoaded(void) const 
         { 
-			// Lock load status mutex rather than main mutex to reduce check contention
-			OGRE_LOCK_MUTEX(mLoadStatusMutex)
+			OGRE_LOCK_AUTO_MUTEX
             return mIsLoaded; 
         }
-
-		/** Returns whether this Resource has been earmarked for background loading.
-		@remarks
-			This option only makes sense when you have built Ogre with 
-			thread support (OGRE_THREAD_SUPPORT). If a resource has been marked
-			for background loading, then it won't load on demand like normal
-			when load() is called. Instead, it will ignore request to load()
-			except if the caller indicates it is the background loader. Any
-			other users of this resource should check isLoaded(), and if that
-			returns false, don't use the resource and come back later.
-		*/
-		bool isBackgroundLoaded(void) const { return mIsBackgroundLoaded; }
-
-		/** Tells the resource whether it is background loaded or not.
-		@remarks
-			@see Resource::isBackgroundLoaded . Note that calling this only
-			defers the normal on-demand loading behaviour of a resource, it
-			does not actually set up a thread to make sure the resource gets
-			loaded in the background. You should use ResourceBackgroundLoadingQueue
-			to manage the actual loading (which will call this method itself).
-		*/
-		void setBackgroundLoaded(bool bl) { mIsBackgroundLoaded = bl; }
-
-		/** Register a listener on this resource.
-			@see Resource::Listener
-		*/
-		void addListener(Listener* lis);
-
-		/** Remove a listener on this resource.
-			@see Resource::Listener
-		*/
-		void removeListener(Listener* lis);
 
 		/// Gets the group which this resource is a member of
 		const String& getGroup(void) { return mGroup; }

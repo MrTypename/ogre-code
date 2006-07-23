@@ -95,7 +95,6 @@ namespace Ogre
 			mTexStageDesc[n].coordIndex = 0;
 			mTexStageDesc[n].texType = D3D9Mappings::D3D_TEX_TYPE_NORMAL;
 			mTexStageDesc[n].pTex = 0;
-			mTexStageDesc[n].pVertexTex = 0;
 		}
 
 		mLastVertexSourceCount = 0;
@@ -764,9 +763,6 @@ namespace Ogre
 			mCapabilities->setCapability(RSC_VERTEX_FORMAT_UBYTE4);
 		}
 
-		// Adapter details
-		const D3DADAPTER_IDENTIFIER9& adapterID = mActiveD3DDriver->getAdapterIdentifier();
-
 		// Infinite projection?
 		// We have no capability for this, so we have to base this on our
 		// experience and reports from users
@@ -776,6 +772,7 @@ namespace Ogre
 			// GeForce4 Ti (and presumably GeForce3) does not
 			// render infinite projection properly, even though it does in GL
             // So exclude all cards prior to the FX range from doing infinite
+            const D3DADAPTER_IDENTIFIER9& adapterID = mActiveD3DDriver->getAdapterIdentifier();
 			if (adapterID.VendorId != 0x10DE || // not nVidia
 				!((adapterID.DeviceId >= 0x200 && adapterID.DeviceId <= 0x20F) || //gf3
 				  (adapterID.DeviceId >= 0x250 && adapterID.DeviceId <= 0x25F) || //gf4ti
@@ -837,23 +834,6 @@ namespace Ogre
 			// sprites and extended parameters go together in D3D
 			mCapabilities->setCapability(RSC_POINT_EXTENDED_PARAMETERS);
 			mCapabilities->setMaxPointSize(mCaps.MaxPointSize);
-		}
-
-		// Vertex textures
-		if (mGpuProgramManager->isSyntaxSupported("vs_3_0"))
-		{
-			// Run through all the texture formats looking for any which support
-			// vertex texture fetching. Must have at least one!
-			// All ATI Radeon up to X1n00 say they support vs_3_0, 
-			// but they support no texture formats for vertex texture fetch (cheaters!)
-			if (checkVertexTextureFormats())
-			{
-				mCapabilities->setCapability(RSC_VERTEX_TEXTURE_FETCH);
-				// always 4 vertex texture units in vs_3_0, and never shared
-				mCapabilities->setNumVertexTextureUnits(4);
-				mCapabilities->setVertexTextureUnitsShared(false);
-
-			}
 		}
 		
 
@@ -1093,40 +1073,6 @@ namespace Ogre
             mCapabilities->setCapability(RSC_FRAGMENT_PROGRAM);
         }
     }
-	//-----------------------------------------------------------------------
-	bool D3D9RenderSystem::checkVertexTextureFormats(void)
-	{
-		bool anySupported = false;
-
-		LPDIRECT3DSURFACE9 bbSurf;
-		mPrimaryWindow->getCustomAttribute("DDBACKBUFFER", &bbSurf);
-		D3DSURFACE_DESC bbSurfDesc;
-		bbSurf->GetDesc(&bbSurfDesc);
-
-		for (uint ipf = (uint)PF_L8; ipf < (uint)PF_COUNT; ++ipf)
-		{
-			PixelFormat pf = (PixelFormat)ipf;
-
-			D3DFORMAT fmt = 
-				D3D9Mappings::_getPF(D3D9Mappings::_getClosestSupportedPF(pf));
-
-			if (SUCCEEDED(mpD3D->CheckDeviceFormat(
-				D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, bbSurfDesc.Format, 
-				D3DUSAGE_QUERY_VERTEXTEXTURE, D3DRTYPE_TEXTURE, fmt)))
-			{
-				// cool, at least one supported
-				anySupported = true;
-				StringUtil::StrStreamType str;
-				str << "D3D9: Vertex texture format supported - "
-					<< PixelUtil::getFormatName(pf);
-				LogManager::getSingleton().logMessage(str.str());
-			}
-		}
-
-		return anySupported;
-
-
-	}
 	//-----------------------------------------------------------------------
 	MultiRenderTarget * D3D9RenderSystem::createMultiRenderTarget(const String & name)
 	{
@@ -1513,10 +1459,10 @@ namespace Ogre
 		}
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setTexture( size_t stage, bool enabled, const TexturePtr& tex )
+	void D3D9RenderSystem::_setTexture( size_t stage, bool enabled, const String &texname )
 	{
 		HRESULT hr;
-		D3D9TexturePtr dt = tex;
+		D3D9TexturePtr dt = TextureManager::getSingleton().getByName(texname);
 		if (enabled && !dt.isNull())
 		{
             // note used
@@ -1528,7 +1474,7 @@ namespace Ogre
 				hr = mpD3DDevice->SetTexture(stage, pTex);
 				if( hr != S_OK )
 				{
-					String str = "Unable to set texture '" + tex->getName() + "' in D3D9";
+					String str = "Unable to set texture '" + texname + "' in D3D9";
 					OGRE_EXCEPT( hr, str, "D3D9RenderSystem::_setTexture" );
 				}
 				
@@ -1544,7 +1490,7 @@ namespace Ogre
 				hr = mpD3DDevice->SetTexture(stage, 0);
 				if( hr != S_OK )
 				{
-					String str = "Unable to disable texture '" + StringConverter::toString(stage) + "' in D3D9";
+					String str = "Unable to disable texture '" + texname + "' in D3D9";
 					OGRE_EXCEPT( hr, str, "D3D9RenderSystem::_setTexture" );
 				}
 			}
@@ -1552,7 +1498,7 @@ namespace Ogre
 			hr = this->__SetTextureStageState(stage, D3DTSS_COLOROP, D3DTOP_DISABLE);
 			if( hr != S_OK )
 			{
-				String str = "Unable to disable texture '" + StringConverter::toString(stage) + "' in D3D9";
+				String str = "Unable to disable texture '" + texname + "' in D3D9";
 				OGRE_EXCEPT( hr, str, "D3D9RenderSystem::_setTexture" );
 			}
 
@@ -1562,57 +1508,6 @@ namespace Ogre
 			mTexStageDesc[stage].coordIndex = 0;
 			mTexStageDesc[stage].texType = D3D9Mappings::D3D_TEX_TYPE_NORMAL;
 		}
-	}
-	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setVertexTexture(size_t stage, const TexturePtr& tex)
-	{
-		if (tex.isNull())
-		{
-
-			if (mTexStageDesc[stage].pVertexTex != 0)
-			{
-				HRESULT hr = mpD3DDevice->SetTexture(D3DVERTEXTEXTURESAMPLER0 + stage, 0);
-				if( hr != S_OK )
-				{
-					String str = "Unable to disable vertex texture '" 
-						+ StringConverter::toString(stage) + "' in D3D9";
-					OGRE_EXCEPT( hr, str, "D3D9RenderSystem::_setVertexTexture" );
-				}
-			}
-
-			// set stage desc. to defaults
-			mTexStageDesc[stage].pVertexTex = 0;
-		}
-		else
-		{
-			D3D9TexturePtr dt = tex;
-			// note used
-			dt->touch();
-
-			IDirect3DBaseTexture9 *pTex = dt->getTexture();
-			if (mTexStageDesc[stage].pVertexTex != pTex)
-			{
-				HRESULT hr = mpD3DDevice->SetTexture(D3DVERTEXTEXTURESAMPLER0 + stage, pTex);
-				if( hr != S_OK )
-				{
-					String str = "Unable to set vertex texture '" + tex->getName() + "' in D3D9";
-					OGRE_EXCEPT( hr, str, "D3D9RenderSystem::_setVertexTexture" );
-				}
-
-				// set stage desc.
-				mTexStageDesc[stage].pVertexTex = pTex;
-			}
-
-		}
-
-	}
-	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_disableTextureUnit(size_t texUnit)
-	{
-		RenderSystem::_disableTextureUnit(texUnit);
-		// also disable vertex texture unit
-		static TexturePtr nullPtr;
-		_setVertexTexture(texUnit, nullPtr);
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_setTextureCoordSet( size_t stage, size_t index )

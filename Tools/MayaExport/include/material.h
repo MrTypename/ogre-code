@@ -7,11 +7,9 @@
 namespace OgreMayaExporter
 {
 
-	typedef enum {MT_LAMBERT,MT_PHONG,MT_BLINN} MaterialType;
+	typedef enum MaterialTypeTag {MT_LAMBERT,MT_PHONG,MT_BLINN} MaterialType;
 
-	typedef enum {TOT_REPLACE,TOT_MODULATE,TOT_ADD,TOT_ALPHABLEND} TexOpType;
-
-	typedef enum {TAM_CLAMP,TAM_BORDER,TAM_WRAP,TAM_MIRROR} TexAddressMode;
+	typedef enum TexOpTypeTag {TOT_REPLACE,TOT_MODULATE,TOT_ADD,TOT_ALPHABLEND} TexOpType;
 
 	typedef struct textureTag
 	{
@@ -20,10 +18,6 @@ namespace OgreMayaExporter
 		TexOpType opType;
 		MString uvsetName;
 		int uvsetIndex;
-		TexAddressMode am_u,am_v;
-		double scale_u,scale_v;
-		double scroll_u,scroll_v;
-		double rot;
 	} texture;
 
 
@@ -41,11 +35,11 @@ namespace OgreMayaExporter
 		void clear();
 		//load material data
 		MStatus load(MFnLambertShader* pShader,MStringArray& uvsets,ParamList& params);
-		//write material data to Ogre material script
-		MStatus writeOgreScript(ParamList &params);
+		//write material data to Ogre XML
+		MStatus writeXML(ParamList &params);
 		//copy textures to path specified by params
 		MStatus copyTextures(ParamList &params);
-	public:
+	protected:
 		//load texture data
 		MStatus loadTexture(MFnDependencyNode* pTexNode,TexOpType& opType,MStringArray& uvsets,ParamList& params);
 

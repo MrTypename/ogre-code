@@ -396,32 +396,6 @@ namespace Ogre {
         */
         unsigned int getNumFrames(void) const;
 
-
-		/** The type of unit to bind the texture settings to. */
-		enum BindingType
-		{
-			/** Regular fragment processing unit - the default. */
-			BT_FRAGMENT = 0,
-			/** Vertex processing unit - indicates this unit will be used for 
-				a vertex texture fetch.
-			*/
-			BT_VERTEX = 1
-		};
-		/** Sets the type of unit these texture settings should be bound to. 
-		@remarks
-			Some render systems, when implementing vertex texture fetch, separate
-			the binding of textures for use in the vertex program versus those
-			used in fragment programs. This setting allows you to target the
-			vertex processing unit with a texture binding, in those cases. For
-			rendersystems which have a unified binding for the vertex and fragment
-			units, this setting makes no difference.
-		*/
-		void setBindingType(BindingType bt);
-
-		/** Gets the type of unit these texture settings should be bound to.  
-		*/
-		BindingType getBindingType(void) const;
-
         /** Returns true if this texture unit is either a series of 6 2D textures, each
             in it's own frame, or is a full 3D cube map. You can tell which by checking
             getTextureType.
@@ -996,11 +970,6 @@ namespace Ogre {
 
 		/** Notify this object that its parent has changed */
 		void _notifyParent(Pass* parent);
-
-		/** Get the texture pointer for the current frame. */
-		const TexturePtr& _getTexturePtr(void) const;
-		/** Get the texture pointer for a given frame. */
-		const TexturePtr& _getTexturePtr(size_t frame) const;
 	
 protected:
         // State
@@ -1018,12 +987,12 @@ protected:
         UVWAddressingMode mAddressMode;
         ColourValue mBorderColour;
 
-        LayerBlendModeEx mColourBlendMode;
-        SceneBlendFactor mColourBlendFallbackSrc;
-        SceneBlendFactor mColourBlendFallbackDest;
+        LayerBlendModeEx colourBlendMode;
+        SceneBlendFactor colourBlendFallbackSrc;
+        SceneBlendFactor colourBlendFallbackDest;
 
-        LayerBlendModeEx mAlphaBlendMode;
-        mutable bool mIsBlank;
+        LayerBlendModeEx alphaBlendMode;
+        bool mIsBlank;
         bool mIsAlpha;
 
         mutable bool mRecalcTexMatrix;
@@ -1043,8 +1012,6 @@ protected:
 
         bool mIsDefaultAniso;
         bool mIsDefaultFiltering;
-		/// Binding type (fragment or vertex pipeline)
-		BindingType mBindingType;
 
 
         //-----------------------------------------------------------------------------
@@ -1052,7 +1019,6 @@ protected:
         // allow for fast copying of the basic members.
         //
         std::vector<String> mFrames;
-		mutable std::vector<TexturePtr> mFramePtrs;
         String mName;               // optional name for the TUS
         String mTextureNameAlias;       // optional alias for texture frames
         EffectMap mEffects;
@@ -1078,9 +1044,6 @@ protected:
         /** Internal method for creating texture effect controller.
         */
         void createEffectController(TextureEffect& effect);
-
-		/** Internal method for ensuring the texture for a given frame is loaded. */
-		void ensureLoaded(size_t frame) const;
 
 
     };

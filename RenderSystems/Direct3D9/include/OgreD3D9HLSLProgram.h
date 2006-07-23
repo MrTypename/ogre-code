@@ -54,27 +54,11 @@ namespace Ogre {
             String doGet(const void* target) const;
             void doSet(void* target, const String& val);
         };
-        /// Command object for setting macro defines
-        class CmdPreprocessorDefines : public ParamCommand
-        {
-        public:
-            String doGet(const void* target) const;
-            void doSet(void* target, const String& val);
-        };
-        /// Command object for setting matrix packing in column-major order
-        class CmdColumnMajorMatrices : public ParamCommand
-        {
-        public:
-            String doGet(const void* target) const;
-            void doSet(void* target, const String& val);
-        };
 
     protected:
 
         static CmdEntryPoint msCmdEntryPoint;
         static CmdTarget msCmdTarget;
-        static CmdPreprocessorDefines msCmdPreprocessorDefines;
-        static CmdColumnMajorMatrices msCmdColumnMajorMatrices;
 
         /** Internal load implementation, must be implemented by subclasses.
         */
@@ -92,8 +76,6 @@ namespace Ogre {
 
         String mTarget;
         String mEntryPoint;
-        String mPreprocessorDefines;
-        bool mColumnMajorMatrices;
 
         LPD3DXBUFFER mpMicroCode;
         LPD3DXCONSTANTTABLE mpConstTable;
@@ -111,14 +93,6 @@ namespace Ogre {
         void setTarget(const String& target);
         /** Gets the shader target to compile down to, e.g. 'vs_1_1'. */
         const String& getTarget(void) const { return mTarget; }
-        /** Sets the preprocessor defines use to compile the program. */
-        void setPreprocessorDefines(const String& defines) { mPreprocessorDefines = defines; }
-        /** Sets the preprocessor defines use to compile the program. */
-        const String& getPreprocessorDefines(void) const { return mPreprocessorDefines; }
-        /** Sets whether matrix packing in column-major order. */ 
-        void setColumnMajorMatrices(bool columnMajor) { mColumnMajorMatrices = columnMajor; }
-        /** Gets whether matrix packed in column-major order. */
-        bool getColumnMajorMatrices(void) const { return mColumnMajorMatrices; }
         /// Overridden from GpuProgram
         bool isSupported(void) const;
         /// Overridden from GpuProgram

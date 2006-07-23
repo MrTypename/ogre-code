@@ -87,8 +87,6 @@ namespace Ogre
             const Frustum *frustum;
 			/// texture 
 			IDirect3DBaseTexture9 *pTex;
-			/// vertex texture 
-			IDirect3DBaseTexture9 *pVertexTex;
 		} mTexStageDesc[OGRE_MAX_TEXTURE_LAYERS];
 
 		// Array of up to 8 lights, indexed as per API
@@ -141,7 +139,6 @@ namespace Ogre
 
         void convertVertexShaderCaps(void);
         void convertPixelShaderCaps(void);
-		bool checkVertexTextureFormats(void);
 
         unsigned short mCurrentLights;
         /// Saved last view matrix
@@ -231,10 +228,8 @@ namespace Ogre
 		void _setPointSpritesEnabled(bool enabled);
 		void _setPointParameters(Real size, bool attenuationEnabled, 
 			Real constant, Real linear, Real quadratic, Real minSize, Real maxSize);
-		void _setTexture(size_t unit, bool enabled, const TexturePtr &texPtr);
-		void _setVertexTexture(size_t unit, const TexturePtr& tex);
-		void _disableTextureUnit(size_t texUnit);
-		void _setTextureCoordSet( size_t unit, size_t index );
+		void _setTexture( size_t unit, bool enabled, const String &texname );
+        void _setTextureCoordSet( size_t unit, size_t index );
         void _setTextureCoordCalculation(size_t unit, TexCoordCalcMethod m, 
             const Frustum* frustum = 0);
 		void _setTextureBlendMode( size_t unit, const LayerBlendModeEx& bm );
@@ -324,7 +319,6 @@ namespace Ogre
 		/** Clear all cached depth stencil surfaces
 		*/
 		void _cleanupDepthStencils();
-
 	};
 }
 #endif

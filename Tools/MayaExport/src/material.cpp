@@ -42,24 +42,13 @@ namespace OgreMayaExporter
 	// Load material data
 	MStatus Material::load(MFnLambertShader* pShader,MStringArray& uvsets,ParamList& params)
 	{
-		int i;
 		MStatus stat;
 		clear();
 		//read material name, adding the requested prefix
-		MString tmpStr = params.matPrefix;
-		if (tmpStr != "")
-			tmpStr += "/";
-		tmpStr += pShader->name();
-		MStringArray tmpStrArray;
-		tmpStr.split(':',tmpStrArray);
-		m_name = "";
-		for (i=0; i<tmpStrArray.length(); i++)
-		{
-			m_name += tmpStrArray[i];
-			if (i < tmpStrArray.length()-1)
-				m_name += "_";
-		}
-
+		m_name = params.matPrefix;
+		if (m_name != "")
+			m_name += "/";
+		m_name += pShader->name();
 		//check if we want to export with lighting off option
 		m_lightingOff = params.lightingOff;
 
@@ -85,7 +74,7 @@ namespace OgreMayaExporter
 
 		// Check if material is textured
 		pShader->findPlug("color").connectedTo(colorSrcPlugs,true,false);
-		for (i=0; i<colorSrcPlugs.length(); i++)
+		for (int i=0; i<colorSrcPlugs.length(); i++)
 		{
 			if (colorSrcPlugs[i].node().hasFn(MFn::kFileTexture))
 			{
@@ -198,7 +187,6 @@ namespace OgreMayaExporter
 						if (MS::kSuccess != stat)
 						{
 							std::cout << "Error loading layered texture\n";
-							std::cout.flush();
 							delete pLayeredTexNode;
 							return MS::kFailure;
 						}
@@ -229,7 +217,6 @@ namespace OgreMayaExporter
 					if (MS::kSuccess != stat)
 					{
 						std::cout << "Error loading texture\n";
-						std::cout.flush();
 						return MS::kFailure;
 					}
 				}
@@ -248,7 +235,6 @@ namespace OgreMayaExporter
 	// Load texture data from a texture node
 	MStatus Material::loadTexture(MFnDependencyNode* pTexNode,TexOpType& opType,MStringArray& uvsets,ParamList& params)
 	{
-		int j;
 		texture tex;
 		// Get texture filename
 		MString filename, absFilename;
@@ -269,7 +255,7 @@ namespace OgreMayaExporter
 		pTexNode->findPlug("uvCoord").connectedTo(texSrcPlugs,true,false);
 		// Get place2dtexture node (if connected)
 		MFnDependencyNode* pPlace2dTexNode = NULL;
-		for (j=0; j<texSrcPlugs.length(); j++)
+		for (int j=0; j<texSrcPlugs.length(); j++)
 		{
 			if (texSrcPlugs[j].node().hasFn(MFn::kPlace2dTexture))
 			{
@@ -319,57 +305,6 @@ namespace OgreMayaExporter
 				}
 			}
 		}
-		// Get texture options from Place2dTexture node
-		if (pPlace2dTexNode)
-		{
-			// Get address mode
-			//U
-			bool wrapU, mirrorU;
-			pPlace2dTexNode->findPlug("wrapU").getValue(wrapU);
-			pPlace2dTexNode->findPlug("mirrorU").getValue(mirrorU);
-			if (mirrorU)
-				tex.am_u = TAM_MIRROR;
-			else if (wrapU)
-				tex.am_u = TAM_WRAP;
-			else
-				tex.am_u = TAM_CLAMP;
-			// V
-			bool wrapV,mirrorV;
-			pPlace2dTexNode->findPlug("wrapV").getValue(wrapV);
-			pPlace2dTexNode->findPlug("mirrorV").getValue(mirrorV);
-			if (mirrorV)
-				tex.am_v = TAM_MIRROR;
-			else if (wrapV)
-				tex.am_v = TAM_WRAP;
-			else
-				tex.am_v = TAM_CLAMP;
-			// Get texture scale
-			double covU,covV;
-			pPlace2dTexNode->findPlug("coverageU").getValue(covU);
-			pPlace2dTexNode->findPlug("coverageV").getValue(covV);
-			tex.scale_u = covU;
-			if (fabs(tex.scale_u) < PRECISION)
-				tex.scale_u = 0;
-			tex.scale_v = covV;
-			if (fabs(tex.scale_v) < PRECISION)
-				tex.scale_v = 0;
-			// Get texture scroll
-			double transU,transV;
-			pPlace2dTexNode->findPlug("translateFrameU").getValue(transU);
-			pPlace2dTexNode->findPlug("translateFrameV").getValue(transV);
-			tex.scroll_u = -0.5 * (covU-1.0)/covU - transU/covU;
-			if (fabs(tex.scroll_u) < PRECISION)
-				tex.scroll_u = 0;
-			tex.scroll_v = 0.5 * (covV-1.0)/covV + transV/covV;
-			if (fabs(tex.scroll_v) < PRECISION)
-				tex.scroll_v = 0;
-			// Get texture rotation
-			double rot;
-			pPlace2dTexNode->findPlug("rotateFrame").getValue(rot);
-			tex.rot = -rot;
-			if (fabs(rot) < PRECISION)
-				tex.rot = 0;
-		}
 		// add texture to material texture list
 		m_textures.push_back(tex);
 		// free up memory
@@ -382,8 +317,8 @@ namespace OgreMayaExporter
 	}
 
 
-	// Write material data to an Ogre material script file
-	MStatus Material::writeOgreScript(ParamList &params)
+	// Write material data to Ogre XML file
+	MStatus Material::writeXML(ParamList &params)
 	{
 		//Start material description
 		params.outMaterial << "material " << m_name.asChar() << "\n";
@@ -443,10 +378,6 @@ namespace OgreMayaExporter
 				params.outMaterial << "\t\t\t\tcolour_op alpha_blend\n";
 				break;
 			}
-			//write texture transforms
-			params.outMaterial << "\t\t\t\tscale " << m_textures[i].scale_u << " " << m_textures[i].scale_v << "\n";
-			params.outMaterial << "\t\t\t\tscroll " << m_textures[i].scroll_u << " " << m_textures[i].scroll_v << "\n";
-			params.outMaterial << "\t\t\t\trotate " << m_textures[i].rot << "\n";
 			//end texture unit desription
 			params.outMaterial << "\t\t\t}\n";
 		}

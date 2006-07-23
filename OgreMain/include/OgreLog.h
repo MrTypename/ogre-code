@@ -51,32 +51,9 @@ namespace Ogre {
         LML_CRITICAL = 3
     };
 
-    /** @remarks Pure Abstract class, derive this class and register to the Log to listen to log messages */
-    class LogListener
-    {
-	public:
-        virtual ~LogListener() {};
-
-        /**
-        @remarks
-            This is called whenever the log recieves a message and is about to write it out
-        @param message
-            The message to be logged
-        @param lml
-            The message level the log is using
-        @param maskDebug
-            If we are printing to the console or not
-        @param logName
-            the name of this log (so you can have several listeners for different logs, and identify them)
-        */
-        virtual void messageLogged( const String& message, LogMessageLevel lml, bool maskDebug, const String &logName ) = 0;
-    };
-
-    /**
-    @remarks
-         Log class for writing debug/log data to files.
-    @note
-        <br>Should not be used directly, but trough the LogManager class.
+    /** Log class for writing debug/log data to files.
+        @note
+            <br>Should not be used directly, but trough the LogManager class.
     */
     class _OgreExport Log
     {
@@ -84,54 +61,31 @@ namespace Ogre {
         std::ofstream	mfpLog;
         LoggingLevel	mLogLevel;
         bool			mDebugOut;
-        bool			mSuppressFile;
-        String			mLogName;
-
-        typedef std::vector<LogListener*> mtLogListener;
-        mtLogListener mListeners;
+		bool			mSuppressFile;
+		String			mName;
 
     public:
-        /**
-        @remarks
-            Usual constructor - called by LogManager.
+        /** Usual constructor - called by LogManager.
         */
         Log( const String& name, bool debugOutput = true, bool suppressFileOutput = false);
 
-        /**
-        @remarks
-        Default destructor.
+        /** Default destructor.
         */
         ~Log();
 
-        /**
-        @remarks
-            Log a message to the debugger and to log file (the default is
+        /** Log a message to the debugger and to log file (the default is
             "<code>OGRE.log</code>"),
         */
-        void logMessage( const String& message, LogMessageLevel lml = LML_NORMAL, bool maskDebug = false );
+        void logMessage(
+            const String& message,
+            LogMessageLevel lml = LML_NORMAL, 
+            bool maskDebug = false);
 
-        /**
-        @remarks
-            Sets the level of the log detail.
+        /** Sets the level of the log detail.
         */
         void setLogDetail(LoggingLevel ll);
-
-        /**
-        @remarks
-            Register a listener to this log
-        @param
-            A valid listener derived class
-        */
-        void addListener(LogListener* listener);
-
-        /**
-        @remarks
-            Unregister a listener from this log
-        @param
-            A valid listener derived class
-        */
-        void removeListener(LogListener* listener);
     };
+
 }
 
 #endif

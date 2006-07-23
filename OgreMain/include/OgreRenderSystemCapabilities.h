@@ -83,9 +83,7 @@ namespace Ogre {
 		/// Supports basic point sprite rendering
 		RSC_POINT_SPRITES		    = 0x02000000,
 		/// Supports extra point parameters (minsize, maxsize, attenuation)
-		RSC_POINT_EXTENDED_PARAMETERS = 0x04000000,
-		/// Supports vertex texture fetch
-		RSC_VERTEX_TEXTURE_FETCH = 0x08000000
+		RSC_POINT_EXTENDED_PARAMETERS = 0x04000000
     };
 
     /** singleton class for storing the capabilities of the graphics card. 
@@ -126,10 +124,6 @@ namespace Ogre {
 			ushort mNumMultiRenderTargets;
 			/// The maximum point size
 			Real mMaxPointSize;
-			/// The number of vertex texture units supported
-			ushort mNumVertexTextureUnits;
-			/// Are vertex texture units shared with fragment processor?
-			bool mVertexTextureUnitsShared;
 
     	public:	
             RenderSystemCapabilities ();
@@ -319,27 +313,6 @@ namespace Ogre {
 				return mMaxPointSize;
 			}
 
-			/// Set the number of vertex texture units supported
-			void setNumVertexTextureUnits(ushort n)
-			{
-				mNumVertexTextureUnits = n;
-			}
-			/// Get the number of vertex texture units supported
-			ushort getNumVertexTextureUnits(void) const
-			{
-				return mNumVertexTextureUnits;
-			}
-			/// Set whether the vertex texture units are shared with the fragment processor
-			void setVertexTextureUnitsShared(bool shared)
-			{
-				mVertexTextureUnitsShared = shared;
-			}
-			/// Get whether the vertex texture units are shared with the fragment processor
-			bool getVertexTextureUnitsShared(void) const
-			{
-				return mVertexTextureUnitsShared;
-			}
-
 
             /** Write the capabilities to the pass in Log */
             void log(Log* pLog);
@@ -348,7 +321,7 @@ namespace Ogre {
 
 
     };
-};
+}
 
 #endif // __RenderSystemCapabilities__
 

@@ -5,39 +5,31 @@ namespace OgreMayaExporter
 {
 	void OgreExporter::exit()
 	{
-		// Restore active selection list
-		MGlobal::setActiveSelectionList(m_selList);
-		// Restore current time
-		MAnimControl::setCurrentTime(m_curTime);
-		// Free memory
 		if (m_pMesh)
 			delete m_pMesh;
 		if (m_pMaterialSet)
 			delete m_pMaterialSet;
-		// Close output files
 		m_params.closeFiles();
-		std::cout.flush();
 	}
 
 	MStatus OgreExporter::doIt(const MArgList& args)
 	{
 		// Parse the arguments.
 		m_params.parseArgs(args);
+		
 		// Create output files
 		m_params.openFiles();
+
 		// Create a new empty mesh
 		m_pMesh = new Mesh();
+
 		// Create a new empty material set
 		m_pMaterialSet = new MaterialSet();
-		// Save current time for later restore
-		m_curTime = MAnimControl::currentTime();
-		// Save active selection list for later restore
-		MGlobal::getActiveSelectionList(m_selList);
+
 		/**************************** LOAD DATA **********************************/
 		if (m_params.exportAll)
-		{	// We are exporting the whole scene
+		{	// we are exporting the whole scene
 			std::cout << "Export the whole scene\n";
-			std::cout.flush();
 			MItDag dagIter;
 			MFnDagNode worldDag (dagIter.root());
 			MDagPath worldPath;
@@ -45,16 +37,14 @@ namespace OgreMayaExporter
 			stat = translateNode(worldPath);
 		}
 		else
-		{	// We are translating a selection
+		{	// we are translating a selection
 			std::cout << "Export selected objects\n";
-			std::cout.flush();
-			// Get the selection list
+			// get the selection list
 			MSelectionList activeList;
 			stat = MGlobal::getActiveSelectionList(activeList);
 			if (MS::kSuccess != stat)
 			{
 				std::cout << "Error retrieving selection list\n";
-				std::cout.flush();
 				exit();
 				return MS::kFailure;
 			}
@@ -68,36 +58,71 @@ namespace OgreMayaExporter
 			}							
 		}
 
-		// Load skeleton animation (do it now, so we have loaded all needed joints)
-		if (m_pMesh->getSkeleton() && m_params.exportSkelAnims)
+		// load skeleton animation (do it now, so we have loaded all needed joints)
+		if (m_pMesh->getSkeleton() && m_params.exportAnims)
 		{
-			// Restore skeleton to correct pose
-			m_pMesh->getSkeleton()->restorePose();
-			// Load skeleton animations
 			m_pMesh->getSkeleton()->loadAnims(m_params);
 		}
 
-		// Load vertex animations
-		if (m_params.exportVertAnims)
-			m_pMesh->loadAnims(m_params);
-
-		// Load blend shapes
-		if (m_params.exportBlendShapes)
-			m_pMesh->loadBlendShapes(m_params);
-
 		/**************************** WRITE DATA **********************************/
-		stat = writeOgreData();
+		// write mesh data
+		if (m_params.exportMesh)
+		{
+			std::cout << "Writing mesh data to xml file...\n";
+			stat  = m_pMesh->writeXML(m_params);
+			if (stat == MS::kSuccess)
+				std::cout << "OK\n";
+			else
+			{
+				std::cout << "Error writing mesh to XML\n";
+				exit();
+				return MS::kFailure;
+			}
+		}
+		// write skeleton data
+		if (m_params.exportSkeleton)
+		{
+			std::cout << "Writing skeleton data to xml file...\n";
+			if (m_pMesh->getSkeleton())
+			{
+				stat = m_pMesh->getSkeleton()->writeXML(m_params);
+				if (stat == MS::kSuccess)
+					std::cout << "OK\n";
+				else
+				{
+					std::cout << "Error writing skeleton to XML\n";
+					exit();
+					return MS::kFailure;
+				}
+			}
+			else
+			{
+				std::cout << "Mesh has no linked skeleton, creating an empty skeleton file\n";
+			}
+		}
+		// write materials data
+		if (m_params.exportMaterial)
+		{
+			std::cout << "Writing materials data...\n";
+			stat  = m_pMaterialSet->writeXML(m_params);
+			if (stat == MS::kSuccess)
+				std::cout << "OK\n";
+			else
+			{
+				std::cout << "Error writing materials file\n";
+				exit();
+				return MS::kFailure;
+			}
+		}
 
-		std::cout << "Export completed succesfully\n";
-		std::cout.flush();
 		exit();
 
 		return MS::kSuccess;
 	}
 
 
-	/**************************** TRANSLATE A NODE **********************************/
-	// Method for iterating over nodes in a dependency graph from top to bottom
+
+	// Method for iterating over nodes in a dependency graph from top to bottom, translating only meshes
 	MStatus OgreExporter::translateNode(MDagPath& dagPath)
 	{
 		if (m_params.exportAnimCurves)
@@ -117,17 +142,12 @@ namespace OgreMayaExporter
 					MFnAnimCurve animFn(anim,&stat);
 					std::cout << "Found animation curve: " << animFn.name().asChar() << "\n";
 					std::cout << "Translating animation curve: " << animFn.name().asChar() << "...\n";
-					std::cout.flush();
 					stat = writeAnim(animFn);
 					if (MS::kSuccess == stat)
-					{
 						std::cout << "OK\n";
-						std::cout.flush();
-					}
 					else
 					{
 						std::cout << "Error, Aborting operation\n";
-						std::cout.flush();
 						return MS::kFailure;
 					}
 				}
@@ -143,17 +163,12 @@ namespace OgreMayaExporter
 			{
 				std::cout << "Found mesh node: " << meshDag.fullPathName().asChar() << "\n";
 				std::cout << "Loading mesh node " << meshDag.fullPathName().asChar() << "...\n";
-				std::cout.flush();
 				stat = m_pMesh->load(meshDag,m_params);
 				if (MS::kSuccess == stat)
-				{
 					std::cout << "OK\n";
-					std::cout.flush();
-				}
 				else
 				{
 					std::cout << "Error, mesh skipped\n";
-					std::cout.flush();
 				}
 			}
 		}
@@ -165,17 +180,12 @@ namespace OgreMayaExporter
 			{
 				std::cout <<  "Found camera node: "<< dagPath.fullPathName().asChar() << "\n";
 				std::cout <<  "Translating camera node: "<< dagPath.fullPathName().asChar() << "...\n";
-				std::cout.flush();
 				stat = writeCamera(cameraFn);
 				if (MS::kSuccess == stat)
-				{
 					std::cout << "OK\n";
-					std::cout.flush();
-				}
 				else
 				{
 					std::cout << "Error, Aborting operation\n";
-					std::cout.flush();
 					return MS::kFailure;
 				}
 			}
@@ -187,19 +197,14 @@ namespace OgreMayaExporter
 			{
 				std::cout <<  "Found particles node: "<< dagPath.fullPathName().asChar() << "\n";
 				std::cout <<  "Translating particles node: "<< dagPath.fullPathName().asChar() << "...\n";
-				std::cout.flush();
 				Particles particles;
 				particles.load(dagPath,m_params);
 				stat = particles.writeToXML(m_params);
 				if (MS::kSuccess == stat)
-				{
 					std::cout << "OK\n";
-					std::cout.flush();
-				}
 				else
 				{
 					std::cout << "Error, Aborting operation\n";
-					std::cout.flush();
 					return MS::kFailure;
 				}
 			}
@@ -213,7 +218,6 @@ namespace OgreMayaExporter
 			if (MS::kSuccess != stat)
 			{
 				std::cout << "Error retrieving path to child " << i << " of: " << dagPath.fullPathName().asChar();
-				std::cout.flush();
 				return MS::kFailure;
 			}
 			stat = translateNode(childPath);
@@ -248,7 +252,6 @@ namespace OgreMayaExporter
 	********************************************************************************************************/
 	MStatus OgreExporter::writeCamera(MFnCamera& camera)
 	{
-		int i;
 		MPlug plug;
 		MPlugArray srcplugarray;
 		double dist;
@@ -256,7 +259,7 @@ namespace OgreMayaExporter
 		MFnTransform* cameraTransform = NULL;
 		MFnAnimCurve* animCurve = NULL;
 		// get camera transform
-		for (i=0; i<camera.parentCount(); i++)
+		for (unsigned int i=0; i<camera.parentCount(); i++)
 		{
 			if (camera.parent(i).hasFn(MFn::kTransform))
 			{
@@ -453,61 +456,6 @@ namespace OgreMayaExporter
 			delete cameraTransform;
 		if (animCurve != NULL)
 			delete animCurve;
-		return MS::kSuccess;
-	}
-
-	/********************************************************************************************************
-	*                           Method to write data to OGRE format                                         *
-	********************************************************************************************************/
-	MStatus OgreExporter::writeOgreData()
-	{
-		// Create Ogre Root
-		Ogre::Root ogreRoot;
-		// Create singletons
-		Ogre::DefaultHardwareBufferManager hardwareBufMgr;
-
-		// Write mesh binary
-		if (m_params.exportMesh)
-		{
-			std::cout << "Writing mesh binary...\n";
-			std::cout.flush();
-			stat = m_pMesh->writeOgreBinary(m_params);
-			if (stat != MS::kSuccess)
-			{
-				std::cout << "Error writing mesh binary file\n";
-				std::cout.flush();
-			}
-		}
-
-		// Write skeleton binary
-		if (m_params.exportSkeleton)
-		{
-			if (m_pMesh->getSkeleton())
-			{
-				std::cout << "Writing skeleton binary...\n";
-				std::cout.flush();
-				stat = m_pMesh->getSkeleton()->writeOgreBinary(m_params);
-				if (stat != MS::kSuccess)
-				{
-					std::cout << "Error writing mesh binary file\n";
-					std::cout.flush();
-				}
-			}
-		}
-		
-		// Write materials data
-		if (m_params.exportMaterial)
-		{
-			std::cout << "Writing materials data...\n";
-			std::cout.flush();
-			stat  = m_pMaterialSet->writeOgreScript(m_params);
-			if (stat != MS::kSuccess)
-			{
-				std::cout << "Error writing materials file\n";
-				std::cout.flush();
-			}
-		}
-
 		return MS::kSuccess;
 	}
 
