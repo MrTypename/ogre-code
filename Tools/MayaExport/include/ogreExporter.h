@@ -22,7 +22,6 @@ namespace OgreMayaExporter
 		MStatus translateNode(MDagPath& dagPath);
 		MStatus writeAnim(MFnAnimCurve& anim);
 		MStatus writeCamera(MFnCamera& camera);
-		MStatus writeOgreData();
 
 	private:
 		// private members
@@ -30,8 +29,6 @@ namespace OgreMayaExporter
 		ParamList m_params;
 		Mesh* m_pMesh;
 		MaterialSet* m_pMaterialSet;
-		MSelectionList m_selList;
-		MTime m_curTime;
 
 		void exit();
 	};

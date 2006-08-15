@@ -28,7 +28,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreStringConverter.h"
 #include "OgreVertexIndexData.h"
 #include "OgreException.h"
-#include "OgreOptimisedUtil.h"
 
 namespace Ogre {
 
@@ -168,7 +167,7 @@ namespace Ogre {
         */
 
         // Sort the geometries in the order of vertex set, so we can grouping
-        // triangles by vertex set easy.
+        // triangles by vertex set easy, and improve memory access as well.
         std::sort(mGeometryList.begin(), mGeometryList.end(), geometryLess());
         // Initialize edge data
         mEdgeData = new EdgeData();
@@ -179,8 +178,6 @@ namespace Ogre {
         {
             mEdgeData->edgeGroups[vSet].vertexSet = vSet;
             mEdgeData->edgeGroups[vSet].vertexData = mVertexDataList[vSet];
-            mEdgeData->edgeGroups[vSet].triStart = 0;
-            mEdgeData->edgeGroups[vSet].triCount = 0;
         }
 
         // Build triangles and edge list
@@ -191,12 +188,11 @@ namespace Ogre {
             buildTrianglesEdges(*i);
         }
 
-        // Allocate memory for light facing calculate
-        mEdgeData->triangleLightFacings.resize(mEdgeData->triangles.size());
+        // Log
+        //log(LogManager::getSingleton().createLog("EdgeListBuilder.log"));
 
-        // Record closed, ie the mesh is manifold
-        mEdgeData->isClosed = mEdgeMap.empty();
-
+		// Record closed - uncomment this when .mesh format includes isClosed
+		//mEdgeData->isClosed = mEdgeMap.empty();
         return mEdgeData;
     }
     //---------------------------------------------------------------------
@@ -222,8 +218,7 @@ namespace Ogre {
             return; // Just in case
         };
 
-        // The edge group now we are dealing with.
-        EdgeData::EdgeGroup& eg = mEdgeData->edgeGroups[vertexSet];
+
 
 		// locate position element & the buffer to go with it
         const VertexData* vertexData = mVertexDataList[vertexSet];
@@ -260,15 +255,8 @@ namespace Ogre {
         // Get the triangle start, if we have more than one index set then this
         // will not be zero
         size_t triangleIndex = mEdgeData->triangles.size();
-        // If it's first time dealing with the edge group, setup triStart for it.
-        // Note that we are assume geometries sorted by vertex set.
-        if (!eg.triCount)
-        {
-            eg.triStart = triangleIndex;
-        }
         // Pre-reserve memory for less thrashing
         mEdgeData->triangles.reserve(triangleIndex + iterations);
-        mEdgeData->triangleFaceNormals.reserve(triangleIndex + iterations);
         for (size_t t = 0; t < iterations; ++t)
         {
             EdgeData::Triangle tri;
@@ -334,8 +322,7 @@ namespace Ogre {
             {
                 // Calculate triangle normal (NB will require recalculation for 
                 // skeletally animated meshes)
-                mEdgeData->triangleFaceNormals.push_back(
-                    Math::calculateFaceNormalWithoutNormalize(v[0], v[1], v[2]));
+                tri.normal = Math::calculateFaceNormalWithoutNormalize(v[0], v[1], v[2]);
                 // Add triangle to list
                 mEdgeData->triangles.push_back(tri);
                 // Connect or create edges from common list
@@ -351,10 +338,6 @@ namespace Ogre {
                 ++triangleIndex;
             }
         }
-
-        // Update triCount for the edge group. Note that we are assume
-        // geometries sorted by vertex set.
-        eg.triCount = triangleIndex - eg.triStart;
 
         indexData->indexBuffer->unlock();
         vbuf->unlock();
@@ -424,37 +407,54 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void EdgeData::updateTriangleLightFacing(const Vector4& lightPos)
     {
-        // Triangle face normals should be 1:1 with light facing flags
-        assert(triangleFaceNormals.size() == triangleLightFacings.size());
+        // Iterate over the triangles, and determine if they are light facing
+        EdgeData::TriangleList::iterator ti, tiend;
+        tiend = triangles.end();
+        Vector3 vertToLight;
+        for (ti = triangles.begin(); ti != tiend; ++ti)
+        {
+            EdgeData::Triangle& t = *ti;
+            // Get pointer to positions, and reference the first position
 
-        // Use optimised util to determine if triangle's face normal are light facing
-        OptimisedUtil::getImplementation()->calculateLightFacing(
-            lightPos,
-            &triangleFaceNormals.front(),
-            &triangleLightFacings.front(),
-            triangleLightFacings.size());
+            Real dp = t.normal.dotProduct(lightPos);
+            t.lightFacing = (dp > 0);
+
+        }
+
     }
     //---------------------------------------------------------------------
     void EdgeData::updateFaceNormals(size_t vertexSet, 
-        const HardwareVertexBufferSharedPtr& positionBuffer)
+        HardwareVertexBufferSharedPtr positionBuffer)
     {
         assert (positionBuffer->getVertexSize() == sizeof(float) * 3
             && "Position buffer should contain only positions!");
-
-        // Triangle face normals should be 1:1 with triangles
-        assert(triangleFaceNormals.size() == triangles.size());
 
         // Lock buffer for reading
         float* pVert = static_cast<float*>(
             positionBuffer->lock(HardwareBuffer::HBL_READ_ONLY));
 
-        // Calculate triangles which are using this vertex set
-        const EdgeData::EdgeGroup& eg = edgeGroups[vertexSet];
-        OptimisedUtil::getImplementation()->calculateFaceNormals(
-            pVert,
-            &triangles[eg.triStart],
-            &triangleFaceNormals[eg.triStart],
-            eg.triCount);
+        // Iterate over the triangles
+        EdgeData::TriangleList::iterator i, iend;
+        iend = triangles.end();
+        for (i = triangles.begin(); i != iend; ++i)
+        {
+            Triangle& t = *i;
+            // Only update tris which are using this vertex set
+            if (t.vertexSet == vertexSet)
+            {
+                size_t offset = t.vertIndex[0]*3;
+                Vector3 v1(pVert[offset], pVert[offset+1], pVert[offset+2]);
+
+                offset = t.vertIndex[1]*3;
+                Vector3 v2(pVert[offset], pVert[offset+1], pVert[offset+2]);
+
+                offset = t.vertIndex[2]*3;
+                Vector3 v3(pVert[offset], pVert[offset+1], pVert[offset+2]);
+
+                t.normal = Math::calculateFaceNormalWithoutNormalize(v1, v2, v3);
+            }
+        }
+
 
         // unlock the buffer
         positionBuffer->unlock();

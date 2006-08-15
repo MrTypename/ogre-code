@@ -58,7 +58,6 @@ namespace Ogre {
         bool supportsSkeletalAnimation;
 		bool supportsMorphAnimation;
 		ushort supportsPoseAnimation; // number of simultaneous poses supported
-		bool usesVertexTextureFetch;
 		std::map<String, String> customParameters;
 	};
     /** Struct for holding the script context while parsing. */

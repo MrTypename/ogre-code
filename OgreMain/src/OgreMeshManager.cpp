@@ -506,7 +506,7 @@ namespace Ogre
                 vec.y = (y * ySpace) - halfHeight;
                 vec.z = 0.0f;
                 // Transform by orientation and distance
-                vec = xform.transformAffine(vec);
+                vec = xform * vec;
                 // Assign to geometry
                 *pReal++ = vec.x;
                 *pReal++ = vec.y;
@@ -532,7 +532,7 @@ namespace Ogre
                     // Default normal is along unit Z
                     vec = Vector3::UNIT_Z;
                     // Rotate
-                    vec = rot.transformAffine(vec);
+                    vec = rot * vec;
 
                     *pReal++ = vec.x;
                     *pReal++ = vec.y;
@@ -658,7 +658,7 @@ namespace Ogre
                 vec.z = (-sin((1-dist) * (PI/2)) * params.curvature) + params.curvature;
 
                 // Transform by orientation and distance
-                Vector3 pos = xform.transformAffine(vec);
+                Vector3 pos = xform * vec;
                 // Assign to geometry
                 *pFloat++ = pos.x;
                 *pFloat++ = pos.y;
@@ -687,7 +687,7 @@ namespace Ogre
                     // Default normal is along unit Z
                     //vec = Vector3::UNIT_Z;
                     // Rotate
-                    vec = rot.transformAffine(vec);
+                    vec = rot * vec;
 					vec.normalise();
 
                     *pFloat++ = vec.x;
@@ -825,7 +825,7 @@ namespace Ogre
                 vec.y = (y * ySpace) - halfHeight;
                 vec.z = 0.0f;
                 // Transform by orientation and distance
-                vec = xform.transformAffine(vec);
+                vec = xform * vec;
                 // Assign to geometry
                 *pFloat++ = vec.x;
                 *pFloat++ = vec.y;

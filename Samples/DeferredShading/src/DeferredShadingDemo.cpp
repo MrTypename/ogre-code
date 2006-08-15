@@ -95,9 +95,7 @@ public:
 
 	bool frameStarted(const FrameEvent& evt)
 	{
-		if( ExampleFrameListener::frameStarted(evt) == false )
-			return false;
-
+		bool result = ExampleFrameListener::frameStarted(evt);
 		SharedData::getSingleton().iLastFrameTime = evt.timeSinceLastFrame;
 
 		if (SharedData::getSingleton().mAnimState)
@@ -116,15 +114,15 @@ public:
 		
 		if(somethingChanged)
 			SharedData::getSingleton().iSystem->update();
-		return true;
+		return result;        
 	}
 
 	virtual bool processUnbufferedKeyInput(const FrameEvent& evt) {
-		using namespace OIS;
+
 		bool retval = ExampleFrameListener::processUnbufferedKeyInput(evt);
 
 		// "C" switch filters
-		if (mKeyboard->isKeyDown(KC_C) && timeoutDelay==0) 
+		if (mInputDevice->isKeyDown(KC_C) && timeoutDelay==0) 
 		{
 			timeoutDelay = 0.5f;
 
@@ -138,7 +136,7 @@ public:
 		}
 
 		// "B" activate/deactivate minilight rendering
-		if (mKeyboard->isKeyDown(KC_B) && timeoutDelay==0) 
+		if (mInputDevice->isKeyDown(KC_B) && timeoutDelay==0) 
 		{
 			timeoutDelay = 0.5f;
 			SharedData::getSingleton().iActivate = !SharedData::getSingleton().iActivate;
@@ -153,7 +151,7 @@ public:
 			updateOverlays();
 		}
 		// "G" activate/deactivate global light rendering
-		if (mKeyboard->isKeyDown(KC_G) && timeoutDelay==0) 
+		if (mInputDevice->isKeyDown(KC_G) && timeoutDelay==0) 
 		{
 			timeoutDelay = 0.5f;
 			SharedData::getSingleton().iGlobalActivate = !SharedData::getSingleton().iGlobalActivate;
@@ -251,13 +249,13 @@ protected:
         MeshPtr pAthene = MeshManager::getSingleton().load("athene.mesh", 
             ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
         unsigned short src, dest;
-        if (!pAthene->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
-            pAthene->buildTangentVectors(VES_TANGENT, src, dest);
+        if (!pAthene->suggestTangentVectorBuildParams(src, dest))
+            pAthene->buildTangentVectors(src, dest);
 		// Prepare knot mesh for normal mapping
 		pAthene = MeshManager::getSingleton().load("knot.mesh", 
             ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-        if (!pAthene->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
-            pAthene->buildTangentVectors(VES_TANGENT, src, dest);
+        if (!pAthene->suggestTangentVectorBuildParams(src, dest))
+            pAthene->buildTangentVectors(src, dest);
 
         // Set ambient light
         mSceneMgr->setAmbientLight(ColourValue(0.2, 0.2, 0.15));

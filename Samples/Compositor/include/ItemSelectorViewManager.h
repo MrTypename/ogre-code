@@ -31,6 +31,7 @@ LGPL like the rest of the engine.
 #include <CEGUI/elements/CEGUIPushButton.h>
 #include <CEGUI/elements/CEGUIScrollbar.h>
 #include <CEGUI/elements/CEGUIScrollablePane.h>
+#include <CEGUI/elements/CEGUIStaticImage.h>
 #include "OgreMemoryMacros.h"
 
     /** Provides interface between a View and a Controller.

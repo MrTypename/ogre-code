@@ -216,32 +216,14 @@ namespace Ogre {
         // This method is only ever called to set a texture unit to valid details
         // The method _disableTextureUnit is called to turn a unit off
 
-		// Vertex texture binding?
-		static TexturePtr nullPtr;
-		if (mCapabilities->hasCapability(RSC_VERTEX_TEXTURE_FETCH) && 
-			!mCapabilities->getVertexTextureUnitsShared())
+        // Texture name
+		if (tl.isBlank())
 		{
-			if (tl.getBindingType() == TextureUnitState::BT_VERTEX)
-			{
-				// bind nothing to fragment unit (hardware isn't shared but fragment
-				// unit can't be using the same index
-				_setTexture(texUnit, true, nullPtr);
-				// Bind vertex texture
-				_setVertexTexture(texUnit, tl._getTexturePtr());
-			}
-			else
-			{
-				// vice versa
-				_setTexture(texUnit, true, tl._getTexturePtr());
-				_setVertexTexture(texUnit, nullPtr);
-
-			}
+			_setTexture(texUnit, true, StringUtil::BLANK);
 		}
 		else
 		{
-			// Shared vertex / fragment textures or no vertex texture support
-			// Bind texture (may be blank)
-			_setTexture(texUnit, true, tl._getTexturePtr());
+			_setTexture(texUnit, true, tl.getTextureName());
 		}
 
         // Set texture coordinate set
@@ -322,27 +304,9 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-	void RenderSystem::_setTexture(size_t unit, bool enabled, 
-		const String &texname)
-	{
-		TexturePtr t = TextureManager::getSingleton().getByName(texname);
-		_setTexture(unit, enabled, t);
-	}
-	//-----------------------------------------------------------------------
-	void RenderSystem::_setVertexTexture(size_t unit, const TexturePtr& tex)
-	{
-		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, 
-			"This rendersystem does not support separate vertex texture samplers, "
-			"you should use the regular texture samplers which are shared between "
-			"the vertex and fragment units.", 
-			"RenderSystem::_setVertexTexture");
-	}
-    //-----------------------------------------------------------------------
     void RenderSystem::_disableTextureUnit(size_t texUnit)
     {
-		static TexturePtr nullPtr;
-
-        _setTexture(texUnit, false, nullPtr);
+        _setTexture(texUnit, false, "");
         _setTextureMatrix(texUnit, Matrix4::IDENTITY);
     }
     //---------------------------------------------------------------------

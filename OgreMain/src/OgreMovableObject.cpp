@@ -207,7 +207,7 @@ namespace Ogre {
         if (derive)
         {
             mWorldAABB = this->getBoundingBox();
-            mWorldAABB.transformAffine(_getParentNodeFullTransform());
+            mWorldAABB.transform(_getParentNodeFullTransform());
         }
 
         return mWorldAABB;

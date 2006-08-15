@@ -522,6 +522,12 @@ namespace Ogre {
 		mCurrentSection = 0;
 		resetTempAreas();
 
+		// Tell parent if present
+		if (mParentNode)
+		{
+			mParentNode->needUpdate();
+		}
+
 	}
 	//-----------------------------------------------------------------------------
 	MeshPtr ManualObject::convertToMesh(const String& meshName, const String& groupName)
@@ -645,8 +651,8 @@ namespace Ogre {
 
 		// Calculate the object space light details
 		Vector4 lightPos = light->getAs4DVector();
-		Matrix4 world2Obj = mParentNode->_getFullTransform().inverseAffine();
-		lightPos = world2Obj.transformAffine(lightPos);
+		Matrix4 world2Obj = mParentNode->_getFullTransform().inverse();
+		lightPos =  world2Obj * lightPos;
 
 
 		// Init shadow renderable list if required (only allow indexed)

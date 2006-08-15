@@ -28,13 +28,12 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreLogManager.h"
 #include "OgreString.h"
 
-namespace Ogre
-{
+namespace Ogre {
 
     //-----------------------------------------------------------------------
-    Log::Log( const String& name, bool debuggerOuput, bool suppressFile ) : 
-        mLogLevel(LL_NORMAL), mDebugOut(debuggerOuput),
-        mSuppressFile(suppressFile), mLogName(name)
+    Log::Log( const String& name, bool debuggerOuput, bool suppressFile )
+		: mLogLevel(LL_NORMAL), mDebugOut(debuggerOuput), mSuppressFile(suppressFile), 
+		mName(name)
     {
 		if (!mSuppressFile)
 		{
@@ -54,8 +53,11 @@ namespace Ogre
     {
         if ((mLogLevel + lml) >= OGRE_LOG_THRESHOLD)
         {
-            for( mtLogListener::iterator i = mListeners.begin(); i != mListeners.end(); ++i )
-                (*i)->messageLogged( message, lml, maskDebug, mLogName );
+			// Reroute to log manager for custom listeners.
+			if ( LogManager::getSingletonPtr() ) 
+			{
+				LogManager::getSingleton()._routeMessage( mName,message,lml,maskDebug );
+			}
 
 			if (mDebugOut && !maskDebug)
                 std::cerr << message << std::endl;
@@ -76,22 +78,9 @@ namespace Ogre
 			}
         }
     }
-
     //-----------------------------------------------------------------------
     void Log::setLogDetail(LoggingLevel ll)
     {
         mLogLevel = ll;
-    }
-
-    //-----------------------------------------------------------------------
-    void Log::addListener(LogListener* listener)
-    {
-        mListeners.push_back(listener);
-    }
-
-    //-----------------------------------------------------------------------
-    void Log::removeListener(LogListener* listener)
-    {
-        mListeners.erase(std::find(mListeners.begin(), mListeners.end(), listener));
     }
 }

@@ -37,8 +37,7 @@ public:
     }
     bool frameStarted(const FrameEvent& evt)
     {
-        if( ExampleFrameListener::frameStarted(evt) == false )
-		return false;
+        bool result = ExampleFrameListener::frameStarted(evt);
 
         // Make sure reflection camera is updated too
         mReflectCam->setOrientation(mCamera->getOrientation());
@@ -47,7 +46,7 @@ public:
         // Rotate plane
         mPlaneNode->yaw(Degree(30 * evt.timeSinceLastFrame), Node::TS_PARENT);
 
-        return true;
+        return result;        
     }
 };
 

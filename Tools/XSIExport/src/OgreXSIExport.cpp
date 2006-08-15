@@ -298,10 +298,6 @@ XSI::CStatus OnOgreMeshExportMenu( XSI::CRef& in_ref )
 			bool edgeLists = param.GetValue();
 			param = prop.GetParameters().GetItem( L"calculateTangents" );
 			bool tangents = param.GetValue();
-			param = prop.GetParameters().GetItem( L"tangentSemantic" );
-			CString tangentSemStr = param.GetValue();
-			Ogre::VertexElementSemantic tangentSemantic = (tangentSemStr == L"t")?
-				Ogre::VES_TANGENT : Ogre::VES_TEXTURE_COORDINATES;
 			param = prop.GetParameters().GetItem( L"numLodLevels" );
 			long numlods = param.GetValue();
 			Ogre::XsiMeshExporter::LodData* lodData = 0;
@@ -422,8 +418,8 @@ XSI::CStatus OnOgreMeshExportMenu( XSI::CRef& in_ref )
 				// Do the mesh
 				Ogre::DeformerMap& deformers = 
 					meshExporter.buildMeshForExport(mergeSubmeshes, 
-						exportChildren, edgeLists, tangents, tangentSemantic, 
-						exportVertexAnimation, selAnimList, fps, materialPrefix,
+						exportChildren, edgeLists, tangents, exportVertexAnimation,
+						selAnimList, fps, materialPrefix,
 						lodData, skelName);
 				// do the skeleton
 				const Ogre::AxisAlignedBox& skelAABB = 
@@ -437,8 +433,8 @@ XSI::CStatus OnOgreMeshExportMenu( XSI::CRef& in_ref )
 				Ogre::AxisAlignedBox nullbb;
 				// No skeleton
 				meshExporter.buildMeshForExport(mergeSubmeshes, 
-					exportChildren, edgeLists, tangents, tangentSemantic, 
-					exportVertexAnimation, selAnimList, fps, materialPrefix, lodData);
+					exportChildren, edgeLists, tangents, exportVertexAnimation,
+					selAnimList, fps, materialPrefix, lodData);
 				meshExporter.exportMesh(meshFileName, nullbb);
 			}
 
@@ -537,10 +533,6 @@ CStatus OgreMeshExportOptions_Define( const CRef & in_Ctx )
         L"Calculate Tangents (normal mapping)", L"", 
         CValue(false), param) ;	
 	prop.AddParameter(	
-		L"tangentSemantic",CValue::siString, caps, 
-		L"Tangent Semantic", L"", 
-		L"t", param) ;	
-	prop.AddParameter(	
 		L"numLodLevels",CValue::siInt2, caps, 
 		L"Levels of Detail", L"", 
 		CValue(0L), param) ;	
@@ -635,12 +627,6 @@ CStatus OgreMeshExportOptions_DefineLayout( const CRef & in_Ctx )
 
     item = oLayout.AddItem(L"calculateEdgeLists");
     item = oLayout.AddItem(L"calculateTangents");
-	CValueArray tangentVals;
-	tangentVals.Add(L"Tangent");
-	tangentVals.Add(L"t");
-	tangentVals.Add(L"Texture Coords");
-	tangentVals.Add(L"uvw");
-	item = oLayout.AddEnumControl(L"tangentSemantic", tangentVals, L"Tangent Semantic", XSI::siControlCombo);
 	oLayout.AddGroup(L"Level of Detail Reduction");
     item = oLayout.AddItem(L"numLodLevels");
 	item = oLayout.AddItem(L"lodDistanceIncrement");

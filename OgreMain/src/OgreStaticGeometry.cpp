@@ -916,8 +916,8 @@ namespace Ogre {
 
 		// Calculate the object space light details
 		Vector4 lightPos = light->getAs4DVector();
-		Matrix4 world2Obj = mParentNode->_getFullTransform().inverseAffine();
-		lightPos = world2Obj.transformAffine(lightPos);
+		Matrix4 world2Obj = mParentNode->_getFullTransform().inverse();
+		lightPos =  world2Obj * lightPos;
 
 		// We need to search the edge list for silhouette edges
 		if (!mEdgeList)
@@ -1257,7 +1257,7 @@ namespace Ogre {
 		uint8 group, Real camDistanceSquared)
 	{
 		// Determine the current material technique
-		mTechnique = mMaterial->getTechnique(
+		mTechnique = mMaterial->getBestTechnique(
 			mMaterial->getLodIndexSquaredDepth(camDistanceSquared));
 
 		GeometryBucketList::iterator i, iend;

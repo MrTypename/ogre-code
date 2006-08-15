@@ -94,8 +94,8 @@ typedef MaterialControlsContainer::iterator MaterialControlsIterator;
 //---------------------------------------------------------------------------
 struct ShaderControlGUIWidget
 {
-	CEGUI::Window* TextWidget;
-	CEGUI::Window* NumberWidget;
+	CEGUI::StaticText* TextWidget;
+	CEGUI::StaticText* NumberWidget;
 	CEGUI::Scrollbar*  ScrollWidget;
 
 	ShaderControlGUIWidget() : TextWidget(NULL), NumberWidget(NULL), ScrollWidget(NULL) {}
