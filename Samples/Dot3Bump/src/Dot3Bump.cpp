@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -123,7 +123,7 @@ OverlayElement* mInfo;
 
 #define KEY_PRESSED(_key,_timeDelay, _macro) \
 { \
-    if (mKeyboard->isKeyDown(_key) && timeDelay <= 0) \
+    if (mInputDevice->isKeyDown(_key) && timeDelay <= 0) \
     { \
 		timeDelay = _timeDelay; \
         _macro ; \
@@ -149,8 +149,6 @@ public:
     }
     bool frameStarted(const FrameEvent& evt)
     {
-	using namespace OIS;
-
         if(!ExampleFrameListener::frameStarted(evt))
             return false;
         
@@ -241,11 +239,10 @@ protected:
 				HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
 				true, true); //so we can still read it
             // Build tangent vectors, all our meshes use only 1 texture coordset 
-			// Note we can build into VES_TANGENT now (SM2+)
             unsigned short src, dest;
-            if (!pMesh->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
+            if (!pMesh->suggestTangentVectorBuildParams(src, dest))
             {
-                pMesh->buildTangentVectors(VES_TANGENT, src, dest);
+                pMesh->buildTangentVectors(src, dest);
             }
             // Create entity
             mEntities[mn] = mSceneMgr->createEntity("Ent" + StringConverter::toString(mn), 

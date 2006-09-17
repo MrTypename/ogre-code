@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under 
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple 
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to 
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include <xsi_value.h>
@@ -302,10 +298,6 @@ XSI::CStatus OnOgreMeshExportMenu( XSI::CRef& in_ref )
 			bool edgeLists = param.GetValue();
 			param = prop.GetParameters().GetItem( L"calculateTangents" );
 			bool tangents = param.GetValue();
-			param = prop.GetParameters().GetItem( L"tangentSemantic" );
-			CString tangentSemStr = param.GetValue();
-			Ogre::VertexElementSemantic tangentSemantic = (tangentSemStr == L"t")?
-				Ogre::VES_TANGENT : Ogre::VES_TEXTURE_COORDINATES;
 			param = prop.GetParameters().GetItem( L"numLodLevels" );
 			long numlods = param.GetValue();
 			Ogre::XsiMeshExporter::LodData* lodData = 0;
@@ -426,8 +418,8 @@ XSI::CStatus OnOgreMeshExportMenu( XSI::CRef& in_ref )
 				// Do the mesh
 				Ogre::DeformerMap& deformers = 
 					meshExporter.buildMeshForExport(mergeSubmeshes, 
-						exportChildren, edgeLists, tangents, tangentSemantic, 
-						exportVertexAnimation, selAnimList, fps, materialPrefix,
+						exportChildren, edgeLists, tangents, exportVertexAnimation,
+						selAnimList, fps, materialPrefix,
 						lodData, skelName);
 				// do the skeleton
 				const Ogre::AxisAlignedBox& skelAABB = 
@@ -441,8 +433,8 @@ XSI::CStatus OnOgreMeshExportMenu( XSI::CRef& in_ref )
 				Ogre::AxisAlignedBox nullbb;
 				// No skeleton
 				meshExporter.buildMeshForExport(mergeSubmeshes, 
-					exportChildren, edgeLists, tangents, tangentSemantic, 
-					exportVertexAnimation, selAnimList, fps, materialPrefix, lodData);
+					exportChildren, edgeLists, tangents, exportVertexAnimation,
+					selAnimList, fps, materialPrefix, lodData);
 				meshExporter.exportMesh(meshFileName, nullbb);
 			}
 
@@ -541,10 +533,6 @@ CStatus OgreMeshExportOptions_Define( const CRef & in_Ctx )
         L"Calculate Tangents (normal mapping)", L"", 
         CValue(false), param) ;	
 	prop.AddParameter(	
-		L"tangentSemantic",CValue::siString, caps, 
-		L"Tangent Semantic", L"", 
-		L"t", param) ;	
-	prop.AddParameter(	
 		L"numLodLevels",CValue::siInt2, caps, 
 		L"Levels of Detail", L"", 
 		CValue(0L), param) ;	
@@ -639,12 +627,6 @@ CStatus OgreMeshExportOptions_DefineLayout( const CRef & in_Ctx )
 
     item = oLayout.AddItem(L"calculateEdgeLists");
     item = oLayout.AddItem(L"calculateTangents");
-	CValueArray tangentVals;
-	tangentVals.Add(L"Tangent");
-	tangentVals.Add(L"t");
-	tangentVals.Add(L"Texture Coords");
-	tangentVals.Add(L"uvw");
-	item = oLayout.AddEnumControl(L"tangentSemantic", tangentVals, L"Tangent Semantic", XSI::siControlCombo);
 	oLayout.AddGroup(L"Level of Detail Reduction");
     item = oLayout.AddItem(L"numLodLevels");
 	item = oLayout.AddItem(L"lodDistanceIncrement");

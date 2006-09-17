@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -39,13 +35,6 @@ Torus Knot Software Ltd.
 #include "OgrePass.h"
 #include "OgreTextureUnitState.h"
 #include "OgreException.h"
-#include "OgreMaterialScriptCompiler.h"
-
-/** Set this to 0 if having problems with the new Material Script Compiler and want to use the original one.
-*/
-#ifndef OGRE_MATERIAL_SCRIPT_COMPILER
-#define OGRE_MATERIAL_SCRIPT_COMPILER 0
-#endif
 
 namespace Ogre {
 
@@ -67,10 +56,6 @@ namespace Ogre {
 	    mDefaultMagFilter = FO_LINEAR;
 	    mDefaultMipFilter = FO_POINT;
 		mDefaultMaxAniso = 1;
-
-#if OGRE_MATERIAL_SCRIPT_COMPILER
-        mScriptCompiler = new MaterialScriptCompiler();
-#endif
 
         // Loading order
         mLoadOrder = 100.0f;
@@ -99,10 +84,6 @@ namespace Ogre {
 		// Unregister with resource group manager
 		ResourceGroupManager::getSingleton()._unregisterResourceManager(mResourceType);
 		ResourceGroupManager::getSingleton()._unregisterScriptLoader(this);
-#if OGRE_MATERIAL_SCRIPT_COMPILER
-        delete mScriptCompiler;
-#endif
-
     }
 	//-----------------------------------------------------------------------
 	Resource* MaterialManager::createImpl(const String& name, ResourceHandle handle, 
@@ -131,11 +112,7 @@ namespace Ogre {
     void MaterialManager::parseScript(DataStreamPtr& stream, const String& groupName)
     {
         // Delegate to serializer
-#if OGRE_MATERIAL_SCRIPT_COMPILER
-        mScriptCompiler->parseScript(stream, groupName);
-#else
         mSerializer.parseScript(stream, groupName);
-#endif
     }
     //-----------------------------------------------------------------------
 	void MaterialManager::setDefaultTextureFiltering(TextureFilterOptions fo)

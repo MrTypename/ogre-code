@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -40,9 +40,6 @@ public:
 
     bool frameStarted(const FrameEvent& evt)
     {
-	if( ExampleFrameListener::frameStarted(evt) == false )
-		return false;
-
         static Real timeLapse = 0.0f;
         static Real factor = 0.0;
         static bool wireframe = 0;
@@ -65,13 +62,13 @@ public:
             }
 
             patch->setSubdivision(factor);
-            mDebugText = "Bezier subdivision factor: " + StringConverter::toString(factor);
+            mWindow->setDebugText("Bezier subdivision factor: " + StringConverter::toString(factor));
             timeLapse = 0.0f;
 
         }
 
         // Call default
-        return true;
+        return ExampleFrameListener::frameStarted(evt);
     }
 };
 

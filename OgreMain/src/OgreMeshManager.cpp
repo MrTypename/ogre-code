@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -510,7 +506,7 @@ namespace Ogre
                 vec.y = (y * ySpace) - halfHeight;
                 vec.z = 0.0f;
                 // Transform by orientation and distance
-                vec = xform.transformAffine(vec);
+                vec = xform * vec;
                 // Assign to geometry
                 *pReal++ = vec.x;
                 *pReal++ = vec.y;
@@ -536,7 +532,7 @@ namespace Ogre
                     // Default normal is along unit Z
                     vec = Vector3::UNIT_Z;
                     // Rotate
-                    vec = rot.transformAffine(vec);
+                    vec = rot * vec;
 
                     *pReal++ = vec.x;
                     *pReal++ = vec.y;
@@ -662,7 +658,7 @@ namespace Ogre
                 vec.z = (-sin((1-dist) * (PI/2)) * params.curvature) + params.curvature;
 
                 // Transform by orientation and distance
-                Vector3 pos = xform.transformAffine(vec);
+                Vector3 pos = xform * vec;
                 // Assign to geometry
                 *pFloat++ = pos.x;
                 *pFloat++ = pos.y;
@@ -691,7 +687,7 @@ namespace Ogre
                     // Default normal is along unit Z
                     //vec = Vector3::UNIT_Z;
                     // Rotate
-                    vec = rot.transformAffine(vec);
+                    vec = rot * vec;
 					vec.normalise();
 
                     *pFloat++ = vec.x;
@@ -829,7 +825,7 @@ namespace Ogre
                 vec.y = (y * ySpace) - halfHeight;
                 vec.z = 0.0f;
                 // Transform by orientation and distance
-                vec = xform.transformAffine(vec);
+                vec = xform * vec;
                 // Assign to geometry
                 *pFloat++ = vec.x;
                 *pFloat++ = vec.y;

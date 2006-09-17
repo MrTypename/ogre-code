@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9HLSLProgram.h"
@@ -39,82 +35,21 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     D3D9HLSLProgram::CmdEntryPoint D3D9HLSLProgram::msCmdEntryPoint;
     D3D9HLSLProgram::CmdTarget D3D9HLSLProgram::msCmdTarget;
-    D3D9HLSLProgram::CmdPreprocessorDefines D3D9HLSLProgram::msCmdPreprocessorDefines;
-    D3D9HLSLProgram::CmdColumnMajorMatrices D3D9HLSLProgram::msCmdColumnMajorMatrices;
     //-----------------------------------------------------------------------
     //-----------------------------------------------------------------------
     void D3D9HLSLProgram::loadFromSource(void)
     {
-        // Populate preprocessor defines
-        String stringBuffer;
-        std::vector<D3DXMACRO> defines;
-        const D3DXMACRO* pDefines = 0;
-        if (!mPreprocessorDefines.empty())
-        {
-            stringBuffer = mPreprocessorDefines;
-
-            // Split preprocessor defines and build up macro array
-            D3DXMACRO macro;
-            String::size_type pos = 0;
-            while (pos != String::npos)
-            {
-                macro.Name = &stringBuffer[pos];
-                macro.Definition = 0;
-
-                // Find delims
-                pos = stringBuffer.find_first_of(";,=", pos);
-                if (pos != String::npos)
-                {
-                    // Check definition part
-                    if (stringBuffer[pos] == '=')
-                    {
-                        // Setup null character for macro name
-                        stringBuffer[pos++] = '\0';
-                        macro.Definition = &stringBuffer[pos];
-                        pos = stringBuffer.find_first_of(";,", pos);
-                    }
-                    else
-                    {
-                        // No definition part, define as "1"
-                        macro.Definition = "1";
-                    }
-
-                    if (pos != String::npos)
-                    {
-                        // Setup null character for macro name or definition
-                        stringBuffer[pos++] = '\0';
-                    }
-                }
-
-                defines.push_back(macro);
-            }
-
-            // Add NULL terminator
-            macro.Name = 0;
-            macro.Definition = 0;
-            defines.push_back(macro);
-
-            pDefines = &defines[0];
-        }
-
-        // Populate compile flags
-        DWORD compileFlags = 0;
-        if (mColumnMajorMatrices)
-            compileFlags |= D3DXSHADER_PACKMATRIX_COLUMNMAJOR;
-        else
-            compileFlags |= D3DXSHADER_PACKMATRIX_ROWMAJOR;
-
         LPD3DXBUFFER errors = 0;
 
         // Compile & assemble into microcode
         HRESULT hr = D3DXCompileShader(
             mSource.c_str(),
             static_cast<UINT>(mSource.length()),
-            pDefines,
+            NULL, //no preprocessor defines
             NULL, //no includes
             mEntryPoint.c_str(),
             mTarget.c_str(),
-            compileFlags,
+            NULL, // no compile flags
             &mpMicroCode,
             &errors,
             &mpConstTable);
@@ -244,10 +179,6 @@ namespace Ogre {
         ResourceHandle handle, const String& group, bool isManual, 
         ManualResourceLoader* loader)
         : HighLevelGpuProgram(creator, name, handle, group, isManual, loader)
-        , mTarget()
-        , mEntryPoint()
-        , mPreprocessorDefines()
-        , mColumnMajorMatrices(true)
         , mpMicroCode(NULL), mpConstTable(NULL)
     {
         if (createParamDictionary("D3D9HLSLProgram"))
@@ -261,12 +192,6 @@ namespace Ogre {
             dict->addParameter(ParameterDef("target", 
                 "Name of the assembler target to compile down to.",
                 PT_STRING),&msCmdTarget);
-            dict->addParameter(ParameterDef("preprocessor_defines", 
-                "Preprocessor defines use to compile the program.",
-                PT_STRING),&msCmdPreprocessorDefines);
-            dict->addParameter(ParameterDef("column_major_matrices", 
-                "Whether matrix packing in column-major order.",
-                PT_BOOL),&msCmdColumnMajorMatrices);
         }
         
     }
@@ -275,7 +200,7 @@ namespace Ogre {
     {
         // have to call this here reather than in Resource destructor
         // since calling virtual methods in base destructors causes crash
-        if (isLoaded())
+        if (mIsLoaded)
         {
             unload();
         }
@@ -304,8 +229,8 @@ namespace Ogre {
         // Call superclass
         GpuProgramParametersSharedPtr params = HighLevelGpuProgram::createParameters();
 
-        // Need to transpose matrices if compiled with column-major matrices
-        params->setTransposeMatrices(mColumnMajorMatrices);
+        // D3D HLSL uses column-major matrices
+        params->setTransposeMatrices(true);
 
         return params;
     }
@@ -341,24 +266,6 @@ namespace Ogre {
     void D3D9HLSLProgram::CmdTarget::doSet(void *target, const String& val)
     {
         static_cast<D3D9HLSLProgram*>(target)->setTarget(val);
-    }
-    //-----------------------------------------------------------------------
-    String D3D9HLSLProgram::CmdPreprocessorDefines::doGet(const void *target) const
-    {
-        return static_cast<const D3D9HLSLProgram*>(target)->getPreprocessorDefines();
-    }
-    void D3D9HLSLProgram::CmdPreprocessorDefines::doSet(void *target, const String& val)
-    {
-        static_cast<D3D9HLSLProgram*>(target)->setPreprocessorDefines(val);
-    }
-    //-----------------------------------------------------------------------
-    String D3D9HLSLProgram::CmdColumnMajorMatrices::doGet(const void *target) const
-    {
-        return StringConverter::toString(static_cast<const D3D9HLSLProgram*>(target)->getColumnMajorMatrices());
-    }
-    void D3D9HLSLProgram::CmdColumnMajorMatrices::doSet(void *target, const String& val)
-    {
-        static_cast<D3D9HLSLProgram*>(target)->setColumnMajorMatrices(StringConverter::parseBool(val));
     }
 
 }

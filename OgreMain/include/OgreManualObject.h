@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -226,59 +222,6 @@ namespace Ogre
 		virtual MeshPtr convertToMesh(const String& meshName, 
 			const String& groupName = ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
-		/** Sets whether or not to use an 'identity' projection.
-		@remarks
-			Usually ManualObjects will use a projection matrix as determined
-			by the active camera. However, if they want they can cancel this out
-			and use an identity projection, which effectively projects in 2D using
-			a {-1, 1} view space. Useful for overlay rendering. Normally you don't
-			need to change this. The default is false.
-		@see ManualObject::getUseIdentityProjection
-		*/
-		void setUseIdentityProjection(bool useIdentityProjection);
-
-		/** Returns whether or not to use an 'identity' projection.
-		@remarks
-			Usually ManualObjects will use a projection matrix as determined
-			by the active camera. However, if they want they can cancel this out
-			and use an identity projection, which effectively projects in 2D using
-			a {-1, 1} view space. Useful for overlay rendering. Normally you don't
-			need to change this.
-		@see ManualObject::setUseIdentityProjection
-		*/
-		bool getUseIdentityProjection(void) const { return mUseIdentityProjection; }
-
-		/** Sets whether or not to use an 'identity' view.
-		@remarks
-			Usually ManualObjects will use a view matrix as determined
-			by the active camera. However, if they want they can cancel this out
-			and use an identity matrix, which means all geometry is assumed
-			to be relative to camera space already. Useful for overlay rendering. 
-			Normally you don't need to change this. The default is false.
-		@see ManualObject::getUseIdentityView
-		*/
-		void setUseIdentityView(bool useIdentityView);
-
-		/** Returns whether or not to use an 'identity' view.
-		@remarks
-			Usually ManualObjects will use a view matrix as determined
-			by the active camera. However, if they want they can cancel this out
-			and use an identity matrix, which means all geometry is assumed
-			to be relative to camera space already. Useful for overlay rendering. 
-			Normally you don't need to change this.
-		@see ManualObject::setUseIdentityView
-		*/
-		bool getUseIdentityView(void) const { return mUseIdentityView; }
-
-		/** Sets the bounding box.
-			@remarks Call this after having finished creating sections to modify the
-				bounding box. E.g. if you're using ManualObject to create 2D overlays
-				you can call things function to set an infinite bounding box so that
-				the object always stays visible when attached.
-			@see ManualObject::setUseIdentityProjection, ManualObject::setUseIdentityView,
-				AxisAlignedBox::setInfinite */
-		void setBoundingBox(const AxisAlignedBox& box) { mAABB = box; }
-
 		// MovableObject overrides
 
 		/** @copydoc MovableObject::getMovableType. */
@@ -404,10 +347,6 @@ namespace Ogre
 		EdgeData* mEdgeList;
 		/// List of shadow renderables
 		ShadowRenderableList mShadowRenderables;
-		/// Whether to use identity projection for sections
-		bool mUseIdentityProjection;
-		/// Whether to use identity view for sections
-		bool mUseIdentityView;
 
 
 		/// Delete temp buffers and reset init counts

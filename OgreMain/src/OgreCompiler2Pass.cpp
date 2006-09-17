@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.stevestreeting.com/ogre/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -50,10 +50,6 @@ namespace Ogre {
     {
         if (mBNFTokenState.lexemeTokenDefinitions.empty())
         {
-            /* Every Token ID must be manually generated during the compiler bootstrap phase
-               since the rule base is manually defined.
-           */
-
             addLexemeToken("UNKNOWN", BNF_UNKOWN);
             addLexemeToken("syntax", BNF_SYNTAX);
             addLexemeToken("rule", BNF_RULE);
@@ -781,26 +777,26 @@ namespace Ogre {
 			    // only validate if the previous rule passed
 			    if (passed)
 				    passed = ValidateToken(rulepathIDX, ActiveNTTRule);
-                // log error message if a previouse token was found in this rule path and current token failed
-                if (tokenFound && (mCharPos != mErrorCharPos) && !passed)
-                {
-                    mErrorCharPos = mCharPos;
-                    LogManager::getSingleton().logMessage(
-                    "*** ERROR *** : in " + getClientGrammerName() +
-                    " Source: " + mSourceName +
-                    "\nUnknown token found on line " + StringConverter::toString(mCurrentLine) +
-                    "\nFound: >>>" + mSource->substr(mCharPos, 20) +
-                    "<<<\nbut was expecting form: " + getBNFGrammerTextFromRulePath(rulepathIDX, 2) +
-                    "\nwhile in rule path: <" + mActiveTokenState->lexemeTokenDefinitions[ActiveNTTRule].lexeme +
-                    ">"
-                    );
-                    // log last valid token found
-                    const TokenInst& tokenInst = mActiveTokenState->tokenQue.back();
-                    LogManager::getSingleton().logMessage(
-                        "Last valid token found was on line " + StringConverter::toString(tokenInst.line));
-                    LogManager::getSingleton().logMessage(
-                        "source hint: >>>" + mSource->substr(tokenInst.pos, 20) + "<<<");
-                }
+				    // log error message if a previouse token was found in this rule path and current token failed
+				    if (tokenFound && (mCharPos != mErrorCharPos) && !passed)
+                    {
+                        mErrorCharPos = mCharPos;
+                        LogManager::getSingleton().logMessage(
+                        "*** ERROR *** : in " + getClientGrammerName() +
+                        " Source: " + mSourceName +
+                        "\nUnknown token found on line " + StringConverter::toString(mCurrentLine) +
+                        "\nFound: >>>" + mSource->substr(mCharPos, 20) +
+                        "<<<\nbut was expecting form: " + getBNFGrammerTextFromRulePath(rulepathIDX, 2) +
+                        "\nwhile in rule path: <" + mActiveTokenState->lexemeTokenDefinitions[ActiveNTTRule].lexeme +
+                        ">"
+                        );
+                        // log last valid token found
+                        const TokenInst& tokenInst = mActiveTokenState->tokenQue.back();
+                        LogManager::getSingleton().logMessage(
+                            "Last valid token found was on line " + StringConverter::toString(tokenInst.line));
+                        LogManager::getSingleton().logMessage(
+                            "source hint: >>>" + mSource->substr(tokenInst.pos, 20) + "<<<");
+                    }
 
 			    break;
 
@@ -1261,27 +1257,12 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    size_t Compiler2Pass::addLexemeToken(const String& lexeme, const size_t token, const bool hasAction, const bool caseSensitive)
+    void Compiler2Pass::addLexemeToken(const String& lexeme, const size_t token, const bool hasAction, const bool caseSensitive)
     {
-        size_t newTokenID = token;
-        // if token ID is zero then auto-generate a new token ID
-        if (newTokenID == 0)
-        {
-            // assume BNF system bootstrap is current state
-            size_t autoTokenIDStart = BNF_AUTOTOKENSTART;
-            // if in client state then get auto token start position from the client
-            if (mActiveTokenState != &mBNFTokenState)
-                autoTokenIDStart = getAutoTokenIDStart();
-            // make sure new auto gen id starts at autoTokenIDStart or greater
-            newTokenID = (mActiveTokenState->lexemeTokenDefinitions.size() <= autoTokenIDStart ) ? autoTokenIDStart : newTokenID = mActiveTokenState->lexemeTokenDefinitions.size();
-        }
-        
-        if (newTokenID >= mActiveTokenState->lexemeTokenDefinitions.size())
-        {
-            mActiveTokenState->lexemeTokenDefinitions.resize(newTokenID + 1);
-        }
+        if (token >= mActiveTokenState->lexemeTokenDefinitions.size())
+            mActiveTokenState->lexemeTokenDefinitions.resize(token + 1);
         // since resizing guarentees the token definition will exist, just assign values to members
-        LexemeTokenDef& tokenDef = mActiveTokenState->lexemeTokenDefinitions[newTokenID];
+        LexemeTokenDef& tokenDef = mActiveTokenState->lexemeTokenDefinitions[token];
         if (tokenDef.ID != 0)
         {
             OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM, "In " + getClientGrammerName() +
@@ -1289,16 +1270,14 @@ namespace Ogre {
                 lexeme + "<<< already exists in lexeme token definitions",
                 "Compiler2Pass::addLexemeToken");
         }
-        tokenDef.ID = newTokenID;
+        tokenDef.ID = token;
         tokenDef.lexeme = lexeme;
         if (!caseSensitive)
             StringUtil::toLowerCase(tokenDef.lexeme);
         tokenDef.hasAction = hasAction;
         tokenDef.isCaseSensitive = caseSensitive;
 
-        mActiveTokenState->lexemeTokenMap[lexeme] = newTokenID;
-
-        return newTokenID;
+        mActiveTokenState->lexemeTokenMap[lexeme] = token;
     }
 
     //-----------------------------------------------------------------------

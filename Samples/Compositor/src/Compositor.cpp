@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2006 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -37,6 +37,33 @@ LGPL like the rest of the engine.
 #include "Compositor.h"
 #include "CompositorDemo_FrameListener.h"
 
+/**********************************************************************
+OS X Specific Resource Location Finding
+**********************************************************************/
+#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+
+Ogre::String bundlePath()
+{
+    char path[1024];
+    CFBundleRef mainBundle = CFBundleGetMainBundle();
+    assert(mainBundle);
+    
+    CFURLRef mainBundleURL = CFBundleCopyBundleURL( mainBundle);
+    assert(mainBundleURL);
+    
+    CFStringRef cfStringRef = CFURLCopyFileSystemPath( mainBundleURL, kCFURLPOSIXPathStyle);
+    assert(cfStringRef);
+    
+    CFStringGetCString(cfStringRef, path, 1024, kCFStringEncodingASCII);
+    
+    CFRelease(mainBundleURL);
+    CFRelease(cfStringRef);
+    
+    return Ogre::String(path);
+}
+
+#endif
+
 /*************************************************************************
 	                    CompositorDemo Methods
 *************************************************************************/
@@ -61,7 +88,16 @@ LGPL like the rest of the engine.
 //--------------------------------------------------------------------------
     bool CompositorDemo::setup(void)
     {
-        mRoot = new Ogre::Root();
+		#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+            Ogre::String mResourcePath;
+            mResourcePath = bundlePath() + "/Contents/Resources/";
+            mRoot = new Ogre::Root(mResourcePath + "plugins.cfg", 
+                               mResourcePath + "ogre.cfg", mResourcePath + "Ogre.log");
+        #else
+		
+			mRoot = new Ogre::Root();
+		
+		#endif
 
         setupResources();
         bool carryOn = configure();
@@ -144,7 +180,16 @@ void CompositorDemo::createViewports(void)
     {
         // Load resource paths from config file
         Ogre::ConfigFile cf;
-        cf.load("resources.cfg");
+		
+		#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+                Ogre::String mResourcePath;
+                mResourcePath = bundlePath() + "/Contents/Resources/";
+                cf.load(mResourcePath + "resources.cfg");
+        #else
+		
+			cf.load("resources.cfg");
+		
+		#endif
 
         // Go through all sections & settings in the file
         Ogre::ConfigFile::SectionIterator seci = cf.getSectionIterator();
@@ -184,8 +229,8 @@ void CompositorDemo::createViewports(void)
         // setup GUI system
         mGUIRenderer = new CEGUI::OgreCEGUIRenderer(mWindow, Ogre::RENDER_QUEUE_OVERLAY, false, 3000, mSceneMgr);
         // load scheme and set up defaults
-        mGUISystem = new CEGUI::System(mGUIRenderer, (CEGUI::ResourceProvider *)0, (CEGUI::XMLParser*)0,
-            (CEGUI::ScriptModule*)0, (CEGUI::utf8*)"CompositorDemoCegui.config");
+        mGUISystem = new CEGUI::System(mGUIRenderer, (CEGUI::ScriptModule*)0,
+            (CEGUI::ResourceProvider *)0, (CEGUI::utf8*)"CompositorDemoCegui.config");
         CEGUI::System::getSingleton().setDefaultMouseCursor("TaharezLook", "MouseArrow");
 
 		Ogre::MovableObject::setDefaultVisibilityFlags(0x00000001);

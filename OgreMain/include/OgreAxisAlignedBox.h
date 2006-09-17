@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __AxisAlignedBox_H_
@@ -49,16 +45,9 @@ namespace Ogre {
     class _OgreExport AxisAlignedBox
     {
     protected:
-        enum Extent
-        {
-            EXTENT_NULL,
-            EXTENT_FINITE,
-            EXTENT_INFINITE
-        };
-
 	    Vector3 mMinimum;
 	    Vector3 mMaximum;
-	    Extent mExtent;
+	    bool mNull;
 
 	    Vector3 mCorners[8];
 
@@ -88,7 +77,7 @@ namespace Ogre {
 		    // Default to null box
 		    setMinimum( -0.5, -0.5, -0.5 );
 		    setMaximum( 0.5, 0.5, 0.5 );
-		    mExtent = EXTENT_NULL;
+		    mNull = true;
 	    }
 
 	    inline AxisAlignedBox( const Vector3& min, const Vector3& max )
@@ -121,14 +110,14 @@ namespace Ogre {
 	    */
 	    inline void setMinimum( const Vector3& vec )
 	    {
-		    mExtent = EXTENT_FINITE;
+		    mNull = false;
 		    mMinimum = vec;
 		    updateCorners();
 	    }
 
 	    inline void setMinimum( Real x, Real y, Real z )
 	    {
-		    mExtent = EXTENT_FINITE;
+		    mNull = false;
 		    mMinimum.x = x;
 		    mMinimum.y = y;
 		    mMinimum.z = z;
@@ -139,14 +128,14 @@ namespace Ogre {
 	    */
 	    inline void setMaximum( const Vector3& vec )
 	    {
-		    mExtent = EXTENT_FINITE;
+		    mNull = false;
 		    mMaximum = vec;
 		    updateCorners();
 	    }
 
 	    inline void setMaximum( Real x, Real y, Real z )
 	    {
-		    mExtent = EXTENT_FINITE;
+		    mNull = false;
 		    mMaximum.x = x;
 		    mMaximum.y = y;
 		    mMaximum.z = z;
@@ -157,7 +146,7 @@ namespace Ogre {
 	    */
 	    inline void setExtents( const Vector3& min, const Vector3& max )
 	    {
-		    mExtent = EXTENT_FINITE;
+		    mNull = false;
 		    mMinimum = min;
 		    mMaximum = max;
 		    updateCorners();
@@ -167,7 +156,7 @@ namespace Ogre {
 		    Real mx, Real my, Real mz,
 		    Real Mx, Real My, Real Mz )
 	    {
-		    mExtent = EXTENT_FINITE;
+		    mNull = false;
 
 		    mMinimum.x = mx;
 		    mMinimum.y = my;
@@ -205,34 +194,25 @@ namespace Ogre {
 	    */
 	    inline const Vector3* getAllCorners(void) const
 	    {
-		    assert( (mExtent == EXTENT_FINITE) && "Can't get corners of a null or infinite AAB" );
+		    assert( !mNull && "Can't get corners of a null AAB" );
 		    return (const Vector3*)mCorners;
 	    }
 
 	    friend std::ostream& operator<<( std::ostream& o, AxisAlignedBox aab )
 	    {
-            switch (aab.mExtent)
-            {
-            case EXTENT_NULL:
+		    if (aab.isNull())
+		    {
 			    o << "AxisAlignedBox(null)";
-                return o;
-
-            case EXTENT_FINITE:
+		    }
+		    else
+		    {
 			    o << "AxisAlignedBox(min=" << aab.mMinimum << ", max=" << aab.mMaximum;
 			    o << ", corners=";
 			    for (int i = 0; i < 7; ++i)
 				    o << aab.mCorners[i] << ", ";
 			    o << aab.mCorners[7] << ")";
-                return o;
-
-            case EXTENT_INFINITE:
-			    o << "AxisAlignedBox(infinite)";
-                return o;
-
-            default: // shut up compiler
-                assert( false && "Never reached" );
-                return o;
-            }
+		    }
+		    return o;
 	    }
 
 	    /** Merges the passed in box into the current box. The result is the
@@ -240,20 +220,15 @@ namespace Ogre {
 	    */
 	    void merge( const AxisAlignedBox& rhs )
 	    {
-		    // Do nothing if rhs null, or this is infinite
-		    if ((rhs.mExtent == EXTENT_NULL) || (mExtent == EXTENT_INFINITE))
+		    // Do nothing if rhs null
+		    if (rhs.mNull)
 		    {
 			    return;
 		    }
-            // Otherwise if rhs is infinite, make this infinite, too
-            else if (rhs.mExtent == EXTENT_INFINITE)
-            {
-                mExtent = EXTENT_INFINITE;
-            }
 		    // Otherwise if current null, just take rhs
-		    else if (mExtent == EXTENT_NULL)
+		    else if (mNull)
 		    {
-			    *this = rhs;
+			    setExtents(rhs.mMinimum, rhs.mMaximum);
 		    }
 		    // Otherwise merge
 		    else
@@ -272,23 +247,13 @@ namespace Ogre {
 		*/
 		void merge( const Vector3& point )
 		{
-            switch (mExtent)
-            {
-            case EXTENT_NULL: // if null, use this point
+			if (mNull){ // if null, use this point
 				setExtents(point, point);
-                return;
-
-            case EXTENT_FINITE:
+			} else {
 				mMaximum.makeCeil(point);
 				mMinimum.makeFloor(point);
 				updateCorners();
-                return;
-
-            case EXTENT_INFINITE: // if infinite, makes no difference
-                return;
-            }
-
-            assert( false && "Never reached" );
+			}
 		}
 
 	    /** Transforms the box according to the matrix supplied.
@@ -302,8 +267,8 @@ namespace Ogre {
 	    */
 	    void transform( const Matrix4& matrix )
 	    {
-		    // Do nothing if current null or infinite
-		    if( mExtent != EXTENT_FINITE )
+		    // Do nothing if current null
+		    if( mNull )
 			    return;
 
 		    Vector3 min, max, temp;
@@ -334,71 +299,19 @@ namespace Ogre {
 
 	    }
 
-	    /** Transforms the box according to the affine matrix supplied.
-		    @remarks
-			    By calling this method you get the axis-aligned box which
-			    surrounds the transformed version of this box. Therefore each
-			    corner of the box is transformed by the matrix, then the
-			    extents are mapped back onto the axes to produce another
-			    AABB. Useful when you have a local AABB for an object which
-			    is then transformed.
-            @note
-                The matrix must be an affine matrix. @see Matrix4::isAffine.
-	    */
-	    void transformAffine(const Matrix4& m)
-	    {
-            assert(m.isAffine());
-
-		    // Do nothing if current null or infinite
-		    if ( mExtent != EXTENT_FINITE )
-			    return;
-
-            Vector3 centre = getCenter();
-            Vector3 halfSize = getHalfSize();
-
-            Vector3 newCentre = m.transformAffine(centre);
-            Vector3 newHalfSize(
-                Math::Abs(m[0][0]) * halfSize.x + Math::Abs(m[0][1]) * halfSize.y + Math::Abs(m[0][2]) * halfSize.z, 
-                Math::Abs(m[1][0]) * halfSize.x + Math::Abs(m[1][1]) * halfSize.y + Math::Abs(m[1][2]) * halfSize.z,
-                Math::Abs(m[2][0]) * halfSize.x + Math::Abs(m[2][1]) * halfSize.y + Math::Abs(m[2][2]) * halfSize.z);
-
-            setExtents(newCentre - newHalfSize, newCentre + newHalfSize);
-        }
-
 	    /** Sets the box to a 'null' value i.e. not a box.
 	    */
 	    inline void setNull()
 	    {
-		    mExtent = EXTENT_NULL;
+		    mNull = true;
 	    }
 
 	    /** Returns true if the box is null i.e. empty.
 	    */
 	    bool isNull(void) const
 	    {
-		    return (mExtent == EXTENT_NULL);
+		    return mNull;
 	    }
-
-        /** Returns true if the box is finite.
-        */
-        bool isFinite(void) const
-        {
-            return (mExtent == EXTENT_FINITE);
-        }
-
-        /** Sets the box to 'infinite'
-        */
-        inline void setInfinite()
-        {
-            mExtent = EXTENT_INFINITE;
-        }
-
-        /** Returns true if the box is infinite.
-        */
-        bool isInfinite(void) const
-        {
-            return (mExtent == EXTENT_INFINITE);
-        }
 
         /** Returns whether or not this box intersects another. */
         inline bool intersects(const AxisAlignedBox& b2) const
@@ -406,10 +319,6 @@ namespace Ogre {
             // Early-fail for nulls
             if (this->isNull() || b2.isNull())
                 return false;
-
-            // Early-success for infinites
-            if (this->isInfinite() || b2.isInfinite())
-                return true;
 
             // Use up to 6 separating planes
             if (mMaximum.x < b2.mMinimum.x)
@@ -438,15 +347,6 @@ namespace Ogre {
 			{
 				return AxisAlignedBox();
 			}
-            else if (this->isInfinite())
-            {
-                return b2;
-            }
-            else if (b2.isInfinite())
-            {
-                return *this;
-            }
-
 			Vector3 intMin, intMax;
 
 			const Vector3& b2max = b2.getMaximum();
@@ -485,33 +385,21 @@ namespace Ogre {
 		/// Calculate the volume of this box
 		Real volume(void) const
 		{
-            switch (mExtent)
-            {
-            case EXTENT_NULL:
+			if (mNull)
+			{
 				return 0.0f;
+			}
+			else
+			{
+				Vector3 diff = mMaximum - mMinimum;
+				return diff.x * diff.y * diff.z;
+			}
 
-            case EXTENT_FINITE:
-                {
-                    Vector3 diff = mMaximum - mMinimum;
-                    return diff.x * diff.y * diff.z;
-                }
-
-            case EXTENT_INFINITE:
-                return Math::POS_INFINITY;
-
-            default: // shut up compiler
-                assert( false && "Never reached" );
-                return 0.0f;
-            }
 		}
 
         /** Scales the AABB by the vector given. */
         inline void scale(const Vector3& s)
         {
-		    // Do nothing if current null or infinite
-            if (mExtent != EXTENT_FINITE)
-                return;
-
             // NB assumes centered on origin
             Vector3 min = mMinimum * s;
             Vector3 max = mMaximum * s;
@@ -531,83 +419,14 @@ namespace Ogre {
         /** Tests whether the vector point is within this box. */
         bool intersects(const Vector3& v) const
         {
-            switch (mExtent)
-            {
-            case EXTENT_NULL:
-                return false;
-
-            case EXTENT_FINITE:
-                return(v.x >= mMinimum.x  &&  v.x <= mMaximum.x  && 
-                    v.y >= mMinimum.y  &&  v.y <= mMaximum.y  && 
-                    v.z >= mMinimum.z  &&  v.z <= mMaximum.z);
-
-            case EXTENT_INFINITE:
-                return true;
-
-            default: // shut up compiler
-                assert( false && "Never reached" );
-                return false;
-            }
+			return(v.x >= mMinimum.x  &&  v.x <= mMaximum.x  && 
+			    v.y >= mMinimum.y  &&  v.y <= mMaximum.y  && 
+    			v.z >= mMinimum.z  &&  v.z <= mMaximum.z);
         }
 		/// Gets the centre of the box
 		Vector3 getCenter(void) const
 		{
-            assert( (mExtent == EXTENT_FINITE) && "Can't get center of a null or infinite AAB" );
-
-		    return Vector3(
-		        (mMaximum.x + mMinimum.x) * 0.5,
-		        (mMaximum.y + mMinimum.y) * 0.5,
-		        (mMaximum.z + mMinimum.z) * 0.5);
-		}
-		/// Gets the size of the box
-		Vector3 getSize(void) const
-		{
-            switch (mExtent)
-            {
-            case EXTENT_NULL:
-                return Vector3::ZERO;
-
-            case EXTENT_FINITE:
-                return Vector3(
-                    (mMaximum.x - mMinimum.x),
-                    (mMaximum.y - mMinimum.y),
-                    (mMaximum.z - mMinimum.z));
-
-            case EXTENT_INFINITE:
-                return Vector3(
-                    Math::POS_INFINITY,
-                    Math::POS_INFINITY,
-                    Math::POS_INFINITY);
-
-            default: // shut up compiler
-                assert( false && "Never reached" );
-                return Vector3::ZERO;
-            }
-		}
-		/// Gets the half-size of the box
-		Vector3 getHalfSize(void) const
-		{
-            switch (mExtent)
-            {
-            case EXTENT_NULL:
-                return Vector3::ZERO;
-
-            case EXTENT_FINITE:
-                return Vector3(
-                    (mMaximum.x - mMinimum.x) * 0.5,
-                    (mMaximum.y - mMinimum.y) * 0.5,
-                    (mMaximum.z - mMinimum.z) * 0.5);
-
-            case EXTENT_INFINITE:
-                return Vector3(
-                    Math::POS_INFINITY,
-                    Math::POS_INFINITY,
-                    Math::POS_INFINITY);
-
-            default: // shut up compiler
-                assert( false && "Never reached" );
-                return Vector3::ZERO;
-            }
+			return Vector3((mMaximum + mMinimum) * 0.5);
 		}
 
 

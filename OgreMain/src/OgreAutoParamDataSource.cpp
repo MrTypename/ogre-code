@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -149,7 +145,7 @@ namespace Ogre {
     {
         if (mViewMatrixDirty)
         {
-            if (mCurrentRenderable && mCurrentRenderable->getUseIdentityView())
+            if (mCurrentRenderable && mCurrentRenderable->useIdentityView())
                 mViewMatrix = Matrix4::IDENTITY;
             else
                 mViewMatrix = mCurrentCamera->getViewMatrix(true);
@@ -174,7 +170,7 @@ namespace Ogre {
         {
             // NB use API-independent projection matrix since GPU programs
             // bypass the API-specific handedness and use right-handed coords
-            if (mCurrentRenderable && mCurrentRenderable->getUseIdentityProjection())
+            if (mCurrentRenderable && mCurrentRenderable->useIdentityProjection())
             {
                 // Use identity projection matrix, still need to take RS depth into account.
                 RenderSystem* rs = Root::getSingleton().getRenderSystem();
@@ -202,7 +198,7 @@ namespace Ogre {
     {
         if (mWorldViewMatrixDirty)
         {
-            mWorldViewMatrix = getViewMatrix().concatenateAffine(getWorldMatrix());
+            mWorldViewMatrix = getViewMatrix() * getWorldMatrix();
             mWorldViewMatrixDirty = false;
         }
         return mWorldViewMatrix;
@@ -222,7 +218,7 @@ namespace Ogre {
     {
         if (mInverseWorldMatrixDirty)
         {
-            mInverseWorldMatrix = getWorldMatrix().inverseAffine();
+            mInverseWorldMatrix = getWorldMatrix().inverse();
             mInverseWorldMatrixDirty = false;
         }
         return mInverseWorldMatrix;
@@ -232,7 +228,7 @@ namespace Ogre {
     {
         if (mInverseWorldViewMatrixDirty)
         {
-            mInverseWorldViewMatrix = getWorldViewMatrix().inverseAffine();
+            mInverseWorldViewMatrix = getWorldViewMatrix().inverse();
             mInverseWorldViewMatrixDirty = false;
         }
         return mInverseWorldViewMatrix;
@@ -242,7 +238,7 @@ namespace Ogre {
     {
         if (mInverseViewMatrixDirty)
         {
-            mInverseViewMatrix = getViewMatrix().inverseAffine();
+            mInverseViewMatrix = getViewMatrix().inverse();
             mInverseViewMatrixDirty = false;
         }
         return mInverseViewMatrix;
@@ -287,7 +283,7 @@ namespace Ogre {
         if (mCameraPositionObjectSpaceDirty)
         {
             mCameraPositionObjectSpace = 
-                getInverseWorldMatrix().transformAffine(mCurrentCamera->getDerivedPosition());
+                getInverseWorldMatrix() * mCurrentCamera->getDerivedPosition();
             mCameraPositionObjectSpaceDirty = false;
         }
         return mCameraPositionObjectSpace;
@@ -390,7 +386,8 @@ namespace Ogre {
 		{
 			// Calculate based on object space light distance
 			// compared to light attenuation range
-			Vector3 objPos = getInverseWorldMatrix().transformAffine(l.getDerivedPosition());
+			Vector3 objPos = getInverseWorldMatrix() * 
+				l.getDerivedPosition();
 			return l.getAttenuationRange() - objPos.length();
 		}
 	}

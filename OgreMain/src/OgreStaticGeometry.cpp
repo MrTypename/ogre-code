@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -673,7 +669,8 @@ namespace Ogre {
 		SceneManager* mgr, uint32 regionID, const Vector3& centre)
 		: MovableObject(name), mParent(parent), mSceneMgr(mgr), mNode(0),
 		mRegionID(regionID), mCentre(centre), mBoundingRadius(0.0f),
-		mCurrentLod(0), mEdgeList(0), mVertexProgramInUse(false)
+		mCurrentLod(0), mLightListUpdated(0),
+		mEdgeList(0), mVertexProgramInUse(false)
 	{
 		// First LOD mandatory, and always from 0
 		mLodSquaredDistances.push_back(0.0f);
@@ -892,6 +889,20 @@ namespace Ogre {
 		return LODIterator(mLodBucketList.begin(), mLodBucketList.end());
 	}
 	//--------------------------------------------------------------------------
+	const LightList& StaticGeometry::Region::getLights(void) const
+	{
+		// Make sure we only update this once per frame no matter how many
+		// times we're asked
+		ulong frame = Root::getSingleton().getCurrentFrameNumber();
+		if (frame > mLightListUpdated)
+		{
+			mLightList = mNode->findLights(mBoundingRadius);
+			mLightListUpdated = frame;
+		}
+		return mLightList;
+
+	}
+	//--------------------------------------------------------------------------
 	ShadowCaster::ShadowRenderableListIterator
 	StaticGeometry::Region::getShadowVolumeRenderableIterator(
 		ShadowTechnique shadowTechnique, const Light* light,
@@ -905,8 +916,8 @@ namespace Ogre {
 
 		// Calculate the object space light details
 		Vector4 lightPos = light->getAs4DVector();
-		Matrix4 world2Obj = mParentNode->_getFullTransform().inverseAffine();
-		lightPos = world2Obj.transformAffine(lightPos);
+		Matrix4 world2Obj = mParentNode->_getFullTransform().inverse();
+		lightPos =  world2Obj * lightPos;
 
 		// We need to search the edge list for silhouette edges
 		if (!mEdgeList)
@@ -1410,7 +1421,7 @@ namespace Ogre {
 	//--------------------------------------------------------------------------
 	const LightList& StaticGeometry::GeometryBucket::getLights(void) const
 	{
-		return mParent->getParent()->getParent()->queryLights();
+		return mParent->getParent()->getParent()->getLights();
 	}
 	//--------------------------------------------------------------------------
 	bool StaticGeometry::GeometryBucket::getCastsShadows(void) const

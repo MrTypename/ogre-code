@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 /*
@@ -71,7 +67,6 @@ RaySceneQuery* rayQuery = 0;
 Entity* ball = 0;
 Vector3 ballVector;
 bool testreload = false;
-String testBackgroundLoadGroup;
 
 // Hacky globals
 GpuProgramParametersSharedPtr fragParams;
@@ -83,7 +78,6 @@ Camera* reflectCam = 0;
 Camera* camera2 = 0;
 Bone* manuallyControlledBone = 0;
 
-using namespace OIS;
 
 class RefractionTextureListener : public RenderTargetListener
 {
@@ -117,8 +111,37 @@ public:
 
 };
 
+class UberSimpleFrameListener : public FrameListener
+{
+protected:
+	InputReader* mInputDevice;
 
-class PlayPenListener : public ExampleFrameListener, public ResourceBackgroundQueue::Listener
+public:
+	UberSimpleFrameListener(RenderWindow* win, Camera* cam)
+	{
+		mInputDevice = PlatformManager::getSingleton().createInputReader();
+		mInputDevice->initialise(win,true, true);
+	}
+	~UberSimpleFrameListener()
+	{
+		PlatformManager::getSingleton().destroyInputReader( mInputDevice );
+	}
+
+	bool frameStarted(const FrameEvent& evt)
+	{
+		mInputDevice->capture();
+		if (mInputDevice->isKeyDown(KC_ESCAPE))
+		{
+			return false;
+		}
+		return true;
+
+	}
+};
+
+
+
+class PlayPenListener : public ExampleFrameListener
 {
 protected:
 	SceneManager* mSceneMgr;
@@ -128,13 +151,6 @@ public:
     {
     }
 
-
-	/// Background load completed
-	void operationCompleted(BackgroundProcessTicket ticket)
-	{
-		mDebugText = "Background load complete";
-
-	}
 
     bool frameStarted(const FrameEvent& evt)
     {
@@ -184,19 +200,6 @@ public:
 			}
 		}
 
-		static float backgroundLoadTime = 5.0f;
-		if (!testBackgroundLoadGroup.empty())
-		{
-			backgroundLoadTime -= evt.timeSinceLastFrame;
-			if (backgroundLoadTime < 0)
-			{
-				ResourceBackgroundQueue::getSingleton().loadResourceGroup(testBackgroundLoadGroup, this);
-				testBackgroundLoadGroup.clear();
-				mDebugText = "Background load queued";
-			}
-
-		}
-
 
 
 
@@ -239,7 +242,7 @@ public:
             timeUntilNextToggle -= evt.timeSinceLastFrame;
 
 		static bool mWireframe = false;
-		if (mKeyboard->isKeyDown(KC_G) && timeUntilNextToggle <= 0)
+		if (mInputDevice->isKeyDown(KC_G) && timeUntilNextToggle <= 0)
         {
 			mWireframe = !mWireframe;
 			if (mWireframe)
@@ -272,12 +275,12 @@ public:
 			(*animi)->addTime(evt.timeSinceLastFrame);
 		}
 
-        if (mKeyboard->isKeyDown(KC_R) && timeUntilNextToggle <= 0)
+        if (mInputDevice->isKeyDown(KC_R) && timeUntilNextToggle <= 0)
         {
             rotate = !rotate;
             timeUntilNextToggle = 0.5;
         }
-        if (mKeyboard->isKeyDown(KC_1) && timeUntilNextToggle <= 0)
+        if (mInputDevice->isKeyDown(KC_1) && timeUntilNextToggle <= 0)
         {
             animate = !animate;
             timeUntilNextToggle = 0.5;
@@ -354,7 +357,7 @@ public:
         }
 
         /*
-		if (mKeyboard->isKeyDown(KC_V) && timeUntilNextToggle <= 0)
+		if (mInputDevice->isKeyDown(KC_V) && timeUntilNextToggle <= 0)
         {
             static bool isVP = false;
             if (!isVP)
@@ -372,40 +375,40 @@ public:
         }
         */
 
-		if (mKeyboard->isKeyDown(KC_P))
+		if (mInputDevice->isKeyDown(KC_P))
         {
             mTestNode[0]->yaw(Degree(-evt.timeSinceLastFrame * 30));
         }
-		if (mKeyboard->isKeyDown(KC_O))
+		if (mInputDevice->isKeyDown(KC_O))
         {
             mTestNode[0]->yaw(Degree(evt.timeSinceLastFrame * 30));
         }
-		if (mKeyboard->isKeyDown(KC_K))
+		if (mInputDevice->isKeyDown(KC_K))
         {
             mTestNode[0]->roll(Degree(-evt.timeSinceLastFrame * 30));
         }
-		if (mKeyboard->isKeyDown(KC_L))
+		if (mInputDevice->isKeyDown(KC_L))
         {
             mTestNode[0]->roll(Degree(evt.timeSinceLastFrame * 30));
         }
-		if (mKeyboard->isKeyDown(KC_U))
+		if (mInputDevice->isKeyDown(KC_U))
         {
             mTestNode[0]->translate(0,0,-evt.timeSinceLastFrame * 30);
         }
-		if (mKeyboard->isKeyDown(KC_J))
+		if (mInputDevice->isKeyDown(KC_J))
         {
             mTestNode[0]->translate(0,0,evt.timeSinceLastFrame * 30);
         }
-		if (mKeyboard->isKeyDown(KC_M))
+		if (mInputDevice->isKeyDown(KC_M))
         {
             mTestNode[0]->translate(0,evt.timeSinceLastFrame * 30, 0);
         }
-		if (mKeyboard->isKeyDown(KC_N))
+		if (mInputDevice->isKeyDown(KC_N))
         {
             mTestNode[0]->translate(0,-evt.timeSinceLastFrame * 30, 0);
         }
 
-        if (mKeyboard->isKeyDown(KC_0) && timeUntilNextToggle <= 0)
+        if (mInputDevice->isKeyDown(KC_0) && timeUntilNextToggle <= 0)
         {
             mAnimState->setEnabled(!mAnimState->getEnabled());
             timeUntilNextToggle = 0.5;
@@ -433,8 +436,8 @@ public:
         */
 
         // Print camera details
-        //mWindow->setDebugText("P: " + StringConverter::toString(mCamera->getDerivedPosition()) + " " + 
-        //    "O: " + StringConverter::toString(mCamera->getDerivedOrientation()));
+        mWindow->setDebugText("P: " + StringConverter::toString(mCamera->getDerivedPosition()) + " " + 
+            "O: " + StringConverter::toString(mCamera->getDerivedOrientation()));
         return ExampleFrameListener::frameStarted(evt) && ExampleFrameListener::frameEnded(evt);        
 
     }
@@ -462,18 +465,8 @@ protected:
     
     void chooseSceneManager(void)
     {
-		// DefaultSceneManager
-		//mSceneMgr = mRoot->createSceneManager("DefaultSceneManager", "PlayPenSMInstance");
-
-		// BspSceneManager
-		//mSceneMgr = mRoot->createSceneManager("BspSceneManager", "PlayPenSMInstance");
-
-		// OctreeSceneManager
-		//mSceneMgr = mRoot->createSceneManager("OctreeSceneManager", "PlayPenSMInstance");
-
-		// TerrainSceneManager
-		mSceneMgr = mRoot->createSceneManager("TerrainSceneManager", "PlayPenSMInstance");
-	}
+        mSceneMgr = mRoot->createSceneManager(ST_GENERIC, "PlayPenSMInstance");
+    }
 
 
     void createTestBugPlaneMesh3Streams(const String& testMeshName)
@@ -1549,12 +1542,12 @@ protected:
 
 
 
-        Entity *ent = mSceneMgr->createEntity("robot", "test.mesh");
+        Entity *ent = mSceneMgr->createEntity("robot", "jaiqua.mesh");
         // Uncomment the below to test software skinning
         //ent->setMaterialName("Examples/Rocky");
         // Add entity to the scene node
         mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
-        mAnimState = ent->getAnimationState("Default");
+        mAnimState = ent->getAnimationState("Jaiqua_walk_Preset_Clip");
         mAnimState->setEnabled(true);
 
         // Give it a little ambience with lights
@@ -1574,15 +1567,14 @@ protected:
         // Report whether hardware skinning is enabled or not
         Technique* t = ent->getSubEntity(0)->getMaterial()->getBestTechnique();
         Pass* p = t->getPass(0);
-		OverlayElement* guiDbg = OverlayManager::getSingleton().getOverlayElement("Core/DebugText");
         if (p->hasVertexProgram() && 
             p->getVertexProgram()->isSkeletalAnimationIncluded())
         {
-			guiDbg->setCaption("Hardware skinning is enabled");
+            mWindow->setDebugText("Hardware skinning is enabled");
         }
         else
         {
-            guiDbg->setCaption("Software skinning is enabled");
+            mWindow->setDebugText("Software skinning is enabled");
         }
 
 
@@ -2054,9 +2046,9 @@ protected:
         MeshPtr msh = MeshManager::getSingleton().load("knot.mesh", 
 			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
         unsigned short src, dest;
-        if (!msh->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
+        if (!msh->suggestTangentVectorBuildParams(src, dest))
         {
-            msh->buildTangentVectors(VES_TANGENT, src, dest);
+            msh->buildTangentVectors(src, dest);
         }
         pEnt = mSceneMgr->createEntity( "4", "knot.mesh" );
         pEnt->setMaterialName("Examples/BumpMapping/MultiLightSpecular");
@@ -2216,7 +2208,7 @@ protected:
 
         MeshPtr msh = MeshManager::getSingleton().load("knot.mesh",
 			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-        msh->buildTangentVectors(VES_TANGENT, 0, 0);
+        msh->buildTangentVectors();
         pEnt = mSceneMgr->createEntity( "4", "knot.mesh" );
         //pEnt->setMaterialName("Examples/BumpMapping/MultiLightSpecular");
         mTestNode[2] = mSceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(100, 0, 200));
@@ -2551,7 +2543,7 @@ protected:
 
 		MeshPtr msh = MeshManager::getSingleton().load("knot.mesh",
 			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		msh->buildTangentVectors(VES_TANGENT, 0, 0);
+		msh->buildTangentVectors();
 		pEnt = mSceneMgr->createEntity( "4", "knot.mesh" );
 		//pEnt->setMaterialName("Examples/BumpMapping/MultiLightSpecular");
 		mTestNode[2] = mSceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(100, 0, 200));
@@ -2723,89 +2715,6 @@ protected:
 		Entity* ent = mSceneMgr->createEntity("test", "xsicylinder.mesh");
 		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
 
-	}
-
-	void testGLSLTangent()
-	{
-
-		Entity* ent = mSceneMgr->createEntity("test", "athene.mesh");
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
-		ent->setMaterialName("testglsl");
-	}
-
-	void testInfiniteAAB()
-	{
-		// When using the BspSceneManager
-		//mSceneMgr->setWorldGeometry("ogretestmap.bsp");
-
-		// When using the TerrainSceneManager
-		mSceneMgr->setWorldGeometry("terrain.cfg");
-
-		AxisAlignedBox b1; // null
-		assert( b1.isNull() );
-		
-		AxisAlignedBox b2(Vector3::ZERO, 5.0 * Vector3::UNIT_SCALE); // finite
-		assert( b2.isFinite() );
-
-		AxisAlignedBox b3;
-		b3.setInfinite();
-		assert( b3.isInfinite() );
-
-		{
-			// Create background material
-			MaterialPtr material = MaterialManager::getSingleton().create("Background", "General");
-			material->getTechnique(0)->getPass(0)->createTextureUnitState("rockwall.tga");
-			material->getTechnique(0)->getPass(0)->setDepthCheckEnabled(false);
-			material->getTechnique(0)->getPass(0)->setDepthWriteEnabled(false);
-			material->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-
-			// Create left background rectangle
-			// NOTE: Uses finite aab
-			Rectangle2D* rect1 = new Rectangle2D(true);
-			rect1->setCorners(-0.5, 0.1, -0.1, -0.1);
-			// Hacky, set small bounding box, to show problem
-			rect1->setBoundingBox(AxisAlignedBox(-10.0*Vector3::UNIT_SCALE, 10.0*Vector3::UNIT_SCALE));
-			rect1->setMaterial("Background");
-			rect1->setRenderQueueGroup(RENDER_QUEUE_OVERLAY - 1);
-			SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode("Background1");
-			node->attachObject(rect1);
-
-			// Create right background rectangle
-			// NOTE: Uses infinite aab
-			Rectangle2D* rect2 = new Rectangle2D(true);
-			rect2->setCorners(0.1, 0.1, 0.5, -0.1);
-			AxisAlignedBox aabInf; aabInf.setInfinite();
-			rect2->setBoundingBox(aabInf);
-			rect2->setMaterial("Background");
-			rect2->setRenderQueueGroup(RENDER_QUEUE_OVERLAY - 1);
-			node = mSceneMgr->getRootSceneNode()->createChildSceneNode("Background2");
-			node->attachObject(rect2);
-
-			// Create a manual object for 2D
-			ManualObject* manual = mSceneMgr->createManualObject("manual");
-			manual->setUseIdentityProjection(true);
-			manual->setUseIdentityView(true);
-			manual->begin("BaseWhiteNoLighting", RenderOperation::OT_LINE_STRIP);
-			manual->position(-0.2, -0.2, 0.0);
-			manual->position( 0.2, -0.2, 0.0);
-			manual->position( 0.2,  0.2, 0.0);
-			manual->position(-0.2,  0.2, 0.0);
-			manual->index(0);
-			manual->index(1);
-			manual->index(2);
-			manual->index(3);
-			manual->index(0);
-			manual->end();
-			manual->setBoundingBox(aabInf); // Use infinite aab to always stay visible
-			rect2->setRenderQueueGroup(RENDER_QUEUE_OVERLAY - 1);
-			mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(manual);
-		}
-
-		mSceneMgr->showBoundingBoxes(true);
-
-		Entity* ent = mSceneMgr->createEntity("test", "ogrehead.mesh");
-		mSceneMgr->getRootSceneNode()->createChildSceneNode(
-			"test", 50.0 * Vector3::UNIT_X)->attachObject(ent);
 	}
 
 	void test2Windows(void)
@@ -3618,113 +3527,6 @@ protected:
 		mSceneMgr->showBoundingBoxes(true);
 	}
 
-	void testCubeDDS()
-	{
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			"../../../../Tests/Media", "FileSystem");
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("testcube", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* p = mat->getTechnique(0)->getPass(0);
-		p->setLightingEnabled(false);
-		TextureUnitState* t = p->createTextureUnitState();
-		t->setTextureName("grace_cube.dds", TEX_TYPE_CUBE_MAP);
-		t->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
-		t->setEnvironmentMap(true, TextureUnitState::ENV_REFLECTION);
-		Entity* e = mSceneMgr->createEntity("1", "sphere.mesh");
-		e->setMaterialName(mat->getName());
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-
-		mCamera->setPosition(300,0,0);
-		mCamera->lookAt(Vector3::ZERO);
-
-	}
-
-	void testDxt1()
-	{
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			"../../../../Tests/Media", "FileSystem");
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("testdxt", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* p = mat->getTechnique(0)->getPass(0);
-		p->setLightingEnabled(false);
-		p->setCullingMode(CULL_NONE);
-		TextureUnitState* t = p->createTextureUnitState("BumpyMetal_dxt1.dds");
-		Entity *e = mSceneMgr->createEntity("Plane", SceneManager::PT_PLANE);
-		e->setMaterialName(mat->getName());
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-
-		mCamera->setPosition(0,0,-300);
-		mCamera->lookAt(Vector3::ZERO);
-
-	}
-	void testDxt1Alpha()
-	{
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			"../../../../Tests/Media", "FileSystem");
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("testdxt", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* p = mat->getTechnique(0)->getPass(0);
-		p->setSceneBlending(SBT_TRANSPARENT_ALPHA);
-		p->setAlphaRejectSettings(CMPF_GREATER, 128);
-		p->setLightingEnabled(false);
-		p->setCullingMode(CULL_NONE);
-		TextureUnitState* t = p->createTextureUnitState("gras_02_dxt1.dds");
-		Entity *e = mSceneMgr->createEntity("Plane", SceneManager::PT_PLANE);
-		e->setMaterialName(mat->getName());
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-
-		mCamera->setPosition(0,0,300);
-		mCamera->lookAt(Vector3::ZERO);
-
-	}
-	void testDxt3()
-	{
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			"../../../../Tests/Media", "FileSystem");
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("testdxt", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* p = mat->getTechnique(0)->getPass(0);
-		p->setLightingEnabled(false);
-		p->setCullingMode(CULL_NONE);
-		p->setSceneBlending(SBT_TRANSPARENT_ALPHA);
-		TextureUnitState* t = p->createTextureUnitState("ogreborderUp_dxt3.dds");
-		Entity *e = mSceneMgr->createEntity("Plane", SceneManager::PT_PLANE);
-		e->setMaterialName(mat->getName());
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-		mWindow->getViewport(0)->setBackgroundColour(ColourValue::Red);
-
-		mCamera->setPosition(0,0,300);
-		mCamera->lookAt(Vector3::ZERO);
-
-	}
-	void testDxt5()
-	{
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			"../../../../Tests/Media", "FileSystem");
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("testdxt", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* p = mat->getTechnique(0)->getPass(0);
-		p->setLightingEnabled(false);
-		p->setCullingMode(CULL_NONE);
-		p->setSceneBlending(SBT_TRANSPARENT_ALPHA);
-		TextureUnitState* t = p->createTextureUnitState("ogreborderUp_dxt5.dds");
-		Entity *e = mSceneMgr->createEntity("Plane", SceneManager::PT_PLANE);
-		e->setMaterialName(mat->getName());
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-		mWindow->getViewport(0)->setBackgroundColour(ColourValue::Red);
-
-		mCamera->setPosition(0,0,300);
-		mCamera->lookAt(Vector3::ZERO);
-
-	}
-
-
-
 	void testRibbonTrail()
 	{
 		mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
@@ -4424,141 +4226,6 @@ protected:
         mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pPlaneEnt);
     }
 
-	void testVertexTexture()
-	{
-
-		// NOTE: DirectX only right now
-
-		Light* l = mSceneMgr->createLight("MainLight");
-		l->setType(Light::LT_POINT);
-		l->setPosition(0, 200, 0);
-
-
-		// Create single-channel floating point texture, no mips
-		TexturePtr tex = TextureManager::getSingleton().createManual(
-			"vertexTexture", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, TEX_TYPE_2D, 
-			128, 128, 0, PF_FLOAT32_R);
-		float* pData = static_cast<float*>(
-			tex->getBuffer()->lock(HardwareBuffer::HBL_DISCARD));
-		// write concentric circles into the texture
-		for (int y  = -64; y < 64; ++y)
-		{
-			for (int x = -64; x < 64; ++x)
-			{
-
-				float val = Math::Sqrt(x*x + y*y);
-				// repeat every 20 pixels
-				val = val * Math::TWO_PI / 20.0f;
-				*pData++ = Math::Sin(val);
-			}
-		}
-		tex->getBuffer()->unlock();
-
-		String progSource = 
-			"void main(\n"
-				"float4 pos : POSITION,\n"
-				"float2 uv1 : TEXCOORD0,\n"
-				"uniform float4x4 world, \n"
-				"uniform float4x4 viewProj,\n"
-				"uniform float heightscale,\n"
-				"uniform sampler2D heightmap,\n"
-				"out float4 oPos : POSITION,\n"
-				"out float2 oUv1 : TEXCOORD1,\n"
-				"out float4 col : COLOR)\n"
-			"{\n"
-				"oPos = mul(world, pos);\n"
-				"// tex2Dlod since no mip\n"
-				"float4 t = float4(0,0,0,0);\n"
-				"t.xy = uv1.xy;\n"
-				"float height = tex2Dlod(heightmap, t);\n"
-				"oPos.y = oPos.y + (height * heightscale);\n"
-				"oPos = mul(viewProj, oPos);\n"
-				"oUv1 = uv1;\n"
-				"col = float4(1,1,1,1);\n"
-			"}\n";
-		HighLevelGpuProgramPtr prog = HighLevelGpuProgramManager::getSingleton().createProgram(
-			"TestVertexTextureFetch", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, 
-			"hlsl", GPT_VERTEX_PROGRAM);
-		prog->setSource(progSource);
-		prog->setParameter("target", "vs_3_0");
-		prog->setVertexTextureFetchRequired(true);
-		prog->setParameter("entry_point", "main");
-		prog->load();
-
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("TestVertexTexture", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* pass = mat->getTechnique(0)->getPass(0);
-		pass->setLightingEnabled(false);
-		pass->setVertexProgram("TestVertexTextureFetch");
-		GpuProgramParametersSharedPtr vp = pass->getVertexProgramParameters();
-		vp->setNamedAutoConstant("world", GpuProgramParameters::ACT_WORLD_MATRIX);
-		vp->setNamedAutoConstant("viewProj", GpuProgramParameters::ACT_VIEWPROJ_MATRIX);
-		vp->setNamedConstant("heightscale", 30.0f);
-		// vertex texture
-		TextureUnitState* t = pass->createTextureUnitState("vertexTexture");
-		t->setBindingType(TextureUnitState::BT_VERTEX);
-		// regular texture
-		pass->createTextureUnitState("BumpyMetal.jpg");
-
-		Plane plane;
-		plane.normal = Vector3::UNIT_Y;
-		plane.d = 100;
-		// 128 x 128 segment plane
-		MeshManager::getSingleton().createPlane("Myplane",
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane,
-			1500,1500,128,128,true,1,1,1,Vector3::UNIT_Z);
-		Entity* pPlaneEnt;
-		pPlaneEnt = mSceneMgr->createEntity( "plane", "Myplane" );
-		pPlaneEnt->setMaterialName("TestVertexTexture");
-		pPlaneEnt->setCastShadows(false);
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pPlaneEnt);
-
-
-	}
-
-	void testBackgroundLoadResourceGroup()
-	{
-		ResourceGroupManager& rgm = ResourceGroupManager::getSingleton();
-		TextureManager& tm = TextureManager::getSingleton();
-
-		testBackgroundLoadGroup = "Deferred";
-
-		rgm.createResourceGroup(testBackgroundLoadGroup);
-
-		// define a bunch of textures as deferred loading
-		rgm.declareResource("egyptrockyfull.jpg", tm.getResourceType(), testBackgroundLoadGroup);
-		rgm.declareResource("fw12b.jpg", tm.getResourceType(), testBackgroundLoadGroup);
-		rgm.declareResource("grass_1024.jpg", tm.getResourceType(), testBackgroundLoadGroup);
-		rgm.declareResource("GreenSkin.jpg", tm.getResourceType(), testBackgroundLoadGroup);
-		rgm.declareResource("MtlPlat2.jpg", tm.getResourceType(), testBackgroundLoadGroup);
-		rgm.declareResource("NMBumpsOut.png", tm.getResourceType(), testBackgroundLoadGroup);
-		// Note: initialise resource group in main thread for this test
-		// We will be able to initialise in the background thread too eventually,
-		// once resources can be created thread safely as well as loaded
-		rgm.initialiseResourceGroup(testBackgroundLoadGroup);
-
-		// we won't load it yet, we'll wait for 5 seconds
-
-
-		// Create a basic plane to have something in the scene to look at
-		Plane plane;
-		plane.normal = Vector3::UNIT_Y;
-		plane.d = 100;
-		MeshManager::getSingleton().createPlane("Myplane",
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane,
-			1500,1500,10,10,true,1,5,5,Vector3::UNIT_Z);
-		Entity* pPlaneEnt;
-		pPlaneEnt = mSceneMgr->createEntity( "plane", "Myplane" );
-		pPlaneEnt->setMaterialName("2 - Default");
-		pPlaneEnt->setCastShadows(false);
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pPlaneEnt);
-
-
-
-
-	}
-
 
 	// Just override the mandatory create scene method
     void createScene(void)
@@ -4598,7 +4265,6 @@ protected:
         //testSkeletalAnimation();
         //testOrtho();
         //testClearScene();
-		//testInfiniteAAB();
 
         //testProjection();
         //testStencilShadows(SHADOWTYPE_STENCIL_ADDITIVE, true, true);
@@ -4632,7 +4298,7 @@ protected:
 		//testPoseAnimation();
 		//testPoseAnimation2();
 		//testBug();
-		//testManualBlend();
+		testManualBlend();
 		//testManualObjectNonIndexed();
 		//testManualObjectIndexed();
 		//testCustomProjectionMatrix();
@@ -4652,15 +4318,6 @@ protected:
 		//testMaterialSchemesWithMismatchedLOD();
         //testSkeletonAnimationOptimise();
 
-		//testCubeDDS();
-		//testDxt1();
-		//testDxt1Alpha();
-		//testDxt3();
-		//testDxt5();
-
-		//testVertexTexture();
-		//testGLSLTangent();
-		testBackgroundLoadResourceGroup();
 		
     }
     // Create new frame listener
@@ -4669,6 +4326,7 @@ protected:
         mFrameListener= new PlayPenListener(mSceneMgr, mWindow, mCamera);
         mFrameListener->showDebugOverlay(true);
 		mRoot->addFrameListener(mFrameListener);
+		//FrameListener* fl = new UberSimpleFrameListener(mWindow, mCamera);
         //mRoot->addFrameListener(fl);
 
     }
@@ -4692,42 +4350,31 @@ public:
 bool gReload;
 
 // Listener class for frame updates
-class MemoryTestFrameListener : public FrameListener
+class MemoryTestFrameListener : public FrameListener, public KeyListener
 {
 protected:
 	Real time;
-	Keyboard* mKeyboard;
+	EventProcessor* mEventProcessor;
+	InputReader* mInputDevice;
 public:
 	MemoryTestFrameListener(RenderWindow * win)
 	{
 		time = 0;
-		ParamList pl;	
-		size_t windowHnd = 0;
-		std::ostringstream windowHndStr;
-
-		win->getCustomAttribute("WINDOW", &windowHnd);
-		windowHndStr << windowHnd;
-		pl.insert(std::make_pair(std::string("WINDOW"), windowHndStr.str()));
-
-		InputManager &im = *InputManager::createInputSystem( pl );
-
-		//Create all devices (We only catch joystick exceptions here, as, most people have Key/Mouse)
-		mKeyboard = static_cast<Keyboard*>(im.createInputObject( OISKeyboard, false ));
+		mEventProcessor = new EventProcessor();
+		mEventProcessor->initialise(win);
+		mEventProcessor->startProcessingEvents();
+		mEventProcessor->addKeyListener(this);
+		mInputDevice = mEventProcessor->getInputReader();
 	}
 	virtual ~MemoryTestFrameListener()
 	{
 		time = 0;            
-		InputManager* im = InputManager::getSingletonPtr();
-		if( im )
-		{
-			im->destroyInputObject( mKeyboard );
-			im->destroyInputSystem();
-		}
+		delete mEventProcessor;
 	}
 
 	bool frameStarted(const FrameEvent& evt)
 	{
-		if( mKeyboard->isKeyDown( KC_ESCAPE) )
+		if( mInputDevice->isKeyDown( KC_ESCAPE) )
 		{
 			gReload = false;
 			return false;
@@ -4893,7 +4540,7 @@ int main(int argc, char **argv)
 
     try {
         app.go();
-	} catch( Ogre::Exception& e ) {
+    } catch( Exception& e ) {
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
         MessageBox( NULL, e.getFullDescription().c_str(), "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 #else

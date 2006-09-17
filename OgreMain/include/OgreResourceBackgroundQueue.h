@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __ResourceBackgroundQueue_H__
@@ -33,7 +29,6 @@ Torus Knot Software Ltd.
 #include "OgrePrerequisites.h"
 #include "OgreCommon.h"
 #include "OgreSingleton.h"
-#include "OgreResource.h"
 
 #if OGRE_THREAD_SUPPORT
 #	include <boost/thread/thread.hpp>
@@ -44,6 +39,28 @@ namespace Ogre {
 
 	/// Identifier of a background process
 	typedef unsigned long BackgroundProcessTicket;
+
+	/** This abstract listener interface lets you get immediate notifications of
+		completed background processes instead of having to check ticket 
+		statuses.
+	@note
+		These callbacks occur in the <i>background thread</i>, not the thread
+		which you queued your request from. You should only use this method
+		if you understand the implications of threading and the use of locks, 
+		monitor objects or other such thread safety techniques. If you don't, 
+		use the simpler 'ticket' approach and poll the isProcessComplete() 
+		method
+		to determine when your processes complete.
+	*/
+	class _OgreExport ResourceBackgroundQueueListener
+	{
+	public:
+		/** Called when a requested operation completes. 
+		@note Called in the <i>background thread</i>, not your queueing
+		thread, so be careful!
+		*/
+		virtual void operationCompleted(BackgroundProcessTicket ticket) = 0;
+	};
 	
 	/** This class is used to perform Resource operations in a
 		background thread. 
@@ -72,24 +89,6 @@ namespace Ogre {
 	*/
 	class _OgreExport ResourceBackgroundQueue : public Singleton<ResourceBackgroundQueue>
 	{
-	public:
-		/** This abstract listener interface lets you get notifications of
-		completed background processes instead of having to poll ticket 
-		statuses.
-		@note
-		For simplicity, these callbacks are not issued direct from the background
-		loading thread, they are queued themselves to be sent from the main thread
-		so that you don't have to be concerned about thread safety. 
-		*/
-		class _OgreExport Listener
-		{
-		public:
-			/** Called when a requested operation completes. 
-			@note Called in the <i>background thread</i>, not your queueing
-			thread, so be careful!
-			*/
-			virtual void operationCompleted(BackgroundProcessTicket ticket) = 0;
-		};
 	protected:
 		/** Enumerates the type of requests */
 		enum RequestType
@@ -111,7 +110,7 @@ namespace Ogre {
 			bool isManual; 
 			ManualResourceLoader* loader;
 			const NameValuePairList* loadParams;
-			Listener* listener;
+			ResourceBackgroundQueueListener* listener;
 		};
 		typedef std::list<Request> RequestQueue;
 		typedef std::map<BackgroundProcessTicket, Request*> RequestTicketMap;
@@ -124,30 +123,6 @@ namespace Ogre {
 
 		/// Next ticket ID
 		unsigned long mNextTicketID;
-
-		/// Struct that holds details of queued notifications
-		struct QueuedNotification
-		{
-			QueuedNotification(Resource::Listener* l, Resource* r)
-				: resourceListener(l), resource(r), opListener(0), ticket(0)
-			{}
-
-			QueuedNotification(Listener* l, BackgroundProcessTicket t)
-				: resourceListener(0), resource(0), opListener(l), ticket(t)  
-			{}
-
-			// Type 1 - Resource::Listener kind
-			Resource::Listener* resourceListener;
-			Resource* resource;
-			// Type 2 - ResourceBackgroundQueue::Listener kind
-			Listener* opListener;
-			BackgroundProcessTicket ticket;
-		};
-		typedef std::list<QueuedNotification> NotificationQueue;
-		/// Queued notifications of background loading being finished
-		NotificationQueue mNotificationQueue;
-		/// Mutex to protect the background event queue]
-		OGRE_MUTEX(mNotificationQueueMutex)
 
 #if OGRE_THREAD_SUPPORT
 		/// The single background thread which will process loading requests
@@ -185,7 +160,7 @@ namespace Ogre {
 			determine if completed if not using listener
 		*/
 		virtual BackgroundProcessTicket initialiseResourceGroup(
-			const String& name, Listener* listener = 0);
+			const String& name, ResourceBackgroundQueueListener* listener = 0);
 
 		/** Initialise all resource groups which are yet to be initialised in 
 			the background.
@@ -196,17 +171,16 @@ namespace Ogre {
 			determine if completed if not using listener
 		*/
 		virtual BackgroundProcessTicket initialiseAllResourceGroups( 
-			Listener* listener = 0);
+			ResourceBackgroundQueueListener* listener = 0);
 		/** Loads a resource group in the background.
 		@see ResourceGroupManager::intialiseResourceGroup
-		@param name The name of the resource group to load
 		@param listener Optional callback interface, take note of warnings in 
 			the header and only use if you understand them.
 		@returns Ticket identifying the request, use isProcessComplete() to 
 			determine if completed if not using listener
 		*/
 		virtual BackgroundProcessTicket loadResourceGroup(const String& name, 
-			Listener* listener = 0);
+			ResourceBackgroundQueueListener* listener = 0);
 
 
 		/** Load a single resource in the background. 
@@ -229,14 +203,9 @@ namespace Ogre {
             const String& group, bool isManual = false, 
 			ManualResourceLoader* loader = 0, 
 			const NameValuePairList* loadParams = 0, 
-			Listener* listener = 0);
+			ResourceBackgroundQueueListener* listener = 0);
 
 		/** Returns whether a previously queued process has completed or not. 
-		@remarks
-			This method of checking that a background process has completed is
-			the 'polling' approach. Each queued method takes an optional listener
-			parameter to allow you to register a callback instead, which is
-			arguably more efficient.
 		@param ticket The ticket which was returned when the process was queued
 		@returns true if process has completed (or if the ticket is 
 			unrecognised), false otherwise
@@ -245,47 +214,6 @@ namespace Ogre {
 		This is why a non-existent ticket will return 'true'.
 		*/
 		virtual bool isProcessComplete(BackgroundProcessTicket ticket);
-
-		/** Queue the firing of the 'background loading complete' event to
-			a Resource::Listener event.
-		@remarks
-			The purpose of this is to allow the background loading thread to 
-			call this method to queue the notification to listeners waiting on
-			the background loading of a resource. Rather than allow the resource
-			background loading thread to directly call these listeners, which 
-			would require all the listeners to be thread-safe, this method
-			implements a thread-safe queue which can be processed in the main
-			frame loop thread each frame to clear the events in a simpler 
-			manner.
-		@param listener The listener to be notified
-		@param res The resource listened on
-		*/
-		virtual void _queueFireBackgroundLoadingComplete(Resource::Listener* listener, 
-			Resource* res);
-
-		/** Queue the firing of the 'background loading complete' event to
-			a Resource::Listener event.
-		@remarks
-			The purpose of this is to allow the background loading thread to 
-			call this method to queue the notification to listeners waiting on
-			the background loading of a resource. Rather than allow the resource
-			background loading thread to directly call these listeners, which 
-			would require all the listeners to be thread-safe, this method
-			implements a thread-safe queue which can be processed in the main
-			frame loop thread each frame to clear the events in a simpler 
-			manner.
-		@param listener The listener to be notified
-		@param ticket The ticket for the operation that has completed
-		*/
-		virtual void _queueFireBackgroundOperationComplete(Listener* listener,
-			BackgroundProcessTicket ticket);
-
-		/** Fires all the queued events for background loaded resources.
-		@remarks
-			You should call this from the thread that runs the main frame loop 
-			to avoid having to make the receivers of this event thread-safe.
-		*/
-		virtual void _fireBackgroundLoadingComplete(void);
 
 		/** Override standard Singleton retrieval.
         @remarks

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __EdgeListBuilder_H__
@@ -33,7 +29,6 @@ Torus Knot Software Ltd.
 #include "OgreVector4.h"
 #include "OgreHardwareVertexBuffer.h"
 #include "OgreRenderOperation.h"
-#include "OgreAlignedAllocator.h"
 
 namespace Ogre {
 
@@ -57,6 +52,8 @@ namespace Ogre {
             size_t vertIndex[3];/// Vertex indexes, relative to the original buffer
             size_t sharedVertIndex[3]; /// Vertex indexes, relative to a shared vertex buffer with 
                                         // duplicates eliminated (this buffer is not exposed)
+	        Vector4 normal;   // unit vector othogonal to this face, plus distance from origin
+            bool lightFacing; // Working vector used when calculating the silhouette
         };
         /** Edge data. */
         struct Edge {
@@ -73,16 +70,6 @@ namespace Ogre {
             bool degenerate;
         };
 
-        // Array of 4D vector of triangle face normal, which is unit vector othogonal
-        // to the triangles, plus distance from origin.
-        // Use aligned allocator here because we are intented to use in SIMD optimised routines .
-        typedef std::vector<Vector4, AlignedAllocator<Vector4> > TriangleFaceNormalList;
-
-        // Working vector used when calculating the silhouette.
-        // Use std::vector<char> instead of std::vector<bool> which might implemented
-        // similar bit-fields causing loss performance.
-        typedef std::vector<char> TriangleLightFacingList;
-
         typedef std::vector<Triangle> TriangleList;
         typedef std::vector<Edge> EdgeList;
 
@@ -93,39 +80,25 @@ namespace Ogre {
             size_t vertexSet;
             /** Pointer to vertex data used by this edge group. */
             const VertexData* vertexData;
-            /** Index to main triangles array, indicate the first triangle of this edge
-                group, and all triangles of this edge group are stored continuous in
-                main triangles array.
-            */
-            size_t triStart;
-            /** Number triangles of this edge group. */
-            size_t triCount;
             /** The edges themselves. */
             EdgeList edges;
 
         };
 
         typedef std::vector<EdgeGroup> EdgeGroupList;
-
-        /** Main triangles array, stores all triangles of this edge list. Note that
-            triangles are grouping against edge group.
-        */
         TriangleList triangles;
-        /** All triangle face normals. It should be 1:1 with triangles. */
-        TriangleFaceNormalList triangleFaceNormals;
-        /** Triangle light facing states. It should be 1:1 with triangles. */
-        TriangleLightFacingList triangleLightFacings;
-        /** All edge groups of this edge list. */
         EdgeGroupList edgeGroups;
-        /** Flag indicate the mesh is manifold. */
-        bool isClosed;
+		// manifold? NB This value is not stored in the  binary Mesh format yet so
+		// cannot be relied upon unless this has been calculated interactively.
+		//bool isClosed; // manifold?
 
 
         /** Calculate the light facing state of the triangles in this edge list
         @remarks
             This is normally the first stage of calculating a silhouette, ie
             establishing which tris are facing the light and which are facing
-            away. This state is stored in the 'triangleLightFacings'.
+            away. This state is stored in the 'lightFacing' flag in each 
+            Triangle.
         @param lightPos 4D position of the light in object space, note that 
             for directional lights (which have no position), the w component
             is 0 and the x/y/z position are the direction.
@@ -136,7 +109,7 @@ namespace Ogre {
         @param vertexSet The vertex set we are updating
         @param positionBuffer The updated position buffer, must contain ONLY xyz
         */
-        void updateFaceNormals(size_t vertexSet, const HardwareVertexBufferSharedPtr& positionBuffer);
+        void updateFaceNormals(size_t vertexSet, HardwareVertexBufferSharedPtr positionBuffer);
 
 
 

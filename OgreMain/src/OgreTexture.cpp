@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -60,7 +56,7 @@ namespace Ogre {
             mHasAlpha(false),
             mInternalResourcesCreated(false)
     {
-		
+
 		enable32Bit(false);
 
         if (createParamDictionary("Texture"))
@@ -81,61 +77,13 @@ namespace Ogre {
 
         
     }
-	//--------------------------------------------------------------------------    
+	//--------------------------------------------------------------------------    //--------------------------------------------------------------------------
 	void Texture::loadRawData( DataStreamPtr& stream, 
 		ushort uWidth, ushort uHeight, PixelFormat eFormat)
 	{
 		Image img;
 		img.loadRawData(stream, uWidth, uHeight, eFormat);
 		loadImage(img);
-	}
-	//--------------------------------------------------------------------------    
-	void Texture::loadImage( const Image &img )
-	{
-		// Scope lock over load status
-		{
-			OGRE_LOCK_MUTEX(mLoadingStatusMutex)
-			if (mLoadingState != LOADSTATE_UNLOADED)
-			{
-				// no loading to be done
-				return;
-			}
-			mLoadingState = LOADSTATE_LOADING;
-		}
-
-		// Scope lock for actual loading
-		try
-		{
-			OGRE_LOCK_AUTO_MUTEX
-			std::vector<const Image*> imagePtrs;
-			imagePtrs.push_back(&img);
-			_loadImages( imagePtrs );
-
-		}
-		catch (...)
-		{
-			// Reset loading in-progress flag in case failed for some reason
-			OGRE_LOCK_MUTEX(mLoadingStatusMutex)
-			mLoadingState = LOADSTATE_UNLOADED;
-			// Re-throw
-			throw;
-		}
-
-		// Scope lock for loading progress
-		{
-			OGRE_LOCK_MUTEX(mLoadingStatusMutex)
-
-			// Now loaded
-			mLoadingState = LOADSTATE_LOADED;
-		}
-
-		// Notify manager
-		if(mCreator)
-			mCreator->_notifyResourceLoaded(this);
-
-		// No deferred loading events since this method is not called in background
-
-
 	}
     //--------------------------------------------------------------------------
     void Texture::setFormat(PixelFormat pf)
@@ -157,12 +105,19 @@ namespace Ogre {
 		return getTextureType() == TEX_TYPE_CUBE_MAP ? 6 : 1;
 	}
 	//--------------------------------------------------------------------------
-    void Texture::_loadImages( const ConstImagePtrList& images )
+    void Texture::_loadImages( const std::vector<const Image*>& images )
     {
 		if(images.size() < 1)
 			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Cannot load empty vector of images",
 			 "Texture::loadImages");
         
+        if( mIsLoaded )
+        {
+			LogManager::getSingleton().logMessage( 
+				LML_NORMAL, "Texture: "+mName+": Unloading Image");
+            unload();
+        }
+
 		// Set desired texture size and properties from images[0]
 		mSrcWidth = mWidth = images[0]->getWidth();
 		mSrcHeight = mHeight = images[0]->getHeight();
@@ -210,7 +165,7 @@ namespace Ogre {
         size_t imageMips = images[0]->getNumMipmaps();
 
 		if(imageMips > 0) {
-			mNumMipmaps = mNumRequestedMipmaps = images[0]->getNumMipmaps();
+			mNumMipmaps = images[0]->getNumMipmaps();
 			// Disable flag for auto mip generation
 			mUsage &= ~TU_AUTOMIPMAP;
 		}
@@ -321,6 +276,7 @@ namespace Ogre {
         // Update size (the final size, not including temp space)
         mSize = getNumFaces() * PixelUtil::getMemorySize(mWidth, mHeight, mDepth, mFormat);
 
+        mIsLoaded = true;
     }
 	//-----------------------------------------------------------------------------
 	void Texture::createInternalResources(void)

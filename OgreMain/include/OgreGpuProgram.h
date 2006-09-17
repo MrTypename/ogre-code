@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __GpuProgram_H_
@@ -934,31 +930,10 @@ namespace Ogre {
 			String doGet(const void* target) const;
 			void doSet(void* target, const String& val);
 		};
-		class _OgreExport CmdMorph : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
-		class _OgreExport CmdPose : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
-		class _OgreExport CmdVTF : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
 		// Command object for setting / getting parameters
 		static CmdType msTypeCmd;
 		static CmdSyntax msSyntaxCmd;
 		static CmdSkeletal msSkeletalCmd;
-		static CmdMorph msMorphCmd;
-		static CmdPose msPoseCmd;
-		static CmdVTF msVTFCmd;
 	
 		/// The type of the program
 		GpuProgramType mType;
@@ -976,8 +951,6 @@ namespace Ogre {
 		bool mMorphAnimation;
 		/// Does this (vertex) program include pose animation (count of number of poses supported)
 		ushort mPoseAnimation;
-		/// Does this (vertex) program require support for vertex texture fetch?
-		bool mVertexTextureFetch;
 		/// The default parameters for use with this object
 		GpuProgramParametersSharedPtr mDefaultParams;
 		/// Does this program want light states passed through fixed pipeline
@@ -1107,14 +1080,6 @@ namespace Ogre {
 			blend, for use in pose animation.
         */
         virtual ushort getNumberOfPosesIncluded(void) const { return mPoseAnimation; }
-		/** Sets whether this vertex program requires support for vertex 
-			texture fetch from the hardware.
-		*/
-		virtual void setVertexTextureFetchRequired(bool r) { mVertexTextureFetch = r; }
-		/** Returns whether this vertex program requires support for vertex 
-			texture fetch from the hardware.
-		*/
-		virtual bool isVertexTextureFetchRequired(void) const { return mVertexTextureFetch; }
 
 		/** Get a reference to the default parameters which are to be used for all
 			uses of this program.

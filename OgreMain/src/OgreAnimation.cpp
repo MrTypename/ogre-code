@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -36,6 +32,7 @@ Torus Knot Software Ltd.
 #include "OgreSubEntity.h"
 #include "OgreMesh.h"
 #include "OgreSubMesh.h"
+#include "OgreStringConverter.h"
 
 namespace Ogre {
 
@@ -61,6 +58,14 @@ namespace Ogre {
     //---------------------------------------------------------------------
     NodeAnimationTrack* Animation::createNodeTrack(unsigned short handle)
     {
+        if (hasNodeTrack(handle))
+        {
+            OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM, 
+                "Node track with the specified handle " +
+                StringConverter::toString(handle) + " already exists",
+                "Animation::createNodeTrack");
+        }
+
         NodeAnimationTrack* ret = new NodeAnimationTrack(this, handle);
 
         mNodeTrackList[handle] = ret;
@@ -93,7 +98,8 @@ namespace Ogre {
         if (i == mNodeTrackList.end())
         {
             OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, 
-                "Cannot find node track with the specified handle", 
+                "Cannot find node track with the specified handle " +
+                StringConverter::toString(handle),
                 "Animation::getNodeTrack");
         }
 
@@ -124,6 +130,14 @@ namespace Ogre {
 	//---------------------------------------------------------------------
 	NumericAnimationTrack* Animation::createNumericTrack(unsigned short handle)
 	{
+        if (hasNumericTrack(handle))
+        {
+            OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM, 
+                "Numeric track with the specified handle " +
+                StringConverter::toString(handle) + " already exists",
+                "Animation::createNumericTrack");
+        }
+
 		NumericAnimationTrack* ret = new NumericAnimationTrack(this, handle);
 
 		mNumericTrackList[handle] = ret;
@@ -157,7 +171,8 @@ namespace Ogre {
 		if (i == mNumericTrackList.end())
 		{
 			OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, 
-				"Cannot find Numeric track with the specified handle", 
+				"Cannot find numeric track with the specified handle " +
+                StringConverter::toString(handle),
 				"Animation::getNumericTrack");
 		}
 
@@ -189,6 +204,14 @@ namespace Ogre {
 	VertexAnimationTrack* Animation::createVertexTrack(unsigned short handle, 
 		VertexAnimationType animType)
 	{
+        if (hasVertexTrack(handle))
+        {
+            OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM, 
+                "Vertex track with the specified handle " +
+                StringConverter::toString(handle) + " already exists",
+                "Animation::createVertexTrack");
+        }
+
 		VertexAnimationTrack* ret = new VertexAnimationTrack(this, handle, animType);
 
 		mVertexTrackList[handle] = ret;
@@ -223,7 +246,8 @@ namespace Ogre {
 		if (i == mVertexTrackList.end())
 		{
 			OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, 
-				"Cannot find Vertex track with the specified handle", 
+				"Cannot find vertex track with the specified handle " +
+                StringConverter::toString(handle),
 				"Animation::getVertexTrack");
 		}
 
@@ -480,7 +504,32 @@ namespace Ogre {
 		}
 
 	}
+	//-----------------------------------------------------------------------
+	Animation* Animation::clone(const String& newName) const
+	{
+		Animation* newAnim = new Animation(newName, mLength);
+        newAnim->mInterpolationMode = mInterpolationMode;
+        newAnim->mRotationInterpolationMode = mRotationInterpolationMode;
+		
+		// Clone all tracks
+		for (NodeTrackList::const_iterator i = mNodeTrackList.begin();
+			i != mNodeTrackList.end(); ++i)
+		{
+			newAnim->mNodeTrackList[i->second->getHandle()] = i->second->_clone(newAnim);
+		}
+		for (NumericTrackList::const_iterator i = mNumericTrackList.begin();
+			i != mNumericTrackList.end(); ++i)
+		{
+			newAnim->mNumericTrackList[i->second->getHandle()] = i->second->_clone(newAnim);
+		}
+		for (VertexTrackList::const_iterator i = mVertexTrackList.begin();
+			i != mVertexTrackList.end(); ++i)
+		{
+			newAnim->mVertexTrackList[i->second->getHandle()] = i->second->_clone(newAnim);
+		}
+		return newAnim;
 
+	}
 }
 
 

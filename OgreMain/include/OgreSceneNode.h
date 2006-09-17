@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef _SceneNode_H__
@@ -55,6 +51,8 @@ namespace Ogre {
 
     protected:
         ObjectMap mObjectsByName;
+        mutable LightList mLightList;
+        mutable bool mLightListDirty;
 
 		/// Pointer to a Wire Bounding Box for this Node
 		WireBoundingBox *mWireBoundingBox;
@@ -79,7 +77,7 @@ namespace Ogre {
 		/** Internal method for setting whether the node is in the scene 
 			graph.
 		*/
-		void setInSceneGraph(bool inGraph);
+		virtual void setInSceneGraph(bool inGraph);
 
         /// Whether to yaw around a fixed axis.
         bool mYawFixed;
@@ -305,20 +303,14 @@ namespace Ogre {
 
         /** Allows retrieval of the nearest lights to the centre of this SceneNode.
         @remarks
-            This method allows a list of lights, ordered by proximity to the centre
-            of this SceneNode, to be retrieved. Can be useful when implementing
-            MovableObject::queryLights and Renderable::getLights.
-        @par
-            Note that only lights could be affecting the frustum will take into
-            account, which cached in scene manager.
-        @see SceneManager::_getLightsAffectingFrustum
-        @see SceneManager::_populateLightList
-        @param destList List to be populated with ordered set of lights; will be
-            cleared by this method before population.
-        @param radius Parameter to specify lights intersecting a given radius of
+            This method allows a list of lights, ordered by proximity to the centre of
+            this SceneNode, to be retrieved. Multiple access to this method when neither 
+            the node nor the lights have moved will result in the same list being returned
+            without recalculation. Can be useful when implementing Renderable::getLights.
+        @param radius Optional parameter to specify lights intersecting a given radius of
             this SceneNode's centre.
         */
-        void findLights(LightList& destList, Real radius) const;
+        virtual const LightList& findLights(Real radius) const;
 
         /** Tells the node whether to yaw around it's own local Y axis or a fixed axis of choice.
         @remarks
@@ -334,7 +326,7 @@ namespace Ogre {
         @param
         fixedAxis The axis to use if the first parameter is true.
         */
-        void setFixedYawAxis( bool useFixed, const Vector3& fixedAxis = Vector3::UNIT_Y );
+        virtual void setFixedYawAxis( bool useFixed, const Vector3& fixedAxis = Vector3::UNIT_Y );
 
 		/** Rotate the node around the Y-axis.
 		*/
@@ -354,7 +346,7 @@ namespace Ogre {
         @param localDirectionVector The vector which normally describes the natural
         direction of the node, usually -Z
         */
-        void setDirection(Real x, Real y, Real z, 
+        virtual void setDirection(Real x, Real y, Real z, 
             TransformSpace relativeTo = TS_LOCAL, 
             const Vector3& localDirectionVector = Vector3::NEGATIVE_UNIT_Z);
 
@@ -368,7 +360,7 @@ namespace Ogre {
         @param localDirectionVector The vector which normally describes the natural
         direction of the node, usually -Z
         */
-        void setDirection(const Vector3& vec, TransformSpace relativeTo = TS_LOCAL, 
+        virtual void setDirection(const Vector3& vec, TransformSpace relativeTo = TS_LOCAL, 
             const Vector3& localDirectionVector = Vector3::NEGATIVE_UNIT_Z);
         /** Points the local -Z direction of this node at a point in space.
         @param targetPoint A vector specifying the look at point.
@@ -376,7 +368,7 @@ namespace Ogre {
         @param localDirectionVector The vector which normally describes the natural
         direction of the node, usually -Z
         */
-        void lookAt( const Vector3& targetPoint, TransformSpace relativeTo,
+        virtual void lookAt( const Vector3& targetPoint, TransformSpace relativeTo,
             const Vector3& localDirectionVector = Vector3::NEGATIVE_UNIT_Z);
         /** Enables / disables automatic tracking of another SceneNode.
         @remarks
@@ -396,15 +388,15 @@ namespace Ogre {
         @param offset If supplied, this is the target point in local space of the target node
         instead of the origin of the target node. Good for fine tuning the look at point.
         */
-        void setAutoTracking(bool enabled, SceneNode* target = 0, 
+        virtual void setAutoTracking(bool enabled, SceneNode* target = 0, 
             const Vector3& localDirectionVector = Vector3::NEGATIVE_UNIT_Z,
             const Vector3& offset = Vector3::ZERO);
 		/** Get the auto tracking target for this node, if any. */
-        SceneNode* getAutoTrackTarget(void) { return mAutoTrackTarget; }
+        virtual SceneNode* getAutoTrackTarget(void) { return mAutoTrackTarget; }
 		/** Get the auto tracking offset for this node, if the node is auto tracking. */
-		const Vector3& getAutoTrackOffset(void) { return mAutoTrackOffset; }
+		virtual const Vector3& getAutoTrackOffset(void) { return mAutoTrackOffset; }
 		/** Get the auto tracking local direction for this node, if it is auto tracking. */
-		const Vector3& getAutoTrackLocalDirection(void) { return mAutoTrackLocalDirection; }
+		virtual const Vector3& getAutoTrackLocalDirection(void) { return mAutoTrackLocalDirection; }
 		/** Internal method used by OGRE to update auto-tracking cameras. */
         void _autoTrack(void);
         /** Gets the parent of this SceneNode. */
@@ -417,7 +409,7 @@ namespace Ogre {
         @param visible Whether the objects are to be made visible or invisible
         @param cascade If true, this setting cascades into child nodes too.
         */
-        void setVisible(bool visible, bool cascade = true);
+        virtual void setVisible(bool visible, bool cascade = true);
         /** Inverts the visibility of all objects attached to this node.
         @remarks    
         This is a shortcut to calling setVisible(!isVisible()) on the objects attached
@@ -425,7 +417,7 @@ namespace Ogre {
         nodes. 
         @param cascade If true, this setting cascades into child nodes too.
         */
-        void flipVisibility(bool cascade = true);
+        virtual void flipVisibility(bool cascade = true);
 
 
 

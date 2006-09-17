@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -67,7 +63,7 @@ namespace Ogre {
     {
         // have to call this here reather than in Resource destructor
         // since calling virtual methods in base destructors causes crash
-		if (isLoaded())
+		if (mIsLoaded)
 		{
 			unload(); 
 		}
@@ -241,11 +237,21 @@ namespace Ogre {
         createInternalResources();
     }
 	
+	void GLTexture::loadImage( const Image& img )
+    {
+        std::vector<const Image*> images;
+		
+        images.push_back(&img);
+        _loadImages(images);
+        images.clear();
+    }
+
     void GLTexture::loadImpl()
     {
         if( mUsage & TU_RENDERTARGET )
         {
             createRenderTexture();
+            mIsLoaded = true;     
         }
         else
         {
@@ -279,11 +285,7 @@ namespace Ogre {
 				if(img.getDepth() > 1)
 					mTextureType = TEX_TYPE_3D;
 
-				// Call internal _loadImages, not loadImage since that's external and 
-				// will determine load status etc again
-				ConstImagePtrList imagePtrs;
-				imagePtrs.push_back(&img);
-				_loadImages( imagePtrs );
+				loadImage( img );
             }
             else if (mTextureType == TEX_TYPE_CUBE_MAP)
             {
@@ -299,16 +301,12 @@ namespace Ogre {
 							mName, mGroup, true, this);
 
 	                img.load(dstream, ext);
-					// Call internal _loadImages, not loadImage since that's external and 
-					// will determine load status etc again
-					ConstImagePtrList imagePtrs;
-					imagePtrs.push_back(&img);
-					_loadImages( imagePtrs );
+					loadImage( img );
 				}
 				else
 				{
 					std::vector<Image> images(6);
-					ConstImagePtrList imagePtrs;
+					std::vector<const Image*> imagePtrs;
 					static const String suffixes[6] = {"_rt", "_lf", "_up", "_dn", "_fr", "_bk"};
 	
 					for(size_t i = 0; i < 6; i++)

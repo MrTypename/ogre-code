@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -735,6 +731,11 @@ namespace Ogre {
                         newPass->setDiffuse(0, 0, 0, newPass->getDiffuse().a);  // Preserving alpha
                         newPass->setSpecular(ColourValue::Black);
 
+                        // Calculate hash value for new pass, because we are compiling
+                        // illumination passes on demand, which will loss hash calculate
+                        // before it add to render queue first time.
+                        newPass->_recalculateHash();
+
                         iPass = new IlluminationPass();
                         iPass->destroyOnShutdown = true;
                         iPass->originalPass = p;
@@ -752,6 +753,12 @@ namespace Ogre {
                         Pass* newPass = new Pass(this, p->getIndex());
                         newPass->setAmbient(ColourValue::Black);
                         newPass->setDiffuse(ColourValue::Black);
+
+                        // Calculate hash value for new pass, because we are compiling
+                        // illumination passes on demand, which will loss hash calculate
+                        // before it add to render queue first time.
+                        newPass->_recalculateHash();
+
                         iPass = new IlluminationPass();
                         iPass->destroyOnShutdown = true;
                         iPass->originalPass = p;
@@ -811,6 +818,11 @@ namespace Ogre {
                         // must be additive
                         newPass->setSceneBlending(SBF_ONE, SBF_ONE);
 
+                        // Calculate hash value for new pass, because we are compiling
+                        // illumination passes on demand, which will loss hash calculate
+                        // before it add to render queue first time.
+                        newPass->_recalculateHash();
+
                         iPass = new IlluminationPass();
                         iPass->destroyOnShutdown = true;
                         iPass->originalPass = p;
@@ -849,6 +861,11 @@ namespace Ogre {
                         newPass->setLightingEnabled(false);
                         // modulate
                         newPass->setSceneBlending(SBF_DEST_COLOUR, SBF_ZERO);
+
+                        // Calculate hash value for new pass, because we are compiling
+                        // illumination passes on demand, which will loss hash calculate
+                        // before it add to render queue first time.
+                        newPass->_recalculateHash();
 
                         // NB there is nothing we can do about vertex & fragment
                         // programs here, so people will just have to make their

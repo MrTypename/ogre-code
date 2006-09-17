@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -59,6 +55,9 @@ namespace Ogre
         /** Gets the time of this keyframe in the animation sequence. */
         Real getTime(void) const { return mTime; }
 
+		/** Clone a keyframe (internal use only) */
+		virtual KeyFrame* _clone(AnimationTrack* newParent) const;
+
 
     protected:
         Real mTime;
@@ -83,6 +82,8 @@ namespace Ogre
 		*/
 		virtual void setValue(const AnyNumeric& val);
 
+		/** Clone a keyframe (internal use only) */
+		KeyFrame* _clone(AnimationTrack* newParent) const;
 	protected:
 		AnyNumeric mValue;
 	};
@@ -124,6 +125,9 @@ namespace Ogre
 
 		/** Gets the rotation applied by this keyframe. */
 		virtual const Quaternion& getRotation(void) const;
+
+		/** Clone a keyframe (internal use only) */
+		KeyFrame* _clone(AnimationTrack* newParent) const;
 	protected:
 		Vector3 mTranslate;
 		Vector3 mScale;
@@ -154,6 +158,9 @@ namespace Ogre
 
 		/** Gets the vertex buffer containing positions for this keyframe. */
 		const HardwareVertexBufferSharedPtr& getVertexBuffer(void) const;
+
+		/** Clone a keyframe (internal use only) */
+		KeyFrame* _clone(AnimationTrack* newParent) const;		
 
 	protected:
 		HardwareVertexBufferSharedPtr mBuffer;
@@ -221,6 +228,10 @@ namespace Ogre
 
 		/** Get a const iterator over the pose references. */
 		ConstPoseRefIterator getPoseReferenceIterator(void) const;
+
+		/** Clone a keyframe (internal use only) */
+		KeyFrame* _clone(AnimationTrack* newParent) const;
+		
 	protected:
 		PoseRefList mPoseRefs;
 

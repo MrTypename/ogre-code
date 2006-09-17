@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -159,9 +155,6 @@ mSuppressShadows(false)
 
 	// Setup default queued renderable visitor
 	mActiveQueuedRenderableVisitor = &mDefaultQueuedRenderableVisitor;
-
-	// set up default shadow camera setup
-	mDefaultShadowCameraSetup.bind(new DefaultShadowCameraSetup);
 }
 //-----------------------------------------------------------------------
 SceneManager::~SceneManager()
@@ -365,11 +358,6 @@ void SceneManager::destroyAllLights(void)
 	destroyAllMovableObjectsByType(LightFactory::FACTORY_TYPE_NAME);
 }
 //-----------------------------------------------------------------------
-const LightList& SceneManager::_getLightsAffectingFrustum(void) const
-{
-    return mLightsAffectingFrustum;
-}
-//-----------------------------------------------------------------------
 bool SceneManager::lightLess::operator()(const Light* a, const Light* b) const
 {
     return a->tempSquareDist < b->tempSquareDist;
@@ -380,35 +368,33 @@ void SceneManager::_populateLightList(const Vector3& position, Real radius,
 {
     // Really basic trawl of the lights, then sort
     // Subclasses could do something smarter
-
-    // Pick up the lights that affecting frustum only, which should has been
-    // cached, so better than take all lights in the scene into account.
-    const LightList& candidateLights = _getLightsAffectingFrustum();
-
-    // Pre-allocate memory
     destList.clear();
-    destList.reserve(candidateLights.size());
 
-    LightList::const_iterator it;
-    for (it = candidateLights.begin(); it != candidateLights.end(); ++it)
+	MovableObjectIterator it = 
+		getMovableObjectIterator(LightFactory::FACTORY_TYPE_NAME);
+
+    while(it.hasMoreElements())
     {
-        Light* lt = *it;
-        if (lt->getType() == Light::LT_DIRECTIONAL)
+        Light* lt = static_cast<Light*>(it.getNext());
+        if (lt->isVisible())
         {
-            // No distance
-            lt->tempSquareDist = 0.0f;
-            destList.push_back(lt);
-        }
-        else
-        {
-            // Calc squared distance
-            lt->tempSquareDist = (lt->getDerivedPosition() - position).squaredLength();
-            // only add in-range lights
-            Real range = lt->getAttenuationRange();
-            Real maxDist = range + radius;
-            if (lt->tempSquareDist <= Math::Sqr(maxDist))
+            if (lt->getType() == Light::LT_DIRECTIONAL)
             {
+                // No distance
+                lt->tempSquareDist = 0.0f;
                 destList.push_back(lt);
+            }
+            else
+            {
+                // Calc squared distance
+                lt->tempSquareDist = (lt->getDerivedPosition() - position).squaredLength();
+                // only add in-range lights
+                Real range = lt->getAttenuationRange();
+                Real maxDist = range + radius;
+                if (lt->tempSquareDist <= Math::Sqr(maxDist))
+                {
+                    destList.push_back(lt);
+                }
             }
         }
     }
@@ -1035,30 +1021,27 @@ void SceneManager::_renderScene(Camera* camera, Viewport* vp, bool includeOverla
     camera->_autoTrack();
 
 
-    if (mIlluminationStage != IRS_RENDER_TO_TEXTURE && mFindVisibleObjects)
+    // Are we using any shadows at all?
+    if (isShadowTechniqueInUse() && 
+        mIlluminationStage != IRS_RENDER_TO_TEXTURE &&
+		vp->getShadowsEnabled() &&
+		mFindVisibleObjects)
     {
         // Locate any lights which could be affecting the frustum
         findLightsAffectingFrustum(camera);
-
-        // Are we using any shadows at all?
-        if (isShadowTechniqueInUse() && vp->getShadowsEnabled())
+        if (isShadowTechniqueTextureBased())
         {
-            // Prepare shadow textures if texture shadow based shadowing
-            // technique in use
-            if (isShadowTechniqueTextureBased())
-            {
-                // *******
-                // WARNING
-                // *******
-                // This call will result in re-entrant calls to this method
-                // therefore anything which comes before this is NOT 
-                // guaranteed persistent. Make sure that anything which 
-                // MUST be specific to this camera / target is done 
-                // AFTER THIS POINT
-                prepareShadowTextures(camera, vp);
-                // reset the cameras because of the re-entrant call
-                mCameraInProgress = camera;
-            }
+            // *******
+            // WARNING
+            // *******
+            // This call will result in re-entrant calls to this method
+            // therefore anything which comes before this is NOT 
+            // guaranteed persistent. Make sure that anything which 
+            // MUST be specific to this camera / target is done 
+            // AFTER THIS POINT
+            prepareShadowTextures(camera, vp);
+            // reset the cameras because of the re-entrant call
+            mCameraInProgress = camera;
         }
     }
 
@@ -2419,6 +2402,7 @@ void SceneManager::renderSingleObject(const Renderable* rend, const Pass* pass,
 {
     unsigned short numMatrices;
     static RenderOperation ro;
+    static LightList localLightList;
 
     // Set up rendering operation
     // I know, I know, const_cast is nasty but otherwise it requires all internal
@@ -2492,9 +2476,6 @@ void SceneManager::renderSingleObject(const Renderable* rend, const Pass* pass,
 
 		if (doLightIteration)
 		{
-            // Create single element of light list for faster light iteration setup
-            static LightList localLightList(1);
-
 			// Here's where we issue the rendering operation to the render system
 			// Note that we may do this once per light, therefore it's in a loop
 			// and the light parameters are updated once per traversal through the
@@ -2508,6 +2489,9 @@ void SceneManager::renderSingleObject(const Renderable* rend, const Pass* pass,
 				// Determine light list to use
 				if (iteratePerLight)
 				{
+					// Change the only element of local light list to be
+					// the light at index i
+					localLightList.clear();
 					// Check whether we need to filter this one out
 					if (pass->getRunOnlyForOneLightType() && 
 						pass->getOnlyLightType() != rendLightList[i]->getType())
@@ -2516,10 +2500,7 @@ void SceneManager::renderSingleObject(const Renderable* rend, const Pass* pass,
 						continue;
 					}
 
-					// Change the only element of local light list to be
-					// the light at index i
-					localLightList.front() = rendLightList[i];
-
+					localLightList.push_back(rendLightList[i]);
 					pLightListToUse = &localLightList;
 				}
 				else
@@ -2854,7 +2835,7 @@ void SceneManager::manualRender(RenderOperation* rend,
 void SceneManager::useRenderableViewProjMode(const Renderable* pRend)
 {
     // Check view matrix
-    bool useIdentityView = pRend->getUseIdentityView();
+    bool useIdentityView = pRend->useIdentityView();
     if (useIdentityView)
     {
         // Using identity view now, change it
@@ -2862,7 +2843,7 @@ void SceneManager::useRenderableViewProjMode(const Renderable* pRend)
         mResetIdentityView = true;
     }
 
-    bool useIdentityProj = pRend->getUseIdentityProjection();
+    bool useIdentityProj = pRend->useIdentityProjection();
     if (useIdentityProj)
     {
         // Use identity projection matrix, still need to take RS depth into account.
@@ -3204,17 +3185,10 @@ void SceneManager::updateRenderQueueGroupSplitOptions(RenderQueueGroup* group,
 void SceneManager::findLightsAffectingFrustum(const Camera* camera)
 {
     // Basic iteration for this SM
-
-    MovableObjectMap* lights =
-        getMovableObjectMap(LightFactory::FACTORY_TYPE_NAME);
-
-    // Pre-allocate memory
     mLightsAffectingFrustum.clear();
-    mLightsAffectingFrustum.reserve(lights->size());
-
     Sphere sphere;
-	MovableObjectIterator it(lights->begin(), lights->end());
-
+	MovableObjectIterator it = 
+		getMovableObjectIterator(LightFactory::FACTORY_TYPE_NAME);
     while(it.hasMoreElements())
     {
         Light* l = static_cast<Light*>(it.getNext());
@@ -4575,10 +4549,118 @@ void SceneManager::prepareShadowTextures(Camera* cam, Viewport* vp)
 		// rebind camera, incase another SM in use which has switched to its cam
 		shadowView->setCamera(texCam);
         
-		if (light->getCustomShadowCameraSetup().isNull())
-			mDefaultShadowCameraSetup->getShadowCamera(this, cam, vp, light, texCam);
-		else
-			light->getCustomShadowCameraSetup()->getShadowCamera(this, cam, vp, light, texCam);
+        Vector3 pos, dir;
+
+        // Directional lights 
+        if (light->getType() == Light::LT_DIRECTIONAL)
+        {
+            // set up the shadow texture
+            // Set ortho projection
+            texCam->setProjectionType(PT_ORTHOGRAPHIC);
+            // set easy FOV and near dist so that texture covers far dist
+            texCam->setFOVy(Degree(90));
+            texCam->setNearClipDistance(shadowDist);
+
+            // Calculate look at position
+            // We want to look at a spot shadowOffset away from near plane
+            // 0.5 is a litle too close for angles
+            Vector3 target = cam->getDerivedPosition() + 
+                (cam->getDerivedDirection() * shadowOffset);
+
+            // Calculate direction, which same as directional light direction
+            dir = - light->getDerivedDirection(); // backwards since point down -z
+            dir.normalise();
+
+            // Calculate position
+            // We want to be in the -ve direction of the light direction
+            // far enough to project for the dir light extrusion distance
+            pos = target + dir * mShadowDirLightExtrudeDist;
+
+            // Round local x/y position based on a world-space texel; this helps to reduce
+            // jittering caused by the projection moving with the camera
+            // Viewport is 2 * near clip distance across (90 degree fov)
+            Real worldTexelSize = (texCam->getNearClipDistance() * 20) / mShadowTextureSize;
+            pos.x -= fmod(pos.x, worldTexelSize);
+            pos.y -= fmod(pos.y, worldTexelSize);
+            pos.z -= fmod(pos.z, worldTexelSize);
+        }
+        // Spotlight
+        else if (light->getType() == Light::LT_SPOTLIGHT)
+        {
+            // Set perspective projection
+            texCam->setProjectionType(PT_PERSPECTIVE);
+            // set FOV slightly larger than the spotlight range to ensure coverage
+            texCam->setFOVy(light->getSpotlightOuterAngle()*1.2);
+            // set near clip the same as main camera, since they are likely
+            // to both reflect the nature of the scene
+            texCam->setNearClipDistance(cam->getNearClipDistance());
+
+            // Calculate position, which same as spotlight position
+            pos = light->getDerivedPosition();
+
+            // Calculate direction, which same as spotlight direction
+            dir = - light->getDerivedDirection(); // backwards since point down -z
+            dir.normalise();
+        }
+        // Point light
+        else
+        {
+            // Set perspective projection
+            texCam->setProjectionType(PT_PERSPECTIVE);
+            // Use 120 degree FOV for point light to ensure coverage more area
+            texCam->setFOVy(Degree(120));
+            // set near clip the same as main camera, since they are likely
+            // to both reflect the nature of the scene
+            texCam->setNearClipDistance(cam->getNearClipDistance());
+
+            // Calculate look at position
+            // We want to look at a spot shadowOffset away from near plane
+            // 0.5 is a litle too close for angles
+            Vector3 target = cam->getDerivedPosition() + 
+                (cam->getDerivedDirection() * shadowOffset);
+
+            // Calculate position, which same as point light position
+            pos = light->getDerivedPosition();
+
+            dir = (pos - target); // backwards since point down -z
+            dir.normalise();
+        }
+
+        // Finally set position
+        texCam->setPosition(pos);
+
+        // Calculate orientation based on direction calculated above
+        /*
+        // Next section (camera oriented shadow map) abandoned
+        // Always point in the same direction, if we don't do this then
+        // we get 'shadow swimming' as camera rotates
+        // As it is, we get swimming on moving but this is less noticeable
+
+        // calculate up vector, we want it aligned with cam direction
+        Vector3 up = cam->getDerivedDirection();
+        // Check it's not coincident with dir
+        if (up.dotProduct(dir) >= 1.0f)
+        {
+        // Use camera up
+        up = cam->getUp();
+        }
+        */
+        Vector3 up = Vector3::UNIT_Y;
+        // Check it's not coincident with dir
+        if (Math::Abs(up.dotProduct(dir)) >= 1.0f)
+        {
+            // Use camera up
+            up = Vector3::UNIT_Z;
+        }
+        // cross twice to rederive, only direction is unaltered
+        Vector3 left = dir.crossProduct(up);
+        left.normalise();
+        up = dir.crossProduct(left);
+        up.normalise();
+        // Derive quaternion from axes
+        Quaternion q;
+        q.FromAxes(left, up, dir);
+        texCam->setOrientation(q);
 
         // Setup background colour
         shadowView->setBackgroundColour(ColourValue::White);

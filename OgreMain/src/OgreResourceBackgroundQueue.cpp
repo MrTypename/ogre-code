@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -92,7 +88,7 @@ namespace Ogre {
 	}
 	//------------------------------------------------------------------------
 	BackgroundProcessTicket ResourceBackgroundQueue::initialiseResourceGroup(
-		const String& name, ResourceBackgroundQueue::Listener* listener)
+		const String& name, ResourceBackgroundQueueListener* listener)
 	{
 #if OGRE_THREAD_SUPPORT
 		if (!mThread)
@@ -116,7 +112,7 @@ namespace Ogre {
 	//------------------------------------------------------------------------
 	BackgroundProcessTicket 
 	ResourceBackgroundQueue::initialiseAllResourceGroups( 
-		ResourceBackgroundQueue::Listener* listener)
+		ResourceBackgroundQueueListener* listener)
 	{
 #if OGRE_THREAD_SUPPORT
 		if (!mThread)
@@ -138,7 +134,7 @@ namespace Ogre {
 	}
 	//------------------------------------------------------------------------
 	BackgroundProcessTicket ResourceBackgroundQueue::loadResourceGroup(
-		const String& name, ResourceBackgroundQueue::Listener* listener)
+		const String& name, ResourceBackgroundQueueListener* listener)
 	{
 #if OGRE_THREAD_SUPPORT
 		if (!mThread)
@@ -165,7 +161,7 @@ namespace Ogre {
 		const String& group, bool isManual, 
 		ManualResourceLoader* loader, 
 		const NameValuePairList* loadParams, 
-		ResourceBackgroundQueue::Listener* listener)
+		ResourceBackgroundQueueListener* listener)
 	{
 #if OGRE_THREAD_SUPPORT
 		if (!mThread)
@@ -224,7 +220,6 @@ namespace Ogre {
 		ResourceBackgroundQueue& queueInstance = 
 			ResourceBackgroundQueue::getSingleton();
 
-		LogManager::getSingleton().logMessage("ResourceBackgroundQueue - thread starting.");
 		bool shuttingDown = false;
 		// Spin forever until we're told to shut down
 		while (!shuttingDown)
@@ -272,19 +267,10 @@ namespace Ogre {
 			case RT_SHUTDOWN:
 				// That's all folks
 				shuttingDown = true;
-				LogManager::getSingleton().logMessage("ResourceBackgroundQueue - thread stopping.");
-
 				break;
 			};
 
-			// Queue notification
-			if (req->listener)
-			{
-				ResourceBackgroundQueue::getSingleton()
-					._queueFireBackgroundOperationComplete(req->listener, req->ticketID);
-			}
 
-			
 			{
 				// re-lock to consume completed request
 				boost::recursive_mutex::scoped_lock queueLock(
@@ -298,43 +284,10 @@ namespace Ogre {
 
 		}
 
-		LogManager::getSingleton().logMessage("ResourceBackgroundQueue - thread stopped.");
-
 	
 		
 	}
 #endif
-	//-----------------------------------------------------------------------
-	void ResourceBackgroundQueue::_queueFireBackgroundLoadingComplete(
-		Resource::Listener* listener, Resource* res)
-	{
-		OGRE_LOCK_MUTEX(mNotificationQueueMutex);
-		mNotificationQueue.push_back(QueuedNotification(listener, res));
-
-	}
-	//-----------------------------------------------------------------------
-	void ResourceBackgroundQueue::_queueFireBackgroundOperationComplete(
-		ResourceBackgroundQueue::Listener* listener, BackgroundProcessTicket ticket)
-	{
-		OGRE_LOCK_MUTEX(mNotificationQueueMutex);
-		mNotificationQueue.push_back(QueuedNotification(listener, ticket));
-
-	}
-	//-----------------------------------------------------------------------
-	void ResourceBackgroundQueue::_fireBackgroundLoadingComplete()
-	{
-		OGRE_LOCK_MUTEX(mNotificationQueueMutex);
-		for (NotificationQueue::iterator i = mNotificationQueue.begin();
-			i != mNotificationQueue.end(); ++i)
-		{
-			if (i->resource)
-				i->resourceListener->backgroundLoadingComplete(i->resource);
-			else
-				i->opListener->operationCompleted(i->ticket);
-		}
-		mNotificationQueue.clear();
-
-	}
 	//------------------------------------------------------------------------
 
 }

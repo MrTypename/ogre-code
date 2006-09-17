@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -40,18 +36,17 @@ Torus Knot Software Ltd.
 namespace Ogre {
 
     //-----------------------------------------------------------------------------
-    TagPoint::TagPoint(unsigned short handle, Skeleton* creator)
-        : Bone(handle, creator)
-        , mParentEntity(0)
-        , mChildObject(0)
+    TagPoint::TagPoint(unsigned short handle, Skeleton* creator): Bone(handle, creator)
     {
+        mParentEntity = 0; 
+        mChildObject = 0; 
     }
     //-----------------------------------------------------------------------------
     TagPoint::~TagPoint()
     {
     }
     //-----------------------------------------------------------------------------
-    Entity *TagPoint::getParentEntity(void) const
+    Entity *TagPoint::getParentEntity(void)
     {
         return mParentEntity;
     }
@@ -135,7 +130,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     const LightList& TagPoint::getLights(void) const
     {
-        return mParentEntity->queryLights();
+        return mParentEntity->getParentSceneNode()->findLights(mParentEntity->getBoundingRadius());
     }
 
 }

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -184,6 +180,16 @@ namespace Ogre {
 
     }
 	//---------------------------------------------------------------------
+	void AnimationTrack::populateClone(AnimationTrack* clone) const
+	{
+		for (KeyFrameList::const_iterator i = mKeyFrames.begin();
+			i != mKeyFrames.end(); ++i)
+		{
+			KeyFrame* clonekf = (*i)->_clone(clone);
+			clone->mKeyFrames.push_back(clonekf);
+		}
+	}
+	//---------------------------------------------------------------------
 	//---------------------------------------------------------------------
 	// Numeric specialisations
 	//---------------------------------------------------------------------
@@ -272,6 +278,15 @@ namespace Ogre {
 	NumericKeyFrame* NumericAnimationTrack::getNumericKeyFrame(unsigned short index) const
 	{
 		return static_cast<NumericKeyFrame*>(getKeyFrame(index));
+	}
+    //---------------------------------------------------------------------
+	NumericAnimationTrack* NumericAnimationTrack::_clone(Animation* newParent) const
+	{
+		NumericAnimationTrack* newTrack = 
+			newParent->createNumericTrack(mHandle);
+		newTrack->mTargetAnim = mTargetAnim;
+		populateClone(newTrack);
+		return newTrack;
 	}
     //---------------------------------------------------------------------
 	//---------------------------------------------------------------------
@@ -444,7 +459,7 @@ namespace Ogre {
         }
         String msg = "Time: ";
         msg << timePos;
-        //mMainWindow->setDebugText(msg); - removed
+        mMainWindow->setDebugText(msg);
         */
 
         //node->rotate(kf.getRotation() * weight);
@@ -599,6 +614,15 @@ namespace Ogre {
 	{
 		return static_cast<TransformKeyFrame*>(getKeyFrame(index));
 	}
+    //---------------------------------------------------------------------
+	NodeAnimationTrack* NodeAnimationTrack::_clone(Animation* newParent) const
+	{
+		NodeAnimationTrack* newTrack = 
+			newParent->createNodeTrack(mHandle, mTargetNode);
+		newTrack->mUseShortestRotationPath = mUseShortestRotationPath;
+		populateClone(newTrack);
+		return newTrack;
+	}	
 	//--------------------------------------------------------------------------
 	VertexAnimationTrack::VertexAnimationTrack(Animation* parent,
 		unsigned short handle, VertexAnimationType animType)
@@ -860,6 +884,15 @@ namespace Ogre {
 
 
 	}
+    //---------------------------------------------------------------------
+	VertexAnimationTrack* VertexAnimationTrack::_clone(Animation* newParent) const
+	{
+		VertexAnimationTrack* newTrack = 
+			newParent->createVertexTrack(mHandle, mAnimationType);
+		newTrack->mTargetMode = mTargetMode;
+		populateClone(newTrack);
+		return newTrack;
+	}	
 
 
 }

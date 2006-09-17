@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -56,7 +52,6 @@ struct XmlOptions
     bool usePercent;
     bool generateEdgeLists;
     bool generateTangents;
-	VertexElementSemantic tangentSemantic;
     bool reorganiseBuffers;
 	bool optimiseAnimations;
 	bool quietMode;
@@ -69,7 +64,7 @@ void help(void)
 {
     // Print help message
     cout << endl << "OgreXMLConvert: Converts data between XML and OGRE binary formats." << endl;
-    cout << "Provided for OGRE by Steve Streeting" << endl << endl;
+    cout << "Provided for OGRE by Steve Streeting 2002" << endl << endl;
     cout << "Usage: OgreXMLConverter [options] sourcefile [destfile] " << endl;
 	cout << endl << "Available options:" << endl;
     cout << "-i             = interactive mode - prompt for options" << endl;
@@ -81,8 +76,6 @@ void help(void)
     cout << "-e             = DON'T generate edge lists (for stencil shadows)" << endl;
     cout << "-r             = DON'T reorganise vertex buffers to OGRE recommended format." << endl;
     cout << "-t             = Generate tangents (for normal mapping)" << endl;
-	cout << "-td [uvw|tangent]" << endl;
-	cout << "           = Tangent vertex semantic destination (default tangent)" << endl;
     cout << "-o             = DON'T optimise out redundant tracks & keyframes" << endl;
 	cout << "-d3d           = Prefer D3D packed colour formats (default on Windows)" << endl;
 	cout << "-gl            = Prefer GL packed colour formats (default on non-Windows)" << endl;
@@ -112,7 +105,6 @@ XmlOptions parseArgs(int numArgs, char **args)
     opts.usePercent = true;
     opts.generateEdgeLists = true;
     opts.generateTangents = false;
-	opts.tangentSemantic = VES_TANGENT;
     opts.reorganiseBuffers = true;
 	opts.optimiseAnimations = true;
 	opts.quietMode = false;
@@ -140,7 +132,6 @@ XmlOptions parseArgs(int numArgs, char **args)
     binOpt["-f"] = "";
     binOpt["-E"] = "";
     binOpt["-log"] = "OgreXMLConverter.log";
-	binOpt["-td"] = "";
 
     int startIndex = findCommandLineOpts(numArgs, args, unOpt, binOpt);
     UnaryOptionList::iterator ui;
@@ -176,14 +167,6 @@ XmlOptions parseArgs(int numArgs, char **args)
         {
             opts.generateTangents = true;
         }
-		bi = binOpt.find("-td");
-		if (!bi->second.empty())
-		{
-			if (bi->second == "uvw")
-				opts.tangentSemantic = VES_TEXTURE_COORDINATES;
-			else
-				opts.tangentSemantic = VES_TANGENT;
-		}
 
         ui = unOpt.find("-o");
         if (ui->second)
@@ -410,7 +393,6 @@ void XMLToBinary(XmlOptions opts)
             }
             // Dedicated geometry
             Mesh::SubMeshIterator smIt = newMesh->getSubMeshIterator();
-            unsigned short idx = 0;
             while (smIt.hasMoreElements())
             {
                 SubMesh* sm = smIt.getNext();
@@ -621,7 +603,7 @@ void XMLToBinary(XmlOptions opts)
         if (opts.generateTangents)
         {
             unsigned short srcTex, destTex;
-            bool existing = newMesh->suggestTangentVectorBuildParams(opts.tangentSemantic, srcTex, destTex);
+            bool existing = newMesh->suggestTangentVectorBuildParams(srcTex, destTex);
             if (existing)
             {
                 std::cout << "\nThis mesh appears to already have a set of 3D texture coordinates, " <<
@@ -652,7 +634,7 @@ void XMLToBinary(XmlOptions opts)
 				{
                     std::cout << "Generating tangent vectors...." << std::endl;
                 }
-                newMesh->buildTangentVectors(opts.tangentSemantic, srcTex, destTex);
+                newMesh->buildTangentVectors(srcTex, destTex);
             }
         }
 

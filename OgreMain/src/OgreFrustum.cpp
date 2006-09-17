@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -225,9 +221,6 @@ namespace Ogre {
     {
         // Null boxes always invisible
         if (bound.isNull()) return false;
-
-        // Infinite boxes always visible
-        if (bound.isInfinite()) return true;
 
         // Make any pending updates to the calculated frustum planes
         updateFrustumPlanes();
@@ -827,7 +820,7 @@ namespace Ogre {
 	//-----------------------------------------------------------------------
 	void Frustum::updateWorldSpaceCornersImpl(void) const
 	{
-		Matrix4 eyeToWorld = mViewMatrix.inverseAffine();
+		Matrix4 eyeToWorld = mViewMatrix.inverse();
 
 		// Note: Even though we can dealing with general projection matrix here,
 		//       but because it's incompatibly with infinite far plane, thus, we
@@ -848,15 +841,15 @@ namespace Ogre {
 		Real farTop = nearTop * radio;
 
 		// near
-		mWorldSpaceCorners[0] = eyeToWorld.transformAffine(Vector3(nearRight, nearTop,    -mNearDist));
-		mWorldSpaceCorners[1] = eyeToWorld.transformAffine(Vector3(nearLeft,  nearTop,    -mNearDist));
-		mWorldSpaceCorners[2] = eyeToWorld.transformAffine(Vector3(nearLeft,  nearBottom, -mNearDist));
-		mWorldSpaceCorners[3] = eyeToWorld.transformAffine(Vector3(nearRight, nearBottom, -mNearDist));
+		mWorldSpaceCorners[0] = eyeToWorld * Vector3(nearRight, nearTop,    -mNearDist);
+		mWorldSpaceCorners[1] = eyeToWorld * Vector3(nearLeft,  nearTop,    -mNearDist);
+		mWorldSpaceCorners[2] = eyeToWorld * Vector3(nearLeft,  nearBottom, -mNearDist);
+		mWorldSpaceCorners[3] = eyeToWorld * Vector3(nearRight, nearBottom, -mNearDist);
 		// far
-		mWorldSpaceCorners[4] = eyeToWorld.transformAffine(Vector3(farRight,  farTop,     -farDist));
-		mWorldSpaceCorners[5] = eyeToWorld.transformAffine(Vector3(farLeft,   farTop,     -farDist));
-		mWorldSpaceCorners[6] = eyeToWorld.transformAffine(Vector3(farLeft,   farBottom,  -farDist));
-		mWorldSpaceCorners[7] = eyeToWorld.transformAffine(Vector3(farRight,  farBottom,  -farDist));
+		mWorldSpaceCorners[4] = eyeToWorld * Vector3(farRight,  farTop,     -farDist);
+		mWorldSpaceCorners[5] = eyeToWorld * Vector3(farLeft,   farTop,     -farDist);
+		mWorldSpaceCorners[6] = eyeToWorld * Vector3(farLeft,   farBottom,  -farDist);
+		mWorldSpaceCorners[7] = eyeToWorld * Vector3(farRight,  farBottom,  -farDist);
 
 
 		mRecalcWorldSpaceCorners = false;
@@ -1052,7 +1045,7 @@ namespace Ogre {
 
         // Don't use getViewMatrix here, incase overrided by camera and return a cull frustum view matrix
         updateView();
-        Vector3 eyeSpacePos = mViewMatrix.transformAffine(sphere.getCenter());
+        Vector3 eyeSpacePos = mViewMatrix * sphere.getCenter();
 
         if (eyeSpacePos.z < 0)
         {
@@ -1113,7 +1106,6 @@ namespace Ogre {
 		mCustomViewMatrix = enable;
 		if (enable)
 		{
-            assert(viewMatrix.isAffine());
 			mViewMatrix = viewMatrix;
 		}
 		invalidateView();

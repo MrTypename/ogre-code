@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.stevestreeting.com/ogre/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU General Public License along with
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/gpl.html.
-  
-You may alternatively use this source under the terms of a specific version of 
-the OGRE Unrestricted License provided you have obtained such a license from 
-Torus Knot Software Ltd. 
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -143,9 +139,9 @@ namespace Ogre {
         "        <Texture_Unit> ::= 'texture_unit' [<Label>] '{' {<TUS_Properties>} '}' \n"
         "        <TUS_Properties> ::= <Texture_Alias> | <Texture> | <Anim_Texture> | <Cubic_Texture> | \n"
         "                             <Tex_Coord_Set> | <Tex_Address_Mode> | <Tex_Border_Colour> | <Filtering> | \n"
-        "                             <Max_Anisotropy> | <MipMap_Bias> | <Colour_Op_Ex> | <Colour_Op_Multipass_Fallback> | <Colour_Op> | \n"
+        "                             <Max_Anisotropy> | <Colour_Op_Ex> | <Colour_Op_Multipass_Fallback> | <Colour_Op> | \n"
         "                             <Alpha_Op_Ex> | <Env_Map> | <Scroll_Anim> | <Scroll> | <Rotate_Anim> | <Rotate> | \n"
-        "                             <Scale> | <Wave_Xform> | <Transform> | <Binding_Type> \n"
+        "                             <Scale> | <Wave_Xform> | <Transform> \n"
         "           <Texture_Alias> ::= 'texture_alias' <Label> \n"
         "           <Texture> ::= 'texture' <Label> {<Texture_Properties>} \n"
         "           <Texture_Properties> ::= '1d' | '2d' | '3d' | 'cubic' | 'unlimited' | 'alpha' | <#mipmap> \n"
@@ -156,9 +152,9 @@ namespace Ogre {
         "                   <anim_frame> ::= (?!<TUS_Terminators>) <Label> [<Seperator>] \n"
         "           <TUS_Terminators> ::= '}' | 'texture_alias' | 'texture' | 'anim_texture' | 'cubic_texture' | \n"
         "                                 'tex_coord_set' | 'tex_address_mode' | 'tex_border_colour' | \n"
-        "                                 'filtering' | 'max_anisotropy' | 'mipmap_bias' | 'colour_op' | 'colour_op_ex' | \n"
+        "                                 'filtering' | 'max_anisotropy' | 'colour_op' | 'colour_op_ex' | \n"
         "                                 'colour_op_multipass_fallback' | 'alpha_op_ex' | 'env_map' | \n"
-        "                                 'scroll' | 'rotate' | 'scale' | 'wave_xform' | 'transform' | 'binding_type' \n"
+        "                                 'scroll' | 'rotate' | 'scale' | 'wave_xform' | 'transform' \n"
         "           <Cubic_Texture> ::= 'cubic_texture' <Label> <Cubic_Texture_Options> \n"
         "               <Cubic_Texture_Options> ::= 'combineduvw' | 'separateuv' | <Cubic_Seperate> \n"
         "               <Cubic_Seperate> ::= <Label> [<Seperator>] <Label> [<Seperator>] <Label> \n"
@@ -174,8 +170,6 @@ namespace Ogre {
         "                   <MinMagFilter> ::= 'linear' | 'point' | 'anisotropic' \n"
         "                   <MipFilter> ::= 'linear' | 'point' | 'none' \n"
         "           <Max_Anisotropy> ::= 'max_anisotropy' <#val> \n"
-        "           <MipMap_Bias> ::= 'mipmap_bias' <MipMap_Bias_Options> \n"
-        "           <MipMap_Bias_Options> ::= 'vertex' | 'fragment' \n"
         "           <Colour_Op> ::= 'colour_op' <Colour_Op_Options> \n"
         "               <Colour_Op_Options> ::= <Base_Blend> | 'replace' \n"
         "           <Colour_Op_Ex> ::= 'colour_op_ex' <Combine_Operation> <Source_Option> <Source_Option> {<#val>} \n"
@@ -200,16 +194,14 @@ namespace Ogre {
         "               <Wave_Type> ::= 'sine' | 'triangle' | 'square' | 'sawtooth' | 'inverse_sawtooth' \n"
         "           <Transform> ::= 'transform' <#m00> <#m01> <#m02> <#m03> <#m10> <#m11> <#m12> <#m13> <#m20> <#m21> <#m22> <#m23> \n"
         "                           <#m30> <#m31> <#m32> <#m33> \n"
-        "           <Binding_Type> ::= 'binding_type' <#value> \n"
         // GPU Programs
-        " \n"
+        " "
         "<Vertex_Program> ::= 'vertex_program' <Label> [<Seperator>] <Label> '{' {<Vertex_Program_Option>} '}' \n"
-        "   <Vertex_Program_Option> ::= <Vertex_Program_Animation> | <Vertex_Texture_Fetch> | <GPU_Program_Options> \n"
+        "   <Vertex_Program_Option> ::= <Vertex_Program_Animation> | <GPU_Program_Options> \n"
         "   <Vertex_Program_Animation> ::= <Skeletal_Animation> | <Morph_Animation> | <Pose_Animation> \n"
         "       <Skeletal_Animation> ::= 'includes_skeletal_animation' <True_False> \n"
         "       <Morph_Animation> ::= 'includes_morph_animation' <True_False> \n"
         "       <Pose_Animation> ::= 'includes_pose_animation' <#val> \n"
-        "       <Vertex_Texture_Fetch> ::= 'uses_vertex_texture_fetch' <True_False> \n"
         "<Fragment_Program> ::= 'fragment_program' <Label> [<Seperator>] <Label> '{' {<GPU_Program_Options>}'}' \n"
         // do custom parameters last since it will consume everything on the line in the source
         "   <GPU_Program_Options> ::= <Program_Source> | <Syntax> | <Default_Params> | <Custom_Parameter> \n"
@@ -263,194 +255,194 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void MaterialScriptCompiler::setupTokenDefinitions(void)
     {
-        addLexemeAction("{", &MaterialScriptCompiler::parseOpenBrace);
-        addLexemeAction("}", &MaterialScriptCompiler::parseCloseBrace);
+        addLexemeTokenAction("{", ID_OPENBRACE, &MaterialScriptCompiler::parseOpenBrace);
+        addLexemeTokenAction("}", ID_CLOSEBRACE, &MaterialScriptCompiler::parseCloseBrace);
         addLexemeTokenAction("vertex_program", ID_VERTEX_PROGRAM, &MaterialScriptCompiler::parseGPUProgram);
-            addLexemeAction("includes_skeletal_animation", &MaterialScriptCompiler::parseProgramSkeletalAnimation);
-            addLexemeAction("includes_morph_animation", &MaterialScriptCompiler::parseProgramMorphAnimation);
-            addLexemeAction("includes_pose_animation", &MaterialScriptCompiler::parseProgramPoseAnimation);
-            addLexemeAction("uses_vertex_texture_fetch", &MaterialScriptCompiler::parseProgramVertexTextureFetch);
-            
+            addLexemeTokenAction("includes_skeletal_animation", ID_INCLUDES_SKELETAL_ANIMATION, &MaterialScriptCompiler::parseProgramSkeletalAnimation);
+            addLexemeTokenAction("includes_morph_animation", ID_INCLUDES_MORPH_ANIMATION, &MaterialScriptCompiler::parseProgramMorphAnimation);
+            addLexemeTokenAction("includes_pose_animation", ID_INCLUDES_POSE_ANIMATION, &MaterialScriptCompiler::parseProgramPoseAnimation);
         addLexemeTokenAction("fragment_program", ID_FRAGMENT_PROGRAM, &MaterialScriptCompiler::parseGPUProgram);
 
-            addLexemeAction("source", &MaterialScriptCompiler::parseProgramSource);
-            addLexemeAction("syntax", &MaterialScriptCompiler::parseProgramSyntax);
-            addLexemeAction("default_params", &MaterialScriptCompiler::parseDefaultParams);
-            addLexemeAction("param_indexed", &MaterialScriptCompiler::parseParamIndexed);
-            addLexemeAction("param_indexed_auto", &MaterialScriptCompiler::parseParamIndexedAuto);
-            addLexemeAction("param_named", &MaterialScriptCompiler::parseParamNamed);
-            addLexemeAction("param_named_auto", &MaterialScriptCompiler::parseParamNamedAuto);
-            addLexemeAction("custom_parameter", &MaterialScriptCompiler::parseProgramCustomParameter);
+            addLexemeTokenAction("source", ID_SOURCE, &MaterialScriptCompiler::parseProgramSource);
+            addLexemeTokenAction("syntax", ID_SYNTAX, &MaterialScriptCompiler::parseProgramSyntax);
+            addLexemeTokenAction("default_params", ID_DEFAULT_PARAMS, &MaterialScriptCompiler::parseDefaultParams);
+            addLexemeTokenAction("param_indexed", ID_PARAM_INDEXED, &MaterialScriptCompiler::parseParamIndexed);
+            addLexemeTokenAction("param_indexed_auto", ID_PARAM_INDEXED_AUTO, &MaterialScriptCompiler::parseParamIndexedAuto);
+            addLexemeTokenAction("param_named", ID_PARAM_NAMED, &MaterialScriptCompiler::parseParamNamed);
+            addLexemeTokenAction("param_named_auto", ID_PARAM_NAMED_AUTO, &MaterialScriptCompiler::parseParamNamedAuto);
+            addLexemeTokenAction("custom_parameter", ID_CUSTOM_PARAMETER, &MaterialScriptCompiler::parseProgramCustomParameter);
 
-        addLexemeAction("material", &MaterialScriptCompiler::parseMaterial);
-            addLexemeToken(":", ID_CLONE);
-            addLexemeAction("lod_distances", &MaterialScriptCompiler::parseLodDistances);
-            addLexemeAction("receive_shadows", &MaterialScriptCompiler::parseReceiveShadows);
-            addLexemeAction("transparency_casts_shadows", &MaterialScriptCompiler::parseTransparencyCastsShadows);
-            addLexemeAction("set_texture_alias", &MaterialScriptCompiler::parseSetTextureAlias);
+        addLexemeTokenAction("material", ID_MATERIAL, &MaterialScriptCompiler::parseMaterial);
+            addLexemeTokenAction(":", ID_CLONE);
+            addLexemeTokenAction("lod_distances", ID_LOD_DISTANCES, &MaterialScriptCompiler::parseLodDistances);
+            addLexemeTokenAction("receive_shadows", ID_RECEIVE_SHADOWS, &MaterialScriptCompiler::parseReceiveShadows);
+            addLexemeTokenAction("transparency_casts_shadows", ID_TRANSPARENCY_CASTS_SHADOWS, &MaterialScriptCompiler::parseTransparencyCastsShadows);
+            addLexemeTokenAction("set_texture_alias", ID_SET_TEXTURE_ALIAS, &MaterialScriptCompiler::parseSetTextureAlias);
 
         // Technique section
-        addLexemeAction("technique", &MaterialScriptCompiler::parseTechnique);
-            addLexemeAction("scheme", &MaterialScriptCompiler::parseScheme);
-            addLexemeAction("lod_index", &MaterialScriptCompiler::parseLodIndex);
+        addLexemeTokenAction("technique", ID_TECHNIQUE, &MaterialScriptCompiler::parseTechnique);
+            addLexemeTokenAction("scheme", ID_SCHEME, &MaterialScriptCompiler::parseScheme);
+            addLexemeTokenAction("lod_index", ID_LOD_INDEX, &MaterialScriptCompiler::parseLodIndex);
 
 
         // Pass section
-        addLexemeAction("pass", &MaterialScriptCompiler::parsePass);
-            addLexemeAction("ambient", &MaterialScriptCompiler::parseAmbient);
-            addLexemeAction("diffuse", &MaterialScriptCompiler::parseDiffuse);
-            addLexemeAction("specular", &MaterialScriptCompiler::parseSpecular);
-            addLexemeAction("emissive", &MaterialScriptCompiler::parseEmissive);
-            addLexemeToken("vertexcolour", ID_VERTEXCOLOUR);
+        addLexemeTokenAction("pass", ID_PASS, &MaterialScriptCompiler::parsePass);
+            addLexemeTokenAction("ambient", ID_AMBIENT, &MaterialScriptCompiler::parseAmbient);
+            addLexemeTokenAction("diffuse", ID_DIFFUSE, &MaterialScriptCompiler::parseDiffuse);
+            addLexemeTokenAction("specular", ID_SPECULAR, &MaterialScriptCompiler::parseSpecular);
+            addLexemeTokenAction("emissive", ID_EMISSIVE, &MaterialScriptCompiler::parseEmissive);
+            addLexemeTokenAction("vertexcolour", ID_VERTEXCOLOUR);
 
-            addLexemeAction("scene_blend", &MaterialScriptCompiler::parseSceneBlend);
-                addLexemeToken("colour_blend", ID_COLOUR_BLEND);
-                addLexemeToken("dest_colour", ID_DEST_COLOUR);
-                addLexemeToken("src_colour", ID_SRC_COLOUR);
-                addLexemeToken("one_minus_dest_colour", ID_ONE_MINUS_DEST_COLOUR);
-                addLexemeToken("one_minus_src_colour", ID_ONE_MINUS_SRC_COLOUR);
-                addLexemeToken("dest_alpha", ID_DEST_ALPHA);
-                addLexemeToken("src_alpha", ID_SRC_ALPHA);
-                addLexemeToken("one_minus_dest_alpha", ID_ONE_MINUS_DEST_ALPHA);
-                addLexemeToken("one_minus_src_alpha", ID_ONE_MINUS_SRC_ALPHA);
+            addLexemeTokenAction("scene_blend", ID_SCENE_BLEND, &MaterialScriptCompiler::parseSceneBlend);
+                addLexemeTokenAction("colour_blend", ID_COLOUR_BLEND);
+                addLexemeTokenAction("dest_colour", ID_DEST_COLOUR);
+                addLexemeTokenAction("src_colour", ID_SRC_COLOUR);
+                addLexemeTokenAction("one_minus_dest_colour", ID_ONE_MINUS_DEST_COLOUR);
+                addLexemeTokenAction("one_minus_src_colour", ID_ONE_MINUS_SRC_COLOUR);
+                addLexemeTokenAction("dest_alpha", ID_DEST_ALPHA);
+                addLexemeTokenAction("src_alpha", ID_SRC_ALPHA);
+                addLexemeTokenAction("one_minus_dest_alpha", ID_ONE_MINUS_DEST_ALPHA);
+                addLexemeTokenAction("one_minus_src_alpha", ID_ONE_MINUS_SRC_ALPHA);
 
-            addLexemeAction("depth_check", &MaterialScriptCompiler::parseDepthCheck);
-            addLexemeAction("depth_write", &MaterialScriptCompiler::parseDepthWrite);
-            addLexemeAction("depth_func", &MaterialScriptCompiler::parseDepthFunc);
-            addLexemeAction("depth_bias", &MaterialScriptCompiler::parseDepthBias);
-                addLexemeToken("always_fail", ID_ALWAYS_FAIL);
-                addLexemeToken("always_pass", ID_ALWAYS_PASS);
-                addLexemeToken("less_equal", ID_LESS_EQUAL);
-                addLexemeToken("less", ID_LESS);
-                addLexemeToken("equal", ID_EQUAL);
-                addLexemeToken("not_equal", ID_NOT_EQUAL);
-                addLexemeToken("greater_equal", ID_GREATER_EQUAL);
-                addLexemeToken("greater", ID_GREATER);
-            addLexemeAction("alpha_rejection", &MaterialScriptCompiler::parseAlphaRejection);
-            addLexemeAction("cull_hardware", &MaterialScriptCompiler::parseCullHardware);
-                addLexemeToken("clockwise", ID_CLOCKWISE);
-                addLexemeToken("anticlockwise", ID_ANTICLOCKWISE);
-            addLexemeAction("cull_software", &MaterialScriptCompiler::parseCullSoftware);
-                addLexemeToken("back", ID_CULL_BACK);
-                addLexemeToken("front", ID_CULL_FRONT);
-            addLexemeAction("lighting", &MaterialScriptCompiler::parseLighting);
-            addLexemeAction("shading", &MaterialScriptCompiler::parseShading);
+            addLexemeTokenAction("depth_check", ID_DEPTH_CHECK, &MaterialScriptCompiler::parseDepthCheck);
+            addLexemeTokenAction("depth_write", ID_DEPTH_WRITE, &MaterialScriptCompiler::parseDepthWrite);
+            addLexemeTokenAction("depth_func", ID_DEPTH_FUNC, &MaterialScriptCompiler::parseDepthFunc);
+            addLexemeTokenAction("depth_bias", ID_DEPTH_BIAS, &MaterialScriptCompiler::parseDepthBias);
+                addLexemeTokenAction("always_fail", ID_ALWAYS_FAIL);
+                addLexemeTokenAction("always_pass", ID_ALWAYS_PASS);
+                addLexemeTokenAction("less_equal", ID_LESS_EQUAL);
+                addLexemeTokenAction("less", ID_LESS);
+                addLexemeTokenAction("equal", ID_EQUAL);
+                addLexemeTokenAction("not_equal", ID_NOT_EQUAL);
+                addLexemeTokenAction("greater_equal", ID_GREATER_EQUAL);
+                addLexemeTokenAction("greater", ID_GREATER);
+            addLexemeTokenAction("alpha_rejection", ID_ALPHA_REJECTION, &MaterialScriptCompiler::parseAlphaRejection);
+            addLexemeTokenAction("cull_hardware", ID_CULL_HARDWARE, &MaterialScriptCompiler::parseCullHardware);
+                addLexemeTokenAction("clockwise", ID_CLOCKWISE);
+                addLexemeTokenAction("anticlockwise", ID_ANTICLOCKWISE);
+            addLexemeTokenAction("cull_software", ID_CULL_SOFTWARE, &MaterialScriptCompiler::parseCullSoftware);
+                addLexemeTokenAction("back", ID_CULL_BACK);
+                addLexemeTokenAction("front", ID_CULL_FRONT);
+            addLexemeTokenAction("lighting", ID_LIGHTING, &MaterialScriptCompiler::parseLighting);
+            addLexemeTokenAction("shading", ID_SHADING, &MaterialScriptCompiler::parseShading);
                 addLexemeTokenAction("flat", ID_FLAT);
-                addLexemeToken("gouraud", ID_GOURAUD);
-                addLexemeToken("phong", ID_PHONG);
-            addLexemeAction("polygon_mode", &MaterialScriptCompiler::parsePolygonMode);
+                addLexemeTokenAction("gouraud", ID_GOURAUD);
+                addLexemeTokenAction("phong", ID_PHONG);
+            addLexemeTokenAction("polygon_mode", ID_POLYGON_MODE, &MaterialScriptCompiler::parsePolygonMode);
                 addLexemeTokenAction("solid", ID_SOLID);
-                addLexemeToken("wireframe", ID_WIREFRAME);
-                addLexemeToken("points", ID_POINTS);
-            addLexemeAction("fog_override", &MaterialScriptCompiler::parseFogOverride);
-                addLexemeToken("exp", ID_EXP);
-                addLexemeToken("exp2", ID_EXP2);
-            addLexemeAction("colour_write", &MaterialScriptCompiler::parseColourWrite);
-            addLexemeAction("max_lights", &MaterialScriptCompiler::parseMaxLights);
-            addLexemeAction("iteration", &MaterialScriptCompiler::parseIteration);
-                addLexemeToken("once", ID_ONCE);
-                addLexemeToken("once_per_light", ID_ONCE_PER_LIGHT);
-                addLexemeToken("per_light", ID_PER_LIGHT);
-                addLexemeToken("directional", ID_DIRECTIONAL);
-                addLexemeToken("spot", ID_SPOT);
-            addLexemeAction("point_size", &MaterialScriptCompiler::parsePointSize);
-            addLexemeAction("point_sprites", &MaterialScriptCompiler::parsePointSprites);
-            addLexemeAction("point_size_attenuation",  &MaterialScriptCompiler::parsePointSizeAttenuation);
-            addLexemeAction("point_size_min", &MaterialScriptCompiler::parsePointSizeMin);
-            addLexemeAction("point_size_max", &MaterialScriptCompiler::parsePointSizeMax);
+                addLexemeTokenAction("wireframe", ID_WIREFRAME);
+                addLexemeTokenAction("points", ID_POINTS);
+            addLexemeTokenAction("fog_override", ID_FOG_OVERRIDE, &MaterialScriptCompiler::parseFogOverride);
+                addLexemeTokenAction("exp", ID_EXP);
+                addLexemeTokenAction("exp2", ID_EXP2);
+            addLexemeTokenAction("colour_write", ID_COLOUR_WRITE, &MaterialScriptCompiler::parseColourWrite);
+            addLexemeTokenAction("max_lights", ID_MAX_LIGHTS, &MaterialScriptCompiler::parseMaxLights);
+            addLexemeTokenAction("iteration", ID_ITERATION, &MaterialScriptCompiler::parseIteration);
+                addLexemeTokenAction("once", ID_ONCE);
+                addLexemeTokenAction("once_per_light", ID_ONCE_PER_LIGHT);
+                addLexemeTokenAction("per_light", ID_PER_LIGHT);
+                addLexemeTokenAction("directional", ID_DIRECTIONAL);
+                addLexemeTokenAction("spot", ID_SPOT);
+            addLexemeTokenAction("point_size", ID_POINT_SIZE, &MaterialScriptCompiler::parsePointSize);
+            addLexemeTokenAction("point_sprites", ID_POINT_SPRITES, &MaterialScriptCompiler::parsePointSprites);
+            addLexemeTokenAction("point_size_attenuation", ID_POINT_SIZE_ATTENUATION, &MaterialScriptCompiler::parsePointSizeAttenuation);
+            addLexemeTokenAction("point_size_min", ID_POINT_SIZE_MIN, &MaterialScriptCompiler::parsePointSizeMin);
+            addLexemeTokenAction("point_size_max", ID_POINT_SIZE_MAX, &MaterialScriptCompiler::parsePointSizeMax);
 
         // Texture Unit section
-        addLexemeAction("texture_unit", &MaterialScriptCompiler::parseTextureUnit);
-        addLexemeAction("texture_alias", &MaterialScriptCompiler::parseTextureAlias);
-        addLexemeAction("texture", &MaterialScriptCompiler::parseTexture);
-            addLexemeToken("1d", ID_1D);
-            addLexemeToken("2d", ID_2D);
-            addLexemeToken("3d", ID_3D);
-            addLexemeToken("cubic", ID_CUBIC);
-            addLexemeToken("unlimited", ID_UNLIMITED);
-            addLexemeToken("alpha", ID_ALPHA);
-        addLexemeAction("anim_texture", &MaterialScriptCompiler::parseAnimTexture);
-        addLexemeAction("cubic_texture", &MaterialScriptCompiler::parseCubicTexture);
-            addLexemeToken("separateuv", ID_SEPARATE_UV);
-            addLexemeToken("combineduvw", ID_COMBINED_UVW);
-        addLexemeAction("tex_coord_set", &MaterialScriptCompiler::parseTexCoord);
-        addLexemeAction("tex_address_mode", &MaterialScriptCompiler::parseTexAddressMode);
-            addLexemeToken("wrap", ID_WRAP);
-            addLexemeToken("clamp", ID_CLAMP);
-            addLexemeToken("mirror", ID_MIRROR);
-            addLexemeToken("border", ID_BORDER);
-        addLexemeAction("tex_border_colour", &MaterialScriptCompiler::parseTexBorderColour);
-        addLexemeAction("filtering", &MaterialScriptCompiler::parseFiltering);
-            addLexemeToken("bilinear", ID_BILINEAR);
-            addLexemeToken("trilinear", ID_TRILINEAR);
-            addLexemeToken("anisotropic", ID_ANISOTROPIC);
-        addLexemeAction("max_anisotropy", &MaterialScriptCompiler::parseMaxAnisotropy);
-        addLexemeAction("mipmap_bias", &MaterialScriptCompiler::parseMipMapBias);
-        addLexemeAction("colour_op", &MaterialScriptCompiler::parseColourOp);
-            addLexemeToken("replace", ID_REPLACE);
-        addLexemeAction("colour_op_ex", &MaterialScriptCompiler::parseColourOpEx);
-            addLexemeToken("source1", ID_SOURCE1);
-            addLexemeToken("source2", ID_SOURCE2);
-            addLexemeToken("modulate_x2", ID_MODULATE_X2);
-            addLexemeToken("modulate_x4", ID_MODULATE_X4);
-            addLexemeToken("add_signed", ID_ADD_SIGNED);
-            addLexemeToken("add_smooth", ID_ADD_SMOOTH);
-            addLexemeToken("subtract", ID_SUBTRACT);
-            addLexemeToken("blend_diffuse_colour", ID_BLEND_DIFFUSE_COLOUR);
-            addLexemeToken("blend_diffuse_alpha", ID_BLEND_DIFFUSE_ALPHA);
-            addLexemeToken("blend_manual", ID_BLEND_MANUAL);
-            addLexemeToken("dotproduct", ID_DOTPRODUCT);
-            addLexemeToken("src_current", ID_SRC_CURRENT);
-            addLexemeToken("src_texture", ID_SRC_TEXTURE);
-            addLexemeToken("src_diffuse", ID_SRC_DIFFUSE);
-            addLexemeToken("src_specular", ID_SRC_SPECULAR);
-            addLexemeToken("src_manual", ID_SRC_MANUAL);
-        addLexemeAction("colour_op_multipass_fallback", &MaterialScriptCompiler::parseColourOpMultipassFallback);
-        addLexemeAction("alpha_op_ex", &MaterialScriptCompiler::parseAlphaOpEx);
-        addLexemeAction("env_map", &MaterialScriptCompiler::parseEnvMap);
-            addLexemeToken("spherical", ID_SPHERICAL);
-            addLexemeToken("planar", ID_PLANAR);
-            addLexemeToken("cubic_reflection", ID_CUBIC_REFLECTION);
-            addLexemeToken("cubic_normal", ID_CUBIC_NORMAL);
-        addLexemeAction("scroll", &MaterialScriptCompiler::parseScroll);
-        addLexemeAction("scroll_anim", &MaterialScriptCompiler::parseScrollAnim);
+        addLexemeTokenAction("texture_unit", ID_TEXTURE_UNIT, &MaterialScriptCompiler::parseTextureUnit);
+        addLexemeTokenAction("texture_alias", ID_TEXTURE_ALIAS, &MaterialScriptCompiler::parseTextureAlias);
+        addLexemeTokenAction("texture", ID_TEXTURE, &MaterialScriptCompiler::parseTexture);
+            addLexemeTokenAction("1d", ID_1D);
+            addLexemeTokenAction("2d", ID_2D);
+            addLexemeTokenAction("3d", ID_3D);
+            addLexemeTokenAction("cubic", ID_CUBIC);
+            addLexemeTokenAction("unlimited", ID_UNLIMITED);
+            addLexemeTokenAction("alpha", ID_ALPHA);
+        addLexemeTokenAction("anim_texture", ID_ANIM_TEXTURE, &MaterialScriptCompiler::parseAnimTexture);
+        addLexemeTokenAction("cubic_texture", ID_CUBIC_TEXTURE, &MaterialScriptCompiler::parseCubicTexture);
+            addLexemeTokenAction("separateuv", ID_SEPARATE_UV);
+            addLexemeTokenAction("combineduvw", ID_COMBINED_UVW);
+        addLexemeTokenAction("tex_coord_set", ID_TEX_COORD_SET, &MaterialScriptCompiler::parseTexCoord);
+        addLexemeTokenAction("tex_address_mode", ID_TEX_ADDRESS_MODE, &MaterialScriptCompiler::parseTexAddressMode);
+            addLexemeTokenAction("wrap", ID_WRAP);
+            addLexemeTokenAction("clamp", ID_CLAMP);
+            addLexemeTokenAction("mirror", ID_MIRROR);
+            addLexemeTokenAction("border", ID_BORDER);
+        addLexemeTokenAction("tex_border_colour", ID_TEX_BORDER_COLOUR, &MaterialScriptCompiler::parseTexBorderColour);
+        addLexemeTokenAction("filtering", ID_FILTERING, &MaterialScriptCompiler::parseFiltering);
+            addLexemeTokenAction("bilinear", ID_BILINEAR);
+            addLexemeTokenAction("trilinear", ID_TRILINEAR);
+            addLexemeTokenAction("anisotropic", ID_ANISOTROPIC);
+        addLexemeTokenAction("max_anisotropy", ID_MAX_ANISOTROPY, &MaterialScriptCompiler::parseMaxAnisotropy);
+        addLexemeTokenAction("colour_op", ID_COLOUR_OP, &MaterialScriptCompiler::parseColourOp);
+            addLexemeTokenAction("replace", ID_REPLACE);
+        addLexemeTokenAction("colour_op_ex", ID_COLOUR_OP_EX, &MaterialScriptCompiler::parseColourOpEx);
+            addLexemeTokenAction("source1", ID_SOURCE1);
+            addLexemeTokenAction("source2", ID_SOURCE2);
+            addLexemeTokenAction("modulate_x2", ID_MODULATE_X2);
+            addLexemeTokenAction("modulate_x4", ID_MODULATE_X4);
+            addLexemeTokenAction("add_signed", ID_ADD_SIGNED);
+            addLexemeTokenAction("add_smooth", ID_ADD_SMOOTH);
+            addLexemeTokenAction("subtract", ID_SUBTRACT);
+            addLexemeTokenAction("blend_diffuse_colour", ID_BLEND_DIFFUSE_COLOUR);
+            addLexemeTokenAction("blend_diffuse_alpha", ID_BLEND_DIFFUSE_ALPHA);
+            addLexemeTokenAction("blend_manual", ID_BLEND_MANUAL);
+            addLexemeTokenAction("dotproduct", ID_DOTPRODUCT);
+            addLexemeTokenAction("src_current", ID_SRC_CURRENT);
+            addLexemeTokenAction("src_texture", ID_SRC_TEXTURE);
+            addLexemeTokenAction("src_diffuse", ID_SRC_DIFFUSE);
+            addLexemeTokenAction("src_specular", ID_SRC_SPECULAR);
+            addLexemeTokenAction("src_manual", ID_SRC_MANUAL);
+        addLexemeTokenAction("colour_op_multipass_fallback", ID_COLOUR_OP_MULTIPASS_FALLBACK,
+            &MaterialScriptCompiler::parseColourOpMultipassFallback);
+        addLexemeTokenAction("alpha_op_ex", ID_ALPHA_OP_EX, &MaterialScriptCompiler::parseAlphaOpEx);
+        addLexemeTokenAction("env_map", ID_ENV_MAP, &MaterialScriptCompiler::parseEnvMap);
+            addLexemeTokenAction("spherical", ID_SPHERICAL);
+            addLexemeTokenAction("planar", ID_PLANAR);
+            addLexemeTokenAction("cubic_reflection", ID_CUBIC_REFLECTION);
+            addLexemeTokenAction("cubic_normal", ID_CUBIC_NORMAL);
+        addLexemeTokenAction("scroll", ID_SCROLL, &MaterialScriptCompiler::parseScroll);
+        addLexemeTokenAction("scroll_anim", ID_SCROLL_ANIM, &MaterialScriptCompiler::parseScrollAnim);
         addLexemeTokenAction("rotate", ID_ROTATE, &MaterialScriptCompiler::parseRotate);
-        addLexemeAction("rotate_anim", &MaterialScriptCompiler::parseRotateAnim);
-        addLexemeAction("scale", &MaterialScriptCompiler::parseScale);
-        addLexemeAction("wave_xform", &MaterialScriptCompiler::parseWaveXform);
-            addLexemeToken("scroll_x", ID_SCROLL_X);
-            addLexemeToken("scroll_y", ID_SCROLL_Y);
-            addLexemeToken("scale_x", ID_SCALE_X);
-            addLexemeToken("scale_y", ID_SCALE_Y);
-            addLexemeToken("sine", ID_SINE);
-            addLexemeToken("triangle", ID_TRIANGLE);
-            addLexemeToken("square", ID_SQUARE);
-            addLexemeToken("sawtooth", ID_SAWTOOTH);
-            addLexemeToken("inverse_sawtooth", ID_INVERSE_SAWTOOTH);
-        addLexemeAction("transform", &MaterialScriptCompiler::parseTransform);
-        addLexemeAction("binding_type", &MaterialScriptCompiler::parseBindingType);
+        addLexemeTokenAction("rotate_anim", ID_ROTATE_ANIM, &MaterialScriptCompiler::parseRotateAnim);
+        addLexemeTokenAction("scale", ID_SCALE, &MaterialScriptCompiler::parseScale);
+        addLexemeTokenAction("wave_xform", ID_WAVE_XFORM, &MaterialScriptCompiler::parseWaveXform);
+            addLexemeTokenAction("scroll_x", ID_SCROLL_X);
+            addLexemeTokenAction("scroll_y", ID_SCROLL_Y);
+            addLexemeTokenAction("scale_x", ID_SCALE_X);
+            addLexemeTokenAction("scale_y", ID_SCALE_Y);
+            addLexemeTokenAction("sine", ID_SINE);
+            addLexemeTokenAction("triangle", ID_TRIANGLE);
+            addLexemeTokenAction("square", ID_SQUARE);
+            addLexemeTokenAction("sawtooth", ID_SAWTOOTH);
+            addLexemeTokenAction("inverse_sawtooth", ID_INVERSE_SAWTOOTH);
+        addLexemeTokenAction("transform", ID_TRANSFORM, &MaterialScriptCompiler::parseTransform);
         // GPU program reference
-        addLexemeAction("vertex_program_ref", &MaterialScriptCompiler::parseVertexProgramRef);
-        addLexemeAction("fragment_program_ref", &MaterialScriptCompiler::parseFragmentProgramRef);
-        addLexemeAction("shadow_caster_vertex_program_ref", &MaterialScriptCompiler::parseShadowCasterVertexProgramRef);
-        addLexemeAction("shadow_receiver_vertex_program_ref", &MaterialScriptCompiler::parseShadowReceiverVertexProgramRef);
-        addLexemeAction("shadow_receiver_fragment_program_ref", &MaterialScriptCompiler::parseShadowReceiverFragmentProgramRef);
+        addLexemeTokenAction("vertex_program_ref", ID_VERTEX_PROGRAM_REF,
+            &MaterialScriptCompiler::parseVertexProgramRef);
+        addLexemeTokenAction("fragment_program_ref", ID_FRAGMENT_PROGRAM_REF,
+            &MaterialScriptCompiler::parseFragmentProgramRef);
+        addLexemeTokenAction("shadow_caster_vertex_program_ref", ID_SHADOW_CASTER_VERTEX_PROGRAM_REF,
+            &MaterialScriptCompiler::parseShadowCasterVertexProgramRef);
+        addLexemeTokenAction("shadow_receiver_vertex_program_ref", ID_SHADOW_RECEIVER_VERTEX_PROGRAM_REF,
+            &MaterialScriptCompiler::parseShadowReceiverVertexProgramRef);
+        addLexemeTokenAction("shadow_receiver_fragment_program_ref", ID_SHADOW_RECEIVER_FRAGMENT_PROGRAM_REF,
+            &MaterialScriptCompiler::parseShadowReceiverFragmentProgramRef);
 
         // common section
-        addLexemeToken("on", ID_ON);
-        addLexemeToken("off", ID_OFF);
-        addLexemeToken("true", ID_TRUE);
-        addLexemeToken("false", ID_FALSE);
-        addLexemeToken("none", ID_NONE);
-        addLexemeToken("point", ID_POINT);
-        addLexemeToken("linear", ID_LINEAR);
-        addLexemeToken("add", ID_ADD);
-        addLexemeToken("modulate", ID_MODULATE);
-        addLexemeToken("alpha_blend", ID_ALPHA_BLEND);
-        addLexemeToken("one", ID_ONE);
-        addLexemeToken("zero", ID_ZERO);
-        addLexemeToken("vertex", ID_VERTEX);
-        addLexemeToken("fragment", ID_FRAGMENT);
+        addLexemeTokenAction("on", ID_ON);
+        addLexemeTokenAction("off", ID_OFF);
+        addLexemeTokenAction("true", ID_TRUE);
+        addLexemeTokenAction("false", ID_FALSE);
+        addLexemeTokenAction("none", ID_NONE);
+        addLexemeTokenAction("point", ID_POINT);
+        addLexemeTokenAction("linear", ID_LINEAR);
+        addLexemeTokenAction("add", ID_ADD);
+        addLexemeTokenAction("modulate", ID_MODULATE);
+        addLexemeTokenAction("alpha_blend", ID_ALPHA_BLEND);
+        addLexemeTokenAction("one", ID_ONE);
+        addLexemeTokenAction("zero", ID_ZERO);
 
 
     }
@@ -458,9 +450,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void MaterialScriptCompiler::addLexemeTokenAction(const String& lexeme, const size_t token, const MSC_Action action)
     {
-        size_t newTokenID = addLexemeToken(lexeme, token, action != 0);
-        if (action)
-            mTokenActionMap[newTokenID] = action;
+        addLexemeToken(lexeme, token, action != 0);
+        mTokenActionMap[token] = action;
     }
 
     //-----------------------------------------------------------------------
@@ -612,7 +603,6 @@ namespace Ogre {
         mScriptContext.programDef->supportsSkeletalAnimation = false;
 		mScriptContext.programDef->supportsMorphAnimation = false;
 		mScriptContext.programDef->supportsPoseAnimation = 0;
-        mScriptContext.programDef->usesVertexTextureFetch = false;
 
 		// Get name and language code
 		// Name, preserve case
@@ -655,12 +645,6 @@ namespace Ogre {
 	{
         assert(mScriptContext.programDef);
 		mScriptContext.programDef->supportsPoseAnimation = static_cast<ushort>(getNextTokenValue());
-	}
-	//-----------------------------------------------------------------------
-	void MaterialScriptCompiler::parseProgramVertexTextureFetch(void)
-	{
-        assert(mScriptContext.programDef);
-		mScriptContext.programDef->usesVertexTextureFetch = testNextTokenID(ID_TRUE);
 	}
     //-----------------------------------------------------------------------
     void MaterialScriptCompiler::parseProgramCustomParameter(void)
@@ -1692,12 +1676,6 @@ namespace Ogre {
             static_cast<unsigned int>(getNextTokenValue()));
     }
     //-----------------------------------------------------------------------
-    void MaterialScriptCompiler::parseMipMapBias(void)
-    {
-        assert(mScriptContext.textureUnit);
-        mScriptContext.textureUnit->setTextureMipmapBias(getNextTokenValue());
-    }
-    //-----------------------------------------------------------------------
     void MaterialScriptCompiler::parseColourOp(void)
     {
         assert(mScriptContext.textureUnit);
@@ -2006,20 +1984,6 @@ namespace Ogre {
 
 		mScriptContext.textureUnit->setTextureTransform(xform);
 	}
-	//-----------------------------------------------------------------------
-	void MaterialScriptCompiler::parseBindingType(void)
-	{
-        assert(mScriptContext.textureUnit);
-        switch (getNextTokenID())
-        {
-        case ID_VERTEX:
-            mScriptContext.textureUnit->setBindingType(TextureUnitState::BT_VERTEX);
-            break;
-        case ID_FRAGMENT:
-            mScriptContext.textureUnit->setBindingType(TextureUnitState::BT_FRAGMENT);
-            break;
-        }
-    }
     //-----------------------------------------------------------------------
     void MaterialScriptCompiler::parseVertexProgramRef(void)
     {
@@ -2425,19 +2389,19 @@ namespace Ogre {
     void MaterialScriptCompiler::processAutoProgramParam(const size_t index, const String& commandname, const String& paramName)
     {
 
-        String autoConstantName(getNextTokenLabel());
+        String constantName(getNextTokenLabel());
         // make sure param is in lower case
-        StringUtil::toLowerCase(autoConstantName);
+        StringUtil::toLowerCase(constantName);
 
         // lookup the param to see if its a valid auto constant
         const GpuProgramParameters::AutoConstantDefinition* autoConstantDef =
-            mScriptContext.programParams->getAutoConstantDefinition(autoConstantName);
+            mScriptContext.programParams->getAutoConstantDefinition(constantName);
 
         // exit with error msg if the auto constant definition wasn't found
         if (!autoConstantDef)
 		{
 			logParseError("Invalid " + commandname + " attribute - "
-				+ autoConstantName);
+				+ constantName);
 			return;
 		}
 
@@ -2585,6 +2549,11 @@ namespace Ogre {
             return;
         }
 
+        // TEST
+        /*
+        LogManager::getSingleton().logMessage("SETTING PARAMETER " + vecparams[0] + " as index " +
+            StringConverter::toString(index));
+        */
         processManualProgramParam(index, "param_named", paramName);
 
     }
@@ -2690,9 +2659,6 @@ namespace Ogre {
 		gp->setMorphAnimationIncluded(def->supportsMorphAnimation);
 		// Set pose animation option
 		gp->setPoseAnimationIncluded(def->supportsPoseAnimation);
-        // Set vertex texture usage 
-        gp->setVertexTextureFetchRequired(def->usesVertexTextureFetch); 
-
 		// set origin
 		gp->_notifyOrigin(mSourceName);
 
@@ -2705,7 +2671,8 @@ namespace Ogre {
             mScriptContext.program = gp;
             size_t i, iend;
             iend = mScriptContext.pendingDefaultParams.size();
-            for (i = 0; i < iend; ++i)
+            for (i = 0;
+                i < iend; ++i)
             {
                 // invoke the action for the pending default param in the token que
                 setPass2TokenQuePosition(mScriptContext.pendingDefaultParams[i], true);

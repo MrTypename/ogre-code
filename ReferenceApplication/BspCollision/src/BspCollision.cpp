@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -61,7 +61,7 @@ public:
         // Call superclass
         bool ret = ExampleRefAppFrameListener::frameEnded(evt);        
 
-		if (mKeyboard->isKeyDown(OIS::KC_SPACE) && timeUntilNextToggle <= 0)
+        if (mInputDevice->isKeyDown(KC_SPACE) && timeUntilNextToggle <= 0)
         {
             timeUntilNextToggle = 2;
             ball->setPosition(mCamera->getPosition() + 
@@ -80,7 +80,12 @@ public:
             targetNode->setPosition(rsq->getRay().getPoint(res.distance));
 
         }
+
+
+
+
         return ret;
+
     }
 };
 
@@ -188,6 +193,8 @@ protected:
         rsq = mSceneMgr->createRayQuery(Ray());
         rsq->setSortByDistance(true, 1);
         rsq->setWorldFragmentType(SceneQuery::WFT_SINGLE_INTERSECTION);
+
+        mWindow->setDebugText("Press SPACE to throw the ball");
     }
     // Create new frame listener
     void createFrameListener(void)

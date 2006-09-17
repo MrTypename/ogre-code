@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -62,7 +58,7 @@ namespace Ogre {
 		StringUtil::StrStreamType msg;
 
         msg << "Creating viewport on target '" << target->getName() << "'"
-			<< ", rendering from camera '" << cam->getName() << "'"
+			<< ", rendering from camera '" << (cam != 0 ? cam->getName() : "NULL") << "'"
 			<< ", relative dimensions "	<< std::fixed << std::setprecision(2) 
 			<< "L: " << left << " T: " << top << " W: " << width << " H: " << height
 			<< " ZOrder: " << ZOrder;
@@ -72,7 +68,7 @@ namespace Ogre {
         _updateDimensions();
 
         // notify camera
-        cam->_notifyViewport(this);
+        if(cam) cam->_notifyViewport(this);
     }
     //---------------------------------------------------------------------
     Viewport::~Viewport()
@@ -106,14 +102,14 @@ namespace Ogre {
         // This allows cameras to be used to render to many viewports,
         // which can have their own dimensions and aspect ratios.
 
-        if (mCamera->getAutoAspectRatio()) 
+        if (mCamera && mCamera->getAutoAspectRatio()) 
         {
             mCamera->setAspectRatio((Real) mActWidth / (Real) mActHeight);
         }
 
 		StringUtil::StrStreamType msg;
 
-        msg << "Viewport for camera '" << mCamera->getName() << "'"
+		msg << "Viewport for camera '" << (mCamera != 0 ? mCamera->getName() : "NULL") << "'"
 			<< ", actual dimensions "	<< std::fixed << std::setprecision(2) 
 			<< "L: " << mActLeft << " T: " << mActTop << " W: " << mActWidth << " H: " << mActHeight;
 
@@ -232,13 +228,13 @@ namespace Ogre {
     //---------------------------------------------------------------------
     unsigned int Viewport::_getNumRenderedFaces(void) const
     {
-        return mCamera->_getNumRenderedFaces();
+		return mCamera ? mCamera->_getNumRenderedFaces() : 0;
     }
     //---------------------------------------------------------------------
     void Viewport::setCamera(Camera* cam)
     {
         mCamera = cam;
-
+		if(cam) mCamera->_notifyViewport(this);
     }
     //---------------------------------------------------------------------
     void Viewport::setOverlaysEnabled(bool enabled)

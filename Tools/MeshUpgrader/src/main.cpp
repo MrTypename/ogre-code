@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -53,8 +49,6 @@ void help(void)
 	cout << "-f lodnumtris  = Fixed vertex reduction per LOD" << endl;
     cout << "-e         = DON'T generate edge lists (for stencil shadows)" << endl;
     cout << "-t         = Generate tangents (for normal mapping)" << endl;
-	cout << "-td [uvw|tangent]" << endl;
-	cout << "           = Tangent vertex semantic destination (default tangent)" << endl;
 	cout << "-r         = DON'T reorganise buffers to recommended format" << endl;
 	cout << "-d3d       = Convert to D3D colour formats" << endl;
 	cout << "-gl        = Convert to GL colour formats" << endl;
@@ -73,7 +67,6 @@ struct UpgradeOptions
 	bool interactive;
 	bool suppressEdgeLists;
 	bool generateTangents;
-	VertexElementSemantic tangentSemantic;
 	bool dontReorganise;
 	bool destColourFormatSet;
 	VertexElementType destColourFormat;
@@ -108,7 +101,6 @@ void parseOpts(UnaryOptionList& unOpts, BinaryOptionList& binOpts)
 	opts.interactive = false;
 	opts.suppressEdgeLists = false;
 	opts.generateTangents = false;
-	opts.tangentSemantic = VES_TANGENT;
 	opts.dontReorganise = false;
 	opts.endian = Serializer::ENDIAN_NATIVE;
 	opts.destColourFormatSet = false;
@@ -192,14 +184,7 @@ void parseOpts(UnaryOptionList& unOpts, BinaryOptionList& binOpts)
 	    else 
             opts.endian = Serializer::ENDIAN_NATIVE;
     }
-	bi = binOpts.find("-td");
-	if (!bi->second.empty())
-	{
-		if (bi->second == "uvw")
-			opts.tangentSemantic = VES_TEXTURE_COORDINATES;
-		else // if (bi->second == "tangent"), or anything else
-			opts.tangentSemantic = VES_TANGENT;
-	}
+
 }
 
 String describeSemantic(VertexElementSemantic sem)
@@ -852,7 +837,6 @@ int main(int numargs, char** args)
 	binOptList["-p"] = "";
 	binOptList["-f"] = "";
 	binOptList["-E"] = "";
-	binOptList["-td"] = "";
 
     int startIdx = findCommandLineOpts(numargs, args, unOptList, binOptList);
 	parseOpts(unOptList, binOptList);
@@ -916,12 +900,12 @@ int main(int numargs, char** args)
     if (opts.generateTangents)
     {
         unsigned short srcTex, destTex;
-        bool existing = mesh.suggestTangentVectorBuildParams(opts.tangentSemantic, srcTex, destTex);
+        bool existing = mesh.suggestTangentVectorBuildParams(srcTex, destTex);
         if (existing)
         {
 			if (opts.interactive)
 			{
-				std::cout << "\nThis mesh appears to already have a set of tangents, " <<
+				std::cout << "\nThis mesh appears to already have a set of 3D texture coordinates, " <<
 					"which would suggest tangent vectors have already been calculated. Do you really " <<
 					"want to generate new tangent vectors (may duplicate)? (y/n)";
 				while (response == "")
@@ -952,7 +936,7 @@ int main(int numargs, char** args)
         if (opts.generateTangents)
         {
             cout << "Generating tangent vectors...." << std::endl;
-            mesh.buildTangentVectors(opts.tangentSemantic, srcTex, destTex);
+            mesh.buildTangentVectors(srcTex, destTex);
         }
     }
 

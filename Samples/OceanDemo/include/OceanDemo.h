@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2006 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -19,12 +19,14 @@ LGPL like the rest of the engine.
 #include "OgreCEGUIRenderer.h"
 
 #include "OgreConfigFile.h"
+#include "OgreEventQueue.h"
+#include "OgreKeyEvent.h"
+#include "OgreEventListeners.h"
 #include "OgreStringConverter.h"
 #include "OgreException.h"
 #include "OgreFrameListener.h"
 
 #include "MaterialControls.h"
-#include <OIS/OIS.h>
 
 //---------------------------------------------------------------------------
 enum MovementType
@@ -35,7 +37,7 @@ enum MovementType
 //---------------------------------------------------------------------------
 class OceanDemo;
 
-class OceanDemo_FrameListener : public Ogre::FrameListener, public OIS::KeyListener, OIS::MouseListener
+class OceanDemo_FrameListener : public Ogre::FrameListener, public Ogre::KeyListener, Ogre::MouseMotionListener, Ogre::MouseListener
 {
 #define MINSPEED .150f
 #define MOVESPEED 30
@@ -43,6 +45,8 @@ class OceanDemo_FrameListener : public Ogre::FrameListener, public OIS::KeyListe
 
 
 protected:
+    Ogre::EventProcessor* mEventProcessor;
+    Ogre::InputReader* mInputDevice;
 	OceanDemo* mMain;
 
     Ogre::Vector3 mTranslateVector;
@@ -62,9 +66,6 @@ protected:
 	bool mLastMousePositionSet;
 	bool mSpinModel;
 	bool mSpinLight;
-
-	OIS::Mouse *mMouse;
-	OIS::Keyboard *mKeyboard;
 
     // just to stop toggles flipping too fast
     Ogre::Real mTimeUntilNextToggle ;
@@ -90,9 +91,7 @@ protected:
 	CEGUI::Window* mGuiDbg;
 	CEGUI::Window* mRoot;
 
-	std::string mDebugText;
-
-	CEGUI::MouseButton convertOISButtonToCegui(int ois_button_id);
+	CEGUI::MouseButton convertOgreButtonToCegui(int ogre_button_id);
 	void CheckMovementKeys( CEGUI::Key::Scan keycode, bool state );
 	void updateStats(void);
 
@@ -102,12 +101,19 @@ public:
 	virtual ~OceanDemo_FrameListener();
 
 
-	virtual bool mouseMoved ( const OIS::MouseEvent &arg );
-	virtual bool mousePressed ( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
-	virtual bool mouseReleased ( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
+	virtual void mouseMoved (Ogre::MouseEvent *e);
+	virtual void mouseDragged (Ogre::MouseEvent *e);
+	virtual void keyPressed (Ogre::KeyEvent *e);
+	virtual void keyReleased (Ogre::KeyEvent *e);
+	virtual void mousePressed (Ogre::MouseEvent *e);
+	virtual void mouseReleased (Ogre::MouseEvent *e);
 
-	virtual bool keyPressed ( const OIS::KeyEvent &arg );
-	virtual bool keyReleased ( const OIS::KeyEvent &arg );
+	// do-nothing events
+	virtual void keyClicked (Ogre::KeyEvent *e) {}
+	virtual void mouseClicked (Ogre::MouseEvent *e) {}
+	virtual void mouseEntered (Ogre::MouseEvent *e) {}
+	virtual void mouseExited (Ogre::MouseEvent *e) {}
+
 
 	bool frameStarted(const Ogre::FrameEvent& evt);
 	bool handleMouseMove(const CEGUI::EventArgs& e);
@@ -170,7 +176,6 @@ protected:
     /// Method which will define the source of resources (other than current folder)
     void setupResources(void);
 	void loadResources(void);
-	bool setupGUI(void);
 	void createScene(void);
 	void createFrameListener(void);
 
@@ -192,7 +197,7 @@ protected:
 
 public:
 	OceanDemo() : mRoot(0), mFrameListener(0), mGUIRenderer(NULL), mGUISystem(0),
-        mCurrentEntity(0), mCurrentMaterial(0), mMouseMovement(mv_CAMERA)
+        mCurrentEntity(0), mCurrentMaterial(0), mActivePass(0), mMouseMovement(mv_CAMERA)
     {
     }
 
