@@ -1,7 +1,7 @@
 \input texinfo   @c -*-texinfo-*-
 @c %**start of header
 @setfilename manual.info
-@settitle OGRE Manual v1.4.0 ('Eihort')
+@settitle OGRE Manual v1.2.4 ('Dagon')
 @c %**end of header
    
 @titlepage
@@ -507,8 +507,6 @@ Here are the attributes you can use in a 'pass' section of a .material script:
 @item
 @ref{max_lights}
 @item
-@ref{start_light}
-@item
 @ref{iteration}
 @item
 @ref{point_size}
@@ -820,16 +818,6 @@ If colour writing is off no visible pixels are written to the screen during this
 
 Default: colour_write on@*
 
-@anchor{start_light}
-@subheading start_light
-
-Sets the first light which will be considered for use with this pass.@*@*
-Format: start_light <number>@*@*
-
-You can use this attribute to offset the starting point of the lights for this pass. In other words, if you set start_light to 2 then the first light to be processed in that pass will be the third actual light in the applicable list. You could use this option to use different passes to process the first couple of lights versus the second couple of lights for example, or use it in conjunction with the @ref{iteration} option to start the iteration from a given point in the list (e.g. doing the first 2 lights in the first pass, and then iterating every 2 lights from then on perhaps). @*@*
-
-Default: start_light 0@*
-
 @anchor{max_lights}
 @subheading max_lights
 
@@ -845,9 +833,8 @@ Default: max_lights 8@*
 
 Sets whether or not this pass is iterated, ie issued more than once.@*@*
 
-Format 1: iteration <once | once_per_light> [lightType]@*@*
-Format 2: iteration <number> [<per_light> [lightType]]@*@*
-Format 3: iteration <number> [<per_n_lights> <num_lights> [lightType]]@*@*
+Basic Format: iteration <once | once_per_light> [lightType]@*@*
+Advanced Format: iteration <number> [<per_light> [lightType]]@*@*
 Examples:
 @table @asis
 @item iteration once
@@ -858,8 +845,6 @@ Examples:
 	The render state for the pass will be setup and then the draw call will execute 5 times.
 @item iteration 5 per_light point
 	The render state for the pass will be setup and then the draw call will execute 5 times.  This will be done for each point light.
-@item iteration 1 per_n_lights 2 point
-	The render state for the pass will be setup and the draw call executed once for every 2 lights.
 @end table
 @*
 
@@ -869,7 +854,7 @@ Using a number instead of "once" instructs the pass to iterate more than once af
 
 If you use once_per_light, you should also add an ambient pass to the technique before this pass, otherwise when no lights are in range of this object it will not get rendered at all; this is important even when you have no ambient light in the scene, because you would still want the objects sihouette to appear.@*@*
 
-The lightType parameter to the attribute only applies if you use once_per_light, per_light, or per_n_lights and restricts the pass to being run for lights of a single type (either 'point', 'directional' or 'spot'). In the example, the pass will be run once per point light. This can be useful because when you're writing a vertex / fragment program it is a lot easier if you can assume the kind of lights you'll be dealing with. However at least point and directional lights can be dealt with in one way.
+The second parameter to the attribute only applies if you use once_per_light or per_light, and restricts the pass to being run for lights of a single type (either 'point', 'directional' or 'spot'). In the example, the pass will be run once per point light. This can be useful because when you're writing a vertex / fragment program it is a lot better if you can assume the kind of lights you'll be dealing with. 
 @*@*
 Default: iteration once@*@*
 
@@ -1031,8 +1016,6 @@ Here are the attributes you can use in a 'texture_unit' section of a .material s
 @item
 @ref{max_anisotropy}
 @item
-@ref{mipmap_bias}
-@item
 @ref{colour_op}
 @item
 @ref{colour_op_ex}
@@ -1056,10 +1039,6 @@ Here are the attributes you can use in a 'texture_unit' section of a .material s
 @ref{wave_xform}
 @item
 @ref{transform}
-@item
-@ref{binding_type}
-@item
-@ref{content_type}
 @end itemize
 
 You can also use a nested 'texture_source' section in order to use a special add-in as a source of texture data, @xref{External Texture Sources} for details.
@@ -1082,7 +1061,7 @@ Default: If a texture_unit has a name then the texture_alias defaults to the tex
 
 Sets the name of the static texture image this layer will use.@*@*
 
-Format: texture <texturename> [<type>] [unlimited | numMipMaps] [alpha] [<PixelFormat>]@*@*
+Format: texture <texturename> [<type>] [unlimited | numMipMaps] [alpha]@*@*
 
 Example: texture funkywall.jpg@*@*
 
@@ -1100,69 +1079,9 @@ This texture is made up of 6 2D textures which are pasted around the inside of a
 @end table
 The 'numMipMaps' option allows you to specify the number of mipmaps to generate for this texture. The default is 'unlimited' which means mips down to 1x1 size are generated. You can specify a fixed number (even 0) if you like instead. Note that if you use the same texture in many material scripts, the number of mipmaps generated will conform to the number specified in the first texture_unit used to load the texture - so be consistent with your usage.@*@*
 
-The 'alpha' option allows you to specify that a single channel (luminence) texture should be loaded as alpha, rather than the default which is to load it into the red channel. This can be helpful if you want to use alpha-only textures in the fixed function pipeline.
+Finally, the 'alpha' option allows you to specify that a single channel (luminence) texture should be loaded as alpha, rather than the default which is to load it into the red channel. This can be helpful if you want to use alpha-only textures in the fixed function pipeline.
 
 Default: none@*@*
-
-The <PixelFormat> option allows you to specify the desired pixel format of the texture to create, which may be different to the pixel format of the texture file being loaded. Bear in mind that the final pixel format will be constrained by hardware capabilities so you may not get exactly what you ask for. The available options are:
-@table @asis
-@item PF_L8
-8-bit pixel format, all bits luminace.
-@item PF_L16
-16-bit pixel format, all bits luminace.
-@item PF_A8
-8-bit pixel format, all bits alpha.
-@item PF_A4L4
-8-bit pixel format, 4 bits alpha, 4 bits luminace.
-@item PF_BYTE_LA
-2 byte pixel format, 1 byte luminance, 1 byte alpha
-@item PF_R5G6B5
-16-bit pixel format, 5 bits red, 6 bits green, 5 bits blue.
-@item PF_B5G6R5
-16-bit pixel format, 5 bits blue, 6 bits green, 5 bits red.
-@item PF_R3G3B2
-8-bit pixel format, 3 bits red, 3 bits green, 2 bits blue.
-@item PF_A4R4G4B4
-16-bit pixel format, 4 bits for alpha, red, green and blue.
-@item PF_A1R5G5B5
-16-bit pixel format, 1 bit for alpha, 5 bits for red, green and blue.
-@item PF_R8G8B8
-24-bit pixel format, 8 bits for red, green and blue.
-@item PF_B8G8R8
-24-bit pixel format, 8 bits for blue, green and red.
-@item PF_A8R8G8B8
-32-bit pixel format, 8 bits for alpha, red, green and blue.
-@item PF_A8B8G8R8
-32-bit pixel format, 8 bits for alpha, blue, green and red.
-@item PF_B8G8R8A8
-32-bit pixel format, 8 bits for blue, green, red and alpha.
-@item PF_R8G8B8A8
-32-bit pixel format, 8 bits for red, green, blue and alpha.
-@item PF_X8R8G8B8
-32-bit pixel format, 8 bits for red, 8 bits for green, 8 bits for blue
-like PF_A8R8G8B8, but alpha will get discarded
-@item PF_X8B8G8R8
-32-bit pixel format, 8 bits for blue, 8 bits for green, 8 bits for red
-like PF_A8B8G8R8, but alpha will get discarded
-@item PF_A2R10G10B10
-32-bit pixel format, 2 bits for alpha, 10 bits for red, green and blue.
-@item PF_A2B10G10R10
-32-bit pixel format, 2 bits for alpha, 10 bits for blue, green and red.
-@item PF_FLOAT16_R
-16-bit pixel format, 16 bits (float) for red
-@item PF_FLOAT16_RGB
-48-bit pixel format, 16 bits (float) for red, 16 bits (float) for green, 16 bits (float) for blue
-@item PF_FLOAT16_RGBA
-64-bit pixel format, 16 bits (float) for red, 16 bits (float) for green, 16 bits (float) for blue, 16 bits (float) for alpha
-@item PF_FLOAT32_R
-16-bit pixel format, 16 bits (float) for red
-@item PF_FLOAT32_RGB
-96-bit pixel format, 32 bits (float) for red, 32 bits (float) for green, 32 bits (float) for blue
-@item PF_FLOAT32_RGBA
-128-bit pixel format, 32 bits (float) for red, 32 bits (float) for green, 32 bits (float) for blue, 32 bits (float) for alpha
-@item PF_SHORT_RGBA
-64-bit pixel format, 16 bits for red, green, blue and alpha
-@end table
 
 @anchor{anim_texture}
 @subheading anim_texture
@@ -1205,29 +1124,6 @@ In both cases the final parameter means the following:
 @end table
 @*
 Default: none
-
-@anchor{binding_type}
-@subheading binding_type
-
-Tells this texture unit to bind to either the fragment processing unit or the vertex processing unit (for @ref{Vertex Texture Fetch}). @*@*
-
-Format: binding_type <vertex|fragment>
-Default: binding_type fragment
-
-@anchor{content_type}
-@subheading content_type
-
-Tells this texture unit where it should get its content from. The default is to get texture content from a named texture, as defined with the @ref{texture}, @ref{cubic_texture}, @ref{anim_texture} attributes. However you can also pull texture information from other automated sources. The options are:
-
-@table @asis
-@item named
-	The default option, this derives texture content from a texture name, loaded by ordinary means from a file or having been manually created with a given name.
-@item shadow
-	This option allows you to pull in a shadow texture, and is only valid when you use texture shadows and one of the 'custom sequence' shadowing types (@xref{Shadows}). The shadow texture in question will be from the 'n'th closest light that casts shadows, unless you use light-based pass iteration or the light_start option which may start the light index higher. When you use this option in multiple texture units within the same pass, each one references the next shadow texture. The shadow texture index is reset in the next pass, in case you want to take into account the same shadow textures again in another pass (e.g. a separate specular / gloss pass). By using this option, the correct light frustum projection is set up for you for use in fixed-function, if you use shaders just reference the texture_viewproj_matrix auto parameter in your shader.
-@end table
-
-Format: content_type <named|shadow>
-Default: content_type named
 
 @anchor{tex_coord_set}
 @subheading tex_coord_set
@@ -1313,16 +1209,6 @@ In order for this to be used, you have to set the minification and/or the magnif
 
 Format: max_anisotropy <value>@*
 Default: max_anisotropy 1
-
-@anchor{mipmap_bias}
-@subheading mipmap_bias
-
-Sets the bias value applied to the mipmapping calculation, thus allowing you to alter the decision of which level of detail of the texture to use at any distance. The bias value is applied after the regular distance calculation, and adjusts the mipmap level by 1 level for each unit of bias. Negative bias values force larger mip levels to be used, positive bias values force smaller mip levels to be used. The bias is a floating point value so you can use values in between whole numbers for fine tuning.@*@*
-In order for this option to be used, your hardware has to support mipmap biasing (exposed through the render system capabilities), and your minification @ref{filtering} has to be set to point or linear.
-
-Format: mipmap_bias <value>@*
-Default: mipmap_bias 0
-
 
 @anchor{colour_op}
 @subheading colour_op
@@ -1582,10 +1468,10 @@ Another one of the DirectX vertex shader assembler syntaxes. @*
 Supported on cards from: ATI Radeon 9600, nVidia GeForce FX 5 series @*
 @item vs_2_x
 Another one of the DirectX vertex shader assembler syntaxes. @*
-Supported on cards from: ATI Radeon X series, nVidia GeForce FX 6 series @*
+Supported on cards from: ATI Radeon X series, nVidia GeForce 6+ series @*
 @item vs_3_0
 Another one of the DirectX vertex shader assembler syntaxes. @*
-Supported on cards from: nVidia GeForce FX 6 series
+Supported on cards from: nVidia GeForce 6+ series
 @item arbvp1
 This is the OpenGL standard assembler format for vertex programs. It's roughly equivalent to DirectX vs_1_1.
 @item vp20
@@ -1593,7 +1479,7 @@ This is an nVidia-specific OpenGL vertex shader syntax which is a superset of vs
 @item vp30
 Another nVidia-specific OpenGL vertex shader syntax. It is a superset of vs 2.0, which is supported on nVidia GeForce FX 5 series and higher.
 @item vp40
-Another nVidia-specific OpenGL vertex shader syntax. It is a superset of vs 3.0, which is supported on nVidia GeForce FX 6 series and higher.
+Another nVidia-specific OpenGL vertex shader syntax. It is a superset of vs 3.0, which is supported on nVidia GeForce 6 series and higher.
 @item ps_1_1, ps_1_2, ps_1_3
 DirectX pixel shader (ie fragment program) assembler syntax. @*
 Supported on cards from: ATI Radeon 8500, nVidia GeForce 3 @*
@@ -1608,7 +1494,7 @@ Supported cards: ATI Radeon 9600, nVidia GeForce FX 5 series@*
 @item ps_2_x
 DirectX pixel shader (ie fragment program) assembler syntax. This is basically
 ps_2_0 with a higher number of instructions. @*
-Supported cards: ATI Radeon X series, nVidia GeForce FX 6 series@*
+Supported cards: ATI Radeon X series, nVidia GeForce 6 series@*
 @item ps_3_0
 DirectX pixel shader (ie fragment program) assembler syntax. @*
 Supported cards: nVidia GeForce FX6 series@*
@@ -1622,7 +1508,7 @@ This is an nVidia-specific OpenGL fragment syntax which is a superset of ps 1.3.
 @item fp30
 Another nVidia-specific OpenGL fragment shader syntax. It is a superset of ps 2.0, which is supported on nVidia GeForce FX 5 series and higher.
 @item fp40
-Another nVidia-specific OpenGL fragment shader syntax. It is a superset of ps 3.0, which is supported on nVidia GeForce FX 6 series and higher.
+Another nVidia-specific OpenGL fragment shader syntax. It is a superset of ps 3.0, which is supported on nVidia GeForce 6 series and higher.
 
 @end table
 
@@ -1702,13 +1588,6 @@ You can implement pose animation (blending between multiple poses based on weigh
 @end example
 Note that ALL submeshes must be assigned a material which implements this, and that if you combine skeletal animation with vertex animation (@xref{Animation}) then all techniques must be hardware accelerated for any to be.
 
-@subheading Vertex texture fetching in vertex programs
-If your vertex program makes use of @ref{Vertex Texture Fetch}, you should declare that with the 'uses_vertex_texture_fetch' directive. This is enough to tell Ogre that your program uses this feature and that hardware support for it should be checked.
-@example
-	uses_vertex_texture_fetch true
-@end example
-	
-
 @subheading Vertex Programs With Shadows
 When using shadows (@xref{Shadows}), the use of vertex programs can add some additional complexities, because Ogre can only automatically deal with everything when using the fixed-function pipeline. If you use vertex programs, and you are also using shadows, you may need to make some adjustments. @*@*
 
@@ -1736,7 +1615,7 @@ The syntax of the link to a vertex program and a fragment program are identical,
 
 For many situations a vertex and fragment program are associated with each other in a pass but this is not cast in stone.  You could have a vertex program that can be used by several different fragment programs.  Another situation that arises is that you can mix fixed pipeline and programmable pipeline (shaders) together. You could use the non-programable vertex fixed function pipeline and then provide a fragment_program_ref in a pass ie there would be no vertex_program_ref section in the pass.  The fragment program referenced in the pass must meet the requirements as defined in the related API in order to read from the outputs of the vertex fixed pipeline.  You could also just have a vertex program that outputs to the fragment fixed function pipeline.@*@*
 
-The requirements to read from or write to the fixed function pipeline are similar between rendering API's (DirectX and OpenGL) but how its actually done in each type of shader (vertex or fragment) depends on the shader language.  For HLSL (DirectX API) and associated asm consult MSDN at @url{http://msdn.microsoft.com/library/}. For GLSL (OpenGL), consult section 7.6 of the GLSL spec 1.1 available at @url{http://developer.3dlabs.com/documents/index.htm}.  The built in varying variables provided in GLSL allow your program to read/write to the fixed function pipeline varyings.  For Cg consult the Language Profiles section in CgUsersManual.pdf that comes with the Cg Toolkit available at @url{http://developer.nvidia.com/object/cg_toolkit.html}.  For HLSL and Cg its the varying bindings that allow your shader programs to read/write to the fixed function pipeline varyings.@*@*
+The requirements to read from or write to the fixed function pipeline are similar between rendering API's (DirectX and OpenGL) but how its actually done in each type of shader (vertex or fragment) depends on the shader language.  For HLSL (DirectX API) and associated asm consult MSDN at @url{http://msdn.microsoft.com/library/}. For GLSL (OpenGL), consult section 7.6 of the GLSL spec 1.1 available at @url{http://developer.3dlabs.com/documents/index.htm}.  The built in varying variables provided in GLSL allow your program to read/write to the fixed function pipeline varyings.  For Cg consult the Language Profiles section in CgUsersManual.pdf that comes with the Cg Toolkit available at @url(http://developer.nvidia.com/object/cg_toolkit.html).  For HLSL and Cg its the varying bindings that allow your shader programs to read/write to the fixed function pipeline varyings.@*@*
 
 @anchor{Program Parameter Specification}
 @subheading Parameter specification
@@ -1922,7 +1801,7 @@ Near clip distance, in world units
 @item far_clip_distance
 Far clip distance, in world units (may be 0 for infinite view projection)
 @item texture_viewproj_matrix
-Applicable to vertex programs which have been specified as the 'shadow receiver' vertex program alternative, or where a texture unit is marked as content_type shadow; this provides details of the view/projection matrix for the current shadow projector. The optional 'extra_params' entry specifies which light the projector refers to (for the case of content_type shadow where more than one shadow texture may be present in a single pass), where 0 is the default and refers to the first light referenced in this pass.
+Only applicable to vertex programs which have been specified as the 'shadow receiver' vertex program alternative; this provides details of the view/projection matrix for the current shadow projector.
 @anchor{pass_number}
 @item pass_number
 Sets the active pass index number in a gpu parameter.  The first pass in a technique has an index of 0, the second an index of 1 and so on.  This is usefull for multipass shaders (ie fur or blur shader) that need to know what pass it is.  By setting up the auto parameter in a @ref{Default Program Parameters} list in a program definition, there is no requirement to set the pass number parameter in each pass and lose track. (@xref{fur_example})
@@ -1990,28 +1869,6 @@ shadow_receiver_fragment_program_ref myShadowReceiverFragmentProgram
 }
 @end example
 You should pass the projected shadow coordinates from the custom vertex program. As for textures, texture unit 0 will always be the shadow texture. Any other textures which you bind in your pass will be carried across too, but will be moved up by 1 unit to make room for the shadow texture. Therefore your shadow receiver fragment program is likely to be the same as the bare lighting pass of your normal material, except that you insert an extra texture sampler at index 0, which you will use to adjust the result by (modulating diffuse and specular components).
-
-@node Vertex Texture Fetch
-@subsection Vertex Texture Fetch
-
-@subheading Introduction
-More recent generations of video card allow you to perform a read from a texture in the vertex program rather than just the fragment program, as is traditional. This allows you to, for example, read the contents of a texture and displace vertices based on the intensity of the colour contained within.@*@*
-
-@subheading Declaring the use of vertex texture fetching
-Since hardware support for vertex texture fetching is not ubiquitous, you should use the uses_vertex_texture_fetch (@xref{Vertex texture fetching in vertex programs}) directive when declaring your vertex programs which use vertex textures, so that if it is not supported, technique fallback can be enabled. This is not strictly necessary for DirectX-targetted shaders, since vertex texture fetching is only supported in vs_3_0, which can be stated as a required syntax in your shader definition, but for OpenGL (GLSL), there are cards which support GLSL but not vertex textures, so you should be explicit about your need for them.
-
-@subheading Render system texture binding differences
-Unfortunately the method for binding textures so that they are available to a vertex program is not well standardised. As at the time of writing, Shader Model 3.0 (SM3.0) hardware under DirectX9 include 4 separate sampler bindings for the purposes of vertex textures. OpenGL, on the other hand, is able to access vertex textures in GLSL (and in assembler through NV_vertex_program_3, although this is less popular), but the textures are shared with the fragment pipeline. I expect DirectX to move to the GL model with the advent of DirectX10, since a unified shader architecture implies sharing of texture resources between the two stages. As it is right now though, we're stuck with an inconsistent situation.@*@*
-
-To reflect this, you should use the @ref{binding_type} attribute in a texture unit to indicate which unit you are targetting with your texture - 'fragment' (the default) or 'vertex'. For render systems that don't have separate bindings, this actually does nothing. But for those that do, it will ensure your texture gets bound to the right processing unit.
-
-Note that whilst DirectX9 has separate bindings for the vertex and fragment pipelines, binding a texture to the vertex processing unit still uses up a 'slot' which is then not available for use in the fragment pipeline. I didn't manage to find this documented anywhere, but the nVidia samples certainly avoid binding a texture to the same index on both vertex and fragment units, and when I tried to do it, the texture did not appear correctly in the fragment unit, whilst it did as soon as I moved it into the next unit.
-
-@subheading Texture format limitations
-Again as at the time of writing, the types of texture you can use in a vertex program are limited to 1- or 4-component, full precision floating point formats. In code that equates to PF_FLOAT32_R or PF_FLOAT32_RGBA. No other formats are supported. In addition, the textures must be regular 2D textures (no cube or volume maps) and mipmapping and filtering is not supported, although you can perform filtering in your vertex program if you wish by sampling multiple times.
-
-@subheading Hardware limitations
-As at the time of writing (early Q3 2006), ATI do not support texture fetch in their current crop of cards (Radeon X1n00). nVidia do support it in both their 6n00 and 7n00 range. ATI support an alternative called 'Render to Vertex Buffer', but this is not standardised at this time and is very much different in its implementation, so cannot be considered to be a drop-in replacement. This is the case even though the Radeon X1n00 cards claim to support vs_3_0 (which requires vertex texture fetch).
 
 @include MaterialScriptCopy.inc
 

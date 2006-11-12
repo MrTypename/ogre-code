@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef _ResourceGroupManager_H__
@@ -35,7 +31,6 @@ Torus Knot Software Ltd.
 #include "OgreDataStream.h"
 #include "OgreResource.h"
 #include "OgreArchive.h"
-#include "OgreIteratorWrappers.h"
 
 namespace Ogre {
 
@@ -71,11 +66,6 @@ namespace Ogre {
         virtual ~ResourceGroupListener() {}
 
 		/** This event is fired when a resource group begins parsing scripts.
-		@note
-			Remember that if you are loading resources through ResourceBackgroundQueue,
-			these callbacks will occur in the background thread, so you should
-			not perform any thread-unsafe actions in this callback if that's the
-			case (check the group name / script name).
 		@param groupName The name of the group 
 		@param scriptCount The number of scripts which will be parsed
 		*/
@@ -86,7 +76,7 @@ namespace Ogre {
 		virtual void scriptParseStarted(const String& scriptName) = 0;
 		/** This event is fired when the script has been fully parsed.
 		*/
-		virtual void scriptParseEnded(const String& scriptName) = 0;
+		virtual void scriptParseEnded(void) = 0;
 		/** This event is fired when a resource group finished parsing scripts. */
 		virtual void resourceGroupScriptingEnded(const String& groupName) = 0;
 
@@ -192,10 +182,9 @@ namespace Ogre {
         };
         /// List of resource declarations
         typedef std::list<ResourceDeclaration> ResourceDeclarationList;
-		typedef std::map<String, ResourceManager*> ResourceManagerMap;
-		typedef MapIterator<ResourceManagerMap> ResourceManagerIterator;
     protected:
 		/// Map of resource types (strings) to ResourceManagers, used to notify them to load / unload group contents
+		typedef std::map<String, ResourceManager*> ResourceManagerMap;
         ResourceManagerMap mResourceManagerMap;
 
 		/// Map of loading order (Real) to ScriptLoader, used to order script parsing
@@ -223,21 +212,10 @@ namespace Ogre {
 		/// Resource group entry
 		struct ResourceGroup
 		{
-			enum Status
-			{
-				UNINITIALSED = 0,
-				INITIALISING = 1,
-				INITIALISED = 2,
-				LOADING = 3,
-				LOADED = 4
-			};
-			/// General mutex for dealing with group content
 			OGRE_AUTO_MUTEX
-			/// Status-specific mutex, separate from content-changing mutex
-			OGRE_MUTEX(statusMutex)
 			/// Group name
 			String name;
-			/// Group status
+			/// Whether group has been initialised
 			bool initialised;
 			/// List of possible locations to search
 			LocationList locationList;
@@ -290,7 +268,7 @@ namespace Ogre {
 		/// Internal event firing method
 		void fireScriptStarted(const String& scriptName);
         /// Internal event firing method
-        void fireScriptEnded(const String& scriptName);
+        void fireScriptEnded(void);
 		/// Internal event firing method
 		void fireResourceGroupScriptingEnded(const String& groupName);
 		/// Internal event firing method
@@ -736,11 +714,6 @@ namespace Ogre {
         */
         void _unregisterResourceManager(const String& resourceType);
 
-		/** Get an iterator over the registered resource managers.
-		*/
-		ResourceManagerIterator getResourceManagerIterator()
-		{ return ResourceManagerIterator(
-			mResourceManagerMap.begin(), mResourceManagerMap.end()); }
 
         /** Internal method for registering a ScriptLoader.
 		@remarks ScriptLoaders parse scripts when resource groups are initialised.
@@ -808,7 +781,6 @@ namespace Ogre {
 		@returns A copy of list of currently defined resources.
 		*/
 		ResourceDeclarationList getResourceDeclarationList(const String& groupName);
-
 
 		/** Override standard Singleton retrieval.
         @remarks

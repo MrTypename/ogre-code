@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -44,54 +40,27 @@ namespace Ogre {
 	uint32 MovableObject::msDefaultVisibilityFlags = 0xFFFFFFFF;
     //-----------------------------------------------------------------------
     MovableObject::MovableObject()
-        : mCreator(0)
-        , mManager(0)
-        , mParentNode(0)
-        , mParentIsTagPoint(false)
-        , mVisible(true)
-        , mUpperDistance(0)
-        , mSquaredUpperDistance(0)
-        , mBeyondFarDistance(false)
-        , mRenderQueueID(RENDER_QUEUE_MAIN)
-        , mRenderQueueIDSet(false)
-        , mQueryFlags(msDefaultQueryFlags)
-        , mVisibilityFlags(msDefaultVisibilityFlags)
-        , mCastShadows(true)
-        , mRenderingDisabled(false)
-        , mListener(0)
-        , mLightListUpdated(0)
+		: mCreator(0), mManager(0), mParentNode(0), mParentIsTagPoint(false), 
+		mVisible(true), mUpperDistance(0), mSquaredUpperDistance(0), 
+		mBeyondFarDistance(false), mRenderQueueID(RENDER_QUEUE_MAIN),
+		mRenderQueueIDSet(false), mQueryFlags(msDefaultQueryFlags),
+		mVisibilityFlags(msDefaultVisibilityFlags), mCastShadows (true)
     {
     }
-    //-----------------------------------------------------------------------
-    MovableObject::MovableObject(const String& name)
-        : mName(name)
-        , mCreator(0)
-        , mManager(0)
-        , mParentNode(0)
-        , mParentIsTagPoint(false)
-        , mVisible(true)
-        , mUpperDistance(0)
-        , mSquaredUpperDistance(0)
-        , mBeyondFarDistance(false)
-        , mRenderQueueID(RENDER_QUEUE_MAIN)
-        , mRenderQueueIDSet(false)
-        , mQueryFlags(msDefaultQueryFlags)
-        , mVisibilityFlags(msDefaultVisibilityFlags)
-        , mCastShadows(true)
-        , mRenderingDisabled(false)
-        , mListener(0)
-        , mLightListUpdated(0)
-    {
-    }
-    //-----------------------------------------------------------------------
+	//-----------------------------------------------------------------------
+	MovableObject::MovableObject(const String& name) 
+		: mName(name), mCreator(0), mManager(0), mParentNode(0), 
+		mParentIsTagPoint(false), mVisible(true), mUpperDistance(0), 
+		mSquaredUpperDistance(0), 
+		mBeyondFarDistance(false), mRenderQueueID(RENDER_QUEUE_MAIN),
+		mRenderQueueIDSet(false), mQueryFlags(msDefaultQueryFlags),
+		mVisibilityFlags(msDefaultVisibilityFlags),
+		mCastShadows (true)
+	{
+	}
+	//-----------------------------------------------------------------------
     MovableObject::~MovableObject()
     {
-        // Call listener (note, only called if there's something to do)
-        if (mListener)
-        {
-            mListener->objectDestroyed(this);
-        }
-
         if (mParentNode)
         {
             // detach from parent
@@ -112,25 +81,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void MovableObject::_notifyAttached(Node* parent, bool isTagPoint)
     {
-        assert(!mParentNode || !parent);
-
-        bool different = (parent != mParentNode);
-
         mParentNode = parent;
         mParentIsTagPoint = isTagPoint;
-
-        // Mark light list being dirty, simply decrease
-        // counter by one for minimise overhead
-        --mLightListUpdated;
-
-        // Call listener (note, only called if there's something to do)
-        if (mListener && different)
-        {
-            if (mParentNode)
-                mListener->objectAttached(this);
-            else
-                mListener->objectDetached(this);
-        }
     }
     //-----------------------------------------------------------------------
     Node* MovableObject::getParentNode(void) const
@@ -178,19 +130,6 @@ namespace Ogre {
 		}
 	}
     //-----------------------------------------------------------------------
-    void MovableObject::_notifyMoved(void)
-    {
-        // Mark light list being dirty, simply decrease
-        // counter by one for minimise overhead
-        --mLightListUpdated;
-
-        // Notify listener if exists
-        if (mListener)
-        {
-            mListener->objectMoved(this);
-        }
-    }
-    //-----------------------------------------------------------------------
     void MovableObject::setVisible(bool visible)
     {
         mVisible = visible;
@@ -203,14 +142,14 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     bool MovableObject::isVisible(void) const
     {
-        if (!mVisible || mBeyondFarDistance || mRenderingDisabled)
-            return false;
+		bool flagVis = true;
+		if (Root::getSingleton()._getCurrentSceneManager())
+		{
+			flagVis = (mVisibilityFlags & 
+				Root::getSingleton()._getCurrentSceneManager()->getVisibilityMask()) != 0;
+		}
 
-        SceneManager* sm = Root::getSingleton()._getCurrentSceneManager();
-        if (sm && !(mVisibilityFlags & sm->_getCombinedVisibilityMask()))
-            return false;
-
-        return true;
+		return mVisible && !mBeyondFarDistance && flagVis;
     }
 	//-----------------------------------------------------------------------
 	void MovableObject::_notifyCurrentCamera(Camera* cam)
@@ -238,7 +177,6 @@ namespace Ogre {
 			}
 		}
 
-        mRenderingDisabled = mListener && !mListener->objectRendering(this, cam);
 	}
     //-----------------------------------------------------------------------
     void MovableObject::setRenderQueueGroup(uint8 queueID)
@@ -269,7 +207,7 @@ namespace Ogre {
         if (derive)
         {
             mWorldAABB = this->getBoundingBox();
-            mWorldAABB.transformAffine(_getParentNodeFullTransform());
+            mWorldAABB.transform(_getParentNodeFullTransform());
         }
 
         return mWorldAABB;
@@ -285,47 +223,7 @@ namespace Ogre {
 		}
 		return mWorldBoundingSphere;
 	}
-    //-----------------------------------------------------------------------
-    const LightList& MovableObject::queryLights(void) const
-    {
-        // Try listener first
-        if (mListener)
-        {
-            const LightList* lightList =
-                mListener->objectQueryLights(this);
-            if (lightList)
-            {
-                return *lightList;
-            }
-        }
 
-        // Query from parent entity if exists
-        if (mParentIsTagPoint)
-        {
-            TagPoint* tp = static_cast<TagPoint*>(mParentNode);
-            return tp->getParentEntity()->queryLights();
-        }
-
-        if (mParentNode)
-        {
-            SceneNode* sn = static_cast<SceneNode*>(mParentNode);
-
-            // Make sure we only update this only if need.
-            ulong frame = sn->getCreator()->_getLightsDirtyCounter();
-            if (mLightListUpdated != frame)
-            {
-                mLightListUpdated = frame;
-
-                sn->findLights(mLightList, this->getBoundingRadius());
-            }
-        }
-        else
-        {
-            mLightList.clear();
-        }
-
-        return mLightList;
-    }
     //-----------------------------------------------------------------------
     ShadowCaster::ShadowRenderableListIterator MovableObject::getShadowVolumeRenderableIterator(
         ShadowTechnique shadowTechnique, const Light* light, 

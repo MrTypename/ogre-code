@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __TextureUnitState_H__
@@ -201,9 +197,17 @@ namespace Ogre {
         @note
         Applies to both fixed-function and programmable pipeline.
         */
-        void setTextureName( const String& name, TextureType ttype = TEX_TYPE_2D);
+        void setTextureName( const String& name, TextureType ttype = TEX_TYPE_2D, int mipmaps = -1, bool isAlpha = false);
 
-        /** Sets this texture layer to use a combination of 6 texture maps, each one relating to a face of a cube.
+        /** Gets how many mipmaps have been requested for the texture.
+		*/
+		int getNumRequestedMipMaps() const { return mTextureSrcMipmaps; }
+
+		/** Gets whether this texture is requested to be loaded as alpha if single channel
+		*/
+		bool isAlpha() const { return mIsAlpha; }
+
+		/** Sets this texture layer to use a combination of 6 texture maps, each one relating to a face of a cube.
         @remarks
         Cubic textures are made up of 6 separate texture images. Each one of these is an orthoganal view of the
         world with a FOV of 90 degrees and an aspect ratio of 1:1. You can generate these from 3D Studio by
@@ -400,51 +404,6 @@ namespace Ogre {
         */
         unsigned int getNumFrames(void) const;
 
-
-		/** The type of unit to bind the texture settings to. */
-		enum BindingType
-		{
-			/** Regular fragment processing unit - the default. */
-			BT_FRAGMENT = 0,
-			/** Vertex processing unit - indicates this unit will be used for 
-				a vertex texture fetch.
-			*/
-			BT_VERTEX = 1
-		};
-		/** Enum identifying the type of content this texture unit contains.
-		*/
-		enum ContentType
-		{
-			/// Normal texture identified by name
-			CONTENT_NAMED = 0,
-			/// A shadow texture, automatically bound by engine
-			CONTENT_SHADOW = 1
-		};
-
-		/** Sets the type of unit these texture settings should be bound to. 
-		@remarks
-			Some render systems, when implementing vertex texture fetch, separate
-			the binding of textures for use in the vertex program versus those
-			used in fragment programs. This setting allows you to target the
-			vertex processing unit with a texture binding, in those cases. For
-			rendersystems which have a unified binding for the vertex and fragment
-			units, this setting makes no difference.
-		*/
-		void setBindingType(BindingType bt);
-
-		/** Gets the type of unit these texture settings should be bound to.  
-		*/
-		BindingType getBindingType(void) const;
-
-		/** Set the type of content this TextureUnitState references.
-		@remarks
-			The default is to reference a standard named texture, but this unit
-			can also reference automated content like a shadow texture.
-		*/
-		void setContentType(ContentType ct);
-		/** Get the type of content this TextureUnitState references. */
-		ContentType getContentType(void) const;
-
         /** Returns true if this texture unit is either a series of 6 2D textures, each
             in it's own frame, or is a full 3D cube map. You can tell which by checking
             getTextureType.
@@ -464,30 +423,6 @@ namespace Ogre {
         Applies to both fixed-function and programmable pipeline.
         */
         TextureType getTextureType(void) const;
-
-        /** Sets the desired pixel format when load the texture.
-        */
-        void setDesiredFormat(PixelFormat desiredFormat);
-
-        /** Gets the desired pixel format when load the texture.
-        */
-        PixelFormat getDesiredFormat(void) const;
-
-        /** Sets the requests number of mipmaps when load the texture.
-        */
-        void setNumMipmaps(int numMipmaps);
-
-        /** Gets the requests number of mipmaps when load the texture.
-        */
-        int getNumMipmaps(void) const;
-
-        /** Sets whether luminace image should be treat as alpha format when load the texture.
-        */
-        void setIsAlpha(bool isAlpha);
-
-        /** Gets whether luminace image should be treat as alpha format when load the texture.
-        */
-        bool getIsAlpha(void) const;
 
         /** Gets the index of the set of texture co-ords this layer uses.
         @note
@@ -993,24 +928,6 @@ namespace Ogre {
         // get this layer texture anisotropy level
         unsigned int getTextureAnisotropy() const;
 
-		/** Sets the bias value applied to the mipmap calculation.
-		@remarks
-			You can alter the mipmap calculation by biasing the result with a 
-			single floating point value. After the mip level has been calculated,
-			this bias value is added to the result to give the final mip level.
-			Lower mip levels are larger (higher detail), so a negative bias will
-			force the larger mip levels to be used, and a positive bias
-			will cause smaller mip levels to be used. The bias values are in 
-			mip levels, so a -1 bias will force mip levels one larger than by the
-			default calculation.
-		@param bias The bias value as described above, can be positive or negative.
-		*/
-		void setTextureMipmapBias(float bias) { mMipmapBias = bias; }
-		/** Gets the bias value applied to the mipmap calculation.
-		@see TextureUnitState::setTextureMipmapBias
-		*/
-		float getTextureMipmapBias(void) const { return mMipmapBias; }
-
         /// Gets the parent Pass object
         Pass* getParent(void) const { return mParent; }
 
@@ -1061,16 +978,7 @@ namespace Ogre {
 
 		/** Notify this object that its parent has changed */
 		void _notifyParent(Pass* parent);
-
-		/** Get the texture pointer for the current frame. */
-		const TexturePtr& _getTexturePtr(void) const;
-		/** Get the texture pointer for a given frame. */
-		const TexturePtr& _getTexturePtr(size_t frame) const;
 	
-		/** Set the texture pointer for the current frame (internal use only!). */
-		void _setTexturePtr(const TexturePtr& texptr);
-		/** Set the texture pointer for a given frame (internal use only!). */
-		void _setTexturePtr(const TexturePtr& texptr, size_t frame);
 protected:
         // State
         /// The current animation frame.
@@ -1081,19 +989,18 @@ protected:
         bool mCubic; // is this a series of 6 2D textures to make up a cube?
 		
         TextureType mTextureType; 
-        PixelFormat mDesiredFormat;
 		int mTextureSrcMipmaps; // Request number of mipmaps
 
         unsigned int mTextureCoordSetIndex;
         UVWAddressingMode mAddressMode;
         ColourValue mBorderColour;
 
-        LayerBlendModeEx mColourBlendMode;
-        SceneBlendFactor mColourBlendFallbackSrc;
-        SceneBlendFactor mColourBlendFallbackDest;
+        LayerBlendModeEx colourBlendMode;
+        SceneBlendFactor colourBlendFallbackSrc;
+        SceneBlendFactor colourBlendFallbackDest;
 
-        LayerBlendModeEx mAlphaBlendMode;
-        mutable bool mIsBlank;
+        LayerBlendModeEx alphaBlendMode;
+        bool mIsBlank;
         bool mIsAlpha;
 
         mutable bool mRecalcTexMatrix;
@@ -1110,22 +1017,16 @@ protected:
         FilterOptions mMipFilter;
         ///Texture anisotropy
         unsigned int mMaxAniso;
-		/// Mipmap bias (always float, not Real)
-		float mMipmapBias;
 
         bool mIsDefaultAniso;
         bool mIsDefaultFiltering;
-		/// Binding type (fragment or vertex pipeline)
-		BindingType mBindingType;
-		/// Content type of texture (normal loaded texture, auto-texture)
-		ContentType mContentType;
+
 
         //-----------------------------------------------------------------------------
         // Complex members (those that can't be copied using memcpy) are at the end to 
         // allow for fast copying of the basic members.
         //
         std::vector<String> mFrames;
-		mutable std::vector<TexturePtr> mFramePtrs;
         String mName;               // optional name for the TUS
         String mTextureNameAlias;       // optional alias for texture frames
         EffectMap mEffects;
@@ -1151,9 +1052,6 @@ protected:
         /** Internal method for creating texture effect controller.
         */
         void createEffectController(TextureEffect& effect);
-
-		/** Internal method for ensuring the texture for a given frame is loaded. */
-		void ensureLoaded(size_t frame) const;
 
 
     };

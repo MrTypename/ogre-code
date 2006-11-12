@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -35,13 +35,14 @@ Description: Defines an example frame listener which responds to frame events.
 #define __ExampleRefAppFrameListener_H__
 
 #include "OgreReferenceAppLayer.h"
+#include "OgreKeyEvent.h"
+#include "OgreEventListeners.h"
 #include "OgreException.h"
-#include <OIS/OIS.h>
 
 using namespace Ogre;
 using namespace OgreRefApp;
 
-class ExampleRefAppFrameListener: public FrameListener
+class ExampleRefAppFrameListener: public FrameListener, public KeyListener
 {
 private:
     void updateStats(void)
@@ -69,127 +70,168 @@ private:
         guiTris->setCaption(tris + StringConverter::toString(mWindow->getTriangleCount()));
 
         OverlayElement* guiDbg = OverlayManager::getSingleton().getOverlayElement("Core/DebugText");
-        guiDbg->setCaption(mDebugText);
+        guiDbg->setCaption(mWindow->getDebugText());
     }
     
 public:
     // Constructor takes a RenderWindow because it uses that to determine input context
-    ExampleRefAppFrameListener(RenderWindow* win, CollideCamera* cam, bool bufferedKeys = false, bool bufferedMouse = false)
+    ExampleRefAppFrameListener(RenderWindow* win, CollideCamera* cam, bool useBufferedInputKeys = false, bool useBufferedInputMouse = false)
     {
-		using namespace OIS;
-		ParamList pl;	
-		size_t windowHnd = 0;
-		std::ostringstream windowHndStr;
+        mUseBufferedInputKeys = useBufferedInputKeys;
+		mUseBufferedInputMouse = useBufferedInputMouse;
+		mInputTypeSwitchingOn = mUseBufferedInputKeys || mUseBufferedInputMouse;
 
-		win->getCustomAttribute("WINDOW", &windowHnd);
-		windowHndStr << windowHnd;
-		pl.insert(std::make_pair(std::string("WINDOW"), windowHndStr.str()));
+		if (mInputTypeSwitchingOn)
+		{
+            mEventProcessor = new EventProcessor();
+			mEventProcessor->initialise(win);
+			mEventProcessor->startProcessingEvents();
+			mEventProcessor->addKeyListener(this);
+			mInputDevice = mEventProcessor->getInputReader();
 
-		InputManager &im = *InputManager::createInputSystem( pl );
-
-		//Create all devices (We only catch joystick exceptions here, as, most people have Key/Mouse)
-		mKeyboard = static_cast<Keyboard*>(im.createInputObject( OISKeyboard, bufferedKeys ));
-		mMouse = static_cast<Mouse*>(im.createInputObject( OISMouse, bufferedMouse ));
-
-		unsigned int width, height, depth;
-		int left, top;
-		win->getMetrics(width, height, depth, left, top);
-
-		//Set Mouse Region.. if window resizes, we should alter this to reflect as well
-		const MouseState &ms = mMouse->getMouseState();
-		ms.width = width;
-		ms.height = height;
-
-		mCamera = cam;
+		}
+        else
+        {
+            mInputDevice = PlatformManager::getSingleton().createInputReader();
+            mInputDevice->initialise(win,true, true);
+        }
+        mCamera = cam;
         mWindow = win;
         mStatsOn = true;
 		mNumScreenShots = 0;
 		mTimeUntilNextToggle = 0;
 
         showDebugOverlay(true);
-
-		mDebugText = "Press SPACE to throw the ball";
     }
     virtual ~ExampleRefAppFrameListener()
     {
-		OIS::InputManager* im = OIS::InputManager::getSingletonPtr();
-		if(im)
+		if (mInputTypeSwitchingOn)
 		{
-			im->destroyInputObject(mMouse);
-			im->destroyInputObject(mKeyboard);
-			im->destroyInputSystem();
+            delete mEventProcessor;
 		}
+        else
+        {
+            PlatformManager::getSingleton().destroyInputReader( mInputDevice );
+        }
     }
 
     bool processUnbufferedKeyInput(const FrameEvent& evt)
     {
-		using namespace OIS;
+        if (mInputDevice->isKeyDown(KC_A))
+        {
+            // Move camera left
+            mTranslateVector.x = -mMoveScale;
+        }
 
-		if(mKeyboard->isKeyDown(KC_A))
-			mTranslateVector.x = -mMoveScale;	// Move camera left
+        if (mInputDevice->isKeyDown(KC_D))
+        {
+            // Move camera RIGHT
+            mTranslateVector.x = mMoveScale;
+        }
 
-		if(mKeyboard->isKeyDown(KC_D))
-			mTranslateVector.x = mMoveScale;	// Move camera RIGHT
+        /* Move camera forward by keypress. */
+        if (mInputDevice->isKeyDown(KC_UP) || mInputDevice->isKeyDown(KC_W) )
+        {
+            mTranslateVector.z = -mMoveScale;
+        }
+        /* Move camera forward by mousewheel. */
+        if( mInputDevice->getMouseRelativeZ() > 0 )
+        {
+            mTranslateVector.z = -mMoveScale * 8.0;
+        }
 
-		if(mKeyboard->isKeyDown(KC_UP) || mKeyboard->isKeyDown(KC_W) )
-			mTranslateVector.z = -mMoveScale;	// Move camera forward
+        /* Move camera backward by keypress. */
+        if (mInputDevice->isKeyDown(KC_DOWN) || mInputDevice->isKeyDown(KC_S) )
+        {
+            mTranslateVector.z = mMoveScale;
+        }
 
-		if(mKeyboard->isKeyDown(KC_DOWN) || mKeyboard->isKeyDown(KC_S) )
-			mTranslateVector.z = mMoveScale;	// Move camera backward
+        /* Move camera backward by mouse wheel. */
+        if( mInputDevice->getMouseRelativeZ() < 0 )
+        {
+            mTranslateVector.z = mMoveScale * 8.0;
+        }
 
-		if(mKeyboard->isKeyDown(KC_PGUP))
-			mTranslateVector.y = mMoveScale;	// Move camera up
+        if (mInputDevice->isKeyDown(KC_PGUP))
+        {
+            // Move camera up
+            mTranslateVector.y = mMoveScale;
+        }
 
-		if(mKeyboard->isKeyDown(KC_PGDOWN))
-			mTranslateVector.y = -mMoveScale;	// Move camera down
+        if (mInputDevice->isKeyDown(KC_PGDOWN))
+        {
+            // Move camera down
+            mTranslateVector.y = -mMoveScale;
+        }
 
-		if(mKeyboard->isKeyDown(KC_RIGHT))
-			mCamera->yaw(-mRotScale);
+        if (mInputDevice->isKeyDown(KC_RIGHT))
+        {
+            mCamera->yaw(-mRotScale);
+        }
 		
-		if(mKeyboard->isKeyDown(KC_LEFT))
-			mCamera->yaw(mRotScale);
+        if (mInputDevice->isKeyDown(KC_LEFT))
+        {
+            mCamera->yaw(mRotScale);
+        }
 
-		if( mKeyboard->isKeyDown(KC_ESCAPE) || mKeyboard->isKeyDown(KC_Q) )
-			return false;
+        if( mInputDevice->isKeyDown( KC_ESCAPE) )
+        {            
+            return false;
+        }
 
-       	if( mKeyboard->isKeyDown(KC_F) && mTimeUntilNextToggle <= 0 ) 
-		{
-			mStatsOn = !mStatsOn;
-			showDebugOverlay(mStatsOn);
-			mTimeUntilNextToggle = 1;
-		}
+		// see if switching is on, and you want to toggle 
+        if (mInputTypeSwitchingOn && mInputDevice->isKeyDown(KC_M) && mTimeUntilNextToggle <= 0)
+        {
+			switchMouseMode();
+            mTimeUntilNextToggle = 1;
+        }
 
-		if(mKeyboard->isKeyDown(KC_SYSRQ) && mTimeUntilNextToggle <= 0)
-		{
-			std::ostringstream ss;
-			ss << "screenshot_" << ++mNumScreenShots << ".png";
-			mWindow->writeContentsToFile(ss.str());
-			mTimeUntilNextToggle = 0.5;
-			mDebugText = "Saved: " + ss.str();
-		}
+        if (mInputTypeSwitchingOn && mInputDevice->isKeyDown(KC_K) && mTimeUntilNextToggle <= 0)
+        {
+			// must be going from immediate keyboard to buffered keyboard
+			switchKeyMode();
+            mTimeUntilNextToggle = 1;
+        }
+        if (mInputDevice->isKeyDown(KC_F) && mTimeUntilNextToggle <= 0)
+        {
+            mStatsOn = !mStatsOn;
+            showDebugOverlay(mStatsOn);
+
+            mTimeUntilNextToggle = 1;
+        }
+
+        if (mInputDevice->isKeyDown(KC_SYSRQ) && mTimeUntilNextToggle <= 0)
+        {
+			StringUtil::StrStreamType tmp;
+			tmp << "screenshot_" << ++mNumScreenShots << ".png";
+            mWindow->writeContentsToFile(tmp.str());
+            mTimeUntilNextToggle = 0.5;
+			mWindow->setDebugText(String("Wrote ") + tmp.str());
+        }
 
 
-		// Return true to continue rendering
-		return true;
+
+        // Return true to continue rendering
+        return true;
     }
 
     bool processUnbufferedMouseInput(const FrameEvent& evt)
     {
-		using namespace OIS;
+        /* Rotation factors, may not be used if the second mouse button is pressed. */
 
-		// Rotation factors, may not be used if the second mouse button is pressed
-		// 2nd mouse button - slide, otherwise rotate
-		const MouseState &ms = mMouse->getMouseState();
-		if( ms.buttonDown( MB_Right ) )
-		{
-			mTranslateVector.x += ms.relX * 0.13;
-			mTranslateVector.y -= ms.relY * 0.13;
-		}
-		else
-		{
-			mRotX = Degree(-ms.relX * 0.13);
-			mRotY = Degree(-ms.relY * 0.13);
-		}
+        /* If the second mouse button is pressed, then the mouse movement results in 
+           sliding the camera, otherwise we rotate. */
+        if( mInputDevice->getMouseButton( 1 ) )
+        {
+            mTranslateVector.x += mInputDevice->getMouseRelativeX() * 0.13;
+            mTranslateVector.y -= mInputDevice->getMouseRelativeY() * 0.13;
+        }
+        else
+        {
+            mRotX = Degree(-mInputDevice->getMouseRelativeX() * 0.13);
+            mRotY = Degree(-mInputDevice->getMouseRelativeY() * 0.13);
+        }
+
 
 		return true;
 	}
@@ -202,6 +244,8 @@ public:
         mCamera->yaw(mRotX);
         mCamera->pitch(mRotY);
         mCamera->translate(mTranslateVector);
+
+
 	}
 
     void showDebugOverlay(bool show)
@@ -211,18 +255,26 @@ public:
             OGRE_EXCEPT( Exception::ERR_ITEM_NOT_FOUND, "Could not find overlay Core/DebugOverlay",
                 "showDebugOverlay" );
         if (show)
+        {
             o->show();
+        }
         else
+        {
             o->hide();
+        }
     }
 
     // Override frameEnded event 
     bool frameEnded(const FrameEvent& evt)
     {
-		mMouse->capture();
-		mKeyboard->capture();
 
-		if( !mMouse->buffered() || !mKeyboard->buffered() )
+        if (!mInputTypeSwitchingOn)
+    	{
+            mInputDevice->capture();
+        }
+
+
+		if ( !mUseBufferedInputMouse || !mUseBufferedInputKeys)
 		{
 			// one of the input modes is immediate, so setup what is needed for immediate mouse/key movement
 			if (mTimeUntilNextToggle >= 0) 
@@ -247,16 +299,38 @@ public:
 	        mTranslateVector = Vector3::ZERO;
 		}
 
-		//Check to see which device is not buffered, and handle it
-		if( !mKeyboard->buffered() )
-			if( processUnbufferedKeyInput(evt) == false )
+        if (mUseBufferedInputKeys)
+        {
+            // no need to do any processing here, it is handled by event processor and 
+			// you get the results as KeyEvents
+        }
+        else
+        {
+            if (processUnbufferedKeyInput(evt) == false)
+			{
 				return false;
-		if( !mMouse->buffered() )
-			if( processUnbufferedMouseInput(evt) == false )
+			}
+        }
+        if (mUseBufferedInputMouse)
+        {
+            // no need to do any processing here, it is handled by event processor and 
+			// you get the results as MouseEvents
+        }
+        else
+        {
+            if (processUnbufferedMouseInput(evt) == false)
+			{
 				return false;
-		
-		if( !mMouse->buffered() || !mKeyboard->buffered() )
+			}
+        }
+
+		if ( !mUseBufferedInputMouse || !mUseBufferedInputKeys)
+		{
+			// one of the input modes is immediate, so update the movement vector
+
 			moveCamera();
+
+		}
 
         // Perform simulation step
         World::getSingleton().simulationStep(evt.timeSinceLastFrame);
@@ -265,14 +339,41 @@ public:
 		return true;
     }
 
-protected:
-	OIS::Mouse *mMouse;
-	OIS::Keyboard *mKeyboard;
+	void switchMouseMode() 
+	{
+        mUseBufferedInputMouse = !mUseBufferedInputMouse;
+		mInputDevice->setBufferedInput(mUseBufferedInputKeys, mUseBufferedInputMouse);
+	}
+	void switchKeyMode() 
+	{
+        mUseBufferedInputKeys = !mUseBufferedInputKeys;
+		mInputDevice->setBufferedInput(mUseBufferedInputKeys, mUseBufferedInputMouse);
+	}
 
+	void keyClicked(KeyEvent* e) 
+	{
+		if (e->getKeyChar() == 'm')
+		{
+			switchMouseMode();
+		}
+		else if (e->getKeyChar() == 'k')
+		{
+
+			switchKeyMode();
+		}
+
+	}
+	void keyPressed(KeyEvent* e) {}
+	void keyReleased(KeyEvent* e) {}
+
+protected:
+    EventProcessor* mEventProcessor;
+    InputReader* mInputDevice;
     CollideCamera* mCamera;
     Vector3 mTranslateVector;
     RenderWindow* mWindow;
     bool mStatsOn;
+    bool mUseBufferedInputKeys, mUseBufferedInputMouse, mInputTypeSwitchingOn;
 	unsigned int mNumScreenShots;
     float mMoveScale;
     Radian mRotScale;
@@ -280,6 +381,6 @@ protected:
     Real mTimeUntilNextToggle ;
     Radian mRotX, mRotY;
 
-	std::string mDebugText;
 };
+
 #endif

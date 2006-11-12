@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9HardwarePixelBuffer.h"
@@ -105,17 +101,46 @@ void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DVolume9 *volu
 // Util functions to convert a D3D locked box to a pixel box
 void fromD3DLock(PixelBox &rval, const D3DLOCKED_RECT &lrect)
 {
-	rval.rowPitch = lrect.Pitch / PixelUtil::getNumElemBytes(rval.format);
-	rval.slicePitch = rval.rowPitch * rval.getHeight();
-	assert((lrect.Pitch % PixelUtil::getNumElemBytes(rval.format))==0);
+	size_t bpp = PixelUtil::getNumElemBytes(rval.format);
+	if (bpp != 0)
+	{
+		rval.rowPitch = lrect.Pitch / bpp;
+		rval.slicePitch = rval.rowPitch * rval.getHeight();
+		assert((lrect.Pitch % bpp)==0);
+	}
+	else if (PixelUtil::isCompressed(rval.format))
+	{
+		rval.rowPitch = rval.getWidth();
+		rval.slicePitch = rval.getWidth() * rval.getHeight();
+	}
+	else
+	{
+		OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
+			"Invalid pixel format", "fromD3DLock");
+	}
+
 	rval.data = lrect.pBits;
 }
 void fromD3DLock(PixelBox &rval, const D3DLOCKED_BOX &lbox)
 {
-	rval.rowPitch = lbox.RowPitch / PixelUtil::getNumElemBytes(rval.format);
-	rval.slicePitch = lbox.SlicePitch / PixelUtil::getNumElemBytes(rval.format);
-	assert((lbox.RowPitch % PixelUtil::getNumElemBytes(rval.format))==0);
-	assert((lbox.SlicePitch % PixelUtil::getNumElemBytes(rval.format))==0);
+	size_t bpp = PixelUtil::getNumElemBytes(rval.format);
+	if (bpp != 0)
+	{
+		rval.rowPitch = lbox.RowPitch / bpp;
+		rval.slicePitch = lbox.SlicePitch / bpp;
+		assert((lbox.RowPitch % bpp)==0);
+		assert((lbox.SlicePitch % bpp)==0);
+	}
+	else if (PixelUtil::isCompressed(rval.format))
+	{
+		rval.rowPitch = rval.getWidth();
+		rval.slicePitch = rval.getWidth() * rval.getHeight();
+	}
+	else
+	{
+		OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
+			"Invalid pixel format", "fromD3DLock");
+	}
 	rval.data = lbox.pBits;
 }
 // Convert Ogre integer Box to D3D rectangle

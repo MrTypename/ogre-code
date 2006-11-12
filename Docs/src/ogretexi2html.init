@@ -11,7 +11,7 @@
 # Copy this file and make changes to it, if you like.
 # Afterwards, either, load it with command-line option -init_file <your_init_file>
 #
-# $Id: ogretexi2html.init,v 1.3 2006-05-07 21:23:35 sinbad Exp $
+# $Id: ogretexi2html.init,v 1.2.16.1 2006-03-23 22:13:27 sinbad Exp $
 
 ######################################################################
 # stuff which can also be set by command-line options

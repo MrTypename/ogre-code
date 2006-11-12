@@ -1,19 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-// ogreExporter.h
-// Author     : Francesco Giordana
-// Start Date : January 13, 2005
-// Copyright  : (C) 2006 by Francesco Giordana
-// Email      : fra.giordana@tiscali.it
-////////////////////////////////////////////////////////////////////////////////
-
-/*********************************************************************************
-*                                                                                *
-*   This program is free software; you can redistribute it and/or modify         *
-*   it under the terms of the GNU Lesser General Public License as published by  *
-*   the Free Software Foundation; either version 2 of the License, or            *
-*   (at your option) any later version.                                          *
-*                                                                                *
-**********************************************************************************/
 
 #ifndef OGRE_EXPORTER_H
 #define OGRE_EXPORTER_H
@@ -38,7 +22,6 @@ namespace OgreMayaExporter
 		MStatus translateNode(MDagPath& dagPath);
 		MStatus writeAnim(MFnAnimCurve& anim);
 		MStatus writeCamera(MFnCamera& camera);
-		MStatus writeOgreData();
 
 	private:
 		// private members
@@ -46,8 +29,6 @@ namespace OgreMayaExporter
 		ParamList m_params;
 		Mesh* m_pMesh;
 		MaterialSet* m_pMaterialSet;
-		MSelectionList m_selList;
-		MTime m_curTime;
 
 		void exit();
 	};
@@ -81,7 +62,7 @@ namespace OgreMayaExporter
 	MStatus initializePlugin( MObject obj )
 	{
 		MStatus   status;
-		MFnPlugin plugin( obj, "OgreExporter", "7.0", "Any");
+		MFnPlugin plugin( obj, "OgreExporter", "6.5", "Any");
 		status = plugin.registerCommand( "ogreExport", OgreExporter::creator );
 		if (!status) {
 			status.perror("registerCommand");

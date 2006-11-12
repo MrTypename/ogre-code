@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -376,12 +372,6 @@ namespace Ogre {
 				case VES_NORMAL:
 					vbNode->SetAttribute("normals","true");
                     break;
-				case VES_TANGENT:
-					vbNode->SetAttribute("tangents","true");
-					break;
-				case VES_BINORMAL:
-					vbNode->SetAttribute("binormals","true");
-					break;
 				case VES_DIFFUSE:
 					vbNode->SetAttribute("colours_diffuse","true");
                     break;
@@ -394,7 +384,6 @@ namespace Ogre {
                         StringConverter::toString(VertexElement::getTypeCount(elem.getType())));
                     ++numTextureCoords;
                     break;
-
                 default:
                     break;
                 }
@@ -428,22 +417,6 @@ namespace Ogre {
 						elem.baseVertexPointerToElement(pVert, &pFloat);
 						dataNode = 
 							vertexNode->InsertEndChild(TiXmlElement("normal"))->ToElement();
-						dataNode->SetAttribute("x", StringConverter::toString(pFloat[0]));
-						dataNode->SetAttribute("y", StringConverter::toString(pFloat[1]));
-						dataNode->SetAttribute("z", StringConverter::toString(pFloat[2]));
-						break;
-					case VES_TANGENT:
-						elem.baseVertexPointerToElement(pVert, &pFloat);
-						dataNode = 
-							vertexNode->InsertEndChild(TiXmlElement("tangent"))->ToElement();
-						dataNode->SetAttribute("x", StringConverter::toString(pFloat[0]));
-						dataNode->SetAttribute("y", StringConverter::toString(pFloat[1]));
-						dataNode->SetAttribute("z", StringConverter::toString(pFloat[2]));
-						break;
-					case VES_BINORMAL:
-						elem.baseVertexPointerToElement(pVert, &pFloat);
-						dataNode = 
-							vertexNode->InsertEndChild(TiXmlElement("binormal"))->ToElement();
 						dataNode->SetAttribute("x", StringConverter::toString(pFloat[0]));
 						dataNode->SetAttribute("y", StringConverter::toString(pFloat[1]));
 						dataNode->SetAttribute("z", StringConverter::toString(pFloat[2]));
@@ -732,20 +705,6 @@ namespace Ogre {
                 decl->addElement(bufCount, offset, VET_FLOAT3, VES_NORMAL);
                 offset += VertexElement::getTypeSize(VET_FLOAT3);
             }
-			attrib = vbElem->Attribute("tangents");
-			if (attrib && StringConverter::parseBool(attrib))
-			{
-				// Add element
-				decl->addElement(bufCount, offset, VET_FLOAT3, VES_TANGENT);
-				offset += VertexElement::getTypeSize(VET_FLOAT3);
-			}
-			attrib = vbElem->Attribute("binormals");
-			if (attrib && StringConverter::parseBool(attrib))
-			{
-				// Add element
-				decl->addElement(bufCount, offset, VET_FLOAT3, VES_BINORMAL);
-				offset += VertexElement::getTypeSize(VET_FLOAT3);
-			}
             attrib = vbElem->Attribute("colours_diffuse");
             if (attrib && StringConverter::parseBool(attrib))
             {
@@ -865,38 +824,6 @@ namespace Ogre {
                         *pFloat++ = StringConverter::parseReal(
                             xmlElem->Attribute("z"));
                         break;
-					case VES_TANGENT:
-						xmlElem = vertexElem->FirstChildElement("tangent");
-						if (!xmlElem)
-						{
-							OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, "Missing <tangent> element.",
-								"XMLSerializer::readGeometry");
-						}
-						elem.baseVertexPointerToElement(pVert, &pFloat);
-
-						*pFloat++ = StringConverter::parseReal(
-							xmlElem->Attribute("x"));
-						*pFloat++ = StringConverter::parseReal(
-							xmlElem->Attribute("y"));
-						*pFloat++ = StringConverter::parseReal(
-							xmlElem->Attribute("z"));
-						break;
-					case VES_BINORMAL:
-						xmlElem = vertexElem->FirstChildElement("binormal");
-						if (!xmlElem)
-						{
-							OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, "Missing <binormal> element.",
-								"XMLSerializer::readGeometry");
-						}
-						elem.baseVertexPointerToElement(pVert, &pFloat);
-
-						*pFloat++ = StringConverter::parseReal(
-							xmlElem->Attribute("x"));
-						*pFloat++ = StringConverter::parseReal(
-							xmlElem->Attribute("y"));
-						*pFloat++ = StringConverter::parseReal(
-							xmlElem->Attribute("z"));
-						break;
                     case VES_DIFFUSE:
                         xmlElem = vertexElem->FirstChildElement("colour_diffuse");
                         if (!xmlElem)

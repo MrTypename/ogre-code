@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -53,49 +49,6 @@ namespace Ogre {
     */
     class _OgreExport MovableObject : public ShadowCaster, public AnimableObject
     {
-    public:
-        /** Listener which gets called back on MovableObject events.
-        */
-        class _OgreExport Listener
-        {
-        public:
-            Listener(void) {}
-            virtual ~Listener() {}
-            /** MovableObject is being destroyed */
-            virtual void objectDestroyed(MovableObject* object) {}
-            /** MovableObject has been attached to a node */
-            virtual void objectAttached(MovableObject* object) {}
-            /** MovableObject has been detached from a node */
-            virtual void objectDetached(MovableObject* object) {}
-            /** MovableObject has been moved */
-            virtual void objectMoved(MovableObject* object) {}
-            /** Called when the movable object of the camera to be used for rendering.
-            @returns
-                true if allows queue for rendering, false otherwise.
-            */
-            virtual bool objectRendering(const MovableObject* object, const Camera* camera) { return true; }
-            /** Called when the movable object needs to query a light list.
-            @remarks
-                If you want to customize light finding for this object, you should override 
-				this method and hook into MovableObject via MovableObject::setListener.
-				Be aware that the default method caches results within a frame to 
-				prevent unnecessary recalculation, so if you override this you 
-				should provide your own cacheing to maintain performance.
-			@note
-				If you use texture shadows, there is an additional restriction - 
-				since the lights which should have shadow textures rendered for
-				them are determined based on the entire frustum, and not per-object,
-				it is important that the lights returned at the start of this 
-				list (up to the number of shadow textures available) are the same 
-				lights that were used to generate the shadow textures, 
-				and they are in the same order (particularly for additive effects).
-            @returns
-                A pointer to a light list if you populated the light list yourself, or
-                NULL to fall back on the default finding process.
-            */
-            virtual const LightList* objectQueryLights(const MovableObject* object) { return 0; }
-        };
-
     protected:
 		/// Name of this object
 		String mName;
@@ -131,16 +84,6 @@ namespace Ogre {
         mutable AxisAlignedBox mWorldDarkCapBounds;
         /// Does this object cast shadows?
         bool mCastShadows;
-
-        /// Does rendering this object disabled by listener?
-        bool mRenderingDisabled;
-        /// MovableObject listener - only one allowed (no list) for size & performance reasons. */
-        Listener* mListener;
-
-        /// List of lights for this object
-        mutable LightList mLightList;
-        /// The last frame that this light list was updated in
-        mutable ulong mLightListUpdated;
 
 		// Static members
 		/// Default query flags
@@ -203,10 +146,6 @@ namespace Ogre {
 			and this SceneNode / TagPoint is currently in an active part of the
 			scene graph. */
         virtual bool isInScene(void) const;
-
-        /** Internal method called to notify the object that it has been moved.
-        */
-        virtual void _notifyMoved(void);
 
 		/** Internal method to notify the object of the camera to be used for the next rendering operation.
             @remarks
@@ -379,37 +318,6 @@ namespace Ogre {
 		/** Get the default visibility flags for all future MovableObject instances.
 		*/
 		static uint32 getDefaultVisibilityFlags(uint32 flags) { return msDefaultVisibilityFlags; }
-
-        /** Sets a listener for this object.
-        @remarks
-            Note for size and performance reasons only one listener per object
-            is allowed.
-        */
-        virtual void setListener(Listener* listener) { mListener = listener; }
-
-        /** Gets the current listener for this object.
-        */
-        virtual Listener* getListener(void) const { return mListener; }
-
-        /** Gets a list of lights, ordered relative to how close they are to this movable object.
-        @remarks
-            By default, this method gives the listener a chance to populate light list first,
-            if there is no listener or Listener::objectQueryLights returns NULL, it'll
-            query the light list from parent entity if it is present, or returns
-            SceneNode::findLights if it has parent scene node, otherwise it just returns
-            an empty list.
-        @par
-            The object internally caches the light list, so it will recalculate
-			it only when object is moved, or lights that affect the frustum have
-			been changed (@see SceneManager::_getLightsDirtyCounter),
-            but if listener exists, it will be called each time, so the listener 
-			should implement their own cache mechanism to optimise performance.
-        @par
-            This method can be useful when implementing Renderable::getLights in case
-            the renderable is a part of the movable.
-        @returns The list of lights use to lighting this object.
-        */
-        virtual const LightList& queryLights(void) const;
 
 		/// Define a default implementation of method from ShadowCaster which implements no shadows
         EdgeData* getEdgeList(void) { return NULL; }

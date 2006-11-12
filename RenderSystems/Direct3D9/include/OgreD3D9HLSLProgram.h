@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __D3D9HLSLProgram_H__
@@ -58,27 +54,11 @@ namespace Ogre {
             String doGet(const void* target) const;
             void doSet(void* target, const String& val);
         };
-        /// Command object for setting macro defines
-        class CmdPreprocessorDefines : public ParamCommand
-        {
-        public:
-            String doGet(const void* target) const;
-            void doSet(void* target, const String& val);
-        };
-        /// Command object for setting matrix packing in column-major order
-        class CmdColumnMajorMatrices : public ParamCommand
-        {
-        public:
-            String doGet(const void* target) const;
-            void doSet(void* target, const String& val);
-        };
 
     protected:
 
         static CmdEntryPoint msCmdEntryPoint;
         static CmdTarget msCmdTarget;
-        static CmdPreprocessorDefines msCmdPreprocessorDefines;
-        static CmdColumnMajorMatrices msCmdColumnMajorMatrices;
 
         /** Internal load implementation, must be implemented by subclasses.
         */
@@ -96,8 +76,6 @@ namespace Ogre {
 
         String mTarget;
         String mEntryPoint;
-        String mPreprocessorDefines;
-        bool mColumnMajorMatrices;
 
         LPD3DXBUFFER mpMicroCode;
         LPD3DXCONSTANTTABLE mpConstTable;
@@ -115,14 +93,6 @@ namespace Ogre {
         void setTarget(const String& target);
         /** Gets the shader target to compile down to, e.g. 'vs_1_1'. */
         const String& getTarget(void) const { return mTarget; }
-        /** Sets the preprocessor defines use to compile the program. */
-        void setPreprocessorDefines(const String& defines) { mPreprocessorDefines = defines; }
-        /** Sets the preprocessor defines use to compile the program. */
-        const String& getPreprocessorDefines(void) const { return mPreprocessorDefines; }
-        /** Sets whether matrix packing in column-major order. */ 
-        void setColumnMajorMatrices(bool columnMajor) { mColumnMajorMatrices = columnMajor; }
-        /** Gets whether matrix packed in column-major order. */
-        bool getColumnMajorMatrices(void) const { return mColumnMajorMatrices; }
         /// Overridden from GpuProgram
         bool isSupported(void) const;
         /// Overridden from GpuProgram

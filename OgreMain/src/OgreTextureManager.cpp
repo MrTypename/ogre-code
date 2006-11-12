@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -42,11 +38,8 @@ namespace Ogre {
     {  
         assert( ms_Singleton );  return ( *ms_Singleton );  
     }
-    //-----------------------------------------------------------------------
-    TextureManager::TextureManager(void)
-         : mPreferredIntegerBitDepth(0)
-         , mPreferredFloatBitDepth(0)
-         , mDefaultNumMipmaps(MIP_UNLIMITED)
+    TextureManager::TextureManager(bool enable32Bit)
+         : mIs32Bit(enable32Bit), mDefaultNumMipmaps(MIP_UNLIMITED)
     {
         mResourceType = "Texture";
         mLoadOrder = 75.0f;
@@ -61,27 +54,29 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     TexturePtr TextureManager::load(const String &name, const String& group,
-        TextureType texType, int numMipmaps, Real gamma, bool isAlpha, PixelFormat desiredFormat)
+        TextureType texType, int numMipmaps, Real gamma, bool isAlpha)
     {
-        TexturePtr tex = createOrRetrieve(name, group);
+        TexturePtr tex = getByName(name);
 
-        if(!tex->isLoaded())
+        if(tex.isNull())
         {
+            tex = create(name, group);
             tex->setTextureType(texType);
             tex->setNumMipmaps((numMipmaps == -1)? mDefaultNumMipmaps :
 				static_cast<size_t>(numMipmaps));
             tex->setGamma(gamma);
-            tex->setTreatLuminanceAsAlpha(isAlpha);
-            tex->setFormat(desiredFormat);
-	        tex->load();
+            if (isAlpha)
+                tex->setFormat(PF_A8);
+            tex->enable32Bit(mIs32Bit);
         }
+        tex->load();
 
         return tex;
     }
 
     //-----------------------------------------------------------------------
     TexturePtr TextureManager::loadImage( const String &name, const String& group,
-        const Image &img, TextureType texType, int numMipmaps, Real gamma, bool isAlpha, PixelFormat desiredFormat)
+        const Image &img, TextureType texType, int numMipmaps, Real gamma, bool isAlpha )
     {
         TexturePtr tex = create(name, group, true);
 
@@ -89,8 +84,9 @@ namespace Ogre {
         tex->setNumMipmaps((numMipmaps == -1)? mDefaultNumMipmaps :
 			static_cast<size_t>(numMipmaps));
         tex->setGamma(gamma);
-        tex->setTreatLuminanceAsAlpha(isAlpha);
-        tex->setFormat(desiredFormat);
+        if (isAlpha)
+            tex->setFormat(PF_A8);
+        tex->enable32Bit(mIs32Bit);
         tex->loadImage(img);
 
         return tex;
@@ -107,6 +103,7 @@ namespace Ogre {
         tex->setNumMipmaps((numMipmaps == -1)? mDefaultNumMipmaps :
 			static_cast<size_t>(numMipmaps));
         tex->setGamma(gamma);
+        tex->enable32Bit(mIs32Bit);
 		tex->loadRawData(stream, uWidth, uHeight, format);
 		
         return tex;
@@ -125,92 +122,29 @@ namespace Ogre {
 			static_cast<size_t>(numMipmaps));
         ret->setFormat(format);
         ret->setUsage(usage);
+        ret->enable32Bit(mIs32Bit);
 		ret->createInternalResources();
 		return ret;
     }
     //-----------------------------------------------------------------------
-    void TextureManager::setPreferredIntegerBitDepth(ushort bits, bool reloadTextures)
+    void TextureManager::enable32BitTextures( bool setting )
     {
-        mPreferredIntegerBitDepth = bits;
+        mIs32Bit = setting;
 
-        if (reloadTextures)
+        // Iterate throught all textures
+        for( ResourceMap::iterator it = mResources.begin(); it != mResources.end(); ++it )
         {
-            // Iterate throught all textures
-            for (ResourceMap::iterator it = mResources.begin(); it != mResources.end(); ++it)
+            Texture* texture = static_cast<Texture*>(it->second.get());
+            // Reload loaded and reloadable texture only
+            if (texture->isLoaded() && texture->isReloadable())
             {
-                Texture* texture = static_cast<Texture*>(it->second.get());
-                // Reload loaded and reloadable texture only
-                if (texture->isLoaded() && texture->isReloadable())
-                {
-                    texture->unload();
-                    texture->setDesiredIntegerBitDepth(bits);
-                    texture->load();
-                }
-                else
-                {
-                    texture->setDesiredIntegerBitDepth(bits);
-                }
+                texture->unload();
+                texture->enable32Bit(setting);
+                texture->load();
             }
-        }
-    }
-    //-----------------------------------------------------------------------
-    ushort TextureManager::getPreferredIntegerBitDepth(void) const
-    {
-        return mPreferredIntegerBitDepth;
-    }
-    //-----------------------------------------------------------------------
-    void TextureManager::setPreferredFloatBitDepth(ushort bits, bool reloadTextures)
-    {
-        mPreferredFloatBitDepth = bits;
-
-        if (reloadTextures)
-        {
-            // Iterate throught all textures
-            for (ResourceMap::iterator it = mResources.begin(); it != mResources.end(); ++it)
+            else
             {
-                Texture* texture = static_cast<Texture*>(it->second.get());
-                // Reload loaded and reloadable texture only
-                if (texture->isLoaded() && texture->isReloadable())
-                {
-                    texture->unload();
-                    texture->setDesiredFloatBitDepth(bits);
-                    texture->load();
-                }
-                else
-                {
-                    texture->setDesiredFloatBitDepth(bits);
-                }
-            }
-        }
-    }
-    //-----------------------------------------------------------------------
-    ushort TextureManager::getPreferredFloatBitDepth(void) const
-    {
-        return mPreferredFloatBitDepth;
-    }
-    //-----------------------------------------------------------------------
-    void TextureManager::setPreferredBitDepths(ushort integerBits, ushort floatBits, bool reloadTextures)
-    {
-        mPreferredIntegerBitDepth = integerBits;
-        mPreferredFloatBitDepth = floatBits;
-
-        if (reloadTextures)
-        {
-            // Iterate throught all textures
-            for (ResourceMap::iterator it = mResources.begin(); it != mResources.end(); ++it)
-            {
-                Texture* texture = static_cast<Texture*>(it->second.get());
-                // Reload loaded and reloadable texture only
-                if (texture->isLoaded() && texture->isReloadable())
-                {
-                    texture->unload();
-                    texture->setDesiredBitDepths(integerBits, floatBits);
-                    texture->load();
-                }
-                else
-                {
-                    texture->setDesiredBitDepths(integerBits, floatBits);
-                }
+                texture->enable32Bit(setting);
             }
         }
     }

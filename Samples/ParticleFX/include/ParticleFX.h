@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -37,13 +37,12 @@ public:
 
     bool frameStarted(const FrameEvent& evt)
     {
-        if( ExampleFrameListener::frameStarted(evt) == false )
-            return false;
+
         // Rotate fountains
         mFountainNode->yaw(Degree(evt.timeSinceLastFrame * 30));
 
         // Call default
-        return true;
+        return ExampleFrameListener::frameStarted(evt);
 
     }
 };
@@ -65,7 +64,7 @@ protected:
         mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
 
 
-
+       
         Entity *ent = mSceneMgr->createEntity("head", "ogrehead.mesh");
 
         // Add entity to the root scene node
@@ -73,18 +72,16 @@ protected:
 
 
         // Green nimbus around Ogre
-        //mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(
-        //        mSceneMgr->createParticleSystem("Nimbus", "Examples/GreenyNimbus"));
+        ParticleSystem* pSys1 = mSceneMgr->createParticleSystem("Nimbus", 
+            "Examples/GreenyNimbus");
+        mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pSys1);
 
-        // Create some nice fireworks
-        mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(
-                mSceneMgr->createParticleSystem("Fireworks", "Examples/Fireworks"));
 
         // Create shared node for 2 fountains
         mFountainNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 
         // fountain 1
-        ParticleSystem* pSys2 = mSceneMgr->createParticleSystem("fountain1",
+        ParticleSystem* pSys2 = mSceneMgr->createParticleSystem("fountain1", 
             "Examples/PurpleFountain");
         // Point the fountain at an angle
         SceneNode* fNode = mFountainNode->createChildSceneNode();
@@ -93,7 +90,7 @@ protected:
         fNode->attachObject(pSys2);
 
         // fountain 2
-        ParticleSystem* pSys3 = mSceneMgr->createParticleSystem("fountain2",
+        ParticleSystem* pSys3 = mSceneMgr->createParticleSystem("fountain2", 
             "Examples/PurpleFountain");
         // Point the fountain at an angle
         fNode = mFountainNode->createChildSceneNode();
@@ -104,8 +101,8 @@ protected:
 
 
 
-        // Create a rainstorm
-        ParticleSystem* pSys4 = mSceneMgr->createParticleSystem("rain",
+        // Create a rainstorm 
+        ParticleSystem* pSys4 = mSceneMgr->createParticleSystem("rain", 
             "Examples/Rain");
         SceneNode* rNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
         rNode->translate(0,1000,0);
@@ -115,7 +112,7 @@ protected:
 
 
         // Aureola around Ogre perpendicular to the ground
-        ParticleSystem* pSys5 = mSceneMgr->createParticleSystem("Aureola",
+        ParticleSystem* pSys5 = mSceneMgr->createParticleSystem("Aureola", 
             "Examples/Aureola");
         mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pSys5);
 

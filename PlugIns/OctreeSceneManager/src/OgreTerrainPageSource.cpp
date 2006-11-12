@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreTerrainPageSource.h"
@@ -92,7 +88,14 @@ namespace Ogre {
 		page_str << pageIndex;
         name = "page[";
         name += page_str.str() + "]";
-        page->pageSceneNode = mSceneManager->createSceneNode(name);
+		if (mSceneManager->hasSceneNode(name))
+		{
+			page->pageSceneNode = mSceneManager->getSceneNode(name);
+		}
+		else
+		{
+			page->pageSceneNode = mSceneManager->createSceneNode(name);
+		}
         
         size_t q = 0;
         for ( size_t j = 0; j < mPageSize - 1; j += ( mTileSize - 1 ) )
@@ -107,8 +110,19 @@ namespace Ogre {
                 new_name_str << "tile[" << pageIndex << "][" << (int)p << "," << (int)q << "]";
 				name = new_name_str.str();
 
-                SceneNode *c = page->pageSceneNode->createChildSceneNode( name );
-                TerrainRenderable *tile = new TerrainRenderable(name, mSceneManager);
+                SceneNode *c;
+				if (mSceneManager->hasSceneNode(name))
+				{
+					c = mSceneManager->getSceneNode( name );
+					if (c->getParentSceneNode() != page->pageSceneNode)
+						page->pageSceneNode->addChild(c);
+				}
+				else
+				{
+					c = page->pageSceneNode->createChildSceneNode( name );
+				}
+
+				TerrainRenderable *tile = new TerrainRenderable(name, mSceneManager);
 				// set queue
 				tile->setRenderQueueGroup(mSceneManager->getWorldGeometryRenderQueue());
                 // Initialise the tile

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -35,7 +31,6 @@ Torus Knot Software Ltd.
 #include "OgreQuaternion.h"
 #include "OgreVector3.h"
 #include "OgreIteratorWrappers.h"
-#include "OgreStringVector.h"
 
 namespace Ogre {
 
@@ -339,60 +334,6 @@ namespace Ogre {
 		/// Are there any manually controlled bones?
 		virtual bool hasManualBones(void) const { return !mManualBones.empty(); }
 
-        /// Map to translate bone handle from one skeleton to another skeleton.
-        typedef std::vector<ushort> BoneHandleMap;
-
-        /** Merge animations from another Skeleton object into this skeleton.
-        @remarks
-            This function allow merge two structures compatible skeletons. The
-            'compatible' here means identically bones will have same hierarchy,
-            but skeletons are not necessary to have same number of bones (if
-            number bones of source skeleton's more than this skeleton, they will
-            copied as is, except that duplicate names are unallowed; and in the
-            case of bones missing in source skeleton, nothing happen for those
-            bones).
-        @par
-            There are also unnecessary to have same binding poses, this function
-            will adjust keyframes of the source skeleton to match this skeleton
-            automatically.
-        @par
-            It's useful for export skeleton animations seperately. i.e. export
-            mesh and 'master' skeleton at the same time, and then other animations
-            will export seperately (even if used completely difference binding
-            pose), finally, merge seperately exported animations into 'master'
-            skeleton.
-        @param
-            source Pointer to source skeleton. It'll keep unmodified.
-        @param
-            boneHandleMap A map to translate identically bone's handle from source
-            skeleton to this skeleton. If mapped bone handle doesn't exists in this
-            skeleton, it'll created. You can populate bone handle map manually, or
-            use predefined functions build bone handle map for you. (@see 
-            _buildMapBoneByHandle, _buildMapBoneByName)
-        @param
-            animations A list name of animations to merge, if empty, all animations
-            of source skeleton are used to merge. Note that the animation names
-            must not presented in this skeleton, and will NOT pick up animations
-            in linked skeletons (@see addLinkedSkeletonAnimationSource).
-        */
-        virtual void _mergeSkeletonAnimations(const Skeleton* source,
-            const BoneHandleMap& boneHandleMap,
-            const StringVector& animations = StringVector());
-
-        /** Build the bone handle map to use with Skeleton::_mergeSkeletonAnimations.
-        @remarks
-            Identically bones are determine by handle.
-        */
-        virtual void _buildMapBoneByHandle(const Skeleton* source,
-            BoneHandleMap& boneHandleMap) const;
-
-        /** Build the bone handle map to use with Skeleton::_mergeSkeletonAnimations.
-        @remarks
-            Identically bones are determine by name.
-        */
-        virtual void _buildMapBoneByName(const Skeleton* source,
-            BoneHandleMap& boneHandleMap) const;
-
 	protected:
 		SkeletonAnimationBlendMode mBlendState;
         /// Storage of bones, indexed by bone handle
@@ -488,12 +429,6 @@ namespace Ogre {
                     ++(*pUseCount);
                 }
             }
-			else
-			{
-				// RHS must be a null pointer
-				assert(r.isNull() && "RHS must be null if it has no mutex!");
-				setNull();
-			}
             return *this;
         }
     };

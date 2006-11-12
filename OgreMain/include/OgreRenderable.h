@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __Renderable_H__
@@ -56,7 +52,7 @@ namespace Ogre {
     class _OgreExport Renderable
     {
     public:
-		Renderable() : mPolygonModeOverrideable(true), mUseIdentityProjection(false), mUseIdentityView(false) {}
+		Renderable() : mPolygonModeOverrideable(true) {}
         /** Virtual destructor needed as class has virtual methods. */
         virtual ~Renderable() { }
         /** Retrieves a weak reference to the material this renderable object uses.
@@ -82,9 +78,6 @@ namespace Ogre {
                 This method will populate xform with 1 matrix if it does not use vertex blending. If it
                 does use vertex blending it will fill the passed in pointer with an array of matrices,
                 the length being the value returned from getNumWorldTransforms.
-            @note
-                Internal Ogre never supports non-affine matrix for world transform matrix/matrices,
-                the behavior is undefined if returns non-affine matrix here. @see Matrix4::isAffine.
         */
         virtual void getWorldTransforms(Matrix4* xform) const = 0;
         /** Gets the worldspace orientation of this renderable; this is used in order to
@@ -110,55 +103,25 @@ namespace Ogre {
         */
         virtual unsigned short getNumWorldTransforms(void) const { return 1; }
 
-        /** Sets whether or not to use an 'identity' projection.
-        @remarks
-            Usually Renderable objects will use a projection matrix as determined
-            by the active camera. However, if they want they can cancel this out
-            and use an identity projection, which effectively projects in 2D using
-            a {-1, 1} view space. Useful for overlay rendering. Normal renderables
-            need not change this. The default is false.
-        @see Renderable::getUseIdentityProjection
-        */
-        void setUseIdentityProjection(bool useIdentityProjection)
-        {
-            mUseIdentityProjection = useIdentityProjection;
-        }
-
         /** Returns whether or not to use an 'identity' projection.
         @remarks
             Usually Renderable objects will use a projection matrix as determined
             by the active camera. However, if they want they can cancel this out
             and use an identity projection, which effectively projects in 2D using
-            a {-1, 1} view space. Useful for overlay rendering. Normal renderables
-            need not change this.
-        @see Renderable::setUseIdentityProjection
+            a {-1, 1} view space. Useful for overlay rendering. Normal renderables need
+            not override this.
         */
-        bool getUseIdentityProjection(void) const { return mUseIdentityProjection; }
+        virtual bool useIdentityProjection(void) const { return false; }
 
-        /** Sets whether or not to use an 'identity' view.
+        /** Returns whether or not to use an 'identity' projection.
         @remarks
             Usually Renderable objects will use a view matrix as determined
             by the active camera. However, if they want they can cancel this out
             and use an identity matrix, which means all geometry is assumed
             to be relative to camera space already. Useful for overlay rendering. 
-            Normal renderables need not change this. The default is false.
-        @see Renderable::getUseIdentityView
+            Normal renderables need not override this.
         */
-        void setUseIdentityView(bool useIdentityView)
-        {
-            mUseIdentityView = useIdentityView;
-        }
-
-        /** Returns whether or not to use an 'identity' view.
-        @remarks
-            Usually Renderable objects will use a view matrix as determined
-            by the active camera. However, if they want they can cancel this out
-            and use an identity matrix, which means all geometry is assumed
-            to be relative to camera space already. Useful for overlay rendering. 
-            Normal renderables need not change this.
-        @see Renderable::setUseIdentityView
-        */
-        bool getUseIdentityView(void) const { return mUseIdentityView; }
+        virtual bool useIdentityView(void) const { return false; }
 
 		/** Returns the camera-relative squared depth of this renderable.
 		@remarks
@@ -284,8 +247,6 @@ namespace Ogre {
         typedef std::map<size_t, Vector4> CustomParameterMap;
         CustomParameterMap mCustomParameters;
 		bool mPolygonModeOverrideable;
-        bool mUseIdentityProjection;
-        bool mUseIdentityView;
     };
 
 

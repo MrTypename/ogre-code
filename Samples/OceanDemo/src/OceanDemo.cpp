@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2006 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -91,10 +91,10 @@ Ogre::SceneNode* mLightNodes[NUM_LIGHTS];
 // the light node pivots
 Ogre::SceneNode* mLightPivots[NUM_LIGHTS];
 
-#define UVECTOR2(x, y) UVector2(cegui_reldim(x), cegui_reldim(y))
-#define TEXTWIDGET_SIZE UVECTOR2(0.19, 0.06)
-#define NUMBERWIDGET_SIZE UVECTOR2(0.065, 0.06)
-#define SCROLLWIDGET_SIZE UVECTOR2(0.21, 0.02)
+
+#define TEXTWIDGET_SIZE Size(0.19, 0.06)
+#define NUMBERWIDGET_SIZE Size(0.065, 0.06)
+#define SCROLLWIDGET_SIZE Size(0.21, 0.02)
 
 #define TEXTWIDGET_XPOS 0.01
 #define NUMBERWIDGET_XPOS 0.37
@@ -188,8 +188,6 @@ void OceanDemo::go(void)
 //--------------------------------------------------------------------------
 bool OceanDemo::setup(void)
 {
-	bool setupCompleted = false;
-	
 	#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
         Ogre::String mResourcePath;
         mResourcePath = bundlePath() + "/Contents/Resources/";
@@ -202,34 +200,29 @@ bool OceanDemo::setup(void)
     #endif
 
     setupResources();
+    bool carryOn = configure();
+    if (!carryOn) return false;
 
-    if (configure())
-    {
-        chooseSceneManager();
-        createCamera();
-        createViewports();
+    chooseSceneManager();
+    createCamera();
+    createViewports();
 
-        // Set default mipmap level (NB some APIs ignore this)
-        Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
-        loadResources();
-        
-        
-        if (setupGUI())
-        {
-            // Create the scene
-            createScene();
+    // Set default mipmap level (NB some APIs ignore this)
+    Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
+    loadResources();
 
-            createFrameListener();
+    // Create the scene
+    createScene();
 
-            // load some GUI stuff for demo.
-            loadAllMaterialControlFiles(mMaterialControlsContainer);
-            initDemoEventWiring();
-            initComboBoxes();
-            setupCompleted = true;
-        }
-    }
-    
-	return setupCompleted;
+    createFrameListener();
+
+	// load some GUI stuff for demo.
+    loadAllMaterialControlFiles(mMaterialControlsContainer);
+	initDemoEventWiring();
+	initComboBoxes();
+
+	return true;
+
 }
 
 //--------------------------------------------------------------------------
@@ -329,29 +322,16 @@ void OceanDemo::setupResources(void)
 	}
 
 //--------------------------------------------------------------------------
-bool OceanDemo::setupGUI(void)
-{
-    bool setupGUICompleted = false;
-	// setup GUI system
-	try
-	{
-        mGUIRenderer = new CEGUI::OgreCEGUIRenderer(mWindow, Ogre::RENDER_QUEUE_OVERLAY, false, 0, mSceneMgr);
-        // load scheme and set up defaults
-
-        mGUISystem = new CEGUI::System(mGUIRenderer, 0, 0, 0, (CEGUI::utf8*)"OceanDemoCegui.config");
-        CEGUI::System::getSingleton().setDefaultMouseCursor("TaharezLook", "MouseArrow");
-        setupGUICompleted = true;
-	}
-	catch(...)
-	{
-	    
-	}
-	
-	return setupGUICompleted;
-}
-//--------------------------------------------------------------------------
 void OceanDemo::createScene(void)
 {
+	// setup GUI system
+
+    mGUIRenderer = new CEGUI::OgreCEGUIRenderer(mWindow, Ogre::RENDER_QUEUE_OVERLAY, false, 3000, mSceneMgr);
+	// load scheme and set up defaults
+
+    mGUISystem = new CEGUI::System(mGUIRenderer, (CEGUI::ScriptModule*)0, (CEGUI::ResourceProvider *)0, (CEGUI::utf8*)"OceanDemoCegui.config");
+    CEGUI::System::getSingleton().setDefaultMouseCursor("TaharezLook", "MouseArrow");
+
     // Set ambient light
     mSceneMgr->setAmbientLight(Ogre::ColourValue(0.3, 0.3, 0.3));
 	mSceneMgr->setSkyBox(true, "SkyBox", 1000);
@@ -511,9 +491,9 @@ void OceanDemo::doErrorBox(const char* text)
 		// create frame window for box
 		FrameWindow* fwnd = (FrameWindow*)winMgr.createWindow("TaharezLook/FrameWindow", "ErrorBox");
 		root->addChildWindow(fwnd);
-		fwnd->setPosition(UVECTOR2(0.25, 0.25f));
-		fwnd->setMaxSize(UVECTOR2(1.0f, 1.0f));
-		fwnd->setSize(UVECTOR2(0.5f, 0.5f));
+		fwnd->setPosition(CEGUI::Point(0.25, 0.25f));
+		fwnd->setMaximumSize(CEGUI::Size(1.0f, 1.0f));
+		fwnd->setSize(CEGUI::Size(0.5f, 0.5f));
 		fwnd->setText("CEGUI Demo - Error!");
 		fwnd->setDragMovingEnabled(false);
 		fwnd->setSizingEnabled(false);
@@ -521,24 +501,24 @@ void OceanDemo::doErrorBox(const char* text)
 		fwnd->setCloseButtonEnabled(false);
 
 		// create error text message
-		Window* wnd = winMgr.createWindow("TaharezLook/StaticText", "ErrorBox/Message");
-		fwnd->addChildWindow(wnd);
-		wnd->setPosition(UVECTOR2(0.1f, 0.1f));
-		wnd->setSize(UVECTOR2(0.8f, 0.5f));
-		wnd->setProperty("VertFormatting", "VertCentred");
-		wnd->setProperty("HorzFormatting", "HorzCentred");
-		wnd->setProperty("BackgroundEnabled", "false");
-		wnd->setProperty("FrameEnabled", "false");
+		StaticText* msg = (StaticText*)winMgr.createWindow("TaharezLook/StaticText", "ErrorBox/Message");
+		fwnd->addChildWindow(msg);
+		msg->setPosition(CEGUI::Point(0.1f, 0.1f));
+		msg->setSize(CEGUI::Size(0.8f, 0.5f));
+		msg->setVerticalFormatting(StaticText::VertCentred);
+		msg->setHorizontalFormatting(StaticText::HorzCentred);
+		msg->setBackgroundEnabled(false);
+		msg->setFrameEnabled(false);
 
 		// create ok button
-		wnd = (PushButton*)winMgr.createWindow("TaharezLook/Button", "ErrorBox/OkButton");
-		fwnd->addChildWindow(wnd);
-		wnd->setPosition(UVECTOR2(0.3f, 0.80f));
-		wnd->setSize(UVECTOR2(0.4f, 0.1f));
-		wnd->setText("Okay!");
+		PushButton* btn = (PushButton*)winMgr.createWindow("TaharezLook/Button", "ErrorBox/OkButton");
+		fwnd->addChildWindow(btn);
+		btn->setPosition(CEGUI::Point(0.3f, 0.80f));
+		btn->setSize(CEGUI::Size(0.4f, 0.1f));
+		btn->setText("Okay!");
 
 		// subscribe event
-		wnd->subscribeEvent(PushButton::EventClicked, CEGUI::Event::Subscriber(&OceanDemo::handleErrorBox, this ));
+		btn->subscribeEvent(PushButton::EventClicked, CEGUI::Event::Subscriber(&OceanDemo::handleErrorBox, this ));
 
 		errbox = fwnd;
 	}
@@ -692,26 +672,26 @@ void OceanDemo::configureShaderControls(void)
 						const ShaderControl& ActiveShaderDef = mMaterialControlsContainer[mCurrentMaterial].getShaderControl(i);
 
 						// if TextWidget is NULL
-						Window* activeTextWidget = mShaderControlContainer[i].TextWidget;
+						StaticText* activeTextWidget = mShaderControlContainer[i].TextWidget;
 						if(activeTextWidget == NULL)
 						{
 							// create TextWidget
 
 							mShaderControlContainer[i].TextWidget = activeTextWidget =
-								WindowManager::getSingleton().createWindow("TaharezLook/StaticText",
+								(StaticText*)WindowManager::getSingleton().createWindow("TaharezLook/StaticText",
                                 ( ("UniformTxt" + Ogre::StringConverter::toString(i)).c_str() ));
 							// add to Shader control window
 							controlWindow->addChildWindow( activeTextWidget );
 							// set position based on its index
-							activeTextWidget->setPosition(UVECTOR2(TEXTWIDGET_XPOS, WIDGET_YSTART + TEXTWIDGET_YADJUST + WIDGET_YOFFSET * float(i)));
-							activeTextWidget->setProperty("VertFormatting", "TopAligned");
-							activeTextWidget->setProperty("HorzFormatting", "RightAligned");
-							activeTextWidget->setProperty("FrameEnabled", "false");
+							activeTextWidget->setPosition(CEGUI::Point(TEXTWIDGET_XPOS, WIDGET_YSTART + TEXTWIDGET_YADJUST + WIDGET_YOFFSET * float(i)));
+							activeTextWidget->setVerticalFormatting(StaticText::TopAligned);
+							activeTextWidget->setHorizontalFormatting(StaticText::RightAligned);
+							activeTextWidget->setFrameEnabled(false);
 							activeTextWidget->setInheritsAlpha(false);
-							activeTextWidget->setProperty("BackgroundEnabled", "false");
-							activeTextWidget->setMaxSize( TEXTWIDGET_SIZE );
-							activeTextWidget->setMinSize( TEXTWIDGET_SIZE );
-							activeTextWidget->setSize( TEXTWIDGET_SIZE );
+							activeTextWidget->setBackgroundEnabled(false);
+							activeTextWidget->setMaximumSize( CEGUI::TEXTWIDGET_SIZE );
+							activeTextWidget->setMinimumSize( CEGUI::TEXTWIDGET_SIZE );
+							activeTextWidget->setSize( CEGUI::TEXTWIDGET_SIZE );
 						}
 
 						// set TextWidget text to control name
@@ -720,26 +700,26 @@ void OceanDemo::configureShaderControls(void)
 						activeTextWidget->show();
 
 						// if NumberWidget is NULL
-						Window* activeNumberWidget = mShaderControlContainer[i].NumberWidget;
+						StaticText* activeNumberWidget = mShaderControlContainer[i].NumberWidget;
 						if(activeNumberWidget == NULL)
 						{
 							// create NumberWidget
 
 							mShaderControlContainer[i].NumberWidget = activeNumberWidget =
-								WindowManager::getSingleton().createWindow("TaharezLook/StaticText",
+								(StaticText*)WindowManager::getSingleton().createWindow("TaharezLook/StaticText",
                                 ( ("UniformNumTxt" + Ogre::StringConverter::toString(i)).c_str() ));
 							// add to Shader control window
 							controlWindow->addChildWindow( activeNumberWidget );
 							// set position based on its index
-							activeNumberWidget->setPosition(UVECTOR2(NUMBERWIDGET_XPOS, WIDGET_YSTART + TEXTWIDGET_YADJUST + WIDGET_YOFFSET * float(i)));
-							activeNumberWidget->setProperty("HorzFormatting", "RightAligned");
-							activeNumberWidget->setProperty("VertFormatting", "TopAligned");
-							activeNumberWidget->setProperty("FrameEnabled", "false");
+							activeNumberWidget->setPosition(CEGUI::Point(NUMBERWIDGET_XPOS, WIDGET_YSTART + TEXTWIDGET_YADJUST + WIDGET_YOFFSET * float(i)));
+							activeNumberWidget->setHorizontalFormatting(StaticText::RightAligned);
+							activeNumberWidget->setVerticalFormatting(StaticText::TopAligned);
+							activeNumberWidget->setFrameEnabled(false);
 							activeNumberWidget->setInheritsAlpha(false);
-							activeNumberWidget->setProperty("BackgroundEnabled", "false");
-							activeNumberWidget->setMaxSize( NUMBERWIDGET_SIZE );
-							activeNumberWidget->setMinSize( NUMBERWIDGET_SIZE );
-							activeNumberWidget->setSize( NUMBERWIDGET_SIZE );
+							activeNumberWidget->setBackgroundEnabled(false);
+							activeNumberWidget->setMaximumSize( CEGUI::NUMBERWIDGET_SIZE );
+							activeNumberWidget->setMinimumSize(CEGUI:: NUMBERWIDGET_SIZE );
+							activeNumberWidget->setSize( CEGUI::NUMBERWIDGET_SIZE );
 						}
 						// make TextWidget visible
 						activeNumberWidget->show();
@@ -755,11 +735,11 @@ void OceanDemo::configureShaderControls(void)
 							// add to Shader control window
 							controlWindow->addChildWindow( activeScrollWidget );
 							// set position based on its index
-							activeScrollWidget->setPosition(UVECTOR2(SCROLLWIDGET_XPOS, WIDGET_YSTART + WIDGET_YOFFSET * float(i)));
+							activeScrollWidget->setPosition(CEGUI::Point(SCROLLWIDGET_XPOS, WIDGET_YSTART + WIDGET_YOFFSET * float(i)));
 							activeScrollWidget->setInheritsAlpha(false);
-							activeScrollWidget->setMaxSize( SCROLLWIDGET_SIZE );
-							activeScrollWidget->setMinSize( SCROLLWIDGET_SIZE );
-							activeScrollWidget->setSize( SCROLLWIDGET_SIZE );
+							activeScrollWidget->setMaximumSize( CEGUI::SCROLLWIDGET_SIZE );
+							activeScrollWidget->setMinimumSize( CEGUI::SCROLLWIDGET_SIZE );
+							activeScrollWidget->setSize( CEGUI::SCROLLWIDGET_SIZE );
                             activeScrollWidget->setID( static_cast<CEGUI::uint>(i) );
 							activeScrollWidget->setOverlapSize(0);
 							// wire up ScrollWidget position changed event to handleShaderControl
@@ -850,6 +830,7 @@ void OceanDemo::configureShaderControls(void)
 						}
 
 						setShaderControlVal( uniformVal, i );
+;
 						activeScrollWidget->show();
 					} // end of iterate
 				}
@@ -958,9 +939,9 @@ bool OceanDemo::handleScrollControlsWindow(const CEGUI::EventArgs& e)
 	for (size_t i = 0; i < controlCount; i++)
 	{
 		float ypos = WIDGET_YSTART + WIDGET_YOFFSET * float(i) - scrollval;
-		mShaderControlContainer[i].TextWidget->setPosition(UVECTOR2( TEXTWIDGET_XPOS, ypos + TEXTWIDGET_YADJUST));
-		mShaderControlContainer[i].NumberWidget->setPosition(UVECTOR2( NUMBERWIDGET_XPOS, ypos + TEXTWIDGET_YADJUST));
-		mShaderControlContainer[i].ScrollWidget->setPosition(UVECTOR2( SCROLLWIDGET_XPOS, ypos ));
+		mShaderControlContainer[i].TextWidget->setPosition(CEGUI::Point ( TEXTWIDGET_XPOS, ypos + TEXTWIDGET_YADJUST));
+		mShaderControlContainer[i].NumberWidget->setPosition(CEGUI::Point ( NUMBERWIDGET_XPOS, ypos + TEXTWIDGET_YADJUST));
+		mShaderControlContainer[i].ScrollWidget->setPosition(CEGUI::Point ( SCROLLWIDGET_XPOS, ypos ));
 	}
 
     return true;
@@ -1018,8 +999,6 @@ OceanDemo_FrameListener::OceanDemo_FrameListener(OceanDemo* main)
     , mMoveBck(false)
     , mMoveLeft(false)
     , mMoveRight(false)
-	, mMouse(0)
-	, mKeyboard(0)
 
 {
     mRotateSpeed = 0;
@@ -1039,29 +1018,13 @@ OceanDemo_FrameListener::OceanDemo_FrameListener(OceanDemo* main)
 	mAvgFrameTime = 0.1;
 
 	// using buffered input
-	OIS::ParamList pl;
-	size_t windowHnd = 0;
-	std::ostringstream windowHndStr;
-	mMain->getRenderWindow()->getCustomAttribute("WINDOW", &windowHnd);
-	windowHndStr << windowHnd;
-	pl.insert(std::make_pair(std::string("WINDOW"), windowHndStr.str()));
-
-	OIS::InputManager &im = *OIS::InputManager::createInputSystem( pl );
-	//Create all devices (We only catch joystick exceptions here, as, most people have Key/Mouse)
-	mKeyboard = static_cast<OIS::Keyboard*>(im.createInputObject( OIS::OISKeyboard, true ));
-	mMouse = static_cast<OIS::Mouse*>(im.createInputObject( OIS::OISMouse, true ));
-
-	unsigned int width, height, depth;
-	int left, top;
-	mMain->getRenderWindow()->getMetrics(width, height, depth, left, top);
-
-	//Set Mouse Region.. if window resizes, we should alter this to reflect as well
-	const OIS::MouseState &ms = mMouse->getMouseState();
-	ms.width = width;
-	ms.height = height;
-
-	mMouse->setEventCallback(this);
-	mKeyboard->setEventCallback(this);
+	mEventProcessor = new Ogre::EventProcessor();
+	mEventProcessor->initialise(mMain->getRenderWindow());
+	mEventProcessor->startProcessingEvents();
+	mEventProcessor->addKeyListener(this);
+	mEventProcessor->addMouseMotionListener(this);
+	mEventProcessor->addMouseListener(this);
+	mInputDevice = mEventProcessor->getInputReader();
 
 	mQuit = false;
 	mSkipCount = 0;
@@ -1081,22 +1044,13 @@ OceanDemo_FrameListener::OceanDemo_FrameListener(OceanDemo* main)
 //--------------------------------------------------------------------------
 OceanDemo_FrameListener::~OceanDemo_FrameListener()
 {
-	OIS::InputManager* im = OIS::InputManager::getSingletonPtr();
-	if(im)
-	{
-		im->destroyInputObject(mMouse);
-		im->destroyInputObject(mKeyboard);
-		im->destroyInputSystem();
-	}
+	delete mEventProcessor;
 }
 
 
 //--------------------------------------------------------------------------
 bool OceanDemo_FrameListener::frameStarted(const Ogre::FrameEvent& evt)
 {
-	mMouse->capture();
-	mKeyboard->capture();
-
 	if (mQuit)
 		return false;
 	else
@@ -1157,72 +1111,99 @@ bool OceanDemo_FrameListener::frameStarted(const Ogre::FrameEvent& evt)
 }
 
 //--------------------------------------------------------------------------
-bool OceanDemo_FrameListener::mouseMoved (const OIS::MouseEvent &e)
+void OceanDemo_FrameListener::mouseMoved (Ogre::MouseEvent *e)
 {
-	CEGUI::System::getSingleton().injectMouseMove( e.state.relX, e.state.relY );
-	CEGUI::System::getSingleton().injectMouseWheelChange(e.state.relZ);
-	return true;
+	CEGUI::System::getSingleton().injectMouseMove(e->getRelX() * mGuiRenderer->getWidth(), e->getRelY() * mGuiRenderer->getHeight());
+	CEGUI::System::getSingleton().injectMouseWheelChange(e->getRelZ());
+	e->consume();
 }
 
 //--------------------------------------------------------------------------
-bool OceanDemo_FrameListener::keyPressed (const OIS::KeyEvent &e)
+void OceanDemo_FrameListener::mouseDragged (Ogre::MouseEvent *e)
 {
-    // give 'quitting' priority
-	if (e.key == OIS::KC_ESCAPE)
-    {
-        mQuit = true;
-        return false;
-    }
+	mouseMoved(e);
+}
 
-    if (e.key == OIS::KC_SYSRQ )
+//--------------------------------------------------------------------------
+void OceanDemo_FrameListener::keyPressed (Ogre::KeyEvent *e)
+{
+	// give 'quitting' priority
+	if (e->getKey() == Ogre::KC_ESCAPE)
+	{
+		mQuit = true;
+		e->consume();
+		return;
+	}
+
+	if (e->getKey() == Ogre::KC_SYSRQ )
     {
-		std::ostringstream ss;
-        ss << "screenshot_" << ++mNumScreenShots << ".png";
-        mMain->getRenderWindow()->writeContentsToFile(ss.str());
+		char tmp[20];
+		sprintf(tmp, "screenshot_%d.png", ++mNumScreenShots);
+		mMain->getRenderWindow()->writeContentsToFile(tmp);
         //mTimeUntilNextToggle = 0.5;
-		mDebugText = "Saved: " + ss.str();
+		mMain->getRenderWindow()->setDebugText(Ogre::String("Wrote ") + tmp);
     }
 
-    // do event injection
-    CEGUI::System& cegui = CEGUI::System::getSingleton();
-    cegui.injectKeyDown(e.key);
-	cegui.injectChar(e.text);
-	return true;
+	// do event injection
+	CEGUI::System& cegui = CEGUI::System::getSingleton();
+
+	// key down
+	cegui.injectKeyDown(e->getKey());
+
+	// now character
+	cegui.injectChar(e->getKeyChar());
+
+	e->consume();
 }
 
 //--------------------------------------------------------------------------
-bool OceanDemo_FrameListener::keyReleased (const OIS::KeyEvent &e)
+void OceanDemo_FrameListener::keyReleased (Ogre::KeyEvent *e)
 {
-	CEGUI::System::getSingleton().injectKeyUp(e.key);
-	return true;
+	CEGUI::System::getSingleton().injectKeyUp(e->getKey());
 }
 
 //--------------------------------------------------------------------------
-bool OceanDemo_FrameListener::mousePressed (const OIS::MouseEvent &e, OIS::MouseButtonID id)
+void OceanDemo_FrameListener::mousePressed (Ogre::MouseEvent *e)
 {
-	CEGUI::System::getSingleton().injectMouseButtonDown(convertOISButtonToCegui(id));
-	return true;
+	CEGUI::System::getSingleton().injectMouseButtonDown(convertOgreButtonToCegui(e->getButtonID()));
+	e->consume();
 }
 
 //--------------------------------------------------------------------------
-bool OceanDemo_FrameListener::mouseReleased (const OIS::MouseEvent &e, OIS::MouseButtonID id)
+void OceanDemo_FrameListener::mouseReleased (Ogre::MouseEvent *e)
 {
-	CEGUI::System::getSingleton().injectMouseButtonUp(convertOISButtonToCegui(id));
-	return true;
+	CEGUI::System::getSingleton().injectMouseButtonUp(convertOgreButtonToCegui(e->getButtonID()));
+	e->consume();
 }
 
 //--------------------------------------------------------------------------
-CEGUI::MouseButton OceanDemo_FrameListener::convertOISButtonToCegui(int ois_button_id)
+CEGUI::MouseButton OceanDemo_FrameListener::convertOgreButtonToCegui(int ogre_button_id)
 {
-    switch (ois_button_id)
-    {
-	case 0: return CEGUI::LeftButton;
-	case 1: return CEGUI::RightButton;
-	case 2:	return CEGUI::MiddleButton;
-	case 3: return CEGUI::X1Button;
-	default: return CEGUI::LeftButton;
-    }
+	switch (ogre_button_id)
+	{
+	case Ogre::MouseEvent::BUTTON0_MASK:
+		return CEGUI::LeftButton;
+		break;
+
+	case Ogre::MouseEvent::BUTTON1_MASK:
+		return CEGUI::RightButton;
+		break;
+
+	case Ogre::MouseEvent::BUTTON2_MASK:
+		return CEGUI::MiddleButton;
+		break;
+
+	case Ogre::MouseEvent::BUTTON3_MASK:
+		return CEGUI::X1Button;
+		break;
+
+	default:
+		return CEGUI::LeftButton;
+		break;
+	}
+
 }
+
 //--------------------------------------------------------------------------
 void OceanDemo_FrameListener::updateStats(void)
 {
@@ -1243,7 +1224,7 @@ void OceanDemo_FrameListener::updateStats(void)
 		+ " " + Ogre::StringConverter::toString(stats.worstFrameTime)+" ms");
 
 	mGuiTris->setText(tris + Ogre::StringConverter::toString(stats.triangleCount));
-	mGuiDbg->setText(mDebugText);
+	mGuiDbg->setText(mMain->getRenderWindow()->getDebugText());
 	mAvgFrameTime = 1.0f/(stats.avgFPS + 1.0f);
 	if (mAvgFrameTime > 0.1f) mAvgFrameTime = 0.1f;
 

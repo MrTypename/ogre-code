@@ -8,7 +8,7 @@
 		<Option virtualFolders="" />
 		<Build>
 			<Target title="Debug">
-				<Option output="..\bin\Debug\RenderSystem_GL.dll" prefix_auto="0" extension_auto="0" />
+				<Option output="..\bin\Debug\RenderSystem_GL.dll" />
 				<Option object_output="..\obj\Debug" />
 				<Option external_deps="..\..\..\OgreMain\lib\Debug\OgreMain_d.dll;" />
 				<Option type="3" />
@@ -29,7 +29,7 @@
 				</ExtraCommands>
 			</Target>
 			<Target title="Release">
-				<Option output="..\bin\Release\RenderSystem_GL.dll" prefix_auto="0" extension_auto="0" />
+				<Option output="..\bin\Release\RenderSystem_GL.dll" />
 				<Option object_output="..\obj\Release" />
 				<Option external_deps="..\..\..\OgreMain\lib\Release\OgreMain.dll;" />
 				<Option type="3" />
@@ -64,8 +64,8 @@
 			<Add option="-DWIN32" />
 			<Add option="-D_WINDOWS" />
 			<Add option="-D_USRDLL" />
-			<Add option="-DOGRE_GL_USE_MULTITEXTURING" />
 			<Add option="-DRenderSystem_GL_EXPORTS" />
+			<Add option="-DOGRE_GL_USE_MULTITEXTURING" />
 			<Add directory="..\include" />
 			<Add directory="..\src\win32" />
 			<Add directory="..\..\..\OgreMain\include" />

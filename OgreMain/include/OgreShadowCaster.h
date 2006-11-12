@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __ShadowCaster_H__
@@ -51,12 +47,12 @@ namespace Ogre {
         RenderOperation mRenderOp;
         ShadowRenderable* mLightCap; // used only if isLightCapSeparate == true
     public:
-        ShadowRenderable() : mMaterial(), mLightCap(0) {}
+        ShadowRenderable() : mMaterial(0), mLightCap(0) {}
         virtual ~ShadowRenderable() { delete mLightCap; }
         /** Set the material to be used by the shadow, should be set by the caller 
           before adding to a render queue
         */
-        void setMaterial(const MaterialPtr& mat) { mMaterial = mat; }
+        void setMaterial(MaterialPtr& mat) { mMaterial = mat; }
         /// Overridden from Renderable
         const MaterialPtr& getMaterial(void) const { return mMaterial; }
         /// Overridden from Renderable
@@ -164,7 +160,7 @@ namespace Ogre {
         represents a directional light
         @param extrudeDist The distance to extrude
         */
-        static void extrudeVertices(const HardwareVertexBufferSharedPtr& vertexBuffer, 
+        static void extrudeVertices(HardwareVertexBufferSharedPtr vertexBuffer, 
             size_t originalVertexCount, const Vector4& lightPos, Real extrudeDist);
         /** Get the distance to extrude for a point/spot light */
         virtual Real getPointExtrusionDistance(const Light* l) const = 0;
@@ -195,7 +191,7 @@ namespace Ogre {
         @param flags Additional controller flags, see ShadowRenderableFlags
         */
         virtual void generateShadowVolume(EdgeData* edgeData, 
-            const HardwareIndexBufferSharedPtr& indexBuffer, const Light* light,
+            HardwareIndexBufferSharedPtr indexBuffer, const Light* light,
             ShadowRenderableList& shadowRenderables, unsigned long flags);
         /** Utility method for extruding a bounding box. 
         @param box Original bounding box, will be updated in-place

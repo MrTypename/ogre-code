@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -52,26 +52,26 @@ public:
         if(!ExampleFrameListener::frameStarted(evt))
             return false;
         
-        if (mKeyboard->isKeyDown(OIS::KC_H) && timeDelay <= 0)
+        if (mInputDevice->isKeyDown(KC_H) && timeDelay <= 0)
         {
             mCurvature += 1;
             timeDelay = 0.1;
             updateSky = true;
         }
-        if (mKeyboard->isKeyDown(OIS::KC_G) && timeDelay <= 0)
+        if (mInputDevice->isKeyDown(KC_G) && timeDelay <= 0)
         {
             mCurvature -= 1;
             timeDelay = 0.1;
             updateSky = true;
         }
 
-        if (mKeyboard->isKeyDown(OIS::KC_U) && timeDelay <= 0)
+        if (mInputDevice->isKeyDown(KC_U) && timeDelay <= 0)
         {
             mTiling += 1;
             timeDelay = 0.1;
             updateSky = true;
         }
-        if (mKeyboard->isKeyDown(OIS::KC_Y) && timeDelay <= 0)
+        if (mInputDevice->isKeyDown(KC_Y) && timeDelay <= 0)
         {
             mTiling -= 1;
             timeDelay = 0.1;
@@ -89,6 +89,10 @@ public:
         return true;
 
     }
+
+
+
+
 };
 
 class SkyDomeApplication : public ExampleApplication

@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 /***************************************************************************
@@ -283,11 +279,12 @@ namespace Ogre
             // define our own material
             mOptions.terrainMaterial = 
                 MaterialManager::getSingleton().getByName(TERRAIN_MATERIAL_NAME);
+			// Make unique terrain material name
+			StringUtil::StrStreamType s;
+			s << mName << "/Terrain";
+			mOptions.terrainMaterial = MaterialManager::getSingleton().getByName(s.str());
             if (mOptions.terrainMaterial.isNull())
             {
-				// Make unique terrain material name
-				StringUtil::StrStreamType s;
-				s << mName << "/Terrain";
                 mOptions.terrainMaterial = MaterialManager::getSingleton().create(
                     s.str(),
                     ResourceGroupManager::getSingleton().getWorldResourceGroupName());
@@ -539,7 +536,8 @@ namespace Ogre
         // Insert page into list
         mTerrainPages[pageX][pageZ] = page;
         // Attach page to terrain root
-        mTerrainRoot->addChild(page->pageSceneNode);
+		if (page->pageSceneNode->getParentSceneNode() != mTerrainRoot)
+			mTerrainRoot->addChild(page->pageSceneNode);
 
     }
     //-------------------------------------------------------------------------

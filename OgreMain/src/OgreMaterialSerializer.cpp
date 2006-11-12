@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -439,12 +435,6 @@ namespace Ogre
 		context.pass->setMaxSimultaneousLights(StringConverter::parseInt(params));
         return false;
     }
-	//-----------------------------------------------------------------------
-	bool parseStartLight(String& params, MaterialScriptContext& context)
-	{
-		context.pass->setStartLight(StringConverter::parseInt(params));
-		return false;
-	}
     //-----------------------------------------------------------------------
     void parseIterationLightTypes(String& params, MaterialScriptContext& context)
     {
@@ -477,11 +467,10 @@ namespace Ogre
             iteration once_per_light [light type]
             iteration <number>
             iteration <number> [per_light] [light type]
-			iteration <number> [per_n_lights] <num_lights> [light type]
         */
         StringUtil::toLowerCase(params);
         StringVector vecparams = StringUtil::split(params, " \t");
-        if (vecparams.size() < 1 || vecparams.size() > 4)
+        if (vecparams.size() < 1 || vecparams.size() > 3)
         {
             logParseError("Bad iteration attribute, expected 1 to 3 parameters.", context);
             return false;
@@ -520,33 +509,9 @@ namespace Ogre
                             context.pass->setIteratePerLight(true, false);
                         }
                     }
-					else if (vecparams[1] == "per_n_lights")
-					{
-						if (vecparams.size() < 3)
-						{
-							logParseError(
-								"Bad iteration attribute, expected number of lights.", 
-								context);
-						}
-						else
-						{
-							// Parse num lights
-							context.pass->setLightCountPerIteration(
-								StringConverter::parseInt(vecparams[2]));
-							// Light type
-							if (vecparams.size() == 4)
-							{
-								parseIterationLightTypes(vecparams[3], context);
-							}
-							else
-							{
-								context.pass->setIteratePerLight(true, false);
-							}
-						}
-					}
                     else
                         logParseError(
-                            "Bad iteration attribute, valid parameters are <number> [per_light|per_n_lights <num_lights>] [light type].", context);
+                            "Bad iteration attribute, valid parameters are <number> [per_light] [light type].", context);
                 }
             }
             else
@@ -761,7 +726,6 @@ namespace Ogre
         TextureType tt = TEX_TYPE_2D;
 		int mips = MIP_UNLIMITED; // When passed to TextureManager::load, this means default to default number of mipmaps
         bool isAlpha = false;
-        PixelFormat desiredFormat = PF_UNKNOWN;
 		for (size_t p = 1; p < numParams; ++p)
 		{
             StringUtil::toLowerCase(vecparams[p]);
@@ -793,10 +757,6 @@ namespace Ogre
 			{
 				isAlpha = true;
 			}
-            else if ((desiredFormat = PixelUtil::getFormatFromName(vecparams[p], true)) != PF_UNKNOWN)
-            {
-                // nothing to do here
-            }
 			else
 			{
 				logParseError("Invalid texture option - "+vecparams[p]+".",
@@ -804,30 +764,9 @@ namespace Ogre
 			}
         }
 
-		context.textureUnit->setTextureName(vecparams[0], tt);
-        context.textureUnit->setNumMipmaps(mips);
-        context.textureUnit->setIsAlpha(isAlpha);
-        context.textureUnit->setDesiredFormat(desiredFormat);
+		context.textureUnit->setTextureName(vecparams[0], tt, mips, isAlpha);
         return false;
     }
-	//---------------------------------------------------------------------
-	bool parseBindingType(String& params, MaterialScriptContext& context)
-	{
-		if (params == "fragment")
-		{
-			context.textureUnit->setBindingType(TextureUnitState::BT_FRAGMENT);
-		}
-		else if (params == "vertex")
-		{
-			context.textureUnit->setBindingType(TextureUnitState::BT_VERTEX);
-		}
-		else
-		{
-			logParseError("Invalid binding_type option - "+params+".",
-				context);
-		}
-		return false;
-	}
     //-----------------------------------------------------------------------
     bool parseAnimTexture(String& params, MaterialScriptContext& context)
     {
@@ -1478,31 +1417,6 @@ namespace Ogre
 
         return false;
     }
-	//-----------------------------------------------------------------------
-	bool parseMipmapBias(String& params, MaterialScriptContext& context)
-	{
-		context.textureUnit->setTextureMipmapBias(
-			(float)StringConverter::parseReal(params));
-
-		return false;
-	}
-	//-----------------------------------------------------------------------
-	bool parseContentType(String& params, MaterialScriptContext& context)
-	{
-		if (params == "named")
-		{
-			context.textureUnit->setContentType(TextureUnitState::CONTENT_NAMED);
-		}
-		else if (params == "shadow")
-		{
-			context.textureUnit->setContentType(TextureUnitState::CONTENT_SHADOW);
-		}
-		else
-		{
-			logParseError("Invalid content_type specified.", context);
-		}
-		return false;
-	}
     //-----------------------------------------------------------------------
     bool parseLodDistances(String& params, MaterialScriptContext& context)
     {
@@ -1623,7 +1537,7 @@ namespace Ogre
         }
 
         // set the name of the parameter if it exists
-        String paramName = (commandname == "param_named") ? vecparams[0] : StringUtil::BLANK;
+        String paramName = (commandname == "param_named") ? vecparams[0] : "";
 
         // Now parse all the values
         if (isReal)
@@ -1724,14 +1638,6 @@ namespace Ogre
 					context.programParams->setAutoConstant(
 						index, autoConstantDef->acType, context.numAnimationParametrics++);
 				}
-				// Special case texture projector - assume 0 if data not specified
-				else if (autoConstantDef->acType == GpuProgramParameters::ACT_TEXTURE_VIEWPROJ_MATRIX
-					&& vecparams.size() == 2)
-				{
-					context.programParams->setAutoConstant(
-						index, autoConstantDef->acType, 0);
-
-				}
 				else
 				{
 
@@ -1780,7 +1686,7 @@ namespace Ogre
 
         } // end switch
 
-        String paramName = (commandname == "param_named_auto") ? vecparams[0] : StringUtil::BLANK;
+        String paramName = (commandname == "param_named_auto") ? vecparams[0] : "";
         // add constant definition based on AutoConstant
         // make element count 0 so that proper allocation occurs when AutoState is set up
         size_t constantIndex = context.programParams->addConstantDefinition(
@@ -2317,7 +2223,6 @@ namespace Ogre
         context.programDef->supportsSkeletalAnimation = false;
 		context.programDef->supportsMorphAnimation = false;
 		context.programDef->supportsPoseAnimation = 0;
-		context.programDef->usesVertexTextureFetch = false;
 
 		// Get name and language code
 		StringVector vecparams = StringUtil::split(params, " \t");
@@ -2348,7 +2253,6 @@ namespace Ogre
 		context.programDef->supportsSkeletalAnimation = false;
 		context.programDef->supportsMorphAnimation = false;
 		context.programDef->supportsPoseAnimation = 0;
-		context.programDef->usesVertexTextureFetch = false;
 
 		// Get name and language code
 		StringVector vecparams = StringUtil::split(params, " \t");
@@ -2400,15 +2304,6 @@ namespace Ogre
 		// Source filename, preserve case
 		context.programDef->supportsPoseAnimation
 			= StringConverter::parseInt(params);
-
-		return false;
-	}
-	//-----------------------------------------------------------------------
-	bool parseProgramVertexTextureFetch(String& params, MaterialScriptContext& context)
-	{
-		// Source filename, preserve case
-		context.programDef->usesVertexTextureFetch
-			= StringConverter::parseBool(params);
 
 		return false;
 	}
@@ -2573,7 +2468,6 @@ namespace Ogre
 		mPassAttribParsers.insert(AttribParserList::value_type("shadow_receiver_fragment_program_ref", (ATTRIBUTE_PARSER)parseShadowReceiverFragmentProgramRef));
         mPassAttribParsers.insert(AttribParserList::value_type("fragment_program_ref", (ATTRIBUTE_PARSER)parseFragmentProgramRef));
         mPassAttribParsers.insert(AttribParserList::value_type("max_lights", (ATTRIBUTE_PARSER)parseMaxLights));
-		mPassAttribParsers.insert(AttribParserList::value_type("start_light", (ATTRIBUTE_PARSER)parseStartLight));
         mPassAttribParsers.insert(AttribParserList::value_type("iteration", (ATTRIBUTE_PARSER)parseIteration));
 		mPassAttribParsers.insert(AttribParserList::value_type("point_size", (ATTRIBUTE_PARSER)parsePointSize));
 		mPassAttribParsers.insert(AttribParserList::value_type("point_sprites", (ATTRIBUTE_PARSER)parsePointSprites));
@@ -2586,7 +2480,6 @@ namespace Ogre
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("texture", (ATTRIBUTE_PARSER)parseTexture));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("anim_texture", (ATTRIBUTE_PARSER)parseAnimTexture));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("cubic_texture", (ATTRIBUTE_PARSER)parseCubicTexture));
-		mTextureUnitAttribParsers.insert(AttribParserList::value_type("binding_type", (ATTRIBUTE_PARSER)parseBindingType));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("tex_coord_set", (ATTRIBUTE_PARSER)parseTexCoord));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("tex_address_mode", (ATTRIBUTE_PARSER)parseTexAddressMode));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("tex_border_colour", (ATTRIBUTE_PARSER)parseTexBorderColour));
@@ -2605,8 +2498,6 @@ namespace Ogre
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("filtering", (ATTRIBUTE_PARSER)parseFiltering));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("max_anisotropy", (ATTRIBUTE_PARSER)parseAnisotropy));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("texture_alias", (ATTRIBUTE_PARSER)parseTextureAlias));
-		mTextureUnitAttribParsers.insert(AttribParserList::value_type("mipmap_bias", (ATTRIBUTE_PARSER)parseMipmapBias));
-		mTextureUnitAttribParsers.insert(AttribParserList::value_type("content_type", (ATTRIBUTE_PARSER)parseContentType));
 
         // Set up program reference attribute parsers
         mProgramRefAttribParsers.insert(AttribParserList::value_type("param_indexed", (ATTRIBUTE_PARSER)parseParamIndexed));
@@ -2620,7 +2511,6 @@ namespace Ogre
         mProgramAttribParsers.insert(AttribParserList::value_type("includes_skeletal_animation", (ATTRIBUTE_PARSER)parseProgramSkeletalAnimation));
 		mProgramAttribParsers.insert(AttribParserList::value_type("includes_morph_animation", (ATTRIBUTE_PARSER)parseProgramMorphAnimation));
 		mProgramAttribParsers.insert(AttribParserList::value_type("includes_pose_animation", (ATTRIBUTE_PARSER)parseProgramPoseAnimation));
-		mProgramAttribParsers.insert(AttribParserList::value_type("uses_vertex_texture_fetch", (ATTRIBUTE_PARSER)parseProgramVertexTextureFetch));
         mProgramAttribParsers.insert(AttribParserList::value_type("default_params", (ATTRIBUTE_PARSER)parseDefaultParams));
 
         // Set up program default param attribute parsers
@@ -2636,12 +2526,12 @@ namespace Ogre
         mScriptContext.textureUnit = 0;
         mScriptContext.program.setNull();
         mScriptContext.lineNo = 0;
-        mScriptContext.filename.clear();
+        mScriptContext.filename = "";
 		mScriptContext.techLev = -1;
 		mScriptContext.passLev = -1;
 		mScriptContext.stateLev = -1;
 
-        mBuffer.clear();
+        mBuffer = "";
     }
 
     //-----------------------------------------------------------------------
@@ -2944,8 +2834,6 @@ namespace Ogre
 		gp->setMorphAnimationIncluded(def->supportsMorphAnimation);
 		// Set pose animation option
 		gp->setPoseAnimationIncluded(def->supportsPoseAnimation);
-		// Set vertex texture usage
-		gp->setVertexTextureFetchRequired(def->usesVertexTextureFetch);
 		// set origin
 		gp->_notifyOrigin(mScriptContext.filename);
 
@@ -3021,7 +2909,7 @@ namespace Ogre
         // write out gpu program definitions to the buffer
         writeGpuPrograms();
 
-        if (mBuffer.empty())
+        if (mBuffer == "")
             OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Queue is empty !", "MaterialSerializer::exportQueued");
 
         LogManager::getSingleton().logMessage("MaterialSerializer : writing material(s) to material script : " + fileName, LML_CRITICAL);
@@ -3070,8 +2958,8 @@ namespace Ogre
     //-----------------------------------------------------------------------
     void MaterialSerializer::clearQueue()
     {
-        mBuffer.clear();
-        mGpuProgramBuffer.clear();
+        mBuffer = "";
+        mGpuProgramBuffer = "";
         mGpuProgramDefinitionContainer.clear();
     }
     //-----------------------------------------------------------------------
@@ -3196,35 +3084,17 @@ namespace Ogre
                 writeAttribute(3, "max_lights");
                 writeValue(StringConverter::toString(pPass->getMaxSimultaneousLights()));
             }
-			// start_light
-			if (mDefaults ||
-				pPass->getStartLight() != 0)
-			{
-				writeAttribute(3, "start_light");
-				writeValue(StringConverter::toString(pPass->getStartLight()));
-			}
 			// iteration
             if (mDefaults ||
-                pPass->getIteratePerLight() || (pPass->getPassIterationCount() > 1))
+                pPass->getIteratePerLight() || (pPass->getPassIterationCount() > 0))
             {
                 writeAttribute(3, "iteration");
                 // pass iteration count
-                if (pPass->getPassIterationCount() > 1 || pPass->getLightCountPerIteration() > 1)
+                if (pPass->getPassIterationCount() > 0)
                 {
                     writeValue(StringConverter::toString(pPass->getPassIterationCount()));
                     if (pPass->getIteratePerLight())
-					{
-						if (pPass->getLightCountPerIteration() > 1)
-						{
-							writeValue("per_n_lights");
-							writeValue(StringConverter::toString(
-								pPass->getLightCountPerIteration()));
-						}
-						else
-						{
-							writeValue("per_light");
-						}
-					}
+                        writeValue("per_light");
                 }
                 else
                 {
@@ -3624,7 +3494,7 @@ namespace Ogre
             }
 
             //texture name
-            if (pTex->getNumFrames() == 1 && !pTex->getTextureName().empty() && !pTex->isCubic())
+            if (pTex->getNumFrames() == 1 && pTex->getTextureName() != "" && !pTex->isCubic())
             {
                 writeAttribute(4, "texture");
                 writeValue(pTex->getTextureName());
@@ -3646,22 +3516,16 @@ namespace Ogre
                 default:
                     break;
                 };
-
-                if (pTex->getNumMipmaps() != MIP_UNLIMITED)
-                {
-                    writeValue(StringConverter::toString(pTex->getNumMipmaps()));
-                }
-
-                if (pTex->getIsAlpha())
-                {
-                    writeValue("alpha");
-                }
-
-                if (pTex->getDesiredFormat() != PF_UNKNOWN)
-                {
-                    writeValue(PixelUtil::getFormatName(pTex->getDesiredFormat()));
-                }
             }
+
+			if (pTex->getNumRequestedMipMaps() != MIP_UNLIMITED)
+			{
+				writeValue(StringConverter::toString(pTex->getNumRequestedMipMaps()));
+			}
+			if (pTex->isAlpha())
+			{
+				writeValue("alpha");
+			}
 
             //anim. texture
             if (pTex->getNumFrames() > 1 && !pTex->isCubic())
@@ -3750,15 +3614,6 @@ namespace Ogre
                     + " "
                     + convertFiltering(pTex->getTextureFiltering(FT_MIP)));
             }
-
-			// Mip biasing
-			if (mDefaults ||
-				pTex->getTextureMipmapBias() != 0.0f)
-			{
-				writeAttribute(4, "mipmap_bias");
-				writeValue(
-					StringConverter::toString(pTex->getTextureMipmapBias()));
-			}
 
             // colour_op_ex
             if (mDefaults ||
@@ -3892,40 +3747,6 @@ namespace Ogre
 				texEffect.arg2 = scrollAnimV;
 				writeScrollEffect(texEffect, pTex);
 			}
-
-			// Binding type
-			TextureUnitState::BindingType bt = pTex->getBindingType();
-			if (mDefaults ||
-				bt != TextureUnitState::BT_FRAGMENT)
-			{
-				writeAttribute(4, "binding_type");
-				switch(bt)
-				{
-				case TextureUnitState::BT_FRAGMENT:
-					writeValue("fragment");
-					break;
-				case TextureUnitState::BT_VERTEX:
-					writeValue("vertex");
-					break;
-				};
-		
-			}
-			// Content type
-			if (mDefaults ||
-				pTex->getContentType() != TextureUnitState::CONTENT_NAMED)
-			{
-				writeAttribute(4, "content_type");
-				switch(pTex->getContentType())
-				{
-				case TextureUnitState::CONTENT_NAMED:
-					writeValue("named");
-					break;
-				case TextureUnitState::CONTENT_SHADOW:
-					writeValue("shadow");
-					break;
-				};
-			}
-
         }
         endSection(3);
 
@@ -4548,19 +4369,13 @@ namespace Ogre
                         String paramstr = program->getParameter(currentParam->name);
                         if ((currentParam->name == "includes_skeletal_animation")
                             && (paramstr == "false"))
-                            paramstr.clear();
+                            paramstr = "";
 						if ((currentParam->name == "includes_morph_animation")
 							&& (paramstr == "false"))
-							paramstr.clear();
-						if ((currentParam->name == "includes_pose_animation")
-							&& (paramstr == "0"))
-							paramstr.clear();
-						if ((currentParam->name == "uses_vertex_texture_fetch")
-							&& (paramstr == "false"))
-							paramstr.clear();
+							paramstr = "";
 
                         if ((language != "asm") && (currentParam->name == "syntax"))
-                            paramstr.clear();
+                            paramstr = "";
 
                         if (!paramstr.empty())
                         {

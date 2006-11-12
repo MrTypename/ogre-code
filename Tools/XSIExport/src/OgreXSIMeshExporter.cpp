@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under 
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple 
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to 
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreXSIMeshExporter.h"
@@ -107,8 +103,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
 	DeformerMap& XsiMeshExporter::buildMeshForExport(
 		bool mergeSubMeshes, bool exportChildren, 
-		bool edgeLists, bool tangents, VertexElementSemantic tangentSemantic, 
-		bool vertexAnimation, AnimationList& animList, Real fps, const String& materialPrefix, 
+		bool edgeLists, bool tangents, bool vertexAnimation, 
+		AnimationList& animList, Real fps, const String& materialPrefix, 
 		LodData* lod, const String& skeletonName)
     {
 
@@ -163,9 +159,9 @@ namespace Ogre {
         {
             LogOgreAndXSI(L"Calculating tangents");
             unsigned short src, dest;
-            if (!mMesh->suggestTangentVectorBuildParams(tangentSemantic, src, dest))
+            if (!mMesh->suggestTangentVectorBuildParams(src, dest))
             {
-                mMesh->buildTangentVectors(tangentSemantic, src, dest);
+                mMesh->buildTangentVectors(src, dest);
             }
             else
             {
@@ -1055,7 +1051,7 @@ namespace Ogre {
 					XSI::TimeControl timeControl = clip.GetTimeControl();
 					ShapeClipEntry sce;
 					sce.clip = clip;
-					sce.startFrame = timeControl.GetStartOffset();
+					sce.startFrame = sce.originalStartFrame = timeControl.GetStartOffset();
 					long length = (1.0 / timeControl.GetScale()) * 
 						(timeControl.GetClipOut() - timeControl.GetClipIn() + 1);
 					sce.endFrame = sce.startFrame + length - 1;
@@ -1148,7 +1144,7 @@ namespace Ogre {
 							{
 
 								// map the keyframe number to a local number
-								long localFrameNum = frameNum - sce.startFrame *
+								long localFrameNum = frameNum - sce.originalStartFrame *
 									sce.clip.GetTimeControl().GetScale();
 
 								// sample pose influences
@@ -1206,6 +1202,7 @@ namespace Ogre {
 				// Clip overlaps with the animation sampling area and 
 				// applies to this submesh
 				ShapeClipEntry newClipEntry;
+				newClipEntry.originalStartFrame = sce.startFrame;
 				newClipEntry.startFrame = std::max(sce.startFrame, animEntry.startFrame);
 				newClipEntry.endFrame = std::min(sce.endFrame, animEntry.endFrame);
 				newClipEntry.clip = sce.clip;

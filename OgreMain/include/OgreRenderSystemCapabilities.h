@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __RenderSystemCapabilities__
@@ -87,12 +83,7 @@ namespace Ogre {
 		/// Supports basic point sprite rendering
 		RSC_POINT_SPRITES		    = 0x02000000,
 		/// Supports extra point parameters (minsize, maxsize, attenuation)
-		RSC_POINT_EXTENDED_PARAMETERS = 0x04000000,
-		/// Supports vertex texture fetch
-		RSC_VERTEX_TEXTURE_FETCH = 0x08000000, 
-		/// Supports mipmap LOD biasing
-		RSC_MIPMAP_LOD_BIAS = 0x10000000 
-
+		RSC_POINT_EXTENDED_PARAMETERS = 0x04000000
     };
 
     /** singleton class for storing the capabilities of the graphics card. 
@@ -133,10 +124,8 @@ namespace Ogre {
 			ushort mNumMultiRenderTargets;
 			/// The maximum point size
 			Real mMaxPointSize;
-			/// The number of vertex texture units supported
-			ushort mNumVertexTextureUnits;
-			/// Are vertex texture units shared with fragment processor?
-			bool mVertexTextureUnitsShared;
+			/// Are non-POW2 textures feature-limited?
+			bool mNonPOW2TexturesLimited;
 
     	public:	
             RenderSystemCapabilities ();
@@ -325,26 +314,22 @@ namespace Ogre {
 			{
 				return mMaxPointSize;
 			}
-
-			/// Set the number of vertex texture units supported
-			void setNumVertexTextureUnits(ushort n)
+			/// Non-POW2 textures limited
+			void setNonPOW2TexturesLimited(bool l)
 			{
-				mNumVertexTextureUnits = n;
+				mNonPOW2TexturesLimited = l;
 			}
-			/// Get the number of vertex texture units supported
-			ushort getNumVertexTextureUnits(void) const
+			/** Are non-power of two textures limited in features?
+			@remarks
+				If the RSC_NON_POWER_OF_2_TEXTURES capability is set, but this
+				method returns true, you can use non power of 2 textures only if:
+				<ul><li>You load them explicitly with no mip maps</li>
+				<li>You don't use DXT texture compression</li>
+				<li>You use clamp texture addressing</li></ul>
+			*/
+			bool getNonPOW2TexturesLimited(void) const
 			{
-				return mNumVertexTextureUnits;
-			}
-			/// Set whether the vertex texture units are shared with the fragment processor
-			void setVertexTextureUnitsShared(bool shared)
-			{
-				mVertexTextureUnitsShared = shared;
-			}
-			/// Get whether the vertex texture units are shared with the fragment processor
-			bool getVertexTextureUnitsShared(void) const
-			{
-				return mVertexTextureUnitsShared;
+				return mNonPOW2TexturesLimited;
 			}
 
 

@@ -1,26 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
-// mayaExportLayer.h
-// Author     : Francesco Giordana
-// Start Date : January 13, 2005
-// Copyright  : (C) 2006 by Francesco Giordana
-// Email      : fra.giordana@tiscali.it
-////////////////////////////////////////////////////////////////////////////////
-
-/*********************************************************************************
-*                                                                                *
-*   This program is free software; you can redistribute it and/or modify         *
-*   it under the terms of the GNU Lesser General Public License as published by  *
-*   the Free Software Foundation; either version 2 of the License, or            *
-*   (at your option) any later version.                                          *
-*                                                                                *
-**********************************************************************************/
-
 #ifndef _MAYAEXPORTLAYER_H
 #define _MAYAEXPORTLAYER_H
 
-#define PRECISION 0.0001
-
-// Maya API
 #include <maya/MAngle.h>
 #include <maya/MFnTransform.h>
 #include <maya/MItDag.h>
@@ -62,17 +42,8 @@
 #include <maya/MAnimUtil.h>
 #include <maya/MRenderUtil.h>
 #include <maya/MQuaternion.h>
-#include <maya/MFnBlendShapeDeformer.h>
-#include <maya/MBoundingBox.h>
-
-// OGRE API
-#include "Ogre.h"
-#include "OgreDefaultHardwareBufferManager.h"
-
-// standard libraries
 #include <math.h>
 #include <vector>
-#include <set>
 #include <cassert>
 #include <fstream>
 #include <iostream>

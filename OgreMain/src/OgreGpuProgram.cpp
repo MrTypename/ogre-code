@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -46,9 +42,6 @@ namespace Ogre
     GpuProgram::CmdType GpuProgram::msTypeCmd;
     GpuProgram::CmdSyntax GpuProgram::msSyntaxCmd;
     GpuProgram::CmdSkeletal GpuProgram::msSkeletalCmd;
-	GpuProgram::CmdMorph GpuProgram::msMorphCmd;
-	GpuProgram::CmdPose GpuProgram::msPoseCmd;
-	GpuProgram::CmdVTF GpuProgram::msVTFCmd;
 
 
     GpuProgramParameters::AutoConstantDefinition GpuProgramParameters::AutoConstantDictionary[] = {
@@ -105,7 +98,7 @@ namespace Ogre
         AutoConstantDefinition(ACT_SHADOW_EXTRUSION_DISTANCE,     "shadow_extrusion_distance",    1, ET_REAL, ACDT_INT),
         AutoConstantDefinition(ACT_CAMERA_POSITION,               "camera_position",              3, ET_REAL, ACDT_NONE),
         AutoConstantDefinition(ACT_CAMERA_POSITION_OBJECT_SPACE,  "camera_position_object_space", 3, ET_REAL, ACDT_NONE),
-        AutoConstantDefinition(ACT_TEXTURE_VIEWPROJ_MATRIX,       "texture_viewproj_matrix",     16, ET_REAL, ACDT_INT),
+        AutoConstantDefinition(ACT_TEXTURE_VIEWPROJ_MATRIX,       "texture_viewproj_matrix",     16, ET_REAL, ACDT_NONE),
         AutoConstantDefinition(ACT_CUSTOM,                        "custom",                       4, ET_REAL, ACDT_INT),  // *** needs to be tested
         AutoConstantDefinition(ACT_TIME,                               "time",                               1, ET_REAL, ACDT_REAL),
         AutoConstantDefinition(ACT_TIME_0_X,                      "time_0_x",                     4, ET_REAL, ACDT_REAL),
@@ -148,7 +141,7 @@ namespace Ogre
         const String& group, bool isManual, ManualResourceLoader* loader) 
         :Resource(creator, name, handle, group, isManual, loader),
         mType(GPT_VERTEX_PROGRAM), mLoadFromFile(true), mSkeletalAnimation(false),
-        mVertexTextureFetch(false), mPassSurfaceAndLightStates(false), mCompileError(false)
+        mPassSurfaceAndLightStates(false), mCompileError(false)
     {
     }
     //-----------------------------------------------------------------------------
@@ -210,8 +203,6 @@ namespace Ogre
     //-----------------------------------------------------------------------------
     bool GpuProgram::isSupported(void) const
     {
-		const RenderSystemCapabilities* caps = 
-			Root::getSingleton().getRenderSystem()->getCapabilities();
         // If skeletal animation is being done, we need support for UBYTE4
         if ((isSkeletalAnimationIncluded() && 
             !Root::getSingleton().getRenderSystem()->getCapabilities()
@@ -220,14 +211,6 @@ namespace Ogre
         {
             return false;
         }
-
-		// Vertex texture fetch required?
-		if (isVertexTextureFetchRequired() && 
-			!caps->hasCapability(RSC_VERTEX_TEXTURE_FETCH))
-		{
-			return false;
-		}
-
         return GpuProgramManager::getSingleton().isSyntaxSupported(mSyntaxCode);
     }
     //-----------------------------------------------------------------------------
@@ -265,18 +248,6 @@ namespace Ogre
             ParameterDef("includes_skeletal_animation", 
             "Whether this vertex program includes skeletal animation", PT_BOOL), 
             &msSkeletalCmd);
-		dict->addParameter(
-			ParameterDef("includes_morph_animation", 
-			"Whether this vertex program includes morph animation", PT_BOOL), 
-			&msMorphCmd);
-		dict->addParameter(
-			ParameterDef("includes_pose_animation", 
-			"The number of poses this vertex program supports for pose animation", PT_INT), 
-			&msPoseCmd);
-		dict->addParameter(
-			ParameterDef("uses_vertex_texture_fetch", 
-			"Whether this vertex program requires vertex texture fetch support.", PT_BOOL), 
-			&msVTFCmd);
     }
 
     //-----------------------------------------------------------------------
@@ -678,6 +649,9 @@ namespace Ogre
             case ACT_FAR_CLIP_DISTANCE:
                setConstant(i->index, source.getFarClipDistance());
                break;
+            case ACT_TEXTURE_VIEWPROJ_MATRIX:
+                setConstant(i->index, source.getTextureViewProjMatrix());
+                break;
             case ACT_PASS_NUMBER:
                 setConstant(i->index, (float)source.getPassNumber());
                 break;
@@ -726,28 +700,28 @@ namespace Ogre
                 break;
             case ACT_LIGHT_POSITION_OBJECT_SPACE:
                 setConstant(i->index, 
-                    source.getInverseWorldMatrix().transformAffine(source.getLight(i->data).getAs4DVector()));
+                    source.getInverseWorldMatrix() * source.getLight(i->data).getAs4DVector());
                 break;
             case ACT_LIGHT_DIRECTION_OBJECT_SPACE:
-                vec3 = source.getInverseWorldMatrix().transformAffine(
-                    source.getLight(i->data).getDerivedDirection());
+                vec3 = source.getInverseWorldMatrix() * 
+                    source.getLight(i->data).getDerivedDirection();
                 vec3.normalise();
                 // Set as 4D vector for compatibility
                 setConstant(i->index, Vector4(vec3.x, vec3.y, vec3.z, 1.0f));
                 break;
 			case ACT_LIGHT_POSITION_VIEW_SPACE:
                 setConstant(i->index, 
-                    source.getWorldViewMatrix().transformAffine(source.getLight(i->data).getAs4DVector()));
+                    source.getWorldViewMatrix() * source.getLight(i->data).getAs4DVector());
                 break;
             case ACT_LIGHT_DIRECTION_VIEW_SPACE:
-                vec3 = source.getWorldViewMatrix().transformAffine(
-                    source.getLight(i->data).getDerivedDirection());
+                vec3 = source.getWorldViewMatrix() * 
+                    source.getLight(i->data).getDerivedDirection();
                 vec3.normalise();
                 // Set as 4D vector for compatibility
                 setConstant(i->index, Vector4(vec3.x, vec3.y, vec3.z, 1.0f));
                 break;
             case ACT_LIGHT_DISTANCE_OBJECT_SPACE:
-                vec3 = source.getInverseWorldMatrix().transformAffine(source.getLight(i->data).getDerivedPosition());
+                vec3 = source.getInverseWorldMatrix() * source.getLight(i->data).getDerivedPosition();
                 setConstant(i->index, vec3.length());
                 break;
             case ACT_SHADOW_EXTRUSION_DISTANCE:
@@ -767,10 +741,6 @@ namespace Ogre
                 setConstant(i->index, vec4);
                 break;
             }
-			case ACT_TEXTURE_VIEWPROJ_MATRIX:
-				// can also be updated in lights
-				setConstant(i->index, source.getTextureViewProjMatrix(i->data));
-				break;
             default:
                 // do nothing
                 break;
@@ -1182,14 +1152,12 @@ namespace Ogre
 
     //-----------------------------------------------------------------------
     const GpuProgramParameters::AutoConstantDefinition* 
-	GpuProgramParameters::getAutoConstantDefinition(const size_t idx) 
+	GpuProgramParameters::getAutoConstantDefinition(const  size_t idx) 
     {
 
         if (idx < getNumAutoConstantDefinitions())
         {
-            // verify index is equal to acType
-            // if they are not equal then the dictionary was not setup properly
-            assert(idx == static_cast<size_t>(AutoConstantDictionary[idx].acType));
+            assert(idx == AutoConstantDictionary[idx].acType);
             return &AutoConstantDictionary[idx];
         }
         else
@@ -1265,39 +1233,6 @@ namespace Ogre
         GpuProgram* t = static_cast<GpuProgram*>(target);
         t->setSkeletalAnimationIncluded(StringConverter::parseBool(val));
     }
-	//-----------------------------------------------------------------------
-	String GpuProgram::CmdMorph::doGet(const void* target) const
-	{
-		const GpuProgram* t = static_cast<const GpuProgram*>(target);
-		return StringConverter::toString(t->isMorphAnimationIncluded());
-	}
-	void GpuProgram::CmdMorph::doSet(void* target, const String& val)
-	{
-		GpuProgram* t = static_cast<GpuProgram*>(target);
-		t->setMorphAnimationIncluded(StringConverter::parseBool(val));
-	}
-	//-----------------------------------------------------------------------
-	String GpuProgram::CmdPose::doGet(const void* target) const
-	{
-		const GpuProgram* t = static_cast<const GpuProgram*>(target);
-		return StringConverter::toString(t->getNumberOfPosesIncluded());
-	}
-	void GpuProgram::CmdPose::doSet(void* target, const String& val)
-	{
-		GpuProgram* t = static_cast<GpuProgram*>(target);
-		t->setPoseAnimationIncluded(StringConverter::parseUnsignedInt(val));
-	}
-	//-----------------------------------------------------------------------
-	String GpuProgram::CmdVTF::doGet(const void* target) const
-	{
-		const GpuProgram* t = static_cast<const GpuProgram*>(target);
-		return StringConverter::toString(t->isVertexTextureFetchRequired());
-	}
-	void GpuProgram::CmdVTF::doSet(void* target, const String& val)
-	{
-		GpuProgram* t = static_cast<GpuProgram*>(target);
-		t->setVertexTextureFetchRequired(StringConverter::parseBool(val));
-	}
     //-----------------------------------------------------------------------
     GpuProgramPtr& GpuProgramPtr::operator=(const HighLevelGpuProgramPtr& r)
     {
@@ -1317,12 +1252,6 @@ namespace Ogre
                 ++(*pUseCount);
             }
         }
-		else
-		{
-			// RHS must be a null pointer
-			assert(r.isNull() && "RHS must be null if it has no mutex!");
-			setNull();
-		}
         return *this;
     }
 

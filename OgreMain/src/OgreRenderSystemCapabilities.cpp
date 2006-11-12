@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -38,7 +34,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     RenderSystemCapabilities::RenderSystemCapabilities()
       : mNumWorldMatrices(0), mNumTextureUnits(0), mStencilBufferBitDepth(0),
-        mNumVertexBlendMatrices(0), mCapabilities(0), mNumMultiRenderTargets(1)
+        mNumVertexBlendMatrices(0), mCapabilities(0), mNumMultiRenderTargets(1), 
+		mNonPOW2TexturesLimited(false)
     {
     }
     //-----------------------------------------------------------------------
@@ -138,7 +135,8 @@ namespace Ogre {
             + StringConverter::toString(hasCapability(RSC_TEXTURE_FLOAT), true));
         pLog->logMessage(
             " * Non-power-of-two textures: "
-            + StringConverter::toString(hasCapability(RSC_NON_POWER_OF_2_TEXTURES), true));
+            + StringConverter::toString(hasCapability(RSC_NON_POWER_OF_2_TEXTURES), true)
+			+ (mNonPOW2TexturesLimited ? " (limited)" : ""));
 		pLog->logMessage(
             " * Volume textures: "
             + StringConverter::toString(hasCapability(RSC_TEXTURE_3D), true));
@@ -154,20 +152,6 @@ namespace Ogre {
 		pLog->logMessage(
 			" * Max Point Size: "
 			+ StringConverter::toString(mMaxPointSize));
-		pLog->logMessage(
-			" * Vertex texture fetch: "
-			+ StringConverter::toString(hasCapability(RSC_VERTEX_TEXTURE_FETCH), true));
-		if (hasCapability(RSC_VERTEX_TEXTURE_FETCH))
-		{
-			pLog->logMessage(
-				"   - Max vertex textures: "
-					+ StringConverter::toString(mNumVertexTextureUnits));
-			pLog->logMessage(
-				"   - Vertex textures shared: "
-				+ StringConverter::toString(mVertexTextureUnitsShared, true));
-
-		}
-
 
     }
 };

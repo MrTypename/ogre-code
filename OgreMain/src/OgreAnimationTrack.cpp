@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -260,15 +256,15 @@ namespace Ogre {
 	void NumericAnimationTrack::applyToAnimable(const AnimableValuePtr& anim, Real timePos,
 		Real weight, Real scale)
 	{
-		// Nothing to do if no keyframes
-		if (mKeyFrames.empty())
+		// Nothing to do if no keyframes or zero weight, scale
+		if (mKeyFrames.empty() || !weight || !scale)
 			return;
 
 		NumericKeyFrame kf(0, timePos);
 		getInterpolatedKeyFrame(timePos, &kf);
 		// add to existing. Weights are not relative, but treated as
 		// absolute multipliers for the animation
-		AnyNumeric val = kf.getValue() * weight * scale;
+		AnyNumeric val = kf.getValue() * (weight * scale);
 
 		anim->applyDeltaValue(val);
 
@@ -408,8 +404,8 @@ namespace Ogre {
     void NodeAnimationTrack::applyToNode(Node* node, Real timePos, Real weight,
 		bool accumulate, Real scl)
     {
-		// Nothing to do if no keyframes
-		if (mKeyFrames.empty())
+		// Nothing to do if no keyframes or zero weight
+		if (mKeyFrames.empty() || !weight)
 			return;
 
         TransformKeyFrame kf(0, timePos);
@@ -463,7 +459,7 @@ namespace Ogre {
         }
         String msg = "Time: ";
         msg << timePos;
-        //mMainWindow->setDebugText(msg); - removed
+        mMainWindow->setDebugText(msg);
         */
 
         //node->rotate(kf.getRotation() * weight);

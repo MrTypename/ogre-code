@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -33,15 +29,10 @@ Torus Knot Software Ltd.
 namespace Ogre {
 
 	//-----------------------------------------------------------------------
-#define NO_ATTRIB 0xFFFF
+
 	GLSLLinkProgram::GLSLLinkProgram(void)
         : mUniformRefsBuilt(false)
         , mLinked(false)
-		, mTangentAttrib(NO_ATTRIB)
-		, mBinormalAttrib(NO_ATTRIB)
-		, mBlendIndicesAttrib(NO_ATTRIB)
-		, mBlendWeightsAttrib(NO_ATTRIB)
-
 	{
 			checkForGLSLError( "GLSLLinkProgram::GLSLLinkProgram", "Error prior to Creating GLSL Program Object", 0 );
 		    mGLHandle = glCreateProgramObjectARB();
@@ -61,6 +52,14 @@ namespace Ogre {
 	{
 		if (!mLinked)
 		{
+            // if performing skeletal animation (hardware skinning) then bind default vertex attribute names
+            // note that attribute binding has to occur prior to final link of shader objects
+            if (mSkeletalAnimation)
+            {
+                glBindAttribLocationARB(mGLHandle, 7, "BlendIndex");
+                glBindAttribLocationARB(mGLHandle, 1, "BlendWeight");
+            }
+
 			glLinkProgramARB( mGLHandle );
 			glGetObjectParameterivARB( mGLHandle, GL_OBJECT_LINK_STATUS_ARB, &mLinked );
 			// force logging and raise exception if not linked
@@ -70,7 +69,6 @@ namespace Ogre {
 			{
 				logObjectInfo( String("GLSL link result : "), mGLHandle );
 				buildUniformReferences();
-				extractAttributes();
 			}
 
 		}
@@ -81,57 +79,6 @@ namespace Ogre {
 		}
 	}
 
-	//-----------------------------------------------------------------------
-	void GLSLLinkProgram::extractAttributes(void)
-	{
-		GLint attrib = glGetAttribLocationARB(mGLHandle, "tangent");
-		mTangentAttrib = (attrib == -1)? NO_ATTRIB : (GLuint)attrib;
-		
-		attrib = glGetAttribLocationARB(mGLHandle, "binormal");
-		mBinormalAttrib = (attrib == -1)? NO_ATTRIB : (GLuint)attrib;
-
-		attrib = glGetAttribLocationARB(mGLHandle, "blendIndices");
-		mBlendIndicesAttrib = (attrib == -1)? NO_ATTRIB : (GLuint)attrib;
-
-		attrib = glGetAttribLocationARB(mGLHandle, "blendWeights");
-		mBlendWeightsAttrib = (attrib == -1)? NO_ATTRIB : (GLuint)attrib;
-
-	}
-	//-----------------------------------------------------------------------
-	GLuint GLSLLinkProgram::getAttributeIndex(VertexElementSemantic semantic)
-	{
-		switch(semantic)
-		{
-		case VES_TANGENT:
-			return mTangentAttrib;
-		case VES_BINORMAL:
-			return mBinormalAttrib;
-		case VES_BLEND_WEIGHTS:
-			return mBlendWeightsAttrib;
-		case VES_BLEND_INDICES:
-			return mBlendIndicesAttrib;
-		default:
-			assert(false && "Shouldn't be calling this with standard attribs!");
-			return 0;
-		};
-	}
-	//-----------------------------------------------------------------------
-	bool GLSLLinkProgram::isAttributeValid(VertexElementSemantic semantic)
-	{
-		switch(semantic)
-		{
-		case VES_TANGENT:
-			return mTangentAttrib != NO_ATTRIB;
-		case VES_BINORMAL:
-			return mBinormalAttrib != NO_ATTRIB;
-		case VES_BLEND_WEIGHTS:
-			return mBlendWeightsAttrib != NO_ATTRIB;
-		case VES_BLEND_INDICES:
-			return mBlendIndicesAttrib != NO_ATTRIB;
-		default:
-			return false;
-		};
-	}
 	//-----------------------------------------------------------------------
 	void GLSLLinkProgram::buildUniformReferences(void)
 	{
@@ -160,28 +107,30 @@ namespace Ogre {
 				{
 					// user defined uniform found, add it to the reference list
 					newUniformReference.mName = String( uniformName );
-					// default to real since most uniforms are real
-					newUniformReference.isReal = true;
-                    newUniformReference.isSampler = false;
 					// decode uniform size and type
 					switch (newUniformReference.mType)
 					{
 					case GL_FLOAT:
+						newUniformReference.isReal = true;
 						newUniformReference.mElementCount = 1;
 						break;
 
 					case GL_FLOAT_VEC2:
+						newUniformReference.isReal = true;
 						newUniformReference.mElementCount = 2;
 						break;
 
 					case GL_FLOAT_VEC3:
+						newUniformReference.isReal = true;
 						newUniformReference.mElementCount = 3;
 						break;
 
 					case GL_FLOAT_VEC4:
+						newUniformReference.isReal = true;
 						newUniformReference.mElementCount = 4;
 						break;
 
+					case GL_INT:
 					case GL_SAMPLER_1D:
 					case GL_SAMPLER_2D:
 					case GL_SAMPLER_3D:
@@ -190,8 +139,6 @@ namespace Ogre {
 					case GL_SAMPLER_2D_SHADOW:
                     case GL_SAMPLER_2D_RECT_ARB:
                     case GL_SAMPLER_2D_RECT_SHADOW_ARB:
-                        newUniformReference.isSampler = true;
-					case GL_INT:
 						newUniformReference.isReal = false;
 						newUniformReference.mElementCount = 1;
 						break;
@@ -212,14 +159,17 @@ namespace Ogre {
 						break;
 
                     case GL_FLOAT_MAT2:
+						newUniformReference.isReal = true;
 						newUniformReference.mElementCount = 4;
 						break;
 
                     case GL_FLOAT_MAT3:
+						newUniformReference.isReal = true;
 						newUniformReference.mElementCount = 9;
 						break;
 
                     case GL_FLOAT_MAT4:
+						newUniformReference.isReal = true;
 						newUniformReference.mElementCount = 16;
 						break;
 
@@ -364,6 +314,8 @@ namespace Ogre {
 				}
 
 			}
+
+
 			// get the next uniform
 			++currentUniform;
 

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9Texture.h"
@@ -64,7 +60,7 @@ namespace Ogre
 	{
         // have to call this here reather than in Resource destructor
         // since calling virtual methods in base destructors causes crash
-		if (isLoaded())
+		if (mIsLoaded)
 		{
 			unload(); 
 		}
@@ -173,11 +169,20 @@ namespace Ogre
 		}
 	}
 	/****************************************************************************************/
+	void D3D9Texture::loadImage( const Image &img )
+	{
+		// Use OGRE its own codecs
+		std::vector<const Image*> imagePtrs;
+		imagePtrs.push_back(&img);
+		_loadImages( imagePtrs );
+	}
+	/****************************************************************************************/
 	void D3D9Texture::loadImpl()
 	{
 		if (mUsage & TU_RENDERTARGET)
 		{
 			createInternalResources();
+			mIsLoaded = true;
 			return;
 		}
 
@@ -286,6 +291,7 @@ namespace Ogre
             // set src and dest attributes to the same, we can't know
             _setSrcAttributes(texDesc.Width, texDesc.Height, 1, D3D9Mappings::_getPF(texDesc.Format));
             _setFinalAttributes(texDesc.Width, texDesc.Height, 1,  D3D9Mappings::_getPF(texDesc.Format));
+			mIsLoaded = true;
 			mInternalResourcesCreated = true;
         }
         else
@@ -297,7 +303,7 @@ namespace Ogre
 			baseName = mName.substr(0, pos);
 			ext = mName.substr(pos+1);
 			std::vector<Image> images(6);
-			ConstImagePtrList imagePtrs;
+			std::vector<const Image*> imagePtrs;
 			static const String suffixes[6] = {"_rt", "_lf", "_up", "_dn", "_fr", "_bk"};
 
 			for(size_t i = 0; i < 6; i++)
@@ -389,6 +395,7 @@ namespace Ogre
 			// set src and dest attributes to the same, we can't know
 			_setSrcAttributes(texDesc.Width, texDesc.Height, texDesc.Depth, D3D9Mappings::_getPF(texDesc.Format));
 			_setFinalAttributes(texDesc.Width, texDesc.Height, texDesc.Depth, D3D9Mappings::_getPF(texDesc.Format));
+			mIsLoaded = true;
 			mInternalResourcesCreated = true;
         }
 		else
@@ -403,11 +410,7 @@ namespace Ogre
 			String ext = mName.substr(pos+1);
 	
 			img.load(dstream, ext);
-			// Call internal _loadImages, not loadImage since that's external and 
-			// will determine load status etc again
-			ConstImagePtrList imagePtrs;
-			imagePtrs.push_back(&img);
-			_loadImages( imagePtrs );
+			loadImage(img);
 		}
     }
 	/****************************************************************************************/
@@ -482,6 +485,7 @@ namespace Ogre
 			// set src and dest attributes to the same, we can't know
 			_setSrcAttributes(texDesc.Width, texDesc.Height, 1, D3D9Mappings::_getPF(texDesc.Format));
 			_setFinalAttributes(texDesc.Width, texDesc.Height, 1, D3D9Mappings::_getPF(texDesc.Format));
+			mIsLoaded = true;
 			mInternalResourcesCreated = true;
         }
 		else
@@ -497,11 +501,7 @@ namespace Ogre
 			String ext = mName.substr(pos+1);
 			
 			img.load(dstream, ext);
-			// Call internal _loadImages, not loadImage since that's external and 
-			// will determine load status etc again
-			ConstImagePtrList imagePtrs;
-			imagePtrs.push_back(&img);
-			_loadImages( imagePtrs );
+			loadImage(img);
 		}
 	}
 	/****************************************************************************************/
@@ -882,9 +882,13 @@ namespace Ogre
         mDepth = depth;
 		mFormat = format; 
 
-		// Update size (the final size, including temp space because in consumed memory)
+		// Update size (the final size, not including temp space)
 		// this is needed in Resource class
-		mSize = calculateSize();
+		unsigned short bytesPerPixel = mFinalBpp >> 3;
+		if( !mHasAlpha && mFinalBpp == 32 )
+			bytesPerPixel--;
+		mSize = mWidth * mHeight * mDepth * bytesPerPixel 
+            * (mTextureType == TEX_TYPE_CUBE_MAP)? 6 : 1;
 
 		// say to the world what we are doing
 		if (mWidth != mSrcWidth ||
@@ -905,8 +909,8 @@ namespace Ogre
 		// set source image attributes
 		mSrcWidth = width; 
 		mSrcHeight = height; 
-		mSrcDepth = depth;
-        mSrcFormat = format;
+		mSrcBpp = PixelUtil::getNumElemBits(format); 
+        mHasAlpha = PixelUtil::getFlags(format) & PFF_HASALPHA; 
 		// say to the world what we are doing
 		switch (this->getTextureType())
 		{
@@ -1192,7 +1196,7 @@ namespace Ogre
 			// 1. This is a render texture, or
 			// 2. This is a manual texture with no loader, or
 			// 3. This was an unloaded regular texture (preserve unloaded state)
-			if ((mIsManual && !mLoader) || (mUsage & TU_RENDERTARGET) || !isLoaded())
+			if ((mIsManual && !mLoader) || (mUsage & TU_RENDERTARGET) || !mIsLoaded)
 			{
 				// just recreate any internal resources
 				createInternalResources();

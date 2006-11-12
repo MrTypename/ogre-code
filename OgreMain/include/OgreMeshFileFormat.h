@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __MeshFileFormat_H__
@@ -140,7 +136,6 @@ namespace Ogre {
 				M_EDGE_LIST_LOD = 0xB100,
 					// unsigned short lodIndex
 					// bool isManual			// If manual, no edge data here, loaded from manual mesh
-                        // bool isClosed
                         // unsigned long numTriangles
                         // unsigned long numEdgeGroups
 						// Triangle* triangleList
@@ -152,8 +147,6 @@ namespace Ogre {
 
                         M_EDGE_GROUP = 0xB110,
                             // unsigned long vertexSet
-                            // unsigned long triStart
-                            // unsigned long triCount
                             // unsigned long numEdges
 						    // Edge* edgeList
                                 // unsigned long  triIndex[2]

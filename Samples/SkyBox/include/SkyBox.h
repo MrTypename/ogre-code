@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -38,36 +38,35 @@ public:
 
     bool frameStarted( const FrameEvent& evt )
     {
-        if( ExampleFrameListener::frameStarted( evt ) == false )
-		return false;
+        bool bOK = ExampleFrameListener::frameStarted( evt );
 
-        if( mKeyboard->isKeyDown( OIS::KC_N ) )
+        if( mInputDevice->isKeyDown( KC_N ) )
         {
             pThrusters->setDefaultDimensions( fDefDim + 0.25, fDefDim + 0.25 );
             fDefDim += 0.25;
         }
 
-        if( mKeyboard->isKeyDown( OIS::KC_M ) )
+        if( mInputDevice->isKeyDown( KC_M ) )
         {
             pThrusters->setDefaultDimensions( fDefDim - 0.25, fDefDim - 0.25 );
             fDefDim -= 0.25;
         }
 
-        if( mKeyboard->isKeyDown( OIS::KC_H ) )
+        if( mInputDevice->isKeyDown( KC_H ) )
         {
             pThrusters->getEmitter( 0 )->setParticleVelocity( fDefVel + 1 );
             pThrusters->getEmitter( 1 )->setParticleVelocity( fDefVel + 1 );
             fDefVel += 1;            
         }
 
-        if( mKeyboard->isKeyDown( OIS::KC_J ) && !( fDefVel < 0.0f ) )
+        if( mInputDevice->isKeyDown( KC_J ) && !( fDefVel < 0.0f ) )
         {
             pThrusters->getEmitter( 0 )->setParticleVelocity( fDefVel - 1 );
             pThrusters->getEmitter( 1 )->setParticleVelocity( fDefVel - 1 );
             fDefVel -= 1;            
         }
 
-        return true;
+        return bOK;
     }
 };
 

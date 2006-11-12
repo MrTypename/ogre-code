@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -32,13 +28,12 @@ Torus Knot Software Ltd.
 #include "OgreLogManager.h"
 #include "OgreString.h"
 
-namespace Ogre
-{
+namespace Ogre {
 
     //-----------------------------------------------------------------------
-    Log::Log( const String& name, bool debuggerOuput, bool suppressFile ) : 
-        mLogLevel(LL_NORMAL), mDebugOut(debuggerOuput),
-        mSuppressFile(suppressFile), mLogName(name)
+    Log::Log( const String& name, bool debuggerOuput, bool suppressFile )
+		: mLogLevel(LL_NORMAL), mDebugOut(debuggerOuput), mSuppressFile(suppressFile), 
+		mName(name)
     {
 		if (!mSuppressFile)
 		{
@@ -48,7 +43,6 @@ namespace Ogre
     //-----------------------------------------------------------------------
     Log::~Log()
     {
-		OGRE_LOCK_AUTO_MUTEX
 		if (!mSuppressFile)
 		{
 	        mfpLog.close();
@@ -57,11 +51,13 @@ namespace Ogre
     //-----------------------------------------------------------------------
     void Log::logMessage( const String& message, LogMessageLevel lml, bool maskDebug )
     {
-		OGRE_LOCK_AUTO_MUTEX
         if ((mLogLevel + lml) >= OGRE_LOG_THRESHOLD)
         {
-            for( mtLogListener::iterator i = mListeners.begin(); i != mListeners.end(); ++i )
-                (*i)->messageLogged( message, lml, maskDebug, mLogName );
+			// Reroute to log manager for custom listeners.
+			if ( LogManager::getSingletonPtr() ) 
+			{
+				LogManager::getSingleton()._routeMessage( mName,message,lml,maskDebug );
+			}
 
 			if (mDebugOut && !maskDebug)
                 std::cerr << message << std::endl;
@@ -82,25 +78,9 @@ namespace Ogre
 			}
         }
     }
-
     //-----------------------------------------------------------------------
     void Log::setLogDetail(LoggingLevel ll)
     {
-		OGRE_LOCK_AUTO_MUTEX
         mLogLevel = ll;
-    }
-
-    //-----------------------------------------------------------------------
-    void Log::addListener(LogListener* listener)
-    {
-		OGRE_LOCK_AUTO_MUTEX
-        mListeners.push_back(listener);
-    }
-
-    //-----------------------------------------------------------------------
-    void Log::removeListener(LogListener* listener)
-    {
-		OGRE_LOCK_AUTO_MUTEX
-        mListeners.erase(std::find(mListeners.begin(), mListeners.end(), listener));
     }
 }

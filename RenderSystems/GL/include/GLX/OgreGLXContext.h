@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __OgreGLXContext_H__
@@ -42,31 +38,15 @@ namespace Ogre {
     public:
         GLXContext(::Display *dpy,
                     ::GLXDrawable drawable,
-                    ::GLXContext ctx, 
-					::XVisualInfo* visualInfo);
-        GLXContext(::Display *dpy,
-                    ::GLXDrawable drawable,
-                    ::GLXContext ctx, 
-					::GLXFBConfig fbconfig);
-
-
+                    ::GLXContext ctx);
         virtual ~GLXContext();
 
         /** See GLContext */
         virtual void setCurrent();
-		/** See GLContext */
-		virtual void endCurrent();
 
-		/// @copydoc GLContext::clone
-		GLContext* clone() const;
-
-		::Display *mDpy;
+        ::Display *mDpy;
         ::GLXDrawable mDrawable;
         ::GLXContext mCtx;
-		// only valid for window contexts
-		::XVisualInfo* mVisualInfo;
-		// only valid for PBuffer contexts
-		::GLXFBConfig mFBConfig;
     };
 }
 

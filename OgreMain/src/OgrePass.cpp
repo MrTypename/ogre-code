@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -37,125 +33,63 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 	
-	/** Default pass hash function.
-	@remarks
-		Tries to minimise the number of texture changes.
-	*/
-	struct MinTextureStateChangeHashFunc : public Pass::HashFunc
-	{
-		uint32 operator()(const Pass* p) const
-		{
-
-			_StringHash H;
-			uint32 hash = p->getIndex() << 28;
-			size_t c = p->getNumTextureUnitStates();
-
-			const TextureUnitState* t0 = 0;
-			const TextureUnitState* t1 = 0;
-			if (c)
-				t0 = p->getTextureUnitState(0);
-			if (c > 1)
-				t1 = p->getTextureUnitState(1);
-
-			if (t0 && !t0->isBlank())
-				hash += (H(t0->getTextureName()) % (1 << 14)) << 14;
-			if (t1 && !t1->isBlank())
-				hash += (H(t1->getTextureName()) % (1 << 14));
-
-			return hash;
-		}
-	};
-	MinTextureStateChangeHashFunc sMinTextureStateChangeHashFunc;
-	/** Alternate pass hash function.
-	@remarks
-		Tries to minimise the number of GPU program changes.
-	*/
-	struct MinGpuProgramChangeHashFunc : public Pass::HashFunc
-	{
-		uint32 operator()(const Pass* p) const
-		{
-
-			_StringHash H;
-			uint32 hash = p->getIndex() << 28;
-			if (p->hasVertexProgram())
-				hash += (H(p->getVertexProgramName()) % (1 << 14)) << 14;
-			if (p->hasFragmentProgram())
-				hash += (H(p->getFragmentProgramName()) % (1 << 14));
-
-			return hash;
-		}
-	};
-	MinGpuProgramChangeHashFunc sMinGpuProgramChangeHashFunc;
     //-----------------------------------------------------------------------------
 	Pass::PassSet Pass::msDirtyHashList;
     Pass::PassSet Pass::msPassGraveyard;
-	Pass::HashFunc* Pass::msHashFunc = &sMinTextureStateChangeHashFunc;
-	//-----------------------------------------------------------------------------
-	void Pass::setHashFunction(BuiltinHashFunction builtin)
-	{
-		switch(builtin)
-		{
-		case MIN_TEXTURE_CHANGE:
-			msHashFunc = &sMinTextureStateChangeHashFunc;
-			break;
-		case MIN_GPU_PROGRAM_CHANGE:
-			msHashFunc = &sMinGpuProgramChangeHashFunc;
-			break;
-		}
-	}
     //-----------------------------------------------------------------------------
 	Pass::Pass(Technique* parent, unsigned short index)
-        : mParent(parent)
-		, mIndex(index)
-		, mHash(0)
-		, mAmbient(ColourValue::White)
-		, mDiffuse(ColourValue::White)
-		, mSpecular(ColourValue::Black)
-		, mEmissive(ColourValue::Black)
-		, mShininess(0)
-		, mTracking(TVC_NONE)
-		, mSourceBlendFactor(SBF_ONE)
-		, mDestBlendFactor(SBF_ZERO)
-		, mDepthCheck(true)
-		, mDepthWrite(true)
-		, mDepthFunc(CMPF_LESS_EQUAL)
-		, mDepthBias(0)
-		, mColourWrite(true)
-		, mAlphaRejectFunc(CMPF_ALWAYS_PASS)
-		, mAlphaRejectVal(0)
-		, mCullMode(CULL_CLOCKWISE)
-		, mManualCullMode(MANUAL_CULL_BACK)
-		, mLightingEnabled(true)
-		, mMaxSimultaneousLights(OGRE_MAX_SIMULTANEOUS_LIGHTS)
-		, mStartLight(0)
-		, mIteratePerLight(false)
-		, mLightsPerIteration(1)
-		, mRunOnlyForOneLightType(true)
-		, mOnlyLightType(Light::LT_POINT)
-		, mShadeOptions(SO_GOURAUD)
-		, mPolygonMode(PM_SOLID)
-		, mFogOverride(false)
-		, mFogMode(FOG_NONE)
-		, mFogColour(ColourValue::White)
-		, mFogStart(0.0)
-		, mFogEnd(1.0)
-		, mFogDensity(0.001)
-		, mVertexProgramUsage(0)
-		, mShadowCasterVertexProgramUsage(0)
-		, mShadowReceiverVertexProgramUsage(0)
-		, mFragmentProgramUsage(0)
-		, mShadowReceiverFragmentProgramUsage(0)
-		, mQueuedForDeletion(false)
-		, mPassIterationCount(1)
-		, mPointSize(1.0f)
-		, mPointMinSize(0.0f)
-		, mPointMaxSize(0.0f)
-		, mPointSpritesEnabled(false)
-		, mPointAttenuationEnabled(false)
-		, mContentTypeLookupBuilt(false)
+        : mParent(parent), mIndex(index), mPassIterationCount(0)
     {
+        // Default to white ambient & diffuse, no specular / emissive
+	    mAmbient = mDiffuse = ColourValue::White;
+	    mSpecular = mEmissive = ColourValue::Black;
+	    mShininess = 0;
+        mPointSize = 1.0f;
+		mPointMinSize = 0.0f;
+		mPointMaxSize = 0.0f;
+		mPointSpritesEnabled = false;
+		mPointAttenuationEnabled = false;
 		mPointAttenuationCoeffs[0] = 1.0f;
 		mPointAttenuationCoeffs[1] = mPointAttenuationCoeffs[2] = 0.0f;
+        mTracking = TVC_NONE;
+        mHash = 0;
+
+        // By default, don't override the scene's fog settings
+        mFogOverride = false;
+        mFogMode = FOG_NONE;
+        mFogColour = ColourValue::White;
+        mFogStart = 0.0;
+        mFogEnd = 1.0;
+        mFogDensity = 0.001;
+
+	    // Default blending (overwrite)
+	    mSourceBlendFactor = SBF_ONE;
+	    mDestBlendFactor = SBF_ZERO;
+
+	    mDepthCheck = true;
+	    mDepthWrite = true;
+        mColourWrite = true;
+	    mDepthFunc = CMPF_LESS_EQUAL;
+        mDepthBias = 0;
+		mAlphaRejectFunc = CMPF_ALWAYS_PASS;
+		mAlphaRejectVal = 0;
+	    mCullMode = CULL_CLOCKWISE;
+	    mManualCullMode = MANUAL_CULL_BACK;
+	    mLightingEnabled = true;
+        mMaxSimultaneousLights = OGRE_MAX_SIMULTANEOUS_LIGHTS;
+		mIteratePerLight = false;
+        mRunOnlyForOneLightType = true;
+        mOnlyLightType = Light::LT_POINT;
+	    mShadeOptions = SO_GOURAUD;
+		mPolygonMode = PM_SOLID;
+
+		mVertexProgramUsage = NULL;
+        mShadowCasterVertexProgramUsage = NULL;
+        mShadowReceiverVertexProgramUsage = NULL;
+		mShadowReceiverFragmentProgramUsage = NULL;
+		mFragmentProgramUsage = NULL;
+
+        mQueuedForDeletion = false;
 
         // default name to index
         mName = StringConverter::toString(mIndex);
@@ -165,7 +99,7 @@ namespace Ogre {
 	
     //-----------------------------------------------------------------------------
 	Pass::Pass(Technique *parent, unsigned short index, const Pass& oth)
-        :mParent(parent), mIndex(index), mQueuedForDeletion(false), mPassIterationCount(1)
+        :mParent(parent), mIndex(index), mQueuedForDeletion(false), mPassIterationCount(0)
     {
         *this = oth;
         mParent = parent;
@@ -213,9 +147,7 @@ namespace Ogre {
 	    mManualCullMode = oth.mManualCullMode;
 	    mLightingEnabled = oth.mLightingEnabled;
         mMaxSimultaneousLights = oth.mMaxSimultaneousLights;
-		mStartLight = oth.mStartLight;
 		mIteratePerLight = oth.mIteratePerLight;
-		mLightsPerIteration = oth.mLightsPerIteration;
         mRunOnlyForOneLightType = oth.mRunOnlyForOneLightType;
         mOnlyLightType = oth.mOnlyLightType;
 	    mShadeOptions = oth.mShadeOptions;
@@ -227,8 +159,6 @@ namespace Ogre {
 		mPointSpritesEnabled = oth.mPointSpritesEnabled;
 		mPointAttenuationEnabled = oth.mPointAttenuationEnabled;
 		memcpy(mPointAttenuationCoeffs, oth.mPointAttenuationCoeffs, sizeof(Real)*3);
-		mShadowContentTypeLookup = oth.mShadowContentTypeLookup;
-		mContentTypeLookupBuilt = oth.mContentTypeLookupBuilt;
 
 
 		if (oth.mVertexProgramUsage)
@@ -467,7 +397,6 @@ namespace Ogre {
     {
         TextureUnitState *t = new TextureUnitState(this);
         addTextureUnitState(t);
-		mContentTypeLookupBuilt = false;
 	    return t;
     }
     //-----------------------------------------------------------------------
@@ -478,7 +407,6 @@ namespace Ogre {
 	    t->setTextureName(textureName);
 	    t->setTextureCoordSet(texCoordSet);
         addTextureUnitState(t);
-		mContentTypeLookupBuilt = false;
 	    return t;
     }
     //-----------------------------------------------------------------------
@@ -510,7 +438,6 @@ namespace Ogre {
 				    "Pass:addTextureUnitState");
 
             }
-			mContentTypeLookupBuilt = false;
         }
 	}
     //-----------------------------------------------------------------------
@@ -627,7 +554,6 @@ namespace Ogre {
             mParent->_notifyNeedsRecompile();
         }
         _dirtyHash();
-		mContentTypeLookupBuilt = false;
     }
     //-----------------------------------------------------------------------
     void Pass::removeAllTextureUnitStates(void)
@@ -645,7 +571,6 @@ namespace Ogre {
             mParent->_notifyNeedsRecompile();
         }
         _dirtyHash();
-		mContentTypeLookupBuilt = false;
     }
     //-----------------------------------------------------------------------
     void Pass::setSceneBlending(SceneBlendType sbt)
@@ -791,26 +716,6 @@ namespace Ogre {
     {
         return mMaxSimultaneousLights;
     }
-	//-----------------------------------------------------------------------
-	void Pass::setStartLight(unsigned short startLight)
-	{
-		mStartLight = startLight;
-	}
-	//-----------------------------------------------------------------------
-	unsigned short Pass::getStartLight(void) const
-	{
-		return mStartLight;
-	}
-	//-----------------------------------------------------------------------
-	void Pass::setLightCountPerIteration(unsigned short c)
-	{
-		mLightsPerIteration = c;
-	}
-	//-----------------------------------------------------------------------
-	unsigned short Pass::getLightCountPerIteration(void) const
-	{
-		return mLightsPerIteration;
-	}
     //-----------------------------------------------------------------------
     void Pass::setIteratePerLight(bool enabled, 
             bool onlyForOneLightType, Light::LightTypes lightType)
@@ -942,7 +847,6 @@ namespace Ogre {
 			// been transferred
 			mTextureUnitStates.erase(istart, iend);
 			_dirtyHash();
-			mContentTypeLookupBuilt = false;
 			return newPass;
 		}
 		return NULL;
@@ -1147,7 +1051,14 @@ namespace Ogre {
            on the assumption that these are less frequently used; sorting on 
            the first 2 gives us the most benefit for now.
        */
-        mHash = (*msHashFunc)(this);
+        _StringHash H;
+        mHash = (mIndex << 28);
+        size_t c = getNumTextureUnitStates();
+
+        if (c && !mTextureUnitStates[0]->isBlank())
+            mHash += (H(mTextureUnitStates[0]->getTextureName()) % (1 << 14)) << 14;
+        if (c > 1 && !mTextureUnitStates[1]->isBlank())
+            mHash += (H(mTextureUnitStates[1]->getTextureName()) % (1 << 14));
     }
     //-----------------------------------------------------------------------
 	void Pass::_dirtyHash(void)
@@ -1469,54 +1380,6 @@ namespace Ogre {
         return testResult;
 
     }
-	//-----------------------------------------------------------------------
-	unsigned short Pass::_getTextureUnitWithContentTypeIndex(
-		TextureUnitState::ContentType contentType, unsigned short index) const
-	{
-		if (!mContentTypeLookupBuilt)
-		{
-			mShadowContentTypeLookup.clear();
-			for (unsigned short i = 0; i < mTextureUnitStates.size(); ++i)
-			{
-				if (mTextureUnitStates[i]->getContentType() == TextureUnitState::CONTENT_SHADOW)
-				{
-					mShadowContentTypeLookup.push_back(i);
-				}
-			}
-			mContentTypeLookupBuilt = true;
-		}
-
-		switch(contentType)
-		{
-		case TextureUnitState::CONTENT_SHADOW:
-			if (index < mShadowContentTypeLookup.size())
-			{
-				return mShadowContentTypeLookup[index];
-			}
-			break;
-		default:
-			// Simple iteration
-			for (unsigned short i = 0; i < mTextureUnitStates.size(); ++i)
-			{
-				if (mTextureUnitStates[i]->getContentType() == TextureUnitState::CONTENT_SHADOW)
-				{
-					if (index == 0)
-					{
-						return i;
-					}
-					else
-					{
-						--index;
-					}
-				}
-			}
-			break;
-		}
-
-		// not found - return out of range
-		return mTextureUnitStates.size() + 1;
-
-	}
 
 
 }

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -50,18 +46,19 @@ namespace Ogre {
 			mMipmapsHardwareGenerated(false),
             mGamma(1.0f),
             mTextureType(TEX_TYPE_2D),            
-            mFormat(PF_UNKNOWN),
+            mFormat(PF_A8R8G8B8),
             mUsage(TU_DEFAULT),
-            mSrcFormat(PF_UNKNOWN),
+            // mSrcBpp inited later on
             mSrcWidth(0),
             mSrcHeight(0), 
             mSrcDepth(0),
-            mDesiredFormat(PF_UNKNOWN),
-            mDesiredIntegerBitDepth(0),
-            mDesiredFloatBitDepth(0),
-            mTreatLuminanceAsAlpha(false),
+            // mFinalBpp inited later on by enable32bit
+            mHasAlpha(false),
             mInternalResourcesCreated(false)
     {
+
+		enable32Bit(false);
+
         if (createParamDictionary("Texture"))
         {
             // Define the parameters that have to be present to load
@@ -75,12 +72,12 @@ namespace Ogre {
 		{
 			TextureManager& tmgr = TextureManager::getSingleton();
 			setNumMipmaps(tmgr.getDefaultNumMipmaps());
-			setDesiredBitDepths(tmgr.getPreferredIntegerBitDepth(), tmgr.getPreferredFloatBitDepth());
+			enable32Bit(tmgr.isEnable32BitTextures());
 		}
 
         
     }
-	//--------------------------------------------------------------------------
+	//--------------------------------------------------------------------------    //--------------------------------------------------------------------------
 	void Texture::loadRawData( DataStreamPtr& stream, 
 		ushort uWidth, ushort uHeight, PixelFormat eFormat)
 	{
@@ -88,101 +85,14 @@ namespace Ogre {
 		img.loadRawData(stream, uWidth, uHeight, eFormat);
 		loadImage(img);
 	}
-	//--------------------------------------------------------------------------    
-	void Texture::loadImage( const Image &img )
-	{
-		// Scope lock over load status
-		{
-			OGRE_LOCK_MUTEX(mLoadingStatusMutex)
-			if (mLoadingState != LOADSTATE_UNLOADED)
-			{
-				// no loading to be done
-				return;
-			}
-			mLoadingState = LOADSTATE_LOADING;
-		}
-
-		// Scope lock for actual loading
-		try
-		{
-			OGRE_LOCK_AUTO_MUTEX
-			std::vector<const Image*> imagePtrs;
-			imagePtrs.push_back(&img);
-			_loadImages( imagePtrs );
-
-		}
-		catch (...)
-		{
-			// Reset loading in-progress flag in case failed for some reason
-			OGRE_LOCK_MUTEX(mLoadingStatusMutex)
-			mLoadingState = LOADSTATE_UNLOADED;
-			// Re-throw
-			throw;
-		}
-
-		// Scope lock for loading progress
-		{
-			OGRE_LOCK_MUTEX(mLoadingStatusMutex)
-
-			// Now loaded
-			mLoadingState = LOADSTATE_LOADED;
-		}
-
-		// Notify manager
-		if(mCreator)
-			mCreator->_notifyResourceLoaded(this);
-
-		// No deferred loading events since this method is not called in background
-
-
-	}
     //--------------------------------------------------------------------------
     void Texture::setFormat(PixelFormat pf)
     {
         mFormat = pf;
-        mDesiredFormat = pf;
-        mSrcFormat = pf;
-    }
-    //--------------------------------------------------------------------------
-    bool Texture::hasAlpha(void) const
-    {
-        return PixelUtil::hasAlpha(mFormat);
-    }
-    //--------------------------------------------------------------------------
-    void Texture::setDesiredIntegerBitDepth(ushort bits)
-    {
-        mDesiredIntegerBitDepth = bits;
-    }
-    //--------------------------------------------------------------------------
-    ushort Texture::getDesiredIntegerBitDepth(void) const
-    {
-        return mDesiredIntegerBitDepth;
-    }
-    //--------------------------------------------------------------------------
-    void Texture::setDesiredFloatBitDepth(ushort bits)
-    {
-        mDesiredFloatBitDepth = bits;
-    }
-    //--------------------------------------------------------------------------
-    ushort Texture::getDesiredFloatBitDepth(void) const
-    {
-        return mDesiredFloatBitDepth;
-    }
-    //--------------------------------------------------------------------------
-    void Texture::setDesiredBitDepths(ushort integerBits, ushort floatBits)
-    {
-        mDesiredIntegerBitDepth = integerBits;
-        mDesiredFloatBitDepth = floatBits;
-    }
-    //--------------------------------------------------------------------------
-    void Texture::setTreatLuminanceAsAlpha(bool asAlpha)
-    {
-        mTreatLuminanceAsAlpha = asAlpha;
-    }
-    //--------------------------------------------------------------------------
-    bool Texture::getTreatLuminanceAsAlpha(void) const
-    {
-        return mTreatLuminanceAsAlpha;
+        // This should probably change with new texture access methods, but
+        // no changes made for now
+        mSrcBpp = PixelUtil::getNumElemBytes(mFormat);
+        mHasAlpha = PixelUtil::getFlags(mFormat) & PFF_HASALPHA;
     }
     //--------------------------------------------------------------------------
 	size_t Texture::calculateSize(void) const
@@ -195,40 +105,67 @@ namespace Ogre {
 		return getTextureType() == TEX_TYPE_CUBE_MAP ? 6 : 1;
 	}
 	//--------------------------------------------------------------------------
-    void Texture::_loadImages( const ConstImagePtrList& images )
+    void Texture::_loadImages( const std::vector<const Image*>& images )
     {
 		if(images.size() < 1)
 			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Cannot load empty vector of images",
 			 "Texture::loadImages");
         
+        if( mIsLoaded )
+        {
+			LogManager::getSingleton().logMessage( 
+				LML_NORMAL, "Texture: "+mName+": Unloading Image");
+            unload();
+        }
+
 		// Set desired texture size and properties from images[0]
 		mSrcWidth = mWidth = images[0]->getWidth();
 		mSrcHeight = mHeight = images[0]->getHeight();
 		mSrcDepth = mDepth = images[0]->getDepth();
-
-        // Get source image format and adjust if required
-        mSrcFormat = images[0]->getFormat();
-        if (mTreatLuminanceAsAlpha && mSrcFormat == PF_L8)
+        if (mHasAlpha && images[0]->getFormat() == PF_L8)
         {
-            mSrcFormat = PF_A8;
-        }
-
-        if (mDesiredFormat != PF_UNKNOWN)
-        {
-            // If have desired format, use it
-            mFormat = mDesiredFormat;
+            mFormat = PF_A8;
+            mSrcBpp = 8;
         }
         else
         {
-            // Get the format according with desired bit depth
-            mFormat = PixelUtil::getFormatForBitDepths(mSrcFormat, mDesiredIntegerBitDepth, mDesiredFloatBitDepth);
+            mFormat = images[0]->getFormat();
+            mSrcBpp = PixelUtil::getNumElemBits(mFormat);
+            mHasAlpha = PixelUtil::hasAlpha(mFormat);
         }
 
+		if (mFinalBpp == 16) 
+		{
+			// Drop down texture internal format
+			switch (mFormat) 
+			{
+			case PF_R8G8B8:
+			case PF_X8R8G8B8:
+				mFormat = PF_R5G6B5;
+				break;
+			
+			case PF_B8G8R8:
+			case PF_X8B8G8R8:
+				mFormat = PF_B5G6R5;
+				break;
+				
+			case PF_A8R8G8B8:
+			case PF_R8G8B8A8:
+    			case PF_A8B8G8R8:
+			case PF_B8G8R8A8:
+				mFormat = PF_A4R4G4B4;
+				break;
+
+			default:
+				break; // use original image format
+			}
+		}
+		
 		// The custom mipmaps in the image have priority over everything
         size_t imageMips = images[0]->getNumMipmaps();
 
 		if(imageMips > 0) {
-			mNumMipmaps = mNumRequestedMipmaps = images[0]->getNumMipmaps();
+			mNumMipmaps = images[0]->getNumMipmaps();
 			// Disable flag for auto mip generation
 			mUsage &= ~TU_AUTOMIPMAP;
 		}
@@ -304,11 +241,11 @@ namespace Ogre {
                 {
                     // Load from faces of images[0]
                     src = images[0]->getPixelBox(i, mip);
+
+                    if (mHasAlpha && src.format == PF_L8)
+                        src.format = PF_A8;
                 }
     
-                // Sets to treated format in case is difference
-                src.format = mSrcFormat;
-
                 if(mGamma != 1.0f) {
                     // Apply gamma correction
                     // Do not overwrite original image but do gamma correction in temporary buffer
@@ -339,6 +276,7 @@ namespace Ogre {
         // Update size (the final size, not including temp space)
         mSize = getNumFaces() * PixelUtil::getMemorySize(mWidth, mHeight, mDepth, mFormat);
 
+        mIsLoaded = true;
     }
 	//-----------------------------------------------------------------------------
 	void Texture::createInternalResources(void)

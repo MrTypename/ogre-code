@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __ROOT__
@@ -82,6 +78,7 @@ namespace Ogre
         SceneManagerEnumerator* mSceneManagerEnum;
         SceneManager* mCurrentSceneManager;
         DynLibManager* mDynLibManager;
+        PlatformManager* mPlatformManager;
         ArchiveManager* mArchiveManager;
         MaterialManager* mMaterialManager;
         MeshManager* mMeshManager;
@@ -96,7 +93,6 @@ namespace Ogre
         ArchiveFactory *mFileSystemArchiveFactory;
 		ResourceGroupManager* mResourceGroupManager;
 		ResourceBackgroundQueue* mResourceBackgroundQueue;
-		ShadowTextureManager* mShadowTextureManager;
 
         Timer* mTimer;
         RenderWindow* mAutoWindow;
@@ -439,7 +435,9 @@ namespace Ogre
                 applications that don't need to constantly refresh the
                 rendering targets (e.g. an editor utility), it is better to
                 manually refresh each render target only when required by
-                calling RenderTarget::update.
+                calling RenderTarget::update, or if you want to run your own
+				render loop you can update all targets on demand using
+				Root::renderOneFrame.
             @note
                 This frees up the CPU to do other things in between
                 refreshes, since in this case frame rate is less important.

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.stevestreeting.com/ogre/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU General Public License along with
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/gpl.html.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -31,8 +27,11 @@ Torus Knot Software Ltd.
 #define __MaterialScriptScompiler_H__
 
 #include "OgreCompiler2Pass.h"
+#include "OgrePrerequisites.h"
 #include "OgreTextureUnitState.h"
 #include "OgreMaterial.h"
+//#include "OgreBlendMode.h"
+//#include "OgreTextureUnitState.h"
 #include "OgreGpuProgram.h"
 #include "OgreStringVector.h"
 
@@ -57,80 +56,73 @@ namespace Ogre {
 			parsed are to become a member of. If this group is loaded or unloaded,
 			then the resources discovered in this script will be loaded / unloaded
 			with it.
-        @param allowOverride if material or gpu program name already exists then use definition
-            in the material script being parsed to override the existing instance.  The default
-            value is false which causes an exception to be thrown if a duplicate is found.
         */
-        void parseScript(DataStreamPtr& stream, const String& groupName, const bool allowOverride = false);
+        void parseScript(DataStreamPtr& stream, const String& groupName)
+        {
+            mScriptContext.groupName = groupName;
+            Compiler2Pass::compile(stream->getAsString(),  stream->getName());
+        }
 
     protected:
 	    // Token ID enumeration
 	    enum TokenID {
 		    // Terminal Tokens section
-            ID_UNKOWN = 0,
+            ID_UNKOWN = 0, ID_OPENBRACE, ID_CLOSEBRACE,
             // GPU Program
-            ID_VERTEX_PROGRAM, ID_FRAGMENT_PROGRAM,
-
+            ID_VERTEX_PROGRAM, ID_FRAGMENT_PROGRAM, ID_SOURCE, ID_SYNTAX, ID_CUSTOM_PARAMETER,
+            ID_DEFAULT_PARAMS,
+            ID_INCLUDES_SKELETAL_ANIMATION, ID_INCLUDES_MORPH_ANIMATION, ID_INCLUDES_POSE_ANIMATION,
             // material
-            ID_CLONE,
-
+            ID_MATERIAL, ID_CLONE, ID_LOD_DISTANCES, ID_RECEIVE_SHADOWS,
+            ID_TRANSPARENCY_CASTS_SHADOWS, ID_SET_TEXTURE_ALIAS,
             // technique
-
+            ID_TECHNIQUE, ID_SCHEME, ID_LOD_INDEX,
             // pass
-
+            ID_PASS, ID_AMBIENT, ID_DIFFUSE, ID_SPECULAR, ID_EMISSIVE,
             ID_VERTEXCOLOUR,
             // scene blend
-            ID_COLOUR_BLEND, ID_DEST_COLOUR,
+            ID_SCENE_BLEND, ID_COLOUR_BLEND, ID_DEST_COLOUR,
             ID_SRC_COLOUR, ID_ONE_MINUS_DEST_COLOUR, ID_ONE_MINUS_SRC_COLOUR,
             ID_DEST_ALPHA, ID_SRC_ALPHA, ID_ONE_MINUS_DEST_ALPHA, ID_ONE_MINUS_SRC_ALPHA,
             // Depth
-            ID_ALWAYS_FAIL, ID_ALWAYS_PASS,
+            ID_DEPTH_CHECK, ID_DEPTH_WRITE, ID_DEPTH_FUNC, ID_DEPTH_BIAS, ID_ALWAYS_FAIL, ID_ALWAYS_PASS,
             ID_LESS_EQUAL, ID_LESS, ID_EQUAL, ID_NOT_EQUAL, ID_GREATER_EQUAL, ID_GREATER,
-            // culling
-            ID_CLOCKWISE, ID_ANTICLOCKWISE,
-            ID_CULL_BACK, ID_CULL_FRONT,
-            // shading
-            ID_FLAT, ID_GOURAUD, ID_PHONG,
-            // polygon mode
-            ID_SOLID, ID_WIREFRAME, ID_POINTS,
-            // fog overide
-            ID_EXP, ID_EXP2,
-            // iteration
-            ID_ONCE, ID_ONCE_PER_LIGHT, ID_PER_LIGHT, ID_PER_N_LIGHTS, ID_DIRECTIONAL, ID_SPOT,
+
+            ID_ALPHA_REJECTION, ID_CULL_HARDWARE, ID_CLOCKWISE, ID_ANTICLOCKWISE,
+            ID_CULL_SOFTWARE, ID_CULL_BACK, ID_CULL_FRONT,
+            ID_LIGHTING, ID_SHADING, ID_FLAT, ID_GOURAUD, ID_PHONG,
+            ID_POLYGON_MODE, ID_SOLID, ID_WIREFRAME, ID_POINTS,
+            ID_FOG_OVERRIDE, ID_EXP, ID_EXP2,
+            ID_COLOUR_WRITE, ID_MAX_LIGHTS,
+            ID_ITERATION, ID_ONCE, ID_ONCE_PER_LIGHT, ID_PER_LIGHT, ID_DIRECTIONAL, ID_SPOT,
+			ID_POINT_SIZE, ID_POINT_SPRITES, ID_POINT_SIZE_ATTENUATION,
+			ID_POINT_SIZE_MIN, ID_POINT_SIZE_MAX,
 
             // texture unit state
-            // texture
-            ID_1D, ID_2D, ID_3D, ID_CUBIC, ID_UNLIMITED, ID_ALPHA,
-            // cubic texture
-            ID_SEPARATE_UV, ID_COMBINED_UVW,
-            // address mode
-            ID_WRAP, ID_CLAMP, ID_MIRROR, ID_BORDER,
-            // filtering
-            ID_BILINEAR, ID_TRILINEAR, ID_ANISOTROPIC,
-            // color op
-            ID_REPLACE,
-            ID_SOURCE1, ID_SOURCE2, ID_MODULATE_X2, ID_MODULATE_X4, ID_ADD_SIGNED,
+            ID_TEXTURE_UNIT, ID_TEXTURE_ALIAS, ID_TEXTURE, ID_1D, ID_2D, ID_3D, ID_CUBIC, ID_UNLIMITED,
+            ID_ALPHA, ID_ANIM_TEXTURE, ID_CUBIC_TEXTURE, ID_SEPARATE_UV, ID_COMBINED_UVW,
+            ID_TEX_COORD_SET, ID_TEX_ADDRESS_MODE, ID_WRAP, ID_CLAMP, ID_MIRROR, ID_BORDER, ID_TEX_BORDER_COLOUR,
+            ID_FILTERING, ID_BILINEAR, ID_TRILINEAR, ID_ANISOTROPIC,
+            ID_MAX_ANISOTROPY, ID_COLOUR_OP, ID_REPLACE,
+            ID_COLOUR_OP_EX, ID_SOURCE1, ID_SOURCE2, ID_MODULATE_X2, ID_MODULATE_X4, ID_ADD_SIGNED,
             ID_ADD_SMOOTH, ID_SUBTRACT, ID_BLEND_DIFFUSE_COLOUR, ID_BLEND_DIFFUSE_ALPHA,
             ID_BLEND_TEXTURE_ALPHA, ID_BLEND_CURRENT_ALPHA, ID_BLEND_MANUAL, ID_DOTPRODUCT,
             ID_SRC_CURRENT, ID_SRC_TEXTURE, ID_SRC_DIFFUSE, ID_SRC_SPECULAR, ID_SRC_MANUAL,
-
-            // env map
-            ID_SPHERICAL, ID_PLANAR, ID_CUBIC_REFLECTION, ID_CUBIC_NORMAL,
-            // wave transform
+            ID_COLOUR_OP_MULTIPASS_FALLBACK, ID_ALPHA_OP_EX,
+            ID_ENV_MAP, ID_SPHERICAL, ID_PLANAR, ID_CUBIC_REFLECTION, ID_CUBIC_NORMAL,
+            ID_SCROLL, ID_SCROLL_ANIM, ID_ROTATE, ID_ROTATE_ANIM, ID_SCALE, ID_WAVE_XFORM,
             ID_SCROLL_X, ID_SCROLL_Y, ID_SCALE_X, ID_SCALE_Y, ID_SINE, ID_TRIANGLE,
-            ID_SQUARE, ID_SAWTOOTH, ID_INVERSE_SAWTOOTH, ID_ROTATE,
-			// content type
-			ID_NAMED, ID_SHADOW,
-
+            ID_SQUARE, ID_SAWTOOTH, ID_INVERSE_SAWTOOTH,
+            ID_TRANSFORM,
             // GPU program references
+            ID_VERTEX_PROGRAM_REF, ID_FRAGMENT_PROGRAM_REF, ID_SHADOW_CASTER_VERTEX_PROGRAM_REF,
+            ID_SHADOW_RECEIVER_VERTEX_PROGRAM_REF, ID_SHADOW_RECEIVER_FRAGMENT_PROGRAM_REF,
             // GPU Parameters
+            ID_PARAM_INDEXED_AUTO, ID_PARAM_INDEXED, ID_PARAM_NAMED_AUTO, ID_PARAM_NAMED,
 
             // general
             ID_ON, ID_OFF, ID_TRUE, ID_FALSE, ID_NONE, ID_POINT, ID_LINEAR, ID_ADD, ID_MODULATE, ID_ALPHA_BLEND,
-            ID_ONE, ID_ZERO, ID_VERTEX, ID_FRAGMENT,
-
-            // where auto generated tokens start so donot remove
-            ID_AUTOTOKENSTART
+            ID_ONE, ID_ZERO
         };
 
         /** Enum to identify material sections. */
@@ -157,7 +149,6 @@ namespace Ogre {
             bool supportsSkeletalAnimation;
 		    bool supportsMorphAnimation;
 		    ushort supportsPoseAnimation; // number of simultaneous poses supported
-            bool usesVertexTextureFetch;
 		    std::map<String, String> customParameters;
 	    };
         /** Struct for holding the script context while parsing. */
@@ -173,7 +164,6 @@ namespace Ogre {
             bool isProgramShadowCaster; // when referencing, are we in context of shadow caster
             bool isVertexProgramShadowReceiver; // when referencing, are we in context of shadow caster
             bool isFragmentProgramShadowReceiver; // when referencing, are we in context of shadow caster
-            bool allowOverride; // if true then allow existing materials and gpu programs to be overriden
             GpuProgramParametersSharedPtr programParams;
 			ushort numAnimationParametrics;
 		    MaterialScriptProgramDefinition* programDef; // this is used while defining a program
@@ -207,18 +197,10 @@ namespace Ogre {
             section of the source that has been parsed.
         **/
         virtual void executeTokenAction(const size_t tokenID);
-        /** Get the start position of auto generated token IDs.
-        */
-        virtual size_t getAutoTokenIDStart() const {return ID_AUTOTOKENSTART;}
-
         /** Associate all the lexemes used in a material script with their corresponding tokens and actions.
         **/
         virtual void setupTokenDefinitions(void);
         void addLexemeTokenAction(const String& lexeme, const size_t token, const MSC_Action action = 0);
-        /** Associate all the lexemes used in a material script with their corresponding actions and have
-            token IDs auto-generated.
-        **/
-        void addLexemeAction(const String& lexeme, const MSC_Action action) {addLexemeTokenAction(lexeme, 0, action);}
 
         void logParseError(const String& error);
 
@@ -259,7 +241,6 @@ namespace Ogre {
         void parsePolygonMode(void);
         void parseFogOverride(void);
         void parseMaxLights(void);
-		void parseStartLight(void);
         void parseIteration(void);
         void parseIterationLightTypes(void);
         void parseColourWrite(void);
@@ -281,7 +262,6 @@ namespace Ogre {
         void parseFiltering(void);
         FilterOptions convertFiltering();
         void parseMaxAnisotropy(void);
-        void parseMipMapBias(void);
         void parseColourOp(void);
         void parseColourOpEx(void);
         LayerBlendOperationEx convertBlendOpEx(void);
@@ -297,9 +277,6 @@ namespace Ogre {
         void parseWaveXform(void);
         void parseTransform(void);
         void parseTextureCustomParameter(void);
-    	void parseBindingType(void);
-		void parseContentType(void);
-
         // GPU Program
         void parseGPUProgram(void);
         void parseProgramSource(void);
@@ -309,7 +286,6 @@ namespace Ogre {
         void parseProgramSkeletalAnimation(void);
         void parseProgramMorphAnimation(void);
         void parseProgramPoseAnimation(void);
-        void parseProgramVertexTextureFetch(void);
         void parseVertexProgramRef(void);
         void parseFragmentProgramRef(void);
         void parseShadowCasterVertexProgramRef(void);

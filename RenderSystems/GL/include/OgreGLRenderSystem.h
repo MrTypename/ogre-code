@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __GLRenderSystem_H__
@@ -125,13 +121,10 @@ namespace Ogre {
         GLGpuProgram* mCurrentVertexProgram;
         GLGpuProgram* mCurrentFragmentProgram;
 
-		/* The main GL context - main thread only */
+		/* The main GL context */
         GLContext *mMainContext;
-        /* The current GL context  - main thread only*/
+        /* The current GL context */
         GLContext *mCurrentContext;
-		typedef std::list<GLContext*> GLContextList;
-		/// List of background thread contexts
-		GLContextList mBackgroundContextList;
 
         /** Manager object for creating render textures.
             Direct render to texture via GL_EXT_framebuffer_object is preferable 
@@ -252,7 +245,7 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _setTexture(size_t unit, bool enabled, const TexturePtr &tex);
+        void _setTexture(size_t unit, bool enabled, const String &texname);
         /** See
           RenderSystem
          */
@@ -274,10 +267,6 @@ namespace Ogre {
           RenderSystem
          */
         void _setTextureBorderColour(size_t stage, const ColourValue& colour);
-		/** See
-		RenderSystem
-		*/
-		void _setTextureMipmapBias(size_t unit, float bias);
         /** See
           RenderSystem
          */
@@ -435,10 +424,6 @@ namespace Ogre {
         Real getVerticalTexelOffset(void);
         Real getMinimumDepthInputValue(void);
         Real getMaximumDepthInputValue(void);
-		void registerThread();
-		void unregisterThread();
-		void preExtraThreadsStarted();
-		void postExtraThreadsStarted();
 
         // ----------------------------------
         // GLRenderSystem specific members
@@ -462,8 +447,10 @@ namespace Ogre {
             GLContext.
          */
         void _unregisterContext(GLContext *context);
-		/** Returns the main context */
-		GLContext* _getMainContext() {return mMainContext;} 
+        /** Get the main context. This is generally the context with which 
+            a new context wants to share buffers and textures.
+         */
+        GLContext *_getMainContext();
     };
 }
 #endif

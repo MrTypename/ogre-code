@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -33,7 +29,19 @@ Torus Knot Software Ltd.
 #include "OgreImageCodec.h"
 #include "OgreColourValue.h"
 
+/* Use new scaling code when possible */
+#define NEWSCALING
+
+#ifdef NEWSCALING
 #include "OgreImageResampler.h"
+#endif
+
+#if OGRE_NO_DEVIL == 0
+#include "OgreILUtil.h"
+// Dependency on IL/ILU for resize
+#include <IL/il.h>
+#include <IL/ilu.h>
+#endif
 
 namespace Ogre {
 	ImageCodec::~ImageCodec() {
@@ -559,6 +567,30 @@ namespace Ogre {
 		}
 	}
 	//-----------------------------------------------------------------------------
+#if OGRE_NO_DEVIL == 0
+	// Local declaration of DevIL functions to prevent DevIL dependencies on header users
+	ILenum getILFilter(Image::Filter filter)
+	{
+		switch (filter)
+		{
+		case Image::FILTER_NEAREST:
+			return ILU_NEAREST;
+		case Image::FILTER_LINEAR:
+			return ILU_LINEAR;
+		case Image::FILTER_BILINEAR:
+			return ILU_BILINEAR;
+		case Image::FILTER_BOX:
+			return ILU_SCALE_BOX;
+		case Image::FILTER_TRIANGLE:
+			return ILU_SCALE_TRIANGLE;
+		case Image::FILTER_BICUBIC:
+			return ILU_SCALE_BSPLINE;
+		};
+		// keep compiler happy
+		return ILU_NEAREST;
+	}
+#endif
+	//-----------------------------------------------------------------------------
 	void Image::resize(ushort width, ushort height, Filter filter)
 	{
 		// resizing dynamic images is not supported
@@ -585,14 +617,12 @@ namespace Ogre {
 	{
 		assert(PixelUtil::isAccessible(src.format));
 		assert(PixelUtil::isAccessible(scaled.format));
+#ifdef NEWSCALING		
 		MemoryDataStreamPtr buf; // For auto-delete
 		PixelBox temp;
-		switch (filter) 
-		{
-		default:
+		switch (filter) {
 		case FILTER_NEAREST:
-			if(src.format == scaled.format) 
-			{
+			if(src.format == scaled.format) {
 				// No intermediate buffer needed
 				temp = scaled;
 			}
@@ -604,8 +634,7 @@ namespace Ogre {
 				temp.data = buf->getPtr();
 			}
 			// super-optimized: no conversion
-			switch (PixelUtil::getNumElemBytes(src.format)) 
-			{
+			switch (PixelUtil::getNumElemBytes(src.format)) {
 			case 1: NearestResampler<1>::scale(src, temp); break;
 			case 2: NearestResampler<2>::scale(src, temp); break;
 			case 3: NearestResampler<3>::scale(src, temp); break;
@@ -627,15 +656,13 @@ namespace Ogre {
 
 		case FILTER_LINEAR:
 		case FILTER_BILINEAR:
-			switch (src.format) 
-			{
+			switch (src.format) {
 			case PF_L8: case PF_A8: case PF_BYTE_LA:
 			case PF_R8G8B8: case PF_B8G8R8:
 			case PF_R8G8B8A8: case PF_B8G8R8A8:
 			case PF_A8B8G8R8: case PF_A8R8G8B8:
 			case PF_X8B8G8R8: case PF_X8R8G8B8:
-				if(src.format == scaled.format) 
-				{
+				if(src.format == scaled.format) {
 					// No intermediate buffer needed
 					temp = scaled;
 				}
@@ -647,8 +674,7 @@ namespace Ogre {
 					temp.data = buf->getPtr();
 				}
 				// super-optimized: byte-oriented math, no conversion
-				switch (PixelUtil::getNumElemBytes(src.format)) 
-				{
+				switch (PixelUtil::getNumElemBytes(src.format)) {
 				case 1: LinearResampler_Byte<1>::scale(src, temp); break;
 				case 2: LinearResampler_Byte<2>::scale(src, temp); break;
 				case 3: LinearResampler_Byte<3>::scale(src, temp); break;
@@ -677,7 +703,40 @@ namespace Ogre {
 				LinearResampler::scale(src, scaled);
 			}
 			break;
+		default:
+			// fall back to old, slow, wildly incorrect DevIL code
+#endif
+#if OGRE_NO_DEVIL == 0
+			ILuint ImageName;
+			ilGenImages( 1, &ImageName );
+			ilBindImage( ImageName );
+
+			// Convert image from OGRE to current IL image
+			ILUtil::fromOgre(src);
+
+			// set filter
+			iluImageParameter(ILU_FILTER, getILFilter(filter));
+
+			// do the scaling
+			if(!iluScale(scaled.getWidth(), scaled.getHeight(), scaled.getDepth())) {
+				OGRE_EXCEPT( Exception::ERR_INTERNAL_ERROR,
+					iluErrorString(ilGetError()),
+					"Image::scale" ) ;
+			}
+			ILUtil::toOgre(scaled);
+
+			ilDeleteImages(1, &ImageName);
+
+			// return to default filter
+			iluImageParameter(ILU_FILTER, ILU_NEAREST);
+#else
+			OGRE_EXCEPT( Exception::UNIMPLEMENTED_FEATURE,
+				"Scaling algorithm not implemented without DevIL",
+				"Image::scale" ) ;	
+#endif
+#ifdef NEWSCALING
 		}
+#endif
 	}
 
 	//-----------------------------------------------------------------------------    
@@ -693,14 +752,6 @@ namespace Ogre {
 
 	PixelBox Image::getPixelBox(size_t face, size_t mipmap) const
 	{
-		// Image data is arranged as:
-		// face 0, top level (mip 0)
-		// face 0, mip 1
-		// face 0, mip 2
-		// face 1, top level (mip 0)
-		// face 1, mip 1
-		// face 1, mip 2
-		// etc
 		if(mipmap > getNumMipmaps())
 			OGRE_EXCEPT( Exception::UNIMPLEMENTED_FEATURE,
 			"Mipmap index out of range",
@@ -710,35 +761,23 @@ namespace Ogre {
 			"Image::getPixelBox");
         // Calculate mipmap offset and size
         uint8 *offset = const_cast<uint8*>(getData());
-		// Base offset is number of full faces
         size_t width = getWidth(), height=getHeight(), depth=getDepth();
-		size_t numMips = getNumMipmaps();
-
-		// Figure out the offsets 
-		size_t fullFaceSize = 0;
-		size_t finalFaceSize = 0;
-		size_t finalWidth, finalHeight, finalDepth;
-		for(size_t mip=0; mip <= numMips; ++mip)
+        size_t faceSize; // Size of one face of the image
+        for(size_t mip=0; mip<mipmap; ++mip)
         {
-			if (mip == mipmap)
-			{
-				finalFaceSize = fullFaceSize;
-				finalWidth = width;
-				finalHeight = height;
-				finalDepth = depth;
-			}
-            fullFaceSize += PixelUtil::getMemorySize(width, height, depth, getFormat());
-
+            faceSize = PixelUtil::getMemorySize(width, height, depth, getFormat());
+            /// Skip all faces of this mipmap
+            offset += faceSize*getNumFaces(); 
             /// Half size in each dimension
             if(width!=1) width /= 2;
             if(height!=1) height /= 2;
             if(depth!=1) depth /= 2;
         }
-		// Advance pointer by number of full faces, plus mip offset into
-		offset += face * fullFaceSize;
-		offset += finalFaceSize;
+		// We have advanced to the desired mipmap, offset to right face
+        faceSize = PixelUtil::getMemorySize(width, height, depth, getFormat());
+        offset += faceSize*face;
 		// Return subface as pixelbox
-		PixelBox src(finalWidth, finalHeight, finalDepth, getFormat(), offset);
+		PixelBox src(width, height, depth, getFormat(), offset);
 		return src;
 	}
     //-----------------------------------------------------------------------------    

@@ -1,20 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-// material.cpp
-// Author     : Francesco Giordana
-// Start Date : January 13, 2005
-// Copyright  : (C) 2006 by Francesco Giordana
-// Email      : fra.giordana@tiscali.it
-////////////////////////////////////////////////////////////////////////////////
-
-/*********************************************************************************
-*                                                                                *
-*   This program is free software; you can redistribute it and/or modify         *
-*   it under the terms of the GNU Lesser General Public License as published by  *
-*   the Free Software Foundation; either version 2 of the License, or            *
-*   (at your option) any later version.                                          *
-*                                                                                *
-**********************************************************************************/
-
 #include "material.h"
 
 namespace OgreMayaExporter
@@ -57,57 +40,88 @@ namespace OgreMayaExporter
 
 
 	// Load material data
-	MStatus Material::load(MFnDependencyNode* pShader,MStringArray& uvsets,ParamList& params)
+	MStatus Material::load(MFnLambertShader* pShader,MStringArray& uvsets,ParamList& params)
 	{
-		int i;
 		MStatus stat;
 		clear();
 		//read material name, adding the requested prefix
-		MString tmpStr = params.matPrefix;
-		if (tmpStr != "")
-			tmpStr += "/";
-		tmpStr += pShader->name();
-		MStringArray tmpStrArray;
-		tmpStr.split(':',tmpStrArray);
-		m_name = "";
-		for (i=0; i<tmpStrArray.length(); i++)
-		{
-			m_name += tmpStrArray[i];
-			if (i < tmpStrArray.length()-1)
-				m_name += "_";
-		}
-
+		m_name = params.matPrefix;
+		if (m_name != "")
+			m_name += "/";
+		m_name += pShader->name();
 		//check if we want to export with lighting off option
 		m_lightingOff = params.lightingOff;
+
+		MFnPhongShader* pPhong = NULL;
+		MFnBlinnShader* pBlinn = NULL;
+		MPlugArray colorSrcPlugs;
+		MPlugArray texSrcPlugs;
+		MPlugArray placetexSrcPlugs;
 
 		// GET MATERIAL DATA
 
 		// Check material type
 		if (pShader->object().hasFn(MFn::kPhong))
 		{
-			stat = loadPhong(pShader);
+			m_type = MT_PHONG;
+			pPhong = new MFnPhongShader(pShader->object());
 		}
 		else if (pShader->object().hasFn(MFn::kBlinn))
 		{
-			stat = loadBlinn(pShader);
+			m_type = MT_BLINN;
+			pBlinn = new MFnBlinnShader(pShader->object());
 		}
-		else if (pShader->object().hasFn(MFn::kLambert))
+
+		// Check if material is textured
+		pShader->findPlug("color").connectedTo(colorSrcPlugs,true,false);
+		for (int i=0; i<colorSrcPlugs.length(); i++)
 		{
-			stat = loadLambert(pShader);
+			if (colorSrcPlugs[i].node().hasFn(MFn::kFileTexture))
+			{
+				m_isTextured = true;
+				continue;
+			}
+			else if (colorSrcPlugs[i].node().hasFn(MFn::kLayeredTexture))
+			{
+				m_isTextured = true;
+				m_isMultiTextured = true;
+				continue;
+			}
 		}
-		else if (pShader->object().hasFn(MFn::kPluginHwShaderNode))
-		{
-			stat = loadCgFxShader(pShader);
-		}
+
+		// Check if material is transparent
+		if (pShader->findPlug("transparency").isConnected() || pShader->transparency().r>0.0f)
+			m_isTransparent = true;
+
+		// Get material colours
+		//diffuse colour
+		if (m_isTextured)
+			m_diffuse = MColor(1.0,1.0,1.0,1.0);
 		else
 		{
-			stat = loadSurfaceShader(pShader);
+			m_diffuse = pShader->color();
+			m_diffuse.a = 1.0 - pShader->transparency().r;
+		}
+		//ambient colour
+		m_ambient = m_diffuse;
+		//emissive colour
+		m_emissive = pShader->incandescence();
+		//specular colour
+		switch(m_type)
+		{
+		case MT_PHONG:
+			m_specular = pPhong->specularColor();
+			m_specular.a = pPhong->cosPower();
+			break;
+		case MT_BLINN:
+			m_specular = pBlinn->specularColor();
+			m_specular.a = 1.0 / pBlinn->eccentricity();
+			break;
+		default:
+			m_specular = MColor(0.0,0.0,0.0,0.0);
 		}
 
 		// Get textures data
-		MPlugArray colorSrcPlugs;
-		MPlugArray texSrcPlugs;
-		MPlugArray placetexSrcPlugs;
 		if (m_isTextured)
 		{
 			// Translate multiple textures if material is multitextured
@@ -115,10 +129,7 @@ namespace OgreMayaExporter
 			{
 				// Get layered texture node
 				MFnDependencyNode* pLayeredTexNode = NULL;
-				if (m_type == MT_SURFACE_SHADER)
-					pShader->findPlug("outColor").connectedTo(colorSrcPlugs,true,false);
-				else
-					pShader->findPlug("color").connectedTo(colorSrcPlugs,true,false);
+				pShader->findPlug("color").connectedTo(colorSrcPlugs,true,false);
 				for (i=0; i<colorSrcPlugs.length(); i++)
 				{
 					if (colorSrcPlugs[i].node().hasFn(MFn::kLayeredTexture))
@@ -176,7 +187,6 @@ namespace OgreMayaExporter
 						if (MS::kSuccess != stat)
 						{
 							std::cout << "Error loading layered texture\n";
-							std::cout.flush();
 							delete pLayeredTexNode;
 							return MS::kFailure;
 						}
@@ -190,10 +200,7 @@ namespace OgreMayaExporter
 			{
 				// Get texture node
 				MFnDependencyNode* pTextureNode = NULL;
-				if (m_type == MT_SURFACE_SHADER)
-					pShader->findPlug("outColor").connectedTo(colorSrcPlugs,true,false);
-				else
-					pShader->findPlug("color").connectedTo(colorSrcPlugs,true,false);
+				pShader->findPlug("color").connectedTo(colorSrcPlugs,true,false);
 				for (i=0; i<colorSrcPlugs.length(); i++)
 				{
 					if (colorSrcPlugs[i].node().hasFn(MFn::kFileTexture))
@@ -210,226 +217,25 @@ namespace OgreMayaExporter
 					if (MS::kSuccess != stat)
 					{
 						std::cout << "Error loading texture\n";
-						std::cout.flush();
 						return MS::kFailure;
 					}
 				}
 			}
 		}
+		// Free up memory
+		if (pPhong)
+			delete pPhong;
+		if (pBlinn)
+			delete pBlinn;
 
 		return MS::kSuccess;
 	}
 
-
-	// Load a surface shader
-	MStatus Material::loadSurfaceShader(MFnDependencyNode *pShader)
-	{
-		int i;
-		m_type = MT_SURFACE_SHADER;
-		MPlugArray colorSrcPlugs;
-		// Check if material is textured
-		pShader->findPlug("outColor").connectedTo(colorSrcPlugs,true,false);
-		for (i=0; i<colorSrcPlugs.length(); i++)
-		{
-			if (colorSrcPlugs[i].node().hasFn(MFn::kFileTexture))
-			{
-				m_isTextured = true;
-				continue;
-			}
-			else if (colorSrcPlugs[i].node().hasFn(MFn::kLayeredTexture))
-			{
-				m_isTextured = true;
-				m_isMultiTextured = true;
-				continue;
-			}
-		}
-
-		// Check if material is transparent
-		float trasp;
-		pShader->findPlug("outTransparencyR").getValue(trasp);
-		if (pShader->findPlug("outTransparency").isConnected() || trasp>0.0f)
-			m_isTransparent = true;
-
-		// Get material colours
-		if (m_isTextured)
-			m_diffuse = MColor(1.0,1.0,1.0,1.0);
-		else
-		{
-			pShader->findPlug("outColorR").getValue(m_diffuse.r);
-			pShader->findPlug("outColorG").getValue(m_diffuse.g);
-			pShader->findPlug("outColorB").getValue(m_diffuse.b);
-			float trasp;
-			pShader->findPlug("outTransparencyR").getValue(trasp);
-			m_diffuse.a = 1.0 - trasp;
-		}
-		m_ambient = MColor(0,0,0,1);
-		m_emissive = MColor(0,0,0,1);
-		m_specular = MColor(0,0,0,1);
-		return MS::kSuccess;
-	}
-
-	// Load a lambert shader
-	MStatus Material::loadLambert(MFnDependencyNode *pShader)
-	{
-		int i;
-		MPlugArray colorSrcPlugs;
-		m_type = MT_LAMBERT;
-		MFnLambertShader* pLambert = new MFnLambertShader(pShader->object());
-		// Check if material is textured
-		pLambert->findPlug("color").connectedTo(colorSrcPlugs,true,false);
-		for (i=0; i<colorSrcPlugs.length(); i++)
-		{
-			if (colorSrcPlugs[i].node().hasFn(MFn::kFileTexture))
-			{
-				m_isTextured = true;
-				continue;
-			}
-			else if (colorSrcPlugs[i].node().hasFn(MFn::kLayeredTexture))
-			{
-				m_isTextured = true;
-				m_isMultiTextured = true;
-				continue;
-			}
-		}
-
-		// Check if material is transparent
-		if (pLambert->findPlug("transparency").isConnected() || pLambert->transparency().r>0.0f)
-			m_isTransparent = true;
-
-		// Get material colours
-		//diffuse colour
-		if (m_isTextured)
-			m_diffuse = MColor(1.0,1.0,1.0,1.0);
-		else
-		{
-			m_diffuse = pLambert->color();
-			m_diffuse.a = 1.0 - pLambert->transparency().r;
-		}
-		//ambient colour
-		m_ambient = pLambert->ambientColor();
-		//emissive colour
-		m_emissive = pLambert->incandescence();
-		//specular colour
-		m_specular = MColor(0,0,0,1);
-		delete pLambert;
-		return MS::kSuccess;
-	}
-
-	// Load a phong shader
-	MStatus Material::loadPhong(MFnDependencyNode *pShader)
-	{
-		int i;
-		MPlugArray colorSrcPlugs;
-		m_type = MT_PHONG;
-		MFnPhongShader* pPhong = new MFnPhongShader(pShader->object());
-		// Check if material is textured
-		pPhong->findPlug("color").connectedTo(colorSrcPlugs,true,false);
-		for (i=0; i<colorSrcPlugs.length(); i++)
-		{
-			if (colorSrcPlugs[i].node().hasFn(MFn::kFileTexture))
-			{
-				m_isTextured = true;
-				continue;
-			}
-			else if (colorSrcPlugs[i].node().hasFn(MFn::kLayeredTexture))
-			{
-				m_isTextured = true;
-				m_isMultiTextured = true;
-				continue;
-			}
-		}
-
-		// Check if material is transparent
-		if (pPhong->findPlug("transparency").isConnected() || pPhong->transparency().r>0.0f)
-			m_isTransparent = true;
-
-		// Get material colours
-		//diffuse colour
-		if (m_isTextured)
-			m_diffuse = MColor(1.0,1.0,1.0,1.0);
-		else
-		{
-			m_diffuse = pPhong->color();
-			m_diffuse.a = 1.0 - pPhong->transparency().r;
-		}
-		//ambient colour
-		m_ambient = pPhong->ambientColor();
-		//emissive colour
-		m_emissive = pPhong->incandescence();
-		//specular colour
-		m_specular = pPhong->specularColor();
-		m_specular.a = pPhong->cosPower();
-		delete pPhong;
-		return MS::kSuccess;
-	}
-
-	// load a blinn shader
-	MStatus Material::loadBlinn(MFnDependencyNode *pShader)
-	{
-		int i;
-		MPlugArray colorSrcPlugs;
-		m_type = MT_BLINN;
-		MFnBlinnShader* pBlinn = new MFnBlinnShader(pShader->object());
-		// Check if material is textured
-		pBlinn->findPlug("color").connectedTo(colorSrcPlugs,true,false);
-		for (i=0; i<colorSrcPlugs.length(); i++)
-		{
-			if (colorSrcPlugs[i].node().hasFn(MFn::kFileTexture))
-			{
-				m_isTextured = true;
-				continue;
-			}
-			else if (colorSrcPlugs[i].node().hasFn(MFn::kLayeredTexture))
-			{
-				m_isTextured = true;
-				m_isMultiTextured = true;
-				continue;
-			}
-		}
-
-		// Check if material is transparent
-		if (pBlinn->findPlug("transparency").isConnected() || pBlinn->transparency().r>0.0f)
-			m_isTransparent = true;
-
-		// Get material colours
-		//diffuse colour
-		if (m_isTextured)
-			m_diffuse = MColor(1.0,1.0,1.0,1.0);
-		else
-		{
-			m_diffuse = pBlinn->color();
-			m_diffuse.a = 1.0 - pBlinn->transparency().r;
-		}
-		//ambient colour
-		m_ambient = pBlinn->ambientColor();
-		//emissive colour
-		m_emissive = pBlinn->incandescence();
-		//specular colour
-		m_specular = pBlinn->specularColor();
-		m_specular.a = 1.0 / pBlinn->eccentricity();
-		delete pBlinn;
-		return MS::kSuccess;
-	}
-
-	// load a cgFx shader
-	MStatus Material::loadCgFxShader(MFnDependencyNode *pShader)
-	{
-		m_type = MT_CGFX;
-		// Create a default white lambert
-		m_isTextured = false;
-		m_isMultiTextured = false;
-		m_diffuse = MColor(1.0,1.0,1.0,1.0);
-		m_specular = MColor(0,0,0,1);
-		m_emissive = MColor(0,0,0,1);
-		m_ambient = MColor(0,0,0,1);
-		return MS::kSuccess;
-	}
 
 	// Load texture data from a texture node
 	MStatus Material::loadTexture(MFnDependencyNode* pTexNode,TexOpType& opType,MStringArray& uvsets,ParamList& params)
 	{
-		int j;
-		Texture tex;
+		texture tex;
 		// Get texture filename
 		MString filename, absFilename;
 		MRenderUtil::exactFileTextureName(pTexNode->object(),absFilename);
@@ -449,7 +255,7 @@ namespace OgreMayaExporter
 		pTexNode->findPlug("uvCoord").connectedTo(texSrcPlugs,true,false);
 		// Get place2dtexture node (if connected)
 		MFnDependencyNode* pPlace2dTexNode = NULL;
-		for (j=0; j<texSrcPlugs.length(); j++)
+		for (int j=0; j<texSrcPlugs.length(); j++)
 		{
 			if (texSrcPlugs[j].node().hasFn(MFn::kPlace2dTexture))
 			{
@@ -499,57 +305,6 @@ namespace OgreMayaExporter
 				}
 			}
 		}
-		// Get texture options from Place2dTexture node
-		if (pPlace2dTexNode)
-		{
-			// Get address mode
-			//U
-			bool wrapU, mirrorU;
-			pPlace2dTexNode->findPlug("wrapU").getValue(wrapU);
-			pPlace2dTexNode->findPlug("mirrorU").getValue(mirrorU);
-			if (mirrorU)
-				tex.am_u = TAM_MIRROR;
-			else if (wrapU)
-				tex.am_u = TAM_WRAP;
-			else
-				tex.am_u = TAM_CLAMP;
-			// V
-			bool wrapV,mirrorV;
-			pPlace2dTexNode->findPlug("wrapV").getValue(wrapV);
-			pPlace2dTexNode->findPlug("mirrorV").getValue(mirrorV);
-			if (mirrorV)
-				tex.am_v = TAM_MIRROR;
-			else if (wrapV)
-				tex.am_v = TAM_WRAP;
-			else
-				tex.am_v = TAM_CLAMP;
-			// Get texture scale
-			double covU,covV;
-			pPlace2dTexNode->findPlug("coverageU").getValue(covU);
-			pPlace2dTexNode->findPlug("coverageV").getValue(covV);
-			tex.scale_u = covU;
-			if (fabs(tex.scale_u) < PRECISION)
-				tex.scale_u = 0;
-			tex.scale_v = covV;
-			if (fabs(tex.scale_v) < PRECISION)
-				tex.scale_v = 0;
-			// Get texture scroll
-			double transU,transV;
-			pPlace2dTexNode->findPlug("translateFrameU").getValue(transU);
-			pPlace2dTexNode->findPlug("translateFrameV").getValue(transV);
-			tex.scroll_u = -0.5 * (covU-1.0)/covU - transU/covU;
-			if (fabs(tex.scroll_u) < PRECISION)
-				tex.scroll_u = 0;
-			tex.scroll_v = 0.5 * (covV-1.0)/covV + transV/covV;
-			if (fabs(tex.scroll_v) < PRECISION)
-				tex.scroll_v = 0;
-			// Get texture rotation
-			double rot;
-			pPlace2dTexNode->findPlug("rotateFrame").getValue(rot);
-			tex.rot = -rot;
-			if (fabs(rot) < PRECISION)
-				tex.rot = 0;
-		}
 		// add texture to material texture list
 		m_textures.push_back(tex);
 		// free up memory
@@ -562,8 +317,8 @@ namespace OgreMayaExporter
 	}
 
 
-	// Write material data to an Ogre material script file
-	MStatus Material::writeOgreScript(ParamList &params)
+	// Write material data to Ogre XML file
+	MStatus Material::writeXML(ParamList &params)
 	{
 		//Start material description
 		params.outMaterial << "material " << m_name.asChar() << "\n";
@@ -623,10 +378,6 @@ namespace OgreMayaExporter
 				params.outMaterial << "\t\t\t\tcolour_op alpha_blend\n";
 				break;
 			}
-			//write texture transforms
-			params.outMaterial << "\t\t\t\tscale " << m_textures[i].scale_u << " " << m_textures[i].scale_v << "\n";
-			params.outMaterial << "\t\t\t\tscroll " << m_textures[i].scroll_u << " " << m_textures[i].scroll_v << "\n";
-			params.outMaterial << "\t\t\t\trotate " << m_textures[i].rot << "\n";
 			//end texture unit desription
 			params.outMaterial << "\t\t\t}\n";
 		}

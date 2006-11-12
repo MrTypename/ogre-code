@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __RenderTexture_H__
@@ -56,7 +52,6 @@ namespace Ogre
 		at once. Surfaces can be bound and unbound at will, as long as the following constraints
 		are met:
 		- All bound surfaces have the same size
-
 		- All bound surfaces have the same internal format 
 		- Target 0 is bound
 	*/
@@ -66,29 +61,17 @@ namespace Ogre
 		MultiRenderTarget(const String &name);
 
 		/** Bind a surface to a certain attachment point.
-
             @param attachment	0 .. mCapabilities->numMultiRenderTargets()-1
-
 			@param target		RenderTexture to bind.
 
-
-
 			It does not bind the surface and fails with an exception (ERR_INVALIDPARAMS) if:
-
 			- Not all bound surfaces have the same size
-
 			- Not all bound surfaces have the same internal format 
-
 		*/
-
 		virtual void bindSurface(size_t attachment, RenderTexture *target)=0;
 
-
-
 		/** Unbind attachment.
-
 		*/
-
 		virtual void unbindSurface(size_t attachment)=0; 
 
 		/** Error throwing implementation, it's not possible to write a MultiRenderTarget

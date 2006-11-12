@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __GLSLLinkProgram_H__
@@ -31,7 +27,6 @@ Torus Knot Software Ltd.
 
 #include "OgreGLPrerequisites.h"
 #include "OgreGpuProgram.h"
-#include "OgreHardwareVertexBuffer.h"
 
 namespace Ogre {
 
@@ -48,7 +43,6 @@ namespace Ogre {
 			String mName;
 			GLenum mType;
 			GLint  mLocation;
-			bool isSampler;
 			bool isReal;
 			GLsizei mElementCount;
             GLint mArraySize;
@@ -65,24 +59,11 @@ namespace Ogre {
 		GLhandleARB mGLHandle;
 		/// flag indicating that the program object has been successfully linked
 		GLint		mLinked;
-		// Custom attribute bindings
-		/// 'tangent' attribute
-		GLuint mTangentAttrib;
-		/// 'binormal' attribute
-		GLuint mBinormalAttrib;
-		/// 'blendIndices' attribute
-		GLuint mBlendIndicesAttrib;
-		/// 'blendWeights' attribute
-		GLuint mBlendWeightsAttrib;
         /// flag indicating skeletal animation is being performed
         bool mSkeletalAnimation;
 
 		/// build uniform references from active named uniforms
 		void buildUniformReferences(void);
-		/// extract attributes
-		void extractAttributes(void);
-
-		
 
 	public:
 		/// constructor should only be used by GLSLLinkProgramManager
@@ -119,11 +100,6 @@ namespace Ogre {
             skeletal animation, it will expect the vertex program to do it.
         */
         bool isSkeletalAnimationIncluded(void) const { return mSkeletalAnimation; }
-
-		/// Get the index of a non-standard attribute bound in the linked code
-		GLuint getAttributeIndex(VertexElementSemantic semantic);
-		/// Is a non-standard attribute bound in the linked code?
-		bool isAttributeValid(VertexElementSemantic semantic);
 
 	};
 

@@ -8,7 +8,7 @@
 		<Option virtualFolders="" />
 		<Build>
 			<Target title="Debug">
-				<Option output="..\..\..\Samples\Common\bin\Debug\Demo_BspCollision.exe" prefix_auto="0" extension_auto="0" />
+				<Option output="..\..\..\Samples\Common\bin\Debug\Demo_BspCollision.exe" />
 				<Option working_dir="..\..\..\Samples\Common\bin\Debug" />
 				<Option object_output="..\obj\Debug" />
 				<Option external_deps="..\..\..\OgreMain\lib\Debug\OgreMain_d.dll;" />
@@ -22,13 +22,12 @@
 				<Linker>
 					<Add library="ReferenceAppLayer" />
 					<Add library="OgreMain_d" />
-					<Add library="ois_d" />
 					<Add directory="..\..\Dependencies\lib\Debug" />
 					<Add directory="..\..\ReferenceAppLayer\lib\Debug" />
 				</Linker>
 			</Target>
 			<Target title="Release">
-				<Option output="..\..\..\Samples\Common\bin\Release\Demo_BspCollision.exe" prefix_auto="0" extension_auto="0" />
+				<Option output="..\..\..\Samples\Common\bin\Release\Demo_BspCollision.exe" />
 				<Option working_dir="..\..\..\Samples\Common\bin\Release" />
 				<Option object_output="..\obj\Release" />
 				<Option external_deps="..\..\..\OgreMain\lib\Release\OgreMain.dll;" />
@@ -43,7 +42,6 @@
 					<Add option="-s" />
 					<Add library="ReferenceAppLayer" />
 					<Add library="OgreMain" />
-					<Add library="ois" />
 					<Add directory="..\..\Dependencies\lib\Release" />
 					<Add directory="..\..\ReferenceAppLayer\lib\Release" />
 				</Linker>
@@ -61,13 +59,12 @@
 			<Add option="-pipe" />
 			<Add option="-DWIN32" />
 			<Add option="-D_WINDOWS" />
-			<Add directory="..\include" />
-			<Add directory="..\..\..\OgreMain\include" />
-			<Add directory="..\..\ReferenceAppLayer\include" />
-			<Add directory="..\..\Common\include" />
-			<Add directory="..\..\..\Dependencies\include" />
 			<Add directory="..\..\..\Dependencies\include\ode" />
-			<Add directory="..\..\..\Dependencies\include\ois" />
+			<Add directory="..\include" />
+			<Add directory="..\..\Common\include" />
+			<Add directory="..\..\..\OgreMain\include" />
+			<Add directory="..\..\..\Dependencies\include" />
+			<Add directory="..\..\ReferenceAppLayer\include" />
 		</Compiler>
 		<Linker>
 			<Add option="-Wl,--enable-auto-image-base" />
