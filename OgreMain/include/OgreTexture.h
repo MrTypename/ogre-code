@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef _Texture_H__
@@ -133,40 +129,40 @@ namespace Ogre {
 
         /** Returns the height of the texture.
         */
-        virtual size_t getHeight(void) const { return mHeight; }
+        virtual unsigned int getHeight(void) const { return mHeight; }
 
         /** Returns the width of the texture.
         */
-        virtual size_t getWidth(void) const { return mWidth; }
+        virtual unsigned int getWidth(void) const { return mWidth; }
 
         /** Returns the depth of the texture (only applicable for 3D textures).
         */
-        virtual size_t getDepth(void) const { return mDepth; }
+        virtual unsigned int getDepth(void) const { return mDepth; }
 
         /** Returns the height of the original input texture (may differ due to hardware requirements).
         */
-        virtual size_t getSrcHeight(void) const { return mSrcHeight; }
+        virtual unsigned int getSrcHeight(void) const { return mSrcHeight; }
 
         /** Returns the width of the original input texture (may differ due to hardware requirements).
         */
-        virtual size_t getSrcWidth(void) const { return mSrcWidth; }
+        virtual unsigned int getSrcWidth(void) const { return mSrcWidth; }
 
         /** Returns the original depth of the input texture (only applicable for 3D textures).
         */
-        virtual size_t getSrcDepth(void) const { return mSrcDepth; }
+        virtual unsigned int getSrcDepth(void) const { return mSrcDepth; }
 
         /** Set the height of the texture; can only do this before load();
         */
-        virtual void setHeight(size_t h) { mHeight = mSrcHeight = h; }
+        virtual void setHeight(unsigned int h) { mHeight = mSrcHeight = h; }
 
         /** Set the width of the texture; can only do this before load();
         */
-        virtual void setWidth(size_t w) { mWidth = mSrcWidth = w; }
+        virtual void setWidth(unsigned int w) { mWidth = mSrcWidth = w; }
 
         /** Set the depth of the texture (only applicable for 3D textures);
             ; can only do this before load();
         */
-        virtual void setDepth(size_t d)  { mDepth = mSrcDepth = d; }
+        virtual void setDepth(unsigned int d)  { mDepth = mSrcDepth = d; }
 
         /** Returns the TextureUsage indentifier for this Texture
         */
@@ -206,32 +202,18 @@ namespace Ogre {
 		virtual void copyToTexture( TexturePtr& target );
 
         /** Loads the data from an image.
-		@note Important: only call this from outside the load() routine of a 
-			Resource. Don't call it within (including ManualResourceLoader) - use
-			_loadImages() instead. This method is designed to be external, 
-			performs locking and checks the load status before loading.
         */
-        virtual void loadImage( const Image &img );
+        virtual void loadImage( const Image &img ) = 0;
 			
 		/** Loads the data from a raw stream.
-		@note Important: only call this from outside the load() routine of a 
-			Resource. Don't call it within (including ManualResourceLoader) - use
-			_loadImages() instead. This method is designed to be external, 
-			performs locking and checks the load status before loading.
-		@param stream Data stream containing the raw pixel data
-		@param uWidth Width of the image
-		@param uHeight Height of the image
-		@param eFormat The format of the pixel data
 		*/
 		virtual void loadRawData( DataStreamPtr& stream, 
 			ushort uWidth, ushort uHeight, PixelFormat eFormat);
 
-		/** Internal method to load the texture from a set of images. 
-		@note Do NOT call this method unless you are inside the load() routine
-			already, e.g. a ManualResourceLoader. It is not threadsafe and does
-			not check or update resource loading status.
-		*/
-        virtual void _loadImages( const ConstImagePtrList& images );
+        virtual void enable32Bit( bool setting = true ) 
+        {
+            setting ? mFinalBpp = 32 : mFinalBpp = 16;
+        }
 
 		/** Returns the pixel format for the texture surface. */
 		virtual PixelFormat getFormat() const
@@ -239,60 +221,15 @@ namespace Ogre {
 			return mFormat;
 		}
 
-        /** Returns the desired pixel format for the texture surface. */
-        virtual PixelFormat getDesiredFormat(void) const
-        {
-            return mDesiredFormat;
-        }
-
-        /** Returns the pixel format of the original input texture (may differ due to
-            hardware requirements and pixel format convertion).
-        */
-        virtual PixelFormat getSrcFormat(void) const
-        {
-            return mSrcFormat;
-        }
-
         /** Sets the pixel format for the texture surface; can only be set before load(). */
         virtual void setFormat(PixelFormat pf);
 
         /** Returns true if the texture has an alpha layer. */
-        virtual bool hasAlpha(void) const;
-
-        /** Sets desired bit depth for integer pixel format textures.
-        @note
-            Available values: 0, 16 and 32, where 0 (the default) means keep original format
-            as it is. This value is number of bits for the pixel.
-        */
-        virtual void setDesiredIntegerBitDepth(ushort bits);
-
-        /** gets desired bit depth for integer pixel format textures.
-        */
-        virtual ushort getDesiredIntegerBitDepth(void) const;
-
-        /** Sets desired bit depth for float pixel format textures.
-        @note
-            Available values: 0, 16 and 32, where 0 (the default) means keep original format
-            as it is. This value is number of bits for a channel of the pixel.
-        */
-        virtual void setDesiredFloatBitDepth(ushort bits);
-
-        /** gets desired bit depth for float pixel format textures.
-        */
-        virtual ushort getDesiredFloatBitDepth(void) const;
-
-        /** Sets desired bit depth for integer and float pixel format.
-        */
-        virtual void setDesiredBitDepths(ushort integerBits, ushort floatBits);
-
-        /** Sets whether luminace pixel format will treated as alpha format when load this texture.
-        */
-        virtual void setTreatLuminanceAsAlpha(bool asAlpha);
-
-        /** Gets whether luminace pixel format will treated as alpha format when load this texture.
-        */
-        virtual bool getTreatLuminanceAsAlpha(void) const;
-
+        virtual bool hasAlpha(void) const
+        {
+            return mHasAlpha;
+        }
+        
         /** Return the number of faces this texture has. This will be 6 for a cubemap
         	texture and 1 for a 1D, 2D or 3D one.
         */
@@ -313,9 +250,9 @@ namespace Ogre {
 		virtual HardwarePixelBufferSharedPtr getBuffer(size_t face=0, size_t mipmap=0) = 0;
 
     protected:
-        size_t mHeight;
-        size_t mWidth;
-        size_t mDepth;
+        unsigned long mHeight;
+        unsigned long mWidth;
+        unsigned long mDepth;
 
         size_t mNumRequestedMipmaps;
 		size_t mNumMipmaps;
@@ -326,19 +263,26 @@ namespace Ogre {
 		PixelFormat mFormat;
         int mUsage; // Bit field, so this can't be TextureUsage
 
-        PixelFormat mSrcFormat;
-        size_t mSrcWidth, mSrcHeight, mSrcDepth;
-
-        PixelFormat mDesiredFormat;
-        unsigned short mDesiredIntegerBitDepth;
-        unsigned short mDesiredFloatBitDepth;
-        bool mTreatLuminanceAsAlpha;
+        unsigned short mSrcBpp;
+        unsigned long mSrcWidth, mSrcHeight, mSrcDepth;
+        unsigned short mFinalBpp;
+        bool mHasAlpha;
 
 		bool mInternalResourcesCreated;
 
 		/// @copydoc Resource::calculateSize
 		size_t calculateSize(void) const;
 		
+		/** Generic method to load the texture from a set of images. This can be
+		 	used by the specific implementation for convience. Implementations
+			might decide not to use this function if they can use their own image loading
+			functions.
+			@param images	Vector of pointers to Images. If there is only one image
+			in this vector, the faces of that image will be used. If there are multiple
+			images in the vector each image will be loaded as a face.
+		*/
+        virtual void _loadImages( const std::vector<const Image*>& images );
+
 
 		/** Implementation of creating internal texture resources 
 		*/
@@ -399,12 +343,6 @@ namespace Ogre {
                     ++(*pUseCount);
                 }
             }
-			else
-			{
-				// RHS must be a null pointer
-				assert(r.isNull() && "RHS must be null if it has no mutex!");
-				setNull();
-			}
             return *this;
         }
     };

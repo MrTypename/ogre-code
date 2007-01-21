@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __SharedPtr_H__
@@ -60,8 +56,7 @@ namespace Ogre {
             OGRE_SET_AUTO_SHARED_MUTEX_NULL
         }
 
-        template< class Y>
-		explicit SharedPtr(Y* rep) : pRep(rep), pUseCount(new unsigned int(1))
+		explicit SharedPtr(T* rep) : pRep(rep), pUseCount(new unsigned int(1))
 		{
             OGRE_SET_AUTO_SHARED_MUTEX_NULL
 			OGRE_NEW_AUTO_SHARED_MUTEX
@@ -96,52 +91,6 @@ namespace Ogre {
 			    OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
 			    pRep = r.pRep;
 			    pUseCount = r.pUseCount;
-			    if (pUseCount)
-			    {
-				    ++(*pUseCount);
-			    }
-            }
-			else
-			{
-				// RHS must be a null pointer
-				assert(r.isNull() && "RHS must be null if it has no mutex!");
-				setNull();
-			}
-			return *this;
-		}
-		
-		template< class Y>
-		SharedPtr(const SharedPtr<Y>& r)
-            : pRep(0), pUseCount(0)
-		{
-			// lock & copy other mutex pointer
-
-            OGRE_SET_AUTO_SHARED_MUTEX_NULL
-            OGRE_MUTEX_CONDITIONAL(r.OGRE_AUTO_MUTEX_NAME)
-            {
-			    OGRE_LOCK_MUTEX(*r.OGRE_AUTO_MUTEX_NAME)
-			    OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
-			    pRep = r.getPointer();
-			    pUseCount = r.useCountPointer();
-			    // Handle zero pointer gracefully to manage STL containers
-			    if(pUseCount)
-			    {
-				    ++(*pUseCount);
-			    }
-            }
-		}
-		template< class Y>
-		SharedPtr& operator=(const SharedPtr<Y>& r) {
-			if (pRep == r.pRep)
-				return *this;
-			release();
-			// lock & copy other mutex pointer
-            OGRE_MUTEX_CONDITIONAL(r.OGRE_AUTO_MUTEX_NAME)
-            {
-			    OGRE_LOCK_MUTEX(*r.OGRE_AUTO_MUTEX_NAME)
-			    OGRE_COPY_AUTO_SHARED_MUTEX(r.OGRE_AUTO_MUTEX_NAME)
-			    pRep = r.getPointer();
-			    pUseCount = r.useCountPointer();
 			    if (pUseCount)
 			    {
 				    ++(*pUseCount);

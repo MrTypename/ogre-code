@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.stevestreeting.com/ogre/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltdeeting
+Copyright (c) 2000-2005 The OGRE Teameeting
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -46,53 +46,6 @@ GLGpuProgram::~GLGpuProgram()
     unload(); 
 }
 
-GLuint GLGpuProgram::getAttributeIndex(VertexElementSemantic semantic)
-{
-	// default implementation
-	switch(semantic)
-	{
-		case VES_POSITION:
-		case VES_NORMAL:
-		case VES_DIFFUSE:
-		case VES_SPECULAR:
-		case VES_TEXTURE_COORDINATES:
-			assert(false && "Shouldn't be calling this for standard attributes!");
-			break;
-		case VES_BLEND_INDICES:
-			return 7; // default binding
-		case VES_BLEND_WEIGHTS:
-			return 1; // default binding
-		case VES_TANGENT:
-			return 14; // default binding
-		case VES_BINORMAL:
-			return 15; // default binding
-	}
-
-	return 0;
-}
-
-bool GLGpuProgram::isAttributeValid(VertexElementSemantic semantic)
-{
-	// default implementation
-	switch(semantic)
-	{
-		case VES_POSITION:
-		case VES_NORMAL:
-		case VES_DIFFUSE:
-		case VES_SPECULAR:
-		case VES_TEXTURE_COORDINATES:
-			assert(false && "Shouldn't be calling this for standard attributes!");
-			break;
-		case VES_BLEND_WEIGHTS:
-		case VES_BLEND_INDICES:
-		case VES_BINORMAL:
-		case VES_TANGENT:
-			return true; // with default binding
-	}
-
-    return false;
-}
-
 GLArbGpuProgram::GLArbGpuProgram(ResourceManager* creator, const String& name, 
     ResourceHandle handle, const String& group, bool isManual, 
     ManualResourceLoader* loader) 
@@ -131,35 +84,36 @@ void GLArbGpuProgram::bindProgramParameters(GpuProgramParametersSharedPtr params
     GLenum type = (mType == GPT_VERTEX_PROGRAM) ? 
         GL_VERTEX_PROGRAM_ARB : GL_FRAGMENT_PROGRAM_ARB;
     
-	// only supports float constants
-	const GpuLogicalBufferStruct* floatStruct = params->getFloatLogicalBufferStruct();
+    if (params->hasRealConstantParams())
+    {
+        // Iterate over params and set the relevant ones
+        GpuProgramParameters::RealConstantIterator realIt = 
+            params->getRealConstantIterator();
+        unsigned int index = 0;
+        while (realIt.hasMoreElements())
+        {
+            const GpuProgramParameters::RealConstantEntry* e = realIt.peekNextPtr();
+            if (e->isSet)
+            {
+                glProgramLocalParameter4fvARB(type, index, e->val);
+            }
+            index++;
+            realIt.moveNext();
+        }
+    }
 
-	for (GpuLogicalIndexUseMap::const_iterator i = floatStruct->map.begin();
-		i != floatStruct->map.end(); ++i)
-	{
-		size_t logicalIndex = i->first;
-		const float* pFloat = params->getFloatPointer(i->second.physicalIndex);
-		// Iterate over the params, set in 4-float chunks (low-level)
-		for (size_t j = 0; j < i->second.currentSize; j+=4)
-		{
-			glProgramLocalParameter4fvARB(type, logicalIndex, pFloat);
-			pFloat += 4;
-			++logicalIndex;
-		}
-	}
 }
 
 void GLArbGpuProgram::bindProgramPassIterationParameters(GpuProgramParametersSharedPtr params)
 {
-    if (params->hasPassIterationNumber())
-    {
-		GLenum type = (mType == GPT_VERTEX_PROGRAM) ? 
-			GL_VERTEX_PROGRAM_ARB : GL_FRAGMENT_PROGRAM_ARB;
+    GLenum type = (mType == GPT_VERTEX_PROGRAM) ? 
+        GL_VERTEX_PROGRAM_ARB : GL_FRAGMENT_PROGRAM_ARB;
+    
+    GpuProgramParameters::RealConstantEntry* realEntry = params->getPassIterationEntry();
 
-		size_t physicalIndex = params->getPassIterationNumberIndex();
-		size_t logicalIndex = params->getFloatLogicalIndexForPhysicalIndex(physicalIndex);
-		const float* pFloat = params->getFloatPointer(physicalIndex);
-        glProgramLocalParameter4fvARB(type, (GLuint)logicalIndex, pFloat);
+    if (realEntry)
+    {
+        glProgramLocalParameter4fvARB(type, (GLuint)params->getPassIterationEntryIndex(), realEntry->val);
     }
 
 }

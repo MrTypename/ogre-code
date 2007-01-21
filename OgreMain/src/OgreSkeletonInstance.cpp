@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -35,10 +31,9 @@ Torus Knot Software Ltd.
 namespace Ogre {
     //-------------------------------------------------------------------------
     SkeletonInstance::SkeletonInstance(const SkeletonPtr& masterCopy) 
-        : Skeleton()
-        , mSkeleton(masterCopy)
-        , mNextTagPointAutoHandle(0)
+        : Skeleton(), mSkeleton(masterCopy)
     {
+        mNextTagPointAutoHandle = 0;
     }
     //-------------------------------------------------------------------------
     SkeletonInstance::~SkeletonInstance()
@@ -112,7 +107,7 @@ namespace Ogre {
     void SkeletonInstance::cloneBoneAndChildren(Bone* source, Bone* parent)
     {
         Bone* newBone;
-        if (source->getName().empty())
+        if (source->getName() == "")
         {
             newBone = createBone(source->getHandle());
         }
@@ -162,7 +157,7 @@ namespace Ogre {
         Skeleton::unloadImpl();
 
         // destroy TagPoints
-        for (TagPointList::const_iterator it = mActiveTagPoints.begin(); it != mActiveTagPoints.end(); ++it)
+        for (ActiveTagPointList::const_iterator it = mActiveTagPoints.begin(); it != mActiveTagPoints.end(); ++it)
         {
             TagPoint* tagPoint = *it;
             // Woohoo! The child object all the same attaching this skeleton instance, but is ok we can just
@@ -172,7 +167,7 @@ namespace Ogre {
             delete tagPoint;
         }
         mActiveTagPoints.clear();
-        for (TagPointList::const_iterator it2 = mFreeTagPoints.begin(); it2 != mFreeTagPoints.end(); ++it2)
+        for (FreeTagPointQueue::const_iterator it2 = mFreeTagPoints.begin(); it2 != mFreeTagPoints.end(); ++it2)
         {
             TagPoint* tagPoint = *it2;
             delete tagPoint;
@@ -188,19 +183,16 @@ namespace Ogre {
         TagPoint* ret;
         if (mFreeTagPoints.empty()) {
             ret = new TagPoint(mNextTagPointAutoHandle++, this);
-            mActiveTagPoints.push_back(ret);
         } else {
             ret = mFreeTagPoints.front();
-            mActiveTagPoints.splice(
-                mActiveTagPoints.end(), mFreeTagPoints, mFreeTagPoints.begin());
+            mFreeTagPoints.pop_front();
             // Initial some members ensure identically behavior, avoiding potential bug.
             ret->setParentEntity(0);
             ret->setChildObject(0);
             ret->setInheritOrientation(true);
             ret->setInheritScale(true);
-            ret->setInheritParentEntityOrientation(true);
-            ret->setInheritParentEntityScale(true);
         }
+        mActiveTagPoints.push_back(ret);
 
         ret->setPosition(offsetPosition);
         ret->setOrientation(offsetOrientation);
@@ -213,16 +205,13 @@ namespace Ogre {
     //-------------------------------------------------------------------------
     void SkeletonInstance::freeTagPoint(TagPoint* tagPoint)
     {
-        TagPointList::iterator it =
-            std::find(mActiveTagPoints.begin(), mActiveTagPoints.end(), tagPoint);
-        assert(it != mActiveTagPoints.end());
-        if (it != mActiveTagPoints.end())
-        {
-            if (tagPoint->getParent())
-                tagPoint->getParent()->removeChild(tagPoint);
+        assert(std::find(mActiveTagPoints.begin(), mActiveTagPoints.end(), tagPoint) != mActiveTagPoints.end());
 
-            mFreeTagPoints.splice(mFreeTagPoints.end(), mActiveTagPoints, it);
-        }
+        if (tagPoint->getParent())
+            tagPoint->getParent()->removeChild(tagPoint);
+
+        mActiveTagPoints.remove(tagPoint);
+        mFreeTagPoints.push_back(tagPoint);
     }
 	//-------------------------------------------------------------------------
 	const String& SkeletonInstance::getName(void) const

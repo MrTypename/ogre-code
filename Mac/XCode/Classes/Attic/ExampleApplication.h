@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -28,30 +28,25 @@ Description: Base class for all the OGRE examples
 
 using namespace Ogre;
 
-// This function is needed on OS X to determine the correct path to 
-// the application bundle, would it be desired to have ogre internally
-// use this method on OS X, then fall back on the old method?
-#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-Ogre::String bundlePath()
+std::string bundlePath()
 {
     char path[1024];
     CFBundleRef mainBundle = CFBundleGetMainBundle();
-    assert(mainBundle);
+    assert( mainBundle );
 
     CFURLRef mainBundleURL = CFBundleCopyBundleURL( mainBundle);
-    assert(mainBundleURL);
+    assert( mainBundleURL);
 
     CFStringRef cfStringRef = CFURLCopyFileSystemPath( mainBundleURL, kCFURLPOSIXPathStyle);
-    assert(cfStringRef);
+    assert( cfStringRef);
 
-    CFStringGetCString(cfStringRef, path, 1024, kCFStringEncodingASCII);
+    CFStringGetCString( cfStringRef, path, 1024, kCFStringEncodingASCII);
 
-    CFRelease(mainBundleURL);
-    CFRelease(cfStringRef);
+    CFRelease( mainBundleURL);
+    CFRelease( cfStringRef);
 
-    return Ogre::String(path);
+    return std::string( path);
 }
-#endif
 
 
 /** Base class which manages the standard startup of an Ogre application.
@@ -93,17 +88,13 @@ protected:
     SceneManager* mSceneMgr;
     ExampleFrameListener* mFrameListener;
     RenderWindow* mWindow;
-    Ogre::String mResourcePath;
+    std::string mResourcePath;
 
     // These internal methods package up the stages in the startup process
     /** Sets up the application - returns false if the user chooses to abandon configuration. */
     virtual bool setup(void)
     {
-		#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
         mResourcePath = bundlePath() + "/Contents/Resources/";
-		#else
-		mResourcePath = "";
-		#endif
         mRoot = new Root(mResourcePath + "plugins.cfg", 
             mResourcePath + "ogre.cfg", mResourcePath + "Ogre.log");
 

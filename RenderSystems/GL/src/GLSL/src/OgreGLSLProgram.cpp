@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreGpuProgram.h"
@@ -33,12 +29,10 @@ Torus Knot Software Ltd.
 #include "OgreStringConverter.h"
 #include "OgreGpuProgramManager.h"
 #include "OgreHighLevelGpuProgramManager.h"
-#include "OgreLogManager.h"
 
 #include "OgreGLSLProgram.h"
 #include "OgreGLSLGpuProgram.h"
 #include "OgreGLSLExtSupport.h"
-#include "OgreGLSLLinkProgramManager.h"
 
 namespace Ogre {
 
@@ -50,7 +44,7 @@ namespace Ogre {
     {
         // have to call this here reather than in Resource destructor
         // since calling virtual methods in base destructors causes crash
-        if (isLoaded())
+        if (mIsLoaded)
         {
             unload();
         }
@@ -122,29 +116,11 @@ namespace Ogre {
     }
 
 	//-----------------------------------------------------------------------
-    void GLSLProgram::buildConstantDefinitions() const
+    void GLSLProgram::populateParameterNames(GpuProgramParametersSharedPtr params)
     {
-		// We need an accurate list of all the uniforms in the shader, but we
-		// can't get at them until we link all the shaders into a program object.
-
-
-		// Therefore instead, parse the source code manually and extract the uniforms
-		mConstantDefs.floatBufferSize = 0;
-		mConstantDefs.intBufferSize = 0;
-		GLSLLinkProgramManager::getSingleton().extractConstantDefs(mSource, mConstantDefs, mName);
-
-		// Also parse any attached sources
-		for (GLSLProgramContainer::const_iterator i = mAttachedGLSLPrograms.begin();
-			i != mAttachedGLSLPrograms.end(); ++i)
-		{
-			GLSLProgram* childShader = *i;
-
-			GLSLLinkProgramManager::getSingleton().extractConstantDefs(
-				childShader->getSource(), mConstantDefs, childShader->getName());
-
-		}
-
-
+		// can't populate parameter names in GLSL until link time
+		// allow for names read from a material script to be added automatically to the list
+		params->setAutoAddParamName(true);
 
     }
 
@@ -240,24 +216,6 @@ namespace Ogre {
 
 			childShader->attachToProgramObject( programObject );
 
-			++childprogramcurrent;
-		}
-
-	}
-	//-----------------------------------------------------------------------
-	void GLSLProgram::detachFromProgramObject( const GLhandleARB programObject )
-	{
-		glDetachObjectARB(programObject, mGLHandle);
-		checkForGLSLError( "GLSLLinkProgram::GLSLLinkProgram",
-			"Error detaching " + mName + " shader object from GLSL Program Object", programObject );
-		// attach child objects
-		GLSLProgramContainerIterator childprogramcurrent = mAttachedGLSLPrograms.begin();
-		GLSLProgramContainerIterator childprogramend = mAttachedGLSLPrograms.end();
-
-		while (childprogramcurrent != childprogramend)
-		{
-			GLSLProgram* childShader = *childprogramcurrent;
-			childShader->detachFromProgramObject( programObject );
 			++childprogramcurrent;
 		}
 

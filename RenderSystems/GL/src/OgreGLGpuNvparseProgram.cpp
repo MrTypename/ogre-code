@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.stevestreeting.com/ogre/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltdeeting
+Copyright (c) 2000-2005 The OGRE Teameeting
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -67,19 +67,27 @@ void GLGpuNvparseProgram::unbindProgram(void)
 void GLGpuNvparseProgram::bindProgramParameters(GpuProgramParametersSharedPtr params)
 {
     // NB, register combiners uses 2 constants per texture stage (0 and 1)
-    // We have stored these as (stage * 2) + const_index in the physical buffer
-	// There are no other parameters in a register combiners shader
-	const GpuProgramParameters::FloatConstantList& floatList = 
-		params->getFloatConstantList();
-	size_t index = 0;
-	for (GpuProgramParameters::FloatConstantList::const_iterator i = floatList.begin();
-		i != floatList.end(); ++i, ++index)
-	{
-		GLenum combinerStage = GL_COMBINER0_NV + (unsigned int)(index / 2);
-		GLenum pname = GL_CONSTANT_COLOR0_NV + (index % 2);
-		glCombinerStageParameterfvNV(combinerStage, pname, &(*i));
-		
-	}
+    // We have stored these as (stage * 2) + const_index
+
+    if (params->hasRealConstantParams())
+    {
+        // Iterate over params and set the relevant ones
+        GpuProgramParameters::RealConstantIterator realIt = 
+            params->getRealConstantIterator();
+        unsigned int index = 0;
+        while (realIt.hasMoreElements())
+        {
+            const GpuProgramParameters::RealConstantEntry* e = realIt.peekNextPtr();
+            if (e->isSet)
+            {
+                GLenum combinerStage = GL_COMBINER0_NV + (unsigned int)(index / 2);
+                GLenum pname = GL_CONSTANT_COLOR0_NV + (index % 2);
+                glCombinerStageParameterfvNV(combinerStage, pname, e->val);
+            }
+            index++;
+            realIt.moveNext();
+        }
+    }
 
 }
 void GLGpuNvparseProgram::unloadImpl(void)

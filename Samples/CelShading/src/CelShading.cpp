@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -35,11 +35,9 @@ public:
 
     bool frameStarted(const FrameEvent& evt)
     {
-	if( ExampleFrameListener::frameStarted(evt) == false )
-		return false;
-
         rotNode->yaw(Degree(evt.timeSinceLastFrame * 30));
-        return true;
+        // Call superclass
+        return ExampleFrameListener::frameStarted(evt);
     }
 };
 
@@ -74,7 +72,7 @@ protected:
 		const RenderSystemCapabilities* caps = Root::getSingleton().getRenderSystem()->getCapabilities();
         if (!caps->hasCapability(RSC_VERTEX_PROGRAM) || !(caps->hasCapability(RSC_FRAGMENT_PROGRAM)))
         {
-			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support vertex and fragment programs (or you selected D3D7), so cannot "
+            OGRE_EXCEPT(1, "Your card does not support vertex and fragment programs (or you selected D3D7), so cannot "
                 "run this demo. Sorry!", 
                 "CelShading::createScene");
         }

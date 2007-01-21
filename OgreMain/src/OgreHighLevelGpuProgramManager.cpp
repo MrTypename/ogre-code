@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,15 +20,10 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
 #include "OgreHighLevelGpuProgramManager.h"
-#include "OgreUnifiedHighLevelGpuProgram.h"
 
 namespace Ogre {
 
@@ -45,17 +40,7 @@ namespace Ogre {
 		/// Internal unload implementation, must be implemented by subclasses
 		void unloadHighLevelImpl(void) {}
 		/// Populate the passed parameters with name->index map, must be overridden
-		void populateParameterNames(GpuProgramParametersSharedPtr params)
-		{
-			// Skip the normal implementation
-			// Ensure we don't complain about missing parameter names
-			params->setIgnoreMissingParams(true);
-
-		}
-		void buildConstantDefinitions() const
-		{
-			// do nothing
-		}
+		void populateParameterNames(GpuProgramParametersSharedPtr params) {}
 	public:
 		NullProgram(ResourceManager* creator, 
 			const String& name, ResourceHandle handle, const String& group, 
@@ -66,14 +51,6 @@ namespace Ogre {
 		bool isSupported(void) const { return false; }
 		/// Overridden from GpuProgram
 		const String& getLanguage(void) const { return sNullLang; }
-
-		/// Overridden from StringInterface
-		bool setParameter(const String& name, const String& value)
-		{
-			// always silently ignore all parameters so as not to report errors on
-			// unsupported platforms
-			return true;
-		}
 
 	};
 	class NullProgramFactory : public HighLevelGpuProgramFactory
@@ -121,13 +98,11 @@ namespace Ogre {
 
 		mNullFactory = new NullProgramFactory();
 		addFactory(mNullFactory);
-		mUnifiedFactory = new UnifiedHighLevelGpuProgramFactory();
-		addFactory(mUnifiedFactory);
+       
 	}
 	//-----------------------------------------------------------------------
 	HighLevelGpuProgramManager::~HighLevelGpuProgramManager()
 	{
-		delete mUnifiedFactory;
 		delete mNullFactory;
         ResourceGroupManager::getSingleton()._unregisterResourceManager(mResourceType);    
 	}

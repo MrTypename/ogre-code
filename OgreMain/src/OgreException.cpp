@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -38,33 +34,40 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
+    Exception* Exception::last = NULL;
+
+    String Exception::msFunctionStack[ OGRE_CALL_STACK_DEPTH ];
+    ushort   Exception::msStackDepth = 0;
+
     Exception::Exception(int num, const String& desc, const String& src) :
         line( 0 ),
         number( num ),
         description( desc ),
-        source( src )
+        source( src ),
+        stackDepth( msStackDepth )
     {
         // Log this error - not any more, allow catchers to do it
         //LogManager::getSingleton().logMessage(this->getFullDescription());
+
+        // Set last
+        last = this;
     }
 
-    Exception::Exception(int num, const String& desc, const String& src, 
-		const char* typ, const char* fil, long lin) :
+    Exception::Exception(int num, const String& desc, const String& src, const char* fil, long lin) :
         line( lin ),
         number( num ),
-		typeName(typ),
         description( desc ),
         source( src ),
-        file( fil )
+        file( fil ),
+        stackDepth( msStackDepth )
     {
         // Log this error, mask it from debug though since it may be caught and ignored
         if(LogManager::getSingletonPtr())
-		{
-            LogManager::getSingleton().logMessage(
-				this->getFullDescription(), 
+            LogManager::getSingleton().logMessage(this->getFullDescription(), 
                 LML_CRITICAL, true);
-		}
 
+        // Set last
+        last = this;
     }
 
     Exception::Exception(const Exception& rhs)
@@ -79,29 +82,44 @@ namespace Ogre {
         source = rhs.source;
         file = rhs.file;
         line = rhs.line;
-		typeName = rhs.typeName;
     }
 
-    const String& Exception::getFullDescription(void) const
+    String Exception::getFullDescription(void) const
     {
-		if (fullDesc.empty())
-		{
+		StringUtil::StrStreamType desc;
 
-			StringUtil::StrStreamType desc;
+        desc <<  "An exception has been thrown!\n"
+                "\n"
+                "-----------------------------------\nDetails:\n-----------------------------------\n"
+                "Error #: " << number
+			<< "\nFunction: " << source
+			<< "\nDescription: " << description 
+			<< ". ";
 
-			desc <<  "OGRE EXCEPTION(" << number << ":" << typeName << "): "
-				<< description 
-				<< " in " << source;
+        if( line > 0 )
+        {
+            desc << "\nFile: " << file;
+            desc << "\nLine: " << line;
+        }
 
-			if( line > 0 )
-			{
-				desc << " at " << file << " (line " << line << ")";
-			}
+#ifdef OGRE_STACK_UNWINDING
+        desc << "\nStack unwinding: ";
 
-			fullDesc = desc.str();
-		}
+        /* Will cause an overflow, that's why we check that it's smaller.
+           Also note that the call stack index may be greater than the actual call
+           stack size - that's why we begin unrolling with the smallest of the two. */
+        for( 
+            ushort stackUnroll = stackDepth <= OGRE_CALL_STACK_DEPTH ? ( stackDepth - 1 ) : ( OGRE_CALL_STACK_DEPTH - 1 ); 
+            stackUnroll < stackDepth; stackUnroll-- )
+        {
+            desc << msFunctionStack[ stackUnroll ];
+            desc << "(..) <- ";
+        }
 
-		return fullDesc;
+        desc << "<<beginning of stack>>";
+#endif
+
+        return desc.str();
     }
 
     int Exception::getNumber(void) const throw()
@@ -109,5 +127,23 @@ namespace Ogre {
         return number;
     }
 
+    Exception* Exception::getLastException(void) throw()
+    {
+        return last;
+    }
+
+    //-----------------------------------------------------------------------
+    void Exception::_pushFunction( const String& strFuncName ) throw()
+    {
+        if( msStackDepth < OGRE_CALL_STACK_DEPTH )
+            msFunctionStack[ msStackDepth ] = strFuncName;
+        msStackDepth++;
+    }
+
+    //-----------------------------------------------------------------------
+    void Exception::_popFunction() throw()
+    {
+        msStackDepth--;
+    }
 }
 

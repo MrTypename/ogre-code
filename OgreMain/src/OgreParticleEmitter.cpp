@@ -4,7 +4,7 @@ This source file is part of OGRE
 	(Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under 
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple 
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to 
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -31,9 +27,9 @@ Torus Knot Software Ltd.
 #include "OgreParticleEmitter.h"
 #include "OgreParticleEmitterFactory.h"
 
-namespace Ogre
-{
-	// Define static members
+namespace Ogre {
+
+    // Define static members
     EmitterCommands::CmdAngle ParticleEmitter::msAngleCmd;
     EmitterCommands::CmdColour ParticleEmitter::msColourCmd;
     EmitterCommands::CmdColourRangeStart ParticleEmitter::msColourRangeStartCmd;
@@ -53,8 +49,6 @@ namespace Ogre
     EmitterCommands::CmdRepeatDelay ParticleEmitter::msRepeatDelayCmd;
     EmitterCommands::CmdMinRepeatDelay ParticleEmitter::msMinRepeatDelayCmd;
     EmitterCommands::CmdMaxRepeatDelay ParticleEmitter::msMaxRepeatDelayCmd;
-    EmitterCommands::CmdName ParticleEmitter::msNameCmd;
-    EmitterCommands::CmdEmittedEmitter ParticleEmitter::msEmittedEmitterCmd;
 
 
     //-----------------------------------------------------------------------
@@ -79,9 +73,7 @@ namespace Ogre
         mColourRangeStart = mColourRangeEnd = ColourValue::White;
         mEnabled = true;
         mRemainder = 0;
-		mName = StringUtil::BLANK;
-		mEmittedEmitter = StringUtil::BLANK;
-		mEmitted = false;
+
     }
     //-----------------------------------------------------------------------
     ParticleEmitter::~ParticleEmitter() 
@@ -164,36 +156,6 @@ namespace Ogre
     {
         mColourRangeStart = colourStart;
         mColourRangeEnd = colourEnd;
-    }
-	//-----------------------------------------------------------------------
-    const String& ParticleEmitter::getName(void) const
-    {
-        return mName;
-    }
-	//-----------------------------------------------------------------------
-    void ParticleEmitter::setName(const String& newName)
-    {
-		mName = newName;
-    }
-	//-----------------------------------------------------------------------
-    const String& ParticleEmitter::getEmittedEmitter(void) const
-    {
-        return mEmittedEmitter;
-    }
-	//-----------------------------------------------------------------------
-    void ParticleEmitter::setEmittedEmitter(const String& emittedEmitter)
-    {
-        mEmittedEmitter = emittedEmitter;
-    }
-	//-----------------------------------------------------------------------
-	bool ParticleEmitter::isEmitted(void) const
-    {
-		return mEmitted;
-    }
-	//-----------------------------------------------------------------------
-	void ParticleEmitter::setEmitted(bool emitted)
-    {
-        mEmitted = emitted;
     }
     //-----------------------------------------------------------------------
     void ParticleEmitter::genEmissionDirection(Vector3& destVector)
@@ -390,14 +352,6 @@ namespace Ogre
         dict->addParameter(ParameterDef("repeat_delay_max", 
             "If set, after disabling an emitter will repeat (reenable) after this maximum number of seconds." , PT_REAL),
             &msMaxRepeatDelayCmd);
-
-		dict->addParameter(ParameterDef("name", 
-			"This is the name of the emitter" , PT_STRING),
-			&msNameCmd);
-		
-		dict->addParameter(ParameterDef("emit_emitter", 
-			"If set, this emitter will emit other emitters instead of visual particles" , PT_STRING),
-			&msEmittedEmitterCmd);
     }
     //-----------------------------------------------------------------------
     Real ParticleEmitter::getParticleVelocity(void) const

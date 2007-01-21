@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -69,13 +65,13 @@ namespace Ogre {
         unload(); 
     }
 	//-----------------------------------------------------------------------------
-    void GLSLGpuProgram::loadImpl(void)
+    void GLSLGpuProgram::load(void)
     {
-		// nothing to load
+        mIsLoaded = true;
     }
 
 	//-----------------------------------------------------------------------------
-	void GLSLGpuProgram::unloadImpl(void)
+	void GLSLGpuProgram::unload(void)
 	{
 		// nothing to unload
 	}
@@ -121,7 +117,7 @@ namespace Ogre {
 		// activate the link program object
 		GLSLLinkProgram* linkProgram = GLSLLinkProgramManager::getSingleton().getActiveLinkProgram();
 		// pass on parameters from params to program object uniforms
-		linkProgram->updateUniforms(params, mType);
+		linkProgram->updateUniforms( params );
 		
 	}
 
@@ -134,40 +130,6 @@ namespace Ogre {
 		linkProgram->updatePassIterationUniforms( params );
 		
 	}
-	//-----------------------------------------------------------------------------
-	GLuint GLSLGpuProgram::getAttributeIndex(VertexElementSemantic semantic)
-	{
-		// get link program - only call this in the context of bound program
-		GLSLLinkProgram* linkProgram = GLSLLinkProgramManager::getSingleton().getActiveLinkProgram();
-
-		if (linkProgram->isAttributeValid(semantic))
-		{
-			return linkProgram->getAttributeIndex(semantic);
-		}
-		else
-		{
-			// fall back to default implementation, allow default bindings
-			return GLGpuProgram::getAttributeIndex(semantic);
-		}
-		
-	}
-	//-----------------------------------------------------------------------------
-	bool GLSLGpuProgram::isAttributeValid(VertexElementSemantic semantic)
-	{
-		// get link program - only call this in the context of bound program
-		GLSLLinkProgram* linkProgram = GLSLLinkProgramManager::getSingleton().getActiveLinkProgram();
-
-		if (linkProgram->isAttributeValid(semantic))
-		{
-			return true;
-		}
-		else
-		{
-			// fall back to default implementation, allow default bindings
-			return GLGpuProgram::isAttributeValid(semantic);
-		}
-	}
-
 
 
 }

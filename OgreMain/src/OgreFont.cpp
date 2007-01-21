@@ -4,7 +4,7 @@ This source file is a part of OGRE
 
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This library is free software; you can redistribute it and/or modify it
@@ -388,11 +388,7 @@ namespace Ogre
 		img.loadRawData( memStream, tex_side, tex_side, PF_BYTE_LA );
 
 		Texture* tex = static_cast<Texture*>(res);
-		// Call internal _loadImages, not loadImage since that's external and 
-		// will determine load status etc again, and this is a manual loader inside load()
-		ConstImagePtrList imagePtrs;
-		imagePtrs.push_back(&img);
-		tex->_loadImages( imagePtrs );
+		tex->loadImage(img);
 
 
 		FT_Done_FreeType(ftLibrary);

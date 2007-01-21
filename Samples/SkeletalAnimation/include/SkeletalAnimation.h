@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -40,17 +40,13 @@ class SkeletalAnimationFrameListener : public ExampleFrameListener
 {
 protected:
 public:
-	SkeletalAnimationFrameListener(RenderWindow* win, Camera* cam, const std::string &debugText)
+    SkeletalAnimationFrameListener(RenderWindow* win, Camera* cam)
         : ExampleFrameListener(win, cam)
     {
-		mDebugText = debugText;
     }
 
     bool frameStarted(const FrameEvent& evt)
     {
-	if( ExampleFrameListener::frameStarted(evt) == false )
-		return false;
-
         for (int i = 0; i < NUM_JAIQUAS; ++i)
         {
 			Real inc = evt.timeSinceLastFrame * mAnimationSpeed[i]; 
@@ -76,7 +72,9 @@ public:
 			}
         }
 
-        return true;
+        // Call default
+        return ExampleFrameListener::frameStarted(evt);
+
     }
 };
 
@@ -88,7 +86,6 @@ public:
     SkeletalApplication() {}
 
 protected:
-	std::string mDebugText;
 
     // Just override the mandatory create scene method
     void createScene(void)
@@ -202,10 +199,15 @@ protected:
         // Report whether hardware skinning is enabled or not
         Technique* t = ent->getSubEntity(0)->getMaterial()->getBestTechnique();
         Pass* p = t->getPass(0);
-        if (p->hasVertexProgram() && p->getVertexProgram()->isSkeletalAnimationIncluded())
-            mDebugText = "Hardware skinning is enabled";
+        if (p->hasVertexProgram() && 
+            p->getVertexProgram()->isSkeletalAnimationIncluded())
+        {
+            mWindow->setDebugText("Hardware skinning is enabled");
+        }
         else
-            mDebugText = "Software skinning is enabled";
+        {
+            mWindow->setDebugText("Software skinning is enabled");
+        }
 
 		Plane plane;
 		plane.normal = Vector3::UNIT_Y;
@@ -226,7 +228,7 @@ protected:
     // Create new frame listener
     void createFrameListener(void)
     {
-        mFrameListener= new SkeletalAnimationFrameListener(mWindow, mCamera, mDebugText);
+        mFrameListener= new SkeletalAnimationFrameListener(mWindow, mCamera);
         mRoot->addFrameListener(mFrameListener);
     }
 

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __ANIMABLE_H__
@@ -93,16 +89,16 @@ namespace Ogre {
 		virtual void setAsBaseValue(Real val) { mBaseValueReal[0] = val; }
 		/// Internal method to set a value as base
 		virtual void setAsBaseValue(const Vector2& val) 
-		{ memcpy(mBaseValueReal, val.ptr(), sizeof(Real)*2); }
+		{ memcpy(mBaseValueReal, val.val, sizeof(Real)*2); }
 		/// Internal method to set a value as base
 		virtual void setAsBaseValue(const Vector3& val) 
-		{ memcpy(mBaseValueReal, val.ptr(), sizeof(Real)*3); }
+		{ memcpy(mBaseValueReal, val.val, sizeof(Real)*3); }
 		/// Internal method to set a value as base
 		virtual void setAsBaseValue(const Vector4& val) 
-		{ memcpy(mBaseValueReal, val.ptr(), sizeof(Real)*4); }
+		{ memcpy(mBaseValueReal, val.val, sizeof(Real)*4); }
 		/// Internal method to set a value as base
 		virtual void setAsBaseValue(const Quaternion& val) 
-		{ memcpy(mBaseValueReal, val.ptr(), sizeof(Real)*4); }
+		{ memcpy(mBaseValueReal, val.val, sizeof(Real)*4); }
 		/// Internal method to set a value as base
 		virtual void setAsBaseValue(const Any& val);
 		/// Internal method to set a value as base
@@ -126,31 +122,31 @@ namespace Ogre {
 		virtual void setCurrentStateAsBaseValue(void) = 0;
 
 		/// Set value 
-		virtual void setValue(int) {
+		virtual void setValue(int val) {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "", "");
 		}
 		/// Set value 
-		virtual void setValue(Real) {
+		virtual void setValue(Real val) {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "", "");
 		}
 		/// Set value 
-		virtual void setValue(const Vector2&) {
+		virtual void setValue(const Vector2& val) {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "", "");
 		}
 		/// Set value 
-		virtual void setValue(const Vector3&) {
+		virtual void setValue(const Vector3& val) {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "", "");
 		}
 		/// Set value 
-		virtual void setValue(const Vector4&) {
+		virtual void setValue(const Vector4& val) {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "", "");
 		}
 		/// Set value 
-		virtual void setValue(const Quaternion&) {
+		virtual void setValue(const Quaternion& val) {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "", "");
 		}
 		/// Set value 
-		virtual void setValue(const ColourValue&) {
+		virtual void setValue(const ColourValue& val) {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "", "");
 		}
 		/// Set value 
@@ -160,31 +156,31 @@ namespace Ogre {
 		virtual void resetToBaseValue(void);
 
 		/// Apply delta value
-		virtual void applyDeltaValue(int) {
+		virtual void applyDeltaValue(int val) {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "", "");
 		}
 		/// Set value 
-		virtual void applyDeltaValue(Real) {
+		virtual void applyDeltaValue(Real val) {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "", "");
 		}
 		/// Apply delta value 
-		virtual void applyDeltaValue(const Vector2&) {
+		virtual void applyDeltaValue(const Vector2& val) {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "", "");
 		}
 		/// Apply delta value 
-		virtual void applyDeltaValue(const Vector3&) {
+		virtual void applyDeltaValue(const Vector3& val) {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "", "");
 		}
 		/// Apply delta value 
-		virtual void applyDeltaValue(const Vector4&) {
+		virtual void applyDeltaValue(const Vector4& val) {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "", "");
 		}
 		/// Apply delta value 
-		virtual void applyDeltaValue(const Quaternion&) {
+		virtual void applyDeltaValue(const Quaternion& val) {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "", "");
 		}
 		/// Apply delta value 
-		virtual void applyDeltaValue(const ColourValue&) {
+		virtual void applyDeltaValue(const ColourValue& val) {
 			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "", "");
 		}
 		/// Apply delta value 
@@ -249,7 +245,7 @@ namespace Ogre {
 		/** Internal method for initialising dictionary; should be implemented by 
 			subclasses wanting to expose animable parameters.
 		*/
-		virtual void initialiseAnimableDictionary(StringVector&) const {}
+		virtual void initialiseAnimableDictionary(StringVector& vec) const {}
 
 
 	public:

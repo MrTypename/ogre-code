@@ -4,7 +4,7 @@ This source file is part of OGRE
 	(Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under 
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple 
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to 
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __ParticleSystemManager_H__
@@ -78,7 +74,6 @@ namespace Ogre {
 		typedef std::map<String, ParticleEmitterFactory*> ParticleEmitterFactoryMap;
 		typedef std::map<String, ParticleSystemRendererFactory*> ParticleSystemRendererFactoryMap;
     protected:
-		OGRE_AUTO_MUTEX
         /// Templates based on scripts
         ParticleTemplateMap mSystemTemplates;
         
@@ -190,26 +185,6 @@ namespace Ogre {
             
         */
         void addTemplate(const String& name, ParticleSystem* sysTemplate);
-
-        /** Removes a specified template from the ParticleSystemManager.
-        @remarks
-            This method removes a given template from the particle system manager, optionally deleting
-            the template if the deleteTemplate method is called.  Throws an exception if the template
-            could not be found.
-        @param
-            name The name of the template to remove.
-        @param
-            deleteTemplate Whether or not to delete the template before removing it.
-        */
-        void removeTemplate(const String& name, bool deleteTemplate = true);
-
-        /** Removes a specified template from the ParticleSystemManager.
-        @remarks
-            This method removes all templates from the ParticleSystemManager.
-        @param
-            deleteTemplate Whether or not to delete the templates before removing them.
-        */
-        void removeAllTemplates(bool deleteTemplate = true);
 
         /** Create a new particle system template. 
         @remarks

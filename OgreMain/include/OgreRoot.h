@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __ROOT__
@@ -38,6 +34,12 @@ Torus Knot Software Ltd.
 #include "OgreResourceGroupManager.h"
 
 #include <exception>
+
+#if OGRE_COMPILER == OGRE_COMPILER_MSVC || OGRE_COMPILER == OGRE_COMPILER_BORL
+#   define SET_TERM_HANDLER { set_terminate( &Ogre::Root::termHandler ); }
+#else
+#   define SET_TERM_HANDLER { std::set_terminate( &Ogre::Root::termHandler ); }
+#endif
 
 namespace Ogre
 {
@@ -76,6 +78,7 @@ namespace Ogre
         SceneManagerEnumerator* mSceneManagerEnum;
         SceneManager* mCurrentSceneManager;
         DynLibManager* mDynLibManager;
+        PlatformManager* mPlatformManager;
         ArchiveManager* mArchiveManager;
         MaterialManager* mMaterialManager;
         MeshManager* mMeshManager;
@@ -90,7 +93,6 @@ namespace Ogre
         ArchiveFactory *mFileSystemArchiveFactory;
 		ResourceGroupManager* mResourceGroupManager;
 		ResourceBackgroundQueue* mResourceBackgroundQueue;
-		ShadowTextureManager* mShadowTextureManager;
 
         Timer* mTimer;
         RenderWindow* mAutoWindow;
@@ -167,16 +169,11 @@ namespace Ogre
         static void termHandler();
 
         /** Constructor
-        @param pluginFileName The file that contains plugins information.
-            Defaults to "plugins.cfg", may be left blank to ignore.
-		@param configFileName The file that contains the configuration to be loaded.
-			Defaults to "ogre.cfg", may be left blank to load nothing.
-		@param logFileName The logfile to create, defaults to Ogre.log, may be 
-			left blank if you've already set up LogManager & Log yourself
+            @param
+                pluginFileName The file that contains plugins information.
+                Defaults to "plugins.cfg".
 		*/
-        Root(const String& pluginFileName = "plugins.cfg", 
-			const String& configFileName = "ogre.cfg", 
-			const String& logFileName = "Ogre.log");
+        Root(const String& pluginFileName = "plugins.cfg", const String& configFileName = "ogre.cfg", const String& logFileName = "Ogre.log");
         ~Root();
 
         /** Saves the details of the current configuration

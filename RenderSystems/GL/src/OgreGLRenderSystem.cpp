@@ -2,9 +2,9 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -19,11 +19,7 @@ FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more det
 You should have received a copy of the GNU Lesser General Public License along with
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.s
+http://www.gnu.org/copyleft/lesser.txt.s
 -----------------------------------------------------------------------------
 */
 
@@ -105,6 +101,8 @@ namespace Ogre {
     {
         size_t i;
 
+        OgreGuard( "GLRenderSystem::GLRenderSystem" );
+
         LogManager::getSingleton().logMessage(getName() + " created.");
 
         // Get our GLSupport
@@ -145,6 +143,7 @@ namespace Ogre {
 
         mClipPlanes.reserve(6);
 
+        OgreUnguard();
     }
 
     GLRenderSystem::~GLRenderSystem()
@@ -159,6 +158,9 @@ namespace Ogre {
         }
         mRenderTargets.clear();
 
+        if (mTextureManager)
+            delete mTextureManager;
+
         delete mGLSupport;
     }
 
@@ -170,7 +172,9 @@ namespace Ogre {
 
     void GLRenderSystem::initConfigOptions(void)
     {
+        OgreGuard("GLRenderSystem::initConfigOptions");
         mGLSupport->addConfig();
+        OgreUnguard();
     }
     
     ConfigOptionMap& GLRenderSystem::getConfigOptions(void)
@@ -599,24 +603,6 @@ namespace Ogre {
 		float ps;
 		glGetFloatv(GL_POINT_SIZE_MAX, &ps);
 		mCapabilities->setMaxPointSize(ps);
-
-		// Vertex texture fetching
-		GLint vUnits;
-		glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &vUnits);
-		mCapabilities->setNumVertexTextureUnits(static_cast<ushort>(vUnits));
-		if (vUnits > 0)
-		{
-			mCapabilities->setCapability(RSC_VERTEX_TEXTURE_FETCH);
-		}
-		// GL always shares vertex and fragment texture units (for now?)
-		mCapabilities->setVertexTextureUnitsShared(true);
-
-		// Mipmap LOD biasing?
-		if (GLEW_VERSION_1_4 || GLEW_EXT_texture_lod_bias)
-		{
-			mCapabilities->setCapability(RSC_MIPMAP_LOD_BIAS);
-		}
-
         
 		Log* defaultLog = LogManager::getSingleton().getDefaultLog();
 		if (defaultLog)
@@ -650,24 +636,8 @@ namespace Ogre {
         delete mRTTManager;
         mRTTManager = 0;
 
-		// Delete extra threads contexts
-		for (GLContextList::iterator i = mBackgroundContextList.begin(); 
-			i != mBackgroundContextList.end(); ++i)
-		{
-			delete *i;
-		}
-		mBackgroundContextList.clear();
-
         mGLSupport->stop();
         mStopRendering = true;
-
-		delete mTextureManager;
-		mTextureManager = 0;
-
-		// There will be a new initial window and so forth, thus any call to test
-		//  some params will access an invalid pointer, so it is best to reset
-		//  the whole state.
-		mGLInitialized = 0;
     }
 
     void GLRenderSystem::setAmbientLight(float r, float g, float b)
@@ -1053,9 +1023,9 @@ namespace Ogre {
 
 	}
     //-----------------------------------------------------------------------------
-    void GLRenderSystem::_setTexture(size_t stage, bool enabled, const TexturePtr &texPtr)
+    void GLRenderSystem::_setTexture(size_t stage, bool enabled, const String &texname)
     {
-        GLTexturePtr tex = texPtr;
+        GLTexturePtr tex = TextureManager::getSingleton().getByName(texname);
 
         GLenum lastTextureType = mTextureTypes[stage];
 
@@ -1286,18 +1256,7 @@ namespace Ogre {
         glTexParameterfv( mTextureTypes[stage], GL_TEXTURE_BORDER_COLOR, border);
         glActiveTextureARB( GL_TEXTURE0 );
     }
-	//-----------------------------------------------------------------------------
-	void GLRenderSystem::_setTextureMipmapBias(size_t stage, float bias)
-	{
-		if (mCapabilities->hasCapability(RSC_MIPMAP_LOD_BIAS))
-		{
-			glActiveTextureARB( GL_TEXTURE0 + stage );
-			glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, bias);
-			glActiveTextureARB( GL_TEXTURE0 );
-		}
-
-	}
-	//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
     void GLRenderSystem::_setTextureMatrix(size_t stage, const Matrix4& xform)
     {
 		if (stage >= mFixedFunctionTextureUnits)
@@ -1428,13 +1387,22 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     void GLRenderSystem::_beginFrame(void)
     {
+        OgreGuard( "GLRenderSystem::_beginFrame" );
+        
         if (!mActiveViewport)
-            OGRE_EXCEPT(Exception::ERR_INVALID_STATE, 
-				"Cannot begin frame - no viewport selected.",
+            OGRE_EXCEPT(999, "Cannot begin frame - no viewport selected.",
                 "GLRenderSystem::_beginFrame");
 
         // Activate the viewport clipping
         glEnable(GL_SCISSOR_TEST);
+        // Clear the viewport if required
+        if (mActiveViewport->getClearEveryFrame())
+        {
+            clearFrameBuffer(mActiveViewport->getClearBuffers(), 
+                mActiveViewport->getBackgroundColour());
+        }        
+
+        OgreUnguard();
     }
    
     //-----------------------------------------------------------------------------
@@ -1460,7 +1428,6 @@ namespace Ogre {
         case CULL_NONE:
             glDisable( GL_CULL_FACE );
             return;
-		default:
         case CULL_CLOCKWISE:
             if (mActiveRenderTarget && 
                 ((mActiveRenderTarget->requiresTextureFlipping() && !mInvertVertexWinding) ||
@@ -1524,14 +1491,15 @@ namespace Ogre {
         glDepthFunc(convertCompareFunction(func));
     }
     //-----------------------------------------------------------------------------
-    void GLRenderSystem::_setDepthBias(float constantBias, float slopeScaleBias)
+    void GLRenderSystem::_setDepthBias(ushort bias)
     {
-        if (constantBias != 0 || slopeScaleBias != 0)
+        if (bias > 0)
         {
             glEnable(GL_POLYGON_OFFSET_FILL);
             glEnable(GL_POLYGON_OFFSET_POINT);
             glEnable(GL_POLYGON_OFFSET_LINE);
-            glPolygonOffset(-slopeScaleBias, -constantBias);
+            // Bias is in {0, 16}, scale the unit addition appropriately
+            glPolygonOffset(0.0f, -bias);
         }
         else
         {
@@ -1692,7 +1660,6 @@ namespace Ogre {
         case PM_WIREFRAME:
             glmode = GL_LINE;
             break;
-		default:
         case PM_SOLID:
             glmode = GL_FILL;
             break;
@@ -1877,6 +1844,8 @@ namespace Ogre {
     void GLRenderSystem::_setTextureUnitFiltering(size_t unit, 
         FilterType ftype, FilterOptions fo)
 	{
+        OgreGuard( "GLRenderSystem::_setTextureUnitFiltering" );        
+
 		glActiveTextureARB( GL_TEXTURE0 + unit );
         switch(ftype)
         {
@@ -1918,6 +1887,8 @@ namespace Ogre {
 		}
 
         glActiveTextureARB( GL_TEXTURE0 );
+
+		OgreUnguard();
 	}
 	//---------------------------------------------------------------------
 	GLfloat GLRenderSystem::_getCurrentAnisotropy(size_t unit)
@@ -1936,8 +1907,7 @@ namespace Ogre {
 		GLfloat largest_supported_anisotropy = 0;
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &largest_supported_anisotropy);
 		if (maxAnisotropy > largest_supported_anisotropy)
-			maxAnisotropy = largest_supported_anisotropy ? 
-				static_cast<uint>(largest_supported_anisotropy) : 1;
+			maxAnisotropy = largest_supported_anisotropy ? largest_supported_anisotropy : 1;
 		if (_getCurrentAnisotropy(unit) != maxAnisotropy)
 			glTexParameterf(mTextureTypes[unit], GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
 	}
@@ -2175,7 +2145,7 @@ namespace Ogre {
 		float tmp[4] = {vec.x, vec.y, vec.z, vec.w};
 		glLightfv(lightindex, GL_POSITION, tmp);
 #else
-		glLightfv(lightindex, GL_POSITION, vec.ptr());
+		glLightfv(lightindex, GL_POSITION, vec.val);
 #endif
 		// Set spotlight direction
         if (lt->getType() == Light::LT_SPOTLIGHT)
@@ -2187,7 +2157,7 @@ namespace Ogre {
 			float tmp2[4] = {vec.x, vec.y, vec.z, vec.w};
 			glLightfv(lightindex, GL_SPOT_DIRECTION, tmp2);
 #else
-            glLightfv(lightindex, GL_SPOT_DIRECTION, vec.ptr());
+            glLightfv(lightindex, GL_SPOT_DIRECTION, vec.val);
 #endif
         }
     }
@@ -2202,6 +2172,8 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void GLRenderSystem::_render(const RenderOperation& op)
 	{
+        // Guard
+        OgreGuard ("GLRenderSystem::_render");
         // Call super class
         RenderSystem::_render(op);
 
@@ -2235,8 +2207,8 @@ namespace Ogre {
             }
 
             unsigned int i = 0;
-			VertexElementSemantic sem = elem->getSemantic();
-            switch(sem)
+
+            switch(elem->getSemantic())
             {
             case VES_POSITION:
                 glVertexPointer(VertexElement::getTypeCount(
@@ -2289,22 +2261,26 @@ namespace Ogre {
                 }
                 break;
             case VES_BLEND_INDICES:
+                assert(mCapabilities->hasCapability(RSC_VERTEX_PROGRAM));
+                glVertexAttribPointerARB(
+                    7, // matrix indices are vertex attribute 7 (no def?)
+                    VertexElement::getTypeCount(elem->getType()), 
+                    GLHardwareBufferManager::getGLType(elem->getType()), 
+                    GL_FALSE, // normalisation disabled
+                    static_cast<GLsizei>(vertexBuffer->getVertexSize()), 
+                    pBufferData);
+                glEnableVertexAttribArrayARB(7);
+                break;
             case VES_BLEND_WEIGHTS:
-			case VES_TANGENT:
-			case VES_BINORMAL:
-				if (mCurrentVertexProgram)
-				{
-					GLuint attrib = mCurrentVertexProgram->getAttributeIndex(sem);
-	                glVertexAttribPointerARB(
-    	                attrib,
-        	            VertexElement::getTypeCount(elem->getType()), 
-            	        GLHardwareBufferManager::getGLType(elem->getType()), 
-                	    GL_FALSE, // normalisation disabled
-                    	static_cast<GLsizei>(vertexBuffer->getVertexSize()), 
-	                    pBufferData);
-    	            glEnableVertexAttribArrayARB(attrib);
-					
-				}
+                assert(mCapabilities->hasCapability(RSC_VERTEX_PROGRAM));
+                glVertexAttribPointerARB(
+                    1, // weights are vertex attribute 1 (no def?)
+                    VertexElement::getTypeCount(elem->getType()), 
+                    GLHardwareBufferManager::getGLType(elem->getType()), 
+                    GL_FALSE, // normalisation disabled
+                    static_cast<GLsizei>(vertexBuffer->getVertexSize()), 
+                    pBufferData);
+                glEnableVertexAttribArrayARB(1);
                 break;
             default:
                 break;
@@ -2327,7 +2303,6 @@ namespace Ogre {
         case RenderOperation::OT_LINE_STRIP:
             primType = GL_LINE_STRIP;
             break;
-		default:
         case RenderOperation::OT_TRIANGLE_LIST:
             primType = GL_TRIANGLES;
             break;
@@ -2386,33 +2361,10 @@ namespace Ogre {
 		{
 			glDisableClientState( GL_SECONDARY_COLOR_ARRAY );
 		}
-        if (mCurrentVertexProgram)
+        if (mCapabilities->hasCapability(RSC_VERTEX_PROGRAM))
         {
-			// unbind any custom attributes
-			if (mCurrentVertexProgram->isAttributeValid(VES_BLEND_INDICES))
-			{
-				glDisableVertexAttribArrayARB(
-					mCurrentVertexProgram->getAttributeIndex(
-						VES_BLEND_INDICES)); 
-			}
-			if (mCurrentVertexProgram->isAttributeValid(VES_BLEND_WEIGHTS))
-			{
-				glDisableVertexAttribArrayARB(
-					mCurrentVertexProgram->getAttributeIndex(
-						VES_BLEND_WEIGHTS)); 
-			}
-			if (mCurrentVertexProgram->isAttributeValid(VES_TANGENT))
-			{
-				glDisableVertexAttribArrayARB(
-					mCurrentVertexProgram->getAttributeIndex(
-						VES_TANGENT)); 
-			}
-			if (mCurrentVertexProgram->isAttributeValid(VES_BINORMAL))
-			{
-				glDisableVertexAttribArrayARB(
-					mCurrentVertexProgram->getAttributeIndex(
-						VES_BINORMAL)); 
-			}
+            glDisableVertexAttribArrayARB(7); // disable indices
+            glDisableVertexAttribArrayARB(1); // disable weights
         }
         glColor4f(1,1,1,1);
 		if (GLEW_EXT_secondary_color)
@@ -2420,6 +2372,8 @@ namespace Ogre {
 			glSecondaryColor3fEXT(0.0f, 0.0f, 0.0f);
 		}
 
+        // UnGuard
+        OgreUnguard();
 	}
     //---------------------------------------------------------------------
     void GLRenderSystem::setNormaliseNormals(bool normalise)
@@ -2538,7 +2492,7 @@ namespace Ogre {
 
             if (i >= 6/*GL_MAX_CLIP_PLANES*/)
             {
-                OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Unable to set clip plane", 
+                OGRE_EXCEPT(0, "Unable to set clip plane", 
                     "GLRenderSystem::setClipPlanes");
             }
 
@@ -2850,6 +2804,10 @@ namespace Ogre {
         }
     }
     //---------------------------------------------------------------------
+    GLContext *GLRenderSystem::_getMainContext() {
+        return mMainContext;
+    }
+    //---------------------------------------------------------------------
     Real GLRenderSystem::getMinimumDepthInputValue(void)
     {
         // Range [-1.0f, 1.0f]
@@ -2861,53 +2819,5 @@ namespace Ogre {
         // Range [-1.0f, 1.0f]
         return 1.0f;
     }
-    //---------------------------------------------------------------------
-	void GLRenderSystem::registerThread()
-	{
-		// This is only valid once we've created the main context
-		if (!mMainContext)
-		{
-			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
-				"Cannot register a background thread before the main context "
-				"has been created.", 
-				"GLRenderSystem::registerThread");
-		}
-
-		// Create a new context for this thread. Cloning from the main context
-		// will ensure that resources are shared with the main context
-		// We want a separate context so that we can safely create GL
-		// objects in parallel with the main thread
-		GLContext* newContext = mMainContext->clone();
-		mBackgroundContextList.push_back(newContext);
-
-		// Bind this new context to this thread. 
-		newContext->setCurrent();
-
-		_oneTimeContextInitialization();
-		newContext->setInitialized();
-
-
-	}
-    //---------------------------------------------------------------------
-	void GLRenderSystem::unregisterThread()
-	{
-		// nothing to do here?
-		// Don't need to worry about active context, just make sure we delete
-		// on shutdown.
-
-	}
-	//---------------------------------------------------------------------
-	void GLRenderSystem::preExtraThreadsStarted()
-	{
-		// free context, we'll need this to share lists
-		mCurrentContext->endCurrent();
-	}
-	//---------------------------------------------------------------------
-	void GLRenderSystem::postExtraThreadsStarted()
-	{
-		// reacquire context
-		mCurrentContext->setCurrent();
-	}
-
 
 }

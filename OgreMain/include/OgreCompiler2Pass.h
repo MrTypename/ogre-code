@@ -1,29 +1,25 @@
 /*
 -----------------------------------------------------------------------------
 This source file is part of OGRE
-(Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+    (Object-oriented Graphics Rendering Engine)
+For the latest info, see http://www.stevestreeting.com/ogre/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
+the terms of the GNU General Public License as published by the Free Software
 Foundation; either version 2 of the License, or (at your option) any later
 version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License along with
+You should have received a copy of the GNU General Public License along with
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+http://www.gnu.org/copyleft/gpl.html.
 -----------------------------------------------------------------------------
 */
 
@@ -195,10 +191,7 @@ namespace Ogre {
 
             BNF_LETTER, BNF_LETTER_DIGIT, BNF_DIGIT, BNF_WHITE_SPACE,
             BNF_ALPHA_SET, BNF_NUMBER_SET, BNF_SPECIAL_CHARACTER_SET1,
-			BNF_SPECIAL_CHARACTER_SET2, BNF_SPECIAL_CHARACTER_SET3, BNF_NOT_CHARS,
-
-            // do not remove - this indicates where manually defined tokens end and where auto-gen ones start
-            BNF_AUTOTOKENSTART
+			BNF_SPECIAL_CHARACTER_SET2, BNF_SPECIAL_CHARACTER_SET3, BNF_NOT_CHARS
         };
 
 
@@ -284,16 +277,13 @@ namespace Ogre {
 	    std::map<size_t, float> mConstants;
 	    /// storage container for string labels defined in source
         /// container uses Token index as a key associated with a label
-        typedef std::map<size_t, String> LabelContainer;
-        LabelContainer mLabels;
+        std::map<size_t, String> mLabels;
         /// flag indicates when a label is being parsed.
         /// It gets set false when a terminal token not of _character_ is encountered
         bool mLabelIsActive;
         /// the key of the active label being built during pass 1.
         /// a new key is calculated when mLabelIsActive switches from false to true
         size_t mActiveLabelKey;
-        /// The active label that is receiving characters during pass 1.
-        String* mActiveLabel;
         /// flag being true indicates that spaces are not to be skipped
         /// automatically gets set to false when mLabelIsActive goes to false
         bool mNoSpaceSkip;
@@ -335,13 +325,6 @@ namespace Ogre {
             enough tokens exist for pass 2 processing to take place.
         */
         virtual void executeTokenAction(const size_t tokenID) = 0;
-        /** Get the start ID for auto generated token IDs.  This is also one pass the end of manually set token IDs.
-            Manually set Token ID are usually setup in the client code through an enum type so its best to make the
-            last entry the auto ID start position and return this enum value.
-            This method gets called automatically just prior to setupTokenDefinitions() to ensure that any tokens that are auto generated are placed after
-            the manually set ones.
-        */
-        virtual size_t getAutoTokenIDStart() const = 0;
         /** setup client token definitions.  Gets called when BNF grammer is being setup.
         */
         virtual void setupTokenDefinitions(void) = 0;
@@ -479,12 +462,11 @@ namespace Ogre {
             building the rule base from the BNF script so all associations must  be done
             prior to compiling a source.
         @param lexeme is the name of the token and use when parsing the source to determin a match for a token.
-        @param token is the ID associated with the lexeme. If token is 0 then the token ID is auto generated and returned.
+        @param token is the ID associated with the lexeme
         @param hasAction must be set true if the client wants an action triggered when this token is generated
         @param caseSensitive should be set true if lexeme match should use case sensitivity
-        @return the ID of the token.  Useful when auto generating token IDs.
         */
-        size_t addLexemeToken(const String& lexeme, const size_t token, const bool hasAction = false, const bool caseSensitive = false);
+        void addLexemeToken(const String& lexeme, const size_t token, const bool hasAction = false, const bool caseSensitive = false);
 
         /** Sets up the parser rules for the client based on the BNF Grammer text passed in.
         @remarks
@@ -629,9 +611,8 @@ namespace Ogre {
         void extractNumericConstant(const OperationType pendingRuleOp);
         /// changes previous terminal token rule into a conditional terminal token insert rule
         void setConditionalTokenInsert(void);
-        /// get the lexeme text of a rule.
+        /// get the lexem text of a rule.
         String getLexemeText(size_t& ruleID, const size_t level = 0);
-
 
     public:
 

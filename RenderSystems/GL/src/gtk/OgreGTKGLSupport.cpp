@@ -2,9 +2,9 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -98,16 +94,16 @@ RenderWindow* GTKGLSupport::createWindow(bool autoCreateWindow,
     {
         ConfigOptionMap::iterator opt = mOptions.find("Full Screen");
         if (opt == mOptions.end())
-            OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't find full screen options!", "GTKGLSupport::createWindow");
+            OGRE_EXCEPT(999, "Can't find full screen options!", "GTKGLSupport::createWindow");
         bool fullscreen = (opt->second.currentValue == "Yes");
  
         opt = mOptions.find("Video Mode");
         if (opt == mOptions.end())
-            OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't find video mode options!", "GTKGLSupport::createWindow");
+            OGRE_EXCEPT(999, "Can't find video mode options!", "GTKGLSupport::createWindow");
         String val = opt->second.currentValue;
         String::size_type pos = val.find('x');
         if (pos == String::npos)
-            OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Invalid Video Mode provided", "GTKGLSupport::createWindow");
+            OGRE_EXCEPT(999, "Invalid Video Mode provided", "GTKGLSupport::createWindow");
  
         unsigned int w = StringConverter::parseUnsignedInt(val.substr(0, pos));
         unsigned int h = StringConverter::parseUnsignedInt(val.substr(pos + 1));
@@ -181,7 +177,7 @@ void GTKGLSupport::end_context()
 {
     	--_context_ref;
     	if(_context_ref < 0)
-        	OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Too many contexts destroyed!", "GTKGLSupport::end_context");
+        	OGRE_EXCEPT(999, "Too many contexts destroyed!", "GTKGLSupport::end_context");
     	if (_context_ref == 0)
     	{
 		// XX is this enough? (_main_window might not be the current window,

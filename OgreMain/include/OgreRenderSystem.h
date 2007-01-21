@@ -2,9 +2,9 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __RenderSystem_H_
@@ -518,44 +514,22 @@ namespace Ogre
 
 
         /**
-          Sets the texture to bind to a given texture unit.
+          Sets the status of a single texture stage.
 
-          User processes would not normally call this direct unless rendering
-          primitives themselves.
+          Sets the details of a texture stage, to be used for all primitives
+          rendered afterwards. User processes would
+          not normally call this direct unless rendering
+          primitives themselves - the SubEntity class
+          is designed to manage materials for objects.
+          Note that this method is called by _setMaterial.
 
-          @param unit The index of the texture unit to modify. Multitexturing 
-		  	hardware can support multiple units (see 
-			RenderSystemCapabilites::getNumTextureUnits)
-          @param enabled Boolean to turn the unit on/off
-          @param texPtr Pointer to the texture to use.
-         */
-        virtual void _setTexture(size_t unit, bool enabled, 
-			const TexturePtr &texPtr) = 0;
-        /**
-          Sets the texture to bind to a given texture unit.
-
-          User processes would not normally call this direct unless rendering
-          primitives themselves.
-
-          @param unit The index of the texture unit to modify. Multitexturing 
-		  	hardware can support multiple units (see 
-			RenderSystemCapabilites::getNumTextureUnits)
+          @param unit The index of the texture unit to modify. Multitexturing hardware
+          can support multiple units (see RenderSystemCapabilites::numTextureUnits)
           @param enabled Boolean to turn the unit on/off
           @param texname The name of the texture to use - this should have
               already been loaded with TextureManager::load.
          */
-        virtual void _setTexture(size_t unit, bool enabled, const String &texname);
-
-		/** Binds a texture to a vertex sampler.
-		@remarks
-			Not all rendersystems support separate vertex samplers. For those that
-			do, you can set a texture for them, separate to the regular texture
-			samplers, using this method. For those that don't, you should use the
-			regular texture samplers which are shared between the vertex and
-			fragment units; calling this method will throw an exception.
-			@see RenderSystemCapabilites::getVertexTextureUnitsShared
-		*/
-		virtual void _setVertexTexture(size_t unit, const TexturePtr& tex);
+        virtual void _setTexture(size_t unit, bool enabled, const String &texname) = 0;
 
         /**
           Sets the texture coordinate set to use for a texture unit.
@@ -611,17 +585,7 @@ namespace Ogre
 		/** Sets the texture border colour for a texture unit.*/
         virtual void _setTextureBorderColour(size_t unit, const ColourValue& colour) = 0;
 
-		/** Sets the mipmap bias value for a given texture unit.
-		@remarks
-			This allows you to adjust the mipmap calculation up or down for a
-			given texture unit. Negative values force a larger mipmap to be used, 
-			positive values force a smaller mipmap to be used. Units are in numbers
-			of levels, so +1 forces the mipmaps to one smaller level.
-		@note Only does something if render system has capability RSC_MIPMAP_LOD_BIAS.
-		*/
-		virtual void _setTextureMipmapBias(size_t unit, float bias) = 0;
-
-		/** Sets the texture coordinate transformation matrix for a texture unit.
+        /** Sets the texture coordinate transformation matrix for a texture unit.
             @param unit Texture unit to affect
             @param xform The 4x4 matrix
         */
@@ -731,19 +695,9 @@ namespace Ogre
             A way to combat this problem is to use a depth bias to adjust the depth buffer value
             used for the decal such that it is slightly higher than the true value, ensuring that
             the decal appears on top.
-		@note
-			The final bias value is a combination of a constant bias and a bias proportional
-			to the maximum depth slope of the polygon being rendered. The final bias
-			is constantBias + slopeScaleBias * maxslope. Slope scale biasing is
-			generally preferable but is not available on older hardware.
-        @param constantBias The constant bias value, expressed as a value in 
-			homogenous depth coordinates.
-		@param slopeScaleBias The bias value which is factored by the maximum slope
-			of the polygon, see the description above. This is not supported by all
-			cards.
-
+        @param bias The bias value, should be between 0 and 16.
         */
-        virtual void _setDepthBias(float constantBias, float slopeScaleBias = 0.0f) = 0;
+        virtual void _setDepthBias(ushort bias) = 0;
         /** Sets the fogging mode for future geometry.
             @param mode Set up the mode of fog as described in the FogMode enum, or set to FOG_NONE to turn off.
             @param colour The colour of the fog. Either set this to the same as your viewport background colour,
@@ -1035,7 +989,7 @@ namespace Ogre
             When using identity transforms you can manually set the depth
             of a vertex; however the input values required differ per
             rendersystem. This method lets you retrieve the correct value.
-        @see Renderable::getUseIdentityView, Renderable::getUseIdentityProjection
+        @see Renderable::useIdentityView, Renderable::useIdentityProjection
         */
         virtual Real getMinimumDepthInputValue(void) = 0;
         /** Gets the maximum (farthest) depth value to be used when rendering
@@ -1044,7 +998,7 @@ namespace Ogre
             When using identity transforms you can manually set the depth
             of a vertex; however the input values required differ per
             rendersystem. This method lets you retrieve the correct value.
-        @see Renderable::getUseIdentityView, Renderable::getUseIdentityProjection
+        @see Renderable::useIdentityView, Renderable::useIdentityProjection
         */
         virtual Real getMaximumDepthInputValue(void) = 0;
         /** set the current multi pass count value.  This must be set prior to 
@@ -1095,49 +1049,6 @@ namespace Ogre
 		@see RenderSystem::addListener
 		*/
 		virtual const StringVector& getRenderSystemEvents(void) const { return mEventNames; }
-
-		/** Tell the rendersystem to perform any prep tasks it needs to directly
-			before other threads which might access the rendering API are registered.
-		@remarks
-			Call this from your main thread before starting your other threads
-			(which themselves should call registerThread()). Note that if you
-			start your own threads, there is a specific startup sequence which 
-			must be respected and requires synchronisation between the threads:
-			<ol>
-			<li>[Main thread]Call preExtraThreadsStarted</li>
-			<li>[Main thread]Start other thread, wait</li>
-			<li>[Other thread]Call registerThread, notify main thread & continue</li>
-			<li>[Main thread]Wake up & call postExtraThreadsStarted</li>
-			</ol>
-			Once this init sequence is completed the threads are independent but
-			this startup sequence must be respected.
-		*/
-		virtual void preExtraThreadsStarted() = 0;
-
-		/* Tell the rendersystem to perform any tasks it needs to directly
-			after other threads which might access the rendering API are registered.
-		@see RenderSystem::preExtraThreadsStarted
-		*/
-		virtual void postExtraThreadsStarted() = 0;
-		
-		/** Register the an additional thread which may make calls to rendersystem-related 
-			objects.
-		@remarks
-			This method should only be called by additional threads during their
-			initialisation. If they intend to use hardware rendering system resources 
-			they should call this method before doing anything related to the render system.
-			Some rendering APIs require a per-thread setup and this method will sort that
-			out. It is also necessary to call unregisterThread before the thread shuts down.
-		@note
-			This method takes no parameters - it must be called from the thread being
-			registered and that context is enough.
-		*/
-		virtual void registerThread() = 0;
-			
-		/** Unregister an additional thread which may make calls to rendersystem-related objects.
-		@see RenderSystem::registerThread
-		*/
-		virtual void unregisterThread() = 0;
     protected:
 
 		

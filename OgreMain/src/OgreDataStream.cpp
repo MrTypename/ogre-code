@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under 
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple 
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to 
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -424,7 +420,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     size_t FileStreamDataStream::read(void* buf, size_t count)
     {
-		mpStream->read(static_cast<char*>(buf), static_cast<std::streamsize>(count));
+        mpStream->read(static_cast<char*>(buf), count);
         return mpStream->gcount();
     }
     //-----------------------------------------------------------------------
@@ -448,7 +444,7 @@ namespace Ogre {
 			trimCR = true;
 		}
 		// maxCount + 1 since count excludes terminator in getline
-		mpStream->getline(buf, static_cast<std::streamsize>(maxCount+1), delim.at(0));
+		mpStream->getline(buf, maxCount+1, delim.at(0));
 		size_t ret = mpStream->gcount();
 		// three options
 		// 1) we had an eof before we read a whole line
@@ -517,7 +513,7 @@ namespace Ogre {
     void FileStreamDataStream::seek( size_t pos )
     {
 		mpStream->clear(); //Clear fail status in case eof was set
-        mpStream->seekg(static_cast<std::streamoff>(pos), std::ios::beg);
+        mpStream->seekg(static_cast<std::ifstream::pos_type>(pos), std::ios::beg);
     }
 	//-----------------------------------------------------------------------
     size_t FileStreamDataStream::tell(void) const
@@ -581,7 +577,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void FileHandleDataStream::seek( size_t pos )
     {
-        fseek(mFileHandle, static_cast<long>(pos), SEEK_SET);
+        fseek(mFileHandle, pos, SEEK_SET);
     }
     //-----------------------------------------------------------------------
     size_t FileHandleDataStream::tell(void) const

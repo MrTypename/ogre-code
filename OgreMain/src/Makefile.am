@@ -1,21 +1,16 @@
-INCLUDES = $(STLPORT_CFLAGS) $(FT2_CFLAGS) -I$(top_srcdir)/OgreMain/include -DOGRE_NONCLIENT_BUILD $(PLATFORM_CFLAGS) $(ZZIPLIB_CFLAGS) $(DEVIL_CFLAGS) $(FREEIMAGE_CFLAGS) $(GTK_CFLAGS)
-
-noinst_LTLIBRARIES = libSSEsupport.la
-libSSEsupport_la_SOURCES = OgreOptimisedUtilSSE.cpp
-libSSEsupport_la_CPPFLAGS = -msse
+INCLUDES = $(STLPORT_CFLAGS) $(FT2_CFLAGS) -I$(top_srcdir)/OgreMain/include -DOGRE_NONCLIENT_BUILD $(ZZIPLIB_CFLAGS) $(DEVIL_CFLAGS)
 
 lib_LTLIBRARIES=libOgreMain.la
 
-libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
-                         OgreAnimation.cpp \
-			 OgreAnimable.cpp \
+libOgreMain_la_SOURCES = OgreAnimation.cpp \
+						 OgreAnimable.cpp \
                          OgreAnimationState.cpp \
                          OgreAnimationTrack.cpp \
                          OgreArchiveManager.cpp \
-			 OgreAutoParamDataSource.cpp \
+						 OgreAutoParamDataSource.cpp \
                          OgreAxisAlignedBox.cpp \
                          OgreBillboard.cpp \
-			 OgreBillboardChain.cpp \
+						 OgreBillboardChain.cpp \
                          OgreBillboardParticleRenderer.cpp \
                          OgreBillboardSet.cpp \
                          OgreBitwise.cpp \
@@ -29,42 +24,47 @@ libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
                          OgreConfigOptionMap.cpp \
                          OgreController.cpp \
                          OgreControllerManager.cpp \
-						 OgreConvexBody.cpp \
+                         OgreCursor.cpp \
                          OgreDataStream.cpp \
-                         OgreDDSCodec.cpp \
                          OgreDefaultHardwareBufferManager.cpp \
-			 OgreDefaultSceneQueries.cpp \
+						 OgreDefaultSceneQueries.cpp \
                          OgreDynLib.cpp \
                          OgreDynLibManager.cpp \
                          OgreEdgeListBuilder.cpp \
                          OgreEntity.cpp \
+                         OgreEventDispatcher.cpp \
+                         OgreEventProcessor.cpp \
+                         OgreEventQueue.cpp \
                          OgreException.cpp \
-			 OgreExternalTextureSource.cpp \
-			 OgreExternalTextureSourceManager.cpp \
+						 OgreExternalTextureSource.cpp \
+						 OgreExternalTextureSourceManager.cpp \
                          OgreFileSystem.cpp \
                          OgreFont.cpp \
                          OgreFontManager.cpp \
-			 OgreFrustum.cpp \
+						 OgreFrustum.cpp \
                          OgreGpuProgram.cpp \
                          OgreGpuProgramManager.cpp \
                          OgreGpuProgramUsage.cpp \
-			 OgreHardwareBufferManager.cpp \
-			 OgreHardwareIndexBuffer.cpp \
-			 OgreHardwareOcclusionQuery.cpp \
-			 OgreHardwareVertexBuffer.cpp \
-			 OgreHardwarePixelBuffer.cpp \
-			 OgreHighLevelGpuProgram.cpp \
-			 OgreHighLevelGpuProgramManager.cpp \
+						 OgreHardwareBufferManager.cpp \
+						 OgreHardwareIndexBuffer.cpp \
+						 OgreHardwareOcclusionQuery.cpp \
+						 OgreHardwareVertexBuffer.cpp \
+						 OgreHardwarePixelBuffer.cpp \
+						 OgreHighLevelGpuProgram.cpp \
+						 OgreHighLevelGpuProgramManager.cpp \
                          OgreImage.cpp \
+                         OgreInput.cpp \
+                         OgreInputEvent.cpp \
+						 OgreKeyEvent.cpp \
                          OgreKeyFrame.cpp \
+						 OgreKeyTarget.cpp \
                          OgreLight.cpp \
                          OgreLog.cpp \
                          OgreLogManager.cpp \
-			 OgreManualObject.cpp \
+						 OgreManualObject.cpp \
                          OgreMaterial.cpp \
                          OgreMaterialManager.cpp \
                          OgreMaterialSerializer.cpp \
-                         OgreMaterialScriptCompiler.cpp \
                          OgreMath.cpp \
                          OgreMatrix3.cpp \
                          OgreMatrix4.cpp \
@@ -72,16 +72,16 @@ libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
                          OgreMesh.cpp \
                          OgreMeshManager.cpp \
                          OgreMeshSerializer.cpp \
-			 OgreMeshSerializerImpl.cpp \
+						 OgreMeshSerializerImpl.cpp \
+                         OgreMouseEvent.cpp \
+                         OgreMouseMotionTarget.cpp \
+                         OgreMouseTarget.cpp \
                          OgreMovableObject.cpp \
-			 OgreMovablePlane.cpp \
+						 OgreMovablePlane.cpp \
                          OgreNode.cpp \
-						 OgreNumerics.cpp \
-                         OgreOptimisedUtil.cpp \
-                         OgreOptimisedUtilGeneral.cpp \
                          OgreOverlay.cpp \
                          OgreOverlayContainer.cpp \
-			 OgreOverlayElement.cpp \
+						 OgreOverlayElement.cpp \
                          OgreOverlayElementCommands.cpp \
                          OgreOverlayManager.cpp \
                          OgrePixelFormat.cpp \
@@ -93,21 +93,19 @@ libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
                          OgreParticleSystem.cpp \
                          OgreParticleSystemManager.cpp \
                          OgrePass.cpp \
-			 OgrePatchMesh.cpp \
+						 OgrePatchMesh.cpp \
                          OgrePatchSurface.cpp \
                          OgrePlane.cpp \
-                         OgrePlatformInformation.cpp \
-						 OgrePolygon.cpp \
-			 OgrePose.cpp \
+                         OgrePlatformManager.cpp \
+						 OgrePose.cpp \
                          OgrePredefinedControllers.cpp \
-						 OgrePrefabFactory.cpp \
-			 OgreProfiler.cpp \
+						 OgreProfiler.cpp \
                          OgreProgressiveMesh.cpp \
                          OgreQuaternion.cpp \
-			 OgreRectangle2D.cpp \
+						 OgreRectangle2D.cpp \
                          OgreRenderQueue.cpp \
-			 OgreRenderQueueInvocation.cpp \
-			 OgreRenderQueueSortingGrouping.cpp \
+						 OgreRenderQueueInvocation.cpp \
+						 OgreRenderQueueSortingGrouping.cpp \
                          OgreRenderSystem.cpp \
                          OgreRenderSystemCapabilities.cpp \
                          OgreRenderTarget.cpp \
@@ -117,7 +115,7 @@ libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
                          OgreResourceBackgroundQueue.cpp \
                          OgreResourceGroupManager.cpp \
                          OgreResourceManager.cpp \
-			 OgreRibbonTrail.cpp \
+						 OgreRibbonTrail.cpp \
                          OgreRoot.cpp \
                          OgreRotationSpline.cpp \
                          OgreSceneManager.cpp \
@@ -126,13 +124,8 @@ libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
                          OgreSceneQuery.cpp \
                          OgreSearchOps.cpp \
                          OgreSerializer.cpp \
-						 OgreShadowCameraSetup.cpp \
-						 OgreShadowCameraSetupFocused.cpp \
-						 OgreShadowCameraSetupLiSPSM.cpp \
-						 OgreShadowCameraSetupPlaneOptimal.cpp \
-			 OgreShadowCaster.cpp \
-			 OgreShadowTextureManager.cpp \
-			 OgreShadowVolumeExtrudeProgram.cpp \
+						 OgreShadowCaster.cpp \
+						 OgreShadowVolumeExtrudeProgram.cpp \
                          OgreSimpleRenderable.cpp \
                          OgreSimpleSpline.cpp \
                          OgreSingleton.cpp \
@@ -140,7 +133,7 @@ libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
                          OgreSkeletonInstance.cpp \
                          OgreSkeletonManager.cpp \
                          OgreSkeletonSerializer.cpp \
-			 OgreStaticGeometry.cpp \
+						 OgreStaticGeometry.cpp \
                          OgreString.cpp \
                          OgreStringConverter.cpp \
                          OgreStringInterface.cpp \
@@ -153,7 +146,7 @@ libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
                          OgreTexture.cpp \
                          OgreTextureManager.cpp \
                          OgreTextureUnitState.cpp \
-						 OgreUnifiedHighLevelGpuProgram.cpp \
+						 OgreTimer.cpp \
                          OgreUserDefinedObject.cpp \
                          OgreVector2.cpp \
                          OgreVector3.cpp \
@@ -171,20 +164,16 @@ libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
                          OgreCompositorManager.cpp \
                          OgreCompositorSerializer.cpp \
                          OgreCompositorScriptCompiler.cpp \
-                         OgreCompiler2Pass.cpp \
-                         $(OGRE_PLATFORM)/OgreTimer.cpp \
-                         $(OGRE_GUI)/OgreConfigDialog.cpp \
-                         $(OGRE_GUI)/OgreErrorDialog.cpp \
-                         OgreWindowEventUtilities.cpp
+                         OgreCompiler2Pass.cpp
 
-if USE_FREEIMAGE
-libOgreMain_la_SOURCES += OgreFreeImageCodec.cpp
-
+if USE_DEVIL
+libOgreMain_la_SOURCES +=OgreILImageCodec.cpp \
+                         OgreILCodecs.cpp \
+                         OgreILUtil.cpp
 endif
 
 platformdir = $(libdir)
-libOgreMain_la_LIBADD= $(STLPORT_LIBS) $(FT2_LIBS) $(ZZIPLIB_LIBS) $(GTK_LIBS) $(OGRE_THREAD_LIBS) $(PLATFORM_LIBS) libSSEsupport.la
-libOgreMain_la_LDFLAGS = $(SHARED_FLAGS) -release @PACKAGE_VERSION@ -Wl,-rpath,$(platformdir)
-#-version-info @OGREMAIN_VERSION_INFO@ -Wl,-rpath,$(platformdir)
+libOgreMain_la_LIBADD= $(STLPORT_LIBS) $(FT2_LIBS) $(ZZIPLIB_LIBS) $(OGRE_THREAD_LIBS)
+libOgreMain_la_LDFLAGS = $(SHARED_FLAGS) -version-info @OGREMAIN_VERSION_INFO@ -Wl,-rpath,$(platformdir)
 #-Wl,--version-script=$(top_srcdir)/OgreMain/src/ogremain.map
 

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.stevestreeting.com/ogre/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -64,35 +64,38 @@ void ATI_FS_GLGpuProgram::unbindProgram(void)
 
 void ATI_FS_GLGpuProgram::bindProgramParameters(GpuProgramParametersSharedPtr params)
 {
+	// program constants done internally by compiler for local
+    
+    if (params->hasRealConstantParams())
+    {
+        // Iterate over params and set the relevant ones
+        GpuProgramParameters::RealConstantIterator realIt = 
+            params->getRealConstantIterator();
+        unsigned int index = 0;
+		// test
+        while (realIt.hasMoreElements())
+        {
+            const GpuProgramParameters::RealConstantEntry* e = realIt.peekNextPtr();
+            if (e->isSet)
+            {
+                glSetFragmentShaderConstantATI( GL_CON_0_ATI + index, e->val);
+            }
+            index++;
+            realIt.moveNext();
+        }
+    }
 
-	// only supports float constants
-	const GpuLogicalBufferStruct* floatStruct = params->getFloatLogicalBufferStruct();
-
-	for (GpuLogicalIndexUseMap::const_iterator i = floatStruct->map.begin();
-		i != floatStruct->map.end(); ++i)
-	{
-		size_t logicalIndex = i->first;
-		const float* pFloat = params->getFloatPointer(i->second.physicalIndex);
-		// Iterate over the params, set in 4-float chunks (low-level)
-		for (size_t j = 0; j < i->second.currentSize; j+=4)
-		{
-			glSetFragmentShaderConstantATI(GL_CON_0_ATI + logicalIndex, pFloat);
-			pFloat += 4;
-			++logicalIndex;
-		}
-	}
 
 }
 
 void ATI_FS_GLGpuProgram::bindProgramPassIterationParameters(GpuProgramParametersSharedPtr params)
 {
-	if (params->hasPassIterationNumber())
-	{
-		size_t physicalIndex = params->getPassIterationNumberIndex();
-		size_t logicalIndex = params->getFloatLogicalIndexForPhysicalIndex(physicalIndex);
-		const float* pFloat = params->getFloatPointer(physicalIndex);
-		glSetFragmentShaderConstantATI( GL_CON_0_ATI + (GLuint)logicalIndex, pFloat);
-	}
+    GpuProgramParameters::RealConstantEntry* realEntry = params->getPassIterationEntry();
+
+    if (realEntry)
+    {
+        glSetFragmentShaderConstantATI( GL_CON_0_ATI + (GLuint)params->getPassIterationEntryIndex(), realEntry->val);
+    }
 }
 
 

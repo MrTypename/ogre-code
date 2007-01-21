@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -114,21 +110,11 @@ namespace Ogre {
         @param yesNo If set to true, result is 'yes' or 'no' instead of 'true' or 'false'
         */
         static String toString(bool val, bool yesNo = false);
-		/** Converts a Vector2 to a String. 
-        @remarks
-            Format is "x y" (i.e. 2x Real values, space delimited)
-        */
-        static String toString(const Vector2& val);
         /** Converts a Vector3 to a String. 
         @remarks
             Format is "x y z" (i.e. 3x Real values, space delimited)
         */
         static String toString(const Vector3& val);
-		/** Converts a Vector4 to a String. 
-        @remarks
-            Format is "x y z w" (i.e. 4x Real values, space delimited)
-        */
-        static String toString(const Vector4& val);
         /** Converts a Matrix3 to a String. 
         @remarks
             Format is "00 01 02 10 11 12 20 21 22" where '01' means row 0 column 1 etc.
@@ -191,8 +177,7 @@ namespace Ogre {
         static unsigned long parseUnsignedLong(const String& val);
         /** Converts a String to a boolean. 
         @remarks
-            Returns true if case-insensitive match of the start of the string
-			matches "true" or "yes", false otherwise.
+            'true' and 'yes' are mapped to true, everything else to false.
         */
         static bool parseBool(const String& val);
         /** Parses a Vector3 out of a String.

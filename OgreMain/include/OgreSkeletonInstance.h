@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -115,7 +111,8 @@ namespace Ogre {
         /// Pointer back to master Skeleton
         SkeletonPtr mSkeleton;
 
-        typedef std::list<TagPoint*> TagPointList;
+        typedef std::list<TagPoint*> ActiveTagPointList;
+        typedef std::deque<TagPoint*> FreeTagPointQueue;
 
         /** Active tag point list.
         @remarks
@@ -125,16 +122,16 @@ namespace Ogre {
             tag points (required for weapon / equip systems etc)    as well as resuse of TagPoint instances
             without construction & destruction which avoids memory thrashing.
         */
-        TagPointList mActiveTagPoints;
+        ActiveTagPointList mActiveTagPoints;
 
-        /** Free tag point list.
+        /** Free tag point queue.
         @remarks
             This contains a list of the tag points free for use as new instances
             as required by the set. When a TagPoint instances are deactived, there will are referenced on this
-            list. As they get used this list reduces, as they get released back to to the set they get added
-            back to the list.
+            deque. As they get used this deque reduces, as they get released back to to the set they get added
+            back to the deque.
         */
-        TagPointList mFreeTagPoints;
+        FreeTagPointQueue mFreeTagPoints;
 
         /// TagPoint automatic handles
         unsigned short mNextTagPointAutoHandle;

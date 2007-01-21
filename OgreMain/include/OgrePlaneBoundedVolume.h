@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __PlaneBoundedVolume_H_
@@ -59,15 +55,28 @@ namespace Ogre {
         inline bool intersects(const AxisAlignedBox& box) const
         {
             if (box.isNull()) return false;
-            if (box.isInfinite()) return true;
-            
+            // If all points are on outside of any plane, we fail
+            const Vector3* points = box.getAllCorners();
             PlaneList::const_iterator i, iend;
             iend = planes.end();
             for (i = planes.begin(); i != iend; ++i)
             {
                 const Plane& plane = *i;
 
-                if(plane.getSide(box) == outside)
+                // Test which side of the plane the corners are
+                // Intersection fails when at all corners are on the
+                // outside of one plane
+                bool splittingPlane = true;
+                for (int corner = 0; corner < 8; ++corner)
+                {
+                    if (plane.getSide(points[corner]) != outside)
+                    {
+                        // this point is on the wrong side
+                        splittingPlane = false;
+                        break;
+                    }
+                }
+                if (splittingPlane)
                 {
                     // Found a splitting plane therefore return not intersecting
                     return false;

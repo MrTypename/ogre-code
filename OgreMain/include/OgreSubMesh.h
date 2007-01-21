@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __SubMesh_H_
@@ -105,27 +101,6 @@ namespace Ogre {
         IndexMap blendIndexToBoneIndexMap;
 
         ProgressiveMesh::LODFaceList mLodFaceList;
-
-        /** A list of extreme points on the submesh (optional).
-            @remarks
-                These points are some arbitrary points on the mesh that are used
-                by engine to better sort submeshes by depth. This doesn't matter
-                much for non-transparent submeshes, as Z-buffer takes care of invisible
-                surface culling anyway, but is pretty useful for semi-transparent
-                submeshes because the order in which transparent submeshes must be
-                rendered cannot be always correctly deduced from entity position.
-            @par
-                These points are intelligently chosen from the points that make up
-                the submesh, the criteria for choosing them should be that these points
-                somewhat characterize the submesh outline, e.g. they should not be
-                close to each other, and they should be on the outer hull of the submesh.
-                They can be stored in the .mesh file, or generated at runtime
-                (see generateExtremes ()).
-            @par
-                If this array is empty, submesh sorting is done like in older versions -
-                by comparing the positions of the owning entity.
-         */
-        std::vector<Vector3> extremityPoints;
 
         /// Reference to parent Mesh (not a smart pointer so child does not keep parent alive).
         Mesh* parent;
@@ -227,12 +202,6 @@ namespace Ogre {
 		/** Get the type of any vertex animation used by dedicated geometry.
 		*/
 		VertexAnimationType getVertexAnimationType(void) const;
-
-        /** Generate the submesh extremes (@see extremityPoints).
-        @param count
-            Number of extreme points to compute for the submesh.
-        */
-        void generateExtremes(size_t count);
 
     protected:
 

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -89,8 +85,7 @@ namespace Ogre {
         mReceiveShadows = rhs.mReceiveShadows;
         mTransparencyCastsShadows = rhs.mTransparencyCastsShadows;
 
-        mLoadingState = rhs.mLoadingState;
-		mIsBackgroundLoaded = rhs.mIsBackgroundLoaded;
+        mIsLoaded = rhs.mIsLoaded;
 
         // Copy Techniques
         this->removeAllTechniques();
@@ -111,7 +106,7 @@ namespace Ogre {
         mCompilationRequired = rhs.mCompilationRequired;
         // illumination passes are not compiled right away so
         // mIsLoaded state should still be the same as the original material
-        assert(isLoaded() == rhs.isLoaded());
+        assert(mIsLoaded == rhs.mIsLoaded);
 
 	    return *this;
     }
@@ -429,30 +424,17 @@ namespace Ogre {
         // Compile each technique, then add it to the list of supported techniques
         mSupportedTechniques.clear();
 		clearBestTechniqueList();
-		mUnsupportedReasons.clear();
 
 
         Techniques::iterator i, iend;
         iend = mTechniques.end();
-		size_t techNo = 0;
-        for (i = mTechniques.begin(); i != iend; ++i, ++techNo)
+        for (i = mTechniques.begin(); i != iend; ++i)
         {
-            String compileMessages = (*i)->_compile(autoManageTextureUnits);
+            (*i)->_compile(autoManageTextureUnits);
             if ( (*i)->isSupported() )
             {
 				insertSupportedTechnique(*i);
             }
-			else
-			{
-				// Log informational
-				StringUtil::StrStreamType str;
-				str << "Material " << mName << " Technique " << techNo;
-				if (!(*i)->getName().empty())
-					str << "(" << (*i)->getName() << ")";
-				str << " is not supported. " << compileMessages;
-				LogManager::getSingleton().logMessage(str.str(), LML_TRIVIAL);
-				mUnsupportedReasons += compileMessages;
-			}
         }
 
         mCompilationRequired = false;
@@ -460,10 +442,9 @@ namespace Ogre {
         // Did we find any?
         if (mSupportedTechniques.empty())
         {
-			StringUtil::StrStreamType str;
-			str << "WARNING: material " << mName << " has no supportable "
-				"Techniques and will be blank. Explanation: " << std::endl << mUnsupportedReasons;
-            LogManager::getSingleton().logMessage(str.str());               
+            LogManager::getSingleton().logMessage(
+                "Warning: material " + mName + " has no supportable Techniques on this "
+                "hardware, it will be rendered blank.");
         }
     }
 	//-----------------------------------------------------------------------
@@ -650,13 +631,13 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    void Material::setDepthBias(float constantBias, float slopeScaleBias)
+    void Material::setDepthBias(ushort bias)
     {
         Techniques::iterator i, iend;
         iend = mTechniques.end();
         for (i = mTechniques.begin(); i != iend; ++i)
         {
-            (*i)->setDepthBias(constantBias, slopeScaleBias);
+            (*i)->setDepthBias(bias);
         }
     }
     //-----------------------------------------------------------------------

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -220,32 +216,14 @@ namespace Ogre {
         // This method is only ever called to set a texture unit to valid details
         // The method _disableTextureUnit is called to turn a unit off
 
-		// Vertex texture binding?
-		static TexturePtr nullPtr;
-		if (mCapabilities->hasCapability(RSC_VERTEX_TEXTURE_FETCH) && 
-			!mCapabilities->getVertexTextureUnitsShared())
+        // Texture name
+		if (tl.isBlank())
 		{
-			if (tl.getBindingType() == TextureUnitState::BT_VERTEX)
-			{
-				// bind nothing to fragment unit (hardware isn't shared but fragment
-				// unit can't be using the same index
-				_setTexture(texUnit, true, nullPtr);
-				// Bind vertex texture
-				_setVertexTexture(texUnit, tl._getTexturePtr());
-			}
-			else
-			{
-				// vice versa
-				_setTexture(texUnit, true, tl._getTexturePtr());
-				_setVertexTexture(texUnit, nullPtr);
-
-			}
+			_setTexture(texUnit, true, StringUtil::BLANK);
 		}
 		else
 		{
-			// Shared vertex / fragment textures or no vertex texture support
-			// Bind texture (may be blank)
-			_setTexture(texUnit, true, tl._getTexturePtr());
+			_setTexture(texUnit, true, tl.getTextureName());
 		}
 
         // Set texture coordinate set
@@ -259,9 +237,6 @@ namespace Ogre {
 
         // Set texture layer filtering
         _setTextureLayerAnisotropy(texUnit, tl.getTextureAnisotropy());
-
-		// Set mipmap biasing
-		_setTextureMipmapBias(texUnit, tl.getTextureMipmapBias());
 
 		// Set blend modes
 		// Note, colour before alpha is important
@@ -329,27 +304,9 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-	void RenderSystem::_setTexture(size_t unit, bool enabled, 
-		const String &texname)
-	{
-		TexturePtr t = TextureManager::getSingleton().getByName(texname);
-		_setTexture(unit, enabled, t);
-	}
-	//-----------------------------------------------------------------------
-	void RenderSystem::_setVertexTexture(size_t unit, const TexturePtr& tex)
-	{
-		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, 
-			"This rendersystem does not support separate vertex texture samplers, "
-			"you should use the regular texture samplers which are shared between "
-			"the vertex and fragment units.", 
-			"RenderSystem::_setVertexTexture");
-	}
-    //-----------------------------------------------------------------------
     void RenderSystem::_disableTextureUnit(size_t texUnit)
     {
-		static TexturePtr nullPtr;
-
-        _setTexture(texUnit, false, nullPtr);
+        _setTexture(texUnit, false, "");
         _setTextureMatrix(texUnit, Matrix4::IDENTITY);
     }
     //---------------------------------------------------------------------

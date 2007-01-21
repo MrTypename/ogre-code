@@ -2,28 +2,24 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://www.stevestreeting.com/ogre/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
+the terms of the GNU General Public License as published by the Free Software
 Foundation; either version 2 of the License, or (at your option) any later
 version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License along with
+You should have received a copy of the GNU General Public License along with
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+http://www.gnu.org/copyleft/gpl.html.
 -----------------------------------------------------------------------------
 */
 
@@ -70,20 +66,30 @@ namespace Ogre {
 		// Token ID enumeration
 		enum TokenID {
 			// Terminal Tokens section
-			ID_UNKOWN = 0,
+			ID_UNKOWN = 0, ID_OPENBRACE, ID_CLOSEBRACE,
+			// Top level
+			ID_COMPOSITOR,
 			// Techniques
-			ID_TARGET_WIDTH, ID_TARGET_HEIGHT,
-			ID_PF_A8R8G8B8, ID_PF_R8G8B8A8, ID_PF_R8G8B8, 
+			ID_TECHNIQUE, ID_TEXTURE, ID_TARGET_WIDTH, ID_TARGET_HEIGHT,
+			ID_PF_A8R8G8B8, ID_PF_R8G8B8A8, ID_PF_R8G8B8,
 			ID_PF_FLOAT16_R, ID_PF_FLOAT16_RGB, ID_PF_FLOAT16_RGBA,
 			ID_PF_FLOAT32_R, ID_PF_FLOAT32_RGB, ID_PF_FLOAT32_RGBA,
-			ID_PF_FLOAT16_GR, ID_PF_FLOAT32_GR,
 			// Targets
+			ID_TARGET, ID_INPUT, ID_TARGET_OUTPUT, ID_ONLY_INITIAL,
+			ID_VISIBILITY_MASK, ID_LOD_BIAS, ID_MATERIAL_SCHEME,
 			ID_PREVIOUS, ID_NONE,
 			// Passes
+			ID_PASS,
+			ID_MATERIAL,
 			ID_RENDER_QUAD, ID_CLEAR, ID_STENCIL, ID_RENDER_SCENE,
-			// Clear section
-			ID_CLR_COLOUR, ID_CLR_DEPTH,
-			// Stencil section
+			ID_FIRST_RQ, ID_LAST_RQ,
+			ID_IDENTIFIER,
+			// clear
+			ID_CLR_BUFF, ID_CLR_COLOUR, ID_CLR_DEPTH,
+			ID_CLR_COLOUR_VAL, ID_CLR_DEPTH_VAL, ID_CLR_STENCIL_VAL,
+			// stencil
+			ID_ST_CHECK, ID_ST_FUNC, ID_ST_REF_VAL, ID_ST_MASK, ID_ST_FAILOP,
+			ID_ST_DEPTH_FAILOP, ID_ST_PASSOP, ID_ST_TWOSIDED,
 
 			// compare functions
             ID_ST_ALWAYS_FAIL, ID_ST_ALWAYS_PASS, ID_ST_LESS,
@@ -96,9 +102,7 @@ namespace Ogre {
             ID_ST_INVERT,
 
 			// general
-			ID_ON, ID_OFF, ID_TRUE, ID_FALSE,
-            // where auto generated tokens start so donot remove
-            ID_AUTOTOKENSTART
+			ID_ON, ID_OFF, ID_TRUE, ID_FALSE
 		};
 
 		/** Enum to identify compositor sections. */
@@ -141,14 +145,10 @@ namespace Ogre {
 		section of the source that has been parsed.
 		**/
 		virtual void executeTokenAction(const size_t tokenID);
-        /** Get the start position of auto generated token IDs.
-        */
-        virtual size_t getAutoTokenIDStart() const {return ID_AUTOTOKENSTART;}
 		/** Associate all the lexemes used in a material script with their corresponding tokens and actions.
 		**/
         virtual void setupTokenDefinitions(void);
 		void addLexemeTokenAction(const String& lexeme, const size_t token, const CSC_Action action = 0);
-        void addLexemeAction(const String& lexeme, const CSC_Action action) { addLexemeTokenAction(lexeme, 0, action); }
 
 		void logParseError(const String& error);
 

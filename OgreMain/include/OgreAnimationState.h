@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -127,8 +123,6 @@ namespace Ogre {
 	class _OgreExport AnimationStateSet
 	{
 	public:
-		/// Mutex, public for external locking if needed
-		OGRE_AUTO_MUTEX
 		/// Create a blank animation state set
 		AnimationStateSet();
 		/// Create an animation set by copying the contents of another
@@ -154,19 +148,9 @@ namespace Ogre {
 		/// Remove all animation states
 		void removeAllAnimationStates(void);
 
-		/** Get an iterator over all the animation states in this set.
-		@note
-			The iterator returned from this method is not threadsafe,
-			you will need to manually lock the public mutex on this
-			class to ensure thread safety if you need it.
-		*/
+		/// Get an iterator over all the animation states in this set
 		AnimationStateIterator getAnimationStateIterator(void);
-		/** Get an iterator over all the animation states in this set.
-		@note
-			The iterator returned from this method is not threadsafe,
-			you will need to manually lock the public mutex on this
-			class to ensure thread safety if you need it.
-		*/
+		/// Get an iterator over all the animation states in this set
 		ConstAnimationStateIterator getAnimationStateIterator(void) const;
 		/// Copy the state of any matching animation states from this to another
 		void copyMatchingState(AnimationStateSet* target) const;
@@ -179,12 +163,7 @@ namespace Ogre {
         void _notifyAnimationStateEnabled(AnimationState* target, bool enabled);
         /// Tests if exists enabled animation state in this set
         bool hasEnabledAnimationState(void) const { return !mEnabledAnimationStates.empty(); }
-		/** Get an iterator over all the enabled animation states in this set
-		@note
-			The iterator returned from this method is not threadsafe,
-			you will need to manually lock the public mutex on this
-			class to ensure thread safety if you need it.
-		*/
+		/// Get an iterator over all the enabled animation states in this set
 		ConstEnabledAnimationStateIterator getEnabledAnimationStateIterator(void) const;
 
 	protected:

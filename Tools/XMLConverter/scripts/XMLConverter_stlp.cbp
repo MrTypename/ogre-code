@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_project_file>
-	<FileVersion major="1" minor="5" />
+	<FileVersion major="1" minor="4" />
 	<Project>
 		<Option title="XMLConverter" />
 		<Option pch_mode="0" />
-		<Option default_target="" />
 		<Option compiler="gcc" />
-		<Option virtualFolders="" />
 		<Build>
 			<Target title="Debug">
 				<Option output="..\..\Common\bin\Debug\OgreXMLConverter.exe" />
@@ -14,14 +12,16 @@
 				<Option object_output="..\obj\Debug" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option includeInTargetAll="1" />
 				<Option projectResourceIncludeDirsRelation="1" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-D_DEBUG" />
+					<Add option="-D_STLP_DEBUG" />
 				</Compiler>
 				<Linker>
 					<Add library="OgreMain_d" />
-					<Add library="stlportstlg.5.1" />
+					<Add library="stlportstlg.5.0" />
 				</Linker>
 			</Target>
 			<Target title="Release">
@@ -30,6 +30,7 @@
 				<Option object_output="..\obj\Release" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option includeInTargetAll="1" />
 				<Option projectResourceIncludeDirsRelation="1" />
 				<Compiler>
 					<Add option="-O3" />
@@ -38,13 +39,10 @@
 				<Linker>
 					<Add option="-s" />
 					<Add library="OgreMain" />
-					<Add library="stlport.5.1" />
+					<Add library="stlport.5.0" />
 				</Linker>
 			</Target>
 		</Build>
-		<VirtualTargets>
-			<Add alias="All" targets="Debug;Release;" />
-		</VirtualTargets>
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-mthreads" />
@@ -52,6 +50,7 @@
 			<Add option="-fexceptions" />
 			<Add option="-fident" />
 			<Add option="-D_STLP_NO_CUSTOM_IO" />
+			<Add option="-D_STLP_USE_DYNAMIC_LIB" />
 			<Add option="-DWIN32" />
 			<Add option="-D_WINDOWS" />
 			<Add option="-DTIXML_USE_STL" />

@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -97,19 +93,13 @@ namespace Ogre {
 				info.archive = this;
                 // Get basename / path
                 StringUtil::splitFilename(zzipEntry.d_name, info.basename, info.path);
+                // ignore folder entries
+                if (info.basename.empty())
+                    continue;
                 info.filename = zzipEntry.d_name;
                 // Get sizes
                 info.compressedSize = static_cast<size_t>(zzipEntry.d_csize);
                 info.uncompressedSize = static_cast<size_t>(zzipEntry.st_size);
-                // folder entries
-                if (info.basename.empty())
-                {
-                    info.filename = info.filename.substr (0, info.filename.length () - 1);
-                    StringUtil::splitFilename(info.filename, info.basename, info.path);
-                    // Set compressed size to -1 for folders; anyway nobody will check
-                    // the compressed size of a folder, and if he does, its useless anyway
-                    info.compressedSize = size_t (-1);
-                }
 
                 mFileList.push_back(info);
 
@@ -155,69 +145,94 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    StringVectorPtr ZipArchive::list(bool recursive, bool dirs)
+    StringVectorPtr ZipArchive::list(bool recursive)
     {
         StringVectorPtr ret = StringVectorPtr(new StringVector());
 
         FileInfoList::iterator i, iend;
         iend = mFileList.end();
         for (i = mFileList.begin(); i != iend; ++i)
-            if ((dirs == (i->compressedSize == size_t (-1))) &&
-                (recursive || i->path.empty()))
+        {
+			if (recursive || i->path.empty())
+            {
                 ret->push_back(i->filename);
-
+            }
+        }
         return ret;
+
     }
     //-----------------------------------------------------------------------
-    FileInfoListPtr ZipArchive::listFileInfo(bool recursive, bool dirs)
+    FileInfoListPtr ZipArchive::listFileInfo(bool recursive)
     {
         FileInfoList* fil = new FileInfoList();
         FileInfoList::const_iterator i, iend;
         iend = mFileList.end();
         for (i = mFileList.begin(); i != iend; ++i)
-            if ((dirs == (i->compressedSize == size_t (-1))) &&
-                (recursive || i->path.empty()))
+        {
+            if (recursive || i->path.empty())
+            {
                 fil->push_back(*i);
-
+            }
+        }
         return FileInfoListPtr(fil);
     }
     //-----------------------------------------------------------------------
-    StringVectorPtr ZipArchive::find(const String& pattern, bool recursive, bool dirs)
+    StringVectorPtr ZipArchive::find(const String& pattern, bool recursive)
     {
         StringVectorPtr ret = StringVectorPtr(new StringVector());
-        // If pattern contains a directory name, do a full match
-        bool full_match = (pattern.find ('/') != String::npos) ||
-                          (pattern.find ('\\') != String::npos);
 
         FileInfoList::iterator i, iend;
         iend = mFileList.end();
         for (i = mFileList.begin(); i != iend; ++i)
-            if ((dirs == (i->compressedSize == size_t (-1))) &&
-                (recursive || full_match || i->path.empty()))
+        {
+			if (recursive || i->path.empty())
+            {
                 // Check basename matches pattern (zip is case insensitive)
-                if (StringUtil::match(full_match ? i->filename : i->basename, pattern, false))
+                if (StringUtil::match(i->basename, pattern, false))
+                {
                     ret->push_back(i->filename);
+                }
+            }
+            else
+            {
+                // Check full name
+                if (StringUtil::match(i->filename, pattern, false))
+                {
+                    ret->push_back(i->filename);
+                }
 
+            }
+        }
         return ret;
     }
     //-----------------------------------------------------------------------
 	FileInfoListPtr ZipArchive::findFileInfo(const String& pattern, 
-        bool recursive, bool dirs)
+        bool recursive)
     {
         FileInfoListPtr ret = FileInfoListPtr(new FileInfoList());
-        // If pattern contains a directory name, do a full match
-        bool full_match = (pattern.find ('/') != String::npos) ||
-                          (pattern.find ('\\') != String::npos);
 
         FileInfoList::iterator i, iend;
         iend = mFileList.end();
         for (i = mFileList.begin(); i != iend; ++i)
-            if ((dirs == (i->compressedSize == size_t (-1))) &&
-                (recursive || full_match || i->path.empty()))
+        {
+            if (recursive || i->path.empty())
+            {
                 // Check name matches pattern (zip is case insensitive)
-                if (StringUtil::match(full_match ? i->filename : i->basename, pattern, false))
+                if (StringUtil::match(i->basename, pattern, false))
+                {
                     ret->push_back(*i);
+                }
+            }
+            else
+            {
+                // Check full name
+                if (StringUtil::match(i->filename, pattern, false))
+                {
+                    ret->push_back(*i);
+                }
 
+            }
+        }
         return ret;
     }
     //-----------------------------------------------------------------------

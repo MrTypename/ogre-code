@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_project_file>
-	<FileVersion major="1" minor="5" />
+	<FileVersion major="1" minor="4" />
 	<Project>
 		<Option title="Plugin_CgProgramManager" />
-		<Option default_target="" />
+		<Option default_target="-1" />
 		<Option compiler="gcc" />
-		<Option virtualFolders="" />
 		<Build>
 			<Target title="Debug">
 				<Option output="..\bin\Debug\Plugin_CgProgramManager.dll" />
@@ -13,15 +12,20 @@
 				<Option external_deps="..\..\..\OgreMain\lib\Debug\OgreMain_d.dll;" />
 				<Option type="3" />
 				<Option compiler="gcc" />
+				<Option includeInTargetAll="1" />
 				<Option projectResourceIncludeDirsRelation="0" />
 				<Compiler>
 					<Add option="-g" />
+					<Add option="-DWIN32" />
 					<Add option="-D_DEBUG" />
+					<Add option="-D_WINDOWS" />
+					<Add option="-D_USRDLL" />
+					<Add option="-D_STLP_DEBUG" />
 				</Compiler>
 				<Linker>
 					<Add library="OgreMain_d" />
 					<Add library="cg" />
-					<Add library="stlportstlg.5.1" />
+					<Add library="stlportstlg.5.0" />
 					<Add directory="..\..\..\Dependencies\lib\Debug" />
 				</Linker>
 				<ExtraCommands>
@@ -34,16 +38,20 @@
 				<Option external_deps="..\..\..\OgreMain\lib\Release\OgreMain.dll;" />
 				<Option type="3" />
 				<Option compiler="gcc" />
+				<Option includeInTargetAll="1" />
 				<Option projectResourceIncludeDirsRelation="0" />
 				<Compiler>
 					<Add option="-O3" />
+					<Add option="-DWIN32" />
 					<Add option="-DNDEBUG" />
+					<Add option="-D_WINDOWS" />
+					<Add option="-D_USRDLL" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
 					<Add library="OgreMain" />
 					<Add library="cg" />
-					<Add library="stlport.5.1" />
+					<Add library="stlport.5.0" />
 					<Add directory="..\..\..\Dependencies\lib\Release" />
 				</Linker>
 				<ExtraCommands>
@@ -51,9 +59,6 @@
 				</ExtraCommands>
 			</Target>
 		</Build>
-		<VirtualTargets>
-			<Add alias="All" targets="Debug;Release;" />
-		</VirtualTargets>
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-mthreads" />
@@ -61,9 +66,7 @@
 			<Add option="-fexceptions" />
 			<Add option="-fident" />
 			<Add option="-D_STLP_NO_CUSTOM_IO" />
-			<Add option="-DWIN32" />
-			<Add option="-D_WINDOWS" />
-			<Add option="-D_USRDLL" />
+			<Add option="-D_STLP_USE_DYNAMIC_LIB" />
 			<Add directory="$(#STLPORT_DIR)\stlport" />
 			<Add directory="..\include" />
 			<Add directory="..\..\..\OgreMain\include" />
@@ -117,6 +120,5 @@
 			<Option target="Debug" />
 			<Option target="Release" />
 		</Unit>
-		<Extensions />
 	</Project>
 </CodeBlocks_project_file>

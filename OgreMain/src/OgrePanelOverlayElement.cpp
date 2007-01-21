@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -263,8 +259,7 @@ namespace Ogre {
                 // remove extras
                 for (size_t i = mNumTexCoordsInBuffer; i > numLayers; --i)
                 {
-                    decl->removeElement(VES_TEXTURE_COORDINATES, 
-						static_cast<unsigned short>(i));
+                    decl->removeElement(VES_TEXTURE_COORDINATES, i);
                 }
             }
             else if (mNumTexCoordsInBuffer < numLayers)
@@ -274,8 +269,7 @@ namespace Ogre {
                 for (size_t i = mNumTexCoordsInBuffer; i < numLayers; ++i)
                 {
                     decl->addElement(TEXCOORD_BINDING,
-                        offset, VET_FLOAT2, VES_TEXTURE_COORDINATES, 
-						static_cast<unsigned short>(i));
+                        offset, VET_FLOAT2, VES_TEXTURE_COORDINATES, i);
                     offset += VertexElement::getTypeSize(VET_FLOAT2);
 
                 }

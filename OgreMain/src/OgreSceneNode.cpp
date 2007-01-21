@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -40,26 +36,18 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
     //-----------------------------------------------------------------------
-    SceneNode::SceneNode(SceneManager* creator)
-        : Node()
-        , mWireBoundingBox(0)
-        , mShowBoundingBox(false)
-        , mCreator(creator)
-        , mYawFixed(false)
-        , mAutoTrackTarget(0)
-        , mIsInSceneGraph(false)
+    SceneNode::SceneNode(SceneManager* creator) 
+    : Node(), mLightListDirty(true), mWireBoundingBox(0), 
+	mShowBoundingBox(false), mCreator(creator), 
+	mYawFixed(false), mAutoTrackTarget(0), mIsInSceneGraph(false)
     {
         needUpdate();
     }
     //-----------------------------------------------------------------------
-    SceneNode::SceneNode(SceneManager* creator, const String& name)
-        : Node(name)
-        , mWireBoundingBox(0)
-        , mShowBoundingBox(false)
-        , mCreator(creator)
-        , mYawFixed(false)
-        , mAutoTrackTarget(0)
-        , mIsInSceneGraph(false)
+    SceneNode::SceneNode(SceneManager* creator, const String& name) 
+    : Node(name), mLightListDirty(true), mWireBoundingBox(0), 
+	mShowBoundingBox(false), mCreator(creator), mYawFixed(false), 
+	mAutoTrackTarget(0), mIsInSceneGraph(false)
     {
         needUpdate();
     }
@@ -86,6 +74,8 @@ namespace Ogre {
     {
         Node::_update(updateChildren, parentHasChanged);
         _updateBounds();
+        mLightListDirty = true;
+
     }
     //-----------------------------------------------------------------------
 	void SceneNode::setParent(Node* parent)
@@ -279,8 +269,7 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     void SceneNode::_findVisibleObjects(Camera* cam, RenderQueue* queue, 
-		VisibleObjectsBoundsInfo* visibleBounds, bool includeChildren, 
-		bool displayNodes, bool onlyShadowCasters)
+        bool includeChildren, bool displayNodes, bool onlyShadowCasters)
     {
         // Check self visible
         if (!cam->isVisible(mWorldAABB))
@@ -297,13 +286,6 @@ namespace Ogre {
                 (!onlyShadowCasters || iobj->second->getCastShadows()))
             {
                 iobj->second->_updateRenderQueue(queue);
-
-				// update visible boundaries aab
-				if (visibleBounds)
-				{
-					visibleBounds->merge(iobj->second->getWorldBoundingBox(true), 
-						iobj->second->getWorldBoundingSphere(true), cam);
-				}
             }
         }
 
@@ -314,7 +296,7 @@ namespace Ogre {
             for (child = mChildren.begin(); child != childend; ++child)
             {
                 SceneNode* sceneChild = static_cast<SceneNode*>(child->second);
-                sceneChild->_findVisibleObjects(cam, queue, visibleBounds, includeChildren, 
+                sceneChild->_findVisibleObjects(cam, queue, includeChildren, 
 					displayNodes, onlyShadowCasters);
             }
         }
@@ -355,19 +337,6 @@ namespace Ogre {
 
 
     //-----------------------------------------------------------------------
-    void SceneNode::_updateFromParent(void) const
-    {
-        Node::_updateFromParent();
-
-        // Notify objects that it has been moved
-        ObjectMap::const_iterator i;
-        for (i = mObjectsByName.begin(); i != mObjectsByName.end(); ++i)
-        {
-            MovableObject* object = i->second;
-            object->_notifyMoved();
-        }
-    }
-    //-----------------------------------------------------------------------
     Node* SceneNode::createChildImpl(void)
     {
         assert(mCreator);
@@ -394,6 +363,11 @@ namespace Ogre {
 	{
 		return ConstObjectIterator(mObjectsByName.begin(), mObjectsByName.end());
 	}
+    //-----------------------------------------------------------------------
+    SceneManager* SceneNode::getCreator(void) const
+    {
+        return mCreator;
+    }
     //-----------------------------------------------------------------------
     void SceneNode::removeAndDestroyChild(const String& name)
     {
@@ -443,24 +417,22 @@ namespace Ogre {
 		return static_cast<SceneNode*>(this->createChild(name, translate, rotate));
 	}
     //-----------------------------------------------------------------------
-    void SceneNode::findLights(LightList& destList, Real radius) const
+    const LightList& SceneNode::findLights(Real radius) const
     {
-        // No any optimisation here, hope inherits more smart for that.
-        //
+        // TEMP FIX
         // If a scene node is static and lights have moved, light list won't change
         // can't use a simple global boolean flag since this is only called for
         // visible nodes, so temporarily visible nodes will not be updated
         // Since this is only called for visible nodes, skip the check for now
-        //
+        //if (mLightListDirty)
         if (mCreator)
         {
             // Use SceneManager to calculate
-            mCreator->_populateLightList(this->_getDerivedPosition(), radius, destList);
+            mCreator->_populateLightList(this->_getDerivedPosition(), radius, mLightList);
+            mLightListDirty = false;
         }
-        else
-        {
-            destList.clear();
-        }
+        return mLightList;
+
     }
     //-----------------------------------------------------------------------
     void SceneNode::setAutoTracking(bool enabled, SceneNode* target, 

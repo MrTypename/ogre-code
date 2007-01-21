@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -219,7 +215,7 @@ namespace Ogre {
         unsigned short mNumVisibleBillboards;
 
         /// Internal method for increasing pool size
-        virtual void increasePool(size_t size);
+        virtual void increasePool(unsigned int size);
 
 
         //-----------------------------------------------------------------------
@@ -287,7 +283,7 @@ namespace Ogre {
         /// Flag indicating whether the HW buffers have been created.
         bool mBuffersCreated;
         /// The number of billboard in the pool.
-        size_t mPoolSize;
+        unsigned int mPoolSize;
         /// Is external billboard data in use?
         bool mExternalData;
 
@@ -417,7 +413,7 @@ namespace Ogre {
             @param
                 size The new size for the pool.
         */
-        virtual void setPoolSize(size_t size);
+        virtual void setPoolSize(unsigned int size);
 
         /** Returns the current size of the billboard pool.
             @returns

@@ -1895,66 +1895,6 @@ typedef void (GLAPIENTRY * PFNGLVERTEXATTRIBPOINTERPROC) (GLuint index, GLint si
 
 #endif /* GL_VERSION_2_0 */
 
-/* ----------------------------- GL_VERSION_2_1 ---------------------------- */
-
-#ifndef GL_VERSION_2_1
-#define GL_VERSION_2_1 1
-
-#define GL_CURRENT_RASTER_SECONDARY_COLOR 0x845F
-#define GL_PIXEL_PACK_BUFFER 0x88EB
-#define GL_PIXEL_UNPACK_BUFFER 0x88EC
-#define GL_PIXEL_PACK_BUFFER_BINDING 0x88ED
-#define GL_PIXEL_UNPACK_BUFFER_BINDING 0x88EF
-#define GL_FLOAT_MAT2x3 0x8B65
-#define GL_FLOAT_MAT2x4 0x8B66
-#define GL_FLOAT_MAT3x2 0x8B67
-#define GL_FLOAT_MAT3x4 0x8B68
-#define GL_FLOAT_MAT4x2 0x8B69
-#define GL_FLOAT_MAT4x3 0x8B6A
-#define GL_SRGB 0x8C40
-#define GL_SRGB8 0x8C41
-#define GL_SRGB_ALPHA 0x8C42
-#define GL_SRGB8_ALPHA8 0x8C43
-#define GL_SLUMINANCE_ALPHA 0x8C44
-#define GL_SLUMINANCE8_ALPHA8 0x8C45
-#define GL_SLUMINANCE 0x8C46
-#define GL_SLUMINANCE8 0x8C47
-#define GL_COMPRESSED_SRGB 0x8C48
-#define GL_COMPRESSED_SRGB_ALPHA 0x8C49
-#define GL_COMPRESSED_SLUMINANCE 0x8C4A
-#define GL_COMPRESSED_SLUMINANCE_ALPHA 0x8C4B
-
-typedef void (GLAPIENTRY * PFNGLUNIFORMMATRIX2X3FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
-typedef void (GLAPIENTRY * PFNGLUNIFORMMATRIX3X2FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
-typedef void (GLAPIENTRY * PFNGLUNIFORMMATRIX2X4FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
-typedef void (GLAPIENTRY * PFNGLUNIFORMMATRIX4X2FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
-typedef void (GLAPIENTRY * PFNGLUNIFORMMATRIX3X4FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
-typedef void (GLAPIENTRY * PFNGLUNIFORMMATRIX4X3FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
-
-#define glUniformMatrix2x3fv GLEW_GET_FUN(__glewUniformMatrix2x3fv)
-#define glUniformMatrix3x2fv GLEW_GET_FUN(__glewUniformMatrix3x2fv)
-#define glUniformMatrix2x4fv GLEW_GET_FUN(__glewUniformMatrix2x4fv)
-#define glUniformMatrix4x2fv GLEW_GET_FUN(__glewUniformMatrix4x2fv)
-#define glUniformMatrix3x4fv GLEW_GET_FUN(__glewUniformMatrix3x4fv)
-#define glUniformMatrix4x3fv GLEW_GET_FUN(__glewUniformMatrix4x3fv)
-
-#define GLEW_VERSION_2_1 GLEW_GET_VAR(__GLEW_VERSION_2_1)
-
-#endif /* GL_VERSION_2_1 */
-
-/* ----------------------- GL_ARB_pixel_buffer_object ---------------------- */
-
-#ifndef GL_ARB_pixel_buffer_object
-#define GL_ARB_pixel_buffer_object 1
-
-#define GL_PIXEL_PACK_BUFFER_ARB          0x88EB
-#define GL_PIXEL_UNPACK_BUFFER_ARB        0x88EC
-#define GL_PIXEL_PACK_BUFFER_BINDING_ARB  0x88ED
-#define GL_PIXEL_UNPACK_BUFFER_BINDING_ARB 0x88EF
-#define GLEW_ARB_pixel_buffer_object GLEW_GET_VAR(__GLEW_ARB_pixel_buffer_object)
-
-#endif /* GL_ARB_pixel_buffer_object */
-
 /* -------------------------- GL_ARB_draw_buffers -------------------------- */
 
 #ifndef GL_ARB_draw_buffers
@@ -2939,30 +2879,6 @@ typedef void (GLAPIENTRY * PFNGLSETFRAGMENTSHADERCONSTANTATIPROC) (GLuint dst, c
 
 #endif /* GL_ATI_texture_float */
 
-/* -------------------------- GL_EXT_texture_sRGB -------------------------- */
-
-#ifndef GL_EXT_texture_sRGB
-#define GL_EXT_texture_sRGB 1
-
-#define GL_SRGB_EXT                       0x8C40
-#define GL_SRGB8_EXT                      0x8C41
-#define GL_SRGB_ALPHA_EXT                 0x8C42
-#define GL_SRGB8_ALPHA8_EXT               0x8C43
-#define GL_SLUMINANCE_ALPHA_EXT           0x8C44
-#define GL_SLUMINANCE8_ALPHA8_EXT         0x8C45
-#define GL_SLUMINANCE_EXT                 0x8C46
-#define GL_SLUMINANCE8_EXT                0x8C47
-#define GL_COMPRESSED_SRGB_EXT            0x8C48
-#define GL_COMPRESSED_SRGB_ALPHA_EXT      0x8C49
-#define GL_COMPRESSED_SLUMINANCE_EXT      0x8C4A
-#define GL_COMPRESSED_SLUMINANCE_ALPHA_EXT 0x8C4B
-#define GL_COMPRESSED_SRGB_S3TC_DXT1_EXT  0x8C4C
-#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT 0x8C4D
-#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT 0x8C4E
-#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT 0x8C4F
-
-#endif /* GL_EXT_texture_sRGB */
-
 /* ----------------------- GL_EXT_framebuffer_object ----------------------- */
 
 #ifndef GL_EXT_framebuffer_object
@@ -3063,6 +2979,13 @@ typedef void (GLAPIENTRY * PFNGLRENDERBUFFERSTORAGEEXTPROC) (GLenum target, GLen
 #define GLEW_EXT_pixel_buffer_object GLEW_GET_VAR(__GLEW_EXT_pixel_buffer_object)
 #endif /* GL_EXT_pixel_buffer_object */
 
+/* ----------------------- GL_ARB_pixel_buffer_object ----------------------- */
+#ifndef GL_ARB_pixel_buffer_object
+#define GL_ARB_pixel_buffer_object 1
+#define GLEW_ARB_pixel_buffer_object GLEW_GET_VAR(__GLEW_ARB_pixel_buffer_object)
+#endif /* GL_ARB_pixel_buffer_object */
+
+/* ------------------------- GL_EXT_secondary_color ------------------------ */
 
 #ifndef GL_EXT_secondary_color
 #define GL_EXT_secondary_color 1
@@ -3805,18 +3728,6 @@ typedef void (GLAPIENTRY * PFNGLPOINTPARAMETERFVEXTPROC) (GLenum pname, GLfloat 
 
 #endif /* GL_EXT_point_parameters */
 /* ------------------------------------------------------------------------- */
-/* ------------------------ GL_EXT_texture_lod_bias ---------------------------- */
-#ifndef GL_EXT_texture_lod_bias
-#define GL_EXT_texture_lod_bias 1
-
-#define GL_MAX_TEXTURE_LOD_BIAS_EXT       0x84FD
-#define GL_TEXTURE_FILTER_CONTROL_EXT     0x8500
-#define GL_TEXTURE_LOD_BIAS_EXT           0x8501
-
-#define GLEW_EXT_texture_lod_bias GLEW_GET_VAR(__GLEW_EXT_texture_lod_bias)
-
-#endif /* GL_EXT_texture_lod_bias */
-
 // End SJS Additions
 
 
@@ -4048,13 +3959,6 @@ GLEW_FUN_EXPORT PFNGLVERTEXATTRIB4UBVPROC __glewVertexAttrib4ubv;
 GLEW_FUN_EXPORT PFNGLVERTEXATTRIB4UIVPROC __glewVertexAttrib4uiv;
 GLEW_FUN_EXPORT PFNGLVERTEXATTRIB4USVPROC __glewVertexAttrib4usv;
 GLEW_FUN_EXPORT PFNGLVERTEXATTRIBPOINTERPROC __glewVertexAttribPointer;
-
-GLEW_FUN_EXPORT PFNGLUNIFORMMATRIX2X3FVPROC __glewUniformMatrix2x3fv;
-GLEW_FUN_EXPORT PFNGLUNIFORMMATRIX3X2FVPROC __glewUniformMatrix3x2fv;
-GLEW_FUN_EXPORT PFNGLUNIFORMMATRIX2X4FVPROC __glewUniformMatrix2x4fv;
-GLEW_FUN_EXPORT PFNGLUNIFORMMATRIX4X2FVPROC __glewUniformMatrix4x2fv;
-GLEW_FUN_EXPORT PFNGLUNIFORMMATRIX3X4FVPROC __glewUniformMatrix3x4fv;
-GLEW_FUN_EXPORT PFNGLUNIFORMMATRIX4X3FVPROC __glewUniformMatrix4x3fv;
 
 GLEW_FUN_EXPORT PFNGLDRAWBUFFERSARBPROC __glewDrawBuffersARB;
 
@@ -4400,7 +4304,6 @@ GLEW_VAR_EXPORT GLboolean __GLEW_VERSION_1_3;
 GLEW_VAR_EXPORT GLboolean __GLEW_VERSION_1_4;
 GLEW_VAR_EXPORT GLboolean __GLEW_VERSION_1_5;
 GLEW_VAR_EXPORT GLboolean __GLEW_VERSION_2_0;
-GLEW_VAR_EXPORT GLboolean __GLEW_VERSION_2_1;
 GLEW_VAR_EXPORT GLboolean __GLEW_ARB_draw_buffers;
 GLEW_VAR_EXPORT GLboolean __GLEW_ARB_fragment_program;
 GLEW_VAR_EXPORT GLboolean __GLEW_ARB_fragment_shader;
@@ -4449,7 +4352,6 @@ GLEW_VAR_EXPORT GLboolean __GLEW_SGIS_generate_mipmap;
 GLEW_VAR_EXPORT GLboolean __GLEW_ARB_point_sprite;
 GLEW_VAR_EXPORT GLboolean __GLEW_ARB_point_parameters;
 GLEW_VAR_EXPORT GLboolean __GLEW_EXT_point_parameters;
-GLEW_VAR_EXPORT GLboolean __GLEW_EXT_texture_lod_bias;
 // End additions
 #ifdef GLEW_MX
 }; /* GLEWContextStruct */

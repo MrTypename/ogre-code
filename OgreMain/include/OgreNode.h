@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef _Node_H__
@@ -83,13 +79,13 @@ namespace Ogre {
 				be several state-changing calls but only one of these calls, 
 				when the node graph is fully updated.
 			*/
-			virtual void nodeUpdated(const Node*) {}
+			virtual void nodeUpdated(const Node* node) {}
 			/** Node is being destroyed */
-			virtual void nodeDestroyed(const Node*) {};
+			virtual void nodeDestroyed(const Node* node) {};
 			/** Node has been attached to a parent */
-			virtual void nodeAttached(const Node*) {};
+			virtual void nodeAttached(const Node* node) {};
 			/** Node has been detached from a parent */
-			virtual void nodeDetached(const Node*) {};
+			virtual void nodeDetached(const Node* node) {};
 		};
 
     protected:
@@ -184,6 +180,15 @@ namespace Ogre {
         Quaternion mInitialOrientation;
         /// The scale to use as a base for keyframe animation
         Vector3 mInitialScale;
+
+        // Weight of applied animations so far, used for blending
+        Real mAccumAnimWeight;
+        // The total weighted translation from the initial state so far
+        Vector3 mTransFromInitial;
+        // The total weighted rotation from the initial state so far
+        Quaternion mRotFromInitial;
+        // The total weighted scale from the initial state so far
+        Vector3 mScaleFromInitial;
 
         /// Cached derived transform as a 4x4 matrix
         mutable Matrix4 mCachedTransform;
@@ -684,6 +689,17 @@ namespace Ogre {
 
         /** Gets the initial position of this node, see setInitialState for more info. */
         virtual const Vector3& getInitialScale(void) const;
+
+        /** Internal weighted transform method.
+        @remarks
+            This method transforms a Node by a weighted amount from it's
+            initial state. If weighted transforms have already been applied, 
+            the previous transforms and this one are blended together based
+            on their relative weight. This method should not be used in
+            combination with the unweighted rotate, translate etc methods.
+        */
+        virtual void _weightedTransform(Real weight, const Vector3& translate, 
+            const Quaternion& rotate, const Vector3& scale);
 
         /** Overridden, see Renderable */
         Real getSquaredViewDepth(const Camera* cam) const;

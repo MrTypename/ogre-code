@@ -2,9 +2,9 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 // Ogre includes
@@ -51,6 +47,7 @@ Torus Knot Software Ltd.
 #include "OgreErrorDialog.h"
 #include "OgreConfigDialog.h"
 #include "OgreStringConverter.h"
+#include "OgrePlatformManager.h"
 #include "OgreArchiveManager.h"
 #include "OgreZip.h"
 #include "OgreFileSystem.h"
@@ -63,14 +60,9 @@ Torus Knot Software Ltd.
 #include "OgreLight.h"
 #include "OgreManualObject.h"
 #include "OgreRenderQueueInvocation.h"
-#include "OgrePlatformInformation.h"
-#include "OgreConvexBody.h"
-	
-#if OGRE_NO_FREEIMAGE == 0
-#include "OgreFreeImageCodec.h"
-#endif
-#if OGRE_NO_DDS_CODEC == 0
-#include "OgreDDSCodec.h"
+
+#if OGRE_NO_DEVIL == 0
+#include "OgreILCodecs.h"
 #endif
 
 #include "OgreFontManager.h"
@@ -81,8 +73,6 @@ Torus Knot Software Ltd.
 
 #include "OgreExternalTextureSourceManager.h"
 #include "OgreCompositorManager.h"
-
-#include "OgreWindowEventUtilities.h"
 
 namespace Ogre {
     //-----------------------------------------------------------------------
@@ -97,16 +87,46 @@ namespace Ogre {
     }
 
     typedef void (*DLL_START_PLUGIN)(void);
-    typedef void (*DLL_INIT_PLUGIN)(void);
+	typedef void (*DLL_INIT_PLUGIN)(void);
     typedef void (*DLL_STOP_PLUGIN)(void);
 
 
     //-----------------------------------------------------------------------
-    Root::Root(const String& pluginFileName, const String& configFileName, 
-		const String& logFileName)
+    // Termination handler
+    extern "C" _OgreExport void handleTerminate(void)
+    {
+        LogManager::getSingleton().logMessage("Termination handler: uncaught exception!", LML_CRITICAL);
+
+        Root::getSingleton().shutdown();
+
+        ErrorDialog* dlg = PlatformManager::getSingleton().createErrorDialog();
+
+        Exception* e = Exception::getLastException();
+
+        if (e)
+            dlg->display(e->getFullDescription());
+        else
+            dlg->display("Unknown");
+
+        // Abort
+        exit(-1);
+
+    }
+
+    void Root::termHandler()
+    {
+        handleTerminate();
+    }
+
+
+    //-----------------------------------------------------------------------
+    Root::Root(const String& pluginFileName, const String& configFileName, const String& logFileName)
       : mLogManager(0), mCurrentFrame(0), mFrameSmoothingTime(0.0f),
 	  mNextMovableObjectTypeFlag(1), mIsInitialised(false)
     {
+        // First create new exception handler
+        SET_TERM_HANDLER;
+
         // superclass will do singleton checking
         String msg;
 
@@ -140,8 +160,6 @@ namespace Ogre {
         mSceneManagerEnum = new SceneManagerEnumerator();
         mCurrentSceneManager = NULL;
 
-		mShadowTextureManager = new ShadowTextureManager();
-
         // ..material manager
         mMaterialManager = new MaterialManager();
 
@@ -154,7 +172,11 @@ namespace Ogre {
         // ..particle system manager
         mParticleManager = new ParticleSystemManager();
 
-        mTimer = new Timer();
+        // Platform manager
+        mPlatformManager = new PlatformManager();
+
+        // Timer
+        mTimer = mPlatformManager->createTimer();
 
         // Overlay manager
         mOverlayManager = new OverlayManager();
@@ -179,13 +201,9 @@ namespace Ogre {
         ArchiveManager::getSingleton().addArchiveFactory( mFileSystemArchiveFactory );
         mZipArchiveFactory = new ZipArchiveFactory();
         ArchiveManager::getSingleton().addArchiveFactory( mZipArchiveFactory );
-#if OGRE_NO_FREEIMAGE == 0
-		// Register image codecs
-		FreeImageCodec::startup();
-#endif
-#if OGRE_NO_DDS_CODEC == 0
-		// Register image codecs
-		DDSCodec::startup();
+#if OGRE_NO_DEVIL == 0
+	    // Register image codecs
+	    ILCodecs::registerCodecs();
 #endif
 
         mHighLevelGpuProgramManager = new HighLevelGpuProgramManager();
@@ -230,16 +248,12 @@ namespace Ogre {
     {
         shutdown();
         delete mSceneManagerEnum;
-		delete mShadowTextureManager;
 
 		destroyAllRenderQueueInvocationSequences();
         delete mCompositorManager;
 		delete mExternalTextureSourceManager;
-#if OGRE_NO_FREEIMAGE == 0
-		FreeImageCodec::shutdown();
-#endif
-#if OGRE_NO_DDS_CODEC == 0
-		DDSCodec::shutdown();
+#if OGRE_NO_DEVIL == 0
+        ILCodecs::deleteCodecs();
 #endif
 #if OGRE_PROFILING
         delete mProfiler;
@@ -275,8 +289,9 @@ namespace Ogre {
 		delete mBillboardChainFactory;
 		delete mRibbonTrailFactory;
 
-	delete mTimer;
 
+        mPlatformManager->destroyTimer(mTimer);
+        delete mPlatformManager;
         delete mDynLibManager;
         delete mLogManager;
 
@@ -388,12 +403,14 @@ namespace Ogre {
         ConfigDialog* dlg;
         bool isOk;
 
-        dlg = new ConfigDialog();
+        dlg = mPlatformManager->createConfigDialog();
 
         isOk = dlg->display();
 
-	delete dlg;
+        mPlatformManager->destroyConfigDialog(dlg);
+
         return isOk;
+
     }
 
     //-----------------------------------------------------------------------
@@ -467,16 +484,16 @@ namespace Ogre {
     RenderWindow* Root::initialise(bool autoCreateWindow, const String& windowTitle)
     {
         if (!mActiveRenderer)
-            OGRE_EXCEPT(Exception::ERR_INVALID_STATE,
+            OGRE_EXCEPT(Exception::ERR_NO_RENDERSYSTEM_SELECTED,
             "Cannot initialise - no render "
             "system has been selected.", "Root::initialise");
 
         if (!mControllerManager)
 			mControllerManager = new ControllerManager();
 
-		PlatformInformation::log(LogManager::getSingleton().getDefaultLog());
-		mAutoWindow =  mActiveRenderer->initialise(autoCreateWindow, windowTitle);
+        mAutoWindow =  mActiveRenderer->initialise(autoCreateWindow, windowTitle);
 
+		mResourceBackgroundQueue->initialise();
 
         if (autoCreateWindow && !mFirstTimePostWindowInit)
         {
@@ -489,9 +506,6 @@ namespace Ogre {
 
 		// Init plugins
 		initialisePlugins();
-
-		// Init pools
-		ConvexBody::_initialisePool();
 
 		mIsInitialised = true;
 
@@ -639,9 +653,6 @@ namespace Ogre {
         if (HardwareBufferManager::getSingletonPtr())
             HardwareBufferManager::getSingleton()._releaseBufferCopies();
 
-		// Also tell the ResourceBackgroundQueue to propagate background load events
-		ResourceBackgroundQueue::getSingleton()._fireBackgroundLoadingComplete();
-
         return ret;
     }
     //-----------------------------------------------------------------------
@@ -718,10 +729,10 @@ namespace Ogre {
 
         while( !mQueuedEnd )
         {
-			//Pump messages in all registered RenderWindow windows
-			WindowEventUtilities::messagePump();
+            //Allow platform to pump/create/etc messages/events once per frame
+            mPlatformManager->messagePump(mAutoWindow);
 
-			if (!renderOneFrame())
+            if (!renderOneFrame())
                 break;
         }
     }
@@ -735,7 +746,6 @@ namespace Ogre {
 
         return _fireFrameEnded();
     }
-
     //-----------------------------------------------------------------------
     void Root::shutdown(void)
     {
@@ -745,10 +755,6 @@ namespace Ogre {
         ShadowVolumeExtrudeProgram::shutdown();
 		mResourceBackgroundQueue->shutdown();
         ResourceGroupManager::getSingleton().shutdownAll();
-
-		// Destroy pools
-		ConvexBody::_destroyPool();
-
 
 		mIsInitialised = false;
 
@@ -871,7 +877,7 @@ namespace Ogre {
 	{
         if (!mActiveRenderer)
         {
-            OGRE_EXCEPT(Exception::ERR_INVALID_STATE,
+            OGRE_EXCEPT(Exception::ERR_NO_RENDERSYSTEM_SELECTED,
             "Cannot create window - no render "
             "system has been selected.", "Root::createRenderWindow");
         }
@@ -893,7 +899,7 @@ namespace Ogre {
     {
         if (!mActiveRenderer)
         {
-            OGRE_EXCEPT(Exception::ERR_INVALID_STATE,
+            OGRE_EXCEPT(Exception::ERR_NO_RENDERSYSTEM_SELECTED,
             "Cannot create window - no render "
             "system has been selected.", "Root::destroyRenderWindow");
         }
@@ -905,7 +911,7 @@ namespace Ogre {
     {
         if (!mActiveRenderer)
         {
-            OGRE_EXCEPT(Exception::ERR_INVALID_STATE,
+            OGRE_EXCEPT(Exception::ERR_NO_RENDERSYSTEM_SELECTED,
             "Cannot create window - no render "
             "system has been selected.", "Root::destroyRenderWindow");
         }
@@ -917,7 +923,7 @@ namespace Ogre {
     {
         if (!mActiveRenderer)
         {
-            OGRE_EXCEPT(Exception::ERR_INVALID_STATE,
+            OGRE_EXCEPT(Exception::ERR_NO_RENDERSYSTEM_SELECTED,
             "Cannot create window - no render "
             "system has been selected.", "Root::getRenderWindow");
         }
@@ -980,8 +986,6 @@ namespace Ogre {
     {
         if (!mFirstTimePostWindowInit)
         {
-			// Background loader
-			mResourceBackgroundQueue->initialise();
 			// Initialise material manager
 			mMaterialManager->initialise();
             // Init particle systems manager

@@ -2,9 +2,9 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreBspSceneManager.h"
@@ -189,19 +185,15 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void BspSceneManager::_findVisibleObjects(Camera* cam, 
-		VisibleObjectsBoundsInfo* visibleBounds, bool onlyShadowCasters)
+    void BspSceneManager::_findVisibleObjects(Camera* cam, bool onlyShadowCasters)
     {
         // Clear unique list of movables for this frame
         mMovablesForRendering.clear();
-
-		// Assemble an AAB on the fly which contains the scene elements visible
-		// by the camera.
-		CamVisibleObjectsMap::iterator findIt = mCamVisibleObjectsMap.find( cam );
-
         // Walk the tree, tag static geometry, return camera's node (for info only)
         // Movables are now added to the render queue in processVisibleLeaf
-        walkTree(cam, &(findIt->second), onlyShadowCasters);
+        BspNode* cameraNode = walkTree(cam, onlyShadowCasters);
+
+
     }
     //-----------------------------------------------------------------------
     void BspSceneManager::renderStaticGeometry(void)
@@ -289,8 +281,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     //-----------------------------------------------------------------------
     //-----------------------------------------------------------------------
-    BspNode* BspSceneManager::walkTree(Camera* camera, 
-		VisibleObjectsBoundsInfo *visibleBounds, bool onlyShadowCasters)
+    BspNode* BspSceneManager::walkTree(Camera* camera, bool onlyShadowCasters)
     {
 		if (mLevel.isNull()) return 0;
 
@@ -342,7 +333,7 @@ namespace Ogre {
                     //{
                     //    of << "Visible Node: " << *nd << std::endl;
                     //}
-                    processVisibleLeaf(nd, camera, visibleBounds, onlyShadowCasters);
+                    processVisibleLeaf(nd, camera, onlyShadowCasters);
                     if (mShowNodeAABs)
                         addBoundingBox(nd->getBoundingBox(), true);
                 }
@@ -361,8 +352,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void BspSceneManager::processVisibleLeaf(BspNode* leaf, Camera* cam, 
-		VisibleObjectsBoundsInfo* visibleBounds, bool onlyShadowCasters)
+    void BspSceneManager::processVisibleLeaf(BspNode* leaf, Camera* cam, bool onlyShadowCasters)
     {
         MaterialPtr pMat;
         // Skip world geometry if we're only supposed to process shadow casters
@@ -432,13 +422,6 @@ namespace Ogre {
                         sn->_addBoundingBoxToQueue(getRenderQueue());
                     }
                     mMovablesForRendering.insert(*oi);
-
-					// update visible boundaries aab
-					if (visibleBounds)
-					{
-						visibleBounds->merge((*oi)->getWorldBoundingBox(true), 
-							(*oi)->getWorldBoundingSphere(true), cam);
-					}
                 }
 
             }

@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 /***************************************************************************
@@ -79,8 +75,7 @@ Intersection intersect( const Ray &one, const AxisAlignedBox &two )
     if (two.isNull()) return OUTSIDE;
 
     bool inside = true;
-    const Vector3& twoMin = two.getMinimum();
-    const Vector3& twoMax = two.getMaximum();
+    const Vector3* pCorners = two.getAllCorners();
     Vector3 origin = one.getOrigin();
     Vector3 dir = one.getDirection();
 
@@ -89,20 +84,20 @@ Intersection intersect( const Ray &one, const AxisAlignedBox &two )
     int i = 0;
     for(i=0; i<3; i++ )
     {
-        if( origin[i] < twoMin[i] )
+        if( origin[i] < pCorners[0][i] )
         {
             inside = false;
             if( dir[i] > 0 )
             {
-                maxT[i] = (twoMin[i] - origin[i])/ dir[i];
+                maxT[i] = (pCorners[0][i] - origin[i])/ dir[i];
             }
         }
-        else if( origin[i] > twoMax[i] )
+        else if( origin[i] > pCorners[4][i] )
         {
             inside = false;
             if( dir[i] < 0 )
             {
-                maxT[i] = (twoMax[i] - origin[i]) / dir[i];
+                maxT[i] = (pCorners[4][i] - origin[i]) / dir[i];
             }
         }
     }
@@ -126,8 +121,8 @@ Intersection intersect( const Ray &one, const AxisAlignedBox &two )
         if( i!= whichPlane )
         {
             float f = origin[i] + maxT[whichPlane] * dir[i];
-            if ( f < (twoMin[i] - 0.00001f) ||
-                    f > (twoMax[i] +0.00001f ) )
+            if ( f < (pCorners[0][i] - 0.00001f) ||
+                    f > (pCorners[4][i] +0.00001f ) )
             {
                 return OUTSIDE;
             }
@@ -147,23 +142,36 @@ Intersection intersect( const PlaneBoundedVolume &one, const AxisAlignedBox &two
     // Null box?
     if (two.isNull()) return OUTSIDE;
 
+    // Get corners of the box
+    const Vector3* pCorners = two.getAllCorners();
 
     // For each plane, see if all points are on the negative side
     // If so, object is not visible.
     // If one or more are, it's partial.
     // If all aren't, full
+    int corners[ 8 ] = {0, 4, 3, 5, 2, 6, 1, 7};
     bool all_inside = true;
     PlaneList::const_iterator i, iend;
     iend = one.planes.end();
     for (i = one.planes.begin(); i != iend; ++i)
     {
         const Plane& plane = *i;
+        bool all_outside = true;
 
-        Plane::Side side = plane.getSide(two);
-        if(side == Plane::NEGATIVE_SIDE)
-                return OUTSIDE;
-        if(side == Plane::BOTH_SIDE)
-                all_inside = false; 
+        float distance = 0;
+
+        for ( int corner = 0; corner < 8; ++corner )
+        {
+            distance = plane.getDistance( pCorners[ corners[ corner ] ] );
+            all_outside = all_outside && ( distance < 0 );
+            all_inside = all_inside && ( distance >= 0 );
+
+            if ( !all_outside && !all_inside )
+                break;
+        }
+
+        if ( all_outside )
+            return OUTSIDE;
     }
 
     if ( all_inside )
@@ -182,28 +190,25 @@ Intersection intersect( const AxisAlignedBox &one, const AxisAlignedBox &two )
     // Null box?
     if (one.isNull() || two.isNull()) return OUTSIDE;
 
-    const Vector3& insideMin = two.getMinimum();
-    const Vector3& insideMax = two.getMaximum();
+    const Vector3 * outside = one.getAllCorners();
+    const Vector3 *inside = two.getAllCorners();
 
-    const Vector3& outsideMin = one.getMinimum();
-    const Vector3& outsideMax = one.getMaximum();
-
-    if (    insideMax.x < outsideMin.x ||
-            insideMax.y < outsideMin.y ||
-            insideMax.z < outsideMin.z ||
-            insideMin.x > outsideMax.x ||
-            insideMin.y > outsideMax.y ||
-            insideMin.z > outsideMax.z )
+    if ( inside[ 4 ].x < outside[ 0 ].x ||
+            inside[ 4 ].y < outside[ 0 ].y ||
+            inside[ 4 ].z < outside[ 0 ].z ||
+            inside[ 0 ].x > outside[ 4 ].x ||
+            inside[ 0 ].y > outside[ 4 ].y ||
+            inside[ 0 ].z > outside[ 4 ].z )
     {
         return OUTSIDE;
     }
 
-    bool full = ( insideMin.x > outsideMin.x &&
-                  insideMin.y > outsideMin.y &&
-                  insideMin.z > outsideMin.z &&
-                  insideMax.x < outsideMax.x &&
-                  insideMax.y < outsideMax.y &&
-                  insideMax.z < outsideMax.z );
+    bool full = ( inside[ 0 ].x > outside[ 0 ].x &&
+                  inside[ 0 ].y > outside[ 0 ].y &&
+                  inside[ 0 ].z > outside[ 0 ].z &&
+                  inside[ 4 ].x < outside[ 4 ].x &&
+                  inside[ 4 ].y < outside[ 4 ].y &&
+                  inside[ 4 ].z < outside[ 4 ].z );
 
     if ( full )
         return INSIDE;
@@ -226,13 +231,12 @@ Intersection intersect( const Sphere &one, const AxisAlignedBox &two )
 
     Vector3 scenter = one.getCenter();
 
-    const Vector3& twoMin = two.getMinimum();
-    const Vector3& twoMax = two.getMaximum();
+    const Vector3 *corners = two.getAllCorners();
 
     float s, d = 0;
 
-    Vector3 mndistance = ( twoMin - scenter );
-    Vector3 mxdistance = ( twoMax - scenter );
+    Vector3 mndistance = ( corners[ 0 ] - scenter );
+    Vector3 mxdistance = ( corners[ 4 ] - scenter );
 
     if ( mndistance.squaredLength() < sradius &&
             mxdistance.squaredLength() < sradius )
@@ -244,15 +248,15 @@ Intersection intersect( const Sphere &one, const AxisAlignedBox &two )
     //from the sphere to the box
     for ( int i = 0 ; i < 3 ; i++ )
     {
-        if ( scenter[ i ] < twoMin[ i ] )
+        if ( scenter[ i ] < corners[ 0 ][ i ] )
         {
-            s = scenter[ i ] - twoMin[ i ];
+            s = scenter[ i ] - corners[ 0 ][ i ];
             d += s * s;
         }
 
-        else if ( scenter[ i ] > twoMax[ i ] )
+        else if ( scenter[ i ] > corners[ 4 ][ i ] )
         {
-            s = scenter[ i ] - twoMax[ i ];
+            s = scenter[ i ] - corners[ 4 ][ i ];
             d += s * s;
         }
 
@@ -372,10 +376,6 @@ Camera * OctreeSceneManager::createCamera( const String &name )
 {
     Camera * c = new OctreeCamera( name, this );
     mCameras.insert( CameraList::value_type( name, c ) );
-
-	// create visible bounds aab map entry
-	mCamVisibleObjectsMap[c] = VisibleObjectsBoundsInfo();
-	
     return c;
 }
 
@@ -478,44 +478,44 @@ void OctreeSceneManager::_addOctreeNode( OctreeNode * n, Octree *octant, int dep
         if ( octant -> mChildren[ x ][ y ][ z ] == 0 )
         {
             octant -> mChildren[ x ][ y ][ z ] = new Octree( octant );
-            const Vector3& octantMin = octant -> mBox.getMinimum();
-            const Vector3& octantMax = octant -> mBox.getMaximum();
+
+            const Vector3 *corners = octant -> mBox.getAllCorners();
             Vector3 min, max;
 
             if ( x == 0 )
             {
-                min.x = octantMin.x;
-                max.x = ( octantMin.x + octantMax.x ) / 2;
+                min.x = corners[ 0 ].x;
+                max.x = ( corners[ 0 ].x + corners[ 4 ].x ) / 2;
             }
 
             else
             {
-                min.x = ( octantMin.x + octantMax.x ) / 2;
-                max.x = octantMax.x;
+                min.x = ( corners[ 0 ].x + corners[ 4 ].x ) / 2;
+                max.x = corners[ 4 ].x;
             }
 
             if ( y == 0 )
             {
-                min.y = octantMin.y;
-                max.y = ( octantMin.y + octantMax.y ) / 2;
+                min.y = corners[ 0 ].y;
+                max.y = ( corners[ 0 ].y + corners[ 4 ].y ) / 2;
             }
 
             else
             {
-                min.y = ( octantMin.y + octantMax.y ) / 2;
-                max.y = octantMax.y;
+                min.y = ( corners[ 0 ].y + corners[ 4 ].y ) / 2;
+                max.y = corners[ 4 ].y;
             }
 
             if ( z == 0 )
             {
-                min.z = octantMin.z;
-                max.z = ( octantMin.z + octantMax.z ) / 2;
+                min.z = corners[ 0 ].z;
+                max.z = ( corners[ 0 ].z + corners[ 4 ].z ) / 2;
             }
 
             else
             {
-                min.z = ( octantMin.z + octantMax.z ) / 2;
-                max.z = octantMax.z;
+                min.z = ( corners[ 0 ].z + corners[ 4 ].z ) / 2;
+                max.z = corners[ 4 ].z;
             }
 
             octant -> mChildren[ x ][ y ][ z ] -> mBox.setExtents( min, max );
@@ -562,7 +562,7 @@ void OctreeSceneManager::_updateSceneGraph( Camera * cam )
 
 void OctreeSceneManager::_alertVisibleObjects( void )
 {
-    OGRE_EXCEPT( Exception::ERR_NOT_IMPLEMENTED,
+    OGRE_EXCEPT( Exception::UNIMPLEMENTED_FEATURE,
         "Function doesn't do as advertised",
         "OctreeSceneManager::_alertVisibleObjects" );
 
@@ -576,8 +576,7 @@ void OctreeSceneManager::_alertVisibleObjects( void )
     }
 }
 
-void OctreeSceneManager::_findVisibleObjects(Camera * cam, 
-	VisibleObjectsBoundsInfo* visibleBounds, bool onlyShadowCasters )
+void OctreeSceneManager::_findVisibleObjects( Camera * cam, bool onlyShadowCasters )
 {
 
     getRenderQueue()->clear();
@@ -595,12 +594,15 @@ void OctreeSceneManager::_findVisibleObjects(Camera * cam,
     mNumObjects = 0;
 
     //walk the octree, adding all visible Octreenodes nodes to the render queue.
-    walkOctree( static_cast < OctreeCamera * > ( cam ), getRenderQueue(), mOctree, 
-				visibleBounds, false, onlyShadowCasters );
+    walkOctree( static_cast < OctreeCamera * > ( cam ), getRenderQueue(), mOctree, false, onlyShadowCasters );
+
 
     // Show the octree boxes & cull camera if required
     if ( mShowBoxes || mCullCamera )
     {
+
+
+
         if ( mShowBoxes )
         {
             for ( BoxList::iterator it = mBoxes.begin(); it != mBoxes.end(); ++it )
@@ -618,12 +620,15 @@ void OctreeSceneManager::_findVisibleObjects(Camera * cam,
                 getRenderQueue()->addRenderable(c);
             }
         }
+
     }
+
+
+
 }
 
-void OctreeSceneManager::walkOctree( OctreeCamera *camera, RenderQueue *queue, 
-	Octree *octant, VisibleObjectsBoundsInfo* visibleBounds, 
-	bool foundvisible, bool onlyShadowCasters )
+void OctreeSceneManager::walkOctree( OctreeCamera *camera, RenderQueue *queue,
+                                     Octree *octant, bool foundvisible, bool onlyShadowCasters )
 {
 
     //return immediately if nothing is in the node.
@@ -678,7 +683,7 @@ void OctreeSceneManager::walkOctree( OctreeCamera *camera, RenderQueue *queue,
             {
 
                 mNumObjects++;
-                sn -> _addToRenderQueue(camera, queue, onlyShadowCasters, visibleBounds );
+                sn -> _addToRenderQueue(camera, queue, onlyShadowCasters );
 
                 mVisible.push_back( sn );
 
@@ -696,28 +701,28 @@ void OctreeSceneManager::walkOctree( OctreeCamera *camera, RenderQueue *queue,
         Octree* child;
         bool childfoundvisible = (v == OctreeCamera::FULL);
         if ( (child = octant -> mChildren[ 0 ][ 0 ][ 0 ]) != 0 )
-            walkOctree( camera, queue, child, visibleBounds, childfoundvisible, onlyShadowCasters );
+            walkOctree( camera, queue, child, childfoundvisible, onlyShadowCasters );
 
         if ( (child = octant -> mChildren[ 1 ][ 0 ][ 0 ]) != 0 )
-            walkOctree( camera, queue, child, visibleBounds, childfoundvisible, onlyShadowCasters );
+            walkOctree( camera, queue, child, childfoundvisible, onlyShadowCasters );
 
         if ( (child = octant -> mChildren[ 0 ][ 1 ][ 0 ]) != 0 )
-            walkOctree( camera, queue, child, visibleBounds, childfoundvisible, onlyShadowCasters );
+            walkOctree( camera, queue, child, childfoundvisible, onlyShadowCasters );
 
         if ( (child = octant -> mChildren[ 1 ][ 1 ][ 0 ]) != 0 )
-            walkOctree( camera, queue, child, visibleBounds, childfoundvisible, onlyShadowCasters );
+            walkOctree( camera, queue, child, childfoundvisible, onlyShadowCasters );
 
         if ( (child = octant -> mChildren[ 0 ][ 0 ][ 1 ]) != 0 )
-            walkOctree( camera, queue, child, visibleBounds, childfoundvisible, onlyShadowCasters );
+            walkOctree( camera, queue, child, childfoundvisible, onlyShadowCasters );
 
         if ( (child = octant -> mChildren[ 1 ][ 0 ][ 1 ]) != 0 )
-            walkOctree( camera, queue, child, visibleBounds, childfoundvisible, onlyShadowCasters );
+            walkOctree( camera, queue, child, childfoundvisible, onlyShadowCasters );
 
         if ( (child = octant -> mChildren[ 0 ][ 1 ][ 1 ]) != 0 )
-            walkOctree( camera, queue, child, visibleBounds, childfoundvisible, onlyShadowCasters );
+            walkOctree( camera, queue, child, childfoundvisible, onlyShadowCasters );
 
         if ( (child = octant -> mChildren[ 1 ][ 1 ][ 1 ]) != 0 )
-            walkOctree( camera, queue, child, visibleBounds, childfoundvisible, onlyShadowCasters );
+            walkOctree( camera, queue, child, childfoundvisible, onlyShadowCasters );
 
     }
 

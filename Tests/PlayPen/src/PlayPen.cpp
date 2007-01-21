@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 /*
@@ -38,7 +34,6 @@ Description: Somewhere to play in the sand...
 #include "OgreEdgeListBuilder.h"
 #include "OgreBillboardChain.h"
 #include "OgreTextAreaOverlayElement.h"
-#include "AnimationBlender.h"
 
 /*
 #include "OgreNoMemoryMacros.h"
@@ -73,7 +68,6 @@ RaySceneQuery* rayQuery = 0;
 Entity* ball = 0;
 Vector3 ballVector;
 bool testreload = false;
-String testBackgroundLoadGroup;
 
 // Hacky globals
 GpuProgramParametersSharedPtr fragParams;
@@ -84,12 +78,7 @@ Camera* theCam;
 Camera* reflectCam = 0;
 Camera* camera2 = 0;
 Bone* manuallyControlledBone = 0;
-AnimationBlender* animBlender = 0;
-String animBlendTarget[2];
-int animBlendTargetIndex;
-MovablePlane movablePlane("APlane");
 
-using namespace OIS;
 
 class RefractionTextureListener : public RenderTargetListener
 {
@@ -123,8 +112,37 @@ public:
 
 };
 
+class UberSimpleFrameListener : public FrameListener
+{
+protected:
+	InputReader* mInputDevice;
 
-class PlayPenListener : public ExampleFrameListener, public ResourceBackgroundQueue::Listener
+public:
+	UberSimpleFrameListener(RenderWindow* win, Camera* cam)
+	{
+		mInputDevice = PlatformManager::getSingleton().createInputReader();
+		mInputDevice->initialise(win,true, true);
+	}
+	~UberSimpleFrameListener()
+	{
+		PlatformManager::getSingleton().destroyInputReader( mInputDevice );
+	}
+
+	bool frameStarted(const FrameEvent& evt)
+	{
+		mInputDevice->capture();
+		if (mInputDevice->isKeyDown(KC_ESCAPE))
+		{
+			return false;
+		}
+		return true;
+
+	}
+};
+
+
+
+class PlayPenListener : public ExampleFrameListener
 {
 protected:
 	SceneManager* mSceneMgr;
@@ -134,13 +152,6 @@ public:
     {
     }
 
-
-	/// Background load completed
-	void operationCompleted(BackgroundProcessTicket ticket)
-	{
-		mDebugText = "Background load complete";
-
-	}
 
     bool frameStarted(const FrameEvent& evt)
     {
@@ -190,19 +201,6 @@ public:
 			}
 		}
 
-		static float backgroundLoadTime = 5.0f;
-		if (!testBackgroundLoadGroup.empty())
-		{
-			backgroundLoadTime -= evt.timeSinceLastFrame;
-			if (backgroundLoadTime < 0)
-			{
-				ResourceBackgroundQueue::getSingleton().loadResourceGroup(testBackgroundLoadGroup, this);
-				testBackgroundLoadGroup.clear();
-				mDebugText = "Background load queued";
-			}
-
-		}
-
 
 
 
@@ -245,7 +243,7 @@ public:
             timeUntilNextToggle -= evt.timeSinceLastFrame;
 
 		static bool mWireframe = false;
-		if (mKeyboard->isKeyDown(KC_G) && timeUntilNextToggle <= 0)
+		if (mInputDevice->isKeyDown(KC_G) && timeUntilNextToggle <= 0)
         {
 			mWireframe = !mWireframe;
 			if (mWireframe)
@@ -272,33 +270,18 @@ public:
         
         if (mAnimState && animate)
             mAnimState->addTime(evt.timeSinceLastFrame);
-
-		if (animBlender && animate)
-		{
-			if (animBlender->getProgress() <= 0.0f)
-			{
-				animBlender->init(animBlendTarget[animBlendTargetIndex]);
-				animBlendTargetIndex = (animBlendTargetIndex + 1) % 2;
-				animBlender->blend(animBlendTarget[animBlendTargetIndex], AnimationBlender::BlendWhileAnimating, 10, false);
-			}
-			else
-			{
-				animBlender->addTime(evt.timeSinceLastFrame);
-			}
-		}
-
 		std::vector<AnimationState*>::iterator animi;
 		for (animi = mAnimStateList.begin(); animi != mAnimStateList.end(); ++animi)
 		{
 			(*animi)->addTime(evt.timeSinceLastFrame);
 		}
 
-        if (mKeyboard->isKeyDown(KC_R) && timeUntilNextToggle <= 0)
+        if (mInputDevice->isKeyDown(KC_R) && timeUntilNextToggle <= 0)
         {
             rotate = !rotate;
             timeUntilNextToggle = 0.5;
         }
-        if (mKeyboard->isKeyDown(KC_1) && timeUntilNextToggle <= 0)
+        if (mInputDevice->isKeyDown(KC_1) && timeUntilNextToggle <= 0)
         {
             animate = !animate;
             timeUntilNextToggle = 0.5;
@@ -372,7 +355,7 @@ public:
         }
 
         /*
-		if (mKeyboard->isKeyDown(KC_V) && timeUntilNextToggle <= 0)
+		if (mInputDevice->isKeyDown(KC_V) && timeUntilNextToggle <= 0)
         {
             static bool isVP = false;
             if (!isVP)
@@ -390,46 +373,46 @@ public:
         }
         */
 
-		if (mKeyboard->isKeyDown(KC_P))
+		if (mInputDevice->isKeyDown(KC_P))
         {
             mTestNode[0]->yaw(Degree(-evt.timeSinceLastFrame * 30));
         }
-		if (mKeyboard->isKeyDown(KC_O))
+		if (mInputDevice->isKeyDown(KC_O))
         {
             mTestNode[0]->yaw(Degree(evt.timeSinceLastFrame * 30));
         }
-		if (mKeyboard->isKeyDown(KC_K))
+		if (mInputDevice->isKeyDown(KC_K))
         {
             mTestNode[0]->roll(Degree(-evt.timeSinceLastFrame * 30));
         }
-		if (mKeyboard->isKeyDown(KC_L))
+		if (mInputDevice->isKeyDown(KC_L))
         {
             mTestNode[0]->roll(Degree(evt.timeSinceLastFrame * 30));
         }
-		if (mKeyboard->isKeyDown(KC_U))
+		if (mInputDevice->isKeyDown(KC_U))
         {
             mTestNode[0]->translate(0,0,-evt.timeSinceLastFrame * 30);
         }
-		if (mKeyboard->isKeyDown(KC_J))
+		if (mInputDevice->isKeyDown(KC_J))
         {
             mTestNode[0]->translate(0,0,evt.timeSinceLastFrame * 30);
         }
-		if (mKeyboard->isKeyDown(KC_M))
+		if (mInputDevice->isKeyDown(KC_M))
         {
             mTestNode[0]->translate(0,evt.timeSinceLastFrame * 30, 0);
         }
-		if (mKeyboard->isKeyDown(KC_N))
+		if (mInputDevice->isKeyDown(KC_N))
         {
             mTestNode[0]->translate(0,-evt.timeSinceLastFrame * 30, 0);
         }
 
-        if (mKeyboard->isKeyDown(KC_0) && timeUntilNextToggle <= 0)
+        if (mInputDevice->isKeyDown(KC_0) && timeUntilNextToggle <= 0)
         {
             mAnimState->setEnabled(!mAnimState->getEnabled());
             timeUntilNextToggle = 0.5;
         }
 
-		if (mEntity && mKeyboard->isKeyDown(KC_SPACE) && timeUntilNextToggle <= 0)
+		if (mEntity && mInputDevice->isKeyDown(KC_SPACE) && timeUntilNextToggle <= 0)
 		{
 			mSceneMgr->destroyEntity(mEntity);
 			//mLight->setCastShadows(true);
@@ -462,8 +445,8 @@ public:
         */
 
         // Print camera details
-        //mWindow->setDebugText("P: " + StringConverter::toString(mCamera->getDerivedPosition()) + " " + 
-        //    "O: " + StringConverter::toString(mCamera->getDerivedOrientation()));
+        mWindow->setDebugText("P: " + StringConverter::toString(mCamera->getDerivedPosition()) + " " + 
+            "O: " + StringConverter::toString(mCamera->getDerivedOrientation()));
         return ExampleFrameListener::frameStarted(evt) && ExampleFrameListener::frameEnded(evt);        
 
     }
@@ -491,18 +474,8 @@ protected:
     
     void chooseSceneManager(void)
     {
-		// DefaultSceneManager
-		//mSceneMgr = mRoot->createSceneManager("DefaultSceneManager", "PlayPenSMInstance");
-
-		// BspSceneManager
-		//mSceneMgr = mRoot->createSceneManager("BspSceneManager", "PlayPenSMInstance");
-
-		// OctreeSceneManager
-		//mSceneMgr = mRoot->createSceneManager("OctreeSceneManager", "PlayPenSMInstance");
-
-		// TerrainSceneManager
-		mSceneMgr = mRoot->createSceneManager("TerrainSceneManager", "PlayPenSMInstance");
-	}
+        mSceneMgr = mRoot->createSceneManager(ST_GENERIC, "PlayPenSMInstance");
+    }
 
 
     void createTestBugPlaneMesh3Streams(const String& testMeshName)
@@ -815,56 +788,45 @@ protected:
 
 	void testBug()
 	{
-		MaterialPtr m = MaterialManager::getSingleton ().getByName ("BaseWhiteNoLighting"); 
-		m->getBestTechnique();
-		TexturePtr tex = TextureManager::getSingleton().getByName("t");
-		size_t x, y;
-		Box box;
-		box.left = x;
-		box.right = x + 1;
-		box.top = y;
-		box.bottom = y + 1;
-		box.front = 0;
-		box.back = 1;
-		const PixelBox& lockBox = tex->getBuffer()->lock(box, HardwareBuffer::HBL_NORMAL);
-		PixelUtil::packColour(ColourValue::White, lockBox.format, lockBox.data);
-		tex->getBuffer()->unlock();
+		mSceneMgr->setShadowTechnique(SHADOWTYPE_STENCIL_MODULATIVE);
+		mSceneMgr->setShadowDirectionalLightExtrusionDistance(1000);
+		// Set ambient light
+		mSceneMgr->setAmbientLight(ColourValue(0.0, 0.0, 0.0));
 
-	}
-
-	void testMaterialSerializer()
-	{
-		MaterialSerializer ser;
-
-		// simple material
-		MaterialPtr m = MaterialManager::getSingleton().getByName("Examples/EnvMappedRustySteel");
-		ser.queueForExport(m);
-
-		// scheme-based but otherwise simple material
-		m = MaterialManager::getSingleton().getByName("Examples/MorningSkyBox");
-		ser.queueForExport(m);
-
-		// fairly simple shader, with custom param & default params
-		m = MaterialManager::getSingleton().getByName("Examples/CelShading");
-		ser.queueForExport(m);
-
-		// More complex shader
-		m = MaterialManager::getSingleton().getByName("Examples/BumpMapping/SingleLight");
-		ser.queueForExport(m);
-
-		// more complex shader, with light iteration
-		m = MaterialManager::getSingleton().getByName("Examples/BumpMapping/MultiLight");
-		ser.queueForExport(m);
-
-		// With a unified program
-		m = MaterialManager::getSingleton().getByName("jaiqua");
-		ser.queueForExport(m);
+		// Point light
+		mLight = mSceneMgr->createLight("MainLight");
+		mLight->setPosition(-400,400,-300);
+		mLight->setDiffuseColour(0.9, 0.9, 1);
+		mLight->setSpecularColour(0.9, 0.9, 1);
+		mLight->setAttenuation(6000,1,0,0);
+		//mLight->setCastShadows(false);
 
 
-		// export
-		ser.exportQueued("testexport.material", true);
+		// Hardware skin
+		Entity* pEnt;
+		mEntity = mSceneMgr->createEntity( "1", "robot.mesh" );
+		mEntity->setCastShadows(false);
+		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(mEntity);
+		AnimationState* anim = mEntity->getAnimationState("Walk");
+		anim->setEnabled(true);
+		mAnimStateList.push_back(anim);
 
-		
+
+
+
+		Plane plane;
+		plane.normal = Vector3::UNIT_Y;
+		plane.d = 100;
+		MeshManager::getSingleton().createPlane("Myplane",
+			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane,
+			1500,1500,10,10,true,1,5,5,Vector3::UNIT_Z);
+		Entity* pPlaneEnt = mSceneMgr->createEntity( "plane", "Myplane" );
+		pPlaneEnt->setMaterialName("2 - Default");
+		pPlaneEnt->setCastShadows(false);
+		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pPlaneEnt);
+
+		mCamera->setPosition(180, 34, 223);
+		mCamera->setOrientation(Quaternion(0.7265, -0.2064, 0.6304, 0.1791));
 
 
 	}
@@ -1137,40 +1099,6 @@ protected:
 
 
     }
-
-	void testAnimationBlend()
-	{
-		Light* l = mSceneMgr->createLight("MainLight");
-		l->setPosition(200,110,0);
-		l->setType(Light::LT_POINT);
-		Entity *ent;
-
-		mWindow->getViewport(0)->setBackgroundColour(ColourValue::Red);
-
-		mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.4));
-
-		// Create an entity (the plant)
-		ent = mSceneMgr->createEntity("1", "sticky.mesh");
-
-		SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-		node->attachObject(ent);
-		node->scale(2,2,2);
-
-		//mAnimState = ent->getAnimationState("triangle");
-		//mAnimState->setEnabled(true);
-
-		animBlender = new AnimationBlender(ent);
-		animBlendTarget[0] = "still";
-		animBlendTarget[1] = "triangle";
-		animBlendTargetIndex = 1;
-		animBlender->init(animBlendTarget[0]);
-		animBlender->blend(animBlendTarget[1], AnimationBlender::BlendWhileAnimating, 10, false);
-
-		mCamera->setPosition(-50,0,0);
-		mCamera->lookAt(0,0,0);
-
-
-	}
 
     void testGpuPrograms(void)
     {
@@ -1656,12 +1584,12 @@ protected:
 
 
 
-        Entity *ent = mSceneMgr->createEntity("robot", "test.mesh");
+        Entity *ent = mSceneMgr->createEntity("robot", "jaiqua.mesh");
         // Uncomment the below to test software skinning
         //ent->setMaterialName("Examples/Rocky");
         // Add entity to the scene node
         mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
-        mAnimState = ent->getAnimationState("Default");
+        mAnimState = ent->getAnimationState("Jaiqua_walk_Preset_Clip");
         mAnimState->setEnabled(true);
 
         // Give it a little ambience with lights
@@ -1681,15 +1609,14 @@ protected:
         // Report whether hardware skinning is enabled or not
         Technique* t = ent->getSubEntity(0)->getMaterial()->getBestTechnique();
         Pass* p = t->getPass(0);
-		OverlayElement* guiDbg = OverlayManager::getSingleton().getOverlayElement("Core/DebugText");
         if (p->hasVertexProgram() && 
             p->getVertexProgram()->isSkeletalAnimationIncluded())
         {
-			guiDbg->setCaption("Hardware skinning is enabled");
+            mWindow->setDebugText("Hardware skinning is enabled");
         }
         else
         {
-            guiDbg->setCaption("Software skinning is enabled");
+            mWindow->setDebugText("Software skinning is enabled");
         }
 
 
@@ -2161,9 +2088,9 @@ protected:
         MeshPtr msh = MeshManager::getSingleton().load("knot.mesh", 
 			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
         unsigned short src, dest;
-        if (!msh->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
+        if (!msh->suggestTangentVectorBuildParams(src, dest))
         {
-            msh->buildTangentVectors(VES_TANGENT, src, dest);
+            msh->buildTangentVectors(src, dest);
         }
         pEnt = mSceneMgr->createEntity( "4", "knot.mesh" );
         pEnt->setMaterialName("Examples/BumpMapping/MultiLightSpecular");
@@ -2259,46 +2186,11 @@ protected:
 
     }
 
-	void addTextureShadowDebugOverlay(size_t num)
-	{
-		Overlay* debugOverlay = OverlayManager::getSingleton().getByName("Core/DebugOverlay");
-
-		for (size_t i = 0; i < num; ++i)
-		{
-			// Set up a debug panel to display the shadow
-			MaterialPtr debugMat = MaterialManager::getSingleton().create(
-				"Ogre/DebugShadowMap" + StringConverter::toString(i), 
-				ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-			debugMat->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-			TexturePtr shadowTex = mSceneMgr->getShadowTexture(i);
-			TextureUnitState *t = debugMat->getTechnique(0)->getPass(0)->createTextureUnitState(shadowTex->getName());
-			t->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
-			//t = debugMat->getTechnique(0)->getPass(0)->createTextureUnitState("spot_shadow_fade.png");
-			//t->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
-			//t->setColourOperation(LBO_ADD);
-
-			OverlayContainer* debugPanel = (OverlayContainer*)
-				(OverlayManager::getSingleton().createOverlayElement("Panel", "Ogre/DebugShadowPanel" + StringConverter::toString(i)));
-			debugPanel->_setPosition(0.8, i*0.3);
-			debugPanel->_setDimensions(0.2, 0.28);
-			debugPanel->setMaterialName(debugMat->getName());
-			debugOverlay->add2D(debugPanel);
-
-		}
-
-	}
-
 
     void testTextureShadows(ShadowTechnique tech)
     {
-        mSceneMgr->setShadowTextureSize(1024);
+        mSceneMgr->setShadowTextureSize(512);
         mSceneMgr->setShadowTechnique(tech);
-		/*
-		LiSPSMShadowCameraSetup* lispsmSetup = new LiSPSMShadowCameraSetup();
-		lispsmSetup->setOptimalAdjustFactor(0.5);
-		mSceneMgr->setShadowCameraSetup(ShadowCameraSetupPtr(lispsmSetup));
-		*/
-
         mSceneMgr->setShadowFarDistance(1500);
         mSceneMgr->setShadowColour(ColourValue(0.35, 0.35, 0.35));
         //mSceneMgr->setShadowFarDistance(800);
@@ -2308,21 +2200,22 @@ protected:
         mLight = mSceneMgr->createLight("MainLight");
 
         // Directional test
+		/*
         mLight->setType(Light::LT_DIRECTIONAL);
         Vector3 vec(-1,-1,0);
         vec.normalise();
         mLight->setDirection(vec);
+		*/
 
 		
         // Spotlight test
-		/*
         mLight->setType(Light::LT_SPOTLIGHT);
         mLight->setDiffuseColour(1.0, 1.0, 0.8);
         mTestNode[0] = mSceneMgr->getRootSceneNode()->createChildSceneNode();
         mTestNode[0]->setPosition(800,600,0);
         mTestNode[0]->lookAt(Vector3(0,0,0), Node::TS_WORLD, Vector3::UNIT_Z);
         mTestNode[0]->attachObject(mLight);
-		*/
+		
 
         mTestNode[1] = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 
@@ -2357,7 +2250,7 @@ protected:
 
         MeshPtr msh = MeshManager::getSingleton().load("knot.mesh",
 			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-        msh->buildTangentVectors(VES_TANGENT, 0, 0);
+        msh->buildTangentVectors();
         pEnt = mSceneMgr->createEntity( "4", "knot.mesh" );
         //pEnt->setMaterialName("Examples/BumpMapping/MultiLightSpecular");
         mTestNode[2] = mSceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(100, 0, 200));
@@ -2366,25 +2259,36 @@ protected:
         mSceneMgr->setSkyBox(true, "Examples/CloudyNoonSkyBox");
 
 
-        movablePlane.normal = Vector3::UNIT_Y;
-        movablePlane.d = 100;
+        Plane plane;
+        plane.normal = Vector3::UNIT_Y;
+        plane.d = 100;
         MeshManager::getSingleton().createPlane("Myplane",
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, movablePlane,
+			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane,
             1500,1500,10,10,true,1,5,5,Vector3::UNIT_Z);
         Entity* pPlaneEnt;
         pPlaneEnt = mSceneMgr->createEntity( "plane", "Myplane" );
-		if (tech & SHADOWDETAILTYPE_INTEGRATED)
-		{
-			pPlaneEnt->setMaterialName("Examples/Plane/IntegratedShadows");
-		}
-		else
-		{
-			pPlaneEnt->setMaterialName("2 - Default");
-		}
+        pPlaneEnt->setMaterialName("2 - Default");
         pPlaneEnt->setCastShadows(false);
         mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pPlaneEnt);
 
-		addTextureShadowDebugOverlay(1);
+        // Set up a debug panel to display the shadow
+        MaterialPtr debugMat = MaterialManager::getSingleton().create(
+            "Ogre/DebugShadowMap", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+        debugMat->getTechnique(0)->getPass(0)->setLightingEnabled(false);
+        TextureUnitState *t = debugMat->getTechnique(0)->getPass(0)->createTextureUnitState("Ogre/ShadowTexture0");
+        t->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
+        //t = debugMat->getTechnique(0)->getPass(0)->createTextureUnitState("spot_shadow_fade.png");
+        //t->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
+        //t->setColourOperation(LBO_ADD);
+
+        OverlayContainer* debugPanel = (OverlayContainer*)
+            (OverlayManager::getSingleton().createOverlayElement("Panel", "Ogre/DebugShadowPanel"));
+        debugPanel->_setPosition(0.8, 0);
+        debugPanel->_setDimensions(0.2, 0.3);
+        debugPanel->setMaterialName("Ogre/DebugShadowMap");
+        Overlay* debugOverlay = OverlayManager::getSingleton().getByName("Core/DebugOverlay");
+        debugOverlay->add2D(debugPanel);
+
 
 
         ParticleSystem* pSys2 = mSceneMgr->createParticleSystem("smoke", 
@@ -2574,8 +2478,17 @@ protected:
 					Ogre::GpuProgramParametersSharedPtr fparams = 
 						mat->getBestTechnique()->getPass(0)->getFragmentProgramParameters();
 					const Ogre::String& progName = mat->getBestTechnique()->getPass(0)->getFragmentProgramName();
-					fparams->setNamedConstant("sampleOffsets", mBloomTexOffsetsHorz[0], 15);
-					fparams->setNamedConstant("sampleWeights", mBloomTexWeights[0], 15);
+					// A bit hacky - Cg & HLSL index arrays via [0], GLSL does not
+					if (progName.find("GLSL") != Ogre::String::npos)
+					{
+						fparams->setNamedConstant("sampleOffsets", mBloomTexOffsetsHorz[0], 15);
+						fparams->setNamedConstant("sampleWeights", mBloomTexWeights[0], 15);
+					}
+					else
+					{
+						fparams->setNamedConstant("sampleOffsets[0]", mBloomTexOffsetsHorz[0], 15);
+						fparams->setNamedConstant("sampleWeights[0]", mBloomTexWeights[0], 15);
+					}
 
 					break;
 				}
@@ -2586,8 +2499,17 @@ protected:
 					Ogre::GpuProgramParametersSharedPtr fparams = 
 						mat->getTechnique(0)->getPass(0)->getFragmentProgramParameters();
 					const Ogre::String& progName = mat->getBestTechnique()->getPass(0)->getFragmentProgramName();
-					fparams->setNamedConstant("sampleOffsets", mBloomTexOffsetsVert[0], 15);
-					fparams->setNamedConstant("sampleWeights", mBloomTexWeights[0], 15);
+					// A bit hacky - Cg & HLSL index arrays via [0], GLSL does not
+					if (progName.find("GLSL") != Ogre::String::npos)
+					{
+						fparams->setNamedConstant("sampleOffsets", mBloomTexOffsetsVert[0], 15);
+						fparams->setNamedConstant("sampleWeights", mBloomTexWeights[0], 15);
+					}
+					else
+					{
+						fparams->setNamedConstant("sampleOffsets[0]", mBloomTexOffsetsVert[0], 15);
+						fparams->setNamedConstant("sampleWeights[0]", mBloomTexWeights[0], 15);
+					}
 
 					break;
 				}
@@ -2663,7 +2585,7 @@ protected:
 
 		MeshPtr msh = MeshManager::getSingleton().load("knot.mesh",
 			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		msh->buildTangentVectors(VES_TANGENT, 0, 0);
+		msh->buildTangentVectors();
 		pEnt = mSceneMgr->createEntity( "4", "knot.mesh" );
 		//pEnt->setMaterialName("Examples/BumpMapping/MultiLightSpecular");
 		mTestNode[2] = mSceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(100, 0, 200));
@@ -2685,7 +2607,22 @@ protected:
 		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pPlaneEnt);
 
 		// Set up a debug panel to display the shadow
-		addTextureShadowDebugOverlay(1);
+		MaterialPtr debugMat = MaterialManager::getSingleton().create(
+			"Ogre/DebugShadowMap", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+		debugMat->getTechnique(0)->getPass(0)->setLightingEnabled(false);
+		TextureUnitState *t = debugMat->getTechnique(0)->getPass(0)->createTextureUnitState("Ogre/ShadowTexture0");
+		t->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
+		//t = debugMat->getTechnique(0)->getPass(0)->createTextureUnitState("spot_shadow_fade.png");
+		//t->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
+		//t->setColourOperation(LBO_ADD);
+
+		OverlayContainer* debugPanel = (OverlayContainer*)
+			(OverlayManager::getSingleton().createOverlayElement("Panel", "Ogre/DebugShadowPanel"));
+		debugPanel->_setPosition(0.8, 0);
+		debugPanel->_setDimensions(0.2, 0.3);
+		debugPanel->setMaterialName("Ogre/DebugShadowMap");
+		Overlay* debugOverlay = OverlayManager::getSingleton().getByName("Core/DebugOverlay");
+		debugOverlay->add2D(debugPanel);
 
 
 
@@ -2694,7 +2631,7 @@ protected:
 		mTestNode[4] = mSceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(-300, -100, 200));
 		mTestNode[4]->attachObject(pSys2);
 
-		TexturePtr shadowTex = mSceneMgr->getShadowTexture(0);
+		TexturePtr shadowTex = TextureManager::getSingleton().getByName("Ogre/ShadowTexture0");
 		RenderTarget* shadowRtt = shadowTex->getBuffer()->getRenderTarget();
 		Viewport* vp = shadowRtt->getViewport(0);
 		Ogre::CompositorInstance *instance = 
@@ -2782,8 +2719,6 @@ protected:
         bool val = true;
         mSceneMgr->setOption("ShowOctree", &val);
 
-		//mCamera->setFarClipDistance(0);
-
     }
 
 	void testLotsAndLotsOfEntities()
@@ -2822,89 +2757,6 @@ protected:
 		Entity* ent = mSceneMgr->createEntity("test", "xsicylinder.mesh");
 		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
 
-	}
-
-	void testGLSLTangent()
-	{
-
-		Entity* ent = mSceneMgr->createEntity("test", "athene.mesh");
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
-		ent->setMaterialName("testglsl");
-	}
-
-	void testInfiniteAAB()
-	{
-		// When using the BspSceneManager
-		//mSceneMgr->setWorldGeometry("ogretestmap.bsp");
-
-		// When using the TerrainSceneManager
-		mSceneMgr->setWorldGeometry("terrain.cfg");
-
-		AxisAlignedBox b1; // null
-		assert( b1.isNull() );
-		
-		AxisAlignedBox b2(Vector3::ZERO, 5.0 * Vector3::UNIT_SCALE); // finite
-		assert( b2.isFinite() );
-
-		AxisAlignedBox b3;
-		b3.setInfinite();
-		assert( b3.isInfinite() );
-
-		{
-			// Create background material
-			MaterialPtr material = MaterialManager::getSingleton().create("Background", "General");
-			material->getTechnique(0)->getPass(0)->createTextureUnitState("rockwall.tga");
-			material->getTechnique(0)->getPass(0)->setDepthCheckEnabled(false);
-			material->getTechnique(0)->getPass(0)->setDepthWriteEnabled(false);
-			material->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-
-			// Create left background rectangle
-			// NOTE: Uses finite aab
-			Rectangle2D* rect1 = new Rectangle2D(true);
-			rect1->setCorners(-0.5, 0.1, -0.1, -0.1);
-			// Hacky, set small bounding box, to show problem
-			rect1->setBoundingBox(AxisAlignedBox(-10.0*Vector3::UNIT_SCALE, 10.0*Vector3::UNIT_SCALE));
-			rect1->setMaterial("Background");
-			rect1->setRenderQueueGroup(RENDER_QUEUE_OVERLAY - 1);
-			SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode("Background1");
-			node->attachObject(rect1);
-
-			// Create right background rectangle
-			// NOTE: Uses infinite aab
-			Rectangle2D* rect2 = new Rectangle2D(true);
-			rect2->setCorners(0.1, 0.1, 0.5, -0.1);
-			AxisAlignedBox aabInf; aabInf.setInfinite();
-			rect2->setBoundingBox(aabInf);
-			rect2->setMaterial("Background");
-			rect2->setRenderQueueGroup(RENDER_QUEUE_OVERLAY - 1);
-			node = mSceneMgr->getRootSceneNode()->createChildSceneNode("Background2");
-			node->attachObject(rect2);
-
-			// Create a manual object for 2D
-			ManualObject* manual = mSceneMgr->createManualObject("manual");
-			manual->setUseIdentityProjection(true);
-			manual->setUseIdentityView(true);
-			manual->begin("BaseWhiteNoLighting", RenderOperation::OT_LINE_STRIP);
-			manual->position(-0.2, -0.2, 0.0);
-			manual->position( 0.2, -0.2, 0.0);
-			manual->position( 0.2,  0.2, 0.0);
-			manual->position(-0.2,  0.2, 0.0);
-			manual->index(0);
-			manual->index(1);
-			manual->index(2);
-			manual->index(3);
-			manual->index(0);
-			manual->end();
-			manual->setBoundingBox(aabInf); // Use infinite aab to always stay visible
-			rect2->setRenderQueueGroup(RENDER_QUEUE_OVERLAY - 1);
-			mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(manual);
-		}
-
-		mSceneMgr->showBoundingBoxes(true);
-
-		Entity* ent = mSceneMgr->createEntity("test", "ogrehead.mesh");
-		mSceneMgr->getRootSceneNode()->createChildSceneNode(
-			"test", 50.0 * Vector3::UNIT_X)->attachObject(ent);
 	}
 
 	void test2Windows(void)
@@ -3592,93 +3444,6 @@ protected:
 
 	}
 
-	void testManualObjectNonIndexedUpdateSmaller()
-	{
-		testManualObjectNonIndexed();
-		ManualObject* man = static_cast<ManualObject*>(
-			mSceneMgr->getMovableObject("test", ManualObjectFactory::FACTORY_TYPE_NAME));
-
-		// Redefine but make smaller (one tri less)
-		man->beginUpdate(0);
-		man->position(-30, 30, 30);
-		man->normal(0, 0, 1);
-		man->textureCoord(0, 0);
-
-		man->position(-30, -30, 30);
-		man->normal(0, 0, 1);
-		man->textureCoord(0, 1);
-
-		man->position(30, 30, 30);
-		man->normal(0, 0, 1);
-		man->textureCoord(1, 0);
-
-
-		man->end();
-
-	}
-
-	void testManualObjectNonIndexedUpdateLarger()
-	{
-		testManualObjectNonIndexed();
-		ManualObject* man = static_cast<ManualObject*>(
-			mSceneMgr->getMovableObject("test", ManualObjectFactory::FACTORY_TYPE_NAME));
-
-		// Redefine but make larger (2 more tri)
-		man->beginUpdate(0);
-
-		man->position(-20, 20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(0, 0);
-
-		man->position(-20, -20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(0, 1);
-
-		man->position(20, 20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(1, 0);
-
-		man->position(-20, -20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(0, 1);
-
-		man->position(20, -20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(1, 1);
-
-		man->position(20, 20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(1, 0);
-
-
-		man->position(-20, 40, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(0, 0);
-
-		man->position(-20, 20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(0, 1);
-
-		man->position(20, 40, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(1, 0);
-
-		man->position(-20, 20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(0, 1);
-
-		man->position(20, 20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(1, 1);
-
-		man->position(20, 40, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(1, 0);
-
-
-		man->end();
-
-	}
 	void testManualObjectIndexed()
 	{
 		mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
@@ -3752,82 +3517,6 @@ protected:
 
 	}
 
-	void testManualObjectIndexedUpdateSmaller()
-	{
-		testManualObjectIndexed();
-		ManualObject* man = static_cast<ManualObject*>(
-			mSceneMgr->getMovableObject("test", ManualObjectFactory::FACTORY_TYPE_NAME));
-
-
-		man->beginUpdate(0);
-		// 1 tri smaller
-		man->position(-20, 20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(0, 0);
-
-		man->position(-20, -20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(0, 1);
-
-		man->position(20, -20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(1, 1);
-
-		man->triangle(0, 1, 2);
-
-		man->end();
-
-	}
-
-	void testManualObjectIndexedUpdateLarger()
-	{
-		testManualObjectIndexed();
-		ManualObject* man = static_cast<ManualObject*>(
-			mSceneMgr->getMovableObject("test", ManualObjectFactory::FACTORY_TYPE_NAME));
-
-
-		man->beginUpdate(0);
-		// 1 quad larger
-		man->position(-20, 20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(0, 0);
-
-		man->position(-20, -20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(0, 1);
-
-		man->position(20, -20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(1, 1);
-
-		man->position(20, 20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(1, 0);
-
-
-		man->position(-20, 40, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(0, 0);
-
-		man->position(-20, 20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(0, 1);
-
-		man->position(20, 20, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(1, 1);
-
-		man->position(20, 40, 20);
-		man->normal(0, 0, 1);
-		man->textureCoord(1, 0);
-
-		man->quad(0, 1, 2, 3);
-		man->quad(4, 5, 6, 7);
-
-		man->end();
-
-	}
-
 	void testBillboardChain()
 	{
 		mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
@@ -3879,195 +3568,6 @@ protected:
 
 		mSceneMgr->showBoundingBoxes(true);
 	}
-
-	void testCubeDDS()
-	{
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			"../../../../Tests/Media", "FileSystem");
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("testcube", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* p = mat->getTechnique(0)->getPass(0);
-		p->setLightingEnabled(false);
-		TextureUnitState* t = p->createTextureUnitState();
-		t->setTextureName("grace_cube.dds", TEX_TYPE_CUBE_MAP);
-		t->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
-		t->setEnvironmentMap(true, TextureUnitState::ENV_REFLECTION);
-		Entity* e = mSceneMgr->createEntity("1", "sphere.mesh");
-		e->setMaterialName(mat->getName());
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-
-		mCamera->setPosition(300,0,0);
-		mCamera->lookAt(Vector3::ZERO);
-
-	}
-
-	void testDxt1()
-	{
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			"../../../../Tests/Media", "FileSystem");
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("testdxt", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* p = mat->getTechnique(0)->getPass(0);
-		p->setLightingEnabled(false);
-		p->setCullingMode(CULL_NONE);
-		TextureUnitState* t = p->createTextureUnitState("BumpyMetal_dxt1.dds");
-		Entity *e = mSceneMgr->createEntity("Plane", SceneManager::PT_PLANE);
-		e->setMaterialName(mat->getName());
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-
-		mCamera->setPosition(0,0,-300);
-		mCamera->lookAt(Vector3::ZERO);
-
-	}
-	void testDxt1Alpha()
-	{
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			"../../../../Tests/Media", "FileSystem");
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("testdxt", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* p = mat->getTechnique(0)->getPass(0);
-		p->setSceneBlending(SBT_TRANSPARENT_ALPHA);
-		p->setAlphaRejectSettings(CMPF_GREATER, 128);
-		p->setLightingEnabled(false);
-		p->setCullingMode(CULL_NONE);
-		TextureUnitState* t = p->createTextureUnitState("gras_02_dxt1.dds");
-		Entity *e = mSceneMgr->createEntity("Plane", SceneManager::PT_PLANE);
-		e->setMaterialName(mat->getName());
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-
-		mCamera->setPosition(0,0,300);
-		mCamera->lookAt(Vector3::ZERO);
-
-	}
-	void testDxt3()
-	{
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			"../../../../Tests/Media", "FileSystem");
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("testdxt", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* p = mat->getTechnique(0)->getPass(0);
-		p->setLightingEnabled(false);
-		p->setCullingMode(CULL_NONE);
-		p->setSceneBlending(SBT_TRANSPARENT_ALPHA);
-		TextureUnitState* t = p->createTextureUnitState("ogreborderUp_dxt3.dds");
-		Entity *e = mSceneMgr->createEntity("Plane", SceneManager::PT_PLANE);
-		e->setMaterialName(mat->getName());
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-		mWindow->getViewport(0)->setBackgroundColour(ColourValue::Red);
-
-		mCamera->setPosition(0,0,300);
-		mCamera->lookAt(Vector3::ZERO);
-
-	}
-	void testDxt5()
-	{
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			"../../../../Tests/Media", "FileSystem");
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("testdxt", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* p = mat->getTechnique(0)->getPass(0);
-		p->setLightingEnabled(false);
-		p->setCullingMode(CULL_NONE);
-		p->setSceneBlending(SBT_TRANSPARENT_ALPHA);
-		TextureUnitState* t = p->createTextureUnitState("ogreborderUp_dxt5.dds");
-		Entity *e = mSceneMgr->createEntity("Plane", SceneManager::PT_PLANE);
-		e->setMaterialName(mat->getName());
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-		mWindow->getViewport(0)->setBackgroundColour(ColourValue::Red);
-
-		mCamera->setPosition(0,0,300);
-		mCamera->lookAt(Vector3::ZERO);
-
-	}
-	void testFloat64DDS()
-	{
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			"../../../../Tests/Media", "FileSystem");
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("testdds", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* p = mat->getTechnique(0)->getPass(0);
-		p->setLightingEnabled(false);
-		p->setCullingMode(CULL_NONE);
-		p->setSceneBlending(SBT_TRANSPARENT_ALPHA);
-		TextureUnitState* t = p->createTextureUnitState("ogreborderUp_float64.dds");
-		Entity *e = mSceneMgr->createEntity("Plane", SceneManager::PT_PLANE);
-		e->setMaterialName(mat->getName());
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-		mWindow->getViewport(0)->setBackgroundColour(ColourValue::Red);
-
-		mCamera->setPosition(0,0,300);
-		mCamera->lookAt(Vector3::ZERO);
-
-	}
-	void testFloat128DDS()
-	{
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			"../../../../Tests/Media", "FileSystem");
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("testdds", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* p = mat->getTechnique(0)->getPass(0);
-		p->setLightingEnabled(false);
-		p->setCullingMode(CULL_NONE);
-		p->setSceneBlending(SBT_TRANSPARENT_ALPHA);
-		TextureUnitState* t = p->createTextureUnitState("ogreborderUp_float128.dds");
-		Entity *e = mSceneMgr->createEntity("Plane", SceneManager::PT_PLANE);
-		e->setMaterialName(mat->getName());
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-		mWindow->getViewport(0)->setBackgroundColour(ColourValue::Red);
-
-		mCamera->setPosition(0,0,300);
-		mCamera->lookAt(Vector3::ZERO);
-
-	}
-	void testFloat16DDS()
-	{
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			"../../../../Tests/Media", "FileSystem");
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("testdds", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* p = mat->getTechnique(0)->getPass(0);
-		p->setLightingEnabled(false);
-		p->setCullingMode(CULL_NONE);
-		TextureUnitState* t = p->createTextureUnitState("BumpyMetal_float16.dds");
-		Entity *e = mSceneMgr->createEntity("Plane", SceneManager::PT_PLANE);
-		e->setMaterialName(mat->getName());
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-		mWindow->getViewport(0)->setBackgroundColour(ColourValue::Red);
-
-		mCamera->setPosition(0,0,300);
-		mCamera->lookAt(Vector3::ZERO);
-
-	}
-	void testFloat32DDS()
-	{
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			"../../../../Tests/Media", "FileSystem");
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("testdds", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* p = mat->getTechnique(0)->getPass(0);
-		p->setLightingEnabled(false);
-		p->setCullingMode(CULL_NONE);
-		TextureUnitState* t = p->createTextureUnitState("BumpyMetal_float32.dds");
-		Entity *e = mSceneMgr->createEntity("Plane", SceneManager::PT_PLANE);
-		e->setMaterialName(mat->getName());
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-		mWindow->getViewport(0)->setBackgroundColour(ColourValue::Red);
-
-		mCamera->setPosition(0,0,300);
-		mCamera->lookAt(Vector3::ZERO);
-
-	}
-
-
 
 	void testRibbonTrail()
 	{
@@ -4798,9 +4298,9 @@ protected:
             true, true*/); //so we can still read it
         // Build tangent vectors, all our meshes use only 1 texture coordset 
         unsigned short src, dest;
-        if (!pMesh->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
+        if (!pMesh->suggestTangentVectorBuildParams(src, dest))
         {
-            pMesh->buildTangentVectors(VES_TANGENT, src, dest);
+            pMesh->buildTangentVectors(src, dest);
         }
 
         Entity* pEnt = mSceneMgr->createEntity("Ninja", "ninja.mesh");
@@ -4828,144 +4328,6 @@ protected:
         pPlaneEnt->setCastShadows(false);
         mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pPlaneEnt);
     }
-	void testVertexTexture()
-	{
-
-		// NOTE: DirectX only right now
-
-		Light* l = mSceneMgr->createLight("MainLight");
-		l->setType(Light::LT_POINT);
-		l->setPosition(0, 200, 0);
-
-
-		// Create single-channel floating point texture, no mips
-		TexturePtr tex = TextureManager::getSingleton().createManual(
-			"vertexTexture", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, TEX_TYPE_2D, 
-			128, 128, 0, PF_FLOAT32_R);
-		float* pData = static_cast<float*>(
-			tex->getBuffer()->lock(HardwareBuffer::HBL_DISCARD));
-		// write concentric circles into the texture
-		for (int y  = -64; y < 64; ++y)
-		{
-			for (int x = -64; x < 64; ++x)
-			{
-
-				float val = Math::Sqrt(x*x + y*y);
-				// repeat every 20 pixels
-				val = val * Math::TWO_PI / 20.0f;
-				*pData++ = Math::Sin(val);
-			}
-		}
-		tex->getBuffer()->unlock();
-
-		String progSource = 
-			"void main(\n"
-				"float4 pos : POSITION,\n"
-				"float2 uv1 : TEXCOORD0,\n"
-				"uniform float4x4 world, \n"
-				"uniform float4x4 viewProj,\n"
-				"uniform float heightscale,\n"
-				"uniform sampler2D heightmap,\n"
-				"out float4 oPos : POSITION,\n"
-				"out float2 oUv1 : TEXCOORD1,\n"
-				"out float4 col : COLOR)\n"
-			"{\n"
-				"oPos = mul(world, pos);\n"
-				"// tex2Dlod since no mip\n"
-				"float4 t = float4(0,0,0,0);\n"
-				"t.xy = uv1.xy;\n"
-				"float height = tex2Dlod(heightmap, t);\n"
-				"oPos.y = oPos.y + (height * heightscale);\n"
-				"oPos = mul(viewProj, oPos);\n"
-				"oUv1 = uv1;\n"
-				"col = float4(1,1,1,1);\n"
-			"}\n";
-		HighLevelGpuProgramPtr prog = HighLevelGpuProgramManager::getSingleton().createProgram(
-			"TestVertexTextureFetch", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, 
-			"hlsl", GPT_VERTEX_PROGRAM);
-		prog->setSource(progSource);
-		prog->setParameter("target", "vs_3_0");
-		prog->setVertexTextureFetchRequired(true);
-		prog->setParameter("entry_point", "main");
-		prog->load();
-
-
-		MaterialPtr mat = MaterialManager::getSingleton().create("TestVertexTexture", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* pass = mat->getTechnique(0)->getPass(0);
-		pass->setLightingEnabled(false);
-		pass->setVertexProgram("TestVertexTextureFetch");
-		GpuProgramParametersSharedPtr vp = pass->getVertexProgramParameters();
-		vp->setNamedAutoConstant("world", GpuProgramParameters::ACT_WORLD_MATRIX);
-		vp->setNamedAutoConstant("viewProj", GpuProgramParameters::ACT_VIEWPROJ_MATRIX);
-		vp->setNamedConstant("heightscale", 30.0f);
-		// vertex texture
-		TextureUnitState* t = pass->createTextureUnitState("vertexTexture");
-		t->setBindingType(TextureUnitState::BT_VERTEX);
-		// regular texture
-		pass->createTextureUnitState("BumpyMetal.jpg");
-
-		Plane plane;
-		plane.normal = Vector3::UNIT_Y;
-		plane.d = 100;
-		// 128 x 128 segment plane
-		MeshManager::getSingleton().createPlane("Myplane",
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane,
-			1500,1500,128,128,true,1,1,1,Vector3::UNIT_Z);
-		Entity* pPlaneEnt;
-		pPlaneEnt = mSceneMgr->createEntity( "plane", "Myplane" );
-		pPlaneEnt->setMaterialName("TestVertexTexture");
-		pPlaneEnt->setCastShadows(false);
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pPlaneEnt);
-
-
-	}
-
-	void testBackgroundLoadResourceGroup()
-	{
-		ResourceGroupManager& rgm = ResourceGroupManager::getSingleton();
-		TextureManager& tm = TextureManager::getSingleton();
-		MeshManager& mm = MeshManager::getSingleton();
-
-		testBackgroundLoadGroup = "Deferred";
-
-		rgm.createResourceGroup(testBackgroundLoadGroup);
-
-		// define a bunch of textures as deferred loading
-		rgm.declareResource("egyptrockyfull.jpg", tm.getResourceType(), testBackgroundLoadGroup);
-		rgm.declareResource("fw12b.jpg", tm.getResourceType(), testBackgroundLoadGroup);
-		rgm.declareResource("grass_1024.jpg", tm.getResourceType(), testBackgroundLoadGroup);
-		rgm.declareResource("GreenSkin.jpg", tm.getResourceType(), testBackgroundLoadGroup);
-		rgm.declareResource("MtlPlat2.jpg", tm.getResourceType(), testBackgroundLoadGroup);
-		rgm.declareResource("NMBumpsOut.png", tm.getResourceType(), testBackgroundLoadGroup);
-		rgm.declareResource("ogrehead.mesh", mm.getResourceType(), testBackgroundLoadGroup);
-		// Note: initialise resource group in main thread for this test
-		// We will be able to initialise in the background thread too eventually,
-		// once resources can be created thread safely as well as loaded
-		rgm.initialiseResourceGroup(testBackgroundLoadGroup);
-
-		// we won't load it yet, we'll wait for 5 seconds
-
-
-		// Create a basic plane to have something in the scene to look at
-		Plane plane;
-		plane.normal = Vector3::UNIT_Y;
-		plane.d = 100;
-		MeshManager::getSingleton().createPlane("Myplane",
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane,
-			1500,1500,10,10,true,1,5,5,Vector3::UNIT_Z);
-		Entity* pPlaneEnt;
-		pPlaneEnt = mSceneMgr->createEntity( "plane", "Myplane" );
-		pPlaneEnt->setMaterialName("2 - Default");
-		pPlaneEnt->setCastShadows(false);
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pPlaneEnt);
-
-
-
-
-	}
-
-
 
 	void testOverlayRelativeMode()
 	{
@@ -5021,154 +4383,10 @@ protected:
 
 	}
 
-	void testDepthBias()
-	{
-		ResourceGroupManager::getSingleton().addResourceLocation(
-			"../../../../Tests/Media", "FileSystem");
-
-		mSceneMgr->setAmbientLight(ColourValue::White);
-		
-		MaterialPtr mat = MaterialManager::getSingleton().create("mat1", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		Pass* p = mat->getTechnique(0)->getPass(0);
-		p->createTextureUnitState("BumpyMetal.jpg");
-		
-		const String meshName("cube.mesh"); 
-		Entity* entity = mSceneMgr->createEntity("base", meshName);
-		entity->setMaterialName("mat1");
-		mSceneMgr->getRootSceneNode()->attachObject(entity);
-
-
-		entity = mSceneMgr->createEntity("base2", meshName);
-		entity->setMaterialName("Examples/EnvMappedRustySteel");
-		SceneNode* n = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-		n->setPosition(-30, 0, 0);
-		n->yaw(Degree(45));
-		n->attachObject(entity);
-
-		for (size_t i = 0; i <= 6;++i)
-		{
-			String name("decal");
-			name += StringConverter::toString(i);
-
-			MaterialPtr pMat = static_cast<MaterialPtr>(MaterialManager::getSingleton().create(
-				name, ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME));
-
-			pMat->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-			pMat->getTechnique(0)->getPass(0)->setAlphaRejectSettings(CMPF_GREATER_EQUAL, 128);
-			pMat->getTechnique(0)->getPass(0)->setDepthBias(i);
-			pMat->getTechnique(0)->getPass(0)->createTextureUnitState(name + ".png");
-
-			entity = mSceneMgr->createEntity(name, meshName);
-			entity->setMaterialName(name);
-			mSceneMgr->getRootSceneNode()->attachObject(entity);
-		}
-
-
-
-		mCamera->setPosition(0,0,200);
-		mCamera->lookAt(Vector3::ZERO);
-
-
-	}
-
-
-	void testTextureShadowsIntegrated()
-	{
-		mSceneMgr->setShadowTechnique(SHADOWTYPE_TEXTURE_ADDITIVE_INTEGRATED);
-		//mSceneMgr->setShadowTechnique(SHADOWTYPE_TEXTURE_MODULATIVE);
-		MaterialManager::getSingleton().setDefaultTextureFiltering(TFO_ANISOTROPIC);
-		MaterialManager::getSingleton().setDefaultAnisotropy(5);
-
-		mSceneMgr->setShadowTextureSettings(1024, 2);
-
-		mSceneMgr->setAmbientLight(ColourValue::Black);
-		Light* l = mSceneMgr->createLight("Spot1");
-		l->setType(Light::LT_SPOTLIGHT);
-		l->setAttenuation(5000,1,0,0);
-		l->setSpotlightRange(Degree(30),Degree(45),1.0f);
-		SceneNode* lightNode1 = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-		lightNode1->attachObject(l);
-		lightNode1->setPosition(200, 250, 500);
-		lightNode1->lookAt(Vector3(0,-200,0), Node::TS_WORLD);
-		l->setDirection(Vector3::NEGATIVE_UNIT_Z);
-		l->setDiffuseColour(0.5, 0.7, 0.5);
-
-		l = mSceneMgr->createLight("Spot2");
-		l->setAttenuation(5000,1,0,0);
-		/* // spotlight */
-		l->setType(Light::LT_SPOTLIGHT);
-		l->setSpotlightRange(Degree(30),Degree(45),1.0f);
-		/**/
-		// point
-		SceneNode* lightNode2 = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-		lightNode2->attachObject(l);
-		lightNode2->setPosition(-500, 200, 500);
-		lightNode2->lookAt(Vector3(0,-200,0), Node::TS_WORLD);
-		l->setDirection(Vector3::NEGATIVE_UNIT_Z);
-		/* // directional
-		l->setType(Light::LT_DIRECTIONAL);
-		Vector3 dir(0.5, -1, 0.5);
-		dir.normalise();
-		l->setDirection(dir);
-		*/
-		l->setDiffuseColour(1, 0.2, 0.2);
-
-		// Create a basic plane to have something in the scene to look at
-		Plane plane;
-		plane.normal = Vector3::UNIT_Y;
-		plane.d = 100;
-		MeshPtr msh = MeshManager::getSingleton().createPlane("Myplane",
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane,
-			4500,4500,100,100,true,1,40,40,Vector3::UNIT_Z);
-		msh->buildTangentVectors(VES_TANGENT);
-		Entity* pPlaneEnt;
-		pPlaneEnt = mSceneMgr->createEntity( "plane", "Myplane" );
-		//pPlaneEnt->setMaterialName("Examples/OffsetMapping/Specular");
-		pPlaneEnt->setMaterialName("Examples/OffsetMapping/IntegratedShadows");
-		pPlaneEnt->setCastShadows(false);
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pPlaneEnt);
-
-		pPlaneEnt = mSceneMgr->createEntity( "plane2", "Myplane" );
-		//pPlaneEnt->setMaterialName("Examples/OffsetMapping/Specular");
-		pPlaneEnt->setMaterialName("Examples/OffsetMapping/IntegratedShadows");
-		pPlaneEnt->setCastShadows(false);
-		SceneNode* n = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-		n->roll(Degree(90));
-		n->translate(100,0,0);
-		//n->attachObject(pPlaneEnt);
-
-		pPlaneEnt = mSceneMgr->createEntity( "plane3", "Myplane" );
-		//pPlaneEnt->setMaterialName("Examples/OffsetMapping/Specular");
-		pPlaneEnt->setMaterialName("Examples/OffsetMapping/IntegratedShadows");
-		pPlaneEnt->setCastShadows(false);
-		n = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-		n->pitch(Degree(90));
-		n->yaw(Degree(-90));
-		n->translate(0,0,-100);
-		//n->attachObject(pPlaneEnt);
-
-		mCamera->setPosition(-50, 500, 1000);
-		mCamera->lookAt(Vector3(-50,-100,0));
-
-		Entity* ent = mSceneMgr->createEntity("athene", "athene.mesh");
-		ent->setMaterialName("Examples/Athene/NormalMapped");
-		mSceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(0,-20,0))->attachObject(ent);
-
-		addTextureShadowDebugOverlay(2);
-
-
-
-	}
-
-
 	// Just override the mandatory create scene method
     void createScene(void)
     {
-		Real d = std::numeric_limits<Real>::infinity();
-		d = std::max(1e10f, d);
-		d = std::min(1e5f, d);
-		/*
+
 		AnyNumeric anyInt1(43);
 		AnyNumeric anyInt2(5);
 		AnyNumeric anyInt3 = anyInt1 + anyInt2;
@@ -5183,15 +4401,12 @@ protected:
 		const StringVector& l = mCamera->getAnimableValueNames();
 
 		std::cout << anyInt3;
-
 		//Any anyString("test");
-		*/
 
         //testMatrices();
         //testBsp();
         //testAlpha();
         //testAnimation();
-		//testAnimationBlend();
 
         //testGpuPrograms();
         //testMultiViewports();
@@ -5206,14 +4421,12 @@ protected:
         //testSkeletalAnimation();
         //testOrtho();
         //testClearScene();
-		//testInfiniteAAB();
 
         //testProjection();
         //testStencilShadows(SHADOWTYPE_STENCIL_ADDITIVE, true, true);
         //testStencilShadows(SHADOWTYPE_STENCIL_MODULATIVE, false, true);
         //testTextureShadows(SHADOWTYPE_TEXTURE_ADDITIVE);
 		//testTextureShadows(SHADOWTYPE_TEXTURE_MODULATIVE);
-		testTextureShadowsIntegrated();
 		//testTextureShadowsCustomCasterMat(SHADOWTYPE_TEXTURE_ADDITIVE);
 		//testTextureShadowsCustomReceiverMat(SHADOWTYPE_TEXTURE_MODULATIVE);
 		//testCompositorTextureShadows(SHADOWTYPE_TEXTURE_MODULATIVE);
@@ -5223,11 +4436,9 @@ protected:
 		//testBlendDiffuseColour();
 
         //testRaySceneQuery();
-		//testMaterialSerializer();
         //testIntersectionSceneQuery();
 
         //test2Spotlights();
-		//testDepthBias();
 
 		//testManualLOD();
 		//testGeneratedLOD();
@@ -5235,7 +4446,7 @@ protected:
 		//testSimpleMesh();
 		//test2Windows();
 		//testStaticGeometry();
-		//testBillboardTextureCoords();
+		testBillboardTextureCoords();
 		//testBillboardOrigins();
 		//testReloadResources();
 		//testTransparencyMipMaps();
@@ -5247,10 +4458,6 @@ protected:
 		//testManualBlend();
 		//testManualObjectNonIndexed();
 		//testManualObjectIndexed();
-		//testManualObjectNonIndexedUpdateSmaller();
-		//testManualObjectNonIndexedUpdateLarger();
-		//testManualObjectIndexedUpdateSmaller();
-		//testManualObjectIndexedUpdateLarger();
 		//testCustomProjectionMatrix();
 		//testPointSprites();
 		//testFallbackResourceGroup();
@@ -5270,19 +4477,6 @@ protected:
         //testBuildTangentOnAnimatedMesh();
 		//testOverlayRelativeMode();
 
-		//testCubeDDS();
-		//testDxt1();
-		//testDxt1Alpha();
-		//testDxt3();
-		//testDxt5();
-		//testFloat64DDS();
-		//testFloat128DDS();
-		//testFloat16DDS();
-		//testFloat32DDS();
-
-		//testVertexTexture();
-		//testGLSLTangent();
-		//testBackgroundLoadResourceGroup();
 		
     }
     // Create new frame listener
@@ -5291,6 +4485,7 @@ protected:
         mFrameListener= new PlayPenListener(mSceneMgr, mWindow, mCamera);
         mFrameListener->showDebugOverlay(true);
 		mRoot->addFrameListener(mFrameListener);
+		//FrameListener* fl = new UberSimpleFrameListener(mWindow, mCamera);
         //mRoot->addFrameListener(fl);
 
     }
@@ -5314,36 +4509,31 @@ public:
 bool gReload;
 
 // Listener class for frame updates
-class MemoryTestFrameListener : public FrameListener
+class MemoryTestFrameListener : public FrameListener, public KeyListener
 {
 protected:
 	Real time;
-	Keyboard* mKeyboard;
+	EventProcessor* mEventProcessor;
+	InputReader* mInputDevice;
 public:
 	MemoryTestFrameListener(RenderWindow * win)
 	{
 		time = 0;
-		ParamList pl;	
-		size_t windowHnd = 0;
-		std::ostringstream windowHndStr;
-
-		win->getCustomAttribute("WINDOW", &windowHnd);
-		windowHndStr << windowHnd;
-		pl.insert(std::make_pair(std::string("WINDOW"), windowHndStr.str()));
-
-		InputManager &im = *InputManager::createInputSystem( pl );
-
-		//Create all devices (We only catch joystick exceptions here, as, most people have Key/Mouse)
-		mKeyboard = static_cast<Keyboard*>(im.createInputObject( OISKeyboard, false ));
+		mEventProcessor = new EventProcessor();
+		mEventProcessor->initialise(win);
+		mEventProcessor->startProcessingEvents();
+		mEventProcessor->addKeyListener(this);
+		mInputDevice = mEventProcessor->getInputReader();
 	}
 	virtual ~MemoryTestFrameListener()
 	{
 		time = 0;            
+		delete mEventProcessor;
 	}
 
 	bool frameStarted(const FrameEvent& evt)
 	{
-		if( mKeyboard->isKeyDown( KC_ESCAPE) )
+		if( mInputDevice->isKeyDown( KC_ESCAPE) )
 		{
 			gReload = false;
 			return false;
@@ -5509,7 +4699,7 @@ int main(int argc, char **argv)
 
     try {
         app.go();
-	} catch( Ogre::Exception& e ) {
+    } catch( Exception& e ) {
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
         MessageBox( NULL, e.getFullDescription().c_str(), "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 #else

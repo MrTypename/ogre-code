@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 // NOTE THAT THIS FILE IS BASED ON MATERIAL FROM:
@@ -98,38 +94,10 @@ namespace Ogre {
 		/// Construct a quaternion from 4 manual w/x/y/z values
 		inline Quaternion(Real* valptr)
 		{
-			memcpy(&w, valptr, sizeof(Real)*4);
+			memcpy(val, valptr, sizeof(Real)*4);
 		}
 
-		/// Array accessor operator
-		inline Real operator [] ( const size_t i ) const
-		{
-			assert( i < 4 );
-
-			return *(&w+i);
-		}
-
-		/// Array accessor operator
-		inline Real& operator [] ( const size_t i )
-		{
-			assert( i < 4 );
-
-			return *(&w+i);
-		}
-
-		/// Pointer accessor for direct copying
-		inline Real* ptr()
-		{
-			return &w;
-		}
-
-		/// Pointer accessor for direct copying
-		inline const Real* ptr() const
-		{
-			return &w;
-		}
-
-		void FromRotationMatrix (const Matrix3& kRot);
+        void FromRotationMatrix (const Matrix3& kRot);
         void ToRotationMatrix (Matrix3& kRot) const;
         void FromAngleAxis (const Radian& rfAngle, const Vector3& rkAxis);
         void ToAngleAxis (Radian& rfAngle, Vector3& rkAxis) const;
@@ -234,7 +202,13 @@ namespace Ogre {
         static const Quaternion ZERO;
         static const Quaternion IDENTITY;
 
-		Real w, x, y, z;
+        union
+		{
+			struct {
+				Real w, x, y, z;
+			};
+			Real val[4];
+		};
 
         /** Function for writing to a stream. Outputs "Quaternion(w, x, y, z)" with w,x,y,z
             being the member values of the quaternion.

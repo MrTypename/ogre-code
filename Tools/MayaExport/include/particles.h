@@ -2,15 +2,6 @@
  Thanks to Bandures for the particle exporter
  ****************************************************************/
 
-/*********************************************************************************
-*                                                                                *
-*   This program is free software; you can redistribute it and/or modify         *
-*   it under the terms of the GNU Lesser General Public License as published by  *
-*   the Free Software Foundation; either version 2 of the License, or            *
-*   (at your option) any later version.                                          *
-*                                                                                *
-**********************************************************************************/
-
 #ifndef _PARTICLES_H
 #define _PARTICLES_H
 
@@ -90,7 +81,7 @@ struct SParticleData
 	SParticleData(): nFrame( 0 ), nSprite( 0 ), pos( 0, 0, 0 ), color( 1, 1, 1, 1 ), scale( 1, 1 ), fRotation( 0 ) {}
 };
 typedef std::vector<SParticleData> CParticlesTrack;
-typedef stdext::hash_map<int, CParticlesTrack> CParticlesData;
+typedef std::hash_map<int, CParticlesTrack> CParticlesData;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class T>
 inline void Interpolate( const T &v1, const T &v2, float fCoeff, T *pRes )

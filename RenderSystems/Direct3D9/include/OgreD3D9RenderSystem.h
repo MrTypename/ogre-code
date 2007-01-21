@@ -2,9 +2,9 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __D3D9RENDERSYSTEM_H__
@@ -93,8 +89,6 @@ namespace Ogre
             const Frustum *frustum;
 			/// texture 
 			IDirect3DBaseTexture9 *pTex;
-			/// vertex texture 
-			IDirect3DBaseTexture9 *pVertexTex;
 		} mTexStageDesc[OGRE_MAX_TEXTURE_LAYERS];
 
 		// Array of up to 8 lights, indexed as per API
@@ -147,7 +141,6 @@ namespace Ogre
 
         void convertVertexShaderCaps(void);
         void convertPixelShaderCaps(void);
-		bool checkVertexTextureFormats(void);
 
         unsigned short mCurrentLights;
         /// Saved last view matrix
@@ -237,16 +230,13 @@ namespace Ogre
 		void _setPointSpritesEnabled(bool enabled);
 		void _setPointParameters(Real size, bool attenuationEnabled, 
 			Real constant, Real linear, Real quadratic, Real minSize, Real maxSize);
-		void _setTexture(size_t unit, bool enabled, const TexturePtr &texPtr);
-		void _setVertexTexture(size_t unit, const TexturePtr& tex);
-		void _disableTextureUnit(size_t texUnit);
-		void _setTextureCoordSet( size_t unit, size_t index );
+		void _setTexture( size_t unit, bool enabled, const String &texname );
+        void _setTextureCoordSet( size_t unit, size_t index );
         void _setTextureCoordCalculation(size_t unit, TexCoordCalcMethod m, 
             const Frustum* frustum = 0);
 		void _setTextureBlendMode( size_t unit, const LayerBlendModeEx& bm );
         void _setTextureAddressingMode(size_t stage, const TextureUnitState::UVWAddressingMode& uvw);
         void _setTextureBorderColour(size_t stage, const ColourValue& colour);
-		void _setTextureMipmapBias(size_t unit, float bias);
 		void _setTextureMatrix( size_t unit, const Matrix4 &xform );
 		void _setSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor );
 		void _setAlphaRejectSettings( CompareFunction func, unsigned char value );
@@ -259,7 +249,7 @@ namespace Ogre
 		void _setColourBufferWriteEnabled(bool red, bool green, bool blue, bool alpha);
 		void _setDepthBufferWriteEnabled(bool enabled = true);
 		void _setDepthBufferFunction( CompareFunction func = CMPF_LESS_EQUAL );
-		void _setDepthBias(float constantBias, float slopeScaleBias);
+		void _setDepthBias(ushort bias);
 		void _setFog( FogMode mode = FOG_NONE, const ColourValue& colour = ColourValue::White, Real expDensity = 1.0, Real linearStart = 0.0, Real linearEnd = 1.0 );
 		void _convertProjectionMatrix(const Matrix4& matrix,
             Matrix4& dest, bool forGpuProgram = false);
@@ -309,10 +299,6 @@ namespace Ogre
         Real getVerticalTexelOffset(void);
         Real getMinimumDepthInputValue(void);
         Real getMaximumDepthInputValue(void);
-		void registerThread();
-		void unregisterThread();
-		void preExtraThreadsStarted();
-		void postExtraThreadsStarted();
 
 		/** D3D specific method to restore a lost device. */
 		void restoreLostDevice(void);
@@ -335,7 +321,6 @@ namespace Ogre
 		/** Clear all cached depth stencil surfaces
 		*/
 		void _cleanupDepthStencils();
-
 	};
 }
 #endif

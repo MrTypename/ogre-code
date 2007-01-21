@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -25,31 +25,35 @@ LGPL like the rest of the engine.
 #include <CEGUI/CEGUISchemeManager.h>
 #include <CEGUI/CEGUIWindowManager.h>
 #include <CEGUI/CEGUIWindow.h>
-#include <CEGUI/CEGUIPropertyHelper.h>
 #include <CEGUI/elements/CEGUICombobox.h>
 #include <CEGUI/elements/CEGUIListbox.h>
 #include <CEGUI/elements/CEGUIListboxTextItem.h>
 #include <CEGUI/elements/CEGUIPushButton.h>
 #include <CEGUI/elements/CEGUIScrollbar.h>
+#include <CEGUI/elements/CEGUIStaticImage.h>
 #include "OgreCEGUIRenderer.h"
 #include "OgreCEGUIResourceProvider.h"
 
 #include "ExampleApplication.h"
 
-//----------------------------------------------------------------//
-CEGUI::MouseButton convertOISMouseButtonToCegui(int buttonID)
+CEGUI::MouseButton convertOgreButtonToCegui(int buttonID)
 {
     switch (buttonID)
     {
-	case 0: return CEGUI::LeftButton;
-	case 1: return CEGUI::RightButton;
-	case 2:	return CEGUI::MiddleButton;
-	case 3: return CEGUI::X1Button;
-	default: return CEGUI::LeftButton;
+    case MouseEvent::BUTTON0_MASK:
+        return CEGUI::LeftButton;
+    case MouseEvent::BUTTON1_MASK:
+        return CEGUI::RightButton;
+    case MouseEvent::BUTTON2_MASK:
+        return CEGUI::MiddleButton;
+    case MouseEvent::BUTTON3_MASK:
+        return CEGUI::X1Button;
+    default:
+        return CEGUI::LeftButton;
     }
 }
 
-class GuiFrameListener : public ExampleFrameListener, public OIS::KeyListener, public OIS::MouseListener
+class GuiFrameListener : public ExampleFrameListener, public MouseMotionListener, public MouseListener
 {
 private:
     CEGUI::Renderer* mGUIRenderer;
@@ -58,12 +62,13 @@ private:
 public:
     // NB using buffered input, this is the only change
     GuiFrameListener(RenderWindow* win, Camera* cam, CEGUI::Renderer* renderer)
-        : ExampleFrameListener(win, cam, true, true, true), 
+        : ExampleFrameListener(win, cam, true, true), 
           mGUIRenderer(renderer),
           mShutdownRequested(false)
     {
-		mMouse->setEventCallback(this);
-		mKeyboard->setEventCallback(this);
+        mEventProcessor->addMouseMotionListener(this);
+        mEventProcessor->addMouseListener(this);
+		mEventProcessor->addKeyListener(this);
     }
 
     /// Tell the frame listener to exit at the end of the next frame
@@ -79,42 +84,61 @@ public:
         else
             return ExampleFrameListener::frameEnded(evt);
     }
-	//----------------------------------------------------------------//
-	bool mouseMoved( const OIS::MouseEvent &arg )
-	{
-		CEGUI::System::getSingleton().injectMouseMove( arg.state.X.rel, arg.state.Y.rel );
-		return true;
-	}
 
-	//----------------------------------------------------------------//
-	bool mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id )
-	{
-		CEGUI::System::getSingleton().injectMouseButtonDown(convertOISMouseButtonToCegui(id));
-		return true;
-	}
+    void mouseMoved (MouseEvent *e)
+    {
+        CEGUI::System::getSingleton().injectMouseMove(
+                e->getRelX() * mGUIRenderer->getWidth(), 
+                e->getRelY() * mGUIRenderer->getHeight());
+        e->consume();
+    }
 
-	//----------------------------------------------------------------//
-	bool mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButtonID id )
-	{
-		CEGUI::System::getSingleton().injectMouseButtonUp(convertOISMouseButtonToCegui(id));
-		return true;
-	}
+    void mouseDragged (MouseEvent *e) 
+    { 
+        mouseMoved(e);
+    }
 
-	//----------------------------------------------------------------//
-	bool keyPressed( const OIS::KeyEvent &arg )
-	{
-		if( arg.key == OIS::KC_ESCAPE )
-			mShutdownRequested = true;
-		CEGUI::System::getSingleton().injectKeyDown( arg.key );
-		CEGUI::System::getSingleton().injectChar( arg.text );
-		return true;
-	}
+    void mousePressed (MouseEvent *e)
+    {
+        CEGUI::System::getSingleton().injectMouseButtonDown(
+          convertOgreButtonToCegui(e->getButtonID()));
+        e->consume();
+    }
 
-	//----------------------------------------------------------------//
-	bool keyReleased( const OIS::KeyEvent &arg )
+    void mouseReleased (MouseEvent *e)
+    {
+        CEGUI::System::getSingleton().injectMouseButtonUp(
+          convertOgreButtonToCegui(e->getButtonID()));
+        e->consume();
+    }
+
+	void mouseClicked(MouseEvent* e) {}
+	void mouseEntered(MouseEvent* e) {}
+	void mouseExited(MouseEvent* e) {}
+
+    void keyPressed(KeyEvent* e)
+    {
+        if(e->getKey() == KC_ESCAPE)
+        {
+            mShutdownRequested = true;
+            e->consume();
+            return;
+        }
+
+        CEGUI::System::getSingleton().injectKeyDown(e->getKey());
+		CEGUI::System::getSingleton().injectChar(e->getKeyChar());
+        e->consume();
+    }
+
+	void keyReleased(KeyEvent* e)
 	{
-		CEGUI::System::getSingleton().injectKeyUp( arg.key );
-		return true;
+		CEGUI::System::getSingleton().injectKeyUp(e->getKey());
+		e->consume();
+	}
+	void keyClicked(KeyEvent* e) 
+	{
+		// Do nothing
+		e->consume();
 	}
 };
 
@@ -127,7 +151,7 @@ private:
 	CEGUI::Scrollbar* mRed;
 	CEGUI::Scrollbar* mGreen;
 	CEGUI::Scrollbar* mBlue;
-	CEGUI::Window* mPreview; // StaticImage
+	CEGUI::StaticImage* mPreview;
 	CEGUI::Window* mTip;
 	CEGUI::Listbox* mList;
 	CEGUI::Window* mEditBox;
@@ -325,7 +349,8 @@ protected:
 			wmgr.getWindow((CEGUI::utf8*)"Demo8/Window1/Controls/Green"));
 		mBlue = static_cast<CEGUI::Scrollbar*>(
 			wmgr.getWindow((CEGUI::utf8*)"Demo8/Window1/Controls/Blue"));
-		mPreview = wmgr.getWindow((CEGUI::utf8*)"Demo8/Window1/Controls/ColourSample");
+		mPreview = static_cast<CEGUI::StaticImage*>(
+			wmgr.getWindow((CEGUI::utf8*)"Demo8/Window1/Controls/ColourSample"));
 		mList = static_cast<CEGUI::Listbox*>(
 			wmgr.getWindow((CEGUI::utf8*)"Demo8/Window1/Listbox"));
 		mEditBox = 
@@ -363,10 +388,9 @@ protected:
         CEGUI::Imageset* rttImageSet = 
             CEGUI::ImagesetManager::getSingleton().getImageset(
                 (CEGUI::utf8*)"RttImageset");
-        CEGUI::Window* si = CEGUI::WindowManager::getSingleton().createWindow((CEGUI::utf8*)"TaharezLook/StaticImage", (CEGUI::utf8*)guiObjectName.c_str());
-        si->setSize(CEGUI::UVector2( CEGUI::UDim(0.5f, 0), CEGUI::UDim(0.4f, 0)));
-        si->setProperty("Image", CEGUI::PropertyHelper::imageToString(
-            &rttImageSet->getImage((CEGUI::utf8*)"RttImage")));
+        CEGUI::StaticImage* si = (CEGUI::StaticImage*)CEGUI::WindowManager::getSingleton().createWindow((CEGUI::utf8*)"TaharezLook/StaticImage", (CEGUI::utf8*)guiObjectName.c_str());
+        si->setSize(CEGUI::Size(0.5f, 0.4f));
+        si->setImage(&rttImageSet->getImage((CEGUI::utf8*)"RttImage"));
 
         rttCounter++;
 
@@ -382,10 +406,9 @@ protected:
             CEGUI::ImagesetManager::getSingleton().getImageset(
                 (CEGUI::utf8*)"TaharezLook");
 
-        CEGUI::Window* si = CEGUI::WindowManager::getSingleton().createWindow((CEGUI::utf8*)"TaharezLook/StaticImage", (CEGUI::utf8*)guiObjectName.c_str());
-        si->setSize(CEGUI::UVector2( CEGUI::UDim(0.2f, 0), CEGUI::UDim(0.2f, 0)));
-        si->setProperty("Image", CEGUI::PropertyHelper::imageToString(
-            &imageSet->getImage((CEGUI::utf8*)"ClientBrush")));
+        CEGUI::StaticImage* si = (CEGUI::StaticImage*)CEGUI::WindowManager::getSingleton().createWindow((CEGUI::utf8*)"TaharezLook/StaticImage", (CEGUI::utf8*)guiObjectName.c_str());
+        si->setSize(CEGUI::Size(0.2f, 0.2f));
+        si->setImage(&imageSet->getImage((CEGUI::utf8*)"ClientBrush"));
 
         siCounter++;
 
@@ -451,26 +474,26 @@ protected:
         case 0:
             guiObjectName = "NewWindow" + StringConverter::toString(windowNumber);
             window = CEGUI::WindowManager::getSingleton().createWindow((CEGUI::utf8*)"TaharezLook/FrameWindow", (CEGUI::utf8*)guiObjectName.c_str());
-            window->setSize(CEGUI::UVector2(CEGUI::UDim(0.3f,0), CEGUI::UDim(0.3f,0)));
+            window->setSize(CEGUI::Size(0.3f, 0.3f));
             window->setText((CEGUI::utf8*)"New Window");
             windowNumber++;
             break;
         case 1:
             guiObjectName = "NewHorizScroll" + StringConverter::toString(horizScrollNumber);
             window = CEGUI::WindowManager::getSingleton().createWindow((CEGUI::utf8*)"TaharezLook/HorizontalScrollbar", (CEGUI::utf8*)guiObjectName.c_str());
-            window->setSize(CEGUI::UVector2(CEGUI::UDim(0.75f,0), CEGUI::UDim(0.03f,0)));
+            window->setSize(CEGUI::Size(0.75f, 0.03f));
             horizScrollNumber++;
             break;
         case 2:
             guiObjectName = "NewVertScroll" + StringConverter::toString(vertScrollNumber);
             window = CEGUI::WindowManager::getSingleton().createWindow((CEGUI::utf8*)"TaharezLook/VerticalScrollbar", (CEGUI::utf8*)guiObjectName.c_str());
-            window->setSize(CEGUI::UVector2(CEGUI::UDim(0.03f,0), CEGUI::UDim(0.75f,0)));
+            window->setSize(CEGUI::Size(0.03f, 0.75f));
             vertScrollNumber++;
             break;
         case 3:
             guiObjectName = "NewStaticText" + StringConverter::toString(textScrollNumber);
             window = CEGUI::WindowManager::getSingleton().createWindow((CEGUI::utf8*)"TaharezLook/StaticText", (CEGUI::utf8*)guiObjectName.c_str());
-            window->setSize(CEGUI::UVector2(CEGUI::UDim(0.25f,0), CEGUI::UDim(0.1f,0)));
+            window->setSize(CEGUI::Size(0.25f, 0.1f));
             window->setText((CEGUI::utf8*)"Example static text");
             textScrollNumber++;
             break;
@@ -483,18 +506,17 @@ protected:
         };
 
         editorWindow->addChildWindow(window);
-        window->setPosition(CEGUI::UVector2(CEGUI::UDim(posX, 0), CEGUI::UDim(posY, 0)));
+        window->setPosition(CEGUI::Point(posX, posY));
 
         return true;
     }
 
 	bool handleColourChanged(const CEGUI::EventArgs& e)
 	{
-        mPreview->setProperty("ImageColours",
-            CEGUI::PropertyHelper::colourToString(CEGUI::colour(
-                mRed->getScrollPosition() / 255.0f,
-                mGreen->getScrollPosition() / 255.0f,
-                mBlue->getScrollPosition() / 255.0f)));
+		mPreview->setImageColours(CEGUI::colour(
+			mRed->getScrollPosition() / 255.0f,
+			mGreen->getScrollPosition() / 255.0f,
+			mBlue->getScrollPosition() / 255.0f));
 
 		return true;
 
@@ -506,8 +528,7 @@ protected:
 			new CEGUI::ListboxTextItem (mEditBox->getText());
 		listboxitem->setSelectionBrushImage("TaharezLook", "ListboxSelectionBrush");
 		listboxitem->setSelected(mList->getItemCount() == 0);
-		listboxitem->setSelectionColours(
-            CEGUI::PropertyHelper::stringToColourRect(mPreview->getProperty("ImageColours")));
+		listboxitem->setSelectionColours(mPreview->getImageColours());
 		mList->addItem(listboxitem);
 		return true;
 	}

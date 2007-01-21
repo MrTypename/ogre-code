@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 /*
@@ -123,9 +119,6 @@ public:
     {}
     bool frameStarted(const FrameEvent &evt)
     {
-	if( ExampleFrameListener::frameStarted(evt) == false )
-		return false;
-
         animTime += evt.timeSinceLastFrame;
         while (animTime > FISH_PATH_LENGTH)
             animTime -= FISH_PATH_LENGTH;
@@ -159,7 +152,9 @@ public:
 
         }
 
-        return true;
+
+
+        return ExampleFrameListener::frameStarted(evt);
     }
 
 };
@@ -190,7 +185,7 @@ protected:
 		const RenderSystemCapabilities* caps = Root::getSingleton().getRenderSystem()->getCapabilities();
         if (!caps->hasCapability(RSC_VERTEX_PROGRAM) || !(caps->hasCapability(RSC_FRAGMENT_PROGRAM)))
         {
-            OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support vertex and fragment programs, so cannot "
+            OGRE_EXCEPT(1, "Your card does not support vertex and fragment programs, so cannot "
                 "run this demo. Sorry!", 
                 "Fresnel::createScene");
         }
@@ -201,7 +196,7 @@ protected:
 				!GpuProgramManager::getSingleton().isSyntaxSupported("ps_1_4")
 				)
             {
-                OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support advanced fragment programs, "
+                OGRE_EXCEPT(1, "Your card does not support advanced fragment programs, "
                     "so cannot run this demo. Sorry!", 
                 "Fresnel::createScene");
             }

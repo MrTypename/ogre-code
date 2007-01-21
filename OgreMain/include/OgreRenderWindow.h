@@ -4,7 +4,7 @@ This source file is a part of OGRE
 
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This library is free software; you can redistribute it and/or modify it
@@ -94,11 +94,11 @@ namespace Ogre
         */
         virtual void resize(unsigned int width, unsigned int height) = 0;
 
-	/** Notify that the window has been resized
-	@remarks
-		You don't need to call this unless you created the window externally.
-	*/
-	virtual void windowMovedOrResized() {}
+		/** Notify that the window has been resized externally.
+		@remarks
+			You don't need to call this unless you created the window externally.
+		*/
+		virtual void windowMovedOrResized() {}
 
         /** Reposition the window.
         */
@@ -107,10 +107,6 @@ namespace Ogre
         /** Indicates whether the window is visible (not minimized or obscured)
         */
         virtual bool isVisible(void) const { return true; }
-
-        /** Set the visibility state
-        */
-        virtual void setVisible(bool visible) {}
 
         /** Overridden from RenderTarget, flags invisible windows as inactive
         */

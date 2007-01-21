@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,31 +20,45 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
-#ifndef __COMMON_OGRE_ERRORDIALOG_H__
-#define __COMMON_OGRE_ERRORDIALOG_H__
+#ifndef __ERRORDIALOG_H__
+#define __ERRORDIALOG_H__
 
 #include "OgrePrerequisites.h"
-#include "OgrePlatform.h"
 
-// Bring in the specific platform's header file
-#if defined OGRE_GUI_WIN32
-# include "WIN32/OgreErrorDialogImp.h"
-#elif defined OGRE_GUI_gtk
-# include "gtk/OgreErrorDialogImp.h"
-#elif defined OGRE_GUI_GLX
-# include "GLX/OgreErrorDialogImp.h"
-#elif OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-# include "WIN32/OgreErrorDialogImp.h"
-#elif OGRE_PLATFORM == OGRE_PLATFORM_LINUX
-# include "GLX/OgreErrorDialogImp.h"
-#elif OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-# include "OSX/OgreErrorDialogImp.h"
-#endif
+#include "OgreString.h"
+
+namespace Ogre {
+
+    /** Class for displaying the error dialog if Ogre fails badly.
+    */
+    class _OgreExport ErrorDialog
+    {
+    public:
+    	virtual ~ErrorDialog();
+    	
+        /** Displays the error dialog.
+            @param
+                errorMessage The error message which has caused the failure.
+            @param
+                logName Optional name of the log to display in the detail
+                pane.
+        */
+        virtual void display(const String& errorMessage, String logName = "") = 0;
+
+    };
+
+    /** Defines the interface a platform-specific library must implement.
+        @remarks
+            Any library (.dll, .so) wishing to implement a platform-specific
+            version of this dialog must export the symbol 'createErrorDialog'
+            with the signature void
+            createPlatformErrorDialog(ErrorDialog** ppDlg)
+    */
+    typedef void (*DLL_CREATEERRORDIALOG)(ErrorDialog** ppDlg);
+}
+
+
 
 #endif

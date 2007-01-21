@@ -1,10 +1,10 @@
 /*
 -----------------------------------------------------------------------------
 This source file is part of OGRE
-(Object-oriented Graphics Rendering Engine)
+    (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __AxisAlignedBox_H_
@@ -37,537 +33,312 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** A 3D box aligned with the x/y/z axes.
-	@remarks
-	This class represents a simple box which is aligned with the
-	axes. Internally it only stores 2 points as the extremeties of
-	the box, one which is the minima of all 3 axes, and the other
-	which is the maxima of all 3 axes. This class is typically used
-	for an axis-aligned bounding box (AABB) for collision and
-	visibility determination.
-	*/
-	class _OgreExport AxisAlignedBox
-	{
-	protected:
-		enum Extent
-		{
-			EXTENT_NULL,
-			EXTENT_FINITE,
-			EXTENT_INFINITE
-		};
+    /** A 3D box aligned with the x/y/z axes.
+	    @remarks
+		    This class represents a simple box which is aligned with the
+		    axes. Internally it only stores 2 points as the extremeties of
+		    the box, one which is the minima of all 3 axes, and the other
+		    which is the maxima of all 3 axes. This class is typically used
+		    for an axis-aligned bounding box (AABB) for collision and
+		    visibility determination.
+    */
+    class _OgreExport AxisAlignedBox
+    {
+    protected:
+	    Vector3 mMinimum;
+	    Vector3 mMaximum;
+	    bool mNull;
 
-		Vector3 mMinimum;
-		Vector3 mMaximum;
-		Extent mExtent;
-		mutable Vector3* mpCorners;
+	    Vector3 mCorners[8];
 
-	public:
-		/*
-		1-----2
-		/|    /|
-		/ |   / |
-		5-----4  |
-		|  0--|--3
-		| /   | /
-		|/    |/
-		6-----7
-		*/
-		typedef enum {
-			FAR_LEFT_BOTTOM = 0,
-			FAR_LEFT_TOP = 1,
-			FAR_RIGHT_TOP = 2,
-			FAR_RIGHT_BOTTOM = 3,
-			NEAR_RIGHT_BOTTOM = 7,
-			NEAR_LEFT_BOTTOM = 6,
-			NEAR_LEFT_TOP = 5,
-			NEAR_RIGHT_TOP = 4
-		} CornerEnum;
-		inline AxisAlignedBox() : mpCorners(0)
-		{
-			// Default to a null box 
-			setMinimum( -0.5, -0.5, -0.5 );
-			setMaximum( 0.5, 0.5, 0.5 );
-			mExtent = EXTENT_NULL;
-		}
+	    /** Internal method for updating corner points.
+	    */
+	    void updateCorners(void)
+	    {
+		    // The order of these items is, using right-handed co-ordinates:
+		    // Minimum Z face, starting with Min(all), then anticlockwise
+		    //   around face (looking onto the face)
+		    // Maximum Z face, starting with Max(all), then anticlockwise
+		    //   around face (looking onto the face)
+		    mCorners[0] = mMinimum;
+		    mCorners[1].x = mMinimum.x; mCorners[1].y = mMaximum.y; mCorners[1].z = mMinimum.z;
+		    mCorners[2].x = mMaximum.x; mCorners[2].y = mMaximum.y; mCorners[2].z = mMinimum.z;
+		    mCorners[3].x = mMaximum.x; mCorners[3].y = mMinimum.y; mCorners[3].z = mMinimum.z;            
 
-		inline AxisAlignedBox(const AxisAlignedBox & rkBox) : mpCorners(0)
-		{
-			if (rkBox.isNull())
-				setNull();
-			else if (rkBox.isInfinite())
-				setInfinite();
-			else
-				setExtents( rkBox.mMinimum, rkBox.mMaximum );
-		}
+		    mCorners[4] = mMaximum;
+		    mCorners[5].x = mMinimum.x; mCorners[5].y = mMaximum.y; mCorners[5].z = mMaximum.z;
+		    mCorners[6].x = mMinimum.x; mCorners[6].y = mMinimum.y; mCorners[6].z = mMaximum.z;
+		    mCorners[7].x = mMaximum.x; mCorners[7].y = mMinimum.y; mCorners[7].z = mMaximum.z;            
+	    }        
 
-		inline AxisAlignedBox( const Vector3& min, const Vector3& max ) : mpCorners(0)
-		{
-			setExtents( min, max );
-		}
+    public:
+	    inline AxisAlignedBox()
+	    {
+		    // Default to null box
+		    setMinimum( -0.5, -0.5, -0.5 );
+		    setMaximum( 0.5, 0.5, 0.5 );
+		    mNull = true;
+	    }
 
-		inline AxisAlignedBox(
-			Real mx, Real my, Real mz,
-			Real Mx, Real My, Real Mz ) : mpCorners(0)
-		{
-			setExtents( mx, my, mz, Mx, My, Mz );
-		}
+	    inline AxisAlignedBox( const Vector3& min, const Vector3& max )
+	    {
+		    setExtents( min, max );
+	    }
 
-		AxisAlignedBox& operator=(const AxisAlignedBox& rhs)
-		{
-			// Specifically override to avoid copying mpCorners
-			if (rhs.isNull())
-				setNull();
-			else if (rhs.isInfinite())
-				setInfinite();
-			else
-				setExtents(rhs.mMinimum, rhs.mMaximum);
+	    inline AxisAlignedBox(
+		    Real mx, Real my, Real mz,
+		    Real Mx, Real My, Real Mz )
+	    {
+		    setExtents( mx, my, mz, Mx, My, Mz );
+	    }
 
-			return *this;
-		}
+	    /** Gets the minimum corner of the box.
+	    */
+	    inline const Vector3& getMinimum(void) const
+	    { 
+		    return mMinimum; 
+	    }
 
-		~AxisAlignedBox()
-		{
-			if (mpCorners)
-				delete [] mpCorners;
-		}
+	    /** Gets the maximum corner of the box.
+	    */
+	    inline const Vector3& getMaximum(void) const
+	    { 
+		    return mMaximum;
+	    }
 
+	    /** Sets the minimum corner of the box.
+	    */
+	    inline void setMinimum( const Vector3& vec )
+	    {
+		    mNull = false;
+		    mMinimum = vec;
+		    updateCorners();
+	    }
 
-		/** Gets the minimum corner of the box.
-		*/
-		inline const Vector3& getMinimum(void) const
-		{ 
-			return mMinimum; 
-		}
+	    inline void setMinimum( Real x, Real y, Real z )
+	    {
+		    mNull = false;
+		    mMinimum.x = x;
+		    mMinimum.y = y;
+		    mMinimum.z = z;
+		    updateCorners();
+	    }
 
-		/** Gets a modifiable version of the minimum
-		corner of the box.
-		*/
-		inline Vector3& getMinimum(void)
-		{ 
-			return mMinimum; 
-		}
+	    /** Sets the maximum corner of the box.
+	    */
+	    inline void setMaximum( const Vector3& vec )
+	    {
+		    mNull = false;
+		    mMaximum = vec;
+		    updateCorners();
+	    }
 
-		/** Gets the maximum corner of the box.
-		*/
-		inline const Vector3& getMaximum(void) const
-		{ 
-			return mMaximum;
-		}
+	    inline void setMaximum( Real x, Real y, Real z )
+	    {
+		    mNull = false;
+		    mMaximum.x = x;
+		    mMaximum.y = y;
+		    mMaximum.z = z;
+		    updateCorners();
+	    }
 
-		/** Gets a modifiable version of the maximum
-		corner of the box.
-		*/
-		inline Vector3& getMaximum(void)
-		{ 
-			return mMaximum;
-		}
+	    /** Sets both minimum and maximum extents at once.
+	    */
+	    inline void setExtents( const Vector3& min, const Vector3& max )
+	    {
+		    mNull = false;
+		    mMinimum = min;
+		    mMaximum = max;
+		    updateCorners();
+	    }
 
+	    inline void setExtents(
+		    Real mx, Real my, Real mz,
+		    Real Mx, Real My, Real Mz )
+	    {
+		    mNull = false;
 
-		/** Sets the minimum corner of the box.
-		*/
-		inline void setMinimum( const Vector3& vec )
-		{
-			mExtent = EXTENT_FINITE;
-			mMinimum = vec;
-		}
+		    mMinimum.x = mx;
+		    mMinimum.y = my;
+		    mMinimum.z = mz;
 
-		inline void setMinimum( Real x, Real y, Real z )
-		{
-			mExtent = EXTENT_FINITE;
-			mMinimum.x = x;
-			mMinimum.y = y;
-			mMinimum.z = z;
-		}
+		    mMaximum.x = Mx;
+		    mMaximum.y = My;
+		    mMaximum.z = Mz;
 
-		/** Changes one of the components of the minimum corner of the box
-		used to resize only one dimension of the box
-		*/
-		inline void setMinimumX(Real x)
-		{
-			mMinimum.x = x;
-		}
+		    updateCorners();
+	    }
 
-		inline void setMinimumY(Real y)
-		{
-			mMinimum.y = y;
-		}
+	    /** Returns a pointer to an array of 8 corner points, useful for
+		    collision vs. non-aligned objects.
+		    @remarks
+			    If the order of these corners is important, they are as
+			    follows: The 4 points of the minimum Z face (note that
+			    because Ogre uses right-handed coordinates, the minimum Z is
+			    at the 'back' of the box) starting with the minimum point of
+			    all, then anticlockwise around this face (if you are looking
+			    onto the face from outside the box). Then the 4 points of the
+			    maximum Z face, starting with maximum point of all, then
+			    anticlockwise around this face (looking onto the face from
+			    outside the box). Like this:
+			    <pre>
+			       1-----2
+			      /|    /|
+			     / |   / |
+			    5-----4  |
+			    |  0--|--3
+			    | /   | /
+			    |/    |/
+			    6-----7
+			    </pre>
+	    */
+	    inline const Vector3* getAllCorners(void) const
+	    {
+		    assert( !mNull && "Can't get corners of a null AAB" );
+		    return (const Vector3*)mCorners;
+	    }
 
-		inline void setMinimumZ(Real z)
-		{
-			mMinimum.z = z;
-		}
+	    friend std::ostream& operator<<( std::ostream& o, AxisAlignedBox aab )
+	    {
+		    if (aab.isNull())
+		    {
+			    o << "AxisAlignedBox(null)";
+		    }
+		    else
+		    {
+			    o << "AxisAlignedBox(min=" << aab.mMinimum << ", max=" << aab.mMaximum;
+			    o << ", corners=";
+			    for (int i = 0; i < 7; ++i)
+				    o << aab.mCorners[i] << ", ";
+			    o << aab.mCorners[7] << ")";
+		    }
+		    return o;
+	    }
 
-		/** Sets the maximum corner of the box.
-		*/
-		inline void setMaximum( const Vector3& vec )
-		{
-			mExtent = EXTENT_FINITE;
-			mMaximum = vec;
-		}
+	    /** Merges the passed in box into the current box. The result is the
+		    box which encompasses both.
+	    */
+	    void merge( const AxisAlignedBox& rhs )
+	    {
+		    // Do nothing if rhs null
+		    if (rhs.mNull)
+		    {
+			    return;
+		    }
+		    // Otherwise if current null, just take rhs
+		    else if (mNull)
+		    {
+			    setExtents(rhs.mMinimum, rhs.mMaximum);
+		    }
+		    // Otherwise merge
+		    else
+		    {
+			    Vector3 min = mMinimum;
+			    Vector3 max = mMaximum;
+			    max.makeCeil(rhs.mMaximum);
+			    min.makeFloor(rhs.mMinimum);
 
-		inline void setMaximum( Real x, Real y, Real z )
-		{
-			mExtent = EXTENT_FINITE;
-			mMaximum.x = x;
-			mMaximum.y = y;
-			mMaximum.z = z;
-		}
+			    setExtents(min, max);
+		    }
 
-		/** Changes one of the components of the maximum corner of the box
-		used to resize only one dimension of the box
-		*/
-		inline void setMaximumX( Real x )
-		{
-			mMaximum.x = x;
-		}
-
-		inline void setMaximumY( Real y )
-		{
-			mMaximum.y = y;
-		}
-
-		inline void setMaximumZ( Real z )
-		{
-			mMaximum.z = z;
-		}
-
-		/** Sets both minimum and maximum extents at once.
-		*/
-		inline void setExtents( const Vector3& min, const Vector3& max )
-		{
-			mExtent = EXTENT_FINITE;
-			mMinimum = min;
-			mMaximum = max;
-		}
-
-		inline void setExtents(
-			Real mx, Real my, Real mz,
-			Real Mx, Real My, Real Mz )
-		{
-			mExtent = EXTENT_FINITE;
-
-			mMinimum.x = mx;
-			mMinimum.y = my;
-			mMinimum.z = mz;
-
-			mMaximum.x = Mx;
-			mMaximum.y = My;
-			mMaximum.z = Mz;
-
-		}
-
-		/** Returns a pointer to an array of 8 corner points, useful for
-		collision vs. non-aligned objects.
-		@remarks
-		If the order of these corners is important, they are as
-		follows: The 4 points of the minimum Z face (note that
-		because Ogre uses right-handed coordinates, the minimum Z is
-		at the 'back' of the box) starting with the minimum point of
-		all, then anticlockwise around this face (if you are looking
-		onto the face from outside the box). Then the 4 points of the
-		maximum Z face, starting with maximum point of all, then
-		anticlockwise around this face (looking onto the face from
-		outside the box). Like this:
-		<pre>
-		1-----2
-		/|    /|
-		/ |   / |
-		5-----4  |
-		|  0--|--3
-		| /   | /
-		|/    |/
-		6-----7
-		</pre>
-		@remarks as this implementation uses a static member, make sure to use your own copy !
-		*/
-		inline const Vector3* getAllCorners(void) const
-		{
-			assert( (mExtent == EXTENT_FINITE) && "Can't get corners of a null or infinite AAB" );
-
-			// The order of these items is, using right-handed co-ordinates:
-			// Minimum Z face, starting with Min(all), then anticlockwise
-			//   around face (looking onto the face)
-			// Maximum Z face, starting with Max(all), then anticlockwise
-			//   around face (looking onto the face)
-			// Only for optimization/compatibility.
-			if (!mpCorners)
-				mpCorners = new Vector3[8];
-
-			mpCorners[0] = mMinimum;
-			mpCorners[1].x = mMinimum.x; mpCorners[1].y = mMaximum.y; mpCorners[1].z = mMinimum.z;
-			mpCorners[2].x = mMaximum.x; mpCorners[2].y = mMaximum.y; mpCorners[2].z = mMinimum.z;
-			mpCorners[3].x = mMaximum.x; mpCorners[3].y = mMinimum.y; mpCorners[3].z = mMinimum.z;            
-
-			mpCorners[4] = mMaximum;
-			mpCorners[5].x = mMinimum.x; mpCorners[5].y = mMaximum.y; mpCorners[5].z = mMaximum.z;
-			mpCorners[6].x = mMinimum.x; mpCorners[6].y = mMinimum.y; mpCorners[6].z = mMaximum.z;
-			mpCorners[7].x = mMaximum.x; mpCorners[7].y = mMinimum.y; mpCorners[7].z = mMaximum.z;
-
-			return mpCorners;
-		}
-
-		/** gets the position of one of the corners
-		*/
-		Vector3 getCorner(CornerEnum cornerToGet)
-		{
-			switch(cornerToGet)
-			{
-			case FAR_LEFT_BOTTOM:
-				return mMinimum;
-			case FAR_LEFT_TOP:
-				return Vector3(mMinimum.x, mMaximum.y, mMinimum.z);
-			case FAR_RIGHT_TOP:
-				return Vector3(mMaximum.x, mMaximum.y, mMinimum.z);
-			case FAR_RIGHT_BOTTOM:
-				return Vector3(mMaximum.x, mMinimum.y, mMinimum.z);
-			case NEAR_RIGHT_BOTTOM:
-				return Vector3(mMaximum.x, mMinimum.y, mMaximum.z);
-			case NEAR_LEFT_BOTTOM:
-				return Vector3(mMinimum.x, mMinimum.y, mMaximum.z);
-			case NEAR_LEFT_TOP:
-				return Vector3(mMinimum.x, mMaximum.y, mMaximum.z);
-			case NEAR_RIGHT_TOP:
-				return mMaximum;
-			default:
-				return Vector3();
-			}
-		}
-
-		friend std::ostream& operator<<( std::ostream& o, AxisAlignedBox aab )
-		{
-			switch (aab.mExtent)
-			{
-			case EXTENT_NULL:
-				o << "AxisAlignedBox(null)";
-				return o;
-
-			case EXTENT_FINITE:
-				o << "AxisAlignedBox(min=" << aab.mMinimum << ", max=" << aab.mMaximum << ")";
-				return o;
-
-			case EXTENT_INFINITE:
-				o << "AxisAlignedBox(infinite)";
-				return o;
-
-			default: // shut up compiler
-				assert( false && "Never reached" );
-				return o;
-			}
-		}
-
-		/** Merges the passed in box into the current box. The result is the
-		box which encompasses both.
-		*/
-		void merge( const AxisAlignedBox& rhs )
-		{
-			// Do nothing if rhs null, or this is infinite
-			if ((rhs.mExtent == EXTENT_NULL) || (mExtent == EXTENT_INFINITE))
-			{
-				return;
-			}
-			// Otherwise if rhs is infinite, make this infinite, too
-			else if (rhs.mExtent == EXTENT_INFINITE)
-			{
-				mExtent = EXTENT_INFINITE;
-			}
-			// Otherwise if current null, just take rhs
-			else if (mExtent == EXTENT_NULL)
-			{
-				setExtents(rhs.mMinimum, rhs.mMaximum);
-			}
-			// Otherwise merge
-			else
-			{
-				Vector3 min = mMinimum;
-				Vector3 max = mMaximum;
-				max.makeCeil(rhs.mMaximum);
-				min.makeFloor(rhs.mMinimum);
-
-				setExtents(min, max);
-			}
-
-		}
-
+	    }
+		
 		/** Extends the box to encompass the specified point (if needed).
 		*/
-		inline void merge( const Vector3& point )
+		void merge( const Vector3& point )
 		{
-			switch (mExtent)
-			{
-			case EXTENT_NULL: // if null, use this point
+			if (mNull){ // if null, use this point
 				setExtents(point, point);
-				return;
-
-			case EXTENT_FINITE:
+			} else {
 				mMaximum.makeCeil(point);
 				mMinimum.makeFloor(point);
-				return;
-
-			case EXTENT_INFINITE: // if infinite, makes no difference
-				return;
+				updateCorners();
 			}
-
-			assert( false && "Never reached" );
 		}
 
-		/** Transforms the box according to the matrix supplied.
-		@remarks
-		By calling this method you get the axis-aligned box which
-		surrounds the transformed version of this box. Therefore each
-		corner of the box is transformed by the matrix, then the
-		extents are mapped back onto the axes to produce another
-		AABB. Useful when you have a local AABB for an object which
-		is then transformed.
-		*/
-		inline void transform( const Matrix4& matrix )
-		{
-			// Do nothing if current null or infinite
-			if( mExtent != EXTENT_FINITE )
-				return;
+	    /** Transforms the box according to the matrix supplied.
+		    @remarks
+			    By calling this method you get the axis-aligned box which
+			    surrounds the transformed version of this box. Therefore each
+			    corner of the box is transformed by the matrix, then the
+			    extents are mapped back onto the axes to produce another
+			    AABB. Useful when you have a local AABB for an object which
+			    is then transformed.
+	    */
+	    void transform( const Matrix4& matrix )
+	    {
+		    // Do nothing if current null
+		    if( mNull )
+			    return;
 
-			Vector3 oldMin, oldMax, temp, currentCorner;
+		    Vector3 min, max, temp;
+		    bool first = true;
+		    size_t i;
 
-			// Getting the old values so that we can use the existing merge method.
-			oldMin = mMinimum;
-			oldMax = mMaximum;
+		    for( i = 0; i < 8; ++i )
+		    {
+			    // Transform and check extents
+			    temp = matrix * mCorners[i];
+			    if( first || temp.x > max.x )
+				    max.x = temp.x;
+			    if( first || temp.y > max.y )
+				    max.y = temp.y;
+			    if( first || temp.z > max.z )
+				    max.z = temp.z;
+			    if( first || temp.x < min.x )
+				    min.x = temp.x;
+			    if( first || temp.y < min.y )
+				    min.y = temp.y;
+			    if( first || temp.z < min.z )
+				    min.z = temp.z;
 
-			// We sequentially compute the corners in the following order :
-			// 0, 6, 5, 1, 2, 4 ,7 , 3
-			// This sequence allows us to only change one member at a time to get at all corners.
+			    first = false;
+		    }
 
-			// For each one, we transform it using the matrix
-			// Which gives the resulting point and merge the resulting point.
+		    setExtents( min,max );
 
-			// First corner 
-			// min min min
-			currentCorner = oldMin;
-			merge( matrix * currentCorner );
+	    }
 
-			// min,min,max
-			currentCorner.z = oldMax.z;
-			merge( matrix * currentCorner );
+	    /** Sets the box to a 'null' value i.e. not a box.
+	    */
+	    inline void setNull()
+	    {
+		    mNull = true;
+	    }
 
-			// min max max
-			currentCorner.y = oldMax.y;
-			merge( matrix * currentCorner );
+	    /** Returns true if the box is null i.e. empty.
+	    */
+	    bool isNull(void) const
+	    {
+		    return mNull;
+	    }
 
-			// min max min
-			currentCorner.z = oldMin.z;
-			merge( matrix * currentCorner );
+        /** Returns whether or not this box intersects another. */
+        inline bool intersects(const AxisAlignedBox& b2) const
+        {
+            // Early-fail for nulls
+            if (this->isNull() || b2.isNull())
+                return false;
 
-			// max max min
-			currentCorner.x = oldMax.x;
-			merge( matrix * currentCorner );
+            // Use up to 6 separating planes
+            if (mMaximum.x < b2.mMinimum.x)
+                return false;
+            if (mMaximum.y < b2.mMinimum.y)
+                return false;
+            if (mMaximum.z < b2.mMinimum.z)
+                return false;
 
-			// max max max
-			currentCorner.z = oldMax.z;
-			merge( matrix * currentCorner );
+            if (mMinimum.x > b2.mMaximum.x)
+                return false;
+            if (mMinimum.y > b2.mMaximum.y)
+                return false;
+            if (mMinimum.z > b2.mMaximum.z)
+                return false;
 
-			// max min max
-			currentCorner.y = oldMin.y;
-			merge( matrix * currentCorner );
+            // otherwise, must be intersecting
+            return true;
 
-			// max min min
-			currentCorner.z = oldMin.z;
-			merge( matrix * currentCorner ); 
-		}
-
-		/** Transforms the box according to the affine matrix supplied.
-		@remarks
-		By calling this method you get the axis-aligned box which
-		surrounds the transformed version of this box. Therefore each
-		corner of the box is transformed by the matrix, then the
-		extents are mapped back onto the axes to produce another
-		AABB. Useful when you have a local AABB for an object which
-		is then transformed.
-		@note
-		The matrix must be an affine matrix. @see Matrix4::isAffine.
-		*/
-		void transformAffine(const Matrix4& m)
-		{
-			assert(m.isAffine());
-
-			// Do nothing if current null or infinite
-			if ( mExtent != EXTENT_FINITE )
-				return;
-
-			Vector3 centre = getCenter();
-			Vector3 halfSize = getHalfSize();
-
-			Vector3 newCentre = m.transformAffine(centre);
-			Vector3 newHalfSize(
-				Math::Abs(m[0][0]) * halfSize.x + Math::Abs(m[0][1]) * halfSize.y + Math::Abs(m[0][2]) * halfSize.z, 
-				Math::Abs(m[1][0]) * halfSize.x + Math::Abs(m[1][1]) * halfSize.y + Math::Abs(m[1][2]) * halfSize.z,
-				Math::Abs(m[2][0]) * halfSize.x + Math::Abs(m[2][1]) * halfSize.y + Math::Abs(m[2][2]) * halfSize.z);
-
-			setExtents(newCentre - newHalfSize, newCentre + newHalfSize);
-		}
-
-		/** Sets the box to a 'null' value i.e. not a box.
-		*/
-		inline void setNull()
-		{
-			mExtent = EXTENT_NULL;
-		}
-
-		/** Returns true if the box is null i.e. empty.
-		*/
-		inline bool isNull(void) const
-		{
-			return (mExtent == EXTENT_NULL);
-		}
-
-		/** Returns true if the box is finite.
-		*/
-		bool isFinite(void) const
-		{
-			return (mExtent == EXTENT_FINITE);
-		}
-
-		/** Sets the box to 'infinite'
-		*/
-		inline void setInfinite()
-		{
-			mExtent = EXTENT_INFINITE;
-		}
-
-		/** Returns true if the box is infinite.
-		*/
-		bool isInfinite(void) const
-		{
-			return (mExtent == EXTENT_INFINITE);
-		}
-
-		/** Returns whether or not this box intersects another. */
-		inline bool intersects(const AxisAlignedBox& b2) const
-		{
-			// Early-fail for nulls
-			if (this->isNull() || b2.isNull())
-				return false;
-
-			// Early-success for infinites
-			if (this->isInfinite() || b2.isInfinite())
-				return true;
-
-			// Use up to 6 separating planes
-			if (mMaximum.x < b2.mMinimum.x)
-				return false;
-			if (mMaximum.y < b2.mMinimum.y)
-				return false;
-			if (mMaximum.z < b2.mMinimum.z)
-				return false;
-
-			if (mMinimum.x > b2.mMaximum.x)
-				return false;
-			if (mMinimum.y > b2.mMaximum.y)
-				return false;
-			if (mMinimum.z > b2.mMaximum.z)
-				return false;
-
-			// otherwise, must be intersecting
-			return true;
-
-		}
+        }
 
 		/// Calculate the area of intersection of this box and another
 		inline AxisAlignedBox intersection(const AxisAlignedBox& b2) const
@@ -576,15 +347,6 @@ namespace Ogre {
 			{
 				return AxisAlignedBox();
 			}
-			else if (this->isInfinite())
-			{
-				return b2;
-			}
-			else if (b2.isInfinite())
-			{
-				return *this;
-			}
-
 			Vector3 intMin, intMax;
 
 			const Vector3& b2max = b2.getMaximum();
@@ -623,38 +385,26 @@ namespace Ogre {
 		/// Calculate the volume of this box
 		Real volume(void) const
 		{
-			switch (mExtent)
+			if (mNull)
 			{
-			case EXTENT_NULL:
-				return 0.0f;
-
-			case EXTENT_FINITE:
-				{
-					Vector3 diff = mMaximum - mMinimum;
-					return diff.x * diff.y * diff.z;
-				}
-
-			case EXTENT_INFINITE:
-				return Math::POS_INFINITY;
-
-			default: // shut up compiler
-				assert( false && "Never reached" );
 				return 0.0f;
 			}
+			else
+			{
+				Vector3 diff = mMaximum - mMinimum;
+				return diff.x * diff.y * diff.z;
+			}
+
 		}
 
-		/** Scales the AABB by the vector given. */
-		inline void scale(const Vector3& s)
-		{
-			// Do nothing if current null or infinite
-			if (mExtent != EXTENT_FINITE)
-				return;
-
-			// NB assumes centered on origin
-			Vector3 min = mMinimum * s;
-			Vector3 max = mMaximum * s;
-			setExtents(min, max);
-		}
+        /** Scales the AABB by the vector given. */
+        inline void scale(const Vector3& s)
+        {
+            // NB assumes centered on origin
+            Vector3 min = mMinimum * s;
+            Vector3 max = mMaximum * s;
+            setExtents(min, max);
+        }
 
 		/** Tests whether this box intersects a sphere. */
 		bool intersects(const Sphere& s) const
@@ -666,84 +416,21 @@ namespace Ogre {
 		{
 			return Math::intersects(p, *this);
 		}
-		/** Tests whether the vector point is within this box. */
-		bool intersects(const Vector3& v) const
-		{
-			switch (mExtent)
-			{
-			case EXTENT_NULL:
-				return false;
-
-			case EXTENT_FINITE:
-				return(v.x >= mMinimum.x  &&  v.x <= mMaximum.x  && 
-					v.y >= mMinimum.y  &&  v.y <= mMaximum.y  && 
-					v.z >= mMinimum.z  &&  v.z <= mMaximum.z);
-
-			case EXTENT_INFINITE:
-				return true;
-
-			default: // shut up compiler
-				assert( false && "Never reached" );
-				return false;
-			}
-		}
+        /** Tests whether the vector point is within this box. */
+        bool intersects(const Vector3& v) const
+        {
+			return(v.x >= mMinimum.x  &&  v.x <= mMaximum.x  && 
+			    v.y >= mMinimum.y  &&  v.y <= mMaximum.y  && 
+    			v.z >= mMinimum.z  &&  v.z <= mMaximum.z);
+        }
 		/// Gets the centre of the box
 		Vector3 getCenter(void) const
 		{
-			assert( (mExtent == EXTENT_FINITE) && "Can't get center of a null or infinite AAB" );
-
-			return Vector3(
-				(mMaximum.x + mMinimum.x) * 0.5,
-				(mMaximum.y + mMinimum.y) * 0.5,
-				(mMaximum.z + mMinimum.z) * 0.5);
-		}
-		/// Gets the size of the box
-		Vector3 getSize(void) const
-		{
-			switch (mExtent)
-			{
-			case EXTENT_NULL:
-				return Vector3::ZERO;
-
-			case EXTENT_FINITE:
-				return mMaximum - mMinimum;
-
-			case EXTENT_INFINITE:
-				return Vector3(
-					Math::POS_INFINITY,
-					Math::POS_INFINITY,
-					Math::POS_INFINITY);
-
-			default: // shut up compiler
-				assert( false && "Never reached" );
-				return Vector3::ZERO;
-			}
-		}
-		/// Gets the half-size of the box
-		Vector3 getHalfSize(void) const
-		{
-			switch (mExtent)
-			{
-			case EXTENT_NULL:
-				return Vector3::ZERO;
-
-			case EXTENT_FINITE:
-				return (mMaximum - mMinimum) * 0.5;
-
-			case EXTENT_INFINITE:
-				return Vector3(
-					Math::POS_INFINITY,
-					Math::POS_INFINITY,
-					Math::POS_INFINITY);
-
-			default: // shut up compiler
-				assert( false && "Never reached" );
-				return Vector3::ZERO;
-			}
+			return Vector3((mMaximum + mMinimum) * 0.5);
 		}
 
 
-	};
+    };
 
 } // namespace Ogre
 

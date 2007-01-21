@@ -2,9 +2,9 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __AutoParamDataSource_H_
@@ -37,9 +33,6 @@ Torus Knot Software Ltd.
 #include "OgreColourValue.h"
 
 namespace Ogre {
-
-	// forward decls
-	struct VisibleObjectsBoundsInfo;
 
 
     /** This utility class is used to hold the information used to generate the matrices
@@ -66,7 +59,7 @@ namespace Ogre {
         mutable Matrix4 mInverseTransposeWorldMatrix;
         mutable Matrix4 mInverseTransposeWorldViewMatrix;
         mutable Vector4 mCameraPositionObjectSpace;
-        mutable Matrix4 mTextureViewProjMatrix[OGRE_MAX_SIMULTANEOUS_LIGHTS];
+        mutable Matrix4 mTextureViewProjMatrix;
         mutable Matrix4 mViewMatrix;
         mutable Matrix4 mProjectionMatrix;
 		mutable Real mDirLightExtrusionDistance;
@@ -85,25 +78,18 @@ namespace Ogre {
         mutable bool mInverseTransposeWorldViewMatrixDirty;
         mutable bool mCameraPositionObjectSpaceDirty;
         mutable bool mCameraPositionDirty;
-        mutable bool mTextureViewProjMatrixDirty[OGRE_MAX_SIMULTANEOUS_LIGHTS];
+        mutable bool mTextureViewProjMatrixDirty;
 		mutable ColourValue mAmbientLight;
         mutable ColourValue mFogColour;
         mutable Vector4 mFogParams;
         mutable int mPassNumber;
-		mutable Vector4 mSceneDepthRange;
-		mutable bool mSceneDepthRangeDirty;
-		// Ordered by light, populated on demand, dirtied when lights change
-		mutable std::vector<Vector4> mShadowCamDepthRanges;
-		mutable bool mShadowCamDepthRangesDirty;
 
         const Renderable* mCurrentRenderable;
         const Camera* mCurrentCamera;
         const LightList* mCurrentLightList;
-        const Frustum* mCurrentTextureProjector[OGRE_MAX_SIMULTANEOUS_LIGHTS];
+        const Frustum* mCurrentTextureProjector;
         const RenderTarget* mCurrentRenderTarget;
         const Viewport* mCurrentViewport;
-		const SceneManager* mCurrentSceneManager;
-		const VisibleObjectsBoundsInfo* mMainCamBoundsInfo;
 
         Light mBlankLight;
     public:
@@ -115,20 +101,14 @@ namespace Ogre {
         void setCurrentCamera(const Camera* cam);
         /** Sets the light list that should be used */
         void setCurrentLightList(const LightList* ll);
-        /** Sets the current texture projector for a index */
-        void setTextureProjector(const Frustum* frust, size_t index);
+        /** Sets the current texture projector */
+        void setTextureProjector(const Frustum* frust);
         /** Sets the current render target */
         void setCurrentRenderTarget(const RenderTarget* target);
         /** Sets the current viewport */
         void setCurrentViewport(const Viewport* viewport);
 		/** Sets the shadow extrusion distance to be used for point lights. */
 		void setShadowDirLightExtrusionDistance(Real dist);
-		/** Sets the main camera's scene bounding information */
-		void setMainCamBoundsInfo(VisibleObjectsBoundsInfo* info);
-		/** Set the current scene manager for enquiring on demand */
-		void setCurrentSceneManager(const SceneManager* sm);
-
-
 
         const Matrix4& getWorldMatrix(void) const;
         const Matrix4* getWorldMatrixArray(void) const;
@@ -152,12 +132,10 @@ namespace Ogre {
         void setFog(FogMode mode, const ColourValue& colour, Real expDensity, Real linearStart, Real linearEnd);
         const ColourValue& getFogColour(void) const;
         const Vector4& getFogParams(void) const;
-        const Matrix4& getTextureViewProjMatrix(size_t index) const;
+        const Matrix4& getTextureViewProjMatrix(void) const;
         const RenderTarget* getCurrentRenderTarget(void) const;
         const Renderable* getCurrentRenderable(void) const;
 		Real getShadowExtrusionDistance(void) const;
-		const Vector4& getSceneDepthRange() const;
-		const Vector4& getShadowSceneDepthRange(size_t lightIndex) const;
 		Matrix4 getInverseViewProjMatrix(void) const;
 		Matrix4 getInverseTransposeViewProjMatrix() const;
 		Matrix4 getTransposeViewProjMatrix() const;

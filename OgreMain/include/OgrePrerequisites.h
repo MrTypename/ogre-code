@@ -4,7 +4,7 @@ This source file is a part of OGRE
 
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This library is free software; you can redistribute it and/or modify it
@@ -76,7 +76,7 @@ http://www.gnu.org/copyleft/lesser.txt
 /* Include all the standard header *after* all the configuration
    settings have been made.
 */
-//#include "OgreStdHeaders.h"
+#include "OgreStdHeaders.h"
 
 
 #include "OgreMemoryManager.h"
@@ -84,9 +84,9 @@ http://www.gnu.org/copyleft/lesser.txt
 namespace Ogre {
     // Define ogre version
     #define OGRE_VERSION_MAJOR 1
-    #define OGRE_VERSION_MINOR 3
-    #define OGRE_VERSION_PATCH 0
-    #define OGRE_VERSION_NAME "Eihort"
+    #define OGRE_VERSION_MINOR 2
+    #define OGRE_VERSION_PATCH 5
+    #define OGRE_VERSION_NAME "Dagon"
 
     #define OGRE_VERSION    ((OGRE_VERSION_MAJOR << 16) | (OGRE_VERSION_MINOR << 8) | OGRE_VERSION_PATCH)
 
@@ -153,7 +153,6 @@ namespace Ogre {
 		#define OGRE_LOCK_AUTO_MUTEX boost::recursive_mutex::scoped_lock ogreAutoMutexLock(OGRE_AUTO_MUTEX_NAME);
 		#define OGRE_MUTEX(name) mutable boost::recursive_mutex name;
 		#define OGRE_LOCK_MUTEX(name) boost::recursive_mutex::scoped_lock ogrenameLock(name);
-		#define OGRE_LOCK_MUTEX_NAMED(mutexName, lockName) boost::recursive_mutex::scoped_lock lockName(mutexName);
 		// like OGRE_AUTO_MUTEX but mutex held by pointer
 		#define OGRE_AUTO_SHARED_MUTEX mutable boost::recursive_mutex *OGRE_AUTO_MUTEX_NAME;
 		#define OGRE_LOCK_AUTO_SHARED_MUTEX assert(OGRE_AUTO_MUTEX_NAME); boost::recursive_mutex::scoped_lock ogreAutoMutexLock(*OGRE_AUTO_MUTEX_NAME);
@@ -162,36 +161,19 @@ namespace Ogre {
 		#define OGRE_COPY_AUTO_SHARED_MUTEX(from) assert(!OGRE_AUTO_MUTEX_NAME); OGRE_AUTO_MUTEX_NAME = from;
         #define OGRE_SET_AUTO_SHARED_MUTEX_NULL OGRE_AUTO_MUTEX_NAME = 0;
         #define OGRE_MUTEX_CONDITIONAL(mutex) if (mutex)
-		#define OGRE_THREAD_SYNCHRONISER(sync) boost::condition sync;
-		#define OGRE_THREAD_WAIT(sync, lock) sync.wait(lock);
-		#define OGRE_THREAD_NOTIFY_ONE(sync) sync.notify_one(); 
-		#define OGRE_THREAD_NOTIFY_ALL(sync) sync.notify_all(); 
-		// Thread-local pointer
-		#define OGRE_THREAD_POINTER(T, var) boost::thread_specific_ptr<T> var
-		#define OGRE_THREAD_POINTER_SET(var, expr) var.reset(expr)
-		#define OGRE_THREAD_POINTER_DELETE(var) var.reset(0)
-		#define OGRE_THREAD_POINTER_GET(var) var.get()
+
 	#else
 		#define OGRE_AUTO_MUTEX
 		#define OGRE_LOCK_AUTO_MUTEX
 		#define OGRE_MUTEX(name)
 		#define OGRE_LOCK_MUTEX(name)
-		#define OGRE_LOCK_MUTEX_NAMED(mutexName, lockName)
 		#define OGRE_AUTO_SHARED_MUTEX
 		#define OGRE_LOCK_AUTO_SHARED_MUTEX
 		#define OGRE_NEW_AUTO_SHARED_MUTEX
 		#define OGRE_DELETE_AUTO_SHARED_MUTEX
 		#define OGRE_COPY_AUTO_SHARED_MUTEX(from)
         #define OGRE_SET_AUTO_SHARED_MUTEX_NULL
-        #define OGRE_MUTEX_CONDITIONAL(name) if(true)
-		#define OGRE_THREAD_SYNCHRONISER(sync) 
-		#define OGRE_THREAD_WAIT(sync, lock) 
-		#define OGRE_THREAD_NOTIFY_ONE(sync) 
-		#define OGRE_THREAD_NOTIFY_ALL(sync) 
-		#define OGRE_THREAD_POINTER(T, var) T* var
-		#define OGRE_THREAD_POINTER_SET(var, expr) var = expr
-		#define OGRE_THREAD_POINTER_DELETE(var) delete var; var = 0
-		#define OGRE_THREAD_POINTER_GET(var) var
+        #define OGRE_MUTEX_CONDITIONAL(name)
 	#endif
 
 
@@ -218,16 +200,21 @@ namespace Ogre {
     class ColourValue;
     class ConfigDialog;
     template <typename T> class Controller;
-    template <typename T> class ControllerFunction;
+	template <typename T> class ControllerFunction;
     class ControllerManager;
     template <typename T> class ControllerValue;
-    class Degree;
+	class Cursor;
+	class Degree;
     class DynLib;
     class DynLibManager;
     class EdgeData;
     class EdgeListBuilder;
     class Entity;
     class ErrorDialog;
+	class EventDispatcher;
+	class EventProcessor;
+	class EventQueue;
+	class EventTarget;
     class ExternalTextureSourceManager;
     class Factory;
     class Font;
@@ -250,10 +237,15 @@ namespace Ogre {
 	class HighLevelGpuProgramManager;
 	class HighLevelGpuProgramFactory;
     class IndexData;
+	class InputEvent;
+    class InputReader;
     class IntersectionSceneQuery;
     class IntersectionSceneQueryListener;
     class Image;
+	class KeyEvent;
     class KeyFrame;
+	class KeyListener;
+	class KeyTarget;
     class Light;
     class Log;
     class LogManager;
@@ -262,7 +254,6 @@ namespace Ogre {
     class Material;
     class MaterialPtr;
     class MaterialManager;
-    class MaterialScriptCompiler;
     class Math;
     class Matrix3;
     class Matrix4;
@@ -274,6 +265,10 @@ namespace Ogre {
     class MeshManager;
     class MovableObject;
     class MovablePlane;
+	class MouseEvent;
+	class MouseListener;
+	class MouseMotionListener;
+	class MouseTarget;
     class Node;
 	class NodeAnimationTrack;
 	class NodeKeyFrame;
@@ -297,10 +292,11 @@ namespace Ogre {
     class Pass;
     class PatchMesh;
     class PixelBox;
+    class PlatformManager;
     class Plane;
     class PlaneBoundedVolume;
-    class Pose;
-    class PositionTarget;
+	class Pose;
+	class PositionTarget;
     class ProgressiveMesh;
     class Profile;
 	class Profiler;
@@ -339,7 +335,6 @@ namespace Ogre {
     class Serializer;
     class ShadowCaster;
     class ShadowRenderable;
-	class ShadowTextureManager;
     class SimpleRenderable;
     class SimpleSpline;
     class Skeleton;

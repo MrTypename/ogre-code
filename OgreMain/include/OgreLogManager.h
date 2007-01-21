@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -36,8 +32,24 @@ Torus Knot Software Ltd.
 #include "OgreSingleton.h"
 #include "OgreString.h"
 
-namespace Ogre
-{
+namespace Ogre {
+
+	/** The log listener is here to provide alternate means to write out 
+	    log data. This is helpful if you want to redirect the log output
+		for example to a gui window for an editing application.
+	*/
+	class _OgreExport LogListener
+	{
+	public:
+		/** Called by the log system whenever a message needs to be output.
+		*/
+		virtual void write( const String& name,
+							const String& message, 
+							LogMessageLevel lml = LML_NORMAL, 
+							bool maskDebug = false ) = 0;
+		virtual ~LogListener();
+	};
+
     /** The log manager handles the creation and retrieval of logs for the
         application.
         @remarks
@@ -58,8 +70,20 @@ namespace Ogre
     */
     class _OgreExport LogManager : public Singleton<LogManager>
     {
+		friend class Log;
+
 	protected:
+
+		/** Internal helper method to reroute logging messages to the 
+			new listener system, while maintaining full backward compatiblity.
+		*/
+		void _routeMessage(	const String& name,
+							const String& message, 
+							LogMessageLevel lml = LML_NORMAL, 
+							bool maskDebug = false );
+
         typedef std::map<String, Log*, std::less<String> >	LogList;
+		typedef std::vector<LogListener*>					LogListenerList;
 
         /// A list of all the logs the manager can access
         LogList mLogs;
@@ -67,11 +91,24 @@ namespace Ogre
         /// The default log to which output is done
         Log* mDefaultLog;
 
-    public:
-		OGRE_AUTO_MUTEX // public to allow external locking
+		/// A list of all registered external log listeners.
+		LogListenerList mListeners;
 
+    public:
         LogManager();
         ~LogManager();
+
+		/** Adds a new listener for the logging system.
+		    Ogre does not assume ownership and does not destroy the listener
+			at application shutdown.
+		*/
+		void addListener( LogListener * listener );
+		
+		/** Removes a previously registered listener again, and
+			returns ownership of the listener to the caller, who
+			is responsible for destroying the listener again.
+		*/
+		void removeListener( LogListener * listener );
 
         /** Creates a new log with the given name.
             @param

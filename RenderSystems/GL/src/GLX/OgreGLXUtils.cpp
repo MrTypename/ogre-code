@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -389,7 +385,7 @@ namespace Ogre {
         int nConfigs;
         fbConfigs = glXChooseFBConfig(dpy, scrnum, attribs, &nConfigs);
         if (nConfigs == 0 || !fbConfigs) 
-            OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "glXChooseFBConfig() failed: Couldn't find a suitable pixel format", "GLRenderTexture::createPBuffer");
+            OGRE_EXCEPT(Exception::UNIMPLEMENTED_FEATURE, "glXChooseFBConfig() failed: Couldn't find a suitable pixel format", "GLRenderTexture::createPBuffer");
 
         // Sort by best match
         std::sort(fbConfigs, fbConfigs+nConfigs, FBConfigMatchSort(dpy, idealattribs));

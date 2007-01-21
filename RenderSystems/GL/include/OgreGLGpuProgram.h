@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.stevestreeting.com/ogre/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltdeeting
+Copyright (c) 2000-2005 The OGRE Teameeting
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -28,7 +28,6 @@ http://www.gnu.org/copyleft/gpl.html.
 
 #include "OgreGLPrerequisites.h"
 #include "OgreGpuProgram.h"
-#include "OgreHardwareVertexBuffer.h"
 
 namespace Ogre {
 
@@ -44,6 +43,8 @@ namespace Ogre {
         virtual void bindProgram(void) {}
         /// Execute the binding functions for this program
         virtual void unbindProgram(void) {}
+        /** Overridden from GpuProgram, do nothing */
+        void loadFromSource(void) {}
 
         /// Execute the param binding functions for this program
         virtual void bindProgramParameters(GpuProgramParametersSharedPtr params) {}
@@ -55,19 +56,7 @@ namespace Ogre {
         const GLuint getProgramID(void) const
         { return mProgramID; }
 
-		/** Get the attribute index for a given semantic. 
-		@remarks
-			This can be used to identify the attribute index to bind non-builtin
-			attributes like tangent and binormal.
-		*/
-		virtual GLuint getAttributeIndex(VertexElementSemantic semantic);
-		/** Test whether attribute index for a given semantic is valid. 
-		*/
-		virtual bool isAttributeValid(VertexElementSemantic semantic);
-
     protected:
-		/** Overridden from GpuProgram, do nothing */
-		void loadFromSource(void) {}
         /// @copydoc Resource::unloadImpl
         void unloadImpl(void) {}
 

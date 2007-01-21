@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -65,7 +61,7 @@ namespace Ogre
     {
         createPBuffer();
         // Create context
-        mContext = new GLXContext(_pDpy, _hPBuffer, _hGLContext, mFBConfig);
+        mContext = new GLXContext(_pDpy, _hPBuffer, _hGLContext);
     }
         
     GLContext *GLXPBuffer::getContext()
@@ -108,7 +104,7 @@ namespace Ogre
             floatBuffer = detectRTFType();
             if(floatBuffer == RTF_NONE || floatBuffer == RTF_NV)
             {
-                OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Floating point PBuffers not supported on this hardware",  "GLRenderTexture::createPBuffer");
+                OGRE_EXCEPT(Exception::UNIMPLEMENTED_FEATURE, "Floating point PBuffers not supported on this hardware",  "GLRenderTexture::createPBuffer");
             }
         }
 
@@ -165,7 +161,7 @@ namespace Ogre
         ideal[attrib++] = None;
 
         // Create vector of existing config data formats        
-        mFBConfig = GLXUtils::findBestMatch(_pDpy, screen, attribs, ideal);
+        GLXFBConfig config = GLXUtils::findBestMatch(_pDpy, screen, attribs, ideal);
 
         // Create the pbuffer in the best matching format
         attrib = 0;
@@ -177,18 +173,18 @@ namespace Ogre
         attribs[attrib++] = 1;
         attribs[attrib++] = None;
 
-        FBConfigData configData(_pDpy, mFBConfig);
+        FBConfigData configData(_pDpy, config);
         LogManager::getSingleton().logMessage(
                 LML_NORMAL,
                 "GLXPBuffer::PBuffer chose format "+configData.toString());                   
 
-        _hPBuffer = glXCreatePbuffer(_pDpy, mFBConfig, attribs);
+        _hPBuffer = glXCreatePbuffer(_pDpy, config, attribs);
         if (!_hPBuffer) 
-            OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "glXCreatePbuffer() failed", "GLRenderTexture::createPBuffer");
+            OGRE_EXCEPT(Exception::UNIMPLEMENTED_FEATURE, "glXCreatePbuffer() failed", "GLRenderTexture::createPBuffer");
 
-        _hGLContext = glXCreateNewContext(_pDpy, mFBConfig, GLX_RGBA_TYPE, context, True);
+        _hGLContext = glXCreateNewContext(_pDpy, config, GLX_RGBA_TYPE, context, True);
         if (!_hGLContext) 
-            OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "glXCreateContext() failed", "GLRenderTexture::createPBuffer");        
+            OGRE_EXCEPT(Exception::UNIMPLEMENTED_FEATURE, "glXCreateContext() failed", "GLRenderTexture::createPBuffer");        
 
         // Query real width and height
         GLuint iWidth, iHeight;

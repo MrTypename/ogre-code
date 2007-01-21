@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.stevestreeting.com/ogre/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltdeeting
+Copyright (c) 2000-2005 The OGRE Teameeting
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -55,6 +55,7 @@ protected:
 public:
     GLGpuProgramManager();
     ~GLGpuProgramManager();
+    GpuProgramParametersSharedPtr createParameters(void);
     bool registerProgramFactory(const String& syntaxCode, CreateGpuProgramCallback createFn);
     bool unregisterProgramFactory(const String& syntaxCode);
 };
