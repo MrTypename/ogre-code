@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -99,11 +95,6 @@ namespace Ogre {
 		if (elem)
 			readSubMeshNames(elem, mpMesh);
 
-		// submesh extremes
-		elem = rootElem->FirstChildElement("extremes");
-		if (elem)
-			readExtremes(elem, mpMesh);
-
 		// poses
 		elem = rootElem->FirstChildElement("poses");
 		if (elem)
@@ -128,6 +119,7 @@ namespace Ogre {
 
         mXMLDoc = new TiXmlDocument();
         mXMLDoc->InsertEndChild(TiXmlElement("mesh"));
+        TiXmlElement* rootNode = mXMLDoc->RootElement();
 
         LogManager::getSingleton().logMessage("Populating DOM...");
 
@@ -205,8 +197,11 @@ namespace Ogre {
 		writePoses(rootNode, pMesh);
 		// Write animations
 		writeAnimations(rootNode, pMesh);
-        // Write extremes
-        writeExtremes(rootNode, pMesh);
+
+
+
+
+
     }
     //---------------------------------------------------------------------
     void XMLMeshSerializer::writeSubMesh(TiXmlElement* mSubMeshesNode, const SubMesh* s)
@@ -377,12 +372,6 @@ namespace Ogre {
 				case VES_NORMAL:
 					vbNode->SetAttribute("normals","true");
                     break;
-				case VES_TANGENT:
-					vbNode->SetAttribute("tangents","true");
-					break;
-				case VES_BINORMAL:
-					vbNode->SetAttribute("binormals","true");
-					break;
 				case VES_DIFFUSE:
 					vbNode->SetAttribute("colours_diffuse","true");
                     break;
@@ -395,7 +384,6 @@ namespace Ogre {
                         StringConverter::toString(VertexElement::getTypeCount(elem.getType())));
                     ++numTextureCoords;
                     break;
-
                 default:
                     break;
                 }
@@ -429,22 +417,6 @@ namespace Ogre {
 						elem.baseVertexPointerToElement(pVert, &pFloat);
 						dataNode = 
 							vertexNode->InsertEndChild(TiXmlElement("normal"))->ToElement();
-						dataNode->SetAttribute("x", StringConverter::toString(pFloat[0]));
-						dataNode->SetAttribute("y", StringConverter::toString(pFloat[1]));
-						dataNode->SetAttribute("z", StringConverter::toString(pFloat[2]));
-						break;
-					case VES_TANGENT:
-						elem.baseVertexPointerToElement(pVert, &pFloat);
-						dataNode = 
-							vertexNode->InsertEndChild(TiXmlElement("tangent"))->ToElement();
-						dataNode->SetAttribute("x", StringConverter::toString(pFloat[0]));
-						dataNode->SetAttribute("y", StringConverter::toString(pFloat[1]));
-						dataNode->SetAttribute("z", StringConverter::toString(pFloat[2]));
-						break;
-					case VES_BINORMAL:
-						elem.baseVertexPointerToElement(pVert, &pFloat);
-						dataNode = 
-							vertexNode->InsertEndChild(TiXmlElement("binormal"))->ToElement();
 						dataNode->SetAttribute("x", StringConverter::toString(pFloat[0]));
 						dataNode->SetAttribute("y", StringConverter::toString(pFloat[1]));
 						dataNode->SetAttribute("z", StringConverter::toString(pFloat[2]));
@@ -733,20 +705,6 @@ namespace Ogre {
                 decl->addElement(bufCount, offset, VET_FLOAT3, VES_NORMAL);
                 offset += VertexElement::getTypeSize(VET_FLOAT3);
             }
-			attrib = vbElem->Attribute("tangents");
-			if (attrib && StringConverter::parseBool(attrib))
-			{
-				// Add element
-				decl->addElement(bufCount, offset, VET_FLOAT3, VES_TANGENT);
-				offset += VertexElement::getTypeSize(VET_FLOAT3);
-			}
-			attrib = vbElem->Attribute("binormals");
-			if (attrib && StringConverter::parseBool(attrib))
-			{
-				// Add element
-				decl->addElement(bufCount, offset, VET_FLOAT3, VES_BINORMAL);
-				offset += VertexElement::getTypeSize(VET_FLOAT3);
-			}
             attrib = vbElem->Attribute("colours_diffuse");
             if (attrib && StringConverter::parseBool(attrib))
             {
@@ -866,38 +824,6 @@ namespace Ogre {
                         *pFloat++ = StringConverter::parseReal(
                             xmlElem->Attribute("z"));
                         break;
-					case VES_TANGENT:
-						xmlElem = vertexElem->FirstChildElement("tangent");
-						if (!xmlElem)
-						{
-							OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, "Missing <tangent> element.",
-								"XMLSerializer::readGeometry");
-						}
-						elem.baseVertexPointerToElement(pVert, &pFloat);
-
-						*pFloat++ = StringConverter::parseReal(
-							xmlElem->Attribute("x"));
-						*pFloat++ = StringConverter::parseReal(
-							xmlElem->Attribute("y"));
-						*pFloat++ = StringConverter::parseReal(
-							xmlElem->Attribute("z"));
-						break;
-					case VES_BINORMAL:
-						xmlElem = vertexElem->FirstChildElement("binormal");
-						if (!xmlElem)
-						{
-							OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, "Missing <binormal> element.",
-								"XMLSerializer::readGeometry");
-						}
-						elem.baseVertexPointerToElement(pVert, &pFloat);
-
-						*pFloat++ = StringConverter::parseReal(
-							xmlElem->Attribute("x"));
-						*pFloat++ = StringConverter::parseReal(
-							xmlElem->Attribute("y"));
-						*pFloat++ = StringConverter::parseReal(
-							xmlElem->Attribute("z"));
-						break;
                     case VES_DIFFUSE:
                         xmlElem = vertexElem->FirstChildElement("colour_diffuse");
                         if (!xmlElem)
@@ -1203,37 +1129,6 @@ namespace Ogre {
 
 	}
     //---------------------------------------------------------------------
-	void XMLMeshSerializer::writeExtremes(TiXmlElement* mMeshNode, const Mesh* m)
-	{
-		TiXmlElement* extremesNode = NULL;
-		int idx = 0;
-		for (Mesh::SubMeshIterator i = ((Mesh &)*m).getSubMeshIterator ();
-			 i.hasMoreElements (); i.moveNext (), ++idx)
-		{
-			SubMesh *sm = i.peekNext ();
-			if (sm->extremityPoints.empty())
-				continue; // do nothing
-
-			if (!extremesNode)
-				extremesNode = mMeshNode->InsertEndChild(TiXmlElement("extremes"))->ToElement();
-
-			TiXmlElement* submeshNode =
-				extremesNode->InsertEndChild(TiXmlElement("submesh_extremes"))->ToElement();
-
-			submeshNode->SetAttribute("index",  StringConverter::toString(idx));
-
-			for (std::vector<Vector3>::const_iterator v = sm->extremityPoints.begin ();
-				 v != sm->extremityPoints.end (); ++v)
-			{
-				TiXmlElement* vert = submeshNode->InsertEndChild(
-					TiXmlElement("position"))->ToElement();
-				vert->SetAttribute("x", StringConverter::toString(v->x));
-				vert->SetAttribute("y", StringConverter::toString(v->y));
-				vert->SetAttribute("z", StringConverter::toString(v->z));
-			}
-		}
-	}
-	//---------------------------------------------------------------------
 	void XMLMeshSerializer::readLodInfo(TiXmlElement*  lodNode)
 	{
 		
@@ -1365,32 +1260,6 @@ namespace Ogre {
 			faceListElem = faceListElem->NextSiblingElement();
 		}
         
-	}
-	//-----------------------------------------------------------------------------
-	void XMLMeshSerializer::readExtremes(TiXmlElement* extremesNode, Mesh *m)
-	{
-		LogManager::getSingleton().logMessage("Reading extremes...");
-
-		// Iterate over all children (submesh_extreme list)
-		for (TiXmlElement* elem = extremesNode->FirstChildElement();
-			 elem != 0; elem = elem->NextSiblingElement())
-		{
-			int index = StringConverter::parseInt(elem->Attribute("index"));
-
-			SubMesh *sm = m->getSubMesh(index);
-			sm->extremityPoints.clear ();
-			for (TiXmlElement* vert = elem->FirstChildElement();
-				 vert != 0; vert = vert->NextSiblingElement())
-			{
-				Vector3 v;
-				v.x = StringConverter::parseReal(vert->Attribute("x"));
-				v.y = StringConverter::parseReal(vert->Attribute("y"));
-				v.z = StringConverter::parseReal(vert->Attribute("z"));
-				sm->extremityPoints.push_back (v);
-			}
-		}
-
-		LogManager::getSingleton().logMessage("Extremes done.");
 	}
 	//-----------------------------------------------------------------------------
 	void XMLMeshSerializer::readPoses(TiXmlElement* posesNode, Mesh *m)

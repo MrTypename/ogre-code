@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -35,7 +31,7 @@ Torus Knot Software Ltd.
 namespace Ogre {
     /** GL surface descriptor. Points to a 2D surface that can be rendered to. 
     */
-    struct _OgrePrivate GLSurfaceDesc
+    struct GLSurfaceDesc
     {
     public:
         GLHardwarePixelBuffer *buffer;
@@ -44,7 +40,7 @@ namespace Ogre {
     
     /** Base class for GL Render Textures
     */
-    class _OgrePrivate GLRenderTexture: public RenderTexture
+    class GLRenderTexture: public RenderTexture
     {
     public:
         GLRenderTexture(const String &name, const GLSurfaceDesc &target);
@@ -55,7 +51,7 @@ namespace Ogre {
     
     /** Manager/factory for RenderTextures.
     */
-    class _OgrePrivate GLRTTManager: public Singleton<GLRTTManager>
+    class GLRTTManager: public Singleton<GLRTTManager>
     {
     public:
         virtual ~GLRTTManager();
@@ -90,7 +86,7 @@ namespace Ogre {
     /** RenderTexture for simple copying from frame buffer
     */
     class GLCopyingRTTManager;
-    class _OgrePrivate GLCopyingRenderTexture: public GLRenderTexture
+    class GLCopyingRenderTexture: public GLRenderTexture
     {
     public:
         GLCopyingRenderTexture(GLCopyingRTTManager *manager, const String &name, const GLSurfaceDesc &target);
@@ -101,7 +97,7 @@ namespace Ogre {
     /** Simple, copying manager/factory for RenderTextures. This is only used as the last fallback if
         both PBuffers and FBOs aren't supported.
     */
-    class _OgrePrivate GLCopyingRTTManager: public GLRTTManager
+    class GLCopyingRTTManager: public GLRTTManager
     {
     public:
         GLCopyingRTTManager();

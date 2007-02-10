@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -20,15 +20,14 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreCgProgram.h"
 #include "OgreGpuProgramManager.h"
 #include "OgreStringConverter.h"
+#include "OgreRoot.h"
+#include "OgreRenderSystem.h"
+#include "OgreRenderSystemCapabilities.h"
 #include "OgreLogManager.h"
 
 namespace Ogre {
@@ -171,28 +170,26 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    void CgProgram::buildConstantDefinitions() const
+    void CgProgram::populateParameterNames(GpuProgramParametersSharedPtr params)
     {
         // Derive parameter names from Cg
         assert(mCgProgram && "Cg program not loaded!");
-
-		mFloatLogicalToPhysical.bufferSize = 0;
-		mIntLogicalToPhysical.bufferSize = 0;
-		mConstantDefs.floatBufferSize = 0;
-		mConstantDefs.intBufferSize = 0;
-
-
-		recurseParams(cgGetFirstParameter(mCgProgram, CG_PROGRAM));
-	}
-	//---------------------------------------------------------------------
-	void CgProgram::recurseParams(CGparameter parameter, size_t contextArraySize) const
-	{
-		while (parameter != 0)
+        // Note use of 'leaf' format so we only get bottom-level params, not structs
+        CGparameter parameter = cgGetFirstLeafParameter(mCgProgram, CG_PROGRAM);
+        while (parameter != 0) 
         {
             // Look for uniform (non-sampler) parameters only
             // Don't bother enumerating unused parameters, especially since they will
             // be optimised out and therefore not in the indexed versions
             CGtype paramType = cgGetParameterType(parameter);
+            
+            // *** test
+            //String tempName = cgGetParameterName(parameter);
+            //size_t tempindex = cgGetParameterResourceIndex(parameter);
+            //LogManager::getSingleton().logMessage(
+            //    tempName + " -> " + StringConverter::toString(tempindex));
+
+            // *** end test
 
             if (cgGetParameterVariability(parameter) == CG_UNIFORM &&
                 paramType != CG_SAMPLER1D &&
@@ -203,223 +200,43 @@ namespace Ogre {
                 cgGetParameterDirection(parameter) != CG_OUT && 
                 cgIsParameterReferenced(parameter))
             {
-				int arraySize;
+                String paramName = cgGetParameterName(parameter);
+                size_t index = cgGetParameterResourceIndex(parameter);
 
-				switch(paramType)
-				{
-				case CG_STRUCT:
-					recurseParams(cgGetFirstStructParameter(parameter));
-					break;
-				case CG_ARRAY:
-					// Support only 1-dimensional arrays
-					arraySize = cgGetArraySize(parameter, 0);
-					recurseParams(cgGetArrayParameter(parameter, 0), (size_t)arraySize);
-					break;
-				default:
-					// Normal path (leaf)
-					String paramName = cgGetParameterName(parameter);
-					size_t logicalIndex = cgGetParameterResourceIndex(parameter);
-
-					// Get the parameter resource, to calculate the physical index
-					CGresource res = cgGetParameterResource(parameter);
-					bool isRegisterCombiner = false;
-					size_t regCombinerPhysicalIndex = 0;
-					switch (res)
-					{
-					case CG_COMBINER_STAGE_CONST0:
-						// register combiner, const 0
-						// the index relates to the texture stage; store this as (stage * 2) + 0
-						regCombinerPhysicalIndex = logicalIndex * 2;
-						isRegisterCombiner = true;
-						break;
-					case CG_COMBINER_STAGE_CONST1:
-						// register combiner, const 1
-						// the index relates to the texture stage; store this as (stage * 2) + 1
-						regCombinerPhysicalIndex = (logicalIndex * 2) + 1;
-						isRegisterCombiner = true;
-						break;
-					default:
-						// normal constant
-						break;
-					};
-
-					// Trim the '[0]' suffix if it exists, we will add our own indexing later
-					if (StringUtil::endsWith(paramName, "[0]", false))
-					{
-						paramName.erase(paramName.size() - 3);
-					}
-
-
-					GpuConstantDefinition def;
-					def.arraySize = contextArraySize;
-					mapTypeAndElementSize(paramType, isRegisterCombiner, def);
-
-					if (def.constType == GCT_UNKNOWN)
-					{
-						LogManager::getSingleton().logMessage(
-							"Problem parsing the following Cg Uniform: '"
-							+ paramName + "' in file " + mName);
-						// next uniform
-						continue;
-					}
-					if (isRegisterCombiner)
-					{
-						def.physicalIndex = regCombinerPhysicalIndex;
-					}
-					else
-					{
-						// base position on existing buffer contents
-						if (def.isFloat())
-						{
-							def.physicalIndex = mFloatLogicalToPhysical.bufferSize;
-						}
-						else
-						{
-							def.physicalIndex = mIntLogicalToPhysical.bufferSize;
-						}
-					}
-
-
-					mConstantDefs.map.insert(GpuConstantDefinitionMap::value_type(paramName, def));
-
-					// Record logical / physical mapping
-					if (def.isFloat())
-					{
-						OGRE_LOCK_MUTEX(mFloatLogicalToPhysical.mutex)
-						mFloatLogicalToPhysical.map.insert(
-							GpuLogicalIndexUseMap::value_type(logicalIndex, 
-								GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize)));
-						mFloatLogicalToPhysical.bufferSize += def.arraySize * def.elementSize;
-						mConstantDefs.floatBufferSize = mFloatLogicalToPhysical.bufferSize;
-					}
-					else
-					{
-						OGRE_LOCK_MUTEX(mIntLogicalToPhysical.mutex)
-						mIntLogicalToPhysical.map.insert(
-							GpuLogicalIndexUseMap::value_type(logicalIndex, 
-								GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize)));
-						mIntLogicalToPhysical.bufferSize += def.arraySize * def.elementSize;
-						mConstantDefs.intBufferSize = mIntLogicalToPhysical.bufferSize;
-					}
-
-					// Deal with array indexing
-					mConstantDefs.generateConstantDefinitionArrayEntries(paramName, def);
-
-					break;
-		
-				};
-					
+                // Get the parameter resource, so we know what type we're dealing with
+                CGresource res = cgGetParameterResource(parameter);
+                switch (res)
+                {
+                case CG_COMBINER_STAGE_CONST0:
+                    // register combiner, const 0
+                    // the index relates to the texture stage; store this as (stage * 2) + 0
+                    index = index * 2;
+                    break;
+                case CG_COMBINER_STAGE_CONST1:
+                    // register combiner, const 1
+                    // the index relates to the texture stage; store this as (stage * 2) + 1
+                    index = (index * 2) + 1;
+                    break;
+                default:
+                    // do nothing, normal constant
+                    break;
+                };
+                params->_mapParameterNameToIndex(paramName, index);
+                // setup constant definition
+                // is it float or int
+                GpuProgramParameters::ElementType elementType = GpuProgramParameters::ET_INT;
+                // NOTE: all float enums are grouped together and occur before CG_INT which is the first of the int enums
+                // CG_FIXED1 is the last float type
+                if (paramType <= CG_FIXED1)
+                    elementType = GpuProgramParameters::ET_REAL;
+                params->addConstantDefinition(paramName, index, 0, elementType);
             }
             // Get next
-            parameter = cgGetNextParameter(parameter);
+            parameter = cgGetNextLeafParameter(parameter);
         }
 
         
     }
-	//-----------------------------------------------------------------------
-	void CgProgram::mapTypeAndElementSize(CGtype cgType, bool isRegisterCombiner, 
-		GpuConstantDefinition& def) const
-	{
-		if (isRegisterCombiner)
-		{
-			// register combiners are the only single-float entries in our buffer
-			def.constType = GCT_FLOAT1;
-			def.elementSize = 1;
-		}
-		else
-		{
-			switch(cgType)
-			{
-			case CG_FLOAT:
-			case CG_FLOAT1:
-			case CG_HALF:
-			case CG_HALF1:
-				def.constType = GCT_FLOAT1;
-				def.elementSize = 4; // padded to 4 elements
-				break;
-			case CG_FLOAT2:
-			case CG_HALF2:
-				def.constType = GCT_FLOAT2;
-				def.elementSize = 4; // padded to 4 elements
-				break;
-			case CG_FLOAT3:
-			case CG_HALF3:
-				def.constType = GCT_FLOAT3;
-				def.elementSize = 4; // padded to 4 elements
-				break;
-			case CG_FLOAT4:
-			case CG_HALF4:
-				def.constType = GCT_FLOAT4;
-				def.elementSize = 4; 
-				break;
-			case CG_FLOAT2x2:
-			case CG_HALF2x2:
-				def.constType = GCT_MATRIX_2X2;
-				def.elementSize = 8; // Cg pads this to 2 float4s
-				break;
-			case CG_FLOAT2x3:
-			case CG_HALF2x3:
-				def.constType = GCT_MATRIX_2X3;
-				def.elementSize = 8; // Cg pads this to 2 float4s
-				break;
-			case CG_FLOAT2x4:
-			case CG_HALF2x4:
-				def.constType = GCT_MATRIX_2X4;
-				def.elementSize = 8; 
-				break;
-			case CG_FLOAT3x2:
-			case CG_HALF3x2:
-				def.constType = GCT_MATRIX_2X3;
-				def.elementSize = 12; // Cg pads this to 3 float4s
-				break;
-			case CG_FLOAT3x3:
-			case CG_HALF3x3:
-				def.constType = GCT_MATRIX_3X3;
-				def.elementSize = 12; // Cg pads this to 3 float4s
-				break;
-			case CG_FLOAT3x4:
-			case CG_HALF3x4:
-				def.constType = GCT_MATRIX_3X4;
-				def.elementSize = 12; 
-				break;
-			case CG_FLOAT4x2:
-			case CG_HALF4x2:
-				def.constType = GCT_MATRIX_4X2;
-				def.elementSize = 16; // Cg pads this to 4 float4s
-				break;
-			case CG_FLOAT4x3:
-			case CG_HALF4x3:
-				def.constType = GCT_MATRIX_4X3;
-				def.elementSize = 16; // Cg pads this to 4 float4s
-				break;
-			case CG_FLOAT4x4:
-			case CG_HALF4x4:
-				def.constType = GCT_MATRIX_4X4;
-				def.elementSize = 16; // Cg pads this to 4 float4s
-				break;
-			case CG_INT:
-			case CG_INT1:
-				def.constType = GCT_INT1;
-				def.elementSize = 4; // Cg pads this to int4
-				break;
-			case CG_INT2:
-				def.constType = GCT_INT2;
-				def.elementSize = 4; // Cg pads this to int4
-				break;
-			case CG_INT3:
-				def.constType = GCT_INT3;
-				def.elementSize = 4; // Cg pads this to int4
-				break;
-			case CG_INT4:
-				def.constType = GCT_INT4;
-				def.elementSize = 4; 
-				break;
-			default:
-				def.constType = GCT_UNKNOWN;
-				break;
-			};
-		}
-	}
     //-----------------------------------------------------------------------
     CgProgram::CgProgram(ResourceManager* creator, const String& name, 
         ResourceHandle handle, const String& group, bool isManual, 
@@ -452,7 +269,7 @@ namespace Ogre {
         freeCgArgs();
         // have to call this here reather than in Resource destructor
         // since calling virtual methods in base destructors causes crash
-        if (isLoaded())
+        if (mIsLoaded)
         {
             unload();
         }
@@ -464,8 +281,14 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     bool CgProgram::isSupported(void) const
     {
-        if (mCompileError || !isRequiredCapabilitiesSupported())
-            return false;
+		// If skeletal animation is being done, we need support for UBYTE4
+		if ((isSkeletalAnimationIncluded() && 
+			!Root::getSingleton().getRenderSystem()->getCapabilities()
+			->hasCapability(RSC_VERTEX_FORMAT_UBYTE4)) ||  
+			mCompileError)
+		{
+			return false;
+		}
 
 		StringVector::const_iterator i, iend;
         iend = mProfiles.end();

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,27 +20,34 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
+#include "OgreD3D9RenderSystem.h"
 #include "OgreRoot.h"
-#include "OgreD3D9Plugin.h"
+#include "OgreD3D9HLSLProgramFactory.h"
+
 namespace Ogre 
 {
-	D3D9Plugin* plugin;
+	D3D9RenderSystem* d3dRendPlugin;
+	D3D9HLSLProgramFactory* hlslProgramFactory;
 
-	extern "C" void _OgreD3D9Export dllStartPlugin(void) throw()
+	extern "C" void dllStartPlugin(void) throw()
 	{
-		plugin = new D3D9Plugin();
-		Root::getSingleton().installPlugin(plugin);
+		// Create the DirectX 8 rendering api
+		HINSTANCE hInst = GetModuleHandle( "RenderSystem_Direct3D9.dll" );
+		d3dRendPlugin = new D3D9RenderSystem( hInst );
+		// Register the render system
+		Root::getSingleton().addRenderSystem( d3dRendPlugin );
+
+        // create & register HLSL factory
+        hlslProgramFactory = new D3D9HLSLProgramFactory();
+        HighLevelGpuProgramManager::getSingleton().addFactory(hlslProgramFactory);
+
 	}
 
-	extern "C" void _OgreD3D9Export dllStopPlugin(void)
+	extern "C" void dllStopPlugin(void)
 	{
-		Root::getSingleton().uninstallPlugin(plugin);
-		delete plugin;
+		delete d3dRendPlugin;
+		delete hlslProgramFactory;
 	}
 }

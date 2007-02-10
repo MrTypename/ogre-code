@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -39,13 +35,6 @@ Torus Knot Software Ltd.
 #include "OgrePass.h"
 #include "OgreTextureUnitState.h"
 #include "OgreException.h"
-#include "OgreMaterialScriptCompiler.h"
-
-/** Set this to 0 if having problems with the new Material Script Compiler and want to use the original one.
-*/
-#ifndef OGRE_MATERIAL_SCRIPT_COMPILER
-#define OGRE_MATERIAL_SCRIPT_COMPILER 0
-#endif
 
 namespace Ogre {
 
@@ -56,8 +45,8 @@ namespace Ogre {
         return ms_Singleton;
     }
     MaterialManager& MaterialManager::getSingleton(void)
-    {
-        assert( ms_Singleton );  return ( *ms_Singleton );
+    {  
+        assert( ms_Singleton );  return ( *ms_Singleton );  
     }
 	String MaterialManager::DEFAULT_SCHEME_NAME = "Default";
     //-----------------------------------------------------------------------
@@ -67,13 +56,6 @@ namespace Ogre {
 	    mDefaultMagFilter = FO_LINEAR;
 	    mDefaultMipFilter = FO_POINT;
 		mDefaultMaxAniso = 1;
-
-		// Create primary thread copies of script compiler / serializer
-		// other copies for other threads may also be instantiated
-#if OGRE_MATERIAL_SCRIPT_COMPILER
-        OGRE_THREAD_POINTER_SET(mScriptCompiler, new MaterialScriptCompiler());
-#endif
-		OGRE_THREAD_POINTER_SET(mSerializer, new MaterialSerializer());
 
         // Loading order
         mLoadOrder = 100.0f;
@@ -102,17 +84,9 @@ namespace Ogre {
 		// Unregister with resource group manager
 		ResourceGroupManager::getSingleton()._unregisterResourceManager(mResourceType);
 		ResourceGroupManager::getSingleton()._unregisterScriptLoader(this);
-
-		// delete primary thread instances directly, other threads will delete
-		// theirs automatically when the threads end (part of boost::thread_specific_ptr)
-#if OGRE_MATERIAL_SCRIPT_COMPILER
-        OGRE_THREAD_POINTER_DELETE(mScriptCompiler);
-#endif
-		OGRE_THREAD_POINTER_DELETE(mSerializer);
-
     }
 	//-----------------------------------------------------------------------
-	Resource* MaterialManager::createImpl(const String& name, ResourceHandle handle,
+	Resource* MaterialManager::createImpl(const String& name, ResourceHandle handle, 
 		const String& group, bool isManual, ManualResourceLoader* loader,
         const NameValuePairList* params)
 	{
@@ -129,7 +103,7 @@ namespace Ogre {
 	    // Set up a lit base white material
 	    create("BaseWhite", ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME);
 	    // Set up an unlit base white material
-        MaterialPtr baseWhiteNoLighting = create("BaseWhiteNoLighting",
+        MaterialPtr baseWhiteNoLighting = create("BaseWhiteNoLighting", 
 			ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME);
         baseWhiteNoLighting->setLightingEnabled(false);
 
@@ -138,29 +112,7 @@ namespace Ogre {
     void MaterialManager::parseScript(DataStreamPtr& stream, const String& groupName)
     {
         // Delegate to serializer
-#if OGRE_MATERIAL_SCRIPT_COMPILER
-#if OGRE_THREAD_SUPPORT
-		// check we have an instance for this thread (should always have one for main thread)
-		if (!mScriptCompiler.get())
-		{
-			// create a new instance for this thread - will get deleted when
-			// the thread dies
-			mScriptCompiler.reset(new MaterialScriptCompiler());
-		}
-#endif
-        mScriptCompiler->parseScript(stream, groupName);
-#else
-#if OGRE_THREAD_SUPPORT
-		// check we have an instance for this thread (should always have one for main thread)
-		if (!mSerializer.get())
-		{
-			// create a new instance for this thread - will get deleted when
-			// the thread dies
-			mSerializer.reset(new MaterialSerializer());
-		}
-#endif
-        mSerializer->parseScript(stream, groupName);
-#endif
+        mSerializer.parseScript(stream, groupName);
     }
     //-----------------------------------------------------------------------
 	void MaterialManager::setDefaultTextureFiltering(TextureFilterOptions fo)
@@ -208,7 +160,7 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    void MaterialManager::setDefaultTextureFiltering(FilterOptions minFilter,
+    void MaterialManager::setDefaultTextureFiltering(FilterOptions minFilter, 
         FilterOptions magFilter, FilterOptions mipFilter)
     {
         mDefaultMinFilter = minFilter;
@@ -242,8 +194,8 @@ namespace Ogre {
 		else
 		{
 			// Create new
-			ret = static_cast<unsigned short>(mSchemes.size());
-			mSchemes[schemeName] = ret;
+			ret = mSchemes.size();
+			mSchemes[schemeName] = ret;			
 		}
 		return ret;
 
@@ -281,9 +233,10 @@ namespace Ogre {
 		else
 		{
 			mActiveSchemeName = schemeName;
-			mActiveSchemeIndex = i->second;
+			mActiveSchemeIndex = i->second;		
 		}
 
 	}
     //-----------------------------------------------------------------------
+
 }

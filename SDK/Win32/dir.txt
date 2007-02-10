@@ -9,10 +9,9 @@ OgreSDK/
 			CEGUI headers (inc subdirs)
 		ode/
 			ODE headers (inc subdirs)
-		OIS/
-			OIS headers (inc subdirs)
 		opt/
-			Plugin headers
+			OctreeSceneManager headers
+			BspSceneManager headers
 	bin/
 		debug/
 			Debug dependency dlls
@@ -27,9 +26,13 @@ OgreSDK/
 		OgreGuiRenderer[_d].lib 
 		Debug symbols for the above
 		CEGUIBase[_d].lib
-		OIS[_d].lib
 		opt/
-			Plugin libs
+			debug/
+				OctreeSceneManager debug lib
+				BspSceneManager debug lib
+			release/
+				OctreeSceneManager release lib
+				BspSceneManager release lib
 	docs/
 		Readme.html
 		manual/

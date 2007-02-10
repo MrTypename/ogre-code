@@ -7,7 +7,6 @@ Plugin_BSPSceneManager_la_SOURCES = OgreBspLevel.cpp \
                              OgreBspResourceManager.cpp \
                              OgreBspSceneManager.cpp \
                              OgreBspSceneManagerDll.cpp \
-							 OgreBspSceneManagerPlugin.cpp \
 							 OgreBspSceneNode.cpp \
                              OgreQuake3ShaderManager.cpp \
                              OgreQuake3Shader.cpp \

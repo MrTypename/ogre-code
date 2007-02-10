@@ -12,8 +12,7 @@
 
 namespace Ogre {
 
-class _OgrePrivate GLXGLSupport : public GLSupport
-{
+class GLXGLSupport : public GLSupport {
 public:
 	GLXGLSupport();
 	~GLXGLSupport();

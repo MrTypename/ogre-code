@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __Vector2_H__
@@ -46,7 +42,12 @@ namespace Ogre
     class _OgreExport Vector2
     {
     public:
-        Real x, y;
+        union {
+            struct {
+                Real x, y;
+            };
+            Real val[2];
+        };
 
     public:
         inline Vector2()
@@ -98,17 +99,6 @@ namespace Ogre
 
             return *(&x+i);
         }
-
-		/// Pointer accessor for direct copying
-		inline Real* ptr()
-		{
-			return &x;
-		}
-		/// Pointer accessor for direct copying
-		inline const Real* ptr() const
-		{
-			return &x;
-		}
 
         /** Assigns the value of the other vector.
             @param

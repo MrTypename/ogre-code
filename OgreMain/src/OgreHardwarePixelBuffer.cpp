@@ -2,9 +2,9 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -158,7 +154,7 @@ namespace Ogre
 	void HardwarePixelBuffer::readData(size_t offset, size_t length, void* pDest)
 	{
 		// TODO
-		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
+		OGRE_EXCEPT(Exception::UNIMPLEMENTED_FEATURE,
 				"Reading a byte range is not implemented. Use blitToMemory.",
 				"HardwarePixelBuffer::readData");
 	}
@@ -168,7 +164,7 @@ namespace Ogre
 			bool discardWholeBuffer)
 	{
 		// TODO
-		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
+		OGRE_EXCEPT(Exception::UNIMPLEMENTED_FEATURE,
 				"Writing a byte range is not implemented. Use blitFromMemory.",
 				"HardwarePixelBuffer::writeData");
 	}
@@ -176,7 +172,7 @@ namespace Ogre
     
     RenderTexture *HardwarePixelBuffer::getRenderTarget(size_t)
     {
-        OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
+        OGRE_EXCEPT(Exception::UNIMPLEMENTED_FEATURE,
 				"Not yet implemented for this rendersystem.",
 				"HardwarePixelBuffer::getRenderTarget");
     }

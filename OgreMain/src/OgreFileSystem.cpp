@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -66,63 +62,33 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    static bool is_reserved_dir (const char *fn)
-    {
-        return (fn [0] == '.' && (fn [1] == 0 || (fn [1] == '.' && fn [2] == 0)));
-    }
-    //-----------------------------------------------------------------------
-    static bool is_absolute_path(const char* path)
-    {
-#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-        if (isalpha(uchar(path[0])) && path[1] == ':')
-            return true;
-#endif
-        return path[0] == '/' || path[0] == '\\';
-    }
-    //-----------------------------------------------------------------------
-    static String concatenate_path(const String& base, const String& name)
-    {
-        if (base.empty() || is_absolute_path(name.c_str()))
-            return name;
-        else
-            return base + '/' + name;
-    }
-    //-----------------------------------------------------------------------
     void FileSystemArchive::findFiles(const String& pattern, bool recursive, 
-        bool dirs, StringVector* simpleList, FileInfoList* detailList)
+        StringVector* simpleList, FileInfoList* detailList, 
+        const String& currentDir)
     {
+		// parsing requires locking due to saved returns
+		OGRE_LOCK_AUTO_MUTEX
+
         long lHandle, res;
         struct _finddata_t tagData;
 
-        // pattern can contain a directory name, separate it from mask
-        size_t pos1 = pattern.rfind ('/');
-        size_t pos2 = pattern.rfind ('\\');
-        if (pos1 == pattern.npos || ((pos2 != pattern.npos) && (pos1 < pos2)))
-            pos1 = pos2;
-        String directory;
-        if (pos1 != pattern.npos)
-            directory = pattern.substr (0, pos1 + 1);
-
-        String full_pattern = concatenate_path(mName, pattern);
-
-        lHandle = _findfirst(full_pattern.c_str(), &tagData);
+        lHandle = _findfirst(pattern.c_str(), &tagData);
         res = 0;
         while (lHandle != -1 && res != -1)
         {
-            if ((dirs == ((tagData.attrib & _A_SUBDIR) != 0)) &&
-                (!dirs || !is_reserved_dir (tagData.name)))
+            if(!(tagData.attrib & _A_SUBDIR))
             {
                 if (simpleList)
                 {
-                    simpleList->push_back(directory + tagData.name);
+                    simpleList->push_back(currentDir + tagData.name);
                 }
                 else if (detailList)
                 {
                     FileInfo fi;
-                    fi.archive = this;
-                    fi.filename = directory + tagData.name;
+					fi.archive = this;
+                    fi.filename = currentDir + tagData.name;
                     fi.basename = tagData.name;
-                    fi.path = directory;
+                    fi.path = currentDir;
                     fi.compressedSize = tagData.size;
                     fi.uncompressedSize = tagData.size;
                     detailList->push_back(fi);
@@ -132,45 +98,70 @@ namespace Ogre {
         }
         // Close if we found any files
         if(lHandle != -1)
+        {
             _findclose(lHandle);
+        }
 
         // Now find directories
         if (recursive)
         {
-            String base_dir = mName;
-            if (!directory.empty ())
-            {
-                base_dir = concatenate_path(mName, directory);
-                // Remove the last '/'
-                base_dir.erase (base_dir.length () - 1);
-            }
-            base_dir.append ("/*");
 
-            // Remove directory name from pattern
-            String mask ("/");
-            if (pos1 != pattern.npos)
-                mask.append (pattern.substr (pos1 + 1));
-            else
-                mask.append (pattern);
-
-            lHandle = _findfirst(base_dir.c_str (), &tagData);
+            lHandle = _findfirst("*", &tagData);
             res = 0;
             while (lHandle != -1 && res != -1)
             {
-                if ((tagData.attrib & _A_SUBDIR) &&
-                    !is_reserved_dir (tagData.name))
+                if((tagData.attrib & _A_SUBDIR)
+                    && strcmp(tagData.name, ".")
+                    && strcmp(tagData.name, ".."))
                 {
                     // recurse
-                    base_dir = directory;
-                    base_dir.append (tagData.name).append (mask);
-                    findFiles(base_dir, recursive, dirs, simpleList, detailList);
+                    String dir = currentDir + tagData.name + "/";
+                    pushDirectory(tagData.name);
+                    findFiles(pattern, recursive, simpleList, detailList, dir);
+                    popDirectory();
                 }
                 res = _findnext( lHandle, &tagData );
             }
             // Close if we found any files
             if(lHandle != -1)
+            {
                 _findclose(lHandle);
+            }
+
         }
+
+    }
+    //-----------------------------------------------------------------------
+    void FileSystemArchive::changeDirectory(const String& dir) const
+    {
+        if(chdir(dir.c_str()) == -1)
+        {
+            OGRE_EXCEPT(Exception::ERR_FILE_NOT_FOUND, 
+                "Cannot open requested directory " + dir, 
+                "FileSystemArchive::changeDirectory");
+        }
+    }
+    //-----------------------------------------------------------------------
+    void FileSystemArchive::pushDirectory(const String& dir) const
+    {
+        // get current directory and push it onto the stack
+        getcwd(mTmpPath, OGRE_MAX_PATH);
+        mDirectoryStack.push_back(String(mTmpPath));
+        changeDirectory(dir);
+
+    }
+    //-----------------------------------------------------------------------
+    void FileSystemArchive::popDirectory(void) const
+    {
+        if (mDirectoryStack.empty())
+        {
+            OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
+                "No directories left in the stack.", 
+                "FileSystemArchive::popDirectory");
+        }
+        changeDirectory(mDirectoryStack.back());
+        mDirectoryStack.pop_back();
+
     }
     //-----------------------------------------------------------------------
     FileSystemArchive::~FileSystemArchive()
@@ -180,7 +171,11 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void FileSystemArchive::load()
     {
-        // do nothing here, what has to be said will be said later
+        mBasePath = mName;
+        // Check we can change to it
+        pushDirectory(mBasePath);
+        // return to previous
+        popDirectory();
     }
     //-----------------------------------------------------------------------
     void FileSystemArchive::unload()
@@ -190,17 +185,22 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     DataStreamPtr FileSystemArchive::open(const String& filename) const
     {
-        String full_path = concatenate_path(mName, filename);
+		// directory change requires locking due to saved returns
+		OGRE_LOCK_AUTO_MUTEX
 
+		pushDirectory(mBasePath);
         // Use filesystem to determine size 
         // (quicker than streaming to the end and back)
         struct stat tagStat;
-	int ret = stat(full_path.c_str(), &tagStat);
+        int ret = stat(filename.c_str(), &tagStat);
         assert(ret == 0 && "Problem getting file size" );
+
 
         // Always open in binary mode
         std::ifstream *origStream = new std::ifstream();
-        origStream->open(full_path.c_str(), std::ios::in | std::ios::binary);
+        origStream->open(filename.c_str(), std::ios::in | std::ios::binary);
+
+        popDirectory();
 
         // Should check ensure open succeeded, in case fail for some reason.
         if (origStream->fail())
@@ -217,54 +217,83 @@ namespace Ogre {
         return DataStreamPtr(stream);
     }
     //-----------------------------------------------------------------------
-    StringVectorPtr FileSystemArchive::list(bool recursive, bool dirs)
+    StringVectorPtr FileSystemArchive::list(bool recursive)
     {
 		// directory change requires locking due to saved returns
+		OGRE_LOCK_AUTO_MUTEX
+
+		pushDirectory(mBasePath);
         StringVectorPtr ret(new StringVector());
 
-        findFiles("*", recursive, dirs, ret.getPointer(), 0);
+        findFiles("*", recursive, ret.getPointer(), 0);
+
+        popDirectory();
 
         return ret;
     }
     //-----------------------------------------------------------------------
-    FileInfoListPtr FileSystemArchive::listFileInfo(bool recursive, bool dirs)
+    FileInfoListPtr FileSystemArchive::listFileInfo(bool recursive)
     {
+		// directory change requires locking due to saved returns
+		OGRE_LOCK_AUTO_MUTEX
+
+        pushDirectory(mBasePath);
         FileInfoListPtr ret(new FileInfoList());
 
-        findFiles("*", recursive, dirs, 0, ret.getPointer());
+        findFiles("*", recursive, 0, ret.getPointer());
+
+        popDirectory();
 
         return ret;
     }
     //-----------------------------------------------------------------------
-    StringVectorPtr FileSystemArchive::find(const String& pattern,
-                                            bool recursive, bool dirs)
+    StringVectorPtr FileSystemArchive::find(const String& pattern, bool recursive)
     {
+		// directory change requires locking due to saved returns
+		OGRE_LOCK_AUTO_MUTEX
+
+        pushDirectory(mBasePath);
         StringVectorPtr ret(new StringVector());
 
-        findFiles(pattern, recursive, dirs, ret.getPointer(), 0);
+        findFiles(pattern, recursive, ret.getPointer(), 0);
+
+        popDirectory();
 
         return ret;
 
     }
     //-----------------------------------------------------------------------
     FileInfoListPtr FileSystemArchive::findFileInfo(const String& pattern, 
-        bool recursive, bool dirs)
+        bool recursive)
     {
+		// directory change requires locking due to saved returns
+		OGRE_LOCK_AUTO_MUTEX
+
+        pushDirectory(mBasePath);
         FileInfoListPtr ret(new FileInfoList());
 
-        findFiles(pattern, recursive, dirs, 0, ret.getPointer());
+        findFiles(pattern, recursive, 0, ret.getPointer());
+
+        popDirectory();
 
         return ret;
     }
     //-----------------------------------------------------------------------
 	bool FileSystemArchive::exists(const String& filename)
 	{
-        String full_path = concatenate_path(mName, filename);
+		// directory change requires locking due to saved returns
+		OGRE_LOCK_AUTO_MUTEX
+
+		bool ret;
+        pushDirectory(mBasePath);
 
         struct stat tagStat;
-        bool ret = (stat(full_path.c_str(), &tagStat) == 0);
+        ret = (stat(filename.c_str(), &tagStat) == 0);
+
+		popDirectory();
 
 		return ret;
+		
 	}
     //-----------------------------------------------------------------------
     const String& FileSystemArchiveFactory::getType(void) const

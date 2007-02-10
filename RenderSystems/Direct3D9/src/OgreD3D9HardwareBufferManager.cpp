@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9HardwareBufferManager.h"
@@ -74,10 +70,7 @@ namespace Ogre {
 #endif
 		D3D9HardwareVertexBuffer* vbuf = new D3D9HardwareVertexBuffer(
 			vertexSize, numVerts, usage, mlpD3DDevice, false, useShadowBuffer);
-		{
-			OGRE_LOCK_MUTEX(mVertexBuffersMutex)
-			mVertexBuffers.insert(vbuf);
-		}
+		mVertexBuffers.insert(vbuf);
         return HardwareVertexBufferSharedPtr(vbuf);
     }
     //-----------------------------------------------------------------------
@@ -106,10 +99,7 @@ namespace Ogre {
 #endif
 		D3D9HardwareIndexBuffer* idx = new D3D9HardwareIndexBuffer(
 			itype, numIndexes, usage, mlpD3DDevice, false, useShadowBuffer);
-		{
-			OGRE_LOCK_MUTEX(mIndexBuffersMutex)
-			mIndexBuffers.insert(idx);
-		}
+		mIndexBuffers.insert(idx);
 		return HardwareIndexBufferSharedPtr(idx);
             
     }
@@ -129,32 +119,26 @@ namespace Ogre {
 		size_t iCount = 0;
 		size_t vCount = 0;
 
-		
+		VertexBufferList::iterator v, vend;
+		vend = mVertexBuffers.end();
+		for (v = mVertexBuffers.begin(); v != vend; ++v)
 		{
-			OGRE_LOCK_MUTEX(mVertexBuffersMutex)
-			VertexBufferList::iterator v, vend;
-			vend = mVertexBuffers.end();
-			for (v = mVertexBuffers.begin(); v != vend; ++v)
-			{
-				D3D9HardwareVertexBuffer* vbuf = 
-					static_cast<D3D9HardwareVertexBuffer*>(*v);
-				if (vbuf->releaseIfDefaultPool())
-					vCount++;
-			}
+			D3D9HardwareVertexBuffer* vbuf = 
+				static_cast<D3D9HardwareVertexBuffer*>(*v);
+			if (vbuf->releaseIfDefaultPool())
+				vCount++;
 		}
 
-		{
-			OGRE_LOCK_MUTEX(mIndexBuffersMutex)
-			IndexBufferList::iterator i, iend;
-			iend = mIndexBuffers.end();
-			for (i = mIndexBuffers.begin(); i != iend; ++i)
-			{
-				D3D9HardwareIndexBuffer* ibuf = 
-					static_cast<D3D9HardwareIndexBuffer*>(*i);
-				if (ibuf->releaseIfDefaultPool())
-					iCount++;
 
-			}
+		IndexBufferList::iterator i, iend;
+		iend = mIndexBuffers.end();
+		for (i = mIndexBuffers.begin(); i != iend; ++i)
+		{
+			D3D9HardwareIndexBuffer* ibuf = 
+				static_cast<D3D9HardwareIndexBuffer*>(*i);
+			if (ibuf->releaseIfDefaultPool())
+				iCount++;
+
 		}
 
 		LogManager::getSingleton().logMessage("D3D9HardwareBufferManager released:");
@@ -169,31 +153,26 @@ namespace Ogre {
 		size_t iCount = 0;
 		size_t vCount = 0;
 
+		VertexBufferList::iterator v, vend;
+		vend = mVertexBuffers.end();
+		for (v = mVertexBuffers.begin(); v != vend; ++v)
 		{
-			OGRE_LOCK_MUTEX(mVertexBuffersMutex)
-			VertexBufferList::iterator v, vend;
-			vend = mVertexBuffers.end();
-			for (v = mVertexBuffers.begin(); v != vend; ++v)
-			{
-				D3D9HardwareVertexBuffer* vbuf = 
-					static_cast<D3D9HardwareVertexBuffer*>(*v);
-				if (vbuf->recreateIfDefaultPool(mlpD3DDevice))
-					vCount++;
-			}
+			D3D9HardwareVertexBuffer* vbuf = 
+				static_cast<D3D9HardwareVertexBuffer*>(*v);
+			if (vbuf->recreateIfDefaultPool(mlpD3DDevice))
+				vCount++;
 		}
 
-		{
-			OGRE_LOCK_MUTEX(mIndexBuffersMutex)
-			IndexBufferList::iterator i, iend;
-			iend = mIndexBuffers.end();
-			for (i = mIndexBuffers.begin(); i != iend; ++i)
-			{
-				D3D9HardwareIndexBuffer* ibuf = 
-					static_cast<D3D9HardwareIndexBuffer*>(*i);
-				if (ibuf->recreateIfDefaultPool(mlpD3DDevice))
-					iCount++;
 
-			}
+		IndexBufferList::iterator i, iend;
+		iend = mIndexBuffers.end();
+		for (i = mIndexBuffers.begin(); i != iend; ++i)
+		{
+			D3D9HardwareIndexBuffer* ibuf = 
+				static_cast<D3D9HardwareIndexBuffer*>(*i);
+			if (ibuf->recreateIfDefaultPool(mlpD3DDevice))
+				iCount++;
+
 		}
 
 		LogManager::getSingleton().logMessage("D3D9HardwareBufferManager recreated:");

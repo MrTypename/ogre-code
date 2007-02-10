@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __Mesh_H__
@@ -106,10 +102,8 @@ namespace Ogre {
         */
         SubMeshList mSubMeshList;
 	
-        /** Internal method for making the space for a vertex element to hold tangents. */
-        void organiseTangentsBuffer(VertexData *vertexData, 
-			VertexElementSemantic targetSemantic, unsigned short index, 
-			unsigned short sourceTexCoordSet);
+        /** Internal method for making the space for a 3D texture coord buffer to hold tangents. */
+        void organiseTangentsBuffer(VertexData *vertexData, unsigned short destCoordSet);
 
     public:
 		/** A hashmap used to store optional SubMesh names.
@@ -174,8 +168,6 @@ namespace Ogre {
 
         /// @copydoc Resource::loadImpl
         void loadImpl(void);
-		/// @copydoc Resource::postLoadImpl
-		void postLoadImpl(void);
         /// @copydoc Resource::unloadImpl
         void unloadImpl(void);
 		/// @copydoc Resource::calculateSize
@@ -191,6 +183,9 @@ namespace Ogre {
         Mesh(ResourceManager* creator, const String& name, ResourceHandle handle,
             const String& group, bool isManual = false, ManualResourceLoader* loader = 0);
         ~Mesh();
+
+		/// @copydoc Resource::load
+		void load(void);
 
 		// NB All methods below are non-virtual since they will be
         // called in the rendering loop - speed is of the essence.
@@ -561,39 +556,27 @@ namespace Ogre {
         @par
             The prerequisites for calling this method include that the vertex data used by every
             SubMesh has both vertex normals and 2D texture coordinates.
-		@param targetSemantic The semantic to store the tangents in. Defaults to 
-			the explicit tangent binding, but note that this is only usable on more
-			modern hardware (Shader Model 2), so if you need portability with older
-			cards you should change this to a texture coordinate binding instead.
         @param sourceTexCoordSet The texture coordinate index which should be used as the source
             of 2D texture coordinates, with which to calculate the tangents.
-        @param index The element index, ie the texture coordinate set which should be used to store the 3D
-            coordinates representing a tangent vector per vertex, if targetSemantic is 
-			VES_TEXTURE_COORDINATES. If this already exists, it will be overwritten.
+        @param destTexCoordSet The texture coordinate set which should be used to store the 3D
+            coordinates representing a tangent vector per vertex. If this already exists, it
+            will be overwritten.
         */
-        void buildTangentVectors(VertexElementSemantic targetSemantic = VES_TANGENT,
-			unsigned short sourceTexCoordSet = 0, unsigned short index = 0);
+        void buildTangentVectors(unsigned short sourceTexCoordSet = 0, unsigned short destTexCoordSet = 1);
 
-        /** Ask the mesh to suggest parameters to a future buildTangentVectors call, 
-			should you wish to use texture coordinates to store the tangents. 
+        /** Ask the mesh to suggest parameters to a future buildTangentVectors call. 
         @remarks
             This helper method will suggest source and destination texture coordinate sets
             for a call to buildTangentVectors. It will detect when there are inappropriate
             conditions (such as multiple geometry sets which don't agree). 
             Moreover, it will return 'true' if it detects that there are aleady 3D 
             coordinates in the mesh, and therefore tangents may have been prepared already.
-		@param targetSemantic The semantic you intend to use to store the tangents
-			if they are not already present;
-			most likely options are VES_TEXTURE_COORDINATES or VES_TANGENT; you should
-			use texture coordinates if you want compatibility with older, pre-SM2
-			graphics cards, and the tangent binding otherwise.
         @param outSourceCoordSet Reference to a source texture coordinate set which 
             will be populated
-        @param outIndex Reference to a destination element index (e.g. texture coord set)
-			which will be populated
+        @param outDestCoordSet Reference to a destination texture coordinate set which 
+            will be populated
         */
-        bool suggestTangentVectorBuildParams(VertexElementSemantic targetSemantic,
-			unsigned short& outSourceCoordSet, unsigned short& outIndex);
+        bool suggestTangentVectorBuildParams(unsigned short& outSourceCoordSet, unsigned short& outDestCoordSet);
 
         /** Builds an edge list for this mesh, which can be used for generating a shadow volume
             among other things.
@@ -645,20 +628,6 @@ namespace Ogre {
 		/** Returns whether this mesh has an attached edge list. */
 		bool isEdgeListBuilt(void) const { return mEdgeListsBuilt; }
 
-        /** Prepare matrices for software indexed vertex blend.
-            @remarks
-                This function organise bone indexed matrices to blend indexed matrices,
-                so software vertex blending can access to the matrix via blend index
-                directly.
-            @param blendMatrices Pointer to an array of matrix pointers to store
-                prepared results, which indexed by blend index
-            @param boneMatrices Pointer to an array of matrices to be used to blend,
-                which indexed by bone index
-            @param indexMap The index map used to translate blend index to bone index
-        */
-        static void prepareMatricesForVertexBlend(const Matrix4** blendMatrices,
-            const Matrix4* boneMatrices, const IndexMap& indexMap);
-
         /** Performs a software indexed vertex blend, of the kind used for
             skeletal animation although it can be used for other purposes. 
         @remarks
@@ -671,15 +640,14 @@ namespace Ogre {
             and normal buffers which will be updated with the blended versions.
             Note that the layout of the source and target position / normal 
             buffers must be identical, ie they must use the same buffer indexes
-        @param blendMatrices Pointer to an array of matrix pointers to be used to blend,
-            indexed by blend indices in the sourceVertexData
-        @param numMatrices Number of matrices in the blendMatrices, it might be used
-            as a hint for optimisation.
+        @param pMatrices Pointer to an array of matrices to be used to blend
+        @param pIndexMap Pointer to an array of indices to translate blend indices
+            in the sourceVertexData to the index of pMatrices
         @param blendNormals If true, normals are blended as well as positions
         */
         static void softwareVertexBlend(const VertexData* sourceVertexData, 
-            const VertexData* targetVertexData,
-            const Matrix4* const* blendMatrices, size_t numMatrices,
+            const VertexData* targetVertexData, const Matrix4* pMatrices, 
+            const unsigned short* pIndexMap,
             bool blendNormals);
 
         /** Performs a software vertex morph, of the kind used for

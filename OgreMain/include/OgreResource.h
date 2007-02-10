@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef _Resource_H__
@@ -72,36 +68,6 @@ namespace Ogre {
     {
 	public:
 		OGRE_AUTO_MUTEX // public to allow external locking
-		class Listener
-		{
-		public:
-		   	Listener() {}
-			virtual ~Listener() {}
-
-			/** Callback to indicate that background loading has completed.
-			@remarks
-				This callback is only relevant when a Resource has been
-				marked as background loaded (@see Resource::setBackgroundLoaded)
-				, and occurs when that loading has completed. The call itself
-				does not itself occur in the thread which is doing the loading;
-				when loading is complete a response indicator is placed with the
-				ResourceGroupManager, which will then be sent back to the 
-				listener as part of the application's primary frame loop thread.
-			*/
-			virtual void backgroundLoadingComplete(Resource*) {}
-			
-		};
-		
-		/// Enum identifying the loading state of the resource
-		enum LoadingState
-		{
-			/// Not loaded
-			LOADSTATE_UNLOADED,
-			/// Loading is in progress
-			LOADSTATE_LOADING,
-			/// Fully loaded
-			LOADSTATE_LOADED
-		};
     protected:
 		/// Creator
 		ResourceManager* mCreator;
@@ -112,11 +78,7 @@ namespace Ogre {
 		/// Numeric handle for more efficient look up than name
         ResourceHandle mHandle;
 		/// Is the resource currently loaded?
-        volatile LoadingState mLoadingState;
-		/// Is this resource going to be background loaded? Only applicable for multithreaded
-		volatile bool mIsBackgroundLoaded;
-		/// Mutex to cover the status of loading
-		OGRE_MUTEX(mLoadingStatusMutex)
+        bool mIsLoaded;
 		/// The size of the resource in bytes
         size_t mSize;
 		/// Is this file manually loaded?
@@ -126,43 +88,14 @@ namespace Ogre {
 		/// Optional manual loader; if provided, data is loaded from here instead of a file
 		ManualResourceLoader* mLoader;
 
-		typedef std::list<Listener*> ListenerList;
-		ListenerList mListenerList;
-
 		/** Protected unnamed constructor to prevent default construction. 
 		*/
 		Resource() 
-			: mCreator(0), mHandle(0), mLoadingState(LOADSTATE_UNLOADED), 
-			mIsBackgroundLoaded(false),	mSize(0), mIsManual(0), mLoader(0)
+			: mCreator(0), mHandle(0), mIsLoaded(false), mSize(0), mIsManual(0), mLoader(0)
 		{ 
 		}
 
-		/** Internal hook to perform actions before the load process, but
-			after the resource has been marked as 'loading'.
-		@note Mutex will have already been acquired by the loading thread.
-			Also, this call will occur even when using a ManualResourceLoader 
-			(when loadImpl is not actually called)
-		*/
-		virtual void preLoadImpl(void) {}
-		/** Internal hook to perform actions after the load process, but
-			before the resource has been marked as fully loaded.
-		@note Mutex will have already been acquired by the loading thread.
-			Also, this call will occur even when using a ManualResourceLoader 
-			(when loadImpl is not actually called)
-		*/
-		virtual void postLoadImpl(void) {}
-
-		/** Internal hook to perform actions before the unload process.
-		@note Mutex will have already been acquired by the unloading thread.
-		*/
-		virtual void preUnloadImpl(void) {}
-		/** Internal hook to perform actions after the unload process, but
-		before the resource has been marked as fully unloaded.
-		@note Mutex will have already been acquired by the unloading thread.
-		*/
-		virtual void postUnloadImpl(void) {}
-
-		/** Internal implementation of the meat of the 'load' action, only called if this 
+		/** Internal implementation of the 'load' action, only called if this 
 			resource is not being loaded from a ManualResourceLoader. 
 		*/
 		virtual void loadImpl(void) = 0;
@@ -172,9 +105,6 @@ namespace Ogre {
 		virtual void unloadImpl(void) = 0;
 		/** Calculate the size of a resource; this will only be called after 'load' */
 		virtual size_t calculateSize(void) const = 0;
-
-		/// Queue the firing of background loading complete event
-		virtual void queueFireBackgroundLoadingComplete(void);
 
     public:
 		/** Standard constructor.
@@ -206,12 +136,10 @@ namespace Ogre {
 			If the resource is loaded from a file, loading is automatic. If not,
 			if for example this resource gained it's data from procedural calls
 			rather than loading from a file, then this resource will not reload 
-			on it's own.
-		@param backgroundThread Indicates whether the caller of this method is
-			the background resource loading thread. 
+			on it's own
 			
         */
-        virtual void load(bool backgroundThread = false);
+        virtual void load(void);
 
 		/** Reloads the resource, if it is already loaded.
 		@remarks
@@ -266,69 +194,9 @@ namespace Ogre {
         */
         bool isLoaded(void) const 
         { 
-			// No lock required to read this state since no modify
-            return (mLoadingState == LOADSTATE_LOADED); 
+			OGRE_LOCK_AUTO_MUTEX
+            return mIsLoaded; 
         }
-
-		/** Returns whether the resource is currently in the process of
-			background loading.
-		*/
-		LoadingState isLoading() const
-		{
-			return mLoadingState;
-		}
-
-		/** Returns the current loading state.
-		*/
-		LoadingState getLoadingState() const
-		{
-			return mLoadingState;
-		}
-
-
-
-		/** Returns whether this Resource has been earmarked for background loading.
-		@remarks
-			This option only makes sense when you have built Ogre with 
-			thread support (OGRE_THREAD_SUPPORT). If a resource has been marked
-			for background loading, then it won't load on demand like normal
-			when load() is called. Instead, it will ignore request to load()
-			except if the caller indicates it is the background loader. Any
-			other users of this resource should check isLoaded(), and if that
-			returns false, don't use the resource and come back later.
-		*/
-		bool isBackgroundLoaded(void) const { return mIsBackgroundLoaded; }
-
-		/** Tells the resource whether it is background loaded or not.
-		@remarks
-			@see Resource::isBackgroundLoaded . Note that calling this only
-			defers the normal on-demand loading behaviour of a resource, it
-			does not actually set up a thread to make sure the resource gets
-			loaded in the background. You should use ResourceBackgroundLoadingQueue
-			to manage the actual loading (which will call this method itself).
-		*/
-		void setBackgroundLoaded(bool bl) { mIsBackgroundLoaded = bl; }
-
-		/** Escalates the loading of a background loaded resource. 
-		@remarks
-			If a resource is set to load in the background, but something needs
-			it before it's been loaded, there could be a problem. If the user
-			of this resource really can't wait, they can escalate the loading
-			which basically pulls the loading into the current thread immediately.
-			If the resource is already being loaded but just hasn't quite finished
-			then this method will simply wait until the background load is complete.
-		*/
-		void escalateLoading();
-
-		/** Register a listener on this resource.
-			@see Resource::Listener
-		*/
-		void addListener(Listener* lis);
-
-		/** Remove a listener on this resource.
-			@see Resource::Listener
-		*/
-		void removeListener(Listener* lis);
 
 		/// Gets the group which this resource is a member of
 		const String& getGroup(void) { return mGroup; }

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2006 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -35,7 +31,6 @@ Torus Knot Software Ltd.
 #include "OgreLogManager.h"
 #include "OgreStringConverter.h"
 #include "OgreGLXUtils.h"
-#include "OgreWindowEventUtilities.h"
 
 #include <iostream>
 #include <algorithm>
@@ -59,8 +54,8 @@ namespace Ogre
 
 //-------------------------------------------------------------------------------------------------//
 GLXWindow::GLXWindow(Display *display) :
-	mDisplay(display), mWindow(0), mGlxContext(0), mVisualInfo(0), mDelVisualInfo(false), 
-	mClosed(false), mVisible(true), mFullScreen(false), mOldMode(-1), mContext(0)
+	mDisplay(display), mWindow(0), mGlxContext(0), mClosed(false), mVisible(true), 
+	mFullScreen(false), mOldMode(-1), mContext(0) 
 {
 	mActive = false;
 }
@@ -68,9 +63,6 @@ GLXWindow::GLXWindow(Display *display) :
 //-------------------------------------------------------------------------------------------------//
 GLXWindow::~GLXWindow() 
 {
-	if (mDelVisualInfo && mVisualInfo)
-		XFree(mVisualInfo);
-
 	if(mGlxContext)
 		glXDestroyContext(mDisplay, mGlxContext);
 	
@@ -236,13 +228,9 @@ void GLXWindow::create(const String& name, unsigned int width, unsigned int heig
 			int mode = -1;
 			int mode_width = INT_MAX;
 			int mode_height = INT_MAX;
-			for(size_t i=0; i<nsizes; i++) 
-			{
-				if(sizes[i].width >= static_cast<int>(width) && 
-					sizes[i].height >= static_cast<int>(height) &&
-				    sizes[i].width < mode_width && 
-					sizes[i].height < mode_height) 
-				{
+			for(size_t i=0; i<nsizes; i++) {
+				if(sizes[i].width >= width && sizes[i].height >= height &&
+				                sizes[i].width < mode_width && sizes[i].height < mode_height) {
 					mode = i;
 					mode_width = sizes[i].width;
 					mode_height = sizes[i].height;
@@ -263,6 +251,7 @@ void GLXWindow::create(const String& name, unsigned int width, unsigned int heig
 	}
 #endif
 
+	XVisualInfo* visualInfo = NULL;
 	if(extVisualHandler == NULL) // user didn't create visual ( and window ) himself 
 	{
 		// Apply some magic algorithm to get the best visual
@@ -279,17 +268,16 @@ void GLXWindow::create(const String& name, unsigned int width, unsigned int heig
 		XVisualInfo templ;
 		int nmatch;
 		templ.visualid = best_visual;
-		mVisualInfo = XGetVisualInfo(mDisplay, VisualIDMask, &templ, &nmatch);
-		mDelVisualInfo = true;
-		if(mVisualInfo==0 || nmatch==0) {
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "GLXWindow: error choosing visual", "GLXWindow::create");
+		visualInfo = XGetVisualInfo(mDisplay, VisualIDMask, &templ, &nmatch);
+		if(visualInfo==0 || nmatch==0) {
+			OGRE_EXCEPT(999, "GLXWindow: error choosing visual", "GLXWindow::create");
 		}
 
 		XSetWindowAttributes attr;
 		unsigned long mask;
 		attr.background_pixel = 0;
 		attr.border_pixel = 0;
-		attr.colormap = XCreateColormap(mDisplay,rootWindow,mVisualInfo->visual,AllocNone);
+		attr.colormap = XCreateColormap(mDisplay,rootWindow,visualInfo->visual,AllocNone);
 		attr.event_mask = StructureNotifyMask | VisibilityChangeMask;
 		if(fullScreen) {
 			mask = CWBackPixel | CWColormap | CWOverrideRedirect | CWSaveUnder | CWBackingStore | CWEventMask;
@@ -302,9 +290,9 @@ void GLXWindow::create(const String& name, unsigned int width, unsigned int heig
 			mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
 	
 		// Create window on server
-		mWindow = XCreateWindow(mDisplay,parentWindow,left,top,width,height,0,mVisualInfo->depth,InputOutput,mVisualInfo->visual,mask,&attr);
+		mWindow = XCreateWindow(mDisplay,parentWindow,left,top,width,height,0,visualInfo->depth,InputOutput,visualInfo->visual,mask,&attr);
 		if(!mWindow) {
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "GLXWindow: XCreateWindow failed", "GLXWindow::create");
+			OGRE_EXCEPT(999, "GLXWindow: XCreateWindow failed", "GLXWindow::create");
 		}
 	
 		// Make sure the window is in normal state
@@ -351,15 +339,11 @@ void GLXWindow::create(const String& name, unsigned int width, unsigned int heig
 	
 		// Make sure the server is up to date and focus the window
 		XFlush(mDisplay);
-
-		//Register only Ogre created windows (users can register their own)
-		WindowEventUtilities::_addRenderWindow(this);
 	}
 	else
 	{
 		LogManager::getSingleton().logMessage("GLXWindow::create -- using external window handle");
-		mVisualInfo = extVisualHandler;
-		mDelVisualInfo = false;
+		visualInfo = extVisualHandler;
 	}
 
 	GLRenderSystem *rs = static_cast<GLRenderSystem*>(Root::getSingleton().getRenderSystem());
@@ -368,34 +352,30 @@ void GLXWindow::create(const String& name, unsigned int width, unsigned int heig
 	{
 		// Finally, create a GL context
 		// we want to share it with main
-		mGlxContext = glXCreateContext(mDisplay,mVisualInfo,NULL,True);
+		mGlxContext = glXCreateContext(mDisplay,visualInfo,NULL,True);
 	}
 		else
-			mGlxContext = glXCreateContext(mDisplay,mVisualInfo,mainContext->mCtx,True);
+			mGlxContext = glXCreateContext(mDisplay,visualInfo,mainContext->mCtx,True);
 	
 	if(!mGlxContext)
-		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "glXCreateContext failed", "GLXWindow::create");
+		OGRE_EXCEPT(999, "glXCreateContext failed", "GLXWindow::create");
+
+	// Free visual info
+	if (extVisualHandler == NULL)
+		XFree(visualInfo);
 
 	mName = name;
 	mWidth = width;
 	mHeight = height;
 	mFullScreen = fullScreen;
 
-	//Get the attributes of the screen
-	XWindowAttributes temp;
-	XGetWindowAttributes(mDisplay, mWindow, &temp);
-	mLeft = temp.x;
-	mTop = temp.y;
-
-	// Create OGRE GL context
-	mContext = new GLXContext(mDisplay, mWindow, mGlxContext, mVisualInfo);
+    // Create OGRE GL context
+    mContext = new GLXContext(mDisplay, mWindow, mGlxContext);
 }
 
 //-------------------------------------------------------------------------------------------------//
 void GLXWindow::destroy(void)
 {
-	WindowEventUtilities::_removeRenderWindow(this);
-
 	// Unregister and destroy OGRE GLContext
 	delete mContext;
 
@@ -410,8 +390,6 @@ void GLXWindow::destroy(void)
 	mWindow = 0;
 	mGlxContext = 0;
 	mActive = false;
-	mVisible = false;
-	mClosed = true;
 
 	Root::getSingleton().getRenderSystem()->detachRenderTarget( this->getName() );
 }
@@ -435,12 +413,6 @@ bool GLXWindow::isVisible() const
 }
 
 //-------------------------------------------------------------------------------------------------//
-void GLXWindow::setVisible(bool visible)
-{
-	mVisible = visible;
-}
-
-//-------------------------------------------------------------------------------------------------//
 void GLXWindow::reposition(int left, int top)
 {
 	XMoveWindow(mDisplay,mWindow,left,top);
@@ -449,45 +421,10 @@ void GLXWindow::reposition(int left, int top)
 //-------------------------------------------------------------------------------------------------//
 void GLXWindow::resize(unsigned int width, unsigned int height)
 {
-	// Check if the window size really changed
-	if(mWidth == width && mHeight == height)
-		return;
-
-	mWidth = width;
-	mHeight = height;
-
 	if (!mTopLevel)
-	{
-		for (ViewportList::iterator it = mViewportList.begin();	it != mViewportList.end(); ++it)
-			(*it).second->_updateDimensions();
-	}
+		resized(width, height); /// Embedded
 	else
-	{
-		XResizeWindow(mDisplay, mWindow, width, height); /// Ogre handles window
-	}
-}
-
-//-------------------------------------------------------------------------------------------------//
-void GLXWindow::windowMovedOrResized()
-{
-	//Get the new attributes of the screen
-	XWindowAttributes temp;
-	XGetWindowAttributes(mDisplay, mWindow, &temp);
-	mLeft = temp.x;
-	mTop  = temp.y;
-
-	//Only update viewport dimensions if they did actually change
-	if (static_cast<int>(mWidth) == temp.width && static_cast<int>(mHeight) == temp.height)
-		return;
-
-	mWidth = temp.width;
-	mHeight = temp.height;
-
-	// Notify viewports of resize
-	ViewportList::iterator it, itend;
-	itend = mViewportList.end();
-	for( it = mViewportList.begin(); it != itend; ++it )
-		(*it).second->_updateDimensions();
+		XResizeWindow(mDisplay,mWindow,width,height); /// Ogre handles window
 }
 
 //-------------------------------------------------------------------------------------------------//
@@ -497,28 +434,94 @@ void GLXWindow::swapBuffers(bool waitForVSync)
 }
 
 //-------------------------------------------------------------------------------------------------//
+void GLXWindow::injectXEvent(const XEvent &event)
+{
+	switch(event.type) 
+	{
+	case ClientMessage:
+		if(event.xclient.display != mDisplay || event.xclient.window != mWindow)
+			break;
+
+		if(event.xclient.format == 32 && event.xclient.data.l[0] == (long)mAtomDeleteWindow)  
+		{
+			//Window Closed (via X button)
+			mClosed = true;
+			mActive = false;
+
+			Root::getSingleton().getRenderSystem()->detachRenderTarget( this->getName() );
+		}
+		break;
+	case ConfigureNotify:
+		if(event.xconfigure.display != mDisplay || event.xconfigure.window != mWindow)
+			break;
+
+		resized(event.xconfigure.width,	event.xconfigure.height);
+		break;
+	case MapNotify:
+		if(event.xconfigure.display != mDisplay || event.xconfigure.window != mWindow)
+			break;
+
+		// Window was mapped to the screen
+		mActive = true;
+		break;
+	case UnmapNotify:
+		if(event.xconfigure.display != mDisplay || event.xconfigure.window != mWindow)
+			break;
+
+		// Window was unmapped from the screen (user switched
+		// to another workspace, for example)
+		mActive = false;
+		break;
+	case VisibilityNotify:
+		//Visibility status changed
+		switch(event.xvisibility.state)
+		{
+		case VisibilityUnobscured:
+			mActive = mVisible = true;
+			break;
+		case VisibilityPartiallyObscured:
+			mActive = false;
+			mVisible = true;
+			break;
+		case VisibilityFullyObscured:
+			mActive = mVisible = false;
+			break;
+		}
+	}
+}
+
+//-------------------------------------------------------------------------------------------------//
+void GLXWindow::resized(size_t width, size_t height)
+{
+	// Check if the window size really changed
+	if(mWidth == width && mHeight == height)
+		return;
+
+	mWidth = width;
+	mHeight = height;
+
+	for (ViewportList::iterator it = mViewportList.begin();	it != mViewportList.end(); ++it)
+		(*it).second->_updateDimensions();
+}
+
+//-------------------------------------------------------------------------------------------------//
 void GLXWindow::getCustomAttribute( const String& name, void* pData )
 {
-	if( name == "DISPLAY" ) 
-	{
-		*static_cast<Display**>(pData) = mDisplay;
-		return;
-	}
-	else if( name == "ATOM" ) 
-	{
-		*static_cast< ::Atom* >(pData) = mAtomDeleteWindow;
-		return;
-	} 
-	else if( name == "WINDOW" ) 
-	{
-		*static_cast<Window*>(pData) = mWindow;
-		return;
-	} 
-	else if( name == "GLCONTEXT" ) 
+	if( name == "GLCONTEXT" ) 
 	{
 		*static_cast<GLXContext**>(pData) = mContext;
 		return;
 	} 
+	else if( name == "GLXWINDOW" ) 
+	{
+		*static_cast<Window*>(pData) = mWindow;
+		return;
+	} 
+	else if( name == "GLXDISPLAY" ) 
+	{
+		*static_cast<Display**>(pData) = mDisplay;
+		return;
+	}
 }
 
 //-------------------------------------------------------------------------------------------------//
@@ -565,4 +568,6 @@ void GLXWindow::writeContentsToFile(const String& filename)
 
 	delete [] pBuffer;
 }
+
 }
+

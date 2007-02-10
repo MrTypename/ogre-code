@@ -38,7 +38,7 @@ namespace CEGUI
 \brief
 	Texture class that is created by OgreCEGUIRenderer objects
 */
-class _OgrePrivate OgreCEGUITexture : public Texture
+class OGRE_GUIRENDERER_API OgreCEGUITexture : public Texture
 {
 private:
 	/*************************************************************************
@@ -93,23 +93,20 @@ public:
 	/*!
 	\brief
 		Loads (copies) an image in memory into the texture.  The texture is resized as required to hold the image.
-	
+
 	\param buffPtr
 		Pointer to the buffer containing the image data
-	
+
 	\param buffWidth
-		Width of the buffer (in pixels as specified by \a pixelFormat )
-	
+		Width of the buffer (in 0xAARRGGBB pixels)
+
 	\param buffHeight
-		Height of the buffer (in pixels as specified by \a pixelFormat )
-	
-	\param pixelFormat
-	PixelFormat value describing the format contained in \a buffPtr
-	
+		Height of the buffer (in 0xAARRGGBB pixels)
+
 	\return
 		Nothing.
 	*/
-	virtual void	loadFromMemory(const void* buffPtr, uint buffWidth, uint buffHeight, PixelFormat pixelFormat);
+	virtual void	loadFromMemory(const void* buffPtr, uint buffWidth, uint buffHeight);
 
 
 	/*!

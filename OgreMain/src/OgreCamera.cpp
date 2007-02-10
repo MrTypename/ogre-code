@@ -2,9 +2,9 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -365,7 +361,7 @@ namespace Ogre {
 				mDerivedOrientation = dir.getRotationTo(rdir, up) * mRealOrientation;
 
                 // Calculate reflected position.
-                mDerivedPosition = mReflectMatrix.transformAffine(mRealPosition);
+                mDerivedPosition = mReflectMatrix * mRealPosition;
             }
             else
             {
@@ -566,15 +562,23 @@ namespace Ogre {
 		Real nx = (2.0f * screenX) - 1.0f;
 		Real ny = 1.0f - (2.0f * screenY);
 		Vector3 nearPoint(nx, ny, -1.f);
-		// Use midPoint rather than far point to avoid issues with infinite projection
-		Vector3 midPoint (nx, ny,  0.0f);
+		Vector3 farPoint (nx, ny,  1.f);
 
 		// Get ray origin and ray target on near plane in world space
 		Vector3 rayOrigin, rayTarget;
 		
-		rayOrigin = inverseVP * nearPoint;
-		rayTarget = inverseVP * midPoint;
-
+		// Maintain backwards compatibility by making regular rays originate at cam position
+		if (mProjType == PT_PERSPECTIVE && !mCustomProjMatrix)
+		{
+			rayOrigin = getDerivedPosition();
+			rayTarget = inverseVP * nearPoint;
+		}
+		// ortho and custom matrices originate at near plane
+		else
+		{
+			rayOrigin = inverseVP * nearPoint;
+			rayTarget = inverseVP * farPoint;
+		}
 		Vector3 rayDirection = rayTarget - rayOrigin;
 		rayDirection.normalise();
 
@@ -620,12 +624,12 @@ namespace Ogre {
         Vector3 vp_bl (wvpLeft, wvpBottom, -mNearDist);
         Vector3 vp_br (wvpRight, wvpBottom, -mNearDist);
 
-        Matrix4 inv = mViewMatrix.inverseAffine();
+        Matrix4 inv = mViewMatrix.inverse();
 
-        Vector3 vw_ul = inv.transformAffine(vp_ul);
-        Vector3 vw_ur = inv.transformAffine(vp_ur);
-        Vector3 vw_bl = inv.transformAffine(vp_bl);
-        Vector3 vw_br = inv.transformAffine(vp_br);
+        Vector3 vw_ul = inv * vp_ul;
+        Vector3 vw_ur = inv * vp_ur;
+        Vector3 vw_bl = inv * vp_bl;
+        Vector3 vw_br = inv * vp_br;
 
         if (mProjType == PT_PERSPECTIVE)
         {
@@ -808,144 +812,7 @@ namespace Ogre {
 		}
 	}
 	//-----------------------------------------------------------------------
-	//_______________________________________________________
-	//|														|
-	//|	getRayForwardIntersect								|
-	//|	-----------------------------						|
-	//|	get the intersections of frustum rays with a plane	|
-	//| of interest.  The plane is assumed to have constant	|
-	//| z.  If this is not the case, rays					|
-	//| should be rotated beforehand to work in a			|
-	//| coordinate system in which this is true.			|
-	//|_____________________________________________________|
-	//
-	std::vector<Vector4> Camera::getRayForwardIntersect(const Vector3& anchor, const Vector3 *dir, Real planeOffset) const
-	{
-		std::vector<Vector4> res;
 
-		if(!dir)
-			return res;
-
-		int infpt[4] = {0, 0, 0, 0}; // 0=finite, 1=infinite, 2=straddles infinity
-		Vector3 vec[4];
-
-		// find how much the anchor point must be displaced in the plane's
-		// constant variable
-		Real delta = planeOffset - anchor.z;
-
-		// now set the intersection point and note whether it is a 
-		// point at infinity or straddles infinity
-		unsigned int i;
-		for (i=0; i<4; i++)
-		{
-			Real test = dir[i].z * delta;
-			if (test == 0.0) {
-				vec[i] = dir[i];
-				infpt[i] = 1;
-			}
-			else {
-				Real lambda = delta / dir[i].z;
-				vec[i] = anchor + (lambda * dir[i]);
-				if(test < 0.0)
-					infpt[i] = 2;
-			}
-		}
-
-		for (i=0; i<4; i++)
-		{
-			// store the finite intersection points
-			if (infpt[i] == 0)
-				res.push_back(Vector4(vec[i].x, vec[i].y, vec[i].z, 1.0));
-			else
-			{
-				// handle the infinite points of intersection;
-				// cases split up into the possible frustum planes 
-				// pieces which may contain a finite intersection point
-				int nextind = (i+1) % 4;
-				int prevind = (i+3) % 4;
-				if ((infpt[prevind] == 0) || (infpt[nextind] == 0))
-				{
-					if (infpt[i] == 1)
-						res.push_back(Vector4(vec[i].x, vec[i].y, vec[i].z, 0.0));
-					else
-					{
-						// handle the intersection points that straddle infinity (back-project)
-						if(infpt[prevind] == 0) 
-						{
-							Vector3 temp = vec[prevind] - vec[i];
-							res.push_back(Vector4(temp.x, temp.y, temp.z, 0.0));
-						}
-						if(infpt[nextind] == 0)
-						{
-							Vector3 temp = vec[nextind] - vec[i];
-							res.push_back(Vector4(temp.x, temp.y, temp.z, 0.0));
-						}
-					}
-				} // end if we need to add an intersection point to the list
-			} // end if infinite point needs to be considered
-		} // end loop over frustun corners
-
-		// we end up with either 0, 3, 4, or 5 intersection points
-
-		return res;
-	}
-
-	//_______________________________________________________
-	//|														|
-	//|	forwardIntersect									|
-	//|	-----------------------------						|
-	//|	Forward intersect the camera's frustum rays with	|
-	//| a specified plane of interest.						|
-	//| Note that if the frustum rays shoot out and would	|
-	//| back project onto the plane, this means the forward	|
-	//| intersection of the frustum would occur at the		|
-	//| line at infinity.									|
-	//|_____________________________________________________|
-	//
-	void Camera::forwardIntersect(const Plane& worldPlane, std::vector<Vector4>* intersect3d) const
-	{
-		if(!intersect3d)
-			return;
-
-		Vector3 trCorner = getWorldSpaceCorners()[0];
-		Vector3 tlCorner = getWorldSpaceCorners()[1];
-		Vector3 blCorner = getWorldSpaceCorners()[2];
-		Vector3 brCorner = getWorldSpaceCorners()[3];
-
-		// need some sort of rotation that will bring the plane normal to the z axis
-		Plane pval = worldPlane;
-		if(pval.normal.z < 0.0)
-		{
-			pval.normal *= -1.0;
-			pval.d *= -1.0;
-		}
-		Quaternion invPlaneRot = pval.normal.getRotationTo(Vector3::UNIT_Z);
-
-		// get rotated light
-		Vector3 lPos = invPlaneRot * getDerivedPosition();
-		Vector3 vec[4];
-		vec[0] = invPlaneRot * trCorner - lPos;
-		vec[1] = invPlaneRot * tlCorner - lPos; 
-		vec[2] = invPlaneRot * blCorner - lPos; 
-		vec[3] = invPlaneRot * brCorner - lPos; 
-
-		// compute intersection points on plane
-		std::vector<Vector4> iPnt = getRayForwardIntersect(lPos, vec, -pval.d);
-
-
-		// return wanted data
-		if(intersect3d) 
-		{
-			Quaternion planeRot = invPlaneRot.Inverse();
-			(*intersect3d).clear();
-			for(unsigned int i=0; i<iPnt.size(); i++)
-			{
-				Vector3 intersection = planeRot * Vector3(iPnt[i].x, iPnt[i].y, iPnt[i].z);
-				(*intersect3d).push_back(Vector4(intersection.x, intersection.y, intersection.z, iPnt[i].w));
-			}
-		}
-	}
-	//-----------------------------------------------------------------------
 
 
 } // namespace Ogre

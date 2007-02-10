@@ -1,19 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-// paramlist.cpp
-// Author     : Francesco Giordana
-// Start Date : January 13, 2005
-// Copyright  : (C) 2006 by Francesco Giordana
-// Email      : fra.giordana@tiscali.it
-////////////////////////////////////////////////////////////////////////////////
-
-/*********************************************************************************
-*                                                                                *
-*   This program is free software; you can redistribute it and/or modify         *
-*   it under the terms of the GNU Lesser General Public License as published by  *
-*   the Free Software Foundation; either version 2 of the License, or            *
-*   (at your option) any later version.                                          *
-*                                                                                *
-**********************************************************************************/
 
 #include "paramlist.h"
 #include <maya/MGlobal.h>
@@ -32,31 +16,6 @@ namespace OgreMayaExporter
 				exportAll = true;
 			else if ((MString("-world") == args.asString(i,&stat)) && (MS::kSuccess == stat))
 				exportWorldCoords = true;
-			else if ((MString("-lu") == args.asString(i,&stat)) && (MS::kSuccess == stat))
-			{
-				MString lengthUnit = args.asString(++i,&stat);
-				if (MString("pref") == lengthUnit)
-				{
-					MGlobal::executeCommand("currentUnit -q -l",lengthUnit,false);
-				}
-				if (MString("mm") == lengthUnit)
-					lum = CM2MM;
-				else if (MString("cm") == lengthUnit)
-					lum = CM2CM;
-				else if (MString("m") == lengthUnit)
-					lum = CM2M;
-				else if (MString("in") == lengthUnit)
-					lum = CM2IN;
-				else if (MString("ft") == lengthUnit)
-					lum = CM2FT;
-				else if (MString("yd") == lengthUnit)
-					lum = CM2YD;
-			}
-			else if ((MString("-scale") == args.asString(i,&stat)) && (MS::kSuccess == stat))
-			{
-				float s = args.asDouble(++i,&stat);
-				lum *= s;
-			}
 			else if ((MString("-mesh") == args.asString(i,&stat)) && (MS::kSuccess == stat))
 			{
 				exportMesh = true;
@@ -85,33 +44,9 @@ namespace OgreMayaExporter
 				exportSkeleton = true;
 				skeletonFilename = args.asString(++i,&stat);
 			}
-			else if ((MString("-skeletonAnims") == args.asString(i,&stat)) && (MS::kSuccess == stat))
+			else if ((MString("-anims") == args.asString(i,&stat)) && (MS::kSuccess == stat))
 			{
-				exportSkelAnims = true;
-			}
-			else if ((MString("-vertexAnims") == args.asString(i,&stat)) && (MS::kSuccess == stat))
-			{
-				exportVertAnims = true;
-			}
-			else if ((MString("-blendShapes") == args.asString(i,&stat)) && (MS::kSuccess == stat))
-			{
-				exportBlendShapes = true;
-			}
-			else if ((MString("-BSAnims") == args.asString(i,&stat)) && (MS::kSuccess == stat))
-			{
-				exportBSAnims = true;
-			}
-			else if ((MString("-skelBB") == args.asString(i,&stat)) && (MS::kSuccess == stat))
-			{
-				skelBB = true;
-			}
-			else if ((MString("-bsBB") == args.asString(i,&stat)) && (MS::kSuccess == stat))
-			{
-				bsBB = true;
-			}
-			else if ((MString("-vertBB") == args.asString(i,&stat)) && (MS::kSuccess == stat))
-			{
-				vertBB = true;
+				exportAnims = true;
 			}
 			else if ((MString("-animCur") == args.asString(i,&stat)) && (MS::kSuccess == stat))
 			{
@@ -135,26 +70,26 @@ namespace OgreMayaExporter
 			{
 				exportVertCol = true;
 			}
+			else if ((MString("-cw") == args.asString(i,&stat)) && (MS::kSuccess == stat))
+			{
+				exportVertCol = true;
+				exportVertColWhite = true;
+			}
 			else if ((MString("-t") == args.asString(i,&stat)) && (MS::kSuccess == stat))
 			{
 				exportTexCoord = true;
 			}
-			else if ((MString("-edges") == args.asString(i,&stat)) && (MS::kSuccess == stat))
-			{
-				buildEdges = true;
-			}
-			else if ((MString("-tangents") == args.asString(i,&stat)) && (MS::kSuccess == stat))
-			{
-				buildTangents = true;
-				MString tanSem = args.asString(++i,&stat);
-				if (tanSem == "TECOORD")
-					tangentSemantic = TS_TEXCOORD;
-				else if (tanSem == "TANGENT")
-					tangentSemantic = TS_TANGENT;
-			}
 			else if ((MString("-camAnim") == args.asString(i,&stat)) && (MS::kSuccess == stat))
 			{
 				exportCamerasAnim = true;
+			}
+			else if ((MString("-meshbin") == args.asString(i,&stat)) && (MS::kSuccess == stat))
+			{
+				exportMeshBin = true;
+			}
+			else if ((MString("-skelbin") == args.asString(i,&stat)) && (MS::kSuccess == stat))
+			{
+				exportSkelBin = true;
 			}
 			else if ((MString("-particles") == args.asString(i,&stat)) && (MS::kSuccess == stat))
 			{
@@ -167,238 +102,161 @@ namespace OgreMayaExporter
 			}
 			else if ((MString("-np") == args.asString(i,&stat)) && (MS::kSuccess == stat))
 			{
-				MString npType = args.asString(++i,&stat);
+				MString npType = args.asString(i,&stat);
 				if (npType == "curFrame")
 					neutralPoseType = NPT_CURFRAME;
 				else if (npType == "bindPose")
 					neutralPoseType = NPT_BINDPOSE;
+				else if (npType == "frame")
+				{
+					neutralPoseType = NPT_FRAME;
+					neutralPoseFrame = args.asInt(++i,&stat);
+				}
 			}
-			else if ((MString("-skeletonClip") == args.asString(i,&stat)) && (MS::kSuccess == stat))
+			else if ((MString("-clip") == args.asString(i,&stat)) && (MS::kSuccess == stat))
 			{
 				//get clip name
 				MString clipName = args.asString(++i,&stat);
-				//check if name is unique, otherwise skip the clip
-				int k;
-				bool uniqueName = true;
-				for (k=0; k<skelClipList.size() && uniqueName; k++)
-				{
-					if (clipName == skelClipList[k].name)
-						uniqueName = false;
-				}
-				//if the name is uniue, load the clip info
-				if (uniqueName)
-				{
-					//get clip range
-					MString clipRangeType = args.asString(++i,&stat);
-					float startTime, stopTime;
-					if (clipRangeType == "startEnd")
-					{
-						startTime = args.asDouble(++i,&stat);
-						stopTime = args.asDouble(++i,&stat);
-						MString rangeUnits = args.asString(++i,&stat);
-						if (rangeUnits == "frames")
-						{
-							//range specified in frames => convert to seconds
-							MTime t1(startTime, MTime::uiUnit());
-							MTime t2(stopTime, MTime::uiUnit());
-							startTime = t1.as(MTime::kSeconds);
-							stopTime = t2.as(MTime::kSeconds);
-						}
-					}
-					else
-					{
-						//range specified by time slider
-						MTime t1 = MAnimControl::minTime();
-						MTime t2 = MAnimControl::maxTime();
-						startTime = t1.as(MTime::kSeconds);
-						stopTime = t2.as(MTime::kSeconds);
-					}
-					// get sample rate
-					float rate;
-					MString sampleRateType = args.asString(++i,&stat);
-					if (sampleRateType == "sampleByFrames")
-					{
-						// rate specified in frames
-						int intRate = args.asInt(++i,&stat);
-						MTime t = MTime(intRate, MTime::uiUnit());
-						rate = t.as(MTime::kSeconds);
-					}
-					else
-					{
-						// rate specified in seconds
-						rate = args.asDouble(++i,&stat);
-					}
-					//add clip info
-					clipInfo clip;
-					clip.name = clipName;
-					clip.start = startTime;
-					clip.stop = stopTime;
-					clip.rate = rate;
-					skelClipList.push_back(clip);
-					std::cout << "skeleton clip " << clipName.asChar() << "\n";
-					std::cout << "start: " << startTime << ", stop: " << stopTime << "\n";
-					std::cout << "rate: " << rate << "\n";
-					std::cout << "-----------------\n";
-					std::cout.flush();
-				}
-				//warn of duplicate clip name
-				else
-				{
-					std::cout << "Warning! A skeleton clip with name \"" << clipName.asChar() << "\" already exists\n";
-					std::cout.flush();
-				}
-			}
-			else if ((MString("-BSClip") == args.asString(i,&stat)) && (MS::kSuccess == stat))
-			{
-				//get clip name
-				MString clipName = args.asString(++i,&stat);
-				//check if name is unique, otherwise skip the clip
-				int k;
-				bool uniqueName = true;
-				for (k=0; k<BSClipList.size() && uniqueName; k++)
-				{
-					if (clipName == BSClipList[k].name)
-						uniqueName = false;
-				}
-				//if the name is uniue, load the clip info
-				if (uniqueName)
-				{
-					//get clip range
-					MString clipRangeType = args.asString(++i,&stat);
-					float startTime, stopTime;
-					if (clipRangeType == "startEnd")
-					{
-						startTime = args.asDouble(++i,&stat);
-						stopTime = args.asDouble(++i,&stat);
-						MString rangeUnits = args.asString(++i,&stat);
-						if (rangeUnits == "frames")
-						{
-							//range specified in frames => convert to seconds
-							MTime t1(startTime, MTime::uiUnit());
-							MTime t2(stopTime, MTime::uiUnit());
-							startTime = t1.as(MTime::kSeconds);
-							stopTime = t2.as(MTime::kSeconds);
-						}
-					}
-					else
-					{
-						//range specified by time slider
-						MTime t1 = MAnimControl::minTime();
-						MTime t2 = MAnimControl::maxTime();
-						startTime = t1.as(MTime::kSeconds);
-						stopTime = t2.as(MTime::kSeconds);
-					}
-					// get sample rate
-					float rate;
-					MString sampleRateType = args.asString(++i,&stat);
-					if (sampleRateType == "sampleByFrames")
-					{
-						// rate specified in frames
-						int intRate = args.asInt(++i,&stat);
-						MTime t = MTime(intRate, MTime::uiUnit());
-						rate = t.as(MTime::kSeconds);
-					}
-					else
-					{
-						// rate specified in seconds
-						rate = args.asDouble(++i,&stat);
-					}
-					//add clip info
-					clipInfo clip;
-					clip.name = clipName;
-					clip.start = startTime;
-					clip.stop = stopTime;
-					clip.rate = rate;
-					BSClipList.push_back(clip);
-					std::cout << "blend shape clip " << clipName.asChar() << "\n";
-					std::cout << "start: " << startTime << ", stop: " << stopTime << "\n";
-					std::cout << "rate: " << rate << "\n";
-					std::cout << "-----------------\n";
-					std::cout.flush();
-				}
-				//warn of duplicate clip name
-				else
-				{
-					std::cout << "Warning! A blend shape clip with name \"" << clipName.asChar() << "\" already exists\n";
-					std::cout.flush();
-				}
-			}
-			else if ((MString("-vertexClip") == args.asString(i,&stat)) && (MS::kSuccess == stat))
-			{
-				//get clip name
-				MString clipName = args.asString(++i,&stat);
-				//check if name is unique, otherwise skip the clip
-				int k;
-				bool uniqueName = true;
-				for (k=0; k<vertClipList.size() && uniqueName; k++)
-				{
-					if (clipName == vertClipList[k].name)
-						uniqueName = false;
-				}
-				//if the name is uniue, load the clip info
-				if (uniqueName)
-				{
 				//get clip range
-					MString clipRangeType = args.asString(++i,&stat);
-					float startTime, stopTime;
-					if (clipRangeType == "startEnd")
+				MString clipRangeType = args.asString(++i,&stat);
+				double startTime, stopTime;
+				if (clipRangeType == "startEnd")
+				{
+					startTime = args.asDouble(++i,&stat);
+					stopTime = args.asDouble(++i,&stat);
+					MString rangeUnits = args.asString(++i,&stat);
+					if (rangeUnits == "frames")
 					{
-						startTime = args.asDouble(++i,&stat);
-						stopTime = args.asDouble(++i,&stat);
-						MString rangeUnits = args.asString(++i,&stat);
-						if (rangeUnits == "frames")
-						{
-							//range specified in frames => convert to seconds
-							MTime t1(startTime, MTime::uiUnit());
-							MTime t2(stopTime, MTime::uiUnit());
-							startTime = t1.as(MTime::kSeconds);
-							stopTime = t2.as(MTime::kSeconds);
-						}
-					}
-					else
-					{
-						//range specified by time slider
-						MTime t1 = MAnimControl::minTime();
-						MTime t2 = MAnimControl::maxTime();
+						//range specified in frames => convert to seconds
+						MTime t1(startTime, MTime::uiUnit());
+						MTime t2(stopTime, MTime::uiUnit());
 						startTime = t1.as(MTime::kSeconds);
 						stopTime = t2.as(MTime::kSeconds);
 					}
-					// get sample rate
-					float rate;
-					MString sampleRateType = args.asString(++i,&stat);
-					if (sampleRateType == "sampleByFrames")
-					{
-						// rate specified in frames
-						int intRate = args.asInt(++i,&stat);
-						MTime t = MTime(intRate, MTime::uiUnit());
-						rate = t.as(MTime::kSeconds);
-					}
-					else
-					{
-						// rate specified in seconds
-						rate = args.asDouble(++i,&stat);
-					}
-					//add clip info
-					clipInfo clip;
-					clip.name = clipName;
-					clip.start = startTime;
-					clip.stop = stopTime;
-					clip.rate = rate;
-					vertClipList.push_back(clip);
-					std::cout << "vertex clip " << clipName.asChar() << "\n";
-					std::cout << "start: " << startTime << ", stop: " << stopTime << "\n";
-					std::cout << "rate: " << rate << "\n";
-					std::cout << "-----------------\n";
-					std::cout.flush();
 				}
-				//warn of duplicate clip name
 				else
 				{
-					std::cout << "Warning! A vertex animation clip with name \"" << clipName.asChar() << "\" already exists\n";
-					std::cout.flush();
+					//range specified by time slider
+					MTime t1 = MAnimControl::minTime();
+					MTime t2 = MAnimControl::maxTime();
+					startTime = t1.as(MTime::kSeconds);
+					stopTime = t2.as(MTime::kSeconds);
 				}
+				// get sample rate
+				double rate;
+				MString sampleRateType = args.asString(++i,&stat);
+				if (sampleRateType == "sampleByFrames")
+				{
+					// rate specified in frames
+					int intRate = args.asInt(++i,&stat);
+					MTime t = MTime(intRate, MTime::uiUnit());
+					rate = t.as(MTime::kSeconds);
+				}
+				else
+				{
+					// rate specified in seconds
+					rate = args.asDouble(++i,&stat);
+				}
+				//add clip info
+				clipInfo clip;
+				clip.name = clipName;
+				clip.start = startTime;
+				clip.stop = stopTime;
+				clip.rate = rate;
+				clipList.push_back(clip);
+				std::cout << "clip " << clipName.asChar() << "\n";
+				std::cout << "start: " << startTime << ", stop: " << stopTime << "\n";
+				std::cout << "rate: " << rate << "\n";
+				std::cout << "-----------------\n";
 			}
 		}
+	/*	// Read options from exporter window
+		// Gather clips data
+		// Read info about the clips we have to transform
+		int numClips,exportClip,rangeType,rateType,rangeUnits;
+		double startTime,stopTime,rate;
+		MString clipName;
+		//read number of clips
+		MGlobal::executeCommand("eval \"$numClips+=0\"",numClips,false);
+		//read clips data
+		for (int i=1; i<=numClips; i++)
+		{
+			MString command = "checkBox -q -v ExportClip";
+			command += i;
+			MGlobal::executeCommand(command,exportClip,false);
+			if (exportClip)
+			{
+				//get clip name
+				command = "textField -q -tx ClipName";
+				command += i;
+				MGlobal::executeCommand(command,clipName,false);
+				//get clip range
+				command = "radioButtonGrp -q -sl ClipRangeRadio";
+				command += i;
+				MGlobal::executeCommand(command,rangeType,false);
+				if (rangeType == 1)
+				{	//range specified from user
+					command = "floatField -q -v ClipRangeStart";
+					command += i;
+					MGlobal::executeCommand(command,startTime,false);
+					command = "floatField -q -v ClipRangeEnd";
+					command += i;
+					MGlobal::executeCommand(command,stopTime,false);
+					//get range units
+					command = "radioButtonGrp -q -sl ClipRangeUnits";
+					command += i;
+					MGlobal::executeCommand(command,rangeUnits,false);
+					if (rangeUnits == 1)
+					{	//range specified in frames => convert to seconds
+						MTime t1(startTime, MTime::uiUnit());
+						MTime t2(stopTime, MTime::uiUnit());
+						startTime = t1.as(MTime::kSeconds);
+						stopTime = t2.as(MTime::kSeconds);
+					}
+				}
+				else
+				{	//range specified by time slider
+					MTime t1 = MAnimControl::minTime();
+					MTime t2 = MAnimControl::maxTime();
+					startTime = t1.as(MTime::kSeconds);
+					stopTime = t2.as(MTime::kSeconds);
+				}
+				//get sample rate
+				command = "radioButtonGrp -q -sl ClipRateType";
+				command += i;
+				MGlobal::executeCommand(command,rateType,false);
+				MTime t;
+				switch (rateType)
+				{
+				case 1:	//rate specified in frames
+					command = "intField -q -v ClipRateFrames";
+					command += i;
+					MGlobal::executeCommand(command,rate,false);
+					t = MTime(rate, MTime::uiUnit());
+					rate = t.as(MTime::kSeconds);
+					break;
+				case 2:	//rate specified in seconds
+					command = "floatField -q -v ClipRateSeconds";
+					command += i;
+					MGlobal::executeCommand(command,rate,false);
+					break;
+				default://rate not specified, get from time slider
+					rate = -1;
+					break;
+				}
+				//add clip info
+				clipInfo clip;
+				clip.name = clipName;
+				clip.start = startTime;
+				clip.stop = stopTime;
+				clip.rate = rate;
+				clipList.push_back(clip);
+				std::cout << "clip " << clipName.asChar() << "\n";
+				std::cout << "start: " << startTime << ", stop: " << stopTime << "\n";
+				std::cout << "rate: " << rate << "\n";
+				std::cout << "-----------------\n";
+			}
+		}*/
 	}
 
 
@@ -406,12 +264,30 @@ namespace OgreMayaExporter
 	MStatus ParamList::openFiles()
 	{
 		MString msg;
+		if (exportMesh)
+		{
+			outMesh.open(meshFilename.asChar());
+			if (!outMesh)
+			{
+				std::cout << "Error opening file: " << meshFilename.asChar() << "\n";
+				return MS::kFailure;
+			}
+		}
 		if (exportMaterial)
 		{
 			outMaterial.open(materialFilename.asChar());
 			if (!outMaterial)
 			{
 				std::cout << "Error opening file: " << materialFilename.asChar() << "\n";
+				return MS::kFailure;
+			}
+		}
+		if (exportSkeleton)
+		{
+			outSkeleton.open(skeletonFilename.asChar());
+			if (!outSkeleton)
+			{
+				std::cout << "Error opening file: " << skeletonFilename.asChar() << "\n";
 				return MS::kFailure;
 			}
 		}
@@ -448,9 +324,15 @@ namespace OgreMayaExporter
 	// method to close open output files
 	MStatus ParamList::closeFiles()
 	{
+		if (exportMesh)
+			outMesh.close();
+		
 		if (exportMaterial)
 			outMaterial.close();
 	
+		if (exportSkeleton)
+			outSkeleton.close();
+		
 		if (exportAnimCurves)
 			outAnim.close();
 			

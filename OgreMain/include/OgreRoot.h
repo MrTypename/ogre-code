@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __ROOT__
@@ -38,6 +34,12 @@ Torus Knot Software Ltd.
 #include "OgreResourceGroupManager.h"
 
 #include <exception>
+
+#if OGRE_COMPILER == OGRE_COMPILER_MSVC || OGRE_COMPILER == OGRE_COMPILER_BORL
+#   define SET_TERM_HANDLER { set_terminate( &Ogre::Root::termHandler ); }
+#else
+#   define SET_TERM_HANDLER { std::set_terminate( &Ogre::Root::termHandler ); }
+#endif
 
 namespace Ogre
 {
@@ -76,6 +78,7 @@ namespace Ogre
         SceneManagerEnumerator* mSceneManagerEnum;
         SceneManager* mCurrentSceneManager;
         DynLibManager* mDynLibManager;
+        PlatformManager* mPlatformManager;
         ArchiveManager* mArchiveManager;
         MaterialManager* mMaterialManager;
         MeshManager* mMeshManager;
@@ -90,7 +93,6 @@ namespace Ogre
         ArchiveFactory *mFileSystemArchiveFactory;
 		ResourceGroupManager* mResourceGroupManager;
 		ResourceBackgroundQueue* mResourceBackgroundQueue;
-		ShadowTextureManager* mShadowTextureManager;
 
         Timer* mTimer;
         RenderWindow* mAutoWindow;
@@ -101,14 +103,7 @@ namespace Ogre
         unsigned long mCurrentFrame;
 		Real mFrameSmoothingTime;
 
-	public:
-		typedef std::vector<DynLib*> PluginLibList;
-		typedef std::vector<Plugin*> PluginInstanceList;
-	protected:
-		/// List of plugin DLLs loaded
-        PluginLibList mPluginLibs;
-		/// List of Plugin instances registered
-		PluginInstanceList mPlugins;
+        std::vector<DynLib*> mPluginLibs;
 
 		typedef std::map<String, MovableObjectFactory*> MovableObjectFactoryMap;
 		MovableObjectFactoryMap mMovableObjectFactoryMap;
@@ -174,16 +169,11 @@ namespace Ogre
         static void termHandler();
 
         /** Constructor
-        @param pluginFileName The file that contains plugins information.
-            Defaults to "plugins.cfg", may be left blank to ignore.
-		@param configFileName The file that contains the configuration to be loaded.
-			Defaults to "ogre.cfg", may be left blank to load nothing.
-		@param logFileName The logfile to create, defaults to Ogre.log, may be 
-			left blank if you've already set up LogManager & Log yourself
+            @param
+                pluginFileName The file that contains plugins information.
+                Defaults to "plugins.cfg".
 		*/
-        Root(const String& pluginFileName = "plugins.cfg", 
-			const String& configFileName = "ogre.cfg", 
-			const String& logFileName = "Ogre.log");
+        Root(const String& pluginFileName = "plugins.cfg", const String& configFileName = "ogre.cfg", const String& logFileName = "Ogre.log");
         ~Root();
 
         /** Saves the details of the current configuration
@@ -568,53 +558,32 @@ namespace Ogre
         */
         RenderTarget * getRenderTarget(const String &name);
 
-		/** Manually load a Plugin contained in a DLL / DSO.
+        /** Sets whether or not the debug overlay is shown.
+        @remarks
+            The debug overlay displays frame rate stats and various other debug
+            information. You can enable it or disable it using this method.
+            Alternatively you could access the overlay directly using mSceneManager::getOverlay
+            but this is simpler.
+        void showDebugOverlay(bool show);
+        */
+
+		/** Manually load a plugin.
 		 @remarks
-		 	Plugins embedded in DLLs can be loaded at startup using the plugin 
-			configuration file specified when you create Root (default: plugins.cfg).
-			This method allows you to load plugin DLLs directly in code.
-			The DLL in question is expected to implement a dllStartPlugin 
-			method which instantiates a Plugin subclass and calls Root::installPlugin.
-			It should also implement dllStopPlugin (see Root::unloadPlugin)
+		 	Plugins are loaded at startup using the plugin configuration
+			file specified when you create Root (default: plugins.cfg).
+			This method allows you to load plugins in code.
 		@param pluginName Name of the plugin library to load
 		*/
 		void loadPlugin(const String& pluginName);
 
-		/** Manually unloads a Plugin contained in a DLL / DSO.
+		/** Manually unloads a plugin.
 		 @remarks
-		 	Plugin DLLs are unloaded at shutdown automatically. This method 
-			allows you to unload plugins in code, but make sure their 
-			dependencies are decoupled first. This method will call the 
-			dllStopPlugin method defined in the DLL, which in turn should call
-			Root::uninstallPlugin.
+		 	Plugins are unloaded at shutdown automatically.
+			This method allows you to unload plugins in code, but
+			make sure their dependencies are decoupled frist.
 		@param pluginName Name of the plugin library to unload
 		*/
 		void unloadPlugin(const String& pluginName);
-
-		/** Install a new plugin.
-		@remarks
-			This installs a new extension to OGRE. The plugin itself may be loaded
-			from a DLL / DSO, or it might be statically linked into your own 
-			application. Either way, something has to call this method to get
-			it registered and functioning. You should only call this method directly
-			if your plugin is not in a DLL that could otherwise be loaded with 
-			loadPlugin, since the DLL function dllStartPlugin should call this
-			method when the DLL is loaded. 
-		*/
-		void installPlugin(Plugin* plugin);
-
-		/** Uninstall an existing plugin.
-		@remarks
-			This uninstalls an extension to OGRE. Plugins are automatically 
-			uninstalled at shutdown but this lets you remove them early. 
-			If the plugin was loaded from a DLL / DSO you should call unloadPlugin
-			which should result in this method getting called anyway (if the DLL
-			is well behaved).
-		*/
-		void uninstallPlugin(Plugin* plugin);
-
-		/** Gets a read-only list of the currently installed plugins. */
-		const PluginInstanceList& getInstalledPlugins() const { return mPlugins; }
 
         /** Gets a pointer to the central timer used for all OGRE timings */
         Timer* getTimer(void);

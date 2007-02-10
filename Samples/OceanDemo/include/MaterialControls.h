@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2006 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -32,7 +32,7 @@ struct ShaderControl
 	float MinVal;
 	float MaxVal;
 	size_t ElementIndex;
-	mutable size_t PhysicalIndex;
+	mutable size_t ConstantIndex;
 
 	float getRange(void) const { return MaxVal - MinVal; }
 	float convertParamToScrollPosition(const float val) const { return val - MinVal; }
@@ -94,8 +94,8 @@ typedef MaterialControlsContainer::iterator MaterialControlsIterator;
 //---------------------------------------------------------------------------
 struct ShaderControlGUIWidget
 {
-	CEGUI::Window* TextWidget;
-	CEGUI::Window* NumberWidget;
+	CEGUI::StaticText* TextWidget;
+	CEGUI::StaticText* NumberWidget;
 	CEGUI::Scrollbar*  ScrollWidget;
 
 	ShaderControlGUIWidget() : TextWidget(NULL), NumberWidget(NULL), ScrollWidget(NULL) {}

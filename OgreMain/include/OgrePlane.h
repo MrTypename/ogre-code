@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 // Original free version by:
@@ -71,17 +67,10 @@ namespace Ogre {
         {
             NO_SIDE,
             POSITIVE_SIDE,
-            NEGATIVE_SIDE,
-            BOTH_SIDE
+            NEGATIVE_SIDE
         };
 
         Side getSide (const Vector3& rkPoint) const;
-
-        /**
-        returns the side where the aligneBox is. the flag BOTH_SIDE indicates an intersecting box.
-        one corner ON the plane is sufficient to consider the box and the plane intersecting.
-        */
-        Side getSide (const AxisAlignedBox& rkBox) const;
 
         /** This is a pseudodistance. The sign of the return value is
             positive if the point is on the positive side of the plane,
@@ -97,9 +86,6 @@ namespace Ogre {
         void redefine(const Vector3& rkPoint0, const Vector3& rkPoint1,
             const Vector3& rkPoint2);
 
-		/** Redefine this plane based on a normal and a point. */
-		void redefine(const Vector3& rkNormal, const Vector3& rkPoint);
-
 		/** Project a vector onto the plane. 
 		@remarks This gives you the element of the input vector that is perpendicular 
 			to the normal of the plane. You can get the element which is parallel
@@ -109,27 +95,12 @@ namespace Ogre {
 		*/
 		Vector3 projectVector(const Vector3& v);
 
-        /** Normalises the plane.
-            @remarks
-                This method normalises the plane's normal and the length scale of d
-                is as well.
-            @note
-                This function will not crash for zero-sized vectors, but there
-                will be no changes made to their components.
-            @returns The previous length of the plane's normal.
-        */
-        Real normalise(void);
-
 		Vector3 normal;
         Real d;
         /// Comparison operator
         bool operator==(const Plane& rhs) const
         {
             return (rhs.d == d && rhs.normal == normal);
-        }
-        bool operator!=(const Plane& rhs) const
-        {
-            return (rhs.d != d && rhs.normal != normal);
         }
 
         _OgreExport friend std::ostream& operator<< (std::ostream& o, Plane& p);

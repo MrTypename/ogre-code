@@ -2,9 +2,9 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __BspSceneManager_H__
@@ -89,10 +85,9 @@ namespace Ogre {
             @param camera Pointer to the viewpoint.
             @returns The BSP node the camera was found in, for info.
         */
-        BspNode* walkTree(Camera* camera, VisibleObjectsBoundsInfo* visibleBounds, bool onlyShadowCasters);
+        BspNode* walkTree(Camera* camera, bool onlyShadowCasters);
         /** Tags geometry in the leaf specified for later rendering. */
-        void processVisibleLeaf(BspNode* leaf, Camera* cam, 
-			VisibleObjectsBoundsInfo* visibleBounds, bool onlyShadowCasters);
+        void processVisibleLeaf(BspNode* leaf, Camera* cam, bool onlyShadowCasters);
 
         /** Caches a face group for imminent rendering. */
         unsigned int cacheGeometry(unsigned int* pIndexes, const StaticFaceGroup* faceGroup);
@@ -146,8 +141,7 @@ namespace Ogre {
         const BspLevelPtr& getLevel(void) {return mLevel; }
 
         /** Overriden from SceneManager. */
-        void _findVisibleObjects(Camera* cam, VisibleObjectsBoundsInfo* visibleBounds, 
-			bool onlyShadowCasters);
+        void _findVisibleObjects(Camera* cam, bool onlyShadowCasters);
 
         /** Overriden from SceneManager. */
         void _renderVisibleObjects(void);

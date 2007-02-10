@@ -12,7 +12,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="..\..\..\lib"
+			OutputDirectory="..\bin\$(ConfigurationName)"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2">
@@ -20,7 +20,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\include;..\..\..\OgreMain\include;..\..\..\Dependencies\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OGRE_CGPLUGIN_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;PLUGIN_BSPSCENEMANAGER_EXPORTS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -36,16 +36,16 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
 				AdditionalDependencies="OgreMain_d.lib cg.lib"
-				OutputFile="$(OutDir)/$(ProjectName)_d.dll"
+				OutputFile="$(OutDir)/Plugin_CgProgramManager.dll"
 				Version="0.99"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="&quot;..\..\..\lib&quot;;&quot;..\..\..\Dependencies\lib\$(ConfigurationName)&quot;"
-				ModuleDefinitionFile=""
+				AdditionalLibraryDirectories="&quot;..\..\..\OgreMain\lib\$(ConfigurationName)&quot;;&quot;..\..\..\Dependencies\lib\$(ConfigurationName)&quot;"
+				ModuleDefinitionFile="..\misc\OgreCgProgramManager.def"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/$(ProjectName)_d.pdb"
+				ProgramDatabaseFile="$(OutDir)/Plugin_CgProgramManager.pdb"
 				SubSystem="2"
-				ImportLibrary="$(OutDir)/$(TargetName).lib"
+				ImportLibrary="$(OutDir)/Plugin_CgProgramManager.lib"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -71,7 +71,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\..\..\lib"
+			OutputDirectory="..\bin\$(ConfigurationName)"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
@@ -88,7 +88,7 @@
 				EnableFiberSafeOptimizations="TRUE"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="..\include;..\..\..\OgreMain\include;..\..\..\Dependencies\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OGRE_CGPLUGIN_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PLUGIN_BSPSCENEMANAGER_EXPORTS"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="FALSE"
@@ -104,16 +104,17 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
 				AdditionalDependencies="OgreMain.lib  cg.lib"
+				OutputFile="$(OutDir)/Plugin_CgProgramManager.dll"
 				Version="0.99"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="&quot;..\..\..\lib&quot;;&quot;..\..\..\Dependencies\lib\$(ConfigurationName)&quot;"
-				ModuleDefinitionFile=""
+				AdditionalLibraryDirectories="&quot;..\..\..\OgreMain\lib\$(ConfigurationName)&quot;;&quot;..\..\..\Dependencies\lib\$(ConfigurationName)&quot;"
+				ModuleDefinitionFile="..\misc\OgreCgProgramManager.def"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				ImportLibrary="$(OutDir)/$(TargetName).lib"
+				ImportLibrary="$(OutDir)/Plugin_CgProgramManager.lib"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -137,103 +138,6 @@
 			<Tool
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
-		<Configuration
-			Name="DebugStaticLib|Win32"
-			OutputDirectory="..\..\..\lib"
-			IntermediateDirectory="..\obj\$(ConfigurationName)"
-			ConfigurationType="4"
-			CharacterSet="2">
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="..\include;..\..\..\OgreMain\include;..\..\..\Dependencies\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OGRE_CGPLUGIN_EXPORTS;OGRE_STATIC_LIB"
-				MinimalRebuild="TRUE"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
-				EnableFunctionLevelLinking="TRUE"
-				RuntimeTypeInfo="TRUE"
-				UsePrecompiledHeader="2"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="4"/>
-			<Tool
-				Name="VCCustomBuildTool"/>
-			<Tool
-				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/$(ProjectName)Static_d.lib"/>
-			<Tool
-				Name="VCMIDLTool"/>
-			<Tool
-				Name="VCPostBuildEventTool"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
-		</Configuration>
-		<Configuration
-			Name="ReleaseStaticLib|Win32"
-			OutputDirectory="..\..\..\lib"
-			IntermediateDirectory="..\obj\$(ConfigurationName)"
-			ConfigurationType="4"
-			CharacterSet="2"
-			WholeProgramOptimization="TRUE">
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="3"
-				GlobalOptimizations="TRUE"
-				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="TRUE"
-				ImproveFloatingPointConsistency="TRUE"
-				FavorSizeOrSpeed="1"
-				OmitFramePointers="TRUE"
-				EnableFiberSafeOptimizations="TRUE"
-				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="..\include;..\..\..\OgreMain\include;..\..\..\Dependencies\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OGRE_CGPLUGIN_EXPORTS;OGRE_STATIC_LIB"
-				StringPooling="TRUE"
-				RuntimeLibrary="2"
-				BufferSecurityCheck="FALSE"
-				EnableFunctionLevelLinking="TRUE"
-				RuntimeTypeInfo="TRUE"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="3"/>
-			<Tool
-				Name="VCCustomBuildTool"/>
-			<Tool
-				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/$(ProjectName)Static.lib"/>
-			<Tool
-				Name="VCMIDLTool"/>
-			<Tool
-				Name="VCPostBuildEventTool"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
-		</Configuration>
 	</Configurations>
 	<References>
 	</References>
@@ -241,9 +145,6 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm">
-			<File
-				RelativePath="..\src\OgreCgPlugin.cpp">
-			</File>
 			<File
 				RelativePath="..\src\OgreCgProgram.cpp">
 			</File>
@@ -259,9 +160,6 @@
 			Filter="h;hpp;hxx;hm;inl;inc">
 			<File
 				RelativePath="..\..\..\Dependencies\include\Cg\cg.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreCgPlugin.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreCgPrerequisites.h">

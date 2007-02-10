@@ -2,9 +2,9 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -85,24 +81,18 @@ namespace Ogre  {
                 return GL_RGBA;
 			case PF_FLOAT16_R:
                 return GL_LUMINANCE;
-			case PF_FLOAT16_GR:
-				return GL_LUMINANCE_ALPHA;
             case PF_FLOAT16_RGB:
                 return GL_RGB;
             case PF_FLOAT16_RGBA:
                 return GL_RGBA;
 			case PF_FLOAT32_R:
                 return GL_LUMINANCE;
-			case PF_FLOAT32_GR:
-				return GL_LUMINANCE_ALPHA;
             case PF_FLOAT32_RGB:
                 return GL_RGB;
             case PF_FLOAT32_RGBA:
                 return GL_RGBA;
 			case PF_SHORT_RGBA:
 				return GL_RGBA;
-			case PF_SHORT_GR:
-				return GL_LUMINANCE_ALPHA;
             case PF_DXT1:
                 return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
             case PF_DXT3:
@@ -163,17 +153,14 @@ namespace Ogre  {
             case PF_A2B10G10R10:
                 return GL_UNSIGNED_INT_2_10_10_10_REV;
 			case PF_FLOAT16_R:
-			case PF_FLOAT16_GR:
             case PF_FLOAT16_RGB:
             case PF_FLOAT16_RGBA:
                 return GL_HALF_FLOAT_ARB;
 			case PF_FLOAT32_R:
-			case PF_FLOAT32_GR:
             case PF_FLOAT32_RGB:
             case PF_FLOAT32_RGBA:
                 return GL_FLOAT;
 			case PF_SHORT_RGBA:
-			case PF_SHORT_GR:
 				return GL_UNSIGNED_SHORT;
             default:
                 return 0;
@@ -217,23 +204,17 @@ namespace Ogre  {
 				return GL_LUMINANCE16F_ARB;
             case PF_FLOAT16_RGB:
                 return GL_RGB16F_ARB;
-			case PF_FLOAT16_GR: 
-				return GL_LUMINANCE_ALPHA16F_ARB;
             case PF_FLOAT16_RGBA:
                 return GL_RGBA16F_ARB;
 			case PF_FLOAT32_R:
 				return GL_LUMINANCE32F_ARB;
-			case PF_FLOAT32_GR:
-				return GL_LUMINANCE_ALPHA32F_ARB;
             case PF_FLOAT32_RGB:
                 return GL_RGB32F_ARB;
             case PF_FLOAT32_RGBA:
                 return GL_RGBA32F_ARB;
 			case PF_SHORT_RGBA:
 				return GL_RGBA16;
-			case PF_SHORT_GR:
-				GL_LUMINANCE16_ALPHA16;
-			case PF_DXT1:
+            case PF_DXT1:
                 return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
             case PF_DXT3:
                 return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
@@ -285,14 +266,8 @@ namespace Ogre  {
 			return PF_A2R10G10B10;
 		case GL_RGBA16:
 			return PF_SHORT_RGBA;
-		case GL_LUMINANCE16_ALPHA16:
-			return PF_SHORT_GR;
 		case GL_LUMINANCE_FLOAT16_ATI:
 			return PF_FLOAT16_R;
-		case GL_LUMINANCE_ALPHA_FLOAT16_ATI:
-			return PF_FLOAT16_GR;
-		case GL_LUMINANCE_ALPHA_FLOAT32_ATI:
-			return PF_FLOAT32_GR;
 		case GL_LUMINANCE_FLOAT32_ATI:
 			return PF_FLOAT32_R;
 		case GL_RGB_FLOAT16_ATI: // GL_RGB16F_ARB

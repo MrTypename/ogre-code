@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -34,7 +30,7 @@ Torus Knot Software Ltd.
 namespace Ogre {
 
 	//-----------------------------------------------------------------------
-	const String StringUtil::BLANK = String("");
+	const String StringUtil::BLANK;
 	//-----------------------------------------------------------------------
     void StringUtil::trim(String& str, bool left, bool right)
     {
@@ -71,8 +67,10 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     std::vector<String> StringUtil::split( const String& str, const String& delims, unsigned int maxSplits)
     {
-        // static unsigned dl;
         std::vector<String> ret;
+        // Pre-allocate some space for performance
+        ret.reserve(maxSplits ? maxSplits+1 : 10);    // 10 is guessed capacity for most case
+
         unsigned int numSplits = 0;
 
         // Use STL methods 
@@ -179,7 +177,7 @@ namespace Ogre {
 
         if (i == String::npos)
         {
-            outPath = "";
+            outPath.clear();
 			outBasename = qualifiedName;
         }
         else

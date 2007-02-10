@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef _PixelFormat_H__
@@ -124,18 +120,12 @@ namespace Ogre {
         PF_FLOAT32_RGB = 24,
         // 128-bit pixel format, 32 bits (float) for red, 32 bits (float) for green, 32 bits (float) for blue, 32 bits (float) for alpha
         PF_FLOAT32_RGBA = 25,
-		// 32-bit, 2-channel s10e5 floating point pixel format, 16-bit green, 16-bit red
-		PF_FLOAT16_GR = 35,
-		// 64-bit, 2-channel floating point pixel format, 32-bit green, 32-bit red
-		PF_FLOAT32_GR = 36,
 		// Depth texture format
 		PF_DEPTH = 29,
 		// 64-bit pixel format, 16 bits for red, green, blue and alpha
 		PF_SHORT_RGBA = 30,
-		// 32-bit pixel format, 16-bit green, 16-bit red
-		PF_SHORT_GR = 34,
 		// Number of pixel formats currently defined
-        PF_COUNT = 37
+        PF_COUNT = 34
     };
 
     /**
@@ -373,36 +363,7 @@ namespace Ogre {
             4 (has alpha) in case there is no clear component type like with compressed formats.
          */
         static size_t getComponentCount(PixelFormat fmt);
-
-        /** Gets the format from given name.
-            @param  name            The string of format name
-            @param  accessibleOnly  If true, non-accessible format will treat as invalid format,
-                                    otherwise, all supported format are valid.
-            @param  caseSensitive   Should be set true if string match should use case sensitivity.
-            @returns                The format match the format name, or PF_UNKNOWN if is invalid name.
-        */
-        static PixelFormat getFormatFromName(const String& name, bool accessibleOnly = false, bool caseSensitive = false);
-
-        /** Gets the BNF expression of the pixel-formats.
-            @note                   The string returned by this function is intented to use as a BNF expression
-                                    to work with Compiler2Pass.
-            @param  accessibleOnly  If true, only accessible pixel format will take into account, otherwise all
-                                    pixel formats list in PixelFormat enumeration will being returned.
-            @returns                A string contains the BNF expression.
-        */
-        static String getBNFExpressionOfPixelFormats(bool accessibleOnly = false);
-
-        /** Returns the similar format but acoording with given bit depths.
-            @param fmt      The original foamt.
-            @param integerBits Preferred bit depth (pixel bits) for integer pixel format.
-                            Available values: 0, 16 and 32, where 0 (the default) means as it is.
-            @param floatBits Preferred bit depth (channel bits) for float pixel format.
-                            Available values: 0, 16 and 32, where 0 (the default) means as it is.
-            @returns        The format that similar original format with bit depth according
-                            with preferred bit depth, or original format if no convertion occuring.
-        */
-        static PixelFormat getFormatForBitDepths(PixelFormat fmt, ushort integerBits, ushort floatBits);
-
+        
         /** Pack a colour value to memory
         	@param colour	The colour
         	@param pf		Pixelformat in which to write the colour

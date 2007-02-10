@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __GLSLLinkProgramManager_H__
@@ -33,7 +29,6 @@ Torus Knot Software Ltd.
 #include "OgreSingleton.h"
 
 #include "OgreGLSLExtSupport.h"
-#include "OgreGLSLLinkProgram.h"
 
 namespace Ogre {
 
@@ -49,7 +44,7 @@ namespace Ogre {
 
 	*/
 
-	class _OgrePrivate GLSLLinkProgramManager : public Singleton<GLSLLinkProgramManager>
+	class GLSLLinkProgramManager : public Singleton<GLSLLinkProgramManager>
 	{
 
 	private:
@@ -64,17 +59,6 @@ namespace Ogre {
 		GLSLGpuProgram* mActiveVertexGpuProgram;
 		GLSLGpuProgram* mActiveFragmentGpuProgram;
 		GLSLLinkProgram* mActiveLinkProgram;
-
-		typedef std::map<String, GLenum> StringToEnumMap;
-		StringToEnumMap mTypeEnumMap;
-
-		/// Use type to complete other information
-		void completeDefInfo(GLenum gltype, GpuConstantDefinition& defToUpdate);
-		/// Find where the data for a specific uniform should come from, populate
-		bool completeParamSource(const String& paramName,
-			const GpuConstantDefinitionMap* vertexConstantDefs, 
-			const GpuConstantDefinitionMap* fragmentConstantDefs, 
-			GLUniformReference& refToUpdate);
 
 	public:
 
@@ -98,30 +82,6 @@ namespace Ogre {
 			Normally called from the GLSLGpuProgram::bindProgram and unbindProgram methods
 		*/
 		void setActiveVertexShader(GLSLGpuProgram* vertexGpuProgram);
-
-		/** Populate a list of uniforms based on a program object.
-		@param programObject Handle to the program object to query
-		@param vertexConstantDefs Definition of the constants extracted from the
-			vertex program, used to match up physical buffer indexes with program
-			uniforms. May be null if there is no vertex program.
-		@param fragmentConstantDefs Definition of the constants extracted from the
-			fragment program, used to match up physical buffer indexes with program
-			uniforms. May be null if there is no fragment program.
-		@param list The list to populate (will not be cleared before adding, clear
-		it yourself before calling this if that's what you want).
-		*/
-		void extractUniforms(GLhandleARB programObject, 
-			const GpuConstantDefinitionMap* vertexConstantDefs, 
-			const GpuConstantDefinitionMap* fragmentConstantDefs, 
-			GLUniformReferenceList& list);
-		/** Populate a list of uniforms based on GLSL source.
-		@param src Reference to the source code
-		@param list The defs to populate (will not be cleared before adding, clear
-		it yourself before calling this if that's what you want).
-		@param filename The file name this came from, for logging errors.
-		*/
-		void extractConstantDefs(const String& src, GpuNamedConstants& constantDefs, 
-			const String& filename);
 
 		static GLSLLinkProgramManager& getSingleton(void);
         static GLSLLinkProgramManager* getSingletonPtr(void);

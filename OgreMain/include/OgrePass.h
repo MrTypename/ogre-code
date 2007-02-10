@@ -2,9 +2,9 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __Pass_H__
@@ -35,7 +31,6 @@ Torus Knot Software Ltd.
 #include "OgreBlendMode.h"
 #include "OgreCommon.h"
 #include "OgreLight.h"
-#include "OgreTextureUnitState.h"
 
 namespace Ogre {
     /** Class defining a single pass of a Technique (of a Material), ie
@@ -59,23 +54,6 @@ namespace Ogre {
     */
     class _OgreExport Pass
     {
-	public:
-		/** Definition of a functor for calculating the hashcode of a Pass.
-		@remarks
-			The hashcode of a Pass is used to sort Passes for rendering, in order
-			to reduce the number of render state changes. Each Pass represents a
-			single unique set of states, but by ordering them, state changes can
-			be minimised between passes. An implementation of this functor should
-			order passes so that the elements that you want to keep constant are
-			sorted next to each other.
-		@see Pass::setHashFunc
-		*/
-		struct HashFunc
-		{
-			virtual uint32 operator()(const Pass* p) const = 0;
-			/// Need virtual destructor in case subclasses use it
-			virtual ~HashFunc() {}
-		};
     protected:
         Technique* mParent;
         unsigned short mIndex; // pass index
@@ -102,8 +80,7 @@ namespace Ogre {
         bool mDepthCheck;
         bool mDepthWrite;
         CompareFunction mDepthFunc;
-        float mDepthBiasConstant;
-		float mDepthBiasSlopeScale;
+        ushort mDepthBias;
 
         // Colour buffer settings
         bool mColourWrite;
@@ -123,12 +100,8 @@ namespace Ogre {
         bool mLightingEnabled;
         /// Max simultaneous lights
         unsigned short mMaxSimultaneousLights;
-		/// Starting light index
-		unsigned short mStartLight;
 		/// Run this pass once per light?
 		bool mIteratePerLight;
-		/// Iterate per how many lights?
-		unsigned short mLightsPerIteration;
         // Should it only be run for a certain light type?
         bool mRunOnlyForOneLightType;
         Light::LightTypes mOnlyLightType;
@@ -174,11 +147,6 @@ namespace Ogre {
 		bool mPointAttenuationEnabled;
 		// constant, linear, quadratic coeffs
 		Real mPointAttenuationCoeffs[3];
-		// TU Content type lookups
-		typedef std::vector<unsigned short> ContentTypeLookup;
-		mutable ContentTypeLookup mShadowContentTypeLookup;
-		mutable bool mContentTypeLookupBuilt;
-
 	public:
 		typedef std::set<Pass*> PassSet;
     protected:
@@ -186,8 +154,6 @@ namespace Ogre {
 		static PassSet msDirtyHashList;
         /// The place where passes go to die
         static PassSet msPassGraveyard;
-		/// The Pass hash functor
-		static HashFunc* msHashFunc;
     public:
         /// Default constructor
 		Pass(Technique* parent, unsigned short index);
@@ -501,9 +467,9 @@ namespace Ogre {
 
         /** Returns the number of texture unit settings.
         */
-        unsigned short getNumTextureUnitStates(void) const
+        size_t getNumTextureUnitStates(void) const
         {
-            return static_cast<unsigned short>(mTextureUnitStates.size());
+            return mTextureUnitStates.size();
         }
 
         /** Sets the kind of blending this pass has with the existing contents of the scene.
@@ -690,20 +656,6 @@ namespace Ogre {
         /** Gets the maximum number of lights to be used by this pass. */
         unsigned short getMaxSimultaneousLights(void) const;
 
-		/** Sets the light index that this pass will start at in the light list.
-		@remarks
-			Normally the lights passed to a pass will start from the beginning
-			of the light list for this object. This option allows you to make this
-			pass start from a higher light index, for example if one of your earlier
-			passes could deal with lights 0-3, and this pass dealt with lights 4+. 
-			This option also has an interaction with pass iteration, in that
-			if you choose to iterate this pass per light too, the iteration will
-			only begin from light 4.
-		*/
-		void setStartLight(unsigned short startLight);
-		/** Gets the light index that this pass will start at in the light list. */
-		unsigned short getStartLight(void) const;
-
         /** Sets the type of light shading required
         @note
         The default shading method is Gouraud shading.
@@ -800,22 +752,13 @@ namespace Ogre {
         @par
         A way to combat this problem is to use a depth bias to adjust the depth buffer value
         used for the decal such that it is slightly higher than the true value, ensuring that
-        the decal appears on top. There are two aspects to the biasing, a constant
-		bias value and a slope-relative biasing value, which varies according to the
-		maximum depth slope relative to the camera, ie:
-		<pre>finalBias = maxSlope * slopeScaleBias + constantBias</pre>
-		Note that slope scale bias, whilst more accurate, may be ignored by old hardware.
-        @param constantBias The constant bias value, expressed as a factor of the
-			minimum observable depth
-		@param slopeScaleBias The slope-relative bias value, expressed as a factor
-			of the depth slope
-		*/
-        void setDepthBias(float constantBias, float slopeScaleBias = 0.0f);
+        the decal appears on top.
+        @param bias The bias value, should be between 0 and 16.
+        */
+        void setDepthBias(ushort bias);
 
-        /** Retrieves the const depth bias value as set by setDepthBias. */
-        float getDepthBiasConstant(void) const;
-		/** Retrieves the slope-scale depth bias value as set by setDepthBias. */
-		float getDepthBiasSlopeScale(void) const;
+        /** Retrieves the depth bias value as set by setDepthValue. */
+        ushort getDepthBias(void) const;
 
         /** Sets the way the pass will have use alpha to totally reject pixels from the pipeline.
         @remarks
@@ -842,8 +785,8 @@ namespace Ogre {
         /** Gets the alpha reject value. See setAlphaRejectSettings for more information.
         */
 		unsigned char getAlphaRejectValue(void) const { return mAlphaRejectVal; }
-        /** Sets whether or not this pass should iterate per light or number of
-			lights which can affect the object being rendered.
+        /** Sets whether or not this pass should iterate per light which
+		    can affect the object being rendered.
 		@remarks
 			The default behaviour for a pass (when this option is 'false'), is
 			for a pass to be rendered only once (or the number of times set in
@@ -853,8 +796,7 @@ namespace Ogre {
 		@par
 			Setting this option to 'true' changes this behaviour, such that
 			instead of trying to issue render this pass once per object, it
-			is run <b>per light</b>, or for a group of 'n' lights each time
-			which can affect this object, the number of
+			is run <b>per light</b> which can affect this object, the number of
 			times set in setPassIterationCount (default is once). In
 			this case, only light index 0 is ever used, and is a different light
 			every time the pass is issued, up to the total number of lights
@@ -864,8 +806,8 @@ namespace Ogre {
 			<li>It's easier to write vertex / fragment programs for this because
 			a single program can be used for any number of lights</li>
 			</ul>
-			However, this technique is more expensive, and typically you
-			will want an additional ambient pass, because if no lights are 
+			However, this technique is a lot more expensive, and typically you
+			will want an additional ambient pass, because if no lights are
 			affecting the object it will not be rendered at all, which will look
 			odd even if ambient light is zero (imagine if there are lit objects
 			behind it - the objects silhouette would not show up). Therefore,
@@ -874,11 +816,7 @@ namespace Ogre {
 		@note
 			The number of times this pass runs is still limited by the maximum
 			number of lights allowed as set in setMaxSimultaneousLights, so
-			you will never get more passes than this. Also, the iteration is
-			started from the 'start light' as set in Pass::setStartLight, and
-			the number of passes is the number of lights to iterate over divided
-			by the number of lights per iteration (default 1, set by 
-			setLightCountPerIteration).
+			you will never get more passes than this.
         @param enabled Whether this feature is enabled
         @param onlyForOneLightType If true, the pass will only be run for a single type
             of light, other light types will be ignored.
@@ -895,21 +833,6 @@ namespace Ogre {
             getRunOnlyForOneLightType are both true. */
         Light::LightTypes getOnlyLightType() const { return mOnlyLightType; }
 
-		/** If light iteration is enabled, determine the number of lights per
-			iteration.
-		@remarks
-			The default for this setting is 1, so if you enable light iteration
-			(Pass::setIteratePerLight), the pass is rendered once per light. If
-			you set this value higher, the passes will occur once per 'n' lights.
-			The start of the iteration is set by Pass::setStartLight and the end
-			by Pass::setMaxSimultaneousLights.
-		*/
-		void setLightCountPerIteration(unsigned short c);
-		/** If light iteration is enabled, determine the number of lights per
-		iteration.
-		*/
-		unsigned short getLightCountPerIteration(void) const;
-		
 		/// Gets the parent Technique
         Technique* getParent(void) { return mParent; }
 
@@ -1148,16 +1071,7 @@ namespace Ogre {
         /** Update any automatic light parameters on this pass */
         void _updateAutoParamsLightsOnly(const AutoParamDataSource& source) const;
 
-		/** Gets the 'nth' texture which references the given content type.
-		@remarks
-			If the 'nth' texture unit which references the content type doesn't
-			exist, then this method returns an arbitrary high-value outside the
-			valid range to index texture units.
-		*/
-		unsigned short _getTextureUnitWithContentTypeIndex(
-			TextureUnitState::ContentType contentType, unsigned short index) const;
-
-        /** Set texture filtering for every texture unit 
+        /** Set texture filtering for every texture unit
         @note
             This property actually exists on the TextureUnitState class
             For simplicity, this method allows you to set these properties for
@@ -1208,12 +1122,12 @@ namespace Ogre {
         @remarks
             Only applicable for programmable passes.
         @param count number of iterations to perform fast multi pass operations.
-            A value greater than 1 will cause the pass to be executed count number of
+            A value greater than 0 will cause the pass to be executed count number of
             times without changing the render state.  This is very usefull for passes
             that use programmable shaders that have to iterate more than once but don't
             need a render state change.  Using multi pass can dramatically speed up rendering
             for materials that do things like fur, blur.
-            A value of 1 turns off multi pass operation and the pass does
+            A value of 0 turns off multi pass operation and the pass does
             the normal pass operation.
         */
         void setPassIterationCount(const size_t count) { mPassIterationCount = count; }
@@ -1235,51 +1149,6 @@ namespace Ogre {
         */
         bool applyTextureAliases(const AliasTextureNamePairList& aliasList, const bool apply = true) const;
 
-
-		/** There are some default hash functions used to order passes so that
-			render state changes are minimised, this enumerates them.
-		*/
-		enum BuiltinHashFunction
-		{
-			/** Try to minimise the number of texture changes. */
-			MIN_TEXTURE_CHANGE,
-			/** Try to minimise the number of GPU program changes.
-			@note Only really useful if you use GPU programs for all of your
-				materials. 
-			*/
-			MIN_GPU_PROGRAM_CHANGE
-		};
-		/** Sets one of the default hash functions to be used.
-		@remarks
-			You absolutely must not change the hash function whilst any Pass instances
-			exist in the render queue. The only time you can do this is either
-			before you render anything, or directly after you manuall call
-			RenderQueue::clear(true) to completely destroy the queue structures.
-			The default is MIN_TEXTURE_CHANGE.
-		@note
-			You can also implement your own hash function, see the alternate version
-			of this method.
-		@see HashFunc
-		*/
-		static void setHashFunction(BuiltinHashFunction builtin);
-
-		/** Set the hash function used for all passes.
-		@remarks
-			You absolutely must not change the hash function whilst any Pass instances
-			exist in the render queue. The only time you can do this is either
-			before you render anything, or directly after you manuall call
-			RenderQueue::clear(true) to completely destroy the queue structures.
-		@note
-			You can also use one of the built-in hash functions, see the alternate version
-			of this method. The default is MIN_TEXTURE_CHANGE.
-		@see HashFunc
-		*/
-		static void setHashFunction(HashFunc* hashFunc) { msHashFunc = hashFunc; }
-
-		/** Get the hash function used for all passes.
-		*/
-		static HashFunc* getHashFunction(void) { return msHashFunc; }
-        
     };
 
     enum IlluminationStage

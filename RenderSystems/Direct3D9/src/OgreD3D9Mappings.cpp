@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9Mappings.h"
@@ -651,16 +647,10 @@ namespace Ogre
 			return PF_FLOAT16_RGBA;
 		case D3DFMT_R32F:
 			return PF_FLOAT32_R;
-		case D3DFMT_G32R32F:
-			return PF_FLOAT32_GR;
 		case D3DFMT_A32B32G32R32F:
 			return PF_FLOAT32_RGBA;
-		case D3DFMT_G16R16F:
-			return PF_FLOAT16_GR;
 		case D3DFMT_A16B16G16R16:
 			return PF_SHORT_RGBA;
-		case D3DFMT_G16R16:
-			return PF_SHORT_GR;
 		case D3DFMT_DXT1:
 			return PF_DXT1;
 		case D3DFMT_DXT2:
@@ -714,20 +704,14 @@ namespace Ogre
 			return D3DFMT_A2R10G10B10;
 		case PF_FLOAT16_R:
 			return D3DFMT_R16F;
-		case PF_FLOAT16_GR:
-			return D3DFMT_G16R16F;
 		case PF_FLOAT16_RGBA:
 			return D3DFMT_A16B16G16R16F;
 		case PF_FLOAT32_R:
 			return D3DFMT_R32F;
-		case PF_FLOAT32_GR:
-			return D3DFMT_G32R32F;
 		case PF_FLOAT32_RGBA:
 			return D3DFMT_A32B32G32R32F;
 		case PF_SHORT_RGBA:
 			return D3DFMT_A16B16G16R16;
-		case PF_SHORT_GR:
-			return D3DFMT_G16R16;
 		case PF_DXT1:
 			return D3DFMT_DXT1;
 		case PF_DXT2:

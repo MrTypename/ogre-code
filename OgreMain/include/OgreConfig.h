@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __Config_H_
@@ -37,6 +33,11 @@ Torus Knot Software Ltd.
 /** If set to 1, profiling code will be included in the application. When you
 	are deploying your application you will probably want to set this to 0 */
 #define OGRE_PROFILING 0
+
+/** If set to 1, stack unwinding code is compiled into the library and called
+    in case an exception is thrown in order to show the call stack.
+*/
+#define OGRE_STACK_UNWINDING 0
 
 /** There are three modes for handling asserts in OGRE:
 0 - STANDARD - Standard asserts in debug builds, nothing in release builds
@@ -59,6 +60,11 @@ Torus Knot Software Ltd.
 #define OGRE_DOUBLE_PRECISION 0
 #endif
 
+/** If set to 1, the strings are transforned to Unicode, and char is replaced
+    with wchar_t when having to do with strings of any kind.
+*/
+#define OGRE_WCHAR_T_STRINGS 0
+
 /** Define number of texture coordinate sets allowed per vertex.
 */
 #define OGRE_MAX_TEXTURE_COORD_SETS 6
@@ -75,9 +81,9 @@ Torus Knot Software Ltd.
 */
 #define OGRE_MAX_BLEND_WEIGHTS 4
 
-/** Define this if you want to link OGRE as a static lib (preferably as a project file)
+/** Set this to zero if you want to link OGRE as a static lib.
 */
-//#define OGRE_STATIC_LIB
+#define OGRE_DYNAMIC_LINKAGE 1
 
 
 /** Set this to 0 if you want to use the standard memory manager in Debug builds
@@ -102,18 +108,12 @@ Torus Knot Software Ltd.
 #define OGRE_THREAD_SUPPORT 0
 #endif
 
-/** Disables use of the FreeImage image library for loading images.
-WARNING: Use only when you want to provide your own image loading code via codecs.
+/** Disables use of the DevIL image library for loading images.
+    WARNING: Use only when you want to provide your own image loading code via codecs.
 */
-#ifndef OGRE_NO_FREEIMAGE
-#define OGRE_NO_FREEIMAGE 0
+#ifndef OGRE_NO_DEVIL
+#define OGRE_NO_DEVIL 0
 #endif
 
-/** Disables use of the internal image codec for loading DDS files.
-WARNING: Use only when you want to provide your own image loading code via codecs.
-*/
-#ifndef OGRE_NO_DDS_CODEC
-#define OGRE_NO_DDS_CODEC 0
-#endif
 
 #endif

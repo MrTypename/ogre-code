@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __CompositorManager_H__
@@ -34,14 +30,6 @@ Torus Knot Software Ltd.
 #include "OgreCompositor.h"
 #include "OgreRectangle2D.h"
 #include "OgreCompositorSerializer.h"
-
-#if OGRE_THREAD_SUPPORT
-// boost::thread_specific_ptr has 'new' in header but delete in lib
-// so if we use our memory manager it reports leaks incorrectly
-#	include "OgreNoMemoryMacros.h"
-#	include <boost/thread/tss.hpp>
-#	include "OgreMemoryMacros.h"
-#endif
 
 namespace Ogre {
     /** Class for managing Compositor settings for Ogre. Compositors provide the means
@@ -156,8 +144,8 @@ namespace Ogre {
         typedef std::map<Viewport*, CompositorChain*> Chains;
         Chains mChains;
 
-		/// Serializer - Hold instance per thread if necessary
-		OGRE_THREAD_POINTER(CompositorSerializer, mSerializer);
+        /// Serializer
+        CompositorSerializer mSerializer;
 
         /** Clear composition chains for all viewports
          */

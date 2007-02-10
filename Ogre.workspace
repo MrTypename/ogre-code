@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_workspace_file>
-	<Workspace title="Ogre  workspace">
+	<Workspace title="Ogre workspace">
 		<Project filename="OgreMain\scripts\OgreMain.cbp" active="1" />
+		<Project filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp">
+			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+		</Project>
 		<Project filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
 		</Project>
@@ -14,6 +17,9 @@
 		<Project filename="PlugIns\ParticleFX\scripts\Plugin_ParticleFX.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
 		</Project>
+		<Project filename="ReferenceApplication\ReferenceAppLayer\scripts\ReferenceAppLayer.cbp">
+			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+		</Project>
 		<Project filename="RenderSystems\Direct3D9\scripts\RenderSystem_Direct3D9.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
 		</Project>
@@ -23,11 +29,18 @@
 		<Project filename="Samples\Common\CEGUIRenderer\scripts\OgreGUIRenderer.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
 		</Project>
-		<Project filename="ReferenceApplication\ReferenceAppLayer\scripts\ReferenceAppLayer.cbp">
+		<Project filename="Tools\MaterialUpgrader\scripts\MaterialUpgrader.cbp">
+			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+		</Project>
+		<Project filename="Tools\MeshUpgrader\scripts\MeshUpgrader.cbp">
+			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+		</Project>
+		<Project filename="Tools\XMLConverter\scripts\XMLConverter.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
 		</Project>
 		<Project filename="Samples\BezierPatch\scripts\Demo_BezierPatch.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -37,6 +50,7 @@
 		</Project>
 		<Project filename="Samples\BSP\scripts\Demo_BSP.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -46,16 +60,18 @@
 		</Project>
 		<Project filename="ReferenceApplication\BspCollision\scripts\BspCollision.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
 			<Depends filename="PlugIns\ParticleFX\scripts\Plugin_ParticleFX.cbp" />
+			<Depends filename="ReferenceApplication\ReferenceAppLayer\scripts\ReferenceAppLayer.cbp" />
 			<Depends filename="RenderSystems\Direct3D9\scripts\RenderSystem_Direct3D9.cbp" />
 			<Depends filename="RenderSystems\GL\scripts\RenderSystem_GL.cbp" />
-			<Depends filename="ReferenceApplication\ReferenceAppLayer\scripts\ReferenceAppLayer.cbp" />
 		</Project>
 		<Project filename="Samples\CameraTrack\scripts\Demo_CameraTrack.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -65,6 +81,7 @@
 		</Project>
 		<Project filename="Samples\CelShading\scripts\Demo_CelShading.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -74,6 +91,7 @@
 		</Project>
 		<Project filename="Samples\Compositor\scripts\Demo_Compositor.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -84,6 +102,7 @@
 		</Project>
 		<Project filename="Samples\CubeMapping\scripts\Demo_CubeMapping.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -93,6 +112,7 @@
 		</Project>
 		<Project filename="Samples\DeferredShading\scripts\Demo_DeferredShading.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -102,6 +122,7 @@
 		</Project>
 		<Project filename="Samples\Dot3Bump\scripts\Demo_Dot3Bump.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -111,6 +132,7 @@
 		</Project>
 		<Project filename="Samples\DynTex\scripts\Demo_DynTex.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -120,6 +142,7 @@
 		</Project>
 		<Project filename="Samples\EnvMapping\scripts\Demo_EnvMapping.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -129,6 +152,7 @@
 		</Project>
 		<Project filename="Samples\FacialAnimation\scripts\Demo_FacialAnimation.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -139,6 +163,7 @@
 		</Project>
 		<Project filename="Samples\Fresnel\scripts\Demo_Fresnel.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -148,6 +173,7 @@
 		</Project>
 		<Project filename="Samples\Grass\scripts\Demo_Grass.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -157,6 +183,7 @@
 		</Project>
 		<Project filename="Samples\Gui\scripts\Demo_Gui.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -167,6 +194,7 @@
 		</Project>
 		<Project filename="Samples\Lighting\scripts\Demo_Lighting.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -176,6 +204,7 @@
 		</Project>
 		<Project filename="Samples\OceanDemo\script\Demo_Ocean.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -186,6 +215,7 @@
 		</Project>
 		<Project filename="Samples\ParticleFX\scripts\Demo_ParticleFX.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -195,6 +225,7 @@
 		</Project>
 		<Project filename="Samples\RenderToTexture\scripts\Demo_RenderToTexture.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -204,16 +235,17 @@
 		</Project>
 		<Project filename="Samples\Shadows\scripts\Demo_Shadows.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
 			<Depends filename="PlugIns\ParticleFX\scripts\Plugin_ParticleFX.cbp" />
 			<Depends filename="RenderSystems\Direct3D9\scripts\RenderSystem_Direct3D9.cbp" />
 			<Depends filename="RenderSystems\GL\scripts\RenderSystem_GL.cbp" />
-			<Depends filename="Samples\Common\CEGUIRenderer\scripts\OgreGUIRenderer.cbp" />
 		</Project>
 		<Project filename="Samples\SkeletalAnimation\scripts\Demo_SkeletalAnimation.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -223,6 +255,7 @@
 		</Project>
 		<Project filename="Samples\SkyBox\scripts\Demo_SkyBox.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -232,6 +265,7 @@
 		</Project>
 		<Project filename="Samples\SkyDome\scripts\Demo_SkyDome.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -241,6 +275,7 @@
 		</Project>
 		<Project filename="Samples\SkyPlane\scripts\Demo_SkyPlane.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -250,6 +285,7 @@
 		</Project>
 		<Project filename="Samples\Smoke\scripts\Demo_Smoke.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -259,6 +295,7 @@
 		</Project>
 		<Project filename="Samples\Terrain\scripts\Demo_Terrain.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -268,6 +305,7 @@
 		</Project>
 		<Project filename="Samples\TextureFX\scripts\Demo_TextureFX.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -277,6 +315,7 @@
 		</Project>
 		<Project filename="Samples\Transpacency\scripts\Demo_Transparency.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -286,6 +325,7 @@
 		</Project>
 		<Project filename="Samples\VolumeTex\scripts\Demo_VolumeTex.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -295,6 +335,7 @@
 		</Project>
 		<Project filename="Samples\Water\scripts\Demo_Water.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
 			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
 			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
 			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
@@ -302,14 +343,15 @@
 			<Depends filename="RenderSystems\Direct3D9\scripts\RenderSystem_Direct3D9.cbp" />
 			<Depends filename="RenderSystems\GL\scripts\RenderSystem_GL.cbp" />
 		</Project>
-		<Project filename="Tools\XMLConverter\scripts\XMLConverter.cbp">
+		<Project filename="Tests\PlayPen\scripts\PlayPen.cbp">
 			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
-		</Project>
-		<Project filename="Tools\MeshUpgrader\scripts\MeshUpgrader.cbp">
-			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
-		</Project>
-		<Project filename="Tools\MaterialUpgrader\scripts\MaterialUpgrader.cbp">
-			<Depends filename="OgreMain\scripts\OgreMain.cbp" />
+			<Depends filename="PlatformManagers\Win32\scripts\PlatformManager_Win32.cbp" />
+			<Depends filename="PlugIns\BSPSceneManager\scripts\Plugin_BSPSceneManager.cbp" />
+			<Depends filename="PlugIns\CgProgramManager\scripts\Plugin_CgProgramManager.cbp" />
+			<Depends filename="PlugIns\OctreeSceneManager\scripts\Plugin_OctreeSceneManager.cbp" />
+			<Depends filename="PlugIns\ParticleFX\scripts\Plugin_ParticleFX.cbp" />
+			<Depends filename="RenderSystems\Direct3D9\scripts\RenderSystem_Direct3D9.cbp" />
+			<Depends filename="RenderSystems\GL\scripts\RenderSystem_GL.cbp" />
 		</Project>
 	</Workspace>
 </CodeBlocks_workspace_file>

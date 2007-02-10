@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __Viewport_H__
@@ -263,22 +259,6 @@ namespace Ogre {
             viewport. */
         bool getShadowsEnabled(void) const;
 
-
-		/** Sets a per-viewport visibility mask.
-		@remarks
-			The visibility mask is a way to exclude objects from rendering for
-			a given viewport. For each object in the frustum, a check is made
-			between this mask and the objects visibility flags 
-			(@see MovableObject::setVisibilityFlags), and if a binary 'and'
-			returns zero, the object will not be rendered.
-		*/
-		void setVisibilityMask(uint32 mask) { mVisibilityMask = mask; }
-
-		/** Gets a per-viewport visibility mask.
-		@see Viewport::setVisibilityMask
-		*/
-		uint getVisibilityMask(void) const { return mVisibilityMask; }
-
 		/** Sets the use of a custom RenderQueueInvocationSequence for
 			rendering this target.
 		@remarks
@@ -314,7 +294,6 @@ namespace Ogre {
         bool mShowOverlays;
         bool mShowSkies;
 		bool mShowShadows;
-		uint32 mVisibilityMask;
 		// Render queue invocation sequence name
 		String mRQSequenceName;
 		RenderQueueInvocationSequence* mRQSequence;

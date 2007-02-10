@@ -17,7 +17,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="..\..\lib"
+			OutputDirectory="..\lib\$(ConfigurationName)"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)\VCProjectDefaults\UpgradeFromVC70.vsprops"
@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\include;..\..\Dependencies\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_USRDLL;_MT;OGRE_NONCLIENT_BUILD;FREEIMAGE_LIB"
+				PreprocessorDefinitions="WIN32;_DEBUG;_USRDLL;_MT;OGRE_NONCLIENT_BUILD"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="true"
@@ -68,7 +68,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib zziplibd.lib zlibd.lib freetype230_D.lib freeimaged.lib LibJPEG.lib LibMNG.lib LibPNG.lib LibTIFF.lib"
+				AdditionalDependencies="kernel32.lib user32.lib zziplibd.lib zdll.lib freetype2110_D.lib devil.lib ilu.lib"
 				OutputFile="$(OutDir)/OgreMain_d.dll"
 				Version="0.99"
 				LinkIncremental="2"
@@ -112,7 +112,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\..\lib"
+			OutputDirectory="..\lib\$(ConfigurationName)"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)\VCProjectDefaults\UpgradeFromVC70.vsprops"
@@ -142,7 +142,7 @@
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
 				AdditionalIncludeDirectories="..\include;..\..\Dependencies\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_USRDLL;_MT;OGRE_NONCLIENT_BUILD;FREEIMAGE_LIB"
+				PreprocessorDefinitions="WIN32;NDEBUG;_USRDLL;_MT;OGRE_NONCLIENT_BUILD"
 				StringPooling="true"
 				MinimalRebuild="true"
 				RuntimeLibrary="2"
@@ -167,7 +167,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib zziplib.lib zlib.lib freetype230.lib freeimage.lib LibJPEG.lib LibMNG.lib LibPNG.lib LibTIFF.lib"
+				AdditionalDependencies="kernel32.lib user32.lib zziplib.lib zdll.lib freetype2110.lib devil.lib ilu.lib"
 				OutputFile="$(OutDir)/OgreMain.dll"
 				Version="0.99"
 				LinkIncremental="1"
@@ -210,158 +210,6 @@
 				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\Samples\Common\bin\$(ConfigurationName)&#x0D;&#x0A;copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)&#x0D;&#x0A;"
 			/>
 		</Configuration>
-		<Configuration
-			Name="DebugStaticLib|Win32"
-			OutputDirectory="..\..\lib"
-			IntermediateDirectory="..\obj\$(ConfigurationName)"
-			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)\VCProjectDefaults\UpgradeFromVC70.vsprops"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="..\include;..\..\Dependencies\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_USRDLL;_MT;OGRE_NONCLIENT_BUILD;FREEIMAGE_LIB;OGRE_STATIC_LIB"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				SmallerTypeCheck="true"
-				RuntimeLibrary="3"
-				BufferSecurityCheck="true"
-				EnableFunctionLevelLinking="true"
-				FloatingPointModel="2"
-				DisableLanguageExtensions="false"
-				UsePrecompiledHeader="2"
-				PrecompiledHeaderThrough="OgreStableHeaders.h"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="4"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				AdditionalDependencies="zziplibd.lib freetype230_D.lib freeimaged.lib LibJPEG.lib LibMNG.lib LibPNG.lib LibTIFF.lib"
-				OutputFile="$(OutDir)\$(ProjectName)Static_d.lib"
-				AdditionalLibraryDirectories="..\..\lib;..\..\Dependencies\lib\Debug"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine="copy ..\obj\DebugStaticLib\OgreWin32Resources.res ..\..\lib\OgreWin32Resources_d.res"
-			/>
-		</Configuration>
-		<Configuration
-			Name="ReleaseStaticLib|Win32"
-			OutputDirectory="..\..\lib"
-			IntermediateDirectory="..\obj\$(ConfigurationName)"
-			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)\VCProjectDefaults\UpgradeFromVC70.vsprops"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="2"
-				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
-				OmitFramePointers="true"
-				EnableFiberSafeOptimizations="true"
-				AdditionalIncludeDirectories="..\include;..\..\Dependencies\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_USRDLL;_MT;OGRE_NONCLIENT_BUILD;FREEIMAGE_LIB;OGRE_STATIC_LIB"
-				StringPooling="true"
-				MinimalRebuild="false"
-				RuntimeLibrary="2"
-				BufferSecurityCheck="false"
-				EnableFunctionLevelLinking="true"
-				FloatingPointModel="2"
-				DisableLanguageExtensions="false"
-				UsePrecompiledHeader="2"
-				PrecompiledHeaderThrough="OgreStableHeaders.h"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				AdditionalDependencies="zziplib.lib freetype230.lib freeimage.lib LibJPEG.lib LibMNG.lib LibPNG.lib LibTIFF.lib"
-				OutputFile="$(OutDir)\$(ProjectName)Static.lib"
-				AdditionalLibraryDirectories="..\..\lib;..\..\Dependencies\lib\Release"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine="copy ..\obj\ReleaseStaticLib\OgreWin32Resources.res ..\..\lib\OgreWin32Resources.res"
-			/>
-		</Configuration>
 	</Configurations>
 	<References>
 	</References>
@@ -370,10 +218,6 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm"
 			>
-			<File
-				RelativePath="..\src\OgreAlignedAllocator.cpp"
-				>
-			</File>
 			<File
 				RelativePath="..\src\OgreAnimable.cpp"
 				>
@@ -399,6 +243,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\OgreAxisAlignedBox.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\OgreBillboard.cpp"
 				>
 			</File>
@@ -412,6 +260,10 @@
 			</File>
 			<File
 				RelativePath="..\src\OgreBillboardSet.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreBitwise.cpp"
 				>
 			</File>
 			<File
@@ -479,11 +331,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\WIN32\OgreConfigDialog.cpp"
+				RelativePath="..\src\OgreConfigFile.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgreConfigFile.cpp"
+				RelativePath="..\src\OgreConfigOptionMap.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreController.cpp"
 				>
 			</File>
 			<File
@@ -491,15 +347,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgreConvexBody.cpp"
+				RelativePath="..\src\OgreCursor.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\src\OgreDataStream.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreDDSCodec.cpp"
 				>
 			</File>
 			<File
@@ -527,7 +379,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\WIN32\OgreErrorDialog.cpp"
+				RelativePath="..\src\OgreEventDispatcher.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreEventProcessor.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreEventQueue.cpp"
 				>
 			</File>
 			<File
@@ -552,10 +412,6 @@
 			</File>
 			<File
 				RelativePath="..\src\OgreFontManager.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreFreeImageCodec.cpp"
 				>
 			</File>
 			<File
@@ -603,19 +459,39 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\OgreILCodecs.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreILImageCodec.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreILUtil.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\OgreImage.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgreImageResampler.h"
+				RelativePath="..\src\OgreInput.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgreInstancedGeometry.cpp"
+				RelativePath="..\src\OgreInputEvent.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreKeyEvent.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\src\OgreKeyFrame.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreKeyTarget.cpp"
 				>
 			</File>
 			<File
@@ -640,10 +516,6 @@
 			</File>
 			<File
 				RelativePath="..\src\OgreMaterialManager.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreMaterialScriptCompiler.cpp"
 				>
 			</File>
 			<File
@@ -683,6 +555,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\OgreMouseEvent.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreMouseMotionTarget.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreMouseTarget.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\OgreMovableObject.cpp"
 				>
 			</File>
@@ -692,22 +576,6 @@
 			</File>
 			<File
 				RelativePath="..\src\OgreNode.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreNumerics.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreOptimisedUtil.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreOptimisedUtilGeneral.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreOptimisedUtilSSE.cpp"
 				>
 			</File>
 			<File
@@ -771,10 +639,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgrePixelConversions.h"
-				>
-			</File>
-			<File
 				RelativePath="..\src\OgrePixelFormat.cpp"
 				>
 			</File>
@@ -783,11 +647,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgrePlatformInformation.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgrePolygon.cpp"
+				RelativePath="..\src\OgrePlatformManager.cpp"
 				>
 			</File>
 			<File
@@ -815,31 +675,9 @@
 						PrecompiledHeaderThrough="OgreStableHeaders.h"
 					/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugStaticLib|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-						PrecompiledHeaderThrough="OgreStableHeaders.h"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseStaticLib|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-						PrecompiledHeaderThrough="OgreStableHeaders.h"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\OgrePredefinedControllers.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgrePrefabFactory.cpp"
 				>
 			</File>
 			<File
@@ -939,35 +777,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgreShadowCameraSetup.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreShadowCameraSetupFocused.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreShadowCameraSetupLiSPSM.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreShadowCameraSetupPlaneOptimal.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\src\OgreShadowCaster.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgreShadowTextureManager.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\src\OgreShadowVolumeExtrudeProgram.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreSIMDHelper.h"
 				>
 			</File>
 			<File
@@ -976,6 +790,10 @@
 			</File>
 			<File
 				RelativePath="..\src\OgreSimpleSpline.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreSingleton.cpp"
 				>
 			</File>
 			<File
@@ -1011,6 +829,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\OgreStringVector.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\OgreSubEntity.cpp"
 				>
 			</File>
@@ -1043,11 +865,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\WIN32\OgreTimer.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreUnifiedHighLevelGpuProgram.cpp"
+				RelativePath="..\src\OgreTimer.cpp"
 				>
 			</File>
 			<File
@@ -1075,10 +893,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgreWindowEventUtilities.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\src\OgreWireBoundingBox.cpp"
 				>
 			</File>
@@ -1097,10 +911,6 @@
 			</File>
 			<File
 				RelativePath="..\include\Ogre.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreAlignedAllocator.h"
 				>
 			</File>
 			<File
@@ -1244,10 +1054,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\WIN32\OgreConfigDialogImp.h"
-				>
-			</File>
-			<File
 				RelativePath="..\include\OgreConfigFile.h"
 				>
 			</File>
@@ -1264,15 +1070,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OgreConvexBody.h"
+				RelativePath="..\include\OgreCursor.h"
 				>
 			</File>
 			<File
 				RelativePath="..\include\OgreDataStream.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreDDSCodec.h"
 				>
 			</File>
 			<File
@@ -1304,7 +1106,27 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\WIN32\OgreErrorDialogImp.h"
+				RelativePath="..\include\OgreEventDispatcher.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreEventFramework.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreEventListeners.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreEventProcessor.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreEventQueue.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreEventTarget.h"
 				>
 			</File>
 			<File
@@ -1337,10 +1159,6 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreFrameListener.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreFreeImageCodec.h"
 				>
 			</File>
 			<File
@@ -1392,6 +1210,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgreILCodecs.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreILImageCodec.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreILUtil.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreImage.h"
 				>
 			</File>
@@ -1400,7 +1230,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OgreInstancedGeometry.h"
+				RelativePath="..\include\OgreInput.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreInputEvent.h"
 				>
 			</File>
 			<File
@@ -1408,7 +1242,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgreKeyEvent.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreKeyFrame.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreKeyTarget.h"
 				>
 			</File>
 			<File
@@ -1433,10 +1275,6 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreMaterialManager.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreMaterialScriptCompiler.h"
 				>
 			</File>
 			<File
@@ -1484,6 +1322,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgreMouseEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreMouseMotionTarget.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreMouseTarget.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreMovableObject.h"
 				>
 			</File>
@@ -1497,14 +1347,6 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreNoMemoryMacros.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreNumerics.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreOptimisedUtil.h"
 				>
 			</File>
 			<File
@@ -1604,15 +1446,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OgrePlatformInformation.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgrePlugin.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgrePolygon.h"
+				RelativePath="..\include\OgrePlatformManager.h"
 				>
 			</File>
 			<File
@@ -1620,11 +1454,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OgrePredefinedControllers.h"
+				RelativePath="..\include\OgrePositionTarget.h"
 				>
 			</File>
 			<File
-				RelativePath="..\include\OgrePrefabFactory.h"
+				RelativePath="..\include\OgrePredefinedControllers.h"
 				>
 			</File>
 			<File
@@ -1756,27 +1590,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OgreShadowCameraSetup.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreShadowCameraSetupFocused.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreShadowCameraSetupLiSPSM.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreShadowCameraSetupPlaneOptimal.h"
-				>
-			</File>
-			<File
 				RelativePath="..\include\OgreShadowCaster.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreShadowTextureManager.h"
 				>
 			</File>
 			<File
@@ -1876,6 +1690,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgreTargetManager.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreTechnique.h"
 				>
 			</File>
@@ -1900,19 +1718,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\WIN32\OgreTimerImp.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreUnifiedHighLevelGpuProgram.h"
-				>
-			</File>
-			<File
 				RelativePath="..\include\OgreUserDefinedObject.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreUTFString.h"
 				>
 			</File>
 			<File
@@ -1940,10 +1746,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OgreWindowEventUtilities.h"
-				>
-			</File>
-			<File
 				RelativePath="..\include\OgreWireBoundingBox.h"
 				>
 			</File>
@@ -1951,31 +1753,11 @@
 				RelativePath="..\include\OgreZip.h"
 				>
 			</File>
-			<File
-				RelativePath="..\src\WIN32\resource.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 			>
-			<File
-				RelativePath="..\src\WIN32\ogre.ico"
-				>
-			</File>
-			<File
-				RelativePath="..\src\WIN32\ogrelogo.bmp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\WIN32\OgreWin32Resources.rc"
-				>
-			</File>
-			<File
-				RelativePath="..\src\WIN32\winres.h"
-				>
-			</File>
 		</Filter>
 	</Files>
 	<Globals>

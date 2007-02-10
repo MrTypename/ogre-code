@@ -12,7 +12,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="..\..\..\lib"
+			OutputDirectory="..\lib\$(ConfigurationName)"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2">
@@ -36,16 +36,16 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
 				AdditionalDependencies="OgreMain_d.lib ode.lib"
-				OutputFile="$(OutDir)/$(ProjectName)_d.dll"
+				OutputFile="$(OutDir)/ReferenceAppLayer.dll"
 				Version="0.99"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="&quot;..\..\..\lib&quot;;&quot;..\..\..\Dependencies\lib\$(ConfigurationName)&quot;"
+				AdditionalLibraryDirectories="&quot;..\..\..\OgreMain\lib\$(ConfigurationName)&quot;;&quot;..\..\..\Dependencies\lib\$(ConfigurationName)&quot;"
 				ModuleDefinitionFile=""
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/$(ProjectName)_d.pdb"
+				ProgramDatabaseFile="$(OutDir)/ReferenceAppLayer.pdb"
 				SubSystem="2"
-				ImportLibrary="$(OutDir)/$(TargetName).lib"
+				ImportLibrary="$(OutDir)/ReferenceAppLayer.lib"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -71,7 +71,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\..\..\lib"
+			OutputDirectory="..\lib\$(ConfigurationName)"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
@@ -104,16 +104,17 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
 				AdditionalDependencies="OgreMain.lib ode.lib"
+				OutputFile="$(OutDir)/ReferenceAppLayer.dll"
 				Version="0.99"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="&quot;..\..\..\lib&quot;;&quot;..\..\..\Dependencies\lib\$(ConfigurationName)&quot;"
+				AdditionalLibraryDirectories="&quot;..\..\..\OgreMain\lib\$(ConfigurationName)&quot;;&quot;..\..\..\Dependencies\lib\$(ConfigurationName)&quot;"
 				ModuleDefinitionFile=""
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				ImportLibrary="$(OutDir)/$(TargetName).lib"
+				ImportLibrary="$(OutDir)/ReferenceAppLayer.lib"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>

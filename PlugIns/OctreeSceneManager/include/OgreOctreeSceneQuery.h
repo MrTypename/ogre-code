@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 /***************************************************************************
@@ -44,7 +40,7 @@ email                : janders@users.sf.net
 namespace Ogre
 {
 /** Octree implementation of IntersectionSceneQuery. */
-class _OgreOctreePluginExport OctreeIntersectionSceneQuery :  public DefaultIntersectionSceneQuery
+class _OgreTerrainExport OctreeIntersectionSceneQuery :  public DefaultIntersectionSceneQuery
 {
 public:
     OctreeIntersectionSceneQuery(SceneManager* creator);
@@ -55,7 +51,7 @@ public:
 };
 
 /** Octree implementation of RaySceneQuery. */
-class _OgreOctreePluginExport OctreeRaySceneQuery : public DefaultRaySceneQuery
+class _OgreTerrainExport OctreeRaySceneQuery : public DefaultRaySceneQuery
 {
 public:
     OctreeRaySceneQuery(SceneManager* creator);
@@ -65,7 +61,7 @@ public:
     void execute(RaySceneQueryListener* listener);
 };
 /** Octree implementation of SphereSceneQuery. */
-class _OgreOctreePluginExport OctreeSphereSceneQuery : public DefaultSphereSceneQuery
+class _OgreTerrainExport OctreeSphereSceneQuery : public DefaultSphereSceneQuery
 {
 public:
     OctreeSphereSceneQuery(SceneManager* creator);
@@ -75,7 +71,7 @@ public:
     void execute(SceneQueryListener* listener);
 };
 /** Octree implementation of PlaneBoundedVolumeListSceneQuery. */
-class _OgreOctreePluginExport OctreePlaneBoundedVolumeListSceneQuery : public DefaultPlaneBoundedVolumeListSceneQuery
+class _OgreTerrainExport OctreePlaneBoundedVolumeListSceneQuery : public DefaultPlaneBoundedVolumeListSceneQuery
 {
 public:
     OctreePlaneBoundedVolumeListSceneQuery(SceneManager* creator);
@@ -85,7 +81,7 @@ public:
     void execute(SceneQueryListener* listener);
 };
 /** Octree implementation of AxisAlignedBoxSceneQuery. */
-class _OgreOctreePluginExport OctreeAxisAlignedBoxSceneQuery : public DefaultAxisAlignedBoxSceneQuery
+class _OgreTerrainExport OctreeAxisAlignedBoxSceneQuery : public DefaultAxisAlignedBoxSceneQuery
 {
 public:
     OctreeAxisAlignedBoxSceneQuery(SceneManager* creator);

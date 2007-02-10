@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -346,9 +342,8 @@ namespace Ogre {
             Overlay* pOverlay, bool isTemplate, OverlayContainer* parent)
 	{
 		bool ret = false;
-		std::vector<String> params;
 		uint skipParam =0;
-		params = StringUtil::split(line, "\t\n ()");
+		std::vector<String> params = StringUtil::split(line, "\t\n ()");
 
 		if (isTemplate)
 		{
@@ -361,7 +356,7 @@ namespace Ogre {
 		// top level component cannot be an element, it must be a container unless it is a template
 		if (params[0+skipParam] == "container" || (params[0+skipParam] == "element" && (isTemplate || parent != NULL)) )
 		{
-			String templateName = "";
+			String templateName;
 			ret = true;
 			// nested container/element
 			if (params.size() > 3+skipParam)
@@ -413,10 +408,8 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void OverlayManager::parseAttrib( const String& line, Overlay* pOverlay)
     {
-        std::vector<String> vecparams;
-
         // Split params on first space
-        vecparams = StringUtil::split(line, "\t ", 1);
+        std::vector<String> vecparams = StringUtil::split(line, "\t ", 1);
 
         // Look up first param (command setting)
 		StringUtil::toLowerCase(vecparams[0]);
@@ -433,10 +426,8 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void OverlayManager::parseElementAttrib( const String& line, Overlay* pOverlay, OverlayElement* pElement )
     {
-        std::vector<String> vecparams;
-
         // Split params on first space
-        vecparams = StringUtil::split(line, "\t ", 1);
+        std::vector<String> vecparams = StringUtil::split(line, "\t ", 1);
 
         // Look up first param (command setting)
 		StringUtil::toLowerCase(vecparams[0]);
@@ -445,13 +436,13 @@ namespace Ogre {
             // BAD command. BAD!
             LogManager::getSingleton().logMessage("Bad element attribute line: '"
                 + line + "' for element " + pElement->getName() + " in overlay " + 
-                (!pOverlay ? "" : pOverlay->getName().c_str() ));
+                (!pOverlay ? StringUtil::BLANK : pOverlay->getName()));
         }
     }
     //-----------------------------------------------------------------------
     void OverlayManager::skipToNextCloseBrace(DataStreamPtr& stream)
     {
-        String line = "";
+        String line;
         while (!stream->eof() && line != "}")
         {
             line = stream->getLine();
@@ -461,7 +452,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void OverlayManager::skipToNextOpenBrace(DataStreamPtr& stream)
     {
-        String line = "";
+        String line;
         while (!stream->eof() && line != "{")
         {
             line = stream->getLine();
@@ -501,7 +492,7 @@ namespace Ogre {
 
 		OverlayElement* newObj  = NULL;
 
-		if (templateName == "")
+		if (templateName.empty())
 		{
 			newObj = createOverlayElement(typeName, instanceName, isTemplate);
 		}
@@ -511,7 +502,7 @@ namespace Ogre {
 			OverlayElement* templateGui = getOverlayElement(templateName, true);
 
 			String typeNameToCreate;
-			if (typeName == "")
+			if (typeName.empty())
 			{
 				typeNameToCreate = templateGui->getTypeName();
 			}

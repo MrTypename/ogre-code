@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,35 +20,29 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
-#include "OgreCgPlugin.h"
-#include "OgreCgProgram.h"
-#include "OgreRoot.h"
+#include "OgreCgProgramFactory.h"
+#include "OgreHighLevelGpuProgramManager.h"
 
 namespace Ogre {
 
-    CgPlugin* cgPlugin;
+    CgProgramFactory* cgFactory;
     //-----------------------------------------------------------------------
-    extern "C" void _OgreCgPluginExport dllStartPlugin(void)
+    extern "C" void dllStartPlugin(void)
     {
-        // Create new plugin
-        cgPlugin = new CgPlugin();
+        // Create new factory
+        cgFactory = new CgProgramFactory();
 
         // Register
-        Root::getSingleton().installPlugin(cgPlugin);
+        HighLevelGpuProgramManager::getSingleton().addFactory(cgFactory);
 
 
     }
-    extern "C" void _OgreCgPluginExport dllStopPlugin(void)
+    extern "C" void dllStopPlugin(void)
     {
-		Root::getSingleton().uninstallPlugin(cgPlugin);
-		delete cgPlugin;
+        delete cgFactory;
     }
 
     void checkForCgError(const String& ogreMethod, const String& errorTextPrefix, CGcontext context)

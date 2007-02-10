@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef _TextureManager_H__
@@ -56,7 +52,7 @@ namespace Ogre {
     {
     public:
 
-        TextureManager(void);
+        TextureManager(bool enable32Bit = true);
         virtual ~TextureManager();
 
         /** Loads a texture from a file.
@@ -77,8 +73,7 @@ namespace Ogre {
         virtual TexturePtr load( 
             const String& name, const String& group, 
             TextureType texType = TEX_TYPE_2D, int numMipmaps = -1, 
-            Real gamma = 1.0f, bool isAlpha = false,
-            PixelFormat desiredFormat = PF_UNKNOWN);
+            Real gamma = 1.0f, bool isAlpha = false);
 
         /** Loads a texture from an Image object.
             @note
@@ -102,8 +97,7 @@ namespace Ogre {
         virtual TexturePtr loadImage( 
             const String &name, const String& group, const Image &img, 
             TextureType texType = TEX_TYPE_2D,
-            int iNumMipmaps = -1, Real gamma = 1.0f, bool isAlpha = false,
-            PixelFormat desiredFormat = PF_UNKNOWN);
+            int iNumMipmaps = -1, Real gamma = 1.0f, bool isAlpha = false);
 			
         /** Loads a texture from a raw data stream.
             @note
@@ -215,43 +209,16 @@ namespace Ogre {
 				num_mips, format, usage, loader);
 		}
 
-        /** Sets preferred bit depth for integer pixel format textures.
-        @param
-            bits Number of bits. Available values: 0, 16 and 32, where 0 (the default) means keep
-            original format as it is. This value is number of bits for the pixel.
-        @param
-            reloadTextures If true (the default), will reloading all reloadable textures.
+        /** Enables / disables 32-bit textures.
         */
-        virtual void setPreferredIntegerBitDepth(ushort bits, bool reloadTextures = true);
+        virtual void enable32BitTextures(bool setting = true);
 
-        /** gets preferred bit depth for integer pixel format textures.
+        /** Checks 32-bit textures enable setting.
         */
-        virtual ushort getPreferredIntegerBitDepth(void) const;
-
-        /** Sets preferred bit depth for float pixel format textures.
-        @param
-            bits Number of bits. Available values: 0, 16 and 32, where 0 (the default) means keep
-            original format as it is. This value is number of bits for a channel of the pixel.
-        @param
-            reloadTextures If true (the default), will reloading all reloadable textures.
-        */
-        virtual void setPreferredFloatBitDepth(ushort bits, bool reloadTextures = true);
-
-        /** gets preferred bit depth for float pixel format textures.
-        */
-        virtual ushort getPreferredFloatBitDepth(void) const;
-
-        /** Sets preferred bit depth for integer and float pixel format.
-        @param
-            integerBits Number of bits. Available values: 0, 16 and 32, where 0 (the default) means keep
-            original format as it is. This value is number of bits for the pixel.
-        @param
-            floatBits Number of bits. Available values: 0, 16 and 32, where 0 (the default) means keep
-            original format as it is. This value is number of bits for a channel of the pixel.
-        @param
-            reloadTextures If true (the default), will reloading all reloadable textures.
-        */
-        virtual void setPreferredBitDepths(ushort integerBits, ushort floatBits, bool reloadTextures = true);
+        virtual bool isEnable32BitTextures(void)
+        {
+            return mIs32Bit;
+        }
 
 		/** Returns whether this render system can natively support the precise texture 
 			format requested with the given usage options.
@@ -280,48 +247,6 @@ namespace Ogre {
 			contraints of the current device.
 		*/
 		virtual PixelFormat getNativeFormat(TextureType ttype, PixelFormat format, int usage) = 0;
-
-        /** Returns whether this render system has hardware filtering supported for the
-            texture format requested with the given usage options.
-        @remarks
-            Not all texture format are supports filtering by the hardware, i.e. some
-            cards support floating point format, but it doesn't supports filtering on
-            the floating point texture at all, or only a subset floating point formats
-            have flitering supported.
-        @par
-            In the case you want to write shader to work with floating point texture, and
-            you want to produce better visual quality, it's necessary to flitering the
-            texture manually in shader (potential requires four or more texture fetch
-            instructions, plus several arithmetic instructions) if filtering doesn't
-            supported by hardware. But in case on the hardware that supports floating
-            point filtering natively, it had better to adopt this capability for
-            performance (because only one texture fetch instruction are required) and
-            doesn't loss visual quality.
-        @par
-            This method allow you queries hardware texture filtering capability to deciding
-            which verion of the shader to be used. Note it's up to you to write multi-version
-            shaders for support various hardware, internal engine can't do that for you
-            automatically.
-        @note
-            Under GL, texture filtering are always supported by driver, but if it's not
-            supported by hardware natively, software simulation will be used, and you
-            will end up with very slow speed (less than 0.1 fps for example). To slove
-            this performance problem, you must disable filtering manually (by use
-            <b>filtering none</b> in the material script's texture_unit section, or
-            call TextureUnitState::setTextureFiltering with TFO_NONE if populate
-            material in code).
-		@param ttype The texture type requested
-		@param format The pixel format requested
-		@param usage The kind of usage this texture is intended for, a combination of 
-			the TextureUsage flags.
-        @param preciseFormatOnly Whether precise or fallback format mode is used to detecting.
-            In case the pixel format doesn't supported by device, false will be returned
-            if in precise mode, and natively used pixel format will be actually use to
-            check if in fallback mode.
-		@returns true if the texture filtering is supported.
-        */
-        virtual bool isHardwareFilteringSupported(TextureType ttype, PixelFormat format, int usage,
-            bool preciseFormatOnly = false) = 0;
 
         /** Sets the default number of mipmaps to be used for loaded textures, for when textures are
             loaded automatically (e.g. by Material class) or when 'load' is called with the default
@@ -375,8 +300,7 @@ namespace Ogre {
 
     protected:
 
-        ushort mPreferredIntegerBitDepth;
-        ushort mPreferredFloatBitDepth;
+        bool mIs32Bit;
         size_t mDefaultNumMipmaps;
     };
 }// Namespace

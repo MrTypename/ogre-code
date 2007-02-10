@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -159,7 +155,7 @@ namespace Ogre {
 		// Choose suitable pixel format
 		wglChoosePixelFormatARB(old_hdc,attrib,NULL,1,&format,&count);
 		if(count == 0)
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "wglChoosePixelFormatARB() failed", " Win32PBuffer::createPBuffer");
+			OGRE_EXCEPT(0, "wglChoosePixelFormatARB() failed", " Win32PBuffer::createPBuffer");
 
 		// Analyse pixel format
 		const int piAttributes[]={
@@ -182,26 +178,26 @@ namespace Ogre {
 
 		mPBuffer = wglCreatePbufferARB(old_hdc,format,mWidth,mHeight,pattrib_default);
 		if(!mPBuffer)
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "wglCreatePbufferARB() failed", " Win32PBuffer::createPBuffer");
+			OGRE_EXCEPT(0, "wglCreatePbufferARB() failed", " Win32PBuffer::createPBuffer");
 
 		mHDC = wglGetPbufferDCARB(mPBuffer);
 		if(!mHDC) {
 			wglDestroyPbufferARB(mPBuffer);
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "wglGetPbufferDCARB() failed", " Win32PBuffer::createPBuffer");
+			OGRE_EXCEPT(0, "wglGetPbufferDCARB() failed", " Win32PBuffer::createPBuffer");
 		}
 			
 		mGlrc = wglCreateContext(mHDC);
 		if(!mGlrc) {
 			wglReleasePbufferDCARB(mPBuffer,mHDC);
 			wglDestroyPbufferARB(mPBuffer);
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "wglCreateContext() failed", " Win32PBuffer::createPBuffer");
+			OGRE_EXCEPT(0, "wglCreateContext() failed", " Win32PBuffer::createPBuffer");
 		}
 
 		if(!wglShareLists(old_context,mGlrc)) {
 			wglDeleteContext(mGlrc);
 			wglReleasePbufferDCARB(mPBuffer,mHDC);
 			wglDestroyPbufferARB(mPBuffer);
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "wglShareLists() failed", " Win32PBuffer::createPBuffer");
+			OGRE_EXCEPT(0, "wglShareLists() failed", " Win32PBuffer::createPBuffer");
 		}
 				
 		// Query real width and height

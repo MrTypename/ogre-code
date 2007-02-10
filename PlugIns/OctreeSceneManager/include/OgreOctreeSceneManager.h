@@ -12,7 +12,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -28,17 +28,12 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
 #ifndef OCTREESCENEMANAGER_H
 #define OCTREESCENEMANAGER_H
 
-#include "OgreTerrainPrerequisites.h"
 #include "OgreSceneManager.h"
 #include "OgreRenderOperation.h"
 #include "OgreSphere.h"
@@ -74,7 +69,7 @@ and create a camera named "CullCamera".  All culling will be performed using tha
 camera, allowing you to fly around and examine culling.
 */
 
-class _OgreOctreePluginExport OctreeSceneManager : public SceneManager
+class OctreeSceneManager : public SceneManager
 {
     friend class OctreeIntersectionSceneQuery;
     friend class OctreeRaySceneQuery;
@@ -113,8 +108,7 @@ public:
     /** Does nothing more */
     virtual void _updateSceneGraph( Camera * cam );
     /** Recurses through the octree determining which nodes are visible. */
-    virtual void _findVisibleObjects ( Camera * cam, 
-		VisibleObjectsBoundsInfo* visibleBounds, bool onlyShadowCasters );
+    virtual void _findVisibleObjects ( Camera * cam, bool onlyShadowCasters );
 
     /** Alerts each unculled object, notifying it that it will be drawn.
      * Useful for doing calculations only on nodes that will be drawn, prior
@@ -127,9 +121,8 @@ public:
     If any octant in the octree if completely within the view frustum,
     all subchildren are automatically added with no visibility tests.
     */
-    void walkOctree( OctreeCamera *, RenderQueue *, Octree *, 
-		VisibleObjectsBoundsInfo* visibleBounds, bool foundvisible, 
-		bool onlyShadowCasters);
+    void walkOctree( OctreeCamera *, RenderQueue *, Octree *, bool foundvisible,
+                     bool onlyShadowCasters);
 
     /** Checks the given OctreeNode, and determines if it needs to be moved
     * to a different octant.

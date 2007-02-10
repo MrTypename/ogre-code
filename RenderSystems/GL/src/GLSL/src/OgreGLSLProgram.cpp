@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreGpuProgram.h"
@@ -33,17 +29,14 @@ Torus Knot Software Ltd.
 #include "OgreStringConverter.h"
 #include "OgreGpuProgramManager.h"
 #include "OgreHighLevelGpuProgramManager.h"
-#include "OgreLogManager.h"
 
 #include "OgreGLSLProgram.h"
 #include "OgreGLSLGpuProgram.h"
 #include "OgreGLSLExtSupport.h"
-#include "OgreGLSLLinkProgramManager.h"
 
 namespace Ogre {
 
     //-----------------------------------------------------------------------
-	GLSLProgram::CmdPreprocessorDefines GLSLProgram::msCmdPreprocessorDefines;
     GLSLProgram::CmdAttach GLSLProgram::msCmdAttach;
     //-----------------------------------------------------------------------
     //---------------------------------------------------------------------------
@@ -51,7 +44,7 @@ namespace Ogre {
     {
         // have to call this here reather than in Resource destructor
         // since calling virtual methods in base destructors causes crash
-        if (isLoaded())
+        if (mIsLoaded)
         {
             unload();
         }
@@ -74,67 +67,8 @@ namespace Ogre {
             checkForGLSLError( "GLSLProgram::GLSLProgram", "Error creating GLSL shader Object", 0 );
         }
 
-		// build preprocessor defines
-		// GLSL has no explicit interface for defining preprocessor flags outside
-		// of the source code, so we'll prepend some extra source code
-		String preprocessorSource;
-		if (!mPreprocessorDefines.empty())
-		{
-			StringUtil::StrStreamType tempStr;
-			// Split preprocessor defines and build up macro array
-			String::size_type pos = 0;
-			while (pos != String::npos)
-			{
-				// Find delims
-				String::size_type endPos = mPreprocessorDefines.find_first_of(";,=", pos);
-				if (endPos != String::npos)
-				{
-					// ok, we have a definition
-					tempStr << "#define ";
-					// name
-					tempStr << mPreprocessorDefines.substr(pos, endPos - pos) << " ";
-					pos = endPos;
-					
-					// Check definition part
-					if (mPreprocessorDefines[pos] == '=')
-					{
-						// set up a definition, skip delim
-						++pos;
-						endPos = mPreprocessorDefines.find_first_of(";,", pos);
-						if (endPos == String::npos)
-						{
-							tempStr << mPreprocessorDefines.substr(pos, String::npos);
-							pos = endPos;
-						}
-						else
-						{
-							tempStr << mPreprocessorDefines.substr(pos, endPos - pos);
-							pos = endPos+1;
-						}
-					}
-					else
-					{
-						// No definition part, define as "1"
-						++pos;
-						tempStr << "1";
-					}
-
-					tempStr << std::endl;
-				}
-				else
-				{
-					pos = endPos;
-				}
-			}
-
-			preprocessorSource = tempStr.str();
-		}
-
-		// Add preprocessor extras and main source
-		const char* sources[2];
-		sources[0] = preprocessorSource.c_str();
-		sources[1] = mSource.c_str();
-		glShaderSourceARB(mGLHandle, 2, sources, NULL);
+        const char* SLSource = mSource.c_str();
+		glShaderSourceARB(mGLHandle, 1, &SLSource, NULL);
 		// check for load errors
 		checkForGLSLError( "GLSLProgram::loadFromSource", "Cannot load GLSL high-level shader source : " + mName, 0 );
 
@@ -144,10 +78,6 @@ namespace Ogre {
     //---------------------------------------------------------------------------
 	bool GLSLProgram::compile(const bool checkErrors)
 	{
-        if (checkErrors)
-        {
-            logObjectInfo("GLSL compiling: " + mName, mGLHandle);
-        }
 
 		glCompileShaderARB(mGLHandle);
 		// check for compile errors
@@ -159,7 +89,7 @@ namespace Ogre {
 			
 			if (mCompiled)
 			{
-				logObjectInfo("GLSL compiled : " + mName, mGLHandle);
+				logObjectInfo( mName + " : GLSL compiled ", mGLHandle );
 			}
 		}
 		return (mCompiled == 1);
@@ -193,29 +123,11 @@ namespace Ogre {
     }
 
 	//-----------------------------------------------------------------------
-    void GLSLProgram::buildConstantDefinitions() const
+    void GLSLProgram::populateParameterNames(GpuProgramParametersSharedPtr params)
     {
-		// We need an accurate list of all the uniforms in the shader, but we
-		// can't get at them until we link all the shaders into a program object.
-
-
-		// Therefore instead, parse the source code manually and extract the uniforms
-		mConstantDefs.floatBufferSize = 0;
-		mConstantDefs.intBufferSize = 0;
-		GLSLLinkProgramManager::getSingleton().extractConstantDefs(mSource, mConstantDefs, mName);
-
-		// Also parse any attached sources
-		for (GLSLProgramContainer::const_iterator i = mAttachedGLSLPrograms.begin();
-			i != mAttachedGLSLPrograms.end(); ++i)
-		{
-			GLSLProgram* childShader = *i;
-
-			GLSLLinkProgramManager::getSingleton().extractConstantDefs(
-				childShader->getSource(), mConstantDefs, childShader->getName());
-
-		}
-
-
+		// can't populate parameter names in GLSL until link time
+		// allow for names read from a material script to be added automatically to the list
+		params->setAutoAddParamName(true);
 
     }
 
@@ -231,9 +143,6 @@ namespace Ogre {
             setupBaseParamDictionary();
             ParamDictionary* dict = getParamDictionary();
 
-			dict->addParameter(ParameterDef("preprocessor_defines", 
-				"Preprocessor defines use to compile the program.",
-				PT_STRING),&msCmdPreprocessorDefines);
             dict->addParameter(ParameterDef("attach", 
                 "name of another GLSL program needed by this program",
                 PT_STRING),&msCmdAttach);
@@ -264,15 +173,6 @@ namespace Ogre {
 	        static_cast<GLSLProgram*>(target)->attachChildShader(vecShaderNames[i]);
 		}
     }
-	//-----------------------------------------------------------------------
-	String GLSLProgram::CmdPreprocessorDefines::doGet(const void *target) const
-	{
-		return static_cast<const GLSLProgram*>(target)->getPreprocessorDefines();
-	}
-	void GLSLProgram::CmdPreprocessorDefines::doSet(void *target, const String& val)
-	{
-		static_cast<GLSLProgram*>(target)->setPreprocessorDefines(val);
-	}
 
 	//-----------------------------------------------------------------------
     void GLSLProgram::attachChildShader(const String& name)
@@ -323,24 +223,6 @@ namespace Ogre {
 
 			childShader->attachToProgramObject( programObject );
 
-			++childprogramcurrent;
-		}
-
-	}
-	//-----------------------------------------------------------------------
-	void GLSLProgram::detachFromProgramObject( const GLhandleARB programObject )
-	{
-		glDetachObjectARB(programObject, mGLHandle);
-		checkForGLSLError( "GLSLLinkProgram::GLSLLinkProgram",
-			"Error detaching " + mName + " shader object from GLSL Program Object", programObject );
-		// attach child objects
-		GLSLProgramContainerIterator childprogramcurrent = mAttachedGLSLPrograms.begin();
-		GLSLProgramContainerIterator childprogramend = mAttachedGLSLPrograms.end();
-
-		while (childprogramcurrent != childprogramend)
-		{
-			GLSLProgram* childShader = *childprogramcurrent;
-			childShader->detachFromProgramObject( programObject );
 			++childprogramcurrent;
 		}
 

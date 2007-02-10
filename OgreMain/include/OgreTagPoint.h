@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __TagPoint_H_
@@ -59,31 +55,10 @@ namespace Ogre	{
 		TagPoint(unsigned short handle, Skeleton* creator);
 		virtual ~TagPoint();
 
-		Entity *getParentEntity(void) const;
-        MovableObject* getChildObject(void) const;
+		Entity *getParentEntity(void);
 		
 		void setParentEntity(Entity *pEntity);
 		void setChildObject(MovableObject *pObject);
-
-        /** Tells the TagPoint whether it should inherit orientation from it's parent entity.
-        @param inherit If true, this TagPoint's orientation will be affected by
-            its parent entity's orientation. If false, it will not be affected.
-        */
-        void setInheritParentEntityOrientation(bool inherit);
-
-        /** Returns true if this TagPoint is affected by orientation applied to the parent entity. 
-        */
-        bool getInheritParentEntityOrientation(void) const;
-
-        /** Tells the TagPoint whether it should inherit scaling factors from it's parent entity.
-        @param inherit If true, this TagPoint's scaling factors will be affected by
-            its parent entity's scaling factors. If false, it will not be affected.
-        */
-        void setInheritParentEntityScale(bool inherit);
-
-        /** Returns true if this TagPoint is affected by scaling factors applied to the parent entity. 
-        */
-        bool getInheritParentEntityScale(void) const;
 
 		/** Gets the transform of parent entity. */
 		const Matrix4& getParentEntityTransform(void) const;
@@ -105,8 +80,7 @@ namespace Ogre	{
 		Entity *mParentEntity;
 		MovableObject *mChildObject;
         mutable Matrix4 mFullLocalTransform;
-        bool mInheritParentEntityOrientation;
-        bool mInheritParentEntityScale;
+		
 	};
 
 

@@ -4,7 +4,7 @@ This source file is part of OGRE
 	(Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under 
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple 
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to 
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __Particle_H__
@@ -57,16 +53,9 @@ namespace Ogre {
     protected:
         /// Parent ParticleSystem
         ParticleSystem* mParentSystem;
-        /// Additional visual data you might want to associate with the Particle
-        ParticleVisualData* mVisual;
+		/// Additional visual data you might want to associate with the Particle
+		ParticleVisualData* mVisual;
     public:
-        /// Type of particle
-        enum ParticleType
-        {
-            Visual,
-            Emitter
-        };
-
         /// Does this particle have it's own dimensions?
         bool mOwnDimensions;
         /// Personal width if mOwnDimensions == true
@@ -87,16 +76,15 @@ namespace Ogre {
         Real timeToLive;
         /// Total Time to live, number of seconds of particles natural life
         Real totalTimeToLive;
-        /// Speed of rotation in radians/sec
-        Radian rotationSpeed;
-        /// Determines the type of particle.
-        ParticleType particleType;
+		/// Speed of rotation in radians/sec
+		Radian rotationSpeed;
+
 
         Particle()
             : mParentSystem(0), mVisual(0), mOwnDimensions(false), rotation(0), 
             position(Vector3::ZERO), direction(Vector3::ZERO), 
             colour(ColourValue::White), timeToLive(10), totalTimeToLive(10), 
-            rotationSpeed(0), particleType(Visual)
+            rotationSpeed(0)
         {
         }
 
@@ -140,6 +128,8 @@ namespace Ogre {
 
         /// Utility method to reset this particle
         void resetDimensions(void);
+
+       
     };
 }
 

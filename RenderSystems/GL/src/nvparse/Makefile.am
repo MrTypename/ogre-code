@@ -6,8 +6,7 @@ AM_YFLAGS = -d
 
 INCLUDES = -DYY_NEVER_INTERACTIVE -DYY_NO_UNPUT $(STLPORT_CFLAGS) -I$(top_srcdir)/RenderSystems/GL/include \
            -I$(top_srcdir)/OgreMain/include $(GLSUPPORT_CFLAGS) \
-           -I$(top_srcdir)/PlatformManagers/$(OGRE_PLATFORM)/include \
-            $(CFLAGS_VISIBILITY)
+           -I$(top_srcdir)/PlatformManagers/$(OGRE_PLATFORM)/include
 
 noinst_LTLIBRARIES = libnvparse.la
 

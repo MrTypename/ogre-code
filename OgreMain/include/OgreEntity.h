@@ -2,9 +2,9 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __Entity_H__
@@ -71,7 +67,7 @@ namespace Ogre {
 	@note
 	No functions were declared virtual to improve performance.
 	*/
-	class _OgreExport Entity: public MovableObject, public Resource::Listener
+	class _OgreExport Entity: public MovableObject
 	{
 		// Allow EntityFactory full access
 		friend class EntityFactory;
@@ -209,9 +205,6 @@ namespace Ogre {
 		/** This Entity's personal copy of the skeleton, if skeletally animated
 		*/
 		SkeletonInstance* mSkeletonInstance;
-
-		/// Has this entity been initialised yet?
-		bool mInitialised;
 
 		/// Last parent xform
 		Matrix4 mLastParentXform;
@@ -519,8 +512,6 @@ namespace Ogre {
 
         /** Overridden member from ShadowCaster. */
         EdgeData* getEdgeList(void);
-		/** Overridden member from ShadowCaster. */
-		bool hasEdgeList(void);
         /** Overridden member from ShadowCaster. */
         ShadowRenderableListIterator getShadowVolumeRenderableIterator(
             ShadowTechnique shadowTechnique, const Light* light,
@@ -708,36 +699,6 @@ namespace Ogre {
 		/** Mark just this vertex data as animated.
 		*/
 		void _markBuffersUsedForAnimation(void);
-
-		/** Has this Entity been initialised yet?
-		@remarks	
-			If this returns false, it means this Entity hasn't been completely
-			constructed yet from the underlying resources (Mesh, Skeleton), which 
-			probably means they were delay-loaded and aren't available yet. This
-			Entity won't render until it has been successfully initialised, nor
-			will many of the manipulation methods function.
-		*/
-		bool isInitialised(void) const { return mInitialised; }
-
-		/** Try to initialise the Entity from the underlying resources.
-		@remarks
-			This method builds the internal structures of the Entity based on it
-			resources (Mesh, Skeleton). This may or may not succeed if the 
-			resources it references have been earmarked for background loading,
-			so you should check isInitialised afterwards to see if it was sucessful.
-		@param forceReinitialise If true, this forces the Entity to tear down it's
-			internal structures and try to rebuild them. Useful if you changed the
-			content of a Mesh or Skeleton at runtime.
-		*/
-		void _initialise(bool forceReinitialise = false);
-		/** Tear down the internal structures of this Entity, rendering it uninitialised. */
-		void _deinitialise(void);
-
-		/** Resource::Listener hook to notify Entity that a delay-loaded Mesh is
-			complete.
-		*/
-		void backgroundLoadingComplete(Resource* res);
-
 
 
 	};

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -37,7 +33,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
     /** GL-specific implementation of a TextureManager */
-    class _OgrePrivate GLTextureManager : public TextureManager
+    class GLTextureManager : public TextureManager
     {
     public:
         GLTextureManager(GLSupport& support);
@@ -47,11 +43,7 @@ namespace Ogre {
 
 		/// @copydoc TextureManager::getNativeFormat
 		PixelFormat getNativeFormat(TextureType ttype, PixelFormat format, int usage);
-
-        /// @copydoc TextureManager::isHardwareFilteringSupported
-        bool isHardwareFilteringSupported(TextureType ttype, PixelFormat format, int usage,
-            bool preciseFormatOnly = false);
-
+		
     protected:
         /// @copydoc ResourceManager::createImpl
         Resource* createImpl(const String& name, ResourceHandle handle, 

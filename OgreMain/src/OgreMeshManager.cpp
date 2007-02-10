@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -39,8 +35,6 @@ Torus Knot Software Ltd.
 #include "OgreHardwareBufferManager.h"
 #include "OgrePatchSurface.h"
 #include "OgreException.h"
-
-#include "OgrePrefabFactory.h"
 
 namespace Ogre
 {
@@ -78,8 +72,8 @@ namespace Ogre
     {
         // Create prefab objects
         createPrefabPlane();
-		createPrefabCube();
-		createPrefabSphere();
+
+
     }
     //-----------------------------------------------------------------------
     MeshPtr MeshManager::load( const String& filename, const String& groupName, 
@@ -87,15 +81,14 @@ namespace Ogre
 		HardwareBuffer::Usage indexBufferUsage, 
 		bool vertexBufferShadowed, bool indexBufferShadowed)
     {
-        ResourceCreateOrRetrieveResult res = createOrRetrieve(filename, groupName);
-		MeshPtr pMesh = res.first;
-		// Was it created?
-        if (res.second)
+        MeshPtr pMesh = getByName(filename);
+        if (pMesh.isNull())
         {
+            pMesh = this->create(filename, groupName);
 			pMesh->setVertexBufferPolicy(vertexBufferUsage, vertexBufferShadowed);
 			pMesh->setIndexBufferPolicy(indexBufferUsage, indexBufferShadowed);
         }
-		pMesh->load();
+        pMesh->load();
         return pMesh;
 
     }
@@ -103,8 +96,13 @@ namespace Ogre
     MeshPtr MeshManager::createManual( const String& name, const String& groupName, 
         ManualResourceLoader* loader)
     {
-		// Don't try to get existing, create should fail if already exists
-        return create(name, groupName, true, loader);
+        MeshPtr pMesh = getByName(name);
+        if (pMesh.isNull())
+        {
+            pMesh = create(name, groupName, true, loader);
+        }
+
+        return pMesh;
     }
     //-----------------------------------------------------------------------
     MeshPtr MeshManager::createPlane( const String& name, const String& groupName,
@@ -323,71 +321,96 @@ namespace Ogre
         // to preserve previous behaviour, load immediately
         msh->load();
     }
-	//-----------------------------------------------------------------------
-	void MeshManager::createPrefabCube(void)
-	{
-		MeshPtr msh = create(
-			"Prefab_Cube", 
-			ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME, 
-			true, // manually loaded
-			this);
-
-		// to preserve previous behaviour, load immediately
-		msh->load();
-	}
-
-	void MeshManager::createPrefabSphere(void)
-	{
-		MeshPtr msh = create(
-			"Prefab_Sphere", 
-			ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME, 
-			true, // manually loaded
-			this);
-
-		// to preserve previous behaviour, load immediately
-		msh->load();
-	}
-
     //-----------------------------------------------------------------------
-	void MeshManager::loadResource(Resource* res)
-	{
-		Mesh* msh = static_cast<Mesh*>(res);
+    void MeshManager::loadResource(Resource* res)
+    {
+        Mesh* msh = static_cast<Mesh*>(res);
+        // Manual resource load
+        if (res->getName() == "Prefab_Plane")
+        {
+            SubMesh* sub = msh->createSubMesh();
+            float vertices[32] = {
+			    -100, -100, 0,	// pos
+			    0,0,1,			// normal
+			    0,1,			// texcoord
+                100, -100, 0,
+                0,0,1,
+                1,1,
+                100,  100, 0,
+                0,0,1,
+                1,0,
+                -100,  100, 0 ,
+			    0,0,1,
+                0,0 
+		    };
+            msh->sharedVertexData = new VertexData();
+            msh->sharedVertexData->vertexCount = 4;
+		    VertexDeclaration* decl = msh->sharedVertexData->vertexDeclaration;
+		    VertexBufferBinding* bind = msh->sharedVertexData->vertexBufferBinding;
 
-		// attempt to create a prefab mesh
-		bool createdPrefab = PrefabFactory::createPrefab(msh);
+		    size_t offset = 0;
+		    decl->addElement(0, offset, VET_FLOAT3, VES_POSITION);
+		    offset += VertexElement::getTypeSize(VET_FLOAT3);
+		    decl->addElement(0, offset, VET_FLOAT3, VES_NORMAL);
+		    offset += VertexElement::getTypeSize(VET_FLOAT3);
+		    decl->addElement(0, offset, VET_FLOAT2, VES_TEXTURE_COORDINATES, 0);
+		    offset += VertexElement::getTypeSize(VET_FLOAT2);
 
-		// the mesh was not a prefab..
-		if(!createdPrefab)
-		{
-			// Find build parameters
-			MeshBuildParamsMap::iterator ibld = mMeshBuildParams.find(res);
-			if (ibld == mMeshBuildParams.end())
-			{
-				OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, 
-					"Cannot find build parameters for " + res->getName(),
-					"MeshManager::loadResource");
-			}
-			MeshBuildParams& params = ibld->second;
+		    HardwareVertexBufferSharedPtr vbuf = 
+			    HardwareBufferManager::getSingleton().createVertexBuffer(
+				    offset, 4, HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+		    bind->setBinding(0, vbuf);
 
-			switch(params.type)
-			{
-			case MBT_PLANE:
-				loadManualPlane(msh, params);
-				break;
-			case MBT_CURVED_ILLUSION_PLANE:
-				loadManualCurvedIllusionPlane(msh, params);
-				break;
-			case MBT_CURVED_PLANE:
-				loadManualCurvedPlane(msh, params);
-				break;
-			default:
-				OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, 
-					"Unknown build parameters for " + res->getName(),
-					"MeshManager::loadResource");
-			}
-		}
-	}
+		    vbuf->writeData(0, vbuf->getSizeInBytes(), vertices, true);
 
+		    sub->useSharedVertices = true;
+		    HardwareIndexBufferSharedPtr ibuf = HardwareBufferManager::getSingleton().
+			    createIndexBuffer(
+				    HardwareIndexBuffer::IT_16BIT, 
+				    6, 
+				    HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+
+            unsigned short faces[6] = {0,1,2,
+                                    0,2,3 };
+            sub->indexData->indexBuffer = ibuf;
+		    sub->indexData->indexCount = 6;
+		    sub->indexData->indexStart =0;
+            ibuf->writeData(0, ibuf->getSizeInBytes(), faces, true);
+
+            msh->_setBounds(AxisAlignedBox(-100,-100,0,100,100,0), true);
+            msh->_setBoundingSphereRadius(Math::Sqrt(100*100+100*100));
+        }
+        else
+        {
+            // Find build parameters
+            MeshBuildParamsMap::iterator ibld = mMeshBuildParams.find(res);
+            if (ibld == mMeshBuildParams.end())
+            {
+                OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, 
+                    "Cannot find build parameters for " + res->getName(),
+                    "MeshManager::loadResource");
+            }
+            MeshBuildParams& params = ibld->second;
+
+            switch(params.type)
+            {
+            case MBT_PLANE:
+                loadManualPlane(msh, params);
+                break;
+            case MBT_CURVED_ILLUSION_PLANE:
+                loadManualCurvedIllusionPlane(msh, params);
+                break;
+            case MBT_CURVED_PLANE:
+                loadManualCurvedPlane(msh, params);
+                break;
+            default:
+                OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND, 
+                    "Unknown build parameters for " + res->getName(),
+                    "MeshManager::loadResource");
+            }
+        }
+
+    }
     //-----------------------------------------------------------------------
     void MeshManager::loadManualPlane(Mesh* pMesh, MeshBuildParams& params)
     {
@@ -471,7 +494,7 @@ namespace Ogre
         Real yTex = (1.0f * params.yTile) / params.ysegments;
         Vector3 vec;
         Vector3 min, max;
-        Real maxSquaredLength = 0;
+        Real maxSquaredLength;
         bool firstTime = true;
 
         for (int y = 0; y < params.ysegments + 1; ++y)
@@ -483,7 +506,7 @@ namespace Ogre
                 vec.y = (y * ySpace) - halfHeight;
                 vec.z = 0.0f;
                 // Transform by orientation and distance
-                vec = xform.transformAffine(vec);
+                vec = xform * vec;
                 // Assign to geometry
                 *pReal++ = vec.x;
                 *pReal++ = vec.y;
@@ -509,7 +532,7 @@ namespace Ogre
                     // Default normal is along unit Z
                     vec = Vector3::UNIT_Z;
                     // Rotate
-                    vec = rot.transformAffine(vec);
+                    vec = rot * vec;
 
                     *pReal++ = vec.x;
                     *pReal++ = vec.y;
@@ -615,7 +638,7 @@ namespace Ogre
         Vector3 vec;
 
         Vector3 min, max;
-        Real maxSqLen = 0;
+        Real maxSqLen;
         bool first = true;
 
         Real diff_x, diff_y, dist;
@@ -635,7 +658,7 @@ namespace Ogre
                 vec.z = (-sin((1-dist) * (PI/2)) * params.curvature) + params.curvature;
 
                 // Transform by orientation and distance
-                Vector3 pos = xform.transformAffine(vec);
+                Vector3 pos = xform * vec;
                 // Assign to geometry
                 *pFloat++ = pos.x;
                 *pFloat++ = pos.y;
@@ -664,7 +687,7 @@ namespace Ogre
                     // Default normal is along unit Z
                     //vec = Vector3::UNIT_Z;
                     // Rotate
-                    vec = rot.transformAffine(vec);
+                    vec = rot * vec;
 					vec.normalise();
 
                     *pFloat++ = vec.x;
@@ -790,7 +813,7 @@ namespace Ogre
         Real halfHeight = params.height / 2;
         Vector3 vec, norm;
         Vector3 min, max;
-        Real maxSquaredLength = 0;
+        Real maxSquaredLength;
         bool firstTime = true;
 
         for (int y = params.ysegments - params.ySegmentsToKeep; y < params.ysegments + 1; ++y)
@@ -802,7 +825,7 @@ namespace Ogre
                 vec.y = (y * ySpace) - halfHeight;
                 vec.z = 0.0f;
                 // Transform by orientation and distance
-                vec = xform.transformAffine(vec);
+                vec = xform * vec;
                 // Assign to geometry
                 *pFloat++ = vec.x;
                 *pFloat++ = vec.y;

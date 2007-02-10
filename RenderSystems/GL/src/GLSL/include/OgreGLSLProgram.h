@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __GLSLProgram_H__
@@ -54,7 +50,7 @@ namespace Ogre {
 		seperated by white space.
         
     */
-    class _OgrePrivate GLSLProgram : public HighLevelGpuProgram
+    class GLSLProgram : public HighLevelGpuProgram
     {
     public:
         /// Command object for attaching another GLSL Program 
@@ -72,29 +68,14 @@ namespace Ogre {
 
 		const GLhandleARB getGLHandle() const { return mGLHandle; }
 		void attachToProgramObject( const GLhandleARB programObject );
-		void detachFromProgramObject( const GLhandleARB programObject );
 		String getAttachedShaderNames() const { return mAttachedShaderNames; }
 
         /** Attach another GLSL Shader to this one. */
         void attachChildShader(const String& name);
-
-		/** Sets the preprocessor defines use to compile the program. */
-		void setPreprocessorDefines(const String& defines) { mPreprocessorDefines = defines; }
-		/** Sets the preprocessor defines use to compile the program. */
-		const String& getPreprocessorDefines(void) const { return mPreprocessorDefines; }
-
         /// Overridden from GpuProgram
         const String& getLanguage(void) const;
 
-		/// Command object for setting macro defines
-		class CmdPreprocessorDefines : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
 	protected:
-		static CmdPreprocessorDefines msCmdPreprocessorDefines;
         static CmdAttach msCmdAttach;
 
         /** Internal load implementation, must be implemented by subclasses.
@@ -112,7 +93,7 @@ namespace Ogre {
 		void unloadImpl(void);
 
         /// Populate the passed parameters with name->index map, must be overridden
-        void buildConstantDefinitions() const;
+        void populateParameterNames(GpuProgramParametersSharedPtr params);
 		/// compile source into shader object
 		bool compile( const bool checkErrors = true);
 
@@ -123,8 +104,6 @@ namespace Ogre {
 		GLint mCompiled;
 		/// attached Shader names
 		String mAttachedShaderNames;
-		/// Preprocessor options
-		String mPreprocessorDefines;
 		/// container of attached programs
 		typedef std::vector< GLSLProgram* > GLSLProgramContainer;
 		typedef GLSLProgramContainer::iterator GLSLProgramContainerIterator;

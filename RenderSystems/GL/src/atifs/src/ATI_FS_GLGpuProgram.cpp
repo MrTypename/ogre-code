@@ -1,29 +1,25 @@
 /*
 -----------------------------------------------------------------------------
 This source file is part of OGRE
-(Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+    (Object-oriented Graphics Rendering Engine)
+For the latest info, see http://www.stevestreeting.com/ogre/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
+the terms of the GNU General Public License as published by the Free Software
 Foundation; either version 2 of the License, or (at your option) any later
 version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License along with
+You should have received a copy of the GNU General Public License along with
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+http://www.gnu.org/copyleft/gpl.html.
 -----------------------------------------------------------------------------
 */
 
@@ -68,35 +64,38 @@ void ATI_FS_GLGpuProgram::unbindProgram(void)
 
 void ATI_FS_GLGpuProgram::bindProgramParameters(GpuProgramParametersSharedPtr params)
 {
+	// program constants done internally by compiler for local
+    
+    if (params->hasRealConstantParams())
+    {
+        // Iterate over params and set the relevant ones
+        GpuProgramParameters::RealConstantIterator realIt = 
+            params->getRealConstantIterator();
+        unsigned int index = 0;
+		// test
+        while (realIt.hasMoreElements())
+        {
+            const GpuProgramParameters::RealConstantEntry* e = realIt.peekNextPtr();
+            if (e->isSet)
+            {
+                glSetFragmentShaderConstantATI( GL_CON_0_ATI + index, e->val);
+            }
+            index++;
+            realIt.moveNext();
+        }
+    }
 
-	// only supports float constants
-	const GpuLogicalBufferStruct* floatStruct = params->getFloatLogicalBufferStruct();
-
-	for (GpuLogicalIndexUseMap::const_iterator i = floatStruct->map.begin();
-		i != floatStruct->map.end(); ++i)
-	{
-		size_t logicalIndex = i->first;
-		const float* pFloat = params->getFloatPointer(i->second.physicalIndex);
-		// Iterate over the params, set in 4-float chunks (low-level)
-		for (size_t j = 0; j < i->second.currentSize; j+=4)
-		{
-			glSetFragmentShaderConstantATI(GL_CON_0_ATI + logicalIndex, pFloat);
-			pFloat += 4;
-			++logicalIndex;
-		}
-	}
 
 }
 
 void ATI_FS_GLGpuProgram::bindProgramPassIterationParameters(GpuProgramParametersSharedPtr params)
 {
-	if (params->hasPassIterationNumber())
-	{
-		size_t physicalIndex = params->getPassIterationNumberIndex();
-		size_t logicalIndex = params->getFloatLogicalIndexForPhysicalIndex(physicalIndex);
-		const float* pFloat = params->getFloatPointer(physicalIndex);
-		glSetFragmentShaderConstantATI( GL_CON_0_ATI + (GLuint)logicalIndex, pFloat);
-	}
+    GpuProgramParameters::RealConstantEntry* realEntry = params->getPassIterationEntry();
+
+    if (realEntry)
+    {
+        glSetFragmentShaderConstantATI( GL_CON_0_ATI + (GLuint)params->getPassIterationEntryIndex(), realEntry->val);
+    }
 }
 
 

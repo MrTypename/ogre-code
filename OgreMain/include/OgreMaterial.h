@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef _Material_H__
@@ -114,8 +110,6 @@ namespace Ogre {
 		bool mTransparencyCastsShadows;
         /// Does this material require compilation?
         bool mCompilationRequired;
-		/// Text description of why any techniques are not supported
-		String mUnsupportedReasons;
 
 		/** Insert a supported technique into the local collections. */
 		void insertSupportedTechnique(Technique* t);
@@ -223,8 +217,6 @@ namespace Ogre {
         Technique* getSupportedTechnique(unsigned short index);
 		/** Retrieves the number of supported techniques. */
         unsigned short getNumSupportedTechniques(void) const;
-		/** Gets a string explaining why any techniques are not supported. */
-		const String& getUnsupportedTechniquesExplanation() const { return mUnsupportedReasons; }
 
         /** Gets the number of levels-of-detail this material has in the 
 			given scheme, based on Technique::setLodIndex. 
@@ -511,7 +503,7 @@ namespace Ogre {
             property there.
         @see Pass::setDepthBias
         */
-        void setDepthBias(float constantBias, float slopeScaleBias);
+        void setDepthBias(ushort bias);
 
         /** Set texture filtering for every texture unit in every Technique and Pass
         @note
@@ -665,12 +657,6 @@ namespace Ogre {
 				    ++(*pUseCount);
 			    }
             }
-			else
-			{
-				// RHS must be a null pointer
-				assert(r.isNull() && "RHS must be null if it has no mutex!");
-				setNull();
-			}
 			return *this;
 		}
 	};

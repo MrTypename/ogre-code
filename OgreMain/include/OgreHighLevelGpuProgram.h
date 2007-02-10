@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __HighLevelGpuProgram_H__
@@ -62,10 +58,6 @@ namespace Ogre {
         bool mHighLevelLoaded;
         /// The underlying assembler program
         GpuProgramPtr mAssemblerProgram;
-		/// Have we built the name->index parameter map yet?
-		mutable bool mConstantDefsBuilt;
-		/// Parameter name -> ConstantDefinition map, shared instance used by all parameter objects
-		mutable GpuNamedConstants mConstantDefs;
 
         /// Internal load high-level portion if not loaded
         virtual void loadHighLevel(void);
@@ -80,16 +72,8 @@ namespace Ogre {
         virtual void createLowLevelImpl(void) = 0;
         /// Internal unload implementation, must be implemented by subclasses
         virtual void unloadHighLevelImpl(void) = 0;
-        /// Populate the passed parameters with name->index map
-        virtual void populateParameterNames(GpuProgramParametersSharedPtr params);
-		/** Build the constant definition map, must be overridden.
-		@note The implementation must fill in the mConstantDefs field at a minimum, 
-			and if the program requires that parameters are bound using logical 
-			parameter indexes then the mFloatLogicalToPhysical and mIntLogicalToPhysical
-			maps must also be populated.
-		*/
-		virtual void buildConstantDefinitions() const = 0;
-
+        /// Populate the passed parameters with name->index map, must be overridden
+        virtual void populateParameterNames(GpuProgramParametersSharedPtr params) = 0;
         /** @copydoc Resource::loadImpl */
         void loadImpl();
         /** @copydoc Resource::unloadImpl */
@@ -111,13 +95,6 @@ namespace Ogre {
         GpuProgramParametersSharedPtr createParameters(void);
         /** @copydoc GpuProgram::getBindingDelegate */
         GpuProgram* _getBindingDelegate(void) { return mAssemblerProgram.getPointer(); }
-
-		/** Get the full list of GpuConstantDefinition instances.
-		@note
-		Only available if this parameters object has named parameters.
-		*/
-		const GpuNamedConstants& getConstantDefinitions() const;
-
 
 
 
@@ -169,12 +146,6 @@ namespace Ogre {
                     ++(*pUseCount);
                 }
             }
-			else
-			{
-				// RHS must be a null pointer
-				assert(r.isNull() && "RHS must be null if it has no mutex!");
-				setNull();
-			}
             return *this;
         }
 		/// Operator used to convert a GpuProgramPtr to a HighLevelGpuProgramPtr

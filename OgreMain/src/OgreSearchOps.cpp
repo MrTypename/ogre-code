@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -39,108 +35,98 @@ Torus Knot Software Ltd.
 
 #include "OgreNoMemoryMacros.h"
 
-struct _find_search_t
-{
-    char *pattern;
-    char *curfn;
-    char *directory;
-    int dirlen;
-    DIR *dirfd;
-};
-        
+/* If we've initialized yet */
+static int G_searches_initialized = 0;
+
+/* The possible searches */
+static struct _find_search_t G_find_searches[MAX_FIND_SEARCHES];
+
 long _findfirst(const char *pattern, struct _finddata_t *data)
 {
-    _find_search_t *fs = new _find_search_t;
-    fs->curfn = NULL;
-    fs->pattern = NULL;
-
-    // Separate the mask from directory name
-    const char *mask = strrchr (pattern, '/');
-    if (mask)
+    long find_key = 0;
+    
+    /* Initialize the system if it's needed */
+    if (!G_searches_initialized)
     {
-        fs->dirlen = mask - pattern;
-        mask++;
-        fs->directory = (char *)malloc (fs->dirlen + 1);
-        memcpy (fs->directory, pattern, fs->dirlen);
-        fs->directory [fs->dirlen] = 0;
+        int x;
+        
+        for (x = 0; x < MAX_FIND_SEARCHES; x++)
+        {
+            G_find_searches[x].in_use = 0;
+        }
+
+        G_searches_initialized = 1;
+    }
+
+    /* See if we have an available search slot */
+    for (find_key = 0; find_key < MAX_FIND_SEARCHES; find_key++)
+    {
+        if (!G_find_searches[find_key].in_use)
+            break;
+    }
+
+    if (find_key == MAX_FIND_SEARCHES)
+    {
+        /* uhoh, no more slots available */
+        return -1;
     }
     else
     {
-        mask = pattern;
-        fs->directory = strdup (".");
-        fs->dirlen = 1;
+        /* We're using the slot */
+        G_find_searches[find_key].in_use = 1;
     }
 
-    fs->dirfd = opendir (fs->directory);
-    if (!fs->dirfd)
-    {
-        _findclose ((long)fs);
+    if ( !(G_find_searches[find_key].dirfd = opendir(".")) )
         return -1;
-    }
 
-    /* Hack for "*.*" -> "*' from DOS/Windows */
-    if (strcmp (mask, "*.*") == 0)
-        mask += 2;
-    fs->pattern = strdup (mask);
+    /* Hack for *.* from DOS/Windows */
+    if (strcmp(pattern, "*.*") == 0)
+        G_find_searches[find_key].pattern = strdup("*");
+    else
+        G_find_searches[find_key].pattern = strdup(pattern);
 
     /* Get the first entry */
-    if (_findnext ((long)fs, data) < 0)
+    if (_findnext(find_key, data) < 0)
     {
-        _findclose ((long)fs);
+        data = NULL;
+        _findclose(find_key);
         return -1;
     }
 
-    return (long)fs;
+    return find_key;
 }
 
 int _findnext(long id, struct _finddata_t *data)
 {
-    _find_search_t *fs = (_find_search_t *)id;
+    struct dirent *entry;
+    struct stat stat_buf;
 
     /* Loop until we run out of entries or find the next one */
-    dirent *entry;
-    for (;;)
+    do
     {
-        if (!(entry = readdir (fs->dirfd)))
+        entry = readdir(G_find_searches[id].dirfd);
+
+        if (entry == NULL)
             return -1;
 
         /* See if the filename matches our pattern */
-        if (fnmatch (fs->pattern, entry->d_name, 0) == 0)
+        if (fnmatch(G_find_searches[id].pattern, entry->d_name, 0) == 0)
             break;
-    }
+    } while ( entry != NULL );
 
-    if (fs->curfn)
-        free (fs->curfn);
-    data->name = fs->curfn = strdup (entry->d_name);
+    data->name = entry->d_name;
 
-    size_t namelen = strlen (entry->d_name);
-    char *xfn = new char [fs->dirlen + 1 + namelen + 1];
-    sprintf (xfn, "%s/%s", fs->directory, entry->d_name);
-
-    /* stat the file to get if it's a subdir and to find its length */
-    struct stat stat_buf;
-    if (stat (xfn, &stat_buf))
+    /* Default type to a normal file */
+    data->attrib = _A_NORMAL;
+    
+    /* stat the file to get if it's a subdir */
+    stat(data->name, &stat_buf);
+    if (S_ISDIR(stat_buf.st_mode))
     {
-        // Hmm strange, imitate a zero-length file then
-        data->attrib = _A_NORMAL;
-        data->size = 0;
-    }
-    else
-    {
-        if (S_ISDIR(stat_buf.st_mode))
-            data->attrib = _A_SUBDIR;
-        else
-            /* Default type to a normal file */
-            data->attrib = _A_NORMAL;
-
-        data->size = stat_buf.st_size;
+        data->attrib = _A_SUBDIR;
     }
 
-    delete [] xfn;
-
-    /* Files starting with a dot are hidden files in Unix */
-    if (data->name [0] == '.')
-        data->attrib |= _A_HIDDEN;
+    data->size = stat_buf.st_size;
 
     return 0;
 }
@@ -148,14 +134,10 @@ int _findnext(long id, struct _finddata_t *data)
 int _findclose(long id)
 {
     int ret;
-    _find_search_t *fs = (_find_search_t *)id;
     
-    ret = fs->dirfd ? closedir (fs->dirfd) : 0;
-    free (fs->pattern);
-    free (fs->directory);
-    if (fs->curfn)
-        free (fs->curfn);
-    delete fs;
+    ret = closedir(G_find_searches[id].dirfd);
+    free(G_find_searches[id].pattern);
+    G_find_searches[id].in_use = 0;
 
     return ret;
 }

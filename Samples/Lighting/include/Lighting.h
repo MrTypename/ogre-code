@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -91,8 +91,6 @@ public:
 
     bool frameStarted(const FrameEvent& evt)
     {
-	if( ExampleFrameListener::frameStarted(evt) == false )
-		return false;
 
 		std::vector<AnimationState*>::iterator animi;
 		for (animi = mAnimStateList.begin(); animi != mAnimStateList.end(); ++animi)
@@ -100,7 +98,8 @@ public:
 			(*animi)->addTime(evt.timeSinceLastFrame);
 		}
 
-        return true;
+        // Call superclass
+        return ExampleFrameListener::frameStarted(evt);
     }
 };
 

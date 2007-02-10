@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -191,7 +187,8 @@ namespace Ogre {
 	    @param scale The scale to apply to translations and scalings, useful for 
 			adapting an animation to a different size target.
         */
-        void apply(Real timePos, Real weight = 1.0, Real scale = 1.0f);
+        void apply(Real timePos, Real weight = 1.0, bool accumulate = false, 
+			Real scale = 1.0f);
 
         /** Applies all node tracks given a specific time point and weight to a given skeleton.
         @remarks
@@ -203,7 +200,8 @@ namespace Ogre {
 	    @param scale The scale to apply to translations and scalings, useful for 
 			adapting an animation to a different size target.
         */
-        void apply(Skeleton* skeleton, Real timePos, Real weight = 1.0, Real scale = 1.0f);
+        void apply(Skeleton* skeleton, Real timePos, Real weight = 1.0, 
+			bool accumulate = false, Real scale = 1.0f);
 
 		/** Applies all vertex tracks given a specific time point and weight to a given entity.
 		@remarks
@@ -315,34 +313,8 @@ namespace Ogre {
 			eliminated from the animation and thus speed up the animation. 
 			In addition, if several keyframes in a row have the same value, 
 			then they are just adding overhead and can be removed.
-        @note
-            Since track-less and identity track has difference behavior for
-            accumulate animation blending if corresponding track presenting at
-            other animation that is non-identity, and in normally this method
-            didn't known about the situation of other animation, it can't deciding
-            whether or not discards identity tracks. So there have a parameter
-            allow you choose what you want, in case you aren't sure how to do that,
-            you should use Skeleton::optimiseAllAnimations instead.
-        @param
-            discardIdentityNodeTracks If true, discard identity node tracks.
 		*/
-		void optimise(bool discardIdentityNodeTracks = true);
-
-        /// A list of track handles
-        typedef std::set<ushort> TrackHandleList;
-
-        /** Internal method for collecting identity node tracks.
-        @remarks
-            This method remove non-identity node tracks form the track handle list.
-        @param
-            tracks A list of track handle of non-identity node tracks, where this
-            method will remove non-identity node track handles.
-        */
-        void _collectIdentityNodeTracks(TrackHandleList& tracks) const;
-
-        /** Internal method for destroy given node tracks.
-        */
-        void _destroyNodeTracks(const TrackHandleList& tracks);
+		void optimise(void);
 
 		/** Clone this animation.
 		@note
@@ -352,21 +324,7 @@ namespace Ogre {
 		*/
 		Animation* clone(const String& newName) const;
 		
-        /** Internal method used to tell the animation that keyframe list has been
-            changed, which may cause it to rebuild some internal data */
-        void _keyFrameListChanged(void) { mKeyFrameTimesDirty = true; }
 
-        /** Internal method used to convert time position to time index object.
-        @note
-            The time index returns by this function are associated with state of
-            the animation object, if the animation object altered (e.g. create/remove
-            keyframe or track), all related time index will invalidated.
-        @param timePos The time position.
-        @returns The time index object which contains wrapped time position (in
-            relation to the whole animation sequence) and lower bound index of
-            global keyframe time list.
-        */
-        TimeIndex _getTimeIndex(Real timePos) const;
 
     protected:
         /// Node tracks, indexed by handle
@@ -385,17 +343,10 @@ namespace Ogre {
         static InterpolationMode msDefaultInterpolationMode;
         static RotationInterpolationMode msDefaultRotationInterpolationMode;
 
-        /// Global keyframe time list used to search global keyframe index.
-        typedef std::vector<Real> KeyFrameTimeList;
-        mutable KeyFrameTimeList mKeyFrameTimes;
-        /// Dirty flag indicate that keyframe time list need to rebuild
-        mutable bool mKeyFrameTimesDirty;
-
-		void optimiseNodeTracks(bool discardIdentityTracks);
+		void optimiseNodeTracks(void);
 		void optimiseVertexTracks(void);
 
-        /// Internal method to build global keyframe time list
-        void buildKeyFrameTimeList(void) const;
+        
     };
 
 

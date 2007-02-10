@@ -10,7 +10,6 @@ Plugin_OctreeSceneManager_la_SOURCES = \
                             OgreOctreeNode.cpp \
                             OgreOctreeCamera.cpp \
 							OgreOctree.cpp \
-							OgreOctreePlugin.cpp \
 							OgreTerrainPage.cpp \
 							OgreTerrainPageSource.cpp \
 							OgreTerrainRenderable.cpp \

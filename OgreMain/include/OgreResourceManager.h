@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef _ResourceManager_H__
@@ -94,26 +90,6 @@ namespace Ogre {
         virtual ResourcePtr create(const String& name, const String& group, 
             bool isManual = false, ManualResourceLoader* loader = 0, 
             const NameValuePairList* createParams = 0);
-
-		typedef std::pair<ResourcePtr, bool> ResourceCreateOrRetrieveResult;
-		/** Create a new resource, or retrieve an existing one with the same
-			name if it already exists.
-		@remarks
-			This method performs the same task as calling getByName() followed
-			by create() if that returns null. The advantage is that it does it
-			in one call so there are no race conditions if using multiple
-			threads that could cause getByName() to return null, but create() to
-			fail because another thread created a resource in between.
-		@see ResourceManager::create
-		@see ResourceManager::getByName
-		@returns A pair, teh first element being the pointer, and the second being 
-			an indicator specifying whether the resource was newly created.
-		*/
-		virtual ResourceCreateOrRetrieveResult createOrRetrieve(const String& name, 
-			const String& group, bool isManual = false, 
-			ManualResourceLoader* loader = 0, 
-			const NameValuePairList* createParams = 0);
-		
         /** Set a limit on the amount of memory this resource handler may use.
             @remarks
                 If, when asked to load a new resource, the manager believes it will exceed this memory

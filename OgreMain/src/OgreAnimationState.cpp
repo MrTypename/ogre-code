@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -36,15 +32,16 @@ namespace Ogre
 
 	//---------------------------------------------------------------------
 	AnimationState::AnimationState(AnimationStateSet* parent, const AnimationState &rhs)
-        : mAnimationName(rhs.mAnimationName)
-        , mParent(parent)
-        , mTimePos(rhs.mTimePos)
-        , mLength(rhs.mLength)
-        , mWeight(rhs.mWeight)
-        , mEnabled(rhs.mEnabled)
-        , mLoop(rhs.mLoop)
 	{
+		mAnimationName = rhs.mAnimationName;
+		mTimePos = rhs.mTimePos;
+		mLoop = rhs.mLoop;
+		setLength(rhs.mLength);
+		mWeight = rhs.mWeight;
+		mParent = parent;
+
 		mParent->_notifyDirty();
+
 	}
 	//---------------------------------------------------------------------
 	AnimationState::~AnimationState()
@@ -54,14 +51,11 @@ namespace Ogre
     AnimationState::AnimationState(const String& animName, 
 		AnimationStateSet *parent, Real timePos, Real length, Real weight, 
 		bool enabled)
-        : mAnimationName(animName)
-        , mParent(parent)
-        , mTimePos(timePos)
-        , mLength(length)
-        , mWeight(weight)
-        , mEnabled(enabled)
-        , mLoop(true)
+        : mAnimationName(animName), mParent(parent), mTimePos(timePos), 
+		mWeight(weight), mEnabled(enabled)
     {
+        mLoop = true;
+        setLength(length);
 		mParent->_notifyDirty();
     }
     //---------------------------------------------------------------------
@@ -110,6 +104,14 @@ namespace Ogre
     void AnimationState::setLength(Real len)
     {
         mLength = len;
+        if (len != 0)
+        {
+            mInvLength = 1/len;
+        }
+        else
+        {
+            mInvLength = 0;
+        }
     }
     //---------------------------------------------------------------------
     Real AnimationState::getWeight(void) const
@@ -167,6 +169,7 @@ namespace Ogre
     {
         mTimePos = animState.mTimePos;
         mLength = animState.mLength;
+        mInvLength = animState.mInvLength;
         mWeight = animState.mWeight;
         mEnabled = animState.mEnabled;
         mLoop = animState.mLoop;
@@ -183,9 +186,6 @@ namespace Ogre
 	AnimationStateSet::AnimationStateSet(const AnimationStateSet& rhs)
 		: mDirtyFrameNumber(std::numeric_limits<unsigned long>::max())
 	{
-		// lock rhs
-		OGRE_LOCK_MUTEX(rhs.OGRE_AUTO_MUTEX_NAME)
-
 		for (AnimationStateMap::const_iterator i = rhs.mAnimationStates.begin();
 			i != rhs.mAnimationStates.end(); ++i)
 		{
@@ -211,8 +211,6 @@ namespace Ogre
 	//---------------------------------------------------------------------
 	void AnimationStateSet::removeAnimationState(const String& name)
 	{
-		OGRE_LOCK_AUTO_MUTEX
-
 		AnimationStateMap::iterator i = mAnimationStates.find(name);
 		if (i != mAnimationStates.end())
 		{
@@ -225,8 +223,6 @@ namespace Ogre
 	//---------------------------------------------------------------------
 	void AnimationStateSet::removeAllAnimationStates(void)
 	{
-		OGRE_LOCK_AUTO_MUTEX
-
 		for (AnimationStateMap::iterator i = mAnimationStates.begin();
 			i != mAnimationStates.end(); ++i)
 		{
@@ -240,8 +236,6 @@ namespace Ogre
 	AnimationState* AnimationStateSet::createAnimationState(const String& name,  
 		Real timePos, Real length, Real weight, bool enabled)
 	{
-		OGRE_LOCK_AUTO_MUTEX
-
 		AnimationStateMap::iterator i = mAnimationStates.find(name);
 		if (i != mAnimationStates.end())
 		{
@@ -260,8 +254,6 @@ namespace Ogre
 	//---------------------------------------------------------------------
 	AnimationState* AnimationStateSet::getAnimationState(const String& name) const
 	{
-		OGRE_LOCK_AUTO_MUTEX
-
 		AnimationStateMap::const_iterator i = mAnimationStates.find(name);
 		if (i == mAnimationStates.end())
 		{
@@ -274,35 +266,24 @@ namespace Ogre
 	//---------------------------------------------------------------------
 	bool AnimationStateSet::hasAnimationState(const String& name) const
 	{
-		OGRE_LOCK_AUTO_MUTEX
-
 		return mAnimationStates.find(name) != mAnimationStates.end();
 	}
 	//---------------------------------------------------------------------
 	AnimationStateIterator AnimationStateSet::getAnimationStateIterator(void)
 	{
-		OGRE_LOCK_AUTO_MUTEX
-		// returned iterator not threadsafe, noted in header
 		return AnimationStateIterator(
 			mAnimationStates.begin(), mAnimationStates.end());
 	}
 	//---------------------------------------------------------------------
 	ConstAnimationStateIterator AnimationStateSet::getAnimationStateIterator(void) const
 	{
-		OGRE_LOCK_AUTO_MUTEX
-		// returned iterator not threadsafe, noted in header
 		return ConstAnimationStateIterator(
 			mAnimationStates.begin(), mAnimationStates.end());
 	}
 	//---------------------------------------------------------------------
 	void AnimationStateSet::copyMatchingState(AnimationStateSet* target) const
 	{
-		// lock target
-		OGRE_LOCK_MUTEX(target->OGRE_AUTO_MUTEX_NAME)
-		// lock source
-		OGRE_LOCK_AUTO_MUTEX
-
-		AnimationStateMap::iterator i, iend;
+        AnimationStateMap::iterator i, iend;
         iend = target->mAnimationStates.end();
         for (i = target->mAnimationStates.begin(); i != iend; ++i) {
             AnimationStateMap::const_iterator iother = mAnimationStates.find(i->first);
@@ -334,14 +315,12 @@ namespace Ogre
     //---------------------------------------------------------------------
     void AnimationStateSet::_notifyDirty(void)
     {
-		OGRE_LOCK_AUTO_MUTEX
         ++mDirtyFrameNumber;
     }
     //---------------------------------------------------------------------
     void AnimationStateSet::_notifyAnimationStateEnabled(AnimationState* target, bool enabled)
     {
-		OGRE_LOCK_AUTO_MUTEX
-		// Remove from enabled animation state list first
+        // Remove from enabled animation state list first
         mEnabledAnimationStates.remove(target);
 
         // Add to enabled animation state list if need
@@ -356,8 +335,6 @@ namespace Ogre
     //---------------------------------------------------------------------
     ConstEnabledAnimationStateIterator AnimationStateSet::getEnabledAnimationStateIterator(void) const
     {
-		OGRE_LOCK_AUTO_MUTEX
-		// returned iterator not threadsafe, noted in header
         return ConstEnabledAnimationStateIterator(
             mEnabledAnimationStates.begin(), mEnabledAnimationStates.end());
     }

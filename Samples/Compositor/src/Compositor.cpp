@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2006 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
@@ -229,8 +229,8 @@ void CompositorDemo::createViewports(void)
         // setup GUI system
         mGUIRenderer = new CEGUI::OgreCEGUIRenderer(mWindow, Ogre::RENDER_QUEUE_OVERLAY, false, 3000, mSceneMgr);
         // load scheme and set up defaults
-        mGUISystem = new CEGUI::System(mGUIRenderer, (CEGUI::ResourceProvider *)0, (CEGUI::XMLParser*)0,
-            (CEGUI::ScriptModule*)0, (CEGUI::utf8*)"CompositorDemoCegui.config");
+        mGUISystem = new CEGUI::System(mGUIRenderer, (CEGUI::ScriptModule*)0,
+            (CEGUI::ResourceProvider *)0, (CEGUI::utf8*)"CompositorDemoCegui.config");
         CEGUI::System::getSingleton().setDefaultMouseCursor("TaharezLook", "MouseArrow");
 
 		Ogre::MovableObject::setDefaultVisibilityFlags(0x00000001);

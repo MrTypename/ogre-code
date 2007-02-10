@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9RenderWindow.h"
@@ -40,10 +36,64 @@ Torus Knot Software Ltd.
 #include <d3d9.h>
 #include "OgreMemoryMacros.h"
 #include "OgreRoot.h"
-#include "OgreWindowEventUtilities.h"
 
 namespace Ogre
 {
+	// Window procedure callback
+	// This is a static member, so applies to all windows but we store the
+	// D3D9RenderWindow instance in the window data GetWindowLog/SetWindowLog
+	LRESULT D3D9RenderWindow::WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
+	{
+		if (uMsg == WM_CREATE)
+		{
+			// copy D3D9RenderWindow* from createwindow param to userdata slot
+			SetWindowLong(hWnd, GWL_USERDATA,
+				(LONG)(((LPCREATESTRUCT)lParam)->lpCreateParams));
+			return 0;
+		}
+
+		D3D9RenderWindow* win =
+			(D3D9RenderWindow*)GetWindowLong(hWnd, GWL_USERDATA);
+
+		if (!win)
+			return DefWindowProc(hWnd, uMsg, wParam, lParam);
+
+		switch( uMsg )
+		{
+		case WM_ACTIVATE:
+			win->mActive = (LOWORD(wParam) != WA_INACTIVE);
+			break;
+
+		case WM_ENTERSIZEMOVE:
+			win->mSizing = true;
+			break;
+
+		case WM_EXITSIZEMOVE:
+			win->windowMovedOrResized();
+			win->mSizing = false;
+			break;
+
+		case WM_MOVE:
+		case WM_SIZE:
+			if (!win->mSizing)
+				win->windowMovedOrResized();
+			break;
+
+		case WM_GETMINMAXINFO:
+			// Prevent the window from going smaller than some minimu size
+			((MINMAXINFO*)lParam)->ptMinTrackSize.x = 100;
+			((MINMAXINFO*)lParam)->ptMinTrackSize.y = 100;
+			break;
+
+		case WM_CLOSE:
+			win->destroy(); // cleanup and call DestroyWindow
+			win->mClosed = true;
+			return 0;
+		}
+
+		return DefWindowProc( hWnd, uMsg, wParam, lParam );
+	}
+
 	D3D9RenderWindow::D3D9RenderWindow(HINSTANCE instance, D3D9Driver *driver, LPDIRECT3DDEVICE9 deviceIfSwapChain):
 	mInstance(instance),
 		mDriver(driver)
@@ -163,6 +213,7 @@ namespace Ogre
 		if( mHWnd )
 			destroy();
 
+
 		if (!externalHandle)
 		{
 			DWORD dwStyle = WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
@@ -220,7 +271,7 @@ namespace Ogre
 
 			// Register the window class
 			// NB allow 4 bytes of window data for D3D9RenderWindow pointer
-			WNDCLASS wc = { 0, WindowEventUtilities::_WndProc, 0, 0, hInst,
+			WNDCLASS wc = { 0, WndProc, 0, 0, hInst,
 				LoadIcon(0, IDI_APPLICATION), LoadCursor(NULL, IDC_ARROW),
 				(HBRUSH)GetStockObject(BLACK_BRUSH), 0, "OgreD3D9Wnd" };
 			RegisterClass(&wc);
@@ -230,8 +281,6 @@ namespace Ogre
 			mIsExternal = false;
 			mHWnd = CreateWindow("OgreD3D9Wnd", title.c_str(), dwStyle,
 				mLeft, mTop, mWidth, mHeight, parentHWnd, 0, hInst, this);
-			
-			WindowEventUtilities::_addRenderWindow(this);
 		}
 		else
 		{
@@ -264,7 +313,6 @@ namespace Ogre
 		createD3DResources();
 
 		mActive = true;
-		mClosed = false;
 	}
 
 	void D3D9RenderWindow::createD3DResources(void)
@@ -463,8 +511,7 @@ namespace Ogre
 				if( FAILED( hr ) )
 				{
 					destroy();
-					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-						"Failed to create Direct3D9 Device: " + 
+					OGRE_EXCEPT( hr, "Failed to create Direct3D9 Device: " + 
 						Root::getSingleton().getErrorDescription(hr), 
 						"D3D9RenderWindow::createD3DResources" );
 				}
@@ -501,14 +548,9 @@ namespace Ogre
 		destroyD3DResources();
 
 		if (mHWnd && !mIsExternal)
-		{
-			WindowEventUtilities::_removeRenderWindow(this);
 			DestroyWindow(mHWnd);
-		}
-
 		mHWnd = 0;
 		mActive = false;
-		mClosed = true;
 	}
 
 	bool D3D9RenderWindow::isVisible() const
@@ -583,7 +625,7 @@ namespace Ogre
 					&mpSwapChain);
 
 				if (FAILED(hr))
-					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Reset window to last size failed", "D3D9RenderWindow::resize" );
+					OGRE_EXCEPT( hr, "Reset window to last size failed", "D3D9RenderWindow::resize" );
 
 			}		
 			else 
@@ -605,7 +647,7 @@ namespace Ogre
 
 				if (FAILED(hr)) 
 				{
-					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to create depth stencil surface for Swap Chain", "D3D9RenderWindow::resize" );
+					OGRE_EXCEPT( hr, "Failed to create depth stencil surface for Swap Chain", "D3D9RenderWindow::resize" );
 				}
 
 				mpRenderSurface->Release();
@@ -647,7 +689,7 @@ namespace Ogre
 					Root::getSingleton().getRenderSystem())->_notifyDeviceLost();
 			}
 			else if( FAILED(hr) )
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Error Presenting surfaces", "D3D9RenderWindow::swapBuffers" );
+				OGRE_EXCEPT( hr, "Error Presenting surfaces", "D3D9RenderWindow::swapBuffers" );
 		}
 	}
 
@@ -655,7 +697,7 @@ namespace Ogre
 	{
 		// Valid attributes and their equvalent native functions:
 		// D3DDEVICE			: getD3DDevice
-		// WINDOW				: getWindowHandle
+		// HWND					: getWindowHandle
 
 		if( name == "D3DDEVICE" )
 		{
@@ -663,7 +705,7 @@ namespace Ogre
 			*pDev = getD3DDevice();
 			return;
 		}
-		else if( name == "WINDOW" )
+		else if( name == "HWND" )
 		{
 			HWND *pHwnd = (HWND*)pData;
 			*pHwnd = getWindowHandle();
@@ -709,7 +751,7 @@ namespace Ogre
 		// get display dimensions
 		// this will be the dimensions of the front buffer
 		if (FAILED(hr = mpD3DDevice->GetDisplayMode(0, &dm)))
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get display mode!", "D3D9RenderWindow::writeContentsToFile");
+			OGRE_EXCEPT(hr, "Can't get display mode!", "D3D9RenderWindow::writeContentsToFile");
 
 		desc.Width = dm.Width;
 		desc.Height = dm.Height;
@@ -722,13 +764,13 @@ namespace Ogre
 			&pTempSurf, 
 			NULL)))
 		{
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Cannot create offscreen buffer 1!", "D3D9RenderWindow::writeContentsToFile");
+			OGRE_EXCEPT(hr, "Cannot create offscreen buffer 1!", "D3D9RenderWindow::writeContentsToFile");
 		}
 
 		if (FAILED(hr = mpD3DDevice->GetFrontBufferData(0, pTempSurf)))
 		{
 			SAFE_RELEASE(pTempSurf);
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get front buffer!", "D3D9RenderWindow::writeContentsToFile");
+			OGRE_EXCEPT(hr, "Can't get front buffer!", "D3D9RenderWindow::writeContentsToFile");
 		}
 		
 		D3DLOCKED_RECT lockedRect;
@@ -737,7 +779,7 @@ namespace Ogre
 			if (FAILED(hr = pTempSurf->LockRect(&lockedRect, NULL, 
 			D3DLOCK_READONLY | D3DLOCK_NOSYSLOCK)))
 			{
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "can't lock rect!", "D3D9RenderWindow::writeContentsToFile");
+				OGRE_EXCEPT(hr, "can't lock rect!", "D3D9RenderWindow::writeContentsToFile");
 			} 
 		}
 		else
@@ -752,7 +794,7 @@ namespace Ogre
 
 			D3DLOCK_READONLY | D3DLOCK_NOSYSLOCK)))
 			{
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "can't lock rect!", "D3D9RenderWindow::writeContentsToFile");
+				OGRE_EXCEPT(hr, "can't lock rect!", "D3D9RenderWindow::writeContentsToFile");
 			} 
 		}
   

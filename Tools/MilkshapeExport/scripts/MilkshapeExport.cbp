@@ -33,7 +33,7 @@
 					<Add library="msModelLib"/>
 					<Add library="OgreMain_d"/>
 					<Add directory="..\lib\Debug"/>
-					<Add directory="..\..\..\lib"/>
+					<Add directory="..\..\..\OgreMain\lib\Debug"/>
 				</Linker>
 			</Target>
 			<Target title="Release">
@@ -59,7 +59,7 @@
 					<Add library="msModelLib"/>
 					<Add library="OgreMain"/>
 					<Add directory="..\lib\Release"/>
-					<Add directory="..\..\..\lib"/>
+					<Add directory="..\..\..\OgreMain\lib\Release"/>
 				</Linker>
 			</Target>
 		</Build>

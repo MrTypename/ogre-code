@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -114,86 +110,7 @@ namespace Ogre {
 
 		
 	}
-	//-----------------------------------------------------------------------------
-    bool GLTextureManager::isHardwareFilteringSupported(TextureType ttype, PixelFormat format, int usage,
-            bool preciseFormatOnly)
-    {
-        if (format == PF_UNKNOWN)
-            return false;
 
-        // Check natively format
-        PixelFormat nativeFormat = getNativeFormat(ttype, format, usage);
-        if (preciseFormatOnly && format != nativeFormat)
-            return false;
 
-        // Assume non-floating point is supported always
-        if (!PixelUtil::isFloatingPoint(nativeFormat))
-            return true;
-
-        // Hack: there are no elegant GL API to detects texture filtering supported,
-        // just hard code for cards based on vendor specifications.
-
-        // TODO: Add cards that 16 bits floating point flitering supported by
-        // hardware below
-        static const String sFloat16SupportedCards[] =
-        {
-            // GeForce 8 Series
-            "*GeForce*8800*",
-
-            // GeForce 7 Series
-            "*GeForce*7950*",
-            "*GeForce*7900*",
-            "*GeForce*7800*",
-            "*GeForce*7600*",
-            "*GeForce*7500*",
-            "*GeForce*7300*",
-
-            // GeForce 6 Series
-            "*GeForce*6800*",
-            "*GeForce*6700*",
-            "*GeForce*6600*",
-            "*GeForce*6500*",
-            "*GeForce*6200*",
-
-            ""                      // Empty string means end of list
-        };
-
-        // TODO: Add cards that 32 bits floating point flitering supported by
-        // hardware below
-        static const String sFloat32SupportedCards[] =
-        {
-            // GeForce 8 Series
-            "*GeForce*8800*",
-
-            ""                      // Empty string means end of list
-        };
-
-        PixelComponentType pct = PixelUtil::getComponentType(nativeFormat);
-        const String* supportedCards;
-        switch (pct)
-        {
-        case PCT_FLOAT16:
-            supportedCards = sFloat16SupportedCards;
-            break;
-        case PCT_FLOAT32:
-            supportedCards = sFloat32SupportedCards;
-            break;
-        default:
-            return false;
-        }
-
-        const GLubyte* pcRenderer = glGetString(GL_RENDERER);
-        String str = (const char*)pcRenderer;
-
-        for (; !supportedCards->empty(); ++supportedCards)
-        {
-            if (StringUtil::match(str, *supportedCards))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
 }

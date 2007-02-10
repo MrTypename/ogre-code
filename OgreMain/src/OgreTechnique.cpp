@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -64,15 +60,13 @@ namespace Ogre {
         return mIsSupported;
     }
     //-----------------------------------------------------------------------------
-    String Technique::_compile(bool autoManageTextureUnits)
+    void Technique::_compile(bool autoManageTextureUnits)
     {
-		StringUtil::StrStreamType compileErrors;
-
 		// assume not supported
 		mIsSupported = false;
         // Go through each pass, checking requirements
         Passes::iterator i;
-		unsigned short passNum = 0;
+		size_t passNum = 0;
         for (i = mPasses.begin(); i != mPasses.end(); ++i, ++passNum)
         {
             Pass* currPass = *i;
@@ -87,68 +81,46 @@ namespace Ogre {
 			if (numTexUnits > OGRE_PRETEND_TEXTURE_UNITS)
 				numTexUnits = OGRE_PRETEND_TEXTURE_UNITS;
 #endif
-			if (numTexUnitsRequested > numTexUnits)
+			if (!autoManageTextureUnits && numTexUnitsRequested > numTexUnits)
 			{
-				if (!autoManageTextureUnits)
-				{
-					// The user disabled auto pass split
-					compileErrors << "Pass " << passNum << 
-						": Too many texture units for the current hardware and no splitting allowed."
-						<< std::endl;
-					return compileErrors.str();
-				}
-				else if (currPass->hasVertexProgram() || currPass->hasFragmentProgram())
-				{
-					// Can't do this one, and can't split a programmable pass
-					compileErrors << "Pass " << passNum << 
-						": Too many texture units for the current hardware and "
-						"cannot split programmable passes."
-						<< std::endl;
-					return compileErrors.str();
-				}
+				// The user disabled auto pass split
+				return;
 			}
 
 			if (currPass->hasVertexProgram())
 			{
+				// Check texture units
+				if (numTexUnitsRequested > numTexUnits)
+				{
+					// Can't do this one, and can't split a programmable vertex pass
+					return;
+				}
 				// Check vertex program version
 				if (!currPass->getVertexProgram()->isSupported() )
 				{
 					// Can't do this one
-					compileErrors << "Pass " << passNum << 
-						": Vertex program " << currPass->getVertexProgram()->getName()
-						<< " cannot be used - ";
-					if (currPass->getVertexProgram()->hasCompileError())
-						compileErrors << "compile error.";
-					else
-						compileErrors << "not supported.";
-
-					compileErrors << std::endl;
-					return compileErrors.str();
+					return;
 				}
 			}
             if (currPass->hasFragmentProgram())
             {
+                // Check texture units
+                if (numTexUnitsRequested > numTexUnits)
+                {
+                    // Can't do this one, and can't split a fragment pass
+                    return;
+                }
                 // Check fragment program version
                 if (!currPass->getFragmentProgram()->isSupported())
                 {
                     // Can't do this one
-					compileErrors << "Pass " << passNum << 
-						": Fragment program " << currPass->getFragmentProgram()->getName()
-						<< " cannot be used - ";
-					if (currPass->getFragmentProgram()->hasCompileError())
-						compileErrors << "compile error.";
-					else
-						compileErrors << "not supported.";
-
-					compileErrors << std::endl;
-					return compileErrors.str();
+                    return;
                 }
             }
             else
             {
 				// Check a few fixed-function options in texture layers
                 Pass::TextureUnitStateIterator texi = currPass->getTextureUnitStateIterator();
-				size_t texUnit = 0;
 				while (texi.hasMoreElements())
 				{
 					TextureUnitState* tex = texi.getNext();
@@ -158,11 +130,7 @@ namespace Ogre {
 					if (tex->is3D() && !caps->hasCapability(RSC_CUBEMAPPING))
 					{
 						// Fail
-						compileErrors << "Pass " << passNum << 
-							" Tex " << texUnit <<
-							": Cube maps not supported by current environment."
-							<< std::endl;
-						return compileErrors.str();
+						return;
 					}
 					// Any 3D textures? NB we make the assumption that any
 					// card capable of running fragment programs can support
@@ -170,24 +138,15 @@ namespace Ogre {
 					if (tex->getTextureType() == TEX_TYPE_3D && !caps->hasCapability(RSC_TEXTURE_3D))
 					{
 						// Fail
-						compileErrors << "Pass " << passNum << 
-							" Tex " << texUnit <<
-							": Volume textures not supported by current environment."
-							<< std::endl;
-						return compileErrors.str();
+						return;
 					}
 					// Any Dot3 blending?
 					if (tex->getColourBlendMode().operation == LBX_DOTPRODUCT &&
 							!caps->hasCapability(RSC_DOT3))
 					{
 						// Fail
-						compileErrors << "Pass " << passNum << 
-							" Tex " << texUnit <<
-							": DOT3 blending not supported by current environment."
-							<< std::endl;
-						return compileErrors.str();
+						return;
 					}
-					++texUnit;
 				}
 
 				// We're ok on operations, now we need to check # texture units
@@ -218,8 +177,6 @@ namespace Ogre {
         // Compile for categorised illumination on demand
         clearIlluminationPasses();
         mIlluminationPassesCompilationPhase = IPS_NOT_COMPILED;
-
-		return StringUtil::BLANK;
 
     }
     //-----------------------------------------------------------------------------
@@ -309,7 +266,7 @@ namespace Ogre {
             mPasses.insert(i, pass);
 
 			// Adjust passes index
-			unsigned short beginIndex, endIndex;
+			size_t beginIndex, endIndex;
 			if (destinationIndex > sourceIndex)
 			{
 				beginIndex = sourceIndex;
@@ -320,7 +277,7 @@ namespace Ogre {
 				beginIndex = destinationIndex;
 				endIndex = sourceIndex;
 			}
-			for (unsigned short index = beginIndex; index <= endIndex; ++index)
+			for (size_t index = beginIndex; index <= endIndex; ++index)
 			{
 				mPasses[index]->_notifyIndex(index);
 			}
@@ -619,13 +576,13 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    void Technique::setDepthBias(float constantBias, float slopeScaleBias)
+    void Technique::setDepthBias(ushort bias)
     {
         Passes::iterator i, iend;
         iend = mPasses.end();
         for (i = mPasses.begin(); i != iend; ++i)
         {
-            (*i)->setDepthBias(constantBias, slopeScaleBias);
+            (*i)->setDepthBias(bias);
         }
     }
     //-----------------------------------------------------------------------

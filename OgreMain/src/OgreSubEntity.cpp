@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -38,13 +34,12 @@ Torus Knot Software Ltd.
 #include "OgreLogManager.h"
 #include "OgreMesh.h"
 #include "OgreException.h"
-#include "OgreCamera.h"
 
 namespace Ogre {
     //-----------------------------------------------------------------------
     SubEntity::SubEntity (Entity* parent, SubMesh* subMeshBasis)
         : Renderable(), mParentEntity(parent), mMaterialName("BaseWhite"),
-		mSubMesh(subMeshBasis), mCachedCamera(0)
+		mSubMesh(subMeshBasis)
     {
         mpMaterial = MaterialManager::getSingleton().getByName(mMaterialName);
         mMaterialLodIndex = 0;
@@ -223,36 +218,9 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     Real SubEntity::getSquaredViewDepth(const Camera* cam) const
     {
-        // First of all, check the cached value
-		// NB this is manually invalidated by parent each _notifyCurrentCamera call
-		// Done this here rather than there since we only need this for transparent objects
-        if (mCachedCamera == cam)
-            return mCachedCameraDist;
-
         Node* n = mParentEntity->getParentNode();
         assert(n);
-        Real dist;
-        if (!mSubMesh->extremityPoints.empty())
-        {
-            const Vector3 &cp = cam->getDerivedPosition();
-            const Matrix4 &l2w = mParentEntity->_getParentNodeFullTransform();
-			dist = std::numeric_limits<Real>::infinity();
-            for (std::vector<Vector3>::const_iterator i = mSubMesh->extremityPoints.begin();
-                 i != mSubMesh->extremityPoints.end (); ++i)
-            {
-                Vector3 v = l2w * (*i);
-                Real d = (v - cp).squaredLength();
-                
-				dist = std::min(d, dist);
-            }
-        }
-        else
-            dist = n->getSquaredViewDepth(cam);
-
-        mCachedCameraDist = dist;
-        mCachedCamera = cam;
-
-        return dist;
+        return n->getSquaredViewDepth(cam);
     }
     //-----------------------------------------------------------------------
     bool SubEntity::getNormaliseNormals(void) const
@@ -262,7 +230,9 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     const LightList& SubEntity::getLights(void) const
     {
-        return mParentEntity->queryLights();
+        SceneNode* n = mParentEntity->getParentSceneNode();
+        assert(n);
+        return n->findLights(mParentEntity->getBoundingRadius());
     }
     //-----------------------------------------------------------------------
     void SubEntity::setVisible(bool visible)
@@ -376,11 +346,11 @@ namespace Ogre {
 				animIndex < mHardwareVertexAnimVertexData->hwAnimationDataList.size();
 				++i, ++animIndex)
 			{
-				val[i] = 
+				val.val[i] = 
 					mHardwareVertexAnimVertexData->hwAnimationDataList[animIndex].parametric;
 			}
 			// set the parametric morph value
-			params->_writeRawConstant(constantEntry.physicalIndex, val);
+			params->setConstant(constantEntry.index, val);
 		}
 		else
 		{

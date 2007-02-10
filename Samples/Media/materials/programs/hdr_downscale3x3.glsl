@@ -1,5 +1,5 @@
 uniform sampler2D inRTT;
-uniform vec2 texelSize;
+uniform float texelSize;
 
 varying vec2 uv;
 

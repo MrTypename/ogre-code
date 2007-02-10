@@ -1,44 +1,55 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_project_file>
-	<FileVersion major="1" minor="5" />
+	<FileVersion major="1" minor="4" />
 	<Project>
 		<Option title="RenderSystem_GL" />
-		<Option default_target="" />
+		<Option default_target="-1" />
 		<Option compiler="gcc" />
-		<Option virtualFolders="" />
 		<Build>
 			<Target title="Debug">
-				<Option output="..\..\..\lib\RenderSystem_GL_d.dll" />
+				<Option output="..\bin\Debug\RenderSystem_GL.dll" />
 				<Option object_output="..\obj\Debug" />
-				<Option external_deps="..\..\..\lib\OgreMain_d.dll;" />
+				<Option external_deps="..\..\..\OgreMain\lib\Debug\OgreMain_d.dll;" />
 				<Option type="3" />
 				<Option compiler="gcc" />
+				<Option includeInTargetAll="1" />
 				<Option projectResourceIncludeDirsRelation="0" />
 				<Compiler>
 					<Add option="-g" />
+					<Add option="-DWIN32" />
 					<Add option="-D_DEBUG" />
+					<Add option="-D_WINDOWS" />
+					<Add option="-D_USRDLL" />
+					<Add option="-DOGRE_GL_USE_MULTITEXTURING" />
+					<Add option="-D_STLP_DEBUG" />
 				</Compiler>
 				<Linker>
 					<Add library="OgreMain_d" />
 					<Add library="OPENGL32" />
 					<Add library="GLU32" />
 					<Add library="GDI32" />
-					<Add library="stlportstlg.5.1" />
+					<Add library="stlportstlg.5.0" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="cmd /c copy $($(TARGET_NAME)_OUTPUT_FILE) ..\..\..\Samples\Common\bin\$(TARGET_NAME)" />
 				</ExtraCommands>
 			</Target>
 			<Target title="Release">
-				<Option output="..\..\..\lib\RenderSystem_GL.dll" />
+				<Option output="..\bin\Release\RenderSystem_GL.dll" />
 				<Option object_output="..\obj\Release" />
-				<Option external_deps="..\..\..\lib\OgreMain.dll;" />
+				<Option external_deps="..\..\..\OgreMain\lib\Release\OgreMain.dll;" />
 				<Option type="3" />
 				<Option compiler="gcc" />
+				<Option includeInTargetAll="1" />
 				<Option projectResourceIncludeDirsRelation="0" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add option="-DWIN32" />
 					<Add option="-DNDEBUG" />
+					<Add option="-D_WINDOWS" />
+					<Add option="-D_USRDLL" />
+					<Add option="-DRenderSystem_GL_EXPORTS" />
+					<Add option="-DOGRE_GL_USE_MULTITEXTURING" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -46,16 +57,13 @@
 					<Add library="OPENGL32" />
 					<Add library="GLU32" />
 					<Add library="GDI32" />
-					<Add library="stlport.5.1" />
+					<Add library="stlport.5.0" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="cmd /c copy $($(TARGET_NAME)_OUTPUT_FILE) ..\..\..\Samples\Common\bin\$(TARGET_NAME)" />
 				</ExtraCommands>
 			</Target>
 		</Build>
-		<VirtualTargets>
-			<Add alias="All" targets="Debug;Release;" />
-		</VirtualTargets>
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-mthreads" />
@@ -63,11 +71,7 @@
 			<Add option="-fexceptions" />
 			<Add option="-fident" />
 			<Add option="-D_STLP_NO_CUSTOM_IO" />
-			<Add option="-DWIN32" />
-			<Add option="-D_WINDOWS" />
-			<Add option="-D_USRDLL" />
-			<Add option="-DOGRE_GL_USE_MULTITEXTURING" />
-			<Add option="-DRenderSystem_GL_EXPORTS" />
+			<Add option="-D_STLP_USE_DYNAMIC_LIB" />
 			<Add directory="$(#STLPORT_DIR)\stlport" />
 			<Add directory="..\include" />
 			<Add directory="..\src\win32" />
@@ -224,13 +228,6 @@
 			<Option target="Release" />
 		</Unit>
 		<Unit filename="..\include\OgreGLPixelFormat.h">
-			<Option compilerVar="CPP" />
-			<Option compile="0" />
-			<Option link="0" />
-			<Option target="Debug" />
-			<Option target="Release" />
-		</Unit>
-		<Unit filename="..\include\OgreGLPlugin.h">
 			<Option compilerVar="CPP" />
 			<Option compile="0" />
 			<Option link="0" />
@@ -495,11 +492,6 @@
 			<Option target="Release" />
 		</Unit>
 		<Unit filename="..\src\OgreGLPixelFormat.cpp">
-			<Option compilerVar="CPP" />
-			<Option target="Debug" />
-			<Option target="Release" />
-		</Unit>
-		<Unit filename="..\src\OgreGLPlugin.cpp">
 			<Option compilerVar="CPP" />
 			<Option target="Debug" />
 			<Option target="Release" />
@@ -826,6 +818,5 @@
 			<Option target="Debug" />
 			<Option target="Release" />
 		</Unit>
-		<Extensions />
 	</Project>
 </CodeBlocks_project_file>

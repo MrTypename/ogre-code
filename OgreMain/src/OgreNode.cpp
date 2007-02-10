@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -61,6 +57,7 @@ namespace Ogre {
 		mInitialPosition(Vector3::ZERO),
 		mInitialOrientation(Quaternion::IDENTITY),
 		mInitialScale(Vector3::UNIT_SCALE),
+		mAccumAnimWeight(0.0f),
 		mCachedTransformOutOfDate(true),
 		mListener(0)
     {
@@ -91,6 +88,7 @@ namespace Ogre {
 		mInitialPosition(Vector3::ZERO),
 		mInitialOrientation(Quaternion::IDENTITY),
 		mInitialScale(Vector3::UNIT_SCALE),
+		mAccumAnimWeight(0.0f),
 		mCachedTransformOutOfDate(true),
 		mListener(0)
 
@@ -231,7 +229,7 @@ namespace Ogre {
                 // Combine orientation with that of parent
                 mDerivedOrientation = parentOrientation * mOrientation;
             }
-			else
+            else
             {
                 // No inheritence
                 mDerivedOrientation = mOrientation;
@@ -682,6 +680,12 @@ namespace Ogre {
         mOrientation = mInitialOrientation;
         mScale = mInitialScale;
 
+        // Reset weights
+        mAccumAnimWeight = 0.0f;
+        mTransFromInitial = Vector3::ZERO;
+        mRotFromInitial = Quaternion::IDENTITY;
+        mScaleFromInitial = Vector3::UNIT_SCALE;
+
         needUpdate();
     }
     //-----------------------------------------------------------------------
@@ -745,6 +749,44 @@ namespace Ogre {
 	{
 		return ConstChildNodeIterator(mChildren.begin(), mChildren.end());
 	}
+    //-----------------------------------------------------------------------
+    void Node::_weightedTransform(Real weight, const Vector3& translate,
+       const Quaternion& rotate, const Vector3& scale)
+    {
+        // Do nothing if zero weight
+        if (!weight)
+            return;
+
+        // If no previous transforms, we can just apply
+        if (mAccumAnimWeight == 0.0f)
+        {
+            mRotFromInitial = rotate;
+            mTransFromInitial = translate;
+            mScaleFromInitial = scale;
+            mAccumAnimWeight = weight;
+        }
+        else
+        {
+            // Blend with existing
+            Real factor = weight / (mAccumAnimWeight + weight);
+            mTransFromInitial += (translate - mTransFromInitial) * factor;
+            mRotFromInitial =
+                Quaternion::Slerp(factor, mRotFromInitial, rotate);
+            // For scale, find delta from 1.0, factor then add back before applying
+            Vector3 scaleDiff = (scale / mScaleFromInitial - Vector3::UNIT_SCALE) * factor;
+            mScaleFromInitial = mScaleFromInitial *
+                (scaleDiff + Vector3::UNIT_SCALE);
+            mAccumAnimWeight += weight;
+
+        }
+
+        // Update final based on bind position + offsets
+        mOrientation = mInitialOrientation * mRotFromInitial;
+        mPosition = mInitialPosition + mTransFromInitial;
+        mScale = mInitialScale * mScaleFromInitial;
+        needUpdate();
+
+    }
     //-----------------------------------------------------------------------
     Real Node::getSquaredViewDepth(const Camera* cam) const
     {

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -56,7 +52,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     ParticleSystemManager::ParticleSystemManager()
     {
-		OGRE_LOCK_AUTO_MUTEX
         mScriptPatterns.push_back("*.particle");
         ResourceGroupManager::getSingleton()._registerScriptLoader(this);
 		mFactory = new ParticleSystemFactory();
@@ -65,7 +60,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     ParticleSystemManager::~ParticleSystemManager()
     {
-		OGRE_LOCK_AUTO_MUTEX
         // Destroy all templates
         ParticleTemplateMap::iterator t;
         for (t = mSystemTemplates.begin(); t != mSystemTemplates.end(); ++t)
@@ -157,7 +151,7 @@ namespace Ogre {
                         vecparams = StringUtil::split(line, "\t ");
                         if (vecparams.size() < 2)
                         {
-                            // Oops, bad emitter
+                            // Oops, bad affector
                             LogManager::getSingleton().logMessage("Bad particle system affector line: '"
                                 + line + "' in " + pSys->getName());
                             skipToNextCloseBrace(stream);
@@ -184,7 +178,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ParticleSystemManager::addEmitterFactory(ParticleEmitterFactory* factory)
     {
-		OGRE_LOCK_AUTO_MUTEX
         String name = factory->getName();
         mEmitterFactories[name] = factory;
         LogManager::getSingleton().logMessage("Particle Emitter Type '" + name + "' registered");
@@ -192,7 +185,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ParticleSystemManager::addAffectorFactory(ParticleAffectorFactory* factory)
     {
-		OGRE_LOCK_AUTO_MUTEX
         String name = factory->getName();
         mAffectorFactories[name] = factory;
         LogManager::getSingleton().logMessage("Particle Affector Type '" + name + "' registered");
@@ -200,15 +192,13 @@ namespace Ogre {
 	//-----------------------------------------------------------------------
 	void ParticleSystemManager::addRendererFactory(ParticleSystemRendererFactory* factory)
 	{
-		OGRE_LOCK_AUTO_MUTEX 
-		String name = factory->getType();
+        String name = factory->getType();
         mRendererFactories[name] = factory;
         LogManager::getSingleton().logMessage("Particle Renderer Type '" + name + "' registered");
 	}
 	//-----------------------------------------------------------------------
     void ParticleSystemManager::addTemplate(const String& name, ParticleSystem* sysTemplate)
     {
-		OGRE_LOCK_AUTO_MUTEX
 		// check name
 		if (mSystemTemplates.find(name) != mSystemTemplates.end())
 		{
@@ -220,38 +210,9 @@ namespace Ogre {
         mSystemTemplates[name] = sysTemplate;
     }
     //-----------------------------------------------------------------------
-    void ParticleSystemManager::removeTemplate(const String& name, bool deleteTemplate)
-    {
-		OGRE_LOCK_AUTO_MUTEX
-        ParticleTemplateMap::iterator itr = mSystemTemplates.find(name);
-        if (itr == mSystemTemplates.end())
-            OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND,
-                "ParticleSystem template with name '" + name + "' cannot be found.",
-                "ParticleSystemManager::removeTemplate");
-
-        if (deleteTemplate)
-            delete itr->second;
-
-        mSystemTemplates.erase(itr);
-    }
-    //-----------------------------------------------------------------------
-    void ParticleSystemManager::removeAllTemplates(bool deleteTemplate)
-    {
-		OGRE_LOCK_AUTO_MUTEX
-        if (deleteTemplate)
-        {
-            ParticleTemplateMap::iterator itr;
-            for (itr = mSystemTemplates.begin(); itr != mSystemTemplates.end(); ++itr)
-                delete itr->second;
-        }
-
-        mSystemTemplates.clear();
-    }
-    //-----------------------------------------------------------------------
     ParticleSystem* ParticleSystemManager::createTemplate(const String& name, 
         const String& resourceGroup)
     {
-		OGRE_LOCK_AUTO_MUTEX
 		// check name
 		if (mSystemTemplates.find(name) != mSystemTemplates.end())
 		{
@@ -268,7 +229,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     ParticleSystem* ParticleSystemManager::getTemplate(const String& name)
     {
-		OGRE_LOCK_AUTO_MUTEX
         ParticleTemplateMap::iterator i = mSystemTemplates.find(name);
         if (i != mSystemTemplates.end())
         {
@@ -314,7 +274,6 @@ namespace Ogre {
     ParticleEmitter* ParticleSystemManager::_createEmitter(
         const String& emitterType, ParticleSystem* psys)
     {
-		OGRE_LOCK_AUTO_MUTEX
         // Locate emitter type
         ParticleEmitterFactoryMap::iterator pFact = mEmitterFactories.find(emitterType);
 
@@ -329,7 +288,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ParticleSystemManager::_destroyEmitter(ParticleEmitter* emitter)
     {
-		OGRE_LOCK_AUTO_MUTEX
         // Destroy using the factory which created it
         ParticleEmitterFactoryMap::iterator pFact = mEmitterFactories.find(emitter->getType());
 
@@ -345,7 +303,6 @@ namespace Ogre {
     ParticleAffector* ParticleSystemManager::_createAffector(
         const String& affectorType, ParticleSystem* psys)
     {
-		OGRE_LOCK_AUTO_MUTEX
         // Locate affector type
         ParticleAffectorFactoryMap::iterator pFact = mAffectorFactories.find(affectorType);
 
@@ -361,7 +318,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ParticleSystemManager::_destroyAffector(ParticleAffector* affector)
     {
-		OGRE_LOCK_AUTO_MUTEX
         // Destroy using the factory which created it
         ParticleAffectorFactoryMap::iterator pFact = mAffectorFactories.find(affector->getType());
 
@@ -376,7 +332,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     ParticleSystemRenderer* ParticleSystemManager::_createRenderer(const String& rendererType)
 	{
-		OGRE_LOCK_AUTO_MUTEX
         // Locate affector type
         ParticleSystemRendererFactoryMap::iterator pFact = mRendererFactories.find(rendererType);
 
@@ -391,7 +346,6 @@ namespace Ogre {
 	//-----------------------------------------------------------------------
     void ParticleSystemManager::_destroyRenderer(ParticleSystemRenderer* renderer)
 	{
-		OGRE_LOCK_AUTO_MUTEX
         // Destroy using the factory which created it
         ParticleSystemRendererFactoryMap::iterator pFact = mRendererFactories.find(renderer->getType());
 
@@ -406,7 +360,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ParticleSystemManager::_initialise(void)
     {
-		OGRE_LOCK_AUTO_MUTEX
         // Create Billboard renderer factory
         mBillboardRendererFactory = new BillboardParticleRendererFactory();
         addRendererFactory(mBillboardRendererFactory);
@@ -474,10 +427,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ParticleSystemManager::parseAttrib(const String& line, ParticleSystem* sys)
     {
-        std::vector<String> vecparams;
-
         // Split params on space
-        vecparams = StringUtil::split(line, "\t ", 1);
+        std::vector<String> vecparams = StringUtil::split(line, "\t ", 1);
 
         // Look up first param (command setting)
         if (!sys->setParameter(vecparams[0], vecparams[1]))
@@ -503,10 +454,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ParticleSystemManager::parseEmitterAttrib(const String& line, ParticleEmitter* emit)
     {
-        std::vector<String> vecparams;
-
         // Split params on first space
-        vecparams = StringUtil::split(line, "\t ", 1);
+        std::vector<String> vecparams = StringUtil::split(line, "\t ", 1);
 
         // Look up first param (command setting)
         if (!emit->setParameter(vecparams[0], vecparams[1]))
@@ -519,10 +468,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ParticleSystemManager::parseAffectorAttrib(const String& line, ParticleAffector* aff)
     {
-        std::vector<String> vecparams;
-
         // Split params on space
-        vecparams = StringUtil::split(line, "\t ", 1);
+        std::vector<String> vecparams = StringUtil::split(line, "\t ", 1);
 
         // Look up first param (command setting)
         if (!aff->setParameter(vecparams[0], vecparams[1]))
@@ -535,7 +482,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ParticleSystemManager::skipToNextCloseBrace(DataStreamPtr& stream)
     {
-        String line = "";
+        String line;
         while (!stream->eof() && line != "}")
         {
             line = stream->getLine();
@@ -545,7 +492,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ParticleSystemManager::skipToNextOpenBrace(DataStreamPtr& stream)
     {
-        String line = "";
+        String line;
         while (!stream->eof() && line != "{")
         {
             line = stream->getLine();

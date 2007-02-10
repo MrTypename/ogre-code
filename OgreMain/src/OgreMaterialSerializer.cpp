@@ -2,9 +2,9 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -291,7 +287,7 @@ namespace Ogre
             }
             catch (Exception& e)
             {
-                logParseError("Bad scene_blend attribute, " + e.getDescription(), context);
+                logParseError("Bad scene_blend attribute, " + e.getFullDescription(), context);
             }
 
         }
@@ -439,12 +435,6 @@ namespace Ogre
 		context.pass->setMaxSimultaneousLights(StringConverter::parseInt(params));
         return false;
     }
-	//-----------------------------------------------------------------------
-	bool parseStartLight(String& params, MaterialScriptContext& context)
-	{
-		context.pass->setStartLight(StringConverter::parseInt(params));
-		return false;
-	}
     //-----------------------------------------------------------------------
     void parseIterationLightTypes(String& params, MaterialScriptContext& context)
     {
@@ -477,11 +467,10 @@ namespace Ogre
             iteration once_per_light [light type]
             iteration <number>
             iteration <number> [per_light] [light type]
-			iteration <number> [per_n_lights] <num_lights> [light type]
         */
         StringUtil::toLowerCase(params);
         StringVector vecparams = StringUtil::split(params, " \t");
-        if (vecparams.size() < 1 || vecparams.size() > 4)
+        if (vecparams.size() < 1 || vecparams.size() > 3)
         {
             logParseError("Bad iteration attribute, expected 1 to 3 parameters.", context);
             return false;
@@ -520,33 +509,9 @@ namespace Ogre
                             context.pass->setIteratePerLight(true, false);
                         }
                     }
-					else if (vecparams[1] == "per_n_lights")
-					{
-						if (vecparams.size() < 3)
-						{
-							logParseError(
-								"Bad iteration attribute, expected number of lights.", 
-								context);
-						}
-						else
-						{
-							// Parse num lights
-							context.pass->setLightCountPerIteration(
-								StringConverter::parseInt(vecparams[2]));
-							// Light type
-							if (vecparams.size() == 4)
-							{
-								parseIterationLightTypes(vecparams[3], context);
-							}
-							else
-							{
-								context.pass->setIteratePerLight(true, false);
-							}
-						}
-					}
                     else
                         logParseError(
-                            "Bad iteration attribute, valid parameters are <number> [per_light|per_n_lights <num_lights>] [light type].", context);
+                            "Bad iteration attribute, valid parameters are <number> [per_light] [light type].", context);
                 }
             }
             else
@@ -761,7 +726,6 @@ namespace Ogre
         TextureType tt = TEX_TYPE_2D;
 		int mips = MIP_UNLIMITED; // When passed to TextureManager::load, this means default to default number of mipmaps
         bool isAlpha = false;
-        PixelFormat desiredFormat = PF_UNKNOWN;
 		for (size_t p = 1; p < numParams; ++p)
 		{
             StringUtil::toLowerCase(vecparams[p]);
@@ -793,10 +757,6 @@ namespace Ogre
 			{
 				isAlpha = true;
 			}
-            else if ((desiredFormat = PixelUtil::getFormatFromName(vecparams[p], true)) != PF_UNKNOWN)
-            {
-                // nothing to do here
-            }
 			else
 			{
 				logParseError("Invalid texture option - "+vecparams[p]+".",
@@ -804,30 +764,9 @@ namespace Ogre
 			}
         }
 
-		context.textureUnit->setTextureName(vecparams[0], tt);
-        context.textureUnit->setNumMipmaps(mips);
-        context.textureUnit->setIsAlpha(isAlpha);
-        context.textureUnit->setDesiredFormat(desiredFormat);
+		context.textureUnit->setTextureName(vecparams[0], tt, mips, isAlpha);
         return false;
     }
-	//---------------------------------------------------------------------
-	bool parseBindingType(String& params, MaterialScriptContext& context)
-	{
-		if (params == "fragment")
-		{
-			context.textureUnit->setBindingType(TextureUnitState::BT_FRAGMENT);
-		}
-		else if (params == "vertex")
-		{
-			context.textureUnit->setBindingType(TextureUnitState::BT_VERTEX);
-		}
-		else
-		{
-			logParseError("Invalid binding_type option - "+params+".",
-				context);
-		}
-		return false;
-	}
     //-----------------------------------------------------------------------
     bool parseAnimTexture(String& params, MaterialScriptContext& context)
     {
@@ -854,7 +793,7 @@ namespace Ogre
             // Second form using individual names
             context.textureUnit->setAnimatedTextureName(
                 (String*)&vecparams[0],
-                static_cast<unsigned int>(numParams-1),
+                numParams-1,
                 StringConverter::parseReal(vecparams[numParams-1]));
         }
         return false;
@@ -1172,7 +1111,7 @@ namespace Ogre
         }
         catch (Exception& e)
         {
-            logParseError("Bad colour_op_ex attribute, " + e.getDescription(), context);
+            logParseError("Bad colour_op_ex attribute, " + e.getFullDescription(), context);
             return false;
         }
 
@@ -1202,7 +1141,7 @@ namespace Ogre
         catch (Exception& e)
         {
             logParseError("Bad colour_op_multipass_fallback attribute, "
-                + e.getDescription(), context);
+                + e.getFullDescription(), context);
         }
         return false;
     }
@@ -1275,7 +1214,7 @@ namespace Ogre
         }
         catch (Exception& e)
         {
-            logParseError("Bad alpha_op_ex attribute, " + e.getDescription(), context);
+            logParseError("Bad alpha_op_ex attribute, " + e.getFullDescription(), context);
             return false;
         }
 
@@ -1458,15 +1397,8 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseDepthBias(String& params, MaterialScriptContext& context)
     {
-		StringVector vecparams = StringUtil::split(params, " \t");
-
-		float constantBias = static_cast<float>(StringConverter::parseReal(vecparams[0]));
-		float slopeScaleBias = 0.0f;
-		if (vecparams.size() > 1)
-		{
-			slopeScaleBias = static_cast<float>(StringConverter::parseReal(vecparams[1]));
-		}
-        context.pass->setDepthBias(constantBias, slopeScaleBias);
+        context.pass->setDepthBias(
+            static_cast<unsigned int>(StringConverter::parseReal(params)));
 
         return false;
     }
@@ -1485,31 +1417,6 @@ namespace Ogre
 
         return false;
     }
-	//-----------------------------------------------------------------------
-	bool parseMipmapBias(String& params, MaterialScriptContext& context)
-	{
-		context.textureUnit->setTextureMipmapBias(
-			(float)StringConverter::parseReal(params));
-
-		return false;
-	}
-	//-----------------------------------------------------------------------
-	bool parseContentType(String& params, MaterialScriptContext& context)
-	{
-		if (params == "named")
-		{
-			context.textureUnit->setContentType(TextureUnitState::CONTENT_NAMED);
-		}
-		else if (params == "shadow")
-		{
-			context.textureUnit->setContentType(TextureUnitState::CONTENT_SHADOW);
-		}
-		else
-		{
-			logParseError("Invalid content_type specified.", context);
-		}
-		return false;
-	}
     //-----------------------------------------------------------------------
     bool parseLodDistances(String& params, MaterialScriptContext& context)
     {
@@ -1556,9 +1463,8 @@ namespace Ogre
     }
 
     //-----------------------------------------------------------------------
-	void processManualProgramParam(bool isNamed, const String commandname,
-		StringVector& vecparams, MaterialScriptContext& context,
-		size_t index = 0, const String& paramName = StringUtil::BLANK)
+    void processManualProgramParam(size_t index, const String& commandname,
+        StringVector& vecparams, MaterialScriptContext& context)
     {
         // NB we assume that the first element of vecparams is taken up with either
         // the index or the parameter name, which we ignore
@@ -1620,25 +1526,25 @@ namespace Ogre
                 "type " + vecparams[1], context);
         }
 
+        // Round dims to multiple of 4
+        if (dims %4 != 0)
+        {
+            roundedDims = dims + 4 - (dims % 4);
+        }
+        else
+        {
+            roundedDims = dims;
+        }
+
 		// clear any auto parameter bound to this constant, it would override this setting
 		// can cause problems overriding materials or changing default params
-		if (isNamed)
-			context.programParams->clearNamedAutoConstant(paramName);
-		else
-			context.programParams->clearAutoConstant(index);
+		context.programParams->clearAutoConstant(index);
 
 
-		// Round dims to multiple of 4
-		if (dims %4 != 0)
-		{
-			roundedDims = dims + 4 - (dims % 4);
-		}
-		else
-		{
-			roundedDims = dims;
-		}
+        // set the name of the parameter if it exists
+        String paramName = (commandname == "param_named") ? vecparams[0] : "";
 
-		// Now parse all the values
+        // Now parse all the values
         if (isReal)
         {
             Real* realBuffer = new Real[roundedDims];
@@ -1647,12 +1553,12 @@ namespace Ogre
             {
                 realBuffer[i] = StringConverter::parseReal(vecparams[i+2]);
             }
-			// Fill up to multiple of 4 with zero
-			for (; i < roundedDims; ++i)
-			{
-				realBuffer[i] = 0.0f;
+            // Fill up to multiple of 4 with zero
+            for (; i < roundedDims; ++i)
+            {
+                realBuffer[i] = 0.0f;
 
-			}
+            }
 
             if (isMatrix4x4)
             {
@@ -1664,33 +1570,20 @@ namespace Ogre
                     realBuffer[8],  realBuffer[9],  realBuffer[10], realBuffer[11],
                     realBuffer[12], realBuffer[13], realBuffer[14], realBuffer[15]
                     );
-				if (isNamed)
-					context.programParams->setNamedConstant(paramName, m4x4);
-				else
-					context.programParams->setConstant(index, m4x4);
+                context.programParams->setConstant(index, m4x4);
             }
             else
             {
                 // Set
-				if (isNamed)
-				{
-					// For named, only set up to the precise number of elements
-					// (no rounding to 4 elements)
-					// GLSL can support sub-float4 elements and we support that
-					// in the buffer now. Note how we set the 'multiple' param to 1
-					context.programParams->setNamedConstant(paramName, realBuffer,
-						dims, 1);
-				}
-				else
-				{
-					context.programParams->setConstant(index, realBuffer,
-						static_cast<size_t>(roundedDims * 0.25));
-				}
+                context.programParams->setConstant(index, realBuffer,
+		    static_cast<size_t>(roundedDims * 0.25));
 
             }
 
 
             delete [] realBuffer;
+            // log the parameter
+            context.programParams->addConstantDefinition(paramName, index, dims, GpuProgramParameters::ET_REAL);
         }
         else
         {
@@ -1700,33 +1593,22 @@ namespace Ogre
             {
                 intBuffer[i] = StringConverter::parseInt(vecparams[i+2]);
             }
-			// Fill to multiple of 4 with 0
-			for (; i < roundedDims; ++i)
-			{
-				intBuffer[i] = 0;
-			}
+            // Fill to multiple of 4 with 0
+            for (; i < roundedDims; ++i)
+            {
+                intBuffer[i] = 0;
+            }
             // Set
-			if (isNamed)
-			{
-				// For named, only set up to the precise number of elements
-				// (no rounding to 4 elements)
-				// GLSL can support sub-float4 elements and we support that
-				// in the buffer now. Note how we set the 'multiple' param to 1
-				context.programParams->setNamedConstant(paramName, intBuffer,
-					dims, 1);
-			}
-			else
-			{
-				context.programParams->setConstant(index, intBuffer,
-					static_cast<size_t>(roundedDims * 0.25));
-			}
+            context.programParams->setConstant(index, intBuffer,
+	        static_cast<size_t>(roundedDims * 0.25));
             delete [] intBuffer;
+            // log the parameter
+            context.programParams->addConstantDefinition(paramName, index, dims, GpuProgramParameters::ET_INT);
         }
     }
     //-----------------------------------------------------------------------
-    void processAutoProgramParam(bool isNamed, const String& commandname,
-        StringVector& vecparams, MaterialScriptContext& context,
-		size_t index = 0, const String& paramName = StringUtil::BLANK)
+    void processAutoProgramParam(size_t index, const String& commandname,
+        StringVector& vecparams, MaterialScriptContext& context)
     {
         // NB we assume that the first element of vecparams is taken up with either
         // the index or the parameter name, which we ignore
@@ -1750,10 +1632,7 @@ namespace Ogre
         switch (autoConstantDef->dataType)
         {
         case GpuProgramParameters::ACDT_NONE:
-			if (isNamed)
-				context.programParams->setNamedAutoConstant(paramName, autoConstantDef->acType, 0);
-			else
-	            context.programParams->setAutoConstant(index, autoConstantDef->acType, 0);
+            context.programParams->setAutoConstant(index, autoConstantDef->acType, 0);
             break;
 
         case GpuProgramParameters::ACDT_INT:
@@ -1761,24 +1640,8 @@ namespace Ogre
 				// Special case animation_parametric, we need to keep track of number of times used
 				if (autoConstantDef->acType == GpuProgramParameters::ACT_ANIMATION_PARAMETRIC)
 				{
-					if (isNamed)
-						context.programParams->setNamedAutoConstant(
-							paramName, autoConstantDef->acType, context.numAnimationParametrics++);
-					else
-						context.programParams->setAutoConstant(
-							index, autoConstantDef->acType, context.numAnimationParametrics++);
-				}
-				// Special case texture projector - assume 0 if data not specified
-				else if (autoConstantDef->acType == GpuProgramParameters::ACT_TEXTURE_VIEWPROJ_MATRIX
-					&& vecparams.size() == 2)
-				{
-					if (isNamed)
-						context.programParams->setNamedAutoConstant(
-							paramName, autoConstantDef->acType, 0);
-					else
-						context.programParams->setAutoConstant(
-							index, autoConstantDef->acType, 0);
-
+					context.programParams->setAutoConstant(
+						index, autoConstantDef->acType, context.numAnimationParametrics++);
 				}
 				else
 				{
@@ -1791,12 +1654,8 @@ namespace Ogre
 					}
 
 					size_t extraParam = StringConverter::parseInt(vecparams[2]);
-					if (isNamed)
-						context.programParams->setNamedAutoConstant(
-							paramName, autoConstantDef->acType, extraParam);
-					else
-						context.programParams->setAutoConstant(
-							index, autoConstantDef->acType, extraParam);
+					context.programParams->setAutoConstant(
+						index, autoConstantDef->acType, extraParam);
 				}
             }
             break;
@@ -1813,12 +1672,7 @@ namespace Ogre
                         factor = StringConverter::parseReal(vecparams[2]);
                     }
 
-					if (isNamed)
-						context.programParams->setNamedAutoConstantReal(paramName, 
-							autoConstantDef->acType, factor);
-					else
-	                    context.programParams->setAutoConstantReal(index, 
-							autoConstantDef->acType, factor);
+                    context.programParams->setAutoConstantReal(index, autoConstantDef->acType, factor);
                 }
                 else // normal processing for auto constants that take an extra real value
                 {
@@ -1830,18 +1684,23 @@ namespace Ogre
                     }
 
 			        Real rData = StringConverter::parseReal(vecparams[2]);
-					if (isNamed)
-						context.programParams->setNamedAutoConstantReal(paramName, 
-							autoConstantDef->acType, rData);
-					else
-						context.programParams->setAutoConstantReal(index, 
-							autoConstantDef->acType, rData);
+			        context.programParams->setAutoConstantReal(index, autoConstantDef->acType, rData);
                 }
             }
             break;
 
         } // end switch
 
+        String paramName = (commandname == "param_named_auto") ? vecparams[0] : "";
+        // add constant definition based on AutoConstant
+        // make element count 0 so that proper allocation occurs when AutoState is set up
+        size_t constantIndex = context.programParams->addConstantDefinition(
+			paramName, index, 0, autoConstantDef->elementType);
+        // update constant definition auto settings
+        // since an autoconstant was just added, its the last one in the container
+        size_t autoIndex = context.programParams->getAutoConstantCount() - 1;
+        // setup autoState which will allocate the proper amount of storage required by constant entries
+        context.programParams->setConstantDefinitionAutoState(constantIndex, true, autoIndex);
 
     }
 
@@ -1866,7 +1725,7 @@ namespace Ogre
         // Get start index
         size_t index = StringConverter::parseInt(vecparams[0]);
 
-        processManualProgramParam(false, "param_indexed", vecparams, context, index);
+        processManualProgramParam(index, "param_indexed", vecparams, context);
 
         return false;
     }
@@ -1891,7 +1750,7 @@ namespace Ogre
         // Get start index
         size_t index = StringConverter::parseInt(vecparams[0]);
 
-        processAutoProgramParam(false, "param_indexed_auto", vecparams, context, index);
+        processAutoProgramParam(index, "param_indexed_auto", vecparams, context);
 
         return false;
     }
@@ -1912,17 +1771,23 @@ namespace Ogre
             return false;
         }
 
+        // Get start index from name
+        size_t index;
         try {
-			const GpuConstantDefinition& def = 
-				context.programParams->getConstantDefinition(vecparams[0]);
+            index = context.programParams->getParamIndex(vecparams[0]);
         }
         catch (Exception& e)
         {
-            logParseError("Invalid param_named attribute - " + e.getDescription(), context);
+            logParseError("Invalid param_named attribute - " + e.getFullDescription(), context);
             return false;
         }
 
-        processManualProgramParam(true, "param_named", vecparams, context, 0, vecparams[0]);
+        // TEST
+        /*
+        LogManager::getSingleton().logMessage("SETTING PARAMETER " + vecparams[0] + " as index " +
+            StringConverter::toString(index));
+        */
+        processManualProgramParam(index, "param_named", vecparams, context);
 
         return false;
     }
@@ -1944,17 +1809,17 @@ namespace Ogre
         }
 
         // Get start index from name
+        size_t index;
         try {
-			const GpuConstantDefinition& def = 
-				context.programParams->getConstantDefinition(vecparams[0]);
+            index = context.programParams->getParamIndex(vecparams[0]);
         }
         catch (Exception& e)
         {
-            logParseError("Invalid param_named_auto attribute - " + e.getDescription(), context);
+            logParseError("Invalid param_named_auto attribute - " + e.getFullDescription(), context);
             return false;
         }
 
-        processAutoProgramParam(true, "param_named_auto", vecparams, context, 0, vecparams[0]);
+        processAutoProgramParam(index, "param_named_auto", vecparams, context);
 
         return false;
     }
@@ -2134,7 +1999,7 @@ namespace Ogre
                 // name was not found so a new TUS is needed
                 // position TUS level to the end index
                 // a new TUS will be created later on
-                context.stateLev = static_cast<int>(context.pass->getNumTextureUnitStates());
+                context.stateLev = context.pass->getNumTextureUnitStates();
             }
         }
         else
@@ -2363,7 +2228,6 @@ namespace Ogre
         context.programDef->supportsSkeletalAnimation = false;
 		context.programDef->supportsMorphAnimation = false;
 		context.programDef->supportsPoseAnimation = 0;
-		context.programDef->usesVertexTextureFetch = false;
 
 		// Get name and language code
 		StringVector vecparams = StringUtil::split(params, " \t");
@@ -2394,7 +2258,6 @@ namespace Ogre
 		context.programDef->supportsSkeletalAnimation = false;
 		context.programDef->supportsMorphAnimation = false;
 		context.programDef->supportsPoseAnimation = 0;
-		context.programDef->usesVertexTextureFetch = false;
 
 		// Get name and language code
 		StringVector vecparams = StringUtil::split(params, " \t");
@@ -2449,15 +2312,6 @@ namespace Ogre
 
 		return false;
 	}
-	//-----------------------------------------------------------------------
-	bool parseProgramVertexTextureFetch(String& params, MaterialScriptContext& context)
-	{
-		// Source filename, preserve case
-		context.programDef->usesVertexTextureFetch
-			= StringConverter::parseBool(params);
-
-		return false;
-	}
     //-----------------------------------------------------------------------
     bool parseProgramSyntax(String& params, MaterialScriptContext& context)
     {
@@ -2482,8 +2336,7 @@ namespace Ogre
             return false;
 		}
 
-		context.programDef->customParameters.push_back(
-			std::pair<String, String>(vecparams[0], vecparams[1]));
+		context.programDef->customParameters[vecparams[0]] = vecparams[1];
 
 		return false;
 	}
@@ -2620,7 +2473,6 @@ namespace Ogre
 		mPassAttribParsers.insert(AttribParserList::value_type("shadow_receiver_fragment_program_ref", (ATTRIBUTE_PARSER)parseShadowReceiverFragmentProgramRef));
         mPassAttribParsers.insert(AttribParserList::value_type("fragment_program_ref", (ATTRIBUTE_PARSER)parseFragmentProgramRef));
         mPassAttribParsers.insert(AttribParserList::value_type("max_lights", (ATTRIBUTE_PARSER)parseMaxLights));
-		mPassAttribParsers.insert(AttribParserList::value_type("start_light", (ATTRIBUTE_PARSER)parseStartLight));
         mPassAttribParsers.insert(AttribParserList::value_type("iteration", (ATTRIBUTE_PARSER)parseIteration));
 		mPassAttribParsers.insert(AttribParserList::value_type("point_size", (ATTRIBUTE_PARSER)parsePointSize));
 		mPassAttribParsers.insert(AttribParserList::value_type("point_sprites", (ATTRIBUTE_PARSER)parsePointSprites));
@@ -2633,7 +2485,6 @@ namespace Ogre
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("texture", (ATTRIBUTE_PARSER)parseTexture));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("anim_texture", (ATTRIBUTE_PARSER)parseAnimTexture));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("cubic_texture", (ATTRIBUTE_PARSER)parseCubicTexture));
-		mTextureUnitAttribParsers.insert(AttribParserList::value_type("binding_type", (ATTRIBUTE_PARSER)parseBindingType));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("tex_coord_set", (ATTRIBUTE_PARSER)parseTexCoord));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("tex_address_mode", (ATTRIBUTE_PARSER)parseTexAddressMode));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("tex_border_colour", (ATTRIBUTE_PARSER)parseTexBorderColour));
@@ -2652,8 +2503,6 @@ namespace Ogre
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("filtering", (ATTRIBUTE_PARSER)parseFiltering));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("max_anisotropy", (ATTRIBUTE_PARSER)parseAnisotropy));
         mTextureUnitAttribParsers.insert(AttribParserList::value_type("texture_alias", (ATTRIBUTE_PARSER)parseTextureAlias));
-		mTextureUnitAttribParsers.insert(AttribParserList::value_type("mipmap_bias", (ATTRIBUTE_PARSER)parseMipmapBias));
-		mTextureUnitAttribParsers.insert(AttribParserList::value_type("content_type", (ATTRIBUTE_PARSER)parseContentType));
 
         // Set up program reference attribute parsers
         mProgramRefAttribParsers.insert(AttribParserList::value_type("param_indexed", (ATTRIBUTE_PARSER)parseParamIndexed));
@@ -2667,7 +2516,6 @@ namespace Ogre
         mProgramAttribParsers.insert(AttribParserList::value_type("includes_skeletal_animation", (ATTRIBUTE_PARSER)parseProgramSkeletalAnimation));
 		mProgramAttribParsers.insert(AttribParserList::value_type("includes_morph_animation", (ATTRIBUTE_PARSER)parseProgramMorphAnimation));
 		mProgramAttribParsers.insert(AttribParserList::value_type("includes_pose_animation", (ATTRIBUTE_PARSER)parseProgramPoseAnimation));
-		mProgramAttribParsers.insert(AttribParserList::value_type("uses_vertex_texture_fetch", (ATTRIBUTE_PARSER)parseProgramVertexTextureFetch));
         mProgramAttribParsers.insert(AttribParserList::value_type("default_params", (ATTRIBUTE_PARSER)parseDefaultParams));
 
         // Set up program default param attribute parsers
@@ -2683,12 +2531,12 @@ namespace Ogre
         mScriptContext.textureUnit = 0;
         mScriptContext.program.setNull();
         mScriptContext.lineNo = 0;
-        mScriptContext.filename.clear();
+        mScriptContext.filename = "";
 		mScriptContext.techLev = -1;
 		mScriptContext.passLev = -1;
 		mScriptContext.stateLev = -1;
 
-        mBuffer.clear();
+        mBuffer = "";
     }
 
     //-----------------------------------------------------------------------
@@ -2948,7 +2796,7 @@ namespace Ogre
 		{
 			// High-level program
 			// Validate
-			if (def->source.empty() && def->language != "unified")
+			if (def->source.empty())
 			{
 				logParseError("Invalid program definition for " + def->name +
 					", you must specify a source file.", mScriptContext);
@@ -2965,7 +2813,7 @@ namespace Ogre
                 hgp->setSourceFile(def->source);
 
 			    // Set custom parameters
-				std::vector<std::pair<String, String> >::const_iterator i, iend;
+			    std::map<String, String>::const_iterator i, iend;
 			    iend = def->customParameters.end();
 			    for (i = def->customParameters.begin(); i != iend; ++i)
 			    {
@@ -2979,7 +2827,7 @@ namespace Ogre
             catch (Exception& e)
             {
                 logParseError("Could not create GPU program '"
-                    + def->name + "', error reported was: " + e.getDescription(), mScriptContext);
+                    + def->name + "', error reported was: " + e.getFullDescription(), mScriptContext);
 				mScriptContext.program.setNull();
             	mScriptContext.programParams.setNull();
 				return;
@@ -2991,8 +2839,6 @@ namespace Ogre
 		gp->setMorphAnimationIncluded(def->supportsMorphAnimation);
 		// Set pose animation option
 		gp->setPoseAnimationIncluded(def->supportsPoseAnimation);
-		// Set vertex texture usage
-		gp->setVertexTextureFetchRequired(def->usesVertexTextureFetch);
 		// set origin
 		gp->_notifyOrigin(mScriptContext.filename);
 
@@ -3068,7 +2914,7 @@ namespace Ogre
         // write out gpu program definitions to the buffer
         writeGpuPrograms();
 
-        if (mBuffer.empty())
+        if (mBuffer == "")
             OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Queue is empty !", "MaterialSerializer::exportQueued");
 
         LogManager::getSingleton().logMessage("MaterialSerializer : writing material(s) to material script : " + fileName, LML_CRITICAL);
@@ -3117,8 +2963,8 @@ namespace Ogre
     //-----------------------------------------------------------------------
     void MaterialSerializer::clearQueue()
     {
-        mBuffer.clear();
-        mGpuProgramBuffer.clear();
+        mBuffer = "";
+        mGpuProgramBuffer = "";
         mGpuProgramDefinitionContainer.clear();
     }
     //-----------------------------------------------------------------------
@@ -3243,35 +3089,17 @@ namespace Ogre
                 writeAttribute(3, "max_lights");
                 writeValue(StringConverter::toString(pPass->getMaxSimultaneousLights()));
             }
-			// start_light
-			if (mDefaults ||
-				pPass->getStartLight() != 0)
-			{
-				writeAttribute(3, "start_light");
-				writeValue(StringConverter::toString(pPass->getStartLight()));
-			}
 			// iteration
             if (mDefaults ||
-                pPass->getIteratePerLight() || (pPass->getPassIterationCount() > 1))
+                pPass->getIteratePerLight() || (pPass->getPassIterationCount() > 0))
             {
                 writeAttribute(3, "iteration");
                 // pass iteration count
-                if (pPass->getPassIterationCount() > 1 || pPass->getLightCountPerIteration() > 1)
+                if (pPass->getPassIterationCount() > 0)
                 {
                     writeValue(StringConverter::toString(pPass->getPassIterationCount()));
                     if (pPass->getIteratePerLight())
-					{
-						if (pPass->getLightCountPerIteration() > 1)
-						{
-							writeValue("per_n_lights");
-							writeValue(StringConverter::toString(
-								pPass->getLightCountPerIteration()));
-						}
-						else
-						{
-							writeValue("per_light");
-						}
-					}
+                        writeValue("per_light");
                 }
                 else
                 {
@@ -3461,12 +3289,10 @@ namespace Ogre
 
             //depth bias
             if (mDefaults ||
-                pPass->getDepthBiasConstant() != 0 ||
-				pPass->getDepthBiasSlopeScale() != 0)
+                pPass->getDepthBias() != 0)
             {
                 writeAttribute(3, "depth_bias");
-                writeValue(StringConverter::toString(pPass->getDepthBiasConstant()));
-				writeValue(StringConverter::toString(pPass->getDepthBiasSlopeScale()));
+                writeValue(StringConverter::toString(pPass->getDepthBias()));
             }
 
             // hardware culling mode
@@ -3673,7 +3499,7 @@ namespace Ogre
             }
 
             //texture name
-            if (pTex->getNumFrames() == 1 && !pTex->getTextureName().empty() && !pTex->isCubic())
+            if (pTex->getNumFrames() == 1 && pTex->getTextureName() != "" && !pTex->isCubic())
             {
                 writeAttribute(4, "texture");
                 writeValue(pTex->getTextureName());
@@ -3695,22 +3521,16 @@ namespace Ogre
                 default:
                     break;
                 };
-
-                if (pTex->getNumMipmaps() != MIP_UNLIMITED)
-                {
-                    writeValue(StringConverter::toString(pTex->getNumMipmaps()));
-                }
-
-                if (pTex->getIsAlpha())
-                {
-                    writeValue("alpha");
-                }
-
-                if (pTex->getDesiredFormat() != PF_UNKNOWN)
-                {
-                    writeValue(PixelUtil::getFormatName(pTex->getDesiredFormat()));
-                }
             }
+
+			if (pTex->getNumRequestedMipMaps() != MIP_UNLIMITED)
+			{
+				writeValue(StringConverter::toString(pTex->getNumRequestedMipMaps()));
+			}
+			if (pTex->isAlpha())
+			{
+				writeValue("alpha");
+			}
 
             //anim. texture
             if (pTex->getNumFrames() > 1 && !pTex->isCubic())
@@ -3799,15 +3619,6 @@ namespace Ogre
                     + " "
                     + convertFiltering(pTex->getTextureFiltering(FT_MIP)));
             }
-
-			// Mip biasing
-			if (mDefaults ||
-				pTex->getTextureMipmapBias() != 0.0f)
-			{
-				writeAttribute(4, "mipmap_bias");
-				writeValue(
-					StringConverter::toString(pTex->getTextureMipmapBias()));
-			}
 
             // colour_op_ex
             if (mDefaults ||
@@ -3941,40 +3752,6 @@ namespace Ogre
 				texEffect.arg2 = scrollAnimV;
 				writeScrollEffect(texEffect, pTex);
 			}
-
-			// Binding type
-			TextureUnitState::BindingType bt = pTex->getBindingType();
-			if (mDefaults ||
-				bt != TextureUnitState::BT_FRAGMENT)
-			{
-				writeAttribute(4, "binding_type");
-				switch(bt)
-				{
-				case TextureUnitState::BT_FRAGMENT:
-					writeValue("fragment");
-					break;
-				case TextureUnitState::BT_VERTEX:
-					writeValue("vertex");
-					break;
-				};
-		
-			}
-			// Content type
-			if (mDefaults ||
-				pTex->getContentType() != TextureUnitState::CONTENT_NAMED)
-			{
-				writeAttribute(4, "content_type");
-				switch(pTex->getContentType())
-				{
-				case TextureUnitState::CONTENT_NAMED:
-					writeValue("named");
-					break;
-				case TextureUnitState::CONTENT_SHADOW:
-					writeValue("shadow");
-					break;
-				};
-			}
-
         }
         endSection(3);
 
@@ -4293,248 +4070,270 @@ namespace Ogre
         mGpuProgramDefinitionContainer.insert(program->getName());
     }
     //-----------------------------------------------------------------------
+    static bool isConstantRealValsEqual(const GpuProgramParameters::RealConstantEntry* constEntry,
+        const GpuProgramParameters::RealConstantEntry* defaultEntry, const size_t elementCount)
+    {
+        assert(constEntry && defaultEntry);
+        // assume values are equal
+        bool isEqual = false;
+
+        if (constEntry && defaultEntry)
+        {
+            // assume values are equal
+            isEqual = true;
+            size_t currentIndex = 0;
+            // iterate through real constants
+            while ((currentIndex < elementCount) && isEqual)
+            {
+                // compare the values within the constant entry
+                size_t idx = 0;
+                while ((idx < 4) && (currentIndex < elementCount) && isEqual)
+                {
+                    if (constEntry->val[idx] != defaultEntry->val[idx])
+                        isEqual = false;
+                    ++idx;
+                    ++currentIndex;
+                }
+                ++constEntry;
+                ++defaultEntry;
+            }
+
+        }
+
+        return isEqual;
+    }
+
+    //-----------------------------------------------------------------------
+    static bool isConstantIntValsEqual(const GpuProgramParameters::IntConstantEntry* constEntry,
+        const GpuProgramParameters::IntConstantEntry* defaultEntry, const size_t elementCount)
+    {
+        assert(constEntry && defaultEntry);
+        // assume values are equal
+        bool isEqual = false;
+
+        if (constEntry && defaultEntry)
+        {
+            // assume values are equal
+            isEqual = true;
+            size_t currentIndex = 0;
+            // iterate through real constants
+            while ((currentIndex < elementCount) && isEqual)
+            {
+                // compare the values within the constant entry
+                size_t idx = 0;
+                while ((idx < 4) && (currentIndex < elementCount) && isEqual)
+                {
+                    if (constEntry->val[idx] != defaultEntry->val[idx])
+                        isEqual = false;
+                    ++idx;
+                    ++currentIndex;
+                }
+                ++constEntry;
+                ++defaultEntry;
+            }
+
+        }
+
+        return isEqual;
+    }
+
+
+    //-----------------------------------------------------------------------
     void MaterialSerializer::writeGPUProgramParameters(
 		const GpuProgramParametersSharedPtr& params,
 		GpuProgramParameters* defaultParams, const int level,
 		const bool useMainBuffer)
     {
         // iterate through the constant definitions
-		if (params->hasNamedParameters())
-		{
-			writeNamedGpuProgramParameters(params, defaultParams, level, useMainBuffer);
-		}
-		else
-		{
-			writeLowLevelGpuProgramParameters(params, defaultParams, level, useMainBuffer);
-		}
-	}
-	//-----------------------------------------------------------------------
-	void MaterialSerializer::writeNamedGpuProgramParameters(
-		const GpuProgramParametersSharedPtr& params,
-		GpuProgramParameters* defaultParams, const int level,
-		const bool useMainBuffer)
-	{
-		GpuConstantDefinitionIterator constIt = params->getConstantDefinitionIterator();
-		while(constIt.hasMoreElements())
-		{
+        const size_t paramCount = params->getNumConstantDefinitions();
+        size_t paramIndex = 0;
+        while (paramIndex < paramCount)
+        {
             // get the constant definition
-			const String& paramName = constIt.peekNextKey();
-			const GpuConstantDefinition& def =
-				constIt.getNext();
+            const GpuProgramParameters::ConstantDefinition* constDef =
+				params->getConstantDefinition(paramIndex);
+            // only output if the constant definition exists and its actually being used
+            // assume its being used if elementCount > 0
+            if (constDef && constDef->elementCount)
+            {
+                // don't duplicate constants that are defined as a default parameter
+                bool defaultExist = false;
+                if (defaultParams)
+                {
+                    // find matching default parameter
+                    const GpuProgramParameters::ConstantDefinition* defaultConstDef =
+                        defaultParams->findMatchingConstantDefinition(
+							constDef->name, constDef->entryIndex, constDef->elementType);
 
-			// get any auto-link
-			const GpuProgramParameters::AutoConstantEntry* autoEntry = 
-				params->findAutoConstantEntry(paramName);
-			const GpuProgramParameters::AutoConstantEntry* defaultAutoEntry = 0;
-			if (defaultParams)
-			{
-				defaultAutoEntry = 
-					defaultParams->findAutoConstantEntry(paramName);
-			}
+                    if (defaultConstDef)
+                    {
+                        // check all the elements for being equal
+                        // auto settings must be the same to be equal
+                        if ((defaultConstDef->isAuto && constDef->isAuto) &&
+							(defaultConstDef->autoIndex == constDef->autoIndex))
+                        {
+                            defaultExist = true;
+                        }
+                        else // check the values
+                        {
+                            if (constDef->elementType == GpuProgramParameters::ET_REAL)
+                            {
+                                const GpuProgramParameters::RealConstantEntry* constEntry =
+                                    params->getRealConstantEntry(constDef->entryIndex);
 
-			writeGpuProgramParameter("param_named", 
-				paramName, autoEntry, defaultAutoEntry, def.isFloat(), 
-				def.physicalIndex, def.elementSize * def.arraySize,
-				params, defaultParams, level, useMainBuffer);
-		}
+                                if (!constEntry)
+                                    // no constant entry found so pretend default value exist and don't output anything
+                                    defaultExist = true;
+                                else
+                                {
+                                    const GpuProgramParameters::RealConstantEntry* defaultEntry =
+                                        defaultParams->getRealConstantEntry(defaultConstDef->entryIndex);
+                                    // compare current pass gpu parameter value with defualt entry parameter values
+                                    // only ouput if they are different
+                                    defaultExist = isConstantRealValsEqual(constEntry, defaultEntry, constDef->elementCount);
+                                }
+                            }
+                            else // dealing with int
+                            {
+                                const GpuProgramParameters::IntConstantEntry* constEntry =
+                                    params->getIntConstantEntry(constDef->entryIndex);
+
+                                if (!constEntry)
+                                    // no constant entry found so pretend default value exist and don't output anything
+                                    defaultExist = true;
+                                else
+                                {
+                                    const GpuProgramParameters::IntConstantEntry* defaultEntry =
+                                        defaultParams->getIntConstantEntry(defaultConstDef->entryIndex);
+
+                                    // compare current pass gpu parameter values with defualt entry parameter values
+                                    // only ouput if they are different
+                                    defaultExist = isConstantIntValsEqual(constEntry, defaultEntry, constDef->elementCount);
+                                }
+                            }
+
+                        }
+                    }
+
+                }
+
+                if (!defaultExist)
+                {
+                    String label;
+                    // is the param named
+                    if (!constDef->name.empty())
+                        label = "param_named";
+                    else
+                        label = "param_indexed";
+                    // is it auto
+                    if (constDef->isAuto)
+                        label += "_auto";
+
+                    writeAttribute(level, label, useMainBuffer);
+                    // output param name or index
+                    if (!constDef->name.empty())
+                        writeValue(constDef->name, useMainBuffer);
+                    else
+                        writeValue(StringConverter::toString(constDef->entryIndex), useMainBuffer);
+
+                    // if auto output auto type name and data if needed
+                    if (constDef->isAuto)
+                    {
+                        // get the auto constant entry associated with this constant definition
+                        const GpuProgramParameters::AutoConstantEntry* autoEntry =
+                            params->getAutoConstantEntry(constDef->autoIndex);
+
+                        if (autoEntry)
+                        {
+                            const GpuProgramParameters::AutoConstantDefinition* autoConstDef =
+                                GpuProgramParameters::getAutoConstantDefinition(autoEntry->paramType);
+
+                            assert(autoConstDef && "Bad auto constant Definition Table");
+                            // output auto constant name
+                            writeValue(autoConstDef->name, useMainBuffer);
+                            // output data if it uses it
+                            switch(autoConstDef->dataType)
+                            {
+                            case GpuProgramParameters::ACDT_REAL:
+                                writeValue(StringConverter::toString(autoEntry->fData), useMainBuffer);
+                                break;
+
+                            case GpuProgramParameters::ACDT_INT:
+                                writeValue(StringConverter::toString(autoEntry->data), useMainBuffer);
+                                break;
+
+                            default:
+                                break;
+                            }
+                        }
+                    }
+                    else // not auto so output all the values used
+                    {
+                        String countLabel;
+                        const size_t elementCount = constDef->elementCount;
+                        // get starting index for constant
+                        size_t entryIndex = constDef->entryIndex;
+                        size_t currentIndex = 0;
+
+                        // only write a number if > 1
+                        if (elementCount > 1)
+                            countLabel = StringConverter::toString(elementCount);
+
+                        if (constDef->elementType == GpuProgramParameters::ET_REAL)
+                        {
+                            writeValue("float" + countLabel, useMainBuffer);
+                            // iterate through real constants
+                            while (currentIndex < elementCount)
+                            {
+                                // get the constant entry
+                                const GpuProgramParameters::RealConstantEntry* constEntry =
+                                    params->getRealConstantEntry(entryIndex);
+
+                                // output the values within the constant entry
+                                size_t idx = 0;
+                                while ((idx < 4) && (currentIndex < elementCount))
+                                {
+                                    writeValue(StringConverter::toString(constEntry->val[idx]), useMainBuffer);
+                                    ++idx;
+                                    ++currentIndex;
+                                }
+                                ++entryIndex;
+                            }
+
+                        }
+                        else
+                        {
+                            writeValue("int" + countLabel, useMainBuffer);
+                            // iterate through int constants
+                            while (currentIndex < elementCount)
+                            {
+                                // get the constant entry
+                                const GpuProgramParameters::IntConstantEntry* constEntry =
+                                    params->getIntConstantEntry(entryIndex + currentIndex);
+
+                                // output the values within the constant entry
+                                size_t idx = 0;
+                                while ((idx < 4) && (currentIndex < elementCount))
+                                {
+                                    writeValue(StringConverter::toString(constEntry->val[idx]), useMainBuffer);
+                                    ++idx;
+                                    ++currentIndex;
+                                }
+                                ++entryIndex;
+                            }
+
+                        }
+                    }
+                } // end if (!defaultExist)
+
+            } // end if
+
+            ++paramIndex;
+
+        } // end while
 
     }
-	//-----------------------------------------------------------------------
-	void MaterialSerializer::writeLowLevelGpuProgramParameters(
-		const GpuProgramParametersSharedPtr& params,
-		GpuProgramParameters* defaultParams, const int level,
-		const bool useMainBuffer)
-	{
-		// Iterate over the logical->physical mappings
-		// This will represent the values which have been set
 
-		// float params
-		const GpuLogicalBufferStruct* floatLogical = params->getFloatLogicalBufferStruct();
-		{
-			OGRE_LOCK_MUTEX(floatLogical->mutex)
-
-			for(GpuLogicalIndexUseMap::const_iterator i = floatLogical->map.begin();
-				i != floatLogical->map.end(); ++i)
-			{
-				size_t logicalIndex = i->first;
-				const GpuLogicalIndexUse& logicalUse = i->second;
-
-				const GpuProgramParameters::AutoConstantEntry* autoEntry = 
-					params->findFloatAutoConstantEntry(logicalIndex);
-				const GpuProgramParameters::AutoConstantEntry* defaultAutoEntry = 0;
-				if (defaultParams)
-				{
-					defaultAutoEntry = defaultParams->findFloatAutoConstantEntry(logicalIndex);
-				}
-
-				writeGpuProgramParameter("param_indexed", 
-					StringConverter::toString(logicalIndex), autoEntry, 
-					defaultAutoEntry, true, logicalUse.physicalIndex, 
-					logicalUse.currentSize,
-					params, defaultParams, level, useMainBuffer);
-			}
-		}
-
-		// int params
-		const GpuLogicalBufferStruct* intLogical = params->getIntLogicalBufferStruct();
-		{
-			OGRE_LOCK_MUTEX(intLogical->mutex)
-
-			for(GpuLogicalIndexUseMap::const_iterator i = intLogical->map.begin();
-				i != intLogical->map.end(); ++i)
-			{
-				size_t logicalIndex = i->first;
-				const GpuLogicalIndexUse& logicalUse = i->second;
-
-				const GpuProgramParameters::AutoConstantEntry* autoEntry = 
-					params->findIntAutoConstantEntry(logicalIndex);
-				const GpuProgramParameters::AutoConstantEntry* defaultAutoEntry = 0;
-				if (defaultParams)
-				{
-					defaultAutoEntry = defaultParams->findIntAutoConstantEntry(logicalIndex);
-				}
-
-				writeGpuProgramParameter("param_indexed", 
-					StringConverter::toString(logicalIndex), autoEntry, 
-					defaultAutoEntry, false, logicalUse.physicalIndex, 
-					logicalUse.currentSize,
-					params, defaultParams, level, useMainBuffer);
-			}
-
-		}
-
-	}
-	//-----------------------------------------------------------------------
-	void MaterialSerializer::writeGpuProgramParameter(
-		const String& commandName, const String& identifier, 
-		const GpuProgramParameters::AutoConstantEntry* autoEntry, 
-		const GpuProgramParameters::AutoConstantEntry* defaultAutoEntry, 
-		bool isFloat, size_t physicalIndex, size_t physicalSize,
-		const GpuProgramParametersSharedPtr& params, GpuProgramParameters* defaultParams,
-		const int level, const bool useMainBuffer)
-	{
-		// Skip any params with array qualifiers
-		// These are only for convenience of setters, the full array will be
-		// written using the base, non-array identifier
-		if (identifier.find("[") != String::npos)
-		{
-			return;
-		}
-
-		// get any auto-link
-		// don't duplicate constants that are defined as a default parameter
-		bool different = false;
-		if (defaultParams)
-		{
-			// if default is auto but we're not or vice versa
-			if ((autoEntry == 0) != (defaultAutoEntry == 0))
-			{
-				different = true;
-			}
-			else if (autoEntry)
-			{
-				// both must be auto
-				// compare the auto values
-				different = (autoEntry->paramType != defaultAutoEntry->paramType
-					|| autoEntry->data != defaultAutoEntry->data);
-			}
-			else
-			{
-				// compare the non-auto (raw buffer) values
-				// param buffers are always initialised with all zeros
-				// so unset == unset
-				if (isFloat)
-				{
-					different = memcmp(
-						params->getFloatPointer(physicalIndex), 
-						defaultParams->getFloatPointer(physicalIndex),
-						sizeof(float) * physicalSize) != 0;
-				}
-				else
-				{
-					different = memcmp(
-						params->getIntPointer(physicalIndex), 
-						defaultParams->getIntPointer(physicalIndex),
-						sizeof(int) * physicalSize) != 0;
-				}
-			}
-		}
-
-		if (!defaultParams || different)
-		{
-			String label = commandName;
-
-			// is it auto
-			if (autoEntry)
-				label += "_auto";
-
-			writeAttribute(level, label, useMainBuffer);
-			// output param index / name
-			writeValue(identifier, useMainBuffer);
-
-			// if auto output auto type name and data if needed
-			if (autoEntry)
-			{
-				const GpuProgramParameters::AutoConstantDefinition* autoConstDef =
-					GpuProgramParameters::getAutoConstantDefinition(autoEntry->paramType);
-
-				assert(autoConstDef && "Bad auto constant Definition Table");
-				// output auto constant name
-				writeValue(autoConstDef->name, useMainBuffer);
-				// output data if it uses it
-				switch(autoConstDef->dataType)
-				{
-				case GpuProgramParameters::ACDT_REAL:
-					writeValue(StringConverter::toString(autoEntry->fData), useMainBuffer);
-					break;
-
-				case GpuProgramParameters::ACDT_INT:
-					writeValue(StringConverter::toString(autoEntry->data), useMainBuffer);
-					break;
-
-				default:
-					break;
-				}
-			}
-			else // not auto so output all the values used
-			{
-				String countLabel;
-
-				// only write a number if > 1
-				if (physicalSize > 1)
-					countLabel = StringConverter::toString(physicalSize);
-
-				if (isFloat)
-				{
-					// Get pointer to start of values
-					const float* pFloat = params->getFloatPointer(physicalIndex);
-
-					writeValue("float" + countLabel, useMainBuffer);
-					// iterate through real constants
-					for (size_t f = 0 ; f < physicalSize; ++f)
-					{
-						writeValue(StringConverter::toString(*pFloat++), useMainBuffer);
-					}
-				}
-				else
-				{
-					// Get pointer to start of values
-					const int* pInt = params->getIntPointer(physicalIndex);
-
-					writeValue("int" + countLabel, useMainBuffer);
-					// iterate through real constants
-					for (size_t f = 0 ; f < physicalSize; ++f)
-					{
-						writeValue(StringConverter::toString(*pInt++), useMainBuffer);
-					}
-
-				} // end if (float/int)
-
-			}
-
-		}
-
-	}
     //-----------------------------------------------------------------------
     void MaterialSerializer::writeGpuPrograms(void)
     {
@@ -4575,19 +4374,13 @@ namespace Ogre
                         String paramstr = program->getParameter(currentParam->name);
                         if ((currentParam->name == "includes_skeletal_animation")
                             && (paramstr == "false"))
-                            paramstr.clear();
+                            paramstr = "";
 						if ((currentParam->name == "includes_morph_animation")
 							&& (paramstr == "false"))
-							paramstr.clear();
-						if ((currentParam->name == "includes_pose_animation")
-							&& (paramstr == "0"))
-							paramstr.clear();
-						if ((currentParam->name == "uses_vertex_texture_fetch")
-							&& (paramstr == "false"))
-							paramstr.clear();
+							paramstr = "";
 
                         if ((language != "asm") && (currentParam->name == "syntax"))
-                            paramstr.clear();
+                            paramstr = "";
 
                         if (!paramstr.empty())
                         {

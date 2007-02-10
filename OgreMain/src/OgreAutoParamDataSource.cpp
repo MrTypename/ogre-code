@@ -2,9 +2,9 @@
 -----------------------------------------------------------------------------
 This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+For the latest info, see http://ogre.sourceforge.net/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -41,7 +37,7 @@ namespace Ogre {
     const Matrix4 PROJECTIONCLIPSPACE2DTOIMAGESPACE_PERSPECTIVE(
         0.5,    0,    0,  0.5, 
         0,   -0.5,    0,  0.5, 
-        0,      0,    1,    0,
+        0,      0,  0.5,  0.5,
         0,      0,    0,    1);
 
     //-----------------------------------------------------------------------------
@@ -59,25 +55,16 @@ namespace Ogre {
          mInverseTransposeWorldViewMatrixDirty(true),
          mCameraPositionObjectSpaceDirty(true),
          mCameraPositionDirty(true),
-		 mSceneDepthRangeDirty(true),
-		 mShadowCamDepthRangesDirty(true),
-         mCurrentRenderable(0),
-         mCurrentCamera(0), 
-         mCurrentRenderTarget(0),
-         mCurrentViewport(0), 
-		 mCurrentSceneManager(0),
-		 mMainCamBoundsInfo(0),
-         mCurrentPass(0)
+         mTextureViewProjMatrixDirty(true),
+         mCurrentRenderable(NULL),
+         mCurrentCamera(NULL), 
+         mCurrentTextureProjector(NULL), 
+         mCurrentRenderTarget(NULL),
+         mCurrentViewport(NULL)
     {
         mBlankLight.setDiffuseColour(ColourValue::Black);
         mBlankLight.setSpecularColour(ColourValue::Black);
-        mBlankLight.setAttenuation(0,1,0,0);
-		for(size_t i = 0; i < OGRE_MAX_SIMULTANEOUS_LIGHTS; ++i)
-		{
-			mTextureViewProjMatrixDirty[i] = true;
-			mCurrentTextureProjector[i] = 0;
-		}
-
+        mBlankLight.setAttenuation(0,0,0,0);
     }
     //-----------------------------------------------------------------------------
     AutoParamDataSource::~AutoParamDataSource()
@@ -119,44 +106,23 @@ namespace Ogre {
     void AutoParamDataSource::setCurrentLightList(const LightList* ll)
     {
         mCurrentLightList = ll;
-		mShadowCamDepthRangesDirty = true;
-    }
-	//-----------------------------------------------------------------------------
-	void AutoParamDataSource::setMainCamBoundsInfo(VisibleObjectsBoundsInfo* info)
-	{
-		mMainCamBoundsInfo = info;
-		mSceneDepthRangeDirty = true;
-	}
-	//-----------------------------------------------------------------------------
-	void AutoParamDataSource::setCurrentSceneManager(const SceneManager* sm)
-	{
-		mCurrentSceneManager = sm;
-	}
-    //-----------------------------------------------------------------------------
-    void AutoParamDataSource::setWorldMatrices(const Matrix4* m, size_t count)
-    {
-        mWorldMatrixArray = m;
-        mWorldMatrixCount = count;
-        mWorldMatrixDirty = false;
     }
     //-----------------------------------------------------------------------------
     const Matrix4& AutoParamDataSource::getWorldMatrix(void) const
     {
         if (mWorldMatrixDirty)
         {
-            mWorldMatrixArray = mWorldMatrix;
             mCurrentRenderable->getWorldTransforms(mWorldMatrix);
             mWorldMatrixCount = mCurrentRenderable->getNumWorldTransforms();
             mWorldMatrixDirty = false;
         }
-        return mWorldMatrixArray[0];
+        return mWorldMatrix[0];
     }
     //-----------------------------------------------------------------------------
     size_t AutoParamDataSource::getWorldMatrixCount(void) const
     {
         if (mWorldMatrixDirty)
         {
-            mWorldMatrixArray = mWorldMatrix;
             mCurrentRenderable->getWorldTransforms(mWorldMatrix);
             mWorldMatrixCount = mCurrentRenderable->getNumWorldTransforms();
             mWorldMatrixDirty = false;
@@ -168,19 +134,18 @@ namespace Ogre {
     {
         if (mWorldMatrixDirty)
         {
-            mWorldMatrixArray = mWorldMatrix;
             mCurrentRenderable->getWorldTransforms(mWorldMatrix);
             mWorldMatrixCount = mCurrentRenderable->getNumWorldTransforms();
             mWorldMatrixDirty = false;
         }
-        return mWorldMatrixArray;
+        return mWorldMatrix;
     }
     //-----------------------------------------------------------------------------
     const Matrix4& AutoParamDataSource::getViewMatrix(void) const
     {
         if (mViewMatrixDirty)
         {
-            if (mCurrentRenderable && mCurrentRenderable->getUseIdentityView())
+            if (mCurrentRenderable && mCurrentRenderable->useIdentityView())
                 mViewMatrix = Matrix4::IDENTITY;
             else
                 mViewMatrix = mCurrentCamera->getViewMatrix(true);
@@ -205,7 +170,7 @@ namespace Ogre {
         {
             // NB use API-independent projection matrix since GPU programs
             // bypass the API-specific handedness and use right-handed coords
-            if (mCurrentRenderable && mCurrentRenderable->getUseIdentityProjection())
+            if (mCurrentRenderable && mCurrentRenderable->useIdentityProjection())
             {
                 // Use identity projection matrix, still need to take RS depth into account.
                 RenderSystem* rs = Root::getSingleton().getRenderSystem();
@@ -233,7 +198,7 @@ namespace Ogre {
     {
         if (mWorldViewMatrixDirty)
         {
-            mWorldViewMatrix = getViewMatrix().concatenateAffine(getWorldMatrix());
+            mWorldViewMatrix = getViewMatrix() * getWorldMatrix();
             mWorldViewMatrixDirty = false;
         }
         return mWorldViewMatrix;
@@ -253,7 +218,7 @@ namespace Ogre {
     {
         if (mInverseWorldMatrixDirty)
         {
-            mInverseWorldMatrix = getWorldMatrix().inverseAffine();
+            mInverseWorldMatrix = getWorldMatrix().inverse();
             mInverseWorldMatrixDirty = false;
         }
         return mInverseWorldMatrix;
@@ -263,7 +228,7 @@ namespace Ogre {
     {
         if (mInverseWorldViewMatrixDirty)
         {
-            mInverseWorldViewMatrix = getWorldViewMatrix().inverseAffine();
+            mInverseWorldViewMatrix = getWorldViewMatrix().inverse();
             mInverseWorldViewMatrixDirty = false;
         }
         return mInverseWorldViewMatrix;
@@ -273,7 +238,7 @@ namespace Ogre {
     {
         if (mInverseViewMatrixDirty)
         {
-            mInverseViewMatrix = getViewMatrix().inverseAffine();
+            mInverseViewMatrix = getViewMatrix().inverse();
             mInverseViewMatrixDirty = false;
         }
         return mInverseViewMatrix;
@@ -318,7 +283,7 @@ namespace Ogre {
         if (mCameraPositionObjectSpaceDirty)
         {
             mCameraPositionObjectSpace = 
-                getInverseWorldMatrix().transformAffine(mCurrentCamera->getDerivedPosition());
+                getInverseWorldMatrix() * mCurrentCamera->getDerivedPosition();
             mCameraPositionObjectSpaceDirty = false;
         }
         return mCameraPositionObjectSpace;
@@ -348,83 +313,6 @@ namespace Ogre {
 		
 	}
     //-----------------------------------------------------------------------------
-    void AutoParamDataSource::setCurrentPass(const Pass* pass)
-    {
-        mCurrentPass = pass;
-    }
-    //-----------------------------------------------------------------------------
-    const Pass* AutoParamDataSource::getCurrentPass(void) const
-    {
-        return mCurrentPass;
-    }
-    //-----------------------------------------------------------------------------
-    Vector4 AutoParamDataSource::getTextureSize(size_t index) const
-    {
-        Vector4 size = Vector4(1,1,1,1);
-
-        if (index < mCurrentPass->getNumTextureUnitStates())
-        {
-            const TexturePtr& tex = mCurrentPass->getTextureUnitState(index)->_getTexturePtr();
-            if (!tex.isNull())
-            {
-                size.x = tex->getWidth();
-                size.y = tex->getHeight();
-                size.z = tex->getDepth();
-            }
-        }
-
-        return size;
-    }
-    //-----------------------------------------------------------------------------
-    Vector4 AutoParamDataSource::getInverseTextureSize(size_t index) const
-    {
-        Vector4 size = getTextureSize(index);
-        return 1 / size;
-    }
-    //-----------------------------------------------------------------------------
-    Vector4 AutoParamDataSource::getPackedTextureSize(size_t index) const
-    {
-        Vector4 size = getTextureSize(index);
-        return Vector4(size.x, size.y, 1 / size.x, 1 / size.y);
-    }
-    //-----------------------------------------------------------------------------
-    const ColourValue& AutoParamDataSource::getSurfaceAmbientColour(void) const
-    {
-        return mCurrentPass->getAmbient();
-    }
-    //-----------------------------------------------------------------------------
-    const ColourValue& AutoParamDataSource::getSurfaceDiffuseColour(void) const
-    {
-        return mCurrentPass->getDiffuse();
-    }
-    //-----------------------------------------------------------------------------
-    const ColourValue& AutoParamDataSource::getSurfaceSpecularColour(void) const
-    {
-        return mCurrentPass->getSpecular();
-    }
-    //-----------------------------------------------------------------------------
-    const ColourValue& AutoParamDataSource::getSurfaceEmissiveColour(void) const
-    {
-        return mCurrentPass->getSelfIllumination();
-    }
-    //-----------------------------------------------------------------------------
-    Real AutoParamDataSource::getSurfaceShininess(void) const
-    {
-        return mCurrentPass->getShininess();
-    }
-    //-----------------------------------------------------------------------------
-    ColourValue AutoParamDataSource::getDerivedAmbientLightColour(void) const
-    {
-        return getAmbientLightColour() * getSurfaceAmbientColour();
-    }
-    //-----------------------------------------------------------------------------
-    ColourValue AutoParamDataSource::getDerivedSceneColour(void) const
-    {
-        ColourValue result = getDerivedAmbientLightColour() + getSurfaceEmissiveColour();
-        result.a = getSurfaceDiffuseColour().a;
-        return result;
-    }
-    //-----------------------------------------------------------------------------
     void AutoParamDataSource::setFog(FogMode mode, const ColourValue& colour,
         Real expDensity, Real linearStart, Real linearEnd)
     {
@@ -446,24 +334,24 @@ namespace Ogre {
         return mFogParams;
     }
     //-----------------------------------------------------------------------------
-    void AutoParamDataSource::setTextureProjector(const Frustum* frust, size_t index = 0)
+    void AutoParamDataSource::setTextureProjector(const Frustum* frust)
     {
-        mCurrentTextureProjector[index] = frust;
-        mTextureViewProjMatrixDirty[index] = true;
+        mCurrentTextureProjector = frust;
+        mTextureViewProjMatrixDirty = true;
 
     }
     //-----------------------------------------------------------------------------
-    const Matrix4& AutoParamDataSource::getTextureViewProjMatrix(size_t index) const
+    const Matrix4& AutoParamDataSource::getTextureViewProjMatrix(void) const
     {
-        if (mTextureViewProjMatrixDirty[index] && mCurrentTextureProjector[index])
+        if (mTextureViewProjMatrixDirty)
         {
-            mTextureViewProjMatrix[index] = 
+            mTextureViewProjMatrix = 
                 PROJECTIONCLIPSPACE2DTOIMAGESPACE_PERSPECTIVE * 
-                mCurrentTextureProjector[index]->getProjectionMatrixWithRSDepth() * 
-				mCurrentTextureProjector[index]->getViewMatrix();
-            mTextureViewProjMatrixDirty[index] = false;
+                mCurrentTextureProjector->getProjectionMatrixWithRSDepth() * 
+				mCurrentTextureProjector->getViewMatrix();
+            mTextureViewProjMatrixDirty = false;
         }
-        return mTextureViewProjMatrix[index];
+        return mTextureViewProjMatrix;
     }
     //-----------------------------------------------------------------------------
     void AutoParamDataSource::setCurrentRenderTarget(const RenderTarget* target)
@@ -498,7 +386,8 @@ namespace Ogre {
 		{
 			// Calculate based on object space light distance
 			// compared to light attenuation range
-			Vector3 objPos = getInverseWorldMatrix().transformAffine(l.getDerivedPosition());
+			Vector3 objPos = getInverseWorldMatrix() * 
+				l.getDerivedPosition();
 			return l.getAttenuationRange() - objPos.length();
 		}
 	}
@@ -731,68 +620,6 @@ namespace Ogre {
         ++mPassNumber;
     }
 	//-----------------------------------------------------------------------------
-	const Vector4& AutoParamDataSource::getSceneDepthRange() const
-	{
-		if (mSceneDepthRangeDirty)
-		{
-			// calculate depth information
-			mSceneDepthRange.x = mMainCamBoundsInfo->minDistance;
-			mSceneDepthRange.y = mMainCamBoundsInfo->maxDistance;
-			mSceneDepthRange.z = mMainCamBoundsInfo->maxDistance - mMainCamBoundsInfo->minDistance;
-			mSceneDepthRange.w = 1.0f / mSceneDepthRange.z;
-			mSceneDepthRangeDirty = false;
-		}
-
-		return mSceneDepthRange;
-
-	}
-	//-----------------------------------------------------------------------------
-	const Vector4& AutoParamDataSource::getShadowSceneDepthRange(size_t lightIndex) const
-	{
-		static Vector4 dummy(0, 100000, 100000, 1/100000);
-
-		if (!mCurrentSceneManager->isShadowTechniqueTextureBased())
-			return dummy;
-
-		if (mShadowCamDepthRangesDirty)
-		{
-			mShadowCamDepthRanges.clear();
-			for (LightList::const_iterator i = mCurrentLightList->begin();
-				i != mCurrentLightList->end(); ++i)
-			{
-				// stop as soon as we run out of shadow casting lights, they are
-				// all grouped at the beginning
-				if (!(*i)->getCastShadows())
-					break;
-
-				const VisibleObjectsBoundsInfo& info = 
-					mCurrentSceneManager->getShadowCasterBoundsInfo(*i);
-
-				mSceneDepthRange.x = mMainCamBoundsInfo->minDistance;
-				mSceneDepthRange.y = mMainCamBoundsInfo->maxDistance;
-				mSceneDepthRange.z = mMainCamBoundsInfo->maxDistance - mMainCamBoundsInfo->minDistance;
-				mSceneDepthRange.w = 1.0f / mSceneDepthRange.z;
-
-				mShadowCamDepthRanges.push_back(Vector4(
-					info.minDistance, 
-					info.maxDistance, 
-					info.maxDistance - info.minDistance,
-					1.0f / (info.maxDistance - info.minDistance)));
-			}
-
-			mShadowCamDepthRangesDirty = false;
-		}
-
-		if (lightIndex >= mShadowCamDepthRanges.size())
-		{
-			return dummy;
-		}
-		else
-		{
-			return mShadowCamDepthRanges[lightIndex];
-		}
-
-	}
 
 }
 

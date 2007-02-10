@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -52,8 +48,9 @@ namespace Ogre {
 		  mPowerScale(1.0f),
           mDerivedPosition(Vector3::ZERO),
           mDerivedDirection(Vector3::UNIT_Z),
-          mDerivedTransformDirty(false),
-		  mCustomShadowCameraSetup()
+          mLastParentOrientation(Quaternion::IDENTITY),
+          mLastParentPosition(Vector3::ZERO),
+          mLocalTransformDirty(false)
     {
     }
     //-----------------------------------------------------------------------
@@ -73,8 +70,9 @@ namespace Ogre {
 		mPowerScale(1.0f),
         mDerivedPosition(Vector3::ZERO),
         mDerivedDirection(Vector3::UNIT_Z),
-        mDerivedTransformDirty(false),
-		mCustomShadowCameraSetup()
+        mLastParentOrientation(Quaternion::IDENTITY),
+        mLastParentPosition(Vector3::ZERO),
+        mLocalTransformDirty(false)
     {
     }
     //-----------------------------------------------------------------------
@@ -97,14 +95,14 @@ namespace Ogre {
         mPosition.x = x;
         mPosition.y = y;
         mPosition.z = z;
-        mDerivedTransformDirty = true;
+        mLocalTransformDirty = true;
 
     }
     //-----------------------------------------------------------------------
     void Light::setPosition(const Vector3& vec)
     {
         mPosition = vec;
-        mDerivedTransformDirty = true;
+        mLocalTransformDirty = true;
     }
     //-----------------------------------------------------------------------
     const Vector3& Light::getPosition(void) const
@@ -117,13 +115,13 @@ namespace Ogre {
         mDirection.x = x;
         mDirection.y = y;
         mDirection.z = z;
-        mDerivedTransformDirty = true;
+        mLocalTransformDirty = true;
     }
     //-----------------------------------------------------------------------
     void Light::setDirection(const Vector3& vec)
     {
         mDirection = vec;
-        mDerivedTransformDirty = true;
+        mLocalTransformDirty = true;
     }
     //-----------------------------------------------------------------------
     const Vector3& Light::getDirection(void) const
@@ -135,7 +133,7 @@ namespace Ogre {
     {
 
         if (mLightType != LT_SPOTLIGHT)
-			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS,
+            OGRE_EXCEPT(9999,
                 "setSpotlightRange is only valid for spotlights.",
                 "Light::setSpotlightRange");
 
@@ -249,38 +247,27 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void Light::update(void) const
     {
-        if (mDerivedTransformDirty)
+        if (mParentNode)
         {
-            if (mParentNode)
+            if (!(mParentNode->_getDerivedOrientation() == mLastParentOrientation &&
+                mParentNode->_getDerivedPosition() == mLastParentPosition)
+                || mLocalTransformDirty)
             {
-                // Ok, update with SceneNode we're attached to
-                const Quaternion& parentOrientation = mParentNode->_getDerivedOrientation();
-                const Vector3& parentPosition = mParentNode->_getDerivedPosition();
-                mDerivedDirection = parentOrientation * mDirection;
-                mDerivedPosition = (parentOrientation * mPosition) + parentPosition;
+                // Ok, we're out of date with SceneNode we're attached to
+                mLastParentOrientation = mParentNode->_getDerivedOrientation();
+                mLastParentPosition = mParentNode->_getDerivedPosition();
+                mDerivedDirection = mLastParentOrientation * mDirection;
+                mDerivedPosition = (mLastParentOrientation * mPosition) + mLastParentPosition;
             }
-            else
-            {
-                mDerivedPosition = mPosition;
-                mDerivedDirection = mDirection;
-            }
-
-            mDerivedTransformDirty = false;
         }
-    }
-    //-----------------------------------------------------------------------
-    void Light::_notifyAttached(Node* parent, bool isTagPoint)
-    {
-        mDerivedTransformDirty = true;
+        else
+        {
+            mDerivedPosition = mPosition;
+            mDerivedDirection = mDirection;
+        }
 
-        MovableObject::_notifyAttached(parent, isTagPoint);
-    }
-    //-----------------------------------------------------------------------
-    void Light::_notifyMoved(void)
-    {
-        mDerivedTransformDirty = true;
+        mLocalTransformDirty = false;
 
-        MovableObject::_notifyMoved();
     }
     //-----------------------------------------------------------------------
     const AxisAlignedBox& Light::getBoundingBox(void) const
@@ -701,21 +688,6 @@ namespace Ogre {
 		{
 			return MovableObject::createAnimableValue(valueName);
 		}
-	}
-	//-----------------------------------------------------------------------
-	void Light::setCustomShadowCameraSetup(const ShadowCameraSetupPtr& customShadowSetup)
-	{
-		mCustomShadowCameraSetup = customShadowSetup;
-	}
-	//-----------------------------------------------------------------------
-	void Light::resetCustomShadowCameraSetup()
-	{
-		mCustomShadowCameraSetup.setNull();
-	}
-	//-----------------------------------------------------------------------
-	const ShadowCameraSetupPtr& Light::getCustomShadowCameraSetup() const
-	{
-		return mCustomShadowCameraSetup;
 	}
 	//-----------------------------------------------------------------------
 	//-----------------------------------------------------------------------

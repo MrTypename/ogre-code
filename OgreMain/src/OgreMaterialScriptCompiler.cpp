@@ -1,29 +1,25 @@
 /*
 -----------------------------------------------------------------------------
 This source file is part of OGRE
-(Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+    (Object-oriented Graphics Rendering Engine)
+For the latest info, see http://www.stevestreeting.com/ogre/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
+the terms of the GNU General Public License as published by the Free Software
 Foundation; either version 2 of the License, or (at your option) any later
 version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License along with
+You should have received a copy of the GNU General Public License along with
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+http://www.gnu.org/copyleft/gpl.html.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -79,7 +75,7 @@ namespace Ogre {
         "                              <Cull_Hardware> | <Cull_Software> | <Lighting> | \n"
         "                              <GPU_Program_Ref> | \n"
         "                              <Shading> | <PolygonMode> | <Fog_Override> | <Colour_Write> | \n"
-		"                              <Max_Lights> | <Start_Light> | <Iteration> | \n"
+        "                              <Max_Lights> | <Iteration> | \n"
 		"                              <Point_Sprites> | <Point_Size_Attenuation> | \n"
 		"                              <Point_Size_Min> | <Point_Size_Max> | <Point_Size> \n"
 
@@ -106,7 +102,7 @@ namespace Ogre {
         "        <Depth_Check> ::= 'depth_check' <On_Off> \n"
         "        <Depth_Write> ::= 'depth_write' <On_Off> \n"
         "        <Depth_Func> ::= 'depth_func' <Compare_Func> \n"
-		"        <Depth_Bias> ::= 'depth_bias' <#constant> [<#slopescale>] \n"
+        "        <Depth_Bias> ::= 'depth_bias' <#value> \n"
         "        <Alpha_Rejection> ::= 'alpha_rejection' <Compare_Func> <#value> \n"
         "        <Compare_Func> ::= 'always_fail' | 'always_pass' | 'less_equal' | 'less' | \n"
         "                           'equal' | 'not_equal' | 'greater_equal' | 'greater' \n"
@@ -133,26 +129,22 @@ namespace Ogre {
         "                   <fog_True_Param_Option> ::= <fog_type> <#red> <#green> <#blue> <#fog_density> <#start> <#end> \n"
         "                       <fog_type> ::= 'linear' | 'exp2' | 'exp' \n"
         "        <Max_Lights> ::= 'max_lights' <#number> \n"
-		"        <Start_Light> ::= 'start_light' <#number> \n"
         "        <Iteration> ::= 'iteration' <Iteration_Options> \n"
         "           <Iteration_Options> ::= <Iteration_Once_Params> | 'once' | <Iteration_Counted> \n"
         "             <Iteration_Once_Params> ::= 'once_per_light' [<light_type>] \n"
-        "             <Iteration_Counted> ::= <#number> [<Per_Light_Options>] \n"
-		"               <Per_Light_Options> ::= <Per_Light> | <Per_N_Lights> \n"
-		"                 <Per_Light> ::= 'per_light' [<light_type>] \n"
-		"                 <Per_N_Lights> ::= 'per_n_lights' <#num_lights> [<light_type>] \n"
+        "             <Iteration_Counted> ::= <#number> [<Per_Light>] \n"
+        "               <Per_Light> ::= 'per_light' <light_type> \n"
         "             <light_type> ::= 'point' | 'directional' | 'spot' \n"
         // Texture Unit section rules
         "        <Texture_Unit> ::= 'texture_unit' [<Label>] '{' {<TUS_Properties>} '}' \n"
         "        <TUS_Properties> ::= <Texture_Alias> | <Texture> | <Anim_Texture> | <Cubic_Texture> | \n"
         "                             <Tex_Coord_Set> | <Tex_Address_Mode> | <Tex_Border_Colour> | <Filtering> | \n"
-        "                             <Max_Anisotropy> | <MipMap_Bias> | <Colour_Op_Ex> | <Colour_Op_Multipass_Fallback> | <Colour_Op> | \n"
+        "                             <Max_Anisotropy> | <Colour_Op_Ex> | <Colour_Op_Multipass_Fallback> | <Colour_Op> | \n"
         "                             <Alpha_Op_Ex> | <Env_Map> | <Scroll_Anim> | <Scroll> | <Rotate_Anim> | <Rotate> | \n"
-		"                             <Scale> | <Wave_Xform> | <Transform> | <Binding_Type> | <Content_Type> \n"
+        "                             <Scale> | <Wave_Xform> | <Transform> \n"
         "           <Texture_Alias> ::= 'texture_alias' <Label> \n"
         "           <Texture> ::= 'texture' <Label> {<Texture_Properties>} \n"
         "           <Texture_Properties> ::= '1d' | '2d' | '3d' | 'cubic' | 'unlimited' | 'alpha' | <#mipmap> \n"
-        "                                    | " + PixelUtil::getBNFExpressionOfPixelFormats(true) + " \n"
         "           <Anim_Texture> ::= 'anim_texture' <Label> <Anim_Texture_Properties> \n"
         "               <Anim_Texture_Properties> ::= <Numbered_Anim_Texture> | <Seperate_Anim_Textures> \n"
         "               <Numbered_Anim_Texture> ::= <#frames> <#duration> \n"
@@ -160,9 +152,9 @@ namespace Ogre {
         "                   <anim_frame> ::= (?!<TUS_Terminators>) <Label> [<Seperator>] \n"
         "           <TUS_Terminators> ::= '}' | 'texture_alias' | 'texture' | 'anim_texture' | 'cubic_texture' | \n"
         "                                 'tex_coord_set' | 'tex_address_mode' | 'tex_border_colour' | \n"
-        "                                 'filtering' | 'max_anisotropy' | 'mipmap_bias' | 'colour_op' | 'colour_op_ex' | \n"
+        "                                 'filtering' | 'max_anisotropy' | 'colour_op' | 'colour_op_ex' | \n"
         "                                 'colour_op_multipass_fallback' | 'alpha_op_ex' | 'env_map' | \n"
-        "                                 'scroll' | 'rotate' | 'scale' | 'wave_xform' | 'transform' | 'binding_type' \n"
+        "                                 'scroll' | 'rotate' | 'scale' | 'wave_xform' | 'transform' \n"
         "           <Cubic_Texture> ::= 'cubic_texture' <Label> <Cubic_Texture_Options> \n"
         "               <Cubic_Texture_Options> ::= 'combineduvw' | 'separateuv' | <Cubic_Seperate> \n"
         "               <Cubic_Seperate> ::= <Label> [<Seperator>] <Label> [<Seperator>] <Label> \n"
@@ -178,7 +170,6 @@ namespace Ogre {
         "                   <MinMagFilter> ::= 'linear' | 'point' | 'anisotropic' \n"
         "                   <MipFilter> ::= 'linear' | 'point' | 'none' \n"
         "           <Max_Anisotropy> ::= 'max_anisotropy' <#val> \n"
-        "           <MipMap_Bias> ::= 'mipmap_bias' <#val> \n"
         "           <Colour_Op> ::= 'colour_op' <Colour_Op_Options> \n"
         "               <Colour_Op_Options> ::= <Base_Blend> | 'replace' \n"
         "           <Colour_Op_Ex> ::= 'colour_op_ex' <Combine_Operation> <Source_Option> <Source_Option> {<#val>} \n"
@@ -203,19 +194,14 @@ namespace Ogre {
         "               <Wave_Type> ::= 'sine' | 'triangle' | 'square' | 'sawtooth' | 'inverse_sawtooth' \n"
         "           <Transform> ::= 'transform' <#m00> <#m01> <#m02> <#m03> <#m10> <#m11> <#m12> <#m13> <#m20> <#m21> <#m22> <#m23> \n"
         "                           <#m30> <#m31> <#m32> <#m33> \n"
-        "           <Binding_Type> ::= 'binding_type' <Program_Type_Options> \n"
-        "           <Program_Type_Options> ::= 'vertex' | 'fragment' \n"
-		"			<Content_Type> ::= 'content_type' <Content_Type_Options> \n"
-		"           <Content_Type_Options> ::= 'named' | 'shadow' \n"
         // GPU Programs
-        " \n"
+        " "
         "<Vertex_Program> ::= 'vertex_program' <Label> [<Seperator>] <Label> '{' {<Vertex_Program_Option>} '}' \n"
-        "   <Vertex_Program_Option> ::= <Vertex_Program_Animation> | <Vertex_Texture_Fetch> | <GPU_Program_Options> \n"
+        "   <Vertex_Program_Option> ::= <Vertex_Program_Animation> | <GPU_Program_Options> \n"
         "   <Vertex_Program_Animation> ::= <Skeletal_Animation> | <Morph_Animation> | <Pose_Animation> \n"
         "       <Skeletal_Animation> ::= 'includes_skeletal_animation' <True_False> \n"
         "       <Morph_Animation> ::= 'includes_morph_animation' <True_False> \n"
         "       <Pose_Animation> ::= 'includes_pose_animation' <#val> \n"
-        "       <Vertex_Texture_Fetch> ::= 'uses_vertex_texture_fetch' <True_False> \n"
         "<Fragment_Program> ::= 'fragment_program' <Label> [<Seperator>] <Label> '{' {<GPU_Program_Options>}'}' \n"
         // do custom parameters last since it will consume everything on the line in the source
         "   <GPU_Program_Options> ::= <Program_Source> | <Syntax> | <Default_Params> | <Custom_Parameter> \n"
@@ -266,213 +252,197 @@ namespace Ogre {
     {
 
     }
-
-    //-----------------------------------------------------------------------
-    void MaterialScriptCompiler::parseScript(DataStreamPtr& stream, const String& groupName, const bool allowOverride)
-    {
-        mScriptContext.groupName = groupName;
-        mScriptContext.allowOverride = allowOverride;
-        Compiler2Pass::compile(stream->getAsString(),  stream->getName());
-    }
-
     //-----------------------------------------------------------------------
     void MaterialScriptCompiler::setupTokenDefinitions(void)
     {
-        addLexemeAction("{", &MaterialScriptCompiler::parseOpenBrace);
-        addLexemeAction("}", &MaterialScriptCompiler::parseCloseBrace);
+        addLexemeTokenAction("{", ID_OPENBRACE, &MaterialScriptCompiler::parseOpenBrace);
+        addLexemeTokenAction("}", ID_CLOSEBRACE, &MaterialScriptCompiler::parseCloseBrace);
         addLexemeTokenAction("vertex_program", ID_VERTEX_PROGRAM, &MaterialScriptCompiler::parseGPUProgram);
-            addLexemeAction("includes_skeletal_animation", &MaterialScriptCompiler::parseProgramSkeletalAnimation);
-            addLexemeAction("includes_morph_animation", &MaterialScriptCompiler::parseProgramMorphAnimation);
-            addLexemeAction("includes_pose_animation", &MaterialScriptCompiler::parseProgramPoseAnimation);
-            addLexemeAction("uses_vertex_texture_fetch", &MaterialScriptCompiler::parseProgramVertexTextureFetch);
-
+            addLexemeTokenAction("includes_skeletal_animation", ID_INCLUDES_SKELETAL_ANIMATION, &MaterialScriptCompiler::parseProgramSkeletalAnimation);
+            addLexemeTokenAction("includes_morph_animation", ID_INCLUDES_MORPH_ANIMATION, &MaterialScriptCompiler::parseProgramMorphAnimation);
+            addLexemeTokenAction("includes_pose_animation", ID_INCLUDES_POSE_ANIMATION, &MaterialScriptCompiler::parseProgramPoseAnimation);
         addLexemeTokenAction("fragment_program", ID_FRAGMENT_PROGRAM, &MaterialScriptCompiler::parseGPUProgram);
 
-            addLexemeAction("source", &MaterialScriptCompiler::parseProgramSource);
-            addLexemeAction("syntax", &MaterialScriptCompiler::parseProgramSyntax);
-            addLexemeAction("default_params", &MaterialScriptCompiler::parseDefaultParams);
-            addLexemeAction("param_indexed", &MaterialScriptCompiler::parseParamIndexed);
-            addLexemeAction("param_indexed_auto", &MaterialScriptCompiler::parseParamIndexedAuto);
-            addLexemeAction("param_named", &MaterialScriptCompiler::parseParamNamed);
-            addLexemeAction("param_named_auto", &MaterialScriptCompiler::parseParamNamedAuto);
-            addLexemeAction("custom_parameter", &MaterialScriptCompiler::parseProgramCustomParameter);
+            addLexemeTokenAction("source", ID_SOURCE, &MaterialScriptCompiler::parseProgramSource);
+            addLexemeTokenAction("syntax", ID_SYNTAX, &MaterialScriptCompiler::parseProgramSyntax);
+            addLexemeTokenAction("default_params", ID_DEFAULT_PARAMS, &MaterialScriptCompiler::parseDefaultParams);
+            addLexemeTokenAction("param_indexed", ID_PARAM_INDEXED, &MaterialScriptCompiler::parseParamIndexed);
+            addLexemeTokenAction("param_indexed_auto", ID_PARAM_INDEXED_AUTO, &MaterialScriptCompiler::parseParamIndexedAuto);
+            addLexemeTokenAction("param_named", ID_PARAM_NAMED, &MaterialScriptCompiler::parseParamNamed);
+            addLexemeTokenAction("param_named_auto", ID_PARAM_NAMED_AUTO, &MaterialScriptCompiler::parseParamNamedAuto);
+            addLexemeTokenAction("custom_parameter", ID_CUSTOM_PARAMETER, &MaterialScriptCompiler::parseProgramCustomParameter);
 
-        addLexemeAction("material", &MaterialScriptCompiler::parseMaterial);
-            addLexemeToken(":", ID_CLONE);
-            addLexemeAction("lod_distances", &MaterialScriptCompiler::parseLodDistances);
-            addLexemeAction("receive_shadows", &MaterialScriptCompiler::parseReceiveShadows);
-            addLexemeAction("transparency_casts_shadows", &MaterialScriptCompiler::parseTransparencyCastsShadows);
-            addLexemeAction("set_texture_alias", &MaterialScriptCompiler::parseSetTextureAlias);
+        addLexemeTokenAction("material", ID_MATERIAL, &MaterialScriptCompiler::parseMaterial);
+            addLexemeTokenAction(":", ID_CLONE);
+            addLexemeTokenAction("lod_distances", ID_LOD_DISTANCES, &MaterialScriptCompiler::parseLodDistances);
+            addLexemeTokenAction("receive_shadows", ID_RECEIVE_SHADOWS, &MaterialScriptCompiler::parseReceiveShadows);
+            addLexemeTokenAction("transparency_casts_shadows", ID_TRANSPARENCY_CASTS_SHADOWS, &MaterialScriptCompiler::parseTransparencyCastsShadows);
+            addLexemeTokenAction("set_texture_alias", ID_SET_TEXTURE_ALIAS, &MaterialScriptCompiler::parseSetTextureAlias);
 
         // Technique section
-        addLexemeAction("technique", &MaterialScriptCompiler::parseTechnique);
-            addLexemeAction("scheme", &MaterialScriptCompiler::parseScheme);
-            addLexemeAction("lod_index", &MaterialScriptCompiler::parseLodIndex);
+        addLexemeTokenAction("technique", ID_TECHNIQUE, &MaterialScriptCompiler::parseTechnique);
+            addLexemeTokenAction("scheme", ID_SCHEME, &MaterialScriptCompiler::parseScheme);
+            addLexemeTokenAction("lod_index", ID_LOD_INDEX, &MaterialScriptCompiler::parseLodIndex);
 
 
         // Pass section
-        addLexemeAction("pass", &MaterialScriptCompiler::parsePass);
-            addLexemeAction("ambient", &MaterialScriptCompiler::parseAmbient);
-            addLexemeAction("diffuse", &MaterialScriptCompiler::parseDiffuse);
-            addLexemeAction("specular", &MaterialScriptCompiler::parseSpecular);
-            addLexemeAction("emissive", &MaterialScriptCompiler::parseEmissive);
-            addLexemeToken("vertexcolour", ID_VERTEXCOLOUR);
+        addLexemeTokenAction("pass", ID_PASS, &MaterialScriptCompiler::parsePass);
+            addLexemeTokenAction("ambient", ID_AMBIENT, &MaterialScriptCompiler::parseAmbient);
+            addLexemeTokenAction("diffuse", ID_DIFFUSE, &MaterialScriptCompiler::parseDiffuse);
+            addLexemeTokenAction("specular", ID_SPECULAR, &MaterialScriptCompiler::parseSpecular);
+            addLexemeTokenAction("emissive", ID_EMISSIVE, &MaterialScriptCompiler::parseEmissive);
+            addLexemeTokenAction("vertexcolour", ID_VERTEXCOLOUR);
 
-            addLexemeAction("scene_blend", &MaterialScriptCompiler::parseSceneBlend);
-                addLexemeToken("colour_blend", ID_COLOUR_BLEND);
-                addLexemeToken("dest_colour", ID_DEST_COLOUR);
-                addLexemeToken("src_colour", ID_SRC_COLOUR);
-                addLexemeToken("one_minus_dest_colour", ID_ONE_MINUS_DEST_COLOUR);
-                addLexemeToken("one_minus_src_colour", ID_ONE_MINUS_SRC_COLOUR);
-                addLexemeToken("dest_alpha", ID_DEST_ALPHA);
-                addLexemeToken("src_alpha", ID_SRC_ALPHA);
-                addLexemeToken("one_minus_dest_alpha", ID_ONE_MINUS_DEST_ALPHA);
-                addLexemeToken("one_minus_src_alpha", ID_ONE_MINUS_SRC_ALPHA);
+            addLexemeTokenAction("scene_blend", ID_SCENE_BLEND, &MaterialScriptCompiler::parseSceneBlend);
+                addLexemeTokenAction("colour_blend", ID_COLOUR_BLEND);
+                addLexemeTokenAction("dest_colour", ID_DEST_COLOUR);
+                addLexemeTokenAction("src_colour", ID_SRC_COLOUR);
+                addLexemeTokenAction("one_minus_dest_colour", ID_ONE_MINUS_DEST_COLOUR);
+                addLexemeTokenAction("one_minus_src_colour", ID_ONE_MINUS_SRC_COLOUR);
+                addLexemeTokenAction("dest_alpha", ID_DEST_ALPHA);
+                addLexemeTokenAction("src_alpha", ID_SRC_ALPHA);
+                addLexemeTokenAction("one_minus_dest_alpha", ID_ONE_MINUS_DEST_ALPHA);
+                addLexemeTokenAction("one_minus_src_alpha", ID_ONE_MINUS_SRC_ALPHA);
 
-            addLexemeAction("depth_check", &MaterialScriptCompiler::parseDepthCheck);
-            addLexemeAction("depth_write", &MaterialScriptCompiler::parseDepthWrite);
-            addLexemeAction("depth_func", &MaterialScriptCompiler::parseDepthFunc);
-            addLexemeAction("depth_bias", &MaterialScriptCompiler::parseDepthBias);
-                addLexemeToken("always_fail", ID_ALWAYS_FAIL);
-                addLexemeToken("always_pass", ID_ALWAYS_PASS);
-                addLexemeToken("less_equal", ID_LESS_EQUAL);
-                addLexemeToken("less", ID_LESS);
-                addLexemeToken("equal", ID_EQUAL);
-                addLexemeToken("not_equal", ID_NOT_EQUAL);
-                addLexemeToken("greater_equal", ID_GREATER_EQUAL);
-                addLexemeToken("greater", ID_GREATER);
-            addLexemeAction("alpha_rejection", &MaterialScriptCompiler::parseAlphaRejection);
-            addLexemeAction("cull_hardware", &MaterialScriptCompiler::parseCullHardware);
-                addLexemeToken("clockwise", ID_CLOCKWISE);
-                addLexemeToken("anticlockwise", ID_ANTICLOCKWISE);
-            addLexemeAction("cull_software", &MaterialScriptCompiler::parseCullSoftware);
-                addLexemeToken("back", ID_CULL_BACK);
-                addLexemeToken("front", ID_CULL_FRONT);
-            addLexemeAction("lighting", &MaterialScriptCompiler::parseLighting);
-            addLexemeAction("shading", &MaterialScriptCompiler::parseShading);
+            addLexemeTokenAction("depth_check", ID_DEPTH_CHECK, &MaterialScriptCompiler::parseDepthCheck);
+            addLexemeTokenAction("depth_write", ID_DEPTH_WRITE, &MaterialScriptCompiler::parseDepthWrite);
+            addLexemeTokenAction("depth_func", ID_DEPTH_FUNC, &MaterialScriptCompiler::parseDepthFunc);
+            addLexemeTokenAction("depth_bias", ID_DEPTH_BIAS, &MaterialScriptCompiler::parseDepthBias);
+                addLexemeTokenAction("always_fail", ID_ALWAYS_FAIL);
+                addLexemeTokenAction("always_pass", ID_ALWAYS_PASS);
+                addLexemeTokenAction("less_equal", ID_LESS_EQUAL);
+                addLexemeTokenAction("less", ID_LESS);
+                addLexemeTokenAction("equal", ID_EQUAL);
+                addLexemeTokenAction("not_equal", ID_NOT_EQUAL);
+                addLexemeTokenAction("greater_equal", ID_GREATER_EQUAL);
+                addLexemeTokenAction("greater", ID_GREATER);
+            addLexemeTokenAction("alpha_rejection", ID_ALPHA_REJECTION, &MaterialScriptCompiler::parseAlphaRejection);
+            addLexemeTokenAction("cull_hardware", ID_CULL_HARDWARE, &MaterialScriptCompiler::parseCullHardware);
+                addLexemeTokenAction("clockwise", ID_CLOCKWISE);
+                addLexemeTokenAction("anticlockwise", ID_ANTICLOCKWISE);
+            addLexemeTokenAction("cull_software", ID_CULL_SOFTWARE, &MaterialScriptCompiler::parseCullSoftware);
+                addLexemeTokenAction("back", ID_CULL_BACK);
+                addLexemeTokenAction("front", ID_CULL_FRONT);
+            addLexemeTokenAction("lighting", ID_LIGHTING, &MaterialScriptCompiler::parseLighting);
+            addLexemeTokenAction("shading", ID_SHADING, &MaterialScriptCompiler::parseShading);
                 addLexemeTokenAction("flat", ID_FLAT);
-                addLexemeToken("gouraud", ID_GOURAUD);
-                addLexemeToken("phong", ID_PHONG);
-            addLexemeAction("polygon_mode", &MaterialScriptCompiler::parsePolygonMode);
+                addLexemeTokenAction("gouraud", ID_GOURAUD);
+                addLexemeTokenAction("phong", ID_PHONG);
+            addLexemeTokenAction("polygon_mode", ID_POLYGON_MODE, &MaterialScriptCompiler::parsePolygonMode);
                 addLexemeTokenAction("solid", ID_SOLID);
-                addLexemeToken("wireframe", ID_WIREFRAME);
-                addLexemeToken("points", ID_POINTS);
-            addLexemeAction("fog_override", &MaterialScriptCompiler::parseFogOverride);
-                addLexemeToken("exp", ID_EXP);
-                addLexemeToken("exp2", ID_EXP2);
-            addLexemeAction("colour_write", &MaterialScriptCompiler::parseColourWrite);
-            addLexemeAction("max_lights", &MaterialScriptCompiler::parseMaxLights);
-			addLexemeAction("start_light", &MaterialScriptCompiler::parseStartLight);
-            addLexemeAction("iteration", &MaterialScriptCompiler::parseIteration);
-                addLexemeToken("once", ID_ONCE);
-                addLexemeToken("once_per_light", ID_ONCE_PER_LIGHT);
-                addLexemeToken("per_light", ID_PER_LIGHT);
-				addLexemeToken("per_n_lights", ID_PER_N_LIGHTS);
-                addLexemeToken("directional", ID_DIRECTIONAL);
-                addLexemeToken("spot", ID_SPOT);
-            addLexemeAction("point_size", &MaterialScriptCompiler::parsePointSize);
-            addLexemeAction("point_sprites", &MaterialScriptCompiler::parsePointSprites);
-            addLexemeAction("point_size_attenuation",  &MaterialScriptCompiler::parsePointSizeAttenuation);
-            addLexemeAction("point_size_min", &MaterialScriptCompiler::parsePointSizeMin);
-            addLexemeAction("point_size_max", &MaterialScriptCompiler::parsePointSizeMax);
+                addLexemeTokenAction("wireframe", ID_WIREFRAME);
+                addLexemeTokenAction("points", ID_POINTS);
+            addLexemeTokenAction("fog_override", ID_FOG_OVERRIDE, &MaterialScriptCompiler::parseFogOverride);
+                addLexemeTokenAction("exp", ID_EXP);
+                addLexemeTokenAction("exp2", ID_EXP2);
+            addLexemeTokenAction("colour_write", ID_COLOUR_WRITE, &MaterialScriptCompiler::parseColourWrite);
+            addLexemeTokenAction("max_lights", ID_MAX_LIGHTS, &MaterialScriptCompiler::parseMaxLights);
+            addLexemeTokenAction("iteration", ID_ITERATION, &MaterialScriptCompiler::parseIteration);
+                addLexemeTokenAction("once", ID_ONCE);
+                addLexemeTokenAction("once_per_light", ID_ONCE_PER_LIGHT);
+                addLexemeTokenAction("per_light", ID_PER_LIGHT);
+                addLexemeTokenAction("directional", ID_DIRECTIONAL);
+                addLexemeTokenAction("spot", ID_SPOT);
+            addLexemeTokenAction("point_size", ID_POINT_SIZE, &MaterialScriptCompiler::parsePointSize);
+            addLexemeTokenAction("point_sprites", ID_POINT_SPRITES, &MaterialScriptCompiler::parsePointSprites);
+            addLexemeTokenAction("point_size_attenuation", ID_POINT_SIZE_ATTENUATION, &MaterialScriptCompiler::parsePointSizeAttenuation);
+            addLexemeTokenAction("point_size_min", ID_POINT_SIZE_MIN, &MaterialScriptCompiler::parsePointSizeMin);
+            addLexemeTokenAction("point_size_max", ID_POINT_SIZE_MAX, &MaterialScriptCompiler::parsePointSizeMax);
 
         // Texture Unit section
-        addLexemeAction("texture_unit", &MaterialScriptCompiler::parseTextureUnit);
-        addLexemeAction("texture_alias", &MaterialScriptCompiler::parseTextureAlias);
-        addLexemeAction("texture", &MaterialScriptCompiler::parseTexture);
-            addLexemeToken("1d", ID_1D);
-            addLexemeToken("2d", ID_2D);
-            addLexemeToken("3d", ID_3D);
-            addLexemeToken("cubic", ID_CUBIC);
-            addLexemeToken("unlimited", ID_UNLIMITED);
-            addLexemeToken("alpha", ID_ALPHA);
-        addLexemeAction("anim_texture", &MaterialScriptCompiler::parseAnimTexture);
-        addLexemeAction("cubic_texture", &MaterialScriptCompiler::parseCubicTexture);
-            addLexemeToken("separateuv", ID_SEPARATE_UV);
-            addLexemeToken("combineduvw", ID_COMBINED_UVW);
-        addLexemeAction("tex_coord_set", &MaterialScriptCompiler::parseTexCoord);
-        addLexemeAction("tex_address_mode", &MaterialScriptCompiler::parseTexAddressMode);
-            addLexemeToken("wrap", ID_WRAP);
-            addLexemeToken("clamp", ID_CLAMP);
-            addLexemeToken("mirror", ID_MIRROR);
-            addLexemeToken("border", ID_BORDER);
-        addLexemeAction("tex_border_colour", &MaterialScriptCompiler::parseTexBorderColour);
-        addLexemeAction("filtering", &MaterialScriptCompiler::parseFiltering);
-            addLexemeToken("bilinear", ID_BILINEAR);
-            addLexemeToken("trilinear", ID_TRILINEAR);
-            addLexemeToken("anisotropic", ID_ANISOTROPIC);
-        addLexemeAction("max_anisotropy", &MaterialScriptCompiler::parseMaxAnisotropy);
-        addLexemeAction("mipmap_bias", &MaterialScriptCompiler::parseMipMapBias);
-        addLexemeAction("colour_op", &MaterialScriptCompiler::parseColourOp);
-            addLexemeToken("replace", ID_REPLACE);
-        addLexemeAction("colour_op_ex", &MaterialScriptCompiler::parseColourOpEx);
-            addLexemeToken("source1", ID_SOURCE1);
-            addLexemeToken("source2", ID_SOURCE2);
-            addLexemeToken("modulate_x2", ID_MODULATE_X2);
-            addLexemeToken("modulate_x4", ID_MODULATE_X4);
-            addLexemeToken("add_signed", ID_ADD_SIGNED);
-            addLexemeToken("add_smooth", ID_ADD_SMOOTH);
-            addLexemeToken("subtract", ID_SUBTRACT);
-            addLexemeToken("blend_diffuse_colour", ID_BLEND_DIFFUSE_COLOUR);
-            addLexemeToken("blend_diffuse_alpha", ID_BLEND_DIFFUSE_ALPHA);
-            addLexemeToken("blend_texture_alpha", ID_BLEND_TEXTURE_ALPHA);
-            addLexemeToken("blend_current_alpha", ID_BLEND_CURRENT_ALPHA);
-            addLexemeToken("blend_manual", ID_BLEND_MANUAL);
-            addLexemeToken("dotproduct", ID_DOTPRODUCT);
-            addLexemeToken("src_current", ID_SRC_CURRENT);
-            addLexemeToken("src_texture", ID_SRC_TEXTURE);
-            addLexemeToken("src_diffuse", ID_SRC_DIFFUSE);
-            addLexemeToken("src_specular", ID_SRC_SPECULAR);
-            addLexemeToken("src_manual", ID_SRC_MANUAL);
-        addLexemeAction("colour_op_multipass_fallback", &MaterialScriptCompiler::parseColourOpMultipassFallback);
-        addLexemeAction("alpha_op_ex", &MaterialScriptCompiler::parseAlphaOpEx);
-        addLexemeAction("env_map", &MaterialScriptCompiler::parseEnvMap);
-            addLexemeToken("spherical", ID_SPHERICAL);
-            addLexemeToken("planar", ID_PLANAR);
-            addLexemeToken("cubic_reflection", ID_CUBIC_REFLECTION);
-            addLexemeToken("cubic_normal", ID_CUBIC_NORMAL);
-        addLexemeAction("scroll", &MaterialScriptCompiler::parseScroll);
-        addLexemeAction("scroll_anim", &MaterialScriptCompiler::parseScrollAnim);
+        addLexemeTokenAction("texture_unit", ID_TEXTURE_UNIT, &MaterialScriptCompiler::parseTextureUnit);
+        addLexemeTokenAction("texture_alias", ID_TEXTURE_ALIAS, &MaterialScriptCompiler::parseTextureAlias);
+        addLexemeTokenAction("texture", ID_TEXTURE, &MaterialScriptCompiler::parseTexture);
+            addLexemeTokenAction("1d", ID_1D);
+            addLexemeTokenAction("2d", ID_2D);
+            addLexemeTokenAction("3d", ID_3D);
+            addLexemeTokenAction("cubic", ID_CUBIC);
+            addLexemeTokenAction("unlimited", ID_UNLIMITED);
+            addLexemeTokenAction("alpha", ID_ALPHA);
+        addLexemeTokenAction("anim_texture", ID_ANIM_TEXTURE, &MaterialScriptCompiler::parseAnimTexture);
+        addLexemeTokenAction("cubic_texture", ID_CUBIC_TEXTURE, &MaterialScriptCompiler::parseCubicTexture);
+            addLexemeTokenAction("separateuv", ID_SEPARATE_UV);
+            addLexemeTokenAction("combineduvw", ID_COMBINED_UVW);
+        addLexemeTokenAction("tex_coord_set", ID_TEX_COORD_SET, &MaterialScriptCompiler::parseTexCoord);
+        addLexemeTokenAction("tex_address_mode", ID_TEX_ADDRESS_MODE, &MaterialScriptCompiler::parseTexAddressMode);
+            addLexemeTokenAction("wrap", ID_WRAP);
+            addLexemeTokenAction("clamp", ID_CLAMP);
+            addLexemeTokenAction("mirror", ID_MIRROR);
+            addLexemeTokenAction("border", ID_BORDER);
+        addLexemeTokenAction("tex_border_colour", ID_TEX_BORDER_COLOUR, &MaterialScriptCompiler::parseTexBorderColour);
+        addLexemeTokenAction("filtering", ID_FILTERING, &MaterialScriptCompiler::parseFiltering);
+            addLexemeTokenAction("bilinear", ID_BILINEAR);
+            addLexemeTokenAction("trilinear", ID_TRILINEAR);
+            addLexemeTokenAction("anisotropic", ID_ANISOTROPIC);
+        addLexemeTokenAction("max_anisotropy", ID_MAX_ANISOTROPY, &MaterialScriptCompiler::parseMaxAnisotropy);
+        addLexemeTokenAction("colour_op", ID_COLOUR_OP, &MaterialScriptCompiler::parseColourOp);
+            addLexemeTokenAction("replace", ID_REPLACE);
+        addLexemeTokenAction("colour_op_ex", ID_COLOUR_OP_EX, &MaterialScriptCompiler::parseColourOpEx);
+            addLexemeTokenAction("source1", ID_SOURCE1);
+            addLexemeTokenAction("source2", ID_SOURCE2);
+            addLexemeTokenAction("modulate_x2", ID_MODULATE_X2);
+            addLexemeTokenAction("modulate_x4", ID_MODULATE_X4);
+            addLexemeTokenAction("add_signed", ID_ADD_SIGNED);
+            addLexemeTokenAction("add_smooth", ID_ADD_SMOOTH);
+            addLexemeTokenAction("subtract", ID_SUBTRACT);
+            addLexemeTokenAction("blend_diffuse_colour", ID_BLEND_DIFFUSE_COLOUR);
+            addLexemeTokenAction("blend_diffuse_alpha", ID_BLEND_DIFFUSE_ALPHA);
+            addLexemeTokenAction("blend_manual", ID_BLEND_MANUAL);
+            addLexemeTokenAction("dotproduct", ID_DOTPRODUCT);
+            addLexemeTokenAction("src_current", ID_SRC_CURRENT);
+            addLexemeTokenAction("src_texture", ID_SRC_TEXTURE);
+            addLexemeTokenAction("src_diffuse", ID_SRC_DIFFUSE);
+            addLexemeTokenAction("src_specular", ID_SRC_SPECULAR);
+            addLexemeTokenAction("src_manual", ID_SRC_MANUAL);
+        addLexemeTokenAction("colour_op_multipass_fallback", ID_COLOUR_OP_MULTIPASS_FALLBACK,
+            &MaterialScriptCompiler::parseColourOpMultipassFallback);
+        addLexemeTokenAction("alpha_op_ex", ID_ALPHA_OP_EX, &MaterialScriptCompiler::parseAlphaOpEx);
+        addLexemeTokenAction("env_map", ID_ENV_MAP, &MaterialScriptCompiler::parseEnvMap);
+            addLexemeTokenAction("spherical", ID_SPHERICAL);
+            addLexemeTokenAction("planar", ID_PLANAR);
+            addLexemeTokenAction("cubic_reflection", ID_CUBIC_REFLECTION);
+            addLexemeTokenAction("cubic_normal", ID_CUBIC_NORMAL);
+        addLexemeTokenAction("scroll", ID_SCROLL, &MaterialScriptCompiler::parseScroll);
+        addLexemeTokenAction("scroll_anim", ID_SCROLL_ANIM, &MaterialScriptCompiler::parseScrollAnim);
         addLexemeTokenAction("rotate", ID_ROTATE, &MaterialScriptCompiler::parseRotate);
-        addLexemeAction("rotate_anim", &MaterialScriptCompiler::parseRotateAnim);
-        addLexemeAction("scale", &MaterialScriptCompiler::parseScale);
-        addLexemeAction("wave_xform", &MaterialScriptCompiler::parseWaveXform);
-            addLexemeToken("scroll_x", ID_SCROLL_X);
-            addLexemeToken("scroll_y", ID_SCROLL_Y);
-            addLexemeToken("scale_x", ID_SCALE_X);
-            addLexemeToken("scale_y", ID_SCALE_Y);
-            addLexemeToken("sine", ID_SINE);
-            addLexemeToken("triangle", ID_TRIANGLE);
-            addLexemeToken("square", ID_SQUARE);
-            addLexemeToken("sawtooth", ID_SAWTOOTH);
-            addLexemeToken("inverse_sawtooth", ID_INVERSE_SAWTOOTH);
-        addLexemeAction("transform", &MaterialScriptCompiler::parseTransform);
-        addLexemeAction("binding_type", &MaterialScriptCompiler::parseBindingType);
-		addLexemeAction("content_type", &MaterialScriptCompiler::parseContentType);
-			addLexemeToken("named", ID_NAMED);
-			addLexemeToken("shadow", ID_SHADOW);
+        addLexemeTokenAction("rotate_anim", ID_ROTATE_ANIM, &MaterialScriptCompiler::parseRotateAnim);
+        addLexemeTokenAction("scale", ID_SCALE, &MaterialScriptCompiler::parseScale);
+        addLexemeTokenAction("wave_xform", ID_WAVE_XFORM, &MaterialScriptCompiler::parseWaveXform);
+            addLexemeTokenAction("scroll_x", ID_SCROLL_X);
+            addLexemeTokenAction("scroll_y", ID_SCROLL_Y);
+            addLexemeTokenAction("scale_x", ID_SCALE_X);
+            addLexemeTokenAction("scale_y", ID_SCALE_Y);
+            addLexemeTokenAction("sine", ID_SINE);
+            addLexemeTokenAction("triangle", ID_TRIANGLE);
+            addLexemeTokenAction("square", ID_SQUARE);
+            addLexemeTokenAction("sawtooth", ID_SAWTOOTH);
+            addLexemeTokenAction("inverse_sawtooth", ID_INVERSE_SAWTOOTH);
+        addLexemeTokenAction("transform", ID_TRANSFORM, &MaterialScriptCompiler::parseTransform);
         // GPU program reference
-        addLexemeAction("vertex_program_ref", &MaterialScriptCompiler::parseVertexProgramRef);
-        addLexemeAction("fragment_program_ref", &MaterialScriptCompiler::parseFragmentProgramRef);
-        addLexemeAction("shadow_caster_vertex_program_ref", &MaterialScriptCompiler::parseShadowCasterVertexProgramRef);
-        addLexemeAction("shadow_receiver_vertex_program_ref", &MaterialScriptCompiler::parseShadowReceiverVertexProgramRef);
-        addLexemeAction("shadow_receiver_fragment_program_ref", &MaterialScriptCompiler::parseShadowReceiverFragmentProgramRef);
+        addLexemeTokenAction("vertex_program_ref", ID_VERTEX_PROGRAM_REF,
+            &MaterialScriptCompiler::parseVertexProgramRef);
+        addLexemeTokenAction("fragment_program_ref", ID_FRAGMENT_PROGRAM_REF,
+            &MaterialScriptCompiler::parseFragmentProgramRef);
+        addLexemeTokenAction("shadow_caster_vertex_program_ref", ID_SHADOW_CASTER_VERTEX_PROGRAM_REF,
+            &MaterialScriptCompiler::parseShadowCasterVertexProgramRef);
+        addLexemeTokenAction("shadow_receiver_vertex_program_ref", ID_SHADOW_RECEIVER_VERTEX_PROGRAM_REF,
+            &MaterialScriptCompiler::parseShadowReceiverVertexProgramRef);
+        addLexemeTokenAction("shadow_receiver_fragment_program_ref", ID_SHADOW_RECEIVER_FRAGMENT_PROGRAM_REF,
+            &MaterialScriptCompiler::parseShadowReceiverFragmentProgramRef);
 
         // common section
-        addLexemeToken("on", ID_ON);
-        addLexemeToken("off", ID_OFF);
-        addLexemeToken("true", ID_TRUE);
-        addLexemeToken("false", ID_FALSE);
-        addLexemeToken("none", ID_NONE);
-        addLexemeToken("point", ID_POINT);
-        addLexemeToken("linear", ID_LINEAR);
-        addLexemeToken("add", ID_ADD);
-        addLexemeToken("modulate", ID_MODULATE);
-        addLexemeToken("alpha_blend", ID_ALPHA_BLEND);
-        addLexemeToken("one", ID_ONE);
-        addLexemeToken("zero", ID_ZERO);
-        addLexemeToken("vertex", ID_VERTEX);
-        addLexemeToken("fragment", ID_FRAGMENT);
+        addLexemeTokenAction("on", ID_ON);
+        addLexemeTokenAction("off", ID_OFF);
+        addLexemeTokenAction("true", ID_TRUE);
+        addLexemeTokenAction("false", ID_FALSE);
+        addLexemeTokenAction("none", ID_NONE);
+        addLexemeTokenAction("point", ID_POINT);
+        addLexemeTokenAction("linear", ID_LINEAR);
+        addLexemeTokenAction("add", ID_ADD);
+        addLexemeTokenAction("modulate", ID_MODULATE);
+        addLexemeTokenAction("alpha_blend", ID_ALPHA_BLEND);
+        addLexemeTokenAction("one", ID_ONE);
+        addLexemeTokenAction("zero", ID_ZERO);
 
 
     }
@@ -480,9 +450,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void MaterialScriptCompiler::addLexemeTokenAction(const String& lexeme, const size_t token, const MSC_Action action)
     {
-        size_t newTokenID = addLexemeToken(lexeme, token, action != 0);
-        if (action)
-            mTokenActionMap[newTokenID] = action;
+        addLexemeToken(lexeme, token, action != 0);
+        mTokenActionMap[token] = action;
     }
 
     //-----------------------------------------------------------------------
@@ -504,21 +473,9 @@ namespace Ogre {
             }
             catch (Exception& ogreException)
             {
-                if (ogreException.getNumber() == Exception::ERR_DUPLICATE_ITEM)
-                {
-                    // an exception for duplicate item was thrown.
-                    // this means that either a material name or gpu program name conflict exists.
-                    // Since it wasn't trapped at a lower level then re-throw in order to terminate parsing
-                    logParseError("Duplicate Item Exception trapped. Parsing terminated for this material script.");
-                    throw;
-                }
-                else
-                {
-                    // an unknown token found or BNF Grammer rule was not successful
-                    // in finding a valid terminal token to complete the rule expression.
-                    // don't relog the exception but do log the material script being parsed and the line number
-                    logParseError("Exception trapped, attempting to continue parsing");
-                }
+                // an unknown token found or BNF Grammer rule was not successful
+                // in finding a valid terminal token to complete the rule expression.
+                logParseError(ogreException.getDescription());
             }
         }
     }
@@ -576,6 +533,10 @@ namespace Ogre {
 
             mScriptContext.section = MSS_NONE;
             mScriptContext.material.setNull();
+			//Reset all levels for next material
+			mScriptContext.passLev = -1;
+			mScriptContext.stateLev= -1;
+			mScriptContext.techLev = -1;
             mScriptContext.textureAliases.clear();
             break;
         case MSS_TECHNIQUE:
@@ -642,7 +603,6 @@ namespace Ogre {
         mScriptContext.programDef->supportsSkeletalAnimation = false;
 		mScriptContext.programDef->supportsMorphAnimation = false;
 		mScriptContext.programDef->supportsPoseAnimation = 0;
-        mScriptContext.programDef->usesVertexTextureFetch = false;
 
 		// Get name and language code
 		// Name, preserve case
@@ -686,12 +646,6 @@ namespace Ogre {
         assert(mScriptContext.programDef);
 		mScriptContext.programDef->supportsPoseAnimation = static_cast<ushort>(getNextTokenValue());
 	}
-	//-----------------------------------------------------------------------
-	void MaterialScriptCompiler::parseProgramVertexTextureFetch(void)
-	{
-        assert(mScriptContext.programDef);
-		mScriptContext.programDef->usesVertexTextureFetch = testNextTokenID(ID_TRUE);
-	}
     //-----------------------------------------------------------------------
     void MaterialScriptCompiler::parseProgramCustomParameter(void)
     {
@@ -701,8 +655,7 @@ namespace Ogre {
 		StringUtil::toLowerCase(command);
         String params = getNextTokenLabel();
         StringUtil::trim(params);
-		mScriptContext.programDef->customParameters.push_back(
-			std::pair<String, String>(command, params));
+		mScriptContext.programDef->customParameters[command] = params;
 	}
     //-----------------------------------------------------------------------
     void MaterialScriptCompiler::parseDefaultParams(void)
@@ -738,52 +691,17 @@ namespace Ogre {
             }
         }
 
-        /* attempt to create the material.  If the material name is already in use
-           then MaterialManager throws an exception.
-        */
-        try
-        {
-            mScriptContext.material =
-                MaterialManager::getSingleton().create(materialName, mScriptContext.groupName);
-        }
-        catch (Exception& e)
-        {
-            bool exceptionHandled = false;
-
-            if (mScriptContext.allowOverride && (e.getNumber() == Exception::ERR_DUPLICATE_ITEM))
-            {
-                /* the material already exists log a warning message about it being modified by
-                 another material script
-                */
-                mScriptContext.material = MaterialManager::getSingleton().getByName(materialName);
-                if ( !mScriptContext.material.isNull())
-                {
-                    logParseError("material " + materialName +
-                        ", defined in " + mScriptContext.material->getOrigin() +
-                        ", was overwritten by current material being parsed with same name");
-                    // update group ownership since the original material might have been in a different resource group
-                    mScriptContext.material->changeGroupOwnership(mScriptContext.groupName);
-                    exceptionHandled = true;
-                }
-            }
-            if (!exceptionHandled)
-            {
-                logParseError("material " + materialName +
-                        " was previously defined and can not override.\n"
-                        "Material Manager script override was not enabled." );
-
-                throw;
-            }
-        }
+        mScriptContext.material =
+			MaterialManager::getSingleton().create(materialName, mScriptContext.groupName);
 
         if (!basematerial.isNull())
         {
-            // copy parent material details to new or pre-existing material
+            // copy parent material details to new material
             basematerial->copyDetailsTo(mScriptContext.material);
         }
         else
         {
-            // Remove pre-created technique from defaults or original material
+            // Remove pre-created technique from defaults
             mScriptContext.material->removeAllTechniques();
         }
 
@@ -791,10 +709,6 @@ namespace Ogre {
 
         // update section
         mScriptContext.section = MSS_MATERIAL;
-        //Reset all levels since this is the start of the material definition
-        mScriptContext.passLev = -1;
-        mScriptContext.stateLev= -1;
-        mScriptContext.techLev = -1;
 
     }
     //-----------------------------------------------------------------------
@@ -1187,14 +1101,7 @@ namespace Ogre {
     void MaterialScriptCompiler::parseDepthBias(void)
     {
         assert(mScriptContext.pass);
-		float constantBias = static_cast<float>(getNextTokenValue());
-		float slopeScaleBias = 0.0f;
-		if (getRemainingTokensForAction() == 1)
-		{
-			slopeScaleBias = static_cast<float>(getNextTokenValue());
-		}
-
-        mScriptContext.pass->setDepthBias(constantBias, slopeScaleBias);
+        mScriptContext.pass->setDepthBias(static_cast<ushort>(getNextTokenValue()));
     }
     //-----------------------------------------------------------------------
     void MaterialScriptCompiler::parseAlphaRejection(void)
@@ -1346,11 +1253,6 @@ namespace Ogre {
         assert(mScriptContext.pass);
 		mScriptContext.pass->setMaxSimultaneousLights(static_cast<int>(getNextTokenValue()));
     }
-	void MaterialScriptCompiler::parseStartLight(void)
-	{
-		assert(mScriptContext.pass);
-		mScriptContext.pass->setStartLight(static_cast<int>(getNextTokenValue()));
-	}
     //-----------------------------------------------------------------------
     void MaterialScriptCompiler::parseIterationLightTypes(void)
     {
@@ -1379,7 +1281,6 @@ namespace Ogre {
             iteration once_per_light [light type]
             iteration <number>
             iteration <number> [per_light] [light type]
-			iteration <number> [per_n_lights] <number> [light type]
         */
         if (testNextTokenID(ID_ONCE))
             mScriptContext.pass->setIteratePerLight(false);
@@ -1404,8 +1305,7 @@ namespace Ogre {
                 mScriptContext.pass->setPassIterationCount(passIterationCount);
                 if (getRemainingTokensForAction() > 1)
                 {
-                    const size_t tokenID = getNextTokenID();
-                    if (tokenID == ID_PER_LIGHT)
+                    if (getNextTokenID() == ID_PER_LIGHT)
                     {
                         if (getRemainingTokensForAction() == 1)
                         {
@@ -1416,22 +1316,9 @@ namespace Ogre {
                             mScriptContext.pass->setIteratePerLight(true, false);
                         }
                     }
-					else if (tokenID == ID_PER_N_LIGHTS)
-					{
-						// Number of lights per iteration
-						mScriptContext.pass->setLightCountPerIteration(static_cast<short unsigned int>(getNextTokenValue()));
-						if (getRemainingTokensForAction() == 1)
-						{
-							parseIterationLightTypes();
-						}
-						else
-						{
-							mScriptContext.pass->setIteratePerLight(true, false);
-						}
-					}
                     else
                         logParseError(
-                            "Bad iteration attribute, valid parameters are <number> [per_light|per_n_lights <num_lights>] [light type].");
+                            "Bad iteration attribute, valid parameters are <number> [per_light] [light type].");
                 }
             }
         }
@@ -1573,7 +1460,6 @@ namespace Ogre {
         TextureType tt = TEX_TYPE_2D;
 		int mips = MIP_UNLIMITED; // When passed to TextureManager::load, this means default to default number of mipmaps
         bool isAlpha = false;
-        PixelFormat desiredFormat = PF_UNKNOWN;
         const String& textureName = getNextTokenLabel();
 
 		while (getRemainingTokensForAction() > 0)
@@ -1602,15 +1488,9 @@ namespace Ogre {
                 replaceToken();
                 mips = static_cast<int>(getNextTokenValue());
                 break;
-            default:
-                desiredFormat = PixelUtil::getFormatFromName(getCurrentTokenLexeme(), true);
-                break;
             }
 		}
-        mScriptContext.textureUnit->setTextureName(textureName, tt);
-        mScriptContext.textureUnit->setNumMipmaps(mips);
-        mScriptContext.textureUnit->setIsAlpha(isAlpha);
-        mScriptContext.textureUnit->setDesiredFormat(desiredFormat);
+        mScriptContext.textureUnit->setTextureName(textureName, tt, mips, isAlpha);
     }
     //-----------------------------------------------------------------------
     void MaterialScriptCompiler::parseAnimTexture(void)
@@ -1796,12 +1676,6 @@ namespace Ogre {
             static_cast<unsigned int>(getNextTokenValue()));
     }
     //-----------------------------------------------------------------------
-    void MaterialScriptCompiler::parseMipMapBias(void)
-    {
-        assert(mScriptContext.textureUnit);
-        mScriptContext.textureUnit->setTextureMipmapBias(getNextTokenValue());
-    }
-    //-----------------------------------------------------------------------
     void MaterialScriptCompiler::parseColourOp(void)
     {
         assert(mScriptContext.textureUnit);
@@ -1907,7 +1781,7 @@ namespace Ogre {
         }
         catch (Exception& e)
         {
-            logParseError("Bad colour_op_ex attribute, " + e.getDescription());
+            logParseError("Bad colour_op_ex attribute, " + e.getFullDescription());
             return;
         }
 
@@ -1948,7 +1822,7 @@ namespace Ogre {
         }
         catch (Exception& e)
         {
-            logParseError("Bad alpha_op_ex attribute, " + e.getDescription());
+            logParseError("Bad alpha_op_ex attribute, " + e.getFullDescription());
             return;
         }
 
@@ -2029,7 +1903,6 @@ namespace Ogre {
         // Check transform type
         switch (getNextTokenID())
         {
-		default:
         case ID_SCROLL_X:
             ttype = TextureUnitState::TT_TRANSLATE_U;
             break;
@@ -2049,7 +1922,6 @@ namespace Ogre {
         // Check wave type
         switch (getNextTokenID())
         {
-		default:
         case ID_SINE:
             waveType = WFT_SINE;
             break;
@@ -2111,34 +1983,6 @@ namespace Ogre {
 			matrixArray[15]);
 
 		mScriptContext.textureUnit->setTextureTransform(xform);
-	}
-	//-----------------------------------------------------------------------
-	void MaterialScriptCompiler::parseBindingType(void)
-	{
-        assert(mScriptContext.textureUnit);
-        switch (getNextTokenID())
-        {
-        case ID_VERTEX:
-            mScriptContext.textureUnit->setBindingType(TextureUnitState::BT_VERTEX);
-            break;
-        case ID_FRAGMENT:
-            mScriptContext.textureUnit->setBindingType(TextureUnitState::BT_FRAGMENT);
-            break;
-        }
-    }
-	//-----------------------------------------------------------------------
-	void MaterialScriptCompiler::parseContentType(void)
-	{
-		assert(mScriptContext.textureUnit);
-		switch (getNextTokenID())
-		{
-		case ID_NAMED:
-			mScriptContext.textureUnit->setContentType(TextureUnitState::CONTENT_NAMED);
-			break;
-		case ID_SHADOW:
-			mScriptContext.textureUnit->setContentType(TextureUnitState::CONTENT_SHADOW);
-			break;
-		}
 	}
     //-----------------------------------------------------------------------
     void MaterialScriptCompiler::parseVertexProgramRef(void)
@@ -2408,8 +2252,7 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-	void MaterialScriptCompiler::processManualProgramParam(bool isNamed, 
-		const String commandname, size_t index, const String& paramName)
+    void MaterialScriptCompiler::processManualProgramParam(size_t index, const String& commandname, const String& paramName)
     {
         // NB we assume that the first element of vecparams is taken up with either
         // the index or the parameter name, which we ignore
@@ -2472,22 +2315,19 @@ namespace Ogre {
                 "type " + param);
         }
 
+        // Round dims to multiple of 4
+        if (dims %4 != 0)
+        {
+            roundedDims = dims + 4 - (dims % 4);
+        }
+        else
+        {
+            roundedDims = dims;
+        }
+
 		// clear any auto parameter bound to this constant, it would override this setting
 		// can cause problems overriding materials or changing default params
-		if (isNamed)
-			mScriptContext.programParams->clearNamedAutoConstant(paramName);
-		else
-			mScriptContext.programParams->clearAutoConstant(index);
-
-		// Round dims to multiple of 4
-		if (dims %4 != 0)
-		{
-			roundedDims = dims + 4 - (dims % 4);
-		}
-		else
-		{
-			roundedDims = dims;
-		}
+		mScriptContext.programParams->clearAutoConstant(index);
 
 		// Now parse all the values
         if (isReal)
@@ -2498,12 +2338,12 @@ namespace Ogre {
             {
                 realBuffer[i] = getNextTokenValue();
             }
-			// Fill up to multiple of 4 with zero
-			for (; i < roundedDims; ++i)
-			{
-				realBuffer[i] = 0.0f;
+            // Fill up to multiple of 4 with zero
+            for (; i < roundedDims; ++i)
+            {
+                realBuffer[i] = 0.0f;
 
-			}
+            }
 
             if (isMatrix4x4)
             {
@@ -2515,33 +2355,19 @@ namespace Ogre {
                     realBuffer[8],  realBuffer[9],  realBuffer[10], realBuffer[11],
                     realBuffer[12], realBuffer[13], realBuffer[14], realBuffer[15]
                     );
-				if (isNamed)
-					mScriptContext.programParams->setNamedConstant(paramName, m4x4);
-				else
-					mScriptContext.programParams->setConstant(index, m4x4);
+                mScriptContext.programParams->setConstant(index, m4x4);
             }
             else
             {
                 // Set
-				if (isNamed)
-				{
-					// For named, only set up to the precise number of elements
-					// (no rounding to 4 elements)
-					// GLSL can support sub-float4 elements and we support that
-					// in the buffer now. Note how we set the 'multiple' param to 1
-					mScriptContext.programParams->setNamedConstant(paramName, 
-						realBuffer, dims, 1);
-				}
-				else
-				{
-	                mScriptContext.programParams->setConstant(index, 
-						realBuffer, static_cast<size_t>(roundedDims * 0.25));
-				}
+                mScriptContext.programParams->setConstant(index, realBuffer, static_cast<size_t>(roundedDims * 0.25));
 
             }
 
 
             delete [] realBuffer;
+            // log the parameter
+            mScriptContext.programParams->addConstantDefinition(paramName, index, dims, GpuProgramParameters::ET_REAL);
         }
         else
         {
@@ -2551,47 +2377,35 @@ namespace Ogre {
             {
                 intBuffer[i] = static_cast<int>(getNextTokenValue());
             }
-			// Fill to multiple of 4 with 0
-			for (; i < roundedDims; ++i)
-			{
-				intBuffer[i] = 0;
-			}
+            // Fill to multiple of 4 with 0
+            for (; i < roundedDims; ++i)
+            {
+                intBuffer[i] = 0;
+            }
             // Set
-			if (isNamed)
-			{
-				// For named, only set up to the precise number of elements
-				// (no rounding to 4 elements)
-				// GLSL can support sub-float4 elements and we support that
-				// in the buffer now. Note how we set the 'multiple' param to 1
-				mScriptContext.programParams->setNamedConstant(paramName, intBuffer, 
-					dims, 1);
-			}
-			else
-			{
-				mScriptContext.programParams->setConstant(index, intBuffer, 
-					static_cast<size_t>(roundedDims * 0.25));
-			}
+            mScriptContext.programParams->setConstant(index, intBuffer, static_cast<size_t>(roundedDims * 0.25));
             delete [] intBuffer;
+            // log the parameter
+            mScriptContext.programParams->addConstantDefinition(paramName, index, dims, GpuProgramParameters::ET_INT);
         }
     }
     //-----------------------------------------------------------------------
-	void MaterialScriptCompiler::processAutoProgramParam(bool isNamed, const String commandname, 
-		size_t index, const String& paramName)
+    void MaterialScriptCompiler::processAutoProgramParam(const size_t index, const String& commandname, const String& paramName)
     {
 
-        String autoConstantName(getNextTokenLabel());
+        String constantName(getNextTokenLabel());
         // make sure param is in lower case
-        StringUtil::toLowerCase(autoConstantName);
+        StringUtil::toLowerCase(constantName);
 
         // lookup the param to see if its a valid auto constant
         const GpuProgramParameters::AutoConstantDefinition* autoConstantDef =
-            mScriptContext.programParams->getAutoConstantDefinition(autoConstantName);
+            mScriptContext.programParams->getAutoConstantDefinition(constantName);
 
         // exit with error msg if the auto constant definition wasn't found
         if (!autoConstantDef)
 		{
 			logParseError("Invalid " + commandname + " attribute - "
-				+ autoConstantName);
+				+ constantName);
 			return;
 		}
 
@@ -2599,10 +2413,7 @@ namespace Ogre {
         switch (autoConstantDef->dataType)
         {
         case GpuProgramParameters::ACDT_NONE:
-			if (isNamed)
-				mScriptContext.programParams->setNamedAutoConstant(paramName, autoConstantDef->acType, 0);
-			else
-				mScriptContext.programParams->setAutoConstant(index, autoConstantDef->acType, 0);
+            mScriptContext.programParams->setAutoConstant(index, autoConstantDef->acType, 0);
             break;
 
         case GpuProgramParameters::ACDT_INT:
@@ -2610,24 +2421,8 @@ namespace Ogre {
 				// Special case animation_parametric, we need to keep track of number of times used
 				if (autoConstantDef->acType == GpuProgramParameters::ACT_ANIMATION_PARAMETRIC)
 				{
-					if (isNamed)
-						mScriptContext.programParams->setNamedAutoConstant(
-							paramName, autoConstantDef->acType, mScriptContext.numAnimationParametrics++);
-					else
-						mScriptContext.programParams->setAutoConstant(
-							index, autoConstantDef->acType, mScriptContext.numAnimationParametrics++);
-				}
-				// Special case texture projector - assume 0 if data not specified
-				else if (autoConstantDef->acType == GpuProgramParameters::ACT_TEXTURE_VIEWPROJ_MATRIX
-					&& getRemainingTokensForAction() == 0)
-				{
-					if (isNamed)
-						mScriptContext.programParams->setNamedAutoConstant(
-							paramName, autoConstantDef->acType, 0);
-					else
-						mScriptContext.programParams->setAutoConstant(
-							index, autoConstantDef->acType, 0);
-
+					mScriptContext.programParams->setAutoConstant(
+						index, autoConstantDef->acType, mScriptContext.numAnimationParametrics++);
 				}
 				else
 				{
@@ -2640,12 +2435,8 @@ namespace Ogre {
 					}
 
 					size_t extraParam = static_cast<size_t>(getNextTokenValue());
-					if (isNamed)
-						mScriptContext.programParams->setNamedAutoConstant(
-							paramName, autoConstantDef->acType, extraParam);
-					else
-						mScriptContext.programParams->setAutoConstant(
-							index, autoConstantDef->acType, extraParam);
+					mScriptContext.programParams->setAutoConstant(
+						index, autoConstantDef->acType, extraParam);
 				}
             }
             break;
@@ -2662,12 +2453,7 @@ namespace Ogre {
                         factor = getNextTokenValue();
                     }
 
-					if (isNamed)
-						mScriptContext.programParams->setNamedAutoConstantReal(
-							paramName, autoConstantDef->acType, factor);
-					else
-						mScriptContext.programParams->setAutoConstantReal(
-							index, autoConstantDef->acType, factor);
+                    mScriptContext.programParams->setAutoConstantReal(index, autoConstantDef->acType, factor);
                 }
                 else // normal processing for auto constants that take an extra real value
                 {
@@ -2679,18 +2465,22 @@ namespace Ogre {
                     }
 
 			        const Real rData = getNextTokenValue();
-					if (isNamed)
-						mScriptContext.programParams->setNamedAutoConstantReal(
-							paramName, autoConstantDef->acType, rData);
-					else
-						mScriptContext.programParams->setAutoConstantReal(
-							index, autoConstantDef->acType, rData);
+			        mScriptContext.programParams->setAutoConstantReal(index, autoConstantDef->acType, rData);
                 }
             }
             break;
 
         } // end switch
 
+        // add constant definition based on AutoConstant
+        // make element count 0 so that proper allocation occurs when AutoState is set up
+        size_t constantIndex = mScriptContext.programParams->addConstantDefinition(
+			paramName, index, 0, autoConstantDef->elementType);
+        // update constant definition auto settings
+        // since an autoconstant was just added, its the last one in the container
+        size_t autoIndex = mScriptContext.programParams->getAutoConstantCount() - 1;
+        // setup autoState which will allocate the proper amount of storage required by constant entries
+        mScriptContext.programParams->setConstantDefinitionAutoState(constantIndex, true, autoIndex);
 
     }
 
@@ -2713,7 +2503,7 @@ namespace Ogre {
         // Get start index
         const size_t index = static_cast<size_t>(getNextTokenValue());
 
-        processManualProgramParam(false, "param_indexed", index);
+        processManualProgramParam(index, "param_indexed");
 
     }
     //-----------------------------------------------------------------------
@@ -2733,7 +2523,7 @@ namespace Ogre {
         // Get start index
         const size_t index = static_cast<size_t>(getNextTokenValue());
 
-        processAutoProgramParam(false, "param_indexed_auto", index);
+        processAutoProgramParam(index, "param_indexed_auto");
 
     }
     //-----------------------------------------------------------------------
@@ -2752,18 +2542,23 @@ namespace Ogre {
         }
 
         // Get start index from name
+        size_t index;
         const String& paramName = getNextTokenLabel();
         try {
-            const GpuConstantDefinition& def =
-				mScriptContext.programParams->getConstantDefinition(paramName);
+            index = mScriptContext.programParams->getParamIndex(paramName);
         }
         catch (Exception& e)
         {
-            logParseError("Invalid param_named attribute - " + e.getDescription());
+            logParseError("Invalid param_named attribute - " + e.getFullDescription());
             return;
         }
 
-        processManualProgramParam(true, "param_named", 0, paramName);
+        // TEST
+        /*
+        LogManager::getSingleton().logMessage("SETTING PARAMETER " + vecparams[0] + " as index " +
+            StringConverter::toString(index));
+        */
+        processManualProgramParam(index, "param_named", paramName);
 
     }
     //-----------------------------------------------------------------------
@@ -2782,18 +2577,18 @@ namespace Ogre {
         }
 
         // Get start index from name
-        const String& paramName = getNextTokenLabel();
+        size_t index;
+        const String& paramNamed = getNextTokenLabel();
         try {
-			const GpuConstantDefinition& def =
-				mScriptContext.programParams->getConstantDefinition(paramName);
+            index = mScriptContext.programParams->getParamIndex(paramNamed);
         }
         catch (Exception& e)
         {
-            logParseError("Invalid param_named_auto attribute - " + e.getDescription());
+            logParseError("Invalid param_named_auto attribute - " + e.getFullDescription());
             return;
         }
 
-        processAutoProgramParam(true, "param_named_auto", 0, paramName);
+        processAutoProgramParam(index, "param_named_auto", paramNamed);
     }
     //-----------------------------------------------------------------------
 	void MaterialScriptCompiler::finishProgramDefinition(void)
@@ -2801,7 +2596,6 @@ namespace Ogre {
 		// Now it is time to create the program and propagate the parameters
 		MaterialScriptProgramDefinition* def = mScriptContext.programDef;
         GpuProgramPtr gp;
-
 		if (def->language == "asm")
 		{
 			// Native assembler
@@ -2816,161 +2610,59 @@ namespace Ogre {
 				logParseError("Invalid program definition for " + def->name +
 					", you must specify a syntax code.");
 			}
+			// Create
+			gp = GpuProgramManager::getSingleton().
+				createProgram(def->name, mScriptContext.groupName, def->source,
+                    def->progType, def->syntax);
 
-			/*  attempt to create the gpu program.  This could fail if the gpu program name is
-                already being used so must catch the exception and see if its possible to override
-                the existing gpu program.
-            */
-			try
-			{
-                gp = GpuProgramManager::getSingleton().
-                    createProgram(def->name, mScriptContext.groupName, def->source,
-                        def->progType, def->syntax);
-			}
-			catch (Exception& e)
-			{
-			    bool exceptionHandled = false;
-
-			    // attempt recovery if exception was caused by duplicate program name found
-                if (mScriptContext.allowOverride && (e.getNumber() == Exception::ERR_DUPLICATE_ITEM))
-                {
-                    // the gpu program already exists so unload it and then change source and syntax
-                    // the syntax code is not checked here
-                    gp = GpuProgramManager::getSingleton().getByName(def->name);
-                    if (!gp.isNull())
-                    {
-                        if (gp->getType() == def->progType)
-                        {
-                            logParseError("gpu asm program: " + def->name +
-                                ", defined in " + gp->getOrigin() +
-                                ", was overwritten by current gpu program definition being parsed with same name");
-                            gp->unload();
-                            /* updat group ownership since the original gpu program
-                               might have been in a different resource group
-                            */
-                            gp->changeGroupOwnership(mScriptContext.groupName);
-                            gp->setSyntaxCode(def->syntax);
-                            gp->setSource(def->source);
-                            // Need to do something about the existing default parameters
-                            gp->load();
-                            exceptionHandled = true;
-                        }
-                        else
-                        {
-                            // Don't create or override the gpu program due to incompitble program type so ignore the new definition
-                            logParseError("gpu asm program: " + def->name + " program type conflict with current gpu program definition being parsed with same name");
-                        }
-                    }
-                }
-
-                if (!exceptionHandled)
-                {
-                    // exception message already logged so no sense logging them in here and making two entries in the log
-                    logParseError("gpu asm program: " + def->name +
-                        " was previously defined and can not be overridden.\n"
-                        "Material Manager script override was not enabled." );
-                    mScriptContext.program.setNull();
-                    mScriptContext.programParams.setNull();
-                }
-			}
 		}
 		else
 		{
 			// High-level program
 			// Validate
-			if (def->source.empty() && def->language != "unified")
+			if (def->source.empty())
 			{
 				logParseError("Invalid program definition for " + def->name +
 					", you must specify a source file.");
 			}
-			/*  attempt to create the high level gpu program.  This could fail if the gpu program name is
-                already being used so must catch the exception and see if its possible to override
-                the existing gpu program.
-            */
-            HighLevelGpuProgramPtr hgp;
+			// Create
             try
             {
-                hgp = HighLevelGpuProgramManager::getSingleton().
-                    createProgram(def->name, mScriptContext.groupName,
+			    HighLevelGpuProgramPtr hgp = HighLevelGpuProgramManager::getSingleton().
+				    createProgram(def->name, mScriptContext.groupName,
                         def->language, def->progType);
+                // Assign to generalised version
+                gp = hgp;
+                // Set source file
+                hgp->setSourceFile(def->source);
+
+			    // Set custom parameters
+			    std::map<String, String>::const_iterator i, iend;
+			    iend = def->customParameters.end();
+			    for (i = def->customParameters.begin(); i != iend; ++i)
+			    {
+				    if (!hgp->setParameter(i->first, i->second))
+				    {
+					    logParseError("Error in program " + def->name +
+						    " parameter " + i->first + " is not valid.");
+				    }
+			    }
             }
             catch (Exception& e)
             {
-			    bool exceptionHandled = false;
-			    // attempt recovery if exception was caused by duplicate gpu program name found
-                if (mScriptContext.allowOverride && (e.getNumber() == Exception::ERR_DUPLICATE_ITEM))
-                {
-                    hgp = HighLevelGpuProgramManager::getSingleton().getByName(def->name);
-                    if (!hgp.isNull())
-                    {
-                        // the language and program type must still be the same otherwise reuse is not possible
-                        if ((hgp->getLanguage() != def->language) || (hgp->getType() != def->progType))
-                        {
-                            logParseError("gpu high level program: " + def->name +
-                                " already exists and can not be redefined with the language or program type defined in the material script");
-                        }
-                        else
-                        {
-                            logParseError("gpu high level program: " + def->name +
-                                ", defined in " + hgp->getOrigin() +
-                                ", was overwritten by current gpu program definition being parsed with same name");
-                            // unload the previous source that was compiled
-                            hgp->unload();
-                            /* update group ownership since the original gpu program
-                               might have been in a different resource group
-                            */
-                            hgp->changeGroupOwnership(mScriptContext.groupName);
-                            exceptionHandled = true;
-                        }
-                    }
-                }
-
-                if (!exceptionHandled)
-                {
-                    // exception message already logged so no sense logging them in here and making two entries in the log
-                    logParseError("gpu high level program: " + def->name +
-                        " was previously defined and can not be overridden.\n"
-                        "Material Manager script override was not enabled." );
-                    mScriptContext.program.setNull();
-                    mScriptContext.programParams.setNull();
-                }
-            }
-            // if the high level gpu program dosn't exist then don't continue
-            if (hgp.isNull())
-                return;
-
-            // Assign to generalised version
-            gp = hgp;
-
-            // Set source file
-            hgp->setSourceFile(def->source);
-
-            // Set custom parameters
-			std::vector<std::pair<String, String> >::const_iterator i, iend;
-            iend = def->customParameters.end();
-            for (i = def->customParameters.begin(); i != iend; ++i)
-            {
-                if (!hgp->setParameter(i->first, i->second))
-                {
-                    logParseError("Error in program " + def->name +
-                        " parameter " + i->first + " is not valid.");
-                }
+                logParseError("Could not create GPU program '"
+                    + def->name + "', error reported was: " + e.getFullDescription());
+				mScriptContext.program.setNull();
+            	mScriptContext.programParams.setNull();
+				return;
             }
         }
-
-        // don't continue processing gpu program if it doesn't exist
-        if (gp.isNull())
-            return;
-
         // Set skeletal animation option
         gp->setSkeletalAnimationIncluded(def->supportsSkeletalAnimation);
 		// Set morph animation option
 		gp->setMorphAnimationIncluded(def->supportsMorphAnimation);
 		// Set pose animation option
 		gp->setPoseAnimationIncluded(def->supportsPoseAnimation);
-        // Set vertex texture usage
-        gp->setVertexTextureFetchRequired(def->usesVertexTextureFetch);
-
 		// set origin
 		gp->_notifyOrigin(mSourceName);
 
@@ -2983,7 +2675,8 @@ namespace Ogre {
             mScriptContext.program = gp;
             size_t i, iend;
             iend = mScriptContext.pendingDefaultParams.size();
-            for (i = 0; i < iend; ++i)
+            for (i = 0;
+                i < iend; ++i)
             {
                 // invoke the action for the pending default param in the token que
                 setPass2TokenQuePosition(mScriptContext.pendingDefaultParams[i], true);

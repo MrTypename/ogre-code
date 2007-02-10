@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 /***************************************************************************
@@ -47,10 +43,12 @@ namespace Ogre
 */
 bool Octree::_isTwiceSize( const AxisAlignedBox &box ) const
 {
+    const Vector3 * pts1 = mBox.getAllCorners();
+    const Vector3 * pts2 = box.getAllCorners();
 
-        Vector3 halfMBoxSize = mBox.getHalfSize();
-        Vector3 boxSize = box.getSize();
-        return ((boxSize.x <= halfMBoxSize.x) && (boxSize.y <= halfMBoxSize.y) && (boxSize.z <= halfMBoxSize.z));
+    return ( ( pts2[ 4 ].x -pts2[ 0 ].x ) <= ( pts1[ 4 ].x - pts1[ 0 ].x ) / 2 ) &&
+           ( ( pts2[ 4 ].y - pts2[ 0 ].y ) <= ( pts1[ 4 ].y - pts1[ 0 ].y ) / 2 ) &&
+           ( ( pts2[ 4 ].z - pts2[ 0 ].z ) <= ( pts1[ 4 ].z - pts1[ 0 ].z ) / 2 ) ;
 
 }
 
@@ -146,7 +144,8 @@ void Octree::_removeNode( OctreeNode * n )
 
 void Octree::_getCullBounds( AxisAlignedBox *b ) const
 {
-    b -> setExtents( mBox.getMinimum() - mHalfSize, mBox.getMaximum() + mHalfSize );
+    const Vector3 * corners = mBox.getAllCorners();
+    b -> setExtents( corners[ 0 ] - mHalfSize, corners[ 4 ] + mHalfSize );
 }
 
 WireBoundingBox* Octree::getWireBoundingBox()

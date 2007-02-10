@@ -4,7 +4,7 @@ This source file is a part of OGRE
 
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This library is free software; you can redistribute it and/or modify it
@@ -21,10 +21,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with this library; if not, write to the Free Software Foundation, 
 Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA or go to
 http://www.gnu.org/copyleft/lesser.txt
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -------------------------------------------------------------------------*/
 #ifndef __SceneManager_H__
 #define __SceneManager_H__
@@ -47,10 +43,6 @@ Torus Knot Software Ltd.
 #include "OgrePixelFormat.h"
 #include "OgreResourceGroupManager.h"
 #include "OgreTexture.h"
-#include "OgreShadowCameraSetup.h"
-#include "OgreShadowTextureManager.h"
-#include "OgreCamera.h"
-#include "OgreInstancedGeometry.h"
 
 namespace Ogre {
 
@@ -66,43 +58,6 @@ namespace Ogre {
 	class DefaultRaySceneQuery;
 	class DefaultSphereSceneQuery;
 	class DefaultAxisAlignedBoxSceneQuery;
-
-	/** Structure collecting together information about the visible objects
-	that have been discovered in a scene.
-	*/
-	struct VisibleObjectsBoundsInfo
-	{
-		/// The axis-aligned bounds of the visible objects
-		AxisAlignedBox aabb;
-		/// The closest a visible object is to the camera
-		Real minDistance;
-		/// The farthest a visible objects is from the camera
-		Real maxDistance;
-
-		VisibleObjectsBoundsInfo()
-		{
-			reset();
-		}
-
-		void reset()
-		{
-			aabb.setNull();
-			minDistance = std::numeric_limits<Real>::infinity();
-			maxDistance = 0;
-		}
-
-		void merge(const AxisAlignedBox& boxBounds, const Sphere& sphereBounds, 
-			const Camera* cam)
-		{
-			aabb.merge(boxBounds);
-			Real camDistToCenter = 
-				(cam->getDerivedPosition() - sphereBounds.getCenter()).length();
-			minDistance = std::min(minDistance, std::max((Real)0, camDistToCenter - sphereBounds.getRadius()));
-			maxDistance = std::max(maxDistance, camDistToCenter + sphereBounds.getRadius());
-		}
-
-
-	};
 
 	/** Interface definition for classes which can listen in on the process
 		of rendering shadows, in order to implement custom behaviour.
@@ -158,31 +113,6 @@ namespace Ogre {
 		*/
 		virtual void shadowTextureReceiverPreViewProj(Light* light, 
 			Frustum* frustum) = 0;
-
-		/** Hook to allow the listener to override the ordering of lights for
-			the entire frustum.
-		@remarks
-			Whilst ordinarily lights are sorted per rendered object 
-			(@see MovableObject::queryLights), texture shadows adds another issue
-			in that, given there is a finite number of shadow textures, we must
-			choose which lights to render texture shadows from based on the entire
-			frustum. These lights should always be listed first in every objects
-			own list, followed by any other lights which will not cast texture 
-			shadows (either because they have shadow casting off, or there aren't
-			enough shadow textures to service them).
-		@par
-			This hook allows you to override the detailed ordering of the lights
-			per frustum. The default ordering is shadow casters first (which you 
-			must also respect if you override this method), and ordered
-			by distance from the camera within those 2 groups. Obviously the closest
-			lights with shadow casting enabled will be listed first. Only lights 
-			within the range of the frustum will be in the list.
-		@param lightList The list of lights within range of the frustum which you
-			may sort.
-		@returns true if you sorted the list, false otherwise.
-		*/
-		virtual bool sortLightsAffectingFrustum(LightList& lightList) { return false; }
-
 		
 	};
 
@@ -310,8 +240,6 @@ namespace Ogre {
 
 		typedef std::map<String, StaticGeometry* > StaticGeometryList;
 		StaticGeometryList mStaticGeometryList;
-		typedef std::map<String, InstancedGeometry* > InstancedGeometryList;
-		InstancedGeometryList mInstancedGeometryList;
 
         typedef std::map<String, SceneNode*> SceneNodeList;
 
@@ -378,61 +306,10 @@ namespace Ogre {
 		bool mResetIdentityView;
 		bool mResetIdentityProj;
 
-	protected:
-
-		/** Visible objects bounding box list.
-			@remarks
-				Holds an ABB for each camera that contains the physical extends of the visible
-				scene elements by each camera. The map is crutial for shadow algorithms which
-				have a focus step to limit the shadow sample distribution to only valid visible
-				scene elements.
-		*/
-		typedef std::map< const Camera*, VisibleObjectsBoundsInfo> CamVisibleObjectsMap;
-		CamVisibleObjectsMap mCamVisibleObjectsMap; 
-
-		/** ShadowCamera to light mapping */
-		typedef std::map< const Camera*, const Light* > ShadowCamLightMapping;
-		ShadowCamLightMapping mShadowCamLightMapping;
-
-        /// Cached light information, used to tracking light's changes
-        struct _OgreExport LightInfo
-        {
-            Light* light;       // Just a pointer for comparison, the light might destroyed for some reason
-            int type;           // Use int instead of Light::LightTypes to avoid header file dependence
-            Real range;         // Sets to zero if directional light
-            Vector3 position;   // Sets to zero if directional light
-
-            bool operator== (const LightInfo& rhs) const
-            {
-                return light == rhs.light && type == rhs.type &&
-                    range == rhs.range && position == rhs.position;
-            }
-
-            bool operator!= (const LightInfo& rhs) const
-            {
-                return !(*this == rhs);
-            }
-        };
-
-        typedef std::vector<LightInfo> LightInfoList;
-
-        LightList mLightsAffectingFrustum;
-        LightInfoList mCachedLightInfos;
-		LightInfoList mTestLightInfos; // potentially new list
-        ulong mLightsDirtyCounter;
-
 		typedef std::map<String, MovableObject*> MovableObjectMap;
-		/// Simple structure to hold MovableObject map and a mutex to go with it.
-		struct MovableObjectCollection
-		{
-			MovableObjectMap map;
-			OGRE_MUTEX(mutex)
-		};
-		typedef std::map<String, MovableObjectCollection*> MovableObjectCollectionMap;
+		typedef std::map<String, MovableObjectMap*> MovableObjectCollectionMap;
 		MovableObjectCollectionMap mMovableObjectCollectionMap;
-		MovableObjectCollection* getMovableObjectCollection(const String& typeName);
-		/// Mutex over the collection of MovableObject types
-		OGRE_MUTEX(mMovableObjectCollectionMapMutex)
+		MovableObjectMap* getMovableObjectMap(const String& typeName);
 
         /** Internal method for initialising the render queue.
         @remarks
@@ -512,9 +389,7 @@ namespace Ogre {
         /// Storage of animations, lookup by name
         typedef std::map<String, Animation*> AnimationList;
         AnimationList mAnimationsList;
-		OGRE_MUTEX(mAnimationsListMutex)
         AnimationStateSet mAnimationStates;
-
 
         /** Internal method used by _renderSingleObject to deal with renderables
             which override the camera's own view / projection materices. */
@@ -579,37 +454,21 @@ namespace Ogre {
         Pass* mShadowStencilPass;
         Pass* mShadowModulativePass;
 		bool mShadowMaterialInitDone;
+        LightList mLightsAffectingFrustum;
         HardwareIndexBufferSharedPtr mShadowIndexBuffer;
 		size_t mShadowIndexBufferSize;
         Rectangle2D* mFullScreenQuad;
         Real mShadowDirLightExtrudeDist;
         IlluminationRenderStage mIlluminationStage;
-		ShadowTextureConfigList mShadowTextureConfigList;
-		bool mShadowTextureConfigDirty;
+        unsigned short mShadowTextureSize;
+        unsigned short mShadowTextureCount;
+		PixelFormat mShadowTextureFormat;
+        typedef std::vector<TexturePtr> ShadowTextureList;
         ShadowTextureList mShadowTextures;
-		TexturePtr mNullShadowTexture;
 		typedef std::vector<Camera*> ShadowTextureCameraList;
 		ShadowTextureCameraList mShadowTextureCameras;
         Texture* mCurrentShadowTexture;
 		bool mShadowUseInfiniteFarPlane;
-		bool mShadowCasterRenderBackFaces;
-
-		/// default shadow camera setup
-		ShadowCameraSetupPtr mDefaultShadowCameraSetup;
-
-		/** Default sorting routine which sorts lights which cast shadows
-			to the front of a list, sub-sorting by distance.
-		@remarks
-			Since shadow textures are generated from lights based on the
-			frustum rather than individual objects, a shadow and camera-wise sort is
-			required to pick the best lights near the start of the list. Up to 
-			the number of shadow textures will be generated from this.
-		*/
-		struct lightsForShadowTextureLess
-		{
-			_OgreExport bool operator()(const Light* l1, const Light* l2) const;
-		};
-
 
         /** Internal method for locating a list of lights which could be affecting the frustum. 
         @remarks
@@ -621,7 +480,8 @@ namespace Ogre {
         /// Internal method for setting up materials for shadows
         virtual void initShadowVolumeMaterials(void);
         /// Internal method for creating shadow textures (texture-based shadows)
-        virtual void ensureShadowTexturesCreated();
+        virtual void createShadowTextures(unsigned short size, unsigned short count, 
+			PixelFormat fmt);
         /// Internal method for destroying shadow textures (texture-based shadows)
         virtual void destroyShadowTextures(void);
         /// Internal method for preparing shadow textures ready for use in a regular render
@@ -802,34 +662,6 @@ namespace Ogre {
         */
         virtual ~SceneManager();
 
-
-		/** Mutex to protect the scene graph from simultaneous access from
-			multiple threads.
-		@remarks
-			If you are updating the scene in a separate thread from the rendering
-			thread, then you should lock this mutex before making any changes to 
-			the scene graph - that means creating, modifying or deleting a
-			scene node, or attaching / detaching objects. It is <b>your</b> 
-			responsibility to take out this lock, the detail methods on the nodes
-			will not do it for you (for the reasons discussed below).
-		@par
-			Note that locking this mutex will prevent the scene being rendered until 
-			it is unlocked again. Therefore you should do this sparingly. Try
-			to create any objects you need separately and fully prepare them
-			before doing all your scene graph work in one go, thus keeping this
-			lock for the shortest time possible.
-		@note
-			A single global lock is used rather than a per-node lock since 
-			it keeps the number of locks required during rendering down to a 
-			minimum. Obtaining a lock, even if there is no contention, is not free
-			so for performance it is good to do it as little as possible. 
-			Since modifying the scene in a separate thread is a fairly
-			rare occurrence (relative to rendering), it is better to keep the 
-			locking required during rendering lower than to make update locks
-			more granular.
-		*/
-		OGRE_MUTEX(sceneGraphMutex)
-
 		/** Return the instance name of this SceneManager. */
 		const String& getName(void) const { return mName; }
 
@@ -922,40 +754,6 @@ namespace Ogre {
         */
         virtual void destroyAllLights(void);
 
-        /** Advance method to increase the lights dirty counter due lights changed.
-        @remarks
-            Scene manager tracking lights that affecting the frustum, if changes
-            detected (the changes includes light list itself and the light's position
-            and attenuation range), then increase the lights dirty counter.
-        @par
-            For some reason, you can call this method to force whole scene objects
-            re-populate their light list. But near in mind, call to this method
-            will harm performance, so should avoid if possible.
-        */
-        virtual void _notifyLightsDirty(void);
-
-        /** Advance method to gets the lights dirty counter.
-        @remarks
-            Scene manager tracking lights that affecting the frustum, if changes
-            detected (the changes includes light list itself and the light's position
-            and attenuation range), then increase the lights dirty counter.
-        @par
-            When implementing customise lights finding algorithm relied on either
-            SceneManager::_getLightsAffectingFrustum or SceneManager::_populateLightList,
-            might check this value for sure that the light list are really need to
-            re-populate, otherwise, returns cached light list (if exists) for better
-            performance.
-        */
-        ulong _getLightsDirtyCounter(void) const { return mLightsDirtyCounter; }
-
-        /** Get the list of lights which could be affecting the frustum.
-        @remarks
-            Note that default implementation of this method returns a cached light list,
-            which is populated when rendering the scene. So by default the list of lights 
-			is only available during scene rendering.
-        */
-        virtual const LightList& _getLightsAffectingFrustum(void) const;
-
         /** Populate a light list with an ordered set of the lights which are closest
         to the position specified.
         @remarks
@@ -965,9 +763,7 @@ namespace Ogre {
             Subclasses of the default SceneManager may wish to take into account other issues
             such as possible visibility of the light if that information is included in their
             data structures. This basic scenemanager simply orders by distance, eliminating 
-            those lights which are out of range or could not be affecting the frustum (i.e.
-            only the lights returned by SceneManager::_getLightsAffectingFrustum are take into
-            account).
+            those lights which are out of range.
         @par
             The number of items in the list max exceed the maximum number of lights supported
             by the renderer, but the extraneous ones will never be used. In fact the limit will
@@ -1069,9 +865,7 @@ namespace Ogre {
                 Add more prefabs (teapots, teapots!!!)
         */
         enum PrefabType {
-            PT_PLANE,
-			PT_CUBE,
-			PT_SPHERE
+            PT_PLANE
         };
 
         /** Create an Entity (instance of a discrete mesh) from a range of prefab shapes.
@@ -1438,7 +1232,7 @@ namespace Ogre {
                 Any visible objects will be added to a rendering queue, which is indexed by material in order
                 to ensure objects with the same material are rendered together to minimise render state changes.
         */
-        virtual void _findVisibleObjects(Camera* cam, VisibleObjectsBoundsInfo* visibleBounds, bool onlyShadowCasters);
+        virtual void _findVisibleObjects(Camera* cam, bool onlyShadowCasters);
 
         /** Internal method for applying animations to scene nodes.
         @remarks
@@ -2080,8 +1874,7 @@ namespace Ogre {
         typedef MapIterator<CameraList> CameraIterator;
         typedef MapIterator<AnimationList> AnimationIterator;
 
-        /** Returns a specialised MapIterator over all cameras in the scene. 
-		*/
+        /** Returns a specialised MapIterator over all cameras in the scene. */
         CameraIterator getCameraIterator(void) {
             return CameraIterator(mCameras.begin(), mCameras.end());
         }
@@ -2216,35 +2009,15 @@ namespace Ogre {
         /// Get the size of the shadow index buffer
 		virtual size_t getShadowIndexBufferSize(void) const
 		{ return mShadowIndexBufferSize; }
-        /** Set the size of the texture used for all texture-based shadows.
+        /** Set the size of the texture used for texture-based shadows.
         @remarks
             The larger the shadow texture, the better the detail on 
             texture based shadows, but obviously this takes more memory.
             The default size is 512. Sizes must be a power of 2.
-		@note This is the simple form, see setShadowTextureConfig for the more 
-			complex form.
         */
         virtual void setShadowTextureSize(unsigned short size);
-
-		/** Set the detailed configuration for a shadow texture.
-		@param shadowIndex The index of the texture to configure, must be < the
-			number of shadow textures setting
-		@param width, height The dimensions of the texture
-		@param format The pixel format of the texture
-		*/
-		virtual void setShadowTextureConfig(size_t shadowIndex, unsigned short width, 
-			unsigned short height, PixelFormat format);
-		/** Set the detailed configuration for a shadow texture.
-		@param shadowIndex The index of the texture to configure, must be < the
-			number of shadow textures setting
-		@param config Configuration structure
-		*/
-		virtual void setShadowTextureConfig(size_t shadowIndex, 
-			const ShadowTextureConfig& config);
-
-		/** Get an iterator over the current shadow texture settings. */
-		ConstShadowTextureConfigIterator getShadowTextureConfigIterator() const;
-
+        /// Get the size of the texture used for texture based shadows
+        unsigned short getShadowTextureSize(void) const {return mShadowTextureSize; }
         /** Set the pixel format of the textures used for texture-based shadows.
         @remarks
 			By default, a colour texture is used (PF_X8R8G8B8) for texture shadows,
@@ -2253,10 +2026,10 @@ namespace Ogre {
 			setShadowTextureCasterMaterial and setShadowTextureReceiverMaterial
 			to provide shader-based materials to use these customised shadow
 			texture formats.
-		@note This is the simple form, see setShadowTextureConfig for the more 
-			complex form.
         */
         virtual void setShadowTexturePixelFormat(PixelFormat fmt);
+        /// Get the format of the textures used for texture based shadows
+        PixelFormat getShadowTexturePixelFormat(void) const {return mShadowTextureFormat; }
         /** Set the number of textures allocated for texture-based shadows.
         @remarks
             The default number of textures assigned to deal with texture based
@@ -2264,28 +2037,17 @@ namespace Ogre {
             shadows at the same time. You can increase this number in order to 
             make this more flexible, but be aware of the texture memory it will use.
         */
-        virtual void setShadowTextureCount(size_t count);
+        virtual void setShadowTextureCount(unsigned short count);
         /// Get the number of the textures allocated for texture based shadows
-        size_t getShadowTextureCount(void) const {return mShadowTextureConfigList.size(); }
+        unsigned short getShadowTextureCount(void) const {return mShadowTextureCount; }
         /** Sets the size and count of textures used in texture-based shadows. 
         @remarks
             @see setShadowTextureSize and setShadowTextureCount for details, this
             method just allows you to change both at once, which can save on 
             reallocation if the textures have already been created.
-		@note This is the simple form, see setShadowTextureConfig for the more 
-			complex form.
         */
         virtual void setShadowTextureSettings(unsigned short size, unsigned short count, 
 			PixelFormat fmt = PF_X8R8G8B8);
-
-		/** Get a reference to the shadow texture currently in use at the given index.
-		@note
-			If you change shadow settings, this reference may no longer
-			be correct, so be sure not to hold the returned reference over 
-			texture shadow configuration changes.
-		*/
-		virtual const TexturePtr& getShadowTexture(size_t shadowIndex);
-
         /** Sets the proportional distance which a texture shadow which is generated from a
             directional light will be offset into the camera view to make best use of texture space.
         @remarks
@@ -2301,10 +2063,6 @@ namespace Ogre {
             far distance, and the default is 0.6.
         */
         virtual void setShadowDirLightTextureOffset(Real offset) { mShadowTextureOffset = offset;}
-		/** Gets the proportional distance which a texture shadow which is generated from a
-		directional light will be offset into the camera view to make best use of texture space.
-		*/
-		virtual Real getShadowDirLightTextureOffset(void)  const { return mShadowTextureOffset; }
         /** Sets the proportional distance at which texture shadows begin to fade out.
         @remarks
             To hide the edges where texture shadows end (in directional lights)
@@ -2385,35 +2143,6 @@ namespace Ogre {
 		*/
 		virtual void setShadowTextureReceiverMaterial(const String& name);
 
-		/** Sets whether or not shadow casters should be rendered into shadow
-			textures using their back faces rather than their front faces. 
-		@remarks
-			Rendering back faces rather than front faces into a shadow texture
-			can help minimise depth comparison issues, if you're using depth
-			shadowmapping. You will probably still need some biasing but you
-			won't need as much. For solid objects the result is the same anyway,
-			if you have objects with holes you may want to turn this option off.
-			The default is to enable this option.
-		*/
-		virtual void setShadowCasterRenderBackFaces(bool bf) { mShadowCasterRenderBackFaces = bf; }
-
-		/** Gets whether or not shadow casters should be rendered into shadow
-			textures using their back faces rather than their front faces. 
-		*/
-		virtual bool getShadowCasterRenderBackFaces() const { return mShadowCasterRenderBackFaces; }
-
-		/** Set the shadow camera setup to use for all lights which don't have
-			their own shadow camera setup.
-		@see ShadowCameraSetup
-		*/
-		virtual void setShadowCameraSetup(const ShadowCameraSetupPtr& shadowSetup);
-
-		/** Get the shadow camera setup in use for all lights which don't have
-			their own shadow camera setup.
-		@see ShadowCameraSetup
-		*/
-		virtual const ShadowCameraSetupPtr& getShadowCameraSetup() const;
-
 		/** Sets whether we should use an inifinite camera far plane
 			when rendering stencil shadows.
 		@remarks
@@ -2465,9 +2194,6 @@ namespace Ogre {
 		/** Is there an additive shadowing technique in use? */
 		virtual bool isShadowTechniqueAdditive(void) const 
 		{ return (mShadowTechnique & SHADOWDETAILTYPE_ADDITIVE) != 0; }
-		/** Is the shadow technique integrated into primary materials? */
-		virtual bool isShadowTechniqueIntegrated(void) const 
-		{ return (mShadowTechnique & SHADOWDETAILTYPE_INTEGRATED) != 0; }
 		/** Is there any shadowing technique in use? */
 		virtual bool isShadowTechniqueInUse(void) const 
 		{ return mShadowTechnique != SHADOWTYPE_NONE; }
@@ -2502,25 +2228,6 @@ namespace Ogre {
 		virtual void destroyStaticGeometry(const String& name);
 		/** Remove & destroy all StaticGeometry instances. */
 		virtual void destroyAllStaticGeometry(void);
-
-		/** Creates a InstancedGeometry instance suitable for use with this
-			SceneManager.
-		@remarks
-			InstancedGeometry is a way of batching up geometry into a more 
-			efficient form, and still be able to move it. Please 
-			read the InstancedGeometry class documentation for full information.
-		@param name The name to give the new object
-		@returns The new InstancedGeometry instance
-		*/
-		virtual InstancedGeometry* createInstancedGeometry(const String& name);
-		/** Retrieve a previously created InstancedGeometry instance. */
-		virtual InstancedGeometry* getInstancedGeometry(const String& name) const;
-		/** Remove & destroy a InstancedGeometry instance. */
-		virtual void destroyInstancedGeometry(InstancedGeometry* geom);
-		/** Remove & destroy a InstancedGeometry instance. */
-		virtual void destroyInstancedGeometry(const String& name);
-		/** Remove & destroy all InstancedGeometry instances. */
-		virtual void destroyAllInstancedGeometry(void);
 
 
 		/** Create a movable object of the type specified.
@@ -2558,11 +2265,7 @@ namespace Ogre {
 		/** Returns whether a movable object instance with the given name exists. */
 		virtual bool hasMovableObject(const String& name, const String& typeName) const;
 		typedef MapIterator<MovableObjectMap> MovableObjectIterator;
-		/** Get an iterator over all MovableObect instances of a given type. 
-		@note
-			The iterator returned from this method is not thread safe, do not use this
-			if you are creating or deleting objects of this type in another thread.
-		*/
+		/** Get an iterator over all MovableObect instances of a given type. */
 		virtual MovableObjectIterator getMovableObjectIterator(const String& typeName);
 		/** Inject a MovableObject instance created externally.
 		@remarks
@@ -2600,9 +2303,6 @@ namespace Ogre {
 
 		/** Sets a mask which is bitwise 'and'ed with objects own visibility masks
 			to determine if the object is visible.
-		@remarks
-			Note that this is combined with any per-viewport visibility mask
-			through an 'and' operation. @see Viewport::setVisibilityMask
 		*/
 		virtual void setVisibilityMask(uint32 vmask) { mVisibilityMask = vmask; }
 
@@ -2610,11 +2310,6 @@ namespace Ogre {
 			to determine if the object is visible.
 		*/
 		virtual uint32 getVisibilityMask(void) { return mVisibilityMask; }
-
-		/** Internal method for getting the combination between the global visibility
-			mask and the per-viewport visibility mask.
-		*/
-		uint32 _getCombinedVisibilityMask(void) const;
 
 		/** Sets whether the SceneManager should search for visible objects, or
             whether they are being manually handled.
@@ -2710,11 +2405,6 @@ namespace Ogre {
 			valid during viewport update. */
 		Viewport* getCurrentViewport(void) { return mCurrentViewport; }
 
-		/** Returns a visibility boundary box for a specific camera. */
-		const VisibleObjectsBoundsInfo& getVisibleObjectsBoundsInfo(const Camera* cam) const;
-
-		/**  Returns the shadow caster AAB for a specific light-camera combination */
-		const VisibleObjectsBoundsInfo& getShadowCasterBoundsInfo(const Light* light) const;
     };
 
     /** Default implementation of IntersectionSceneQuery. */

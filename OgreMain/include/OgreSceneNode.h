@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef _SceneNode_H__
@@ -36,9 +32,6 @@ Torus Knot Software Ltd.
 #include "OgreAxisAlignedBox.h"
 
 namespace Ogre {
-
-	// forward decl
-	struct VisibleObjectsBoundsInfo;
 
     /** Class representing a node in the scene graph.
         @remarks
@@ -58,6 +51,8 @@ namespace Ogre {
 
     protected:
         ObjectMap mObjectsByName;
+        mutable LightList mLightList;
+        mutable bool mLightListDirty;
 
 		/// Pointer to a Wire Bounding Box for this Node
 		WireBoundingBox *mWireBoundingBox;
@@ -69,9 +64,6 @@ namespace Ogre {
 
         /// World-Axis aligned bounding box, updated only through _update
         AxisAlignedBox mWorldAABB;
-
-        /** @copydoc Node::_updateFromParent. */
-        void _updateFromParent(void) const;
 
         /** See Node. */
         Node* createChildImpl(void);
@@ -191,16 +183,13 @@ namespace Ogre {
                 cam The active camera
             @param
                 queue The SceneManager's rendering queue
-			@param
-				visibleBounds bounding information created on the fly containing all visible objects by the camera
             @param
                 includeChildren If true, the call is cascaded down to all child nodes automatically.
             @param
                 displayNodes If true, the nodes themselves are rendered as a set of 3 axes as well
                     as the objects being rendered. For debugging purposes.
         */
-		virtual void _findVisibleObjects(Camera* cam, RenderQueue* queue, 
-			VisibleObjectsBoundsInfo* visibleBounds, 
+        virtual void _findVisibleObjects(Camera* cam, RenderQueue* queue, 
             bool includeChildren = true, bool displayNodes = false, bool onlyShadowCasters = false);
 
         /** Gets the axis-aligned bounding box of this node (and hence all subnodes).
@@ -238,7 +227,7 @@ namespace Ogre {
             This method returns the SceneManager which created this node.
             This can be useful for destroying this node.
         */
-        SceneManager* getCreator(void) const { return mCreator; }
+        SceneManager* getCreator(void) const;
 
         /** This method removes and destroys the named child and all of its children.
         @remarks
@@ -314,20 +303,14 @@ namespace Ogre {
 
         /** Allows retrieval of the nearest lights to the centre of this SceneNode.
         @remarks
-            This method allows a list of lights, ordered by proximity to the centre
-            of this SceneNode, to be retrieved. Can be useful when implementing
-            MovableObject::queryLights and Renderable::getLights.
-        @par
-            Note that only lights could be affecting the frustum will take into
-            account, which cached in scene manager.
-        @see SceneManager::_getLightsAffectingFrustum
-        @see SceneManager::_populateLightList
-        @param destList List to be populated with ordered set of lights; will be
-            cleared by this method before population.
-        @param radius Parameter to specify lights intersecting a given radius of
+            This method allows a list of lights, ordered by proximity to the centre of
+            this SceneNode, to be retrieved. Multiple access to this method when neither 
+            the node nor the lights have moved will result in the same list being returned
+            without recalculation. Can be useful when implementing Renderable::getLights.
+        @param radius Optional parameter to specify lights intersecting a given radius of
             this SceneNode's centre.
         */
-        virtual void findLights(LightList& destList, Real radius) const;
+        virtual const LightList& findLights(Real radius) const;
 
         /** Tells the node whether to yaw around it's own local Y axis or a fixed axis of choice.
         @remarks

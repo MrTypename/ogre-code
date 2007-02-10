@@ -1,29 +1,25 @@
 /*
 -----------------------------------------------------------------------------
 This source file is part of OGRE
-(Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org
+    (Object-oriented Graphics Rendering Engine)
+For the latest info, see http://www.stevestreeting.com/ogre/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
+the terms of the GNU General Public License as published by the Free Software
 Foundation; either version 2 of the License, or (at your option) any later
 version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License along with
+You should have received a copy of the GNU General Public License along with
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+http://www.gnu.org/copyleft/gpl.html.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -54,10 +50,6 @@ namespace Ogre {
     {
         if (mBNFTokenState.lexemeTokenDefinitions.empty())
         {
-            /* Every Token ID must be manually generated during the compiler bootstrap phase
-               since the rule base is manually defined.
-           */
-
             addLexemeToken("UNKNOWN", BNF_UNKOWN);
             addLexemeToken("syntax", BNF_SYNTAX);
             addLexemeToken("rule", BNF_RULE);
@@ -450,11 +442,11 @@ namespace Ogre {
             else if (mCharPos != mEndOfSource && mErrorCharPos == 0)
             {
                 LogManager::getSingleton().logMessage(
-                    "*** ERROR *** : in " + getClientGrammerName() +
-                    " Source: " + mSourceName +
-                    "\nUnknown token found on line " + StringConverter::toString(mCurrentLine) +
-                    "\nFound: >>>" + mSource->substr(mCharPos, 20) +
-                    "<<<\n"
+                "*** ERROR *** : in " + getClientGrammerName() +
+                " Source: " + mSourceName +
+                "\nUnknown token found on line " + StringConverter::toString(mCurrentLine) +
+                "\nFound: >>>" + mSource->substr(mCharPos, 20) +
+                "<<<\n"
                 );
 
             }
@@ -462,14 +454,12 @@ namespace Ogre {
 	    }
 	    catch (Exception& e)
 	    {
-            LogManager::getSingleton().logMessage( "Exception caught "
-                " while trying to parse "
-                + getClientGrammerName()
-                + ": "
-                + mSourceName
-                + ". Exception was '"
-				+ e.getFullDescription()
-				+ "'. Pass 1 terminated"
+            LogManager::getSingleton().logMessage( "Exception caught: "
+            + e.getFullDescription()
+            + ", while trying to parse: "
+            + getClientGrammerName()
+            + ": "
+            + mSourceName
             );
 	    }
 	    catch (...)
@@ -787,26 +777,26 @@ namespace Ogre {
 			    // only validate if the previous rule passed
 			    if (passed)
 				    passed = ValidateToken(rulepathIDX, ActiveNTTRule);
-                // log error message if a previouse token was found in this rule path and current token failed
-                if (tokenFound && (mCharPos != mErrorCharPos) && !passed)
-                {
-                    mErrorCharPos = mCharPos;
-                    LogManager::getSingleton().logMessage(
-                    "*** ERROR *** : in " + getClientGrammerName() +
-                    " Source: " + mSourceName +
-                    "\nUnknown token found on line " + StringConverter::toString(mCurrentLine) +
-                    "\nFound: >>>" + mSource->substr(mCharPos, 20) +
-                    "<<<\nbut was expecting form: " + getBNFGrammerTextFromRulePath(rulepathIDX, 2) +
-                    "\nwhile in rule path: <" + mActiveTokenState->lexemeTokenDefinitions[ActiveNTTRule].lexeme +
-                    ">"
-                    );
-                    // log last valid token found
-                    const TokenInst& tokenInst = mActiveTokenState->tokenQue.back();
-                    LogManager::getSingleton().logMessage(
-                        "Last valid token found was on line " + StringConverter::toString(tokenInst.line));
-                    LogManager::getSingleton().logMessage(
-                        "source hint: >>>" + mSource->substr(tokenInst.pos, 20) + "<<<");
-                }
+				    // log error message if a previouse token was found in this rule path and current token failed
+				    if (tokenFound && (mCharPos != mErrorCharPos) && !passed)
+                    {
+                        mErrorCharPos = mCharPos;
+                        LogManager::getSingleton().logMessage(
+                        "*** ERROR *** : in " + getClientGrammerName() +
+                        " Source: " + mSourceName +
+                        "\nUnknown token found on line " + StringConverter::toString(mCurrentLine) +
+                        "\nFound: >>>" + mSource->substr(mCharPos, 20) +
+                        "<<<\nbut was expecting form: " + getBNFGrammerTextFromRulePath(rulepathIDX, 2) +
+                        "\nwhile in rule path: <" + mActiveTokenState->lexemeTokenDefinitions[ActiveNTTRule].lexeme +
+                        ">"
+                        );
+                        // log last valid token found
+                        const TokenInst& tokenInst = mActiveTokenState->tokenQue.back();
+                        LogManager::getSingleton().logMessage(
+                            "Last valid token found was on line " + StringConverter::toString(tokenInst.line));
+                        LogManager::getSingleton().logMessage(
+                            "source hint: >>>" + mSource->substr(tokenInst.pos, 20) + "<<<");
+                    }
 
 			    break;
 
@@ -882,9 +872,8 @@ namespace Ogre {
 			        if (la_OldLabelIsActive)
 			        {
                         mActiveLabelKey = la_OldActiveLabelKey;
+                        mLabels[la_OldActiveLabelKey] = la_OldLabel;
                         mLabelIsActive = la_OldLabelIsActive;
-                        mActiveLabel = &mLabels[mActiveLabelKey];
-                        *mActiveLabel = la_OldLabel;
 			        }
                     // only perform full rollback if tokens found
 			        if (!passed)
@@ -901,9 +890,8 @@ namespace Ogre {
                         if (OldLabelIsActive)
                         {
                             mActiveLabelKey = OldActiveLabelKey;
+                            mLabels[OldActiveLabelKey] = OldLabel;
                             mLabelIsActive = OldLabelIsActive;
-                            mActiveLabel = &mLabels[mActiveLabelKey];
-                            *mActiveLabel = OldLabel;
                         }
 
                         // terminate rule production processing
@@ -1011,12 +999,10 @@ namespace Ogre {
                     mLabelIsActive = true;
                     mNoSpaceSkip = true;
                     // reset the contents of the label since it might have been used prior to a rollback
-                    // and cach string location so don't have to look it up for the rest of the label processing
-                    mActiveLabel = &mLabels[mActiveLabelKey];
-                    mActiveLabel->clear();
+                    mLabels[mActiveLabelKey] = "";
                 }
                 // add the single character to the end of the active label
-                *mActiveLabel += (*mSource)[mCharPos];
+                mLabels[mActiveLabelKey] += (*mSource)[mCharPos];
             }
         }
 
@@ -1231,7 +1217,7 @@ namespace Ogre {
                     // end up in an infinite loop.
                     if (oldCharPos == mCharPos)
                         ++mCharPos;
-
+                        
 			        // endofsource will get checked on next iteration of this loop so no need to check it here
 			        // need to update oldCharPos so that position advancement can be varified on the next iteration
                     oldCharPos = mCharPos;
@@ -1290,27 +1276,12 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    size_t Compiler2Pass::addLexemeToken(const String& lexeme, const size_t token, const bool hasAction, const bool caseSensitive)
+    void Compiler2Pass::addLexemeToken(const String& lexeme, const size_t token, const bool hasAction, const bool caseSensitive)
     {
-        size_t newTokenID = token;
-        // if token ID is zero then auto-generate a new token ID
-        if (newTokenID == 0)
-        {
-            // assume BNF system bootstrap is current state
-            size_t autoTokenIDStart = BNF_AUTOTOKENSTART;
-            // if in client state then get auto token start position from the client
-            if (mActiveTokenState != &mBNFTokenState)
-                autoTokenIDStart = getAutoTokenIDStart();
-            // make sure new auto gen id starts at autoTokenIDStart or greater
-            newTokenID = (mActiveTokenState->lexemeTokenDefinitions.size() <= autoTokenIDStart ) ? autoTokenIDStart : newTokenID = mActiveTokenState->lexemeTokenDefinitions.size();
-        }
-
-        if (newTokenID >= mActiveTokenState->lexemeTokenDefinitions.size())
-        {
-            mActiveTokenState->lexemeTokenDefinitions.resize(newTokenID + 1);
-        }
+        if (token >= mActiveTokenState->lexemeTokenDefinitions.size())
+            mActiveTokenState->lexemeTokenDefinitions.resize(token + 1);
         // since resizing guarentees the token definition will exist, just assign values to members
-        LexemeTokenDef& tokenDef = mActiveTokenState->lexemeTokenDefinitions[newTokenID];
+        LexemeTokenDef& tokenDef = mActiveTokenState->lexemeTokenDefinitions[token];
         if (tokenDef.ID != 0)
         {
             OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM, "In " + getClientGrammerName() +
@@ -1318,16 +1289,14 @@ namespace Ogre {
                 lexeme + "<<< already exists in lexeme token definitions",
                 "Compiler2Pass::addLexemeToken");
         }
-        tokenDef.ID = newTokenID;
+        tokenDef.ID = token;
         tokenDef.lexeme = lexeme;
         if (!caseSensitive)
             StringUtil::toLowerCase(tokenDef.lexeme);
         tokenDef.hasAction = hasAction;
         tokenDef.isCaseSensitive = caseSensitive;
 
-        mActiveTokenState->lexemeTokenMap[lexeme] = newTokenID;
-
-        return newTokenID;
+        mActiveTokenState->lexemeTokenMap[lexeme] = token;
     }
 
     //-----------------------------------------------------------------------

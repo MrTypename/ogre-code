@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,17 +20,11 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
 #include "OgreStringConverter.h"
-#include "OgreVector2.h"
 #include "OgreVector3.h"
-#include "OgreVector4.h"
 #include "OgreMatrix3.h"
 #include "OgreMatrix4.h"
 #include "OgreQuaternion.h"
@@ -141,25 +135,11 @@ namespace Ogre {
         stream << val;
         return stream.str();
     }
-	//-----------------------------------------------------------------------
-    String StringConverter::toString(const Vector2& val)
-    {
-        StringUtil::StrStreamType stream;
-		stream << val.x << " " << val.y;
-        return stream.str();
-    }
     //-----------------------------------------------------------------------
     String StringConverter::toString(const Vector3& val)
     {
         StringUtil::StrStreamType stream;
 		stream << val.x << " " << val.y << " " << val.z;
-        return stream.str();
-    }
-	//-----------------------------------------------------------------------
-    String StringConverter::toString(const Vector4& val)
-    {
-        StringUtil::StrStreamType stream;
-		stream << val.x << " " << val.y << " " << val.z << " " << val.w;
         return stream.str();
     }
     //-----------------------------------------------------------------------
@@ -281,7 +261,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     bool StringConverter::parseBool(const String& val)
     {
-		return (StringUtil::startsWith(val, "true") || StringUtil::startsWith(val, "yes"));
+        return (val == "true" || val == "yes");
     }
     //-----------------------------------------------------------------------
     Vector3 StringConverter::parseVector3(const String& val)
@@ -376,12 +356,10 @@ namespace Ogre {
 	//-----------------------------------------------------------------------
 	bool StringConverter::isNumber(const String& val)
 	{
-		std::istringstream str;
-		// set string - add space to ensure good() returns true for packed values
-		str.str(val + " ");
+		std::istringstream str(val);
 		float tst;
 		str >> tst;
-		return str.good();
+		return !str.fail() && str.eof();
 	}
 }
 

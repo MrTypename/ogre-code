@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -490,7 +486,6 @@ namespace Ogre
     std::pair<bool, Real> Math::intersects(const Ray& ray, const AxisAlignedBox& box)
     {
         if (box.isNull()) return std::pair<bool, Real>(false, 0);
-        if (box.isInfinite()) return std::pair<bool, Real>(true, 0);
 
         Real lowt = 0.0f;
         Real t;
@@ -620,13 +615,6 @@ namespace Ogre
     {
         if (box.isNull())
             return false;
-
-        if (box.isInfinite())
-        {
-            if (d1) *d1 = 0;
-            if (d2) *d2 = Math::POS_INFINITY;
-            return true;
-        }
 
         const Vector3& min = box.getMinimum();
         const Vector3& max = box.getMaximum();
@@ -807,7 +795,6 @@ namespace Ogre
     bool Math::intersects(const Sphere& sphere, const AxisAlignedBox& box)
     {
         if (box.isNull()) return false;
-        if (box.isInfinite()) return true;
 
         // Use splitting planes
         const Vector3& center = sphere.getCenter();
@@ -857,9 +844,24 @@ namespace Ogre
     bool Math::intersects(const Plane& plane, const AxisAlignedBox& box)
     {
         if (box.isNull()) return false;
-        if (box.isInfinite()) return true;
 
-        return (plane.getSide(box) == Plane::BOTH_SIDE);
+        // Get corners of the box
+        const Vector3* pCorners = box.getAllCorners();
+
+
+        // Test which side of the plane the corners are
+        // Intersection occurs when at least one corner is on the 
+        // opposite side to another
+        Plane::Side lastSide = plane.getSide(pCorners[0]);
+        for (int corner = 1; corner < 8; ++corner)
+        {
+            if (plane.getSide(pCorners[corner]) != lastSide)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
     //-----------------------------------------------------------------------
     bool Math::intersects(const Sphere& sphere, const Plane& plane)

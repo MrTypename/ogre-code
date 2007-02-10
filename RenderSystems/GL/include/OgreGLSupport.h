@@ -11,7 +11,7 @@
 namespace Ogre
 {
     
-class _OgreGLExport GLSupport
+class GLSupport
 {
 public:
     GLSupport() { }

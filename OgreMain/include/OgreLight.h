@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef _LIGHT_H__
@@ -37,7 +33,6 @@ Torus Knot Software Ltd.
 #include "OgreString.h"
 #include "OgreMovableObject.h"
 #include "OgrePlaneBoundedVolume.h"
-#include "OgreShadowCameraSetup.h"
 
 namespace Ogre {
 
@@ -290,12 +285,6 @@ namespace Ogre {
 		Real getPowerScale(void) const;
 
         /** Overridden from MovableObject */
-        void _notifyAttached(Node* parent, bool isTagPoint = false);
-
-        /** Overridden from MovableObject */
-        void _notifyMoved(void);
-
-        /** Overridden from MovableObject */
         const AxisAlignedBox& getBoundingBox(void) const;
 
         /** Overridden from MovableObject */
@@ -355,22 +344,6 @@ namespace Ogre {
 		/// @copydoc AnimableObject::createAnimableValue
 		AnimableValuePtr createAnimableValue(const String& valueName);
 
-		/** Set this light to use a custom shadow camera when rendering texture shadows.
-		@remarks
-			This changes the shadow camera setup for just this light,  you can set
-			the shadow camera setup globally using SceneManager::setShadowCameraSetup
-		@see ShadowCameraSetup
-		*/
-		void setCustomShadowCameraSetup(const ShadowCameraSetupPtr& customShadowSetup);
-
-		/** Reset the shadow camera setup to the default. 
-		@see ShadowCameraSetup
-		*/
-		void resetCustomShadowCameraSetup(void);
-
-		/** return a pointer to the custom shadow camera setup (null means use SceneManager global version). */
-		const ShadowCameraSetupPtr& getCustomShadowCameraSetup(void) const;
-
     protected:
         /// internal method for synchronising with parent node (if any)
         virtual void update(void) const;
@@ -396,20 +369,21 @@ namespace Ogre {
         Real mAttenuationQuad;
 		Real mPowerScale;
 
-
         mutable Vector3 mDerivedPosition;
         mutable Vector3 mDerivedDirection;
+        /// Stored versions of parent orientation / position
+        mutable Quaternion mLastParentOrientation;
+        mutable Vector3 mLastParentPosition;
 
         /// Shared class-level name for Movable type
         static String msMovableType;
 
         mutable PlaneBoundedVolume mNearClipVolume;
         mutable PlaneBoundedVolumeList mFrustumClipVolumes;
-        /// Is the derived transform dirty?
-        mutable bool mDerivedTransformDirty;
+        /// Is the local transform dirty?
+        mutable bool mLocalTransformDirty;
 
-		/// Pointer to a custom shadow camera setup
-		mutable ShadowCameraSetupPtr mCustomShadowCameraSetup;
+
 
     };
 

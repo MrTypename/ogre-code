@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
@@ -20,10 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreTerrainPage.h"
@@ -103,14 +99,15 @@ namespace Ogre {
         while ( tile != 0 )
         {
             AxisAlignedBox b = tile -> getBoundingBox();
+            const Vector3 *corners = b.getAllCorners();
 
-            if ( pt.x < b.getMinimum().x )
+            if ( pt.x < corners[ 0 ].x )
                 tile = tile -> _getNeighbor( TerrainRenderable::WEST );
-            else if ( pt.x > b.getMaximum().x )
+            else if ( pt.x > corners[ 4 ].x )
                 tile = tile -> _getNeighbor( TerrainRenderable::EAST );
-            else if ( pt.z < b.getMinimum().z )
+            else if ( pt.z < corners[ 0 ].z )
                 tile = tile -> _getNeighbor( TerrainRenderable::NORTH );
-            else if ( pt.z > b.getMaximum().z )
+            else if ( pt.z > corners[ 4 ].z )
                 tile = tile -> _getNeighbor( TerrainRenderable::SOUTH );
             else
                 return tile;

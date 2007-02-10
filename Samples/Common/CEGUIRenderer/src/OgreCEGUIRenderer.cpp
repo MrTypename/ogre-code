@@ -53,7 +53,7 @@ const size_t    OgreCEGUIRenderer::UNDERUSED_FRAME_THRESHOLD = 50000; // halfs b
 /*************************************************************************
 	Utility function to create a render operation and vertex buffer to render quads
 *************************************************************************/
-static void createQuadRenderOp(Ogre::RenderOperation &d_render_op, 
+void createQuadRenderOp(Ogre::RenderOperation &d_render_op, 
     Ogre::HardwareVertexBufferSharedPtr &d_buffer, size_t nquads)
 {
     using namespace Ogre;
@@ -81,8 +81,7 @@ static void createQuadRenderOp(Ogre::RenderOperation &d_render_op,
 	d_render_op.operationType = RenderOperation::OT_TRIANGLE_LIST;
 	d_render_op.useIndexes = false;
 }
-
-static void destroyQuadRenderOp(Ogre::RenderOperation &d_render_op, 
+void destroyQuadRenderOp(Ogre::RenderOperation &d_render_op, 
     Ogre::HardwareVertexBufferSharedPtr &d_buffer)
 {
     delete d_render_op.vertexData;
@@ -330,7 +329,7 @@ void OgreCEGUIRenderer::doRender(void)
             }
             d_render_op.vertexData->vertexCount = d_bufferPos - d_render_op.vertexData->vertexStart;
             /// Set texture, and do the render
-            d_render_sys->_setTexture(0, true, d_currTexture);
+            d_render_sys->_setTexture(0, true, d_currTexture->getName());
             d_render_sys->_render(d_render_op);
         }
 
@@ -430,7 +429,7 @@ void OgreCEGUIRenderer::initRenderStates(void)
 	// initialise render settings
 	d_render_sys->setLightingEnabled(false);
 	d_render_sys->_setDepthBufferParams(false, false);
-	d_render_sys->_setDepthBias(0, 0);
+	d_render_sys->_setDepthBias(0);
 	d_render_sys->_setCullingMode(CULL_NONE);
 	d_render_sys->_setFog(FOG_NONE);
 	d_render_sys->_setColourBufferWriteEnabled(true, true, true, true);

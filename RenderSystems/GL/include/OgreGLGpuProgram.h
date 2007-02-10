@@ -1,29 +1,25 @@
 /*
 -----------------------------------------------------------------------------
 This source file is part of OGRE
-(Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+    (Object-oriented Graphics Rendering Engine)
+For the latest info, see http://www.stevestreeting.com/ogre/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
+Copyright (c) 2000-2005 The OGRE Teameeting
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
+the terms of the GNU General Public License as published by the Free Software
 Foundation; either version 2 of the License, or (at your option) any later
 version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License along with
+You should have received a copy of the GNU General Public License along with
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+http://www.gnu.org/copyleft/gpl.html.
 -----------------------------------------------------------------------------
 */
 
@@ -32,12 +28,11 @@ Torus Knot Software Ltd.
 
 #include "OgreGLPrerequisites.h"
 #include "OgreGpuProgram.h"
-#include "OgreHardwareVertexBuffer.h"
 
 namespace Ogre {
 
     /** Generalised low-level GL program, can be applied to multiple types (eg ARB and NV) */
-    class _OgrePrivate GLGpuProgram : public GpuProgram
+    class GLGpuProgram : public GpuProgram
     {
     public:
         GLGpuProgram(ResourceManager* creator, const String& name, ResourceHandle handle,
@@ -48,6 +43,8 @@ namespace Ogre {
         virtual void bindProgram(void) {}
         /// Execute the binding functions for this program
         virtual void unbindProgram(void) {}
+        /** Overridden from GpuProgram, do nothing */
+        void loadFromSource(void) {}
 
         /// Execute the param binding functions for this program
         virtual void bindProgramParameters(GpuProgramParametersSharedPtr params) {}
@@ -59,19 +56,7 @@ namespace Ogre {
         const GLuint getProgramID(void) const
         { return mProgramID; }
 
-		/** Get the attribute index for a given semantic. 
-		@remarks
-			This can be used to identify the attribute index to bind non-builtin
-			attributes like tangent and binormal.
-		*/
-		virtual GLuint getAttributeIndex(VertexElementSemantic semantic);
-		/** Test whether attribute index for a given semantic is valid. 
-		*/
-		virtual bool isAttributeValid(VertexElementSemantic semantic);
-
     protected:
-		/** Overridden from GpuProgram, do nothing */
-		void loadFromSource(void) {}
         /// @copydoc Resource::unloadImpl
         void unloadImpl(void) {}
 
@@ -80,7 +65,7 @@ namespace Ogre {
     };
 
     /** Specialisation of the GL low-level program for ARB programs. */
-    class _OgrePrivate GLArbGpuProgram : public GLGpuProgram
+    class GLArbGpuProgram : public GLGpuProgram
     {
     public:
         GLArbGpuProgram(ResourceManager* creator, const String& name, ResourceHandle handle,

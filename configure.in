@@ -1,12 +1,12 @@
 AC_PREREQ(2.50)
 
-AC_INIT([OGRE], [1.4.0])
+AC_INIT([OGRE], [1.2.5])
 
 AC_CANONICAL_TARGET
 
 # New syntax, but this is still buggy; PACKAGE gets defined as 'ogre' not 'OGRE'
 #AM_INIT_AUTOMAKE([1.7.0 foreign no-installinfo no-installman subdir-objects])
-AM_INIT_AUTOMAKE([OGRE], 1.4.0)
+AM_INIT_AUTOMAKE([OGRE], 1.2.5)
 AC_CONFIG_HEADERS([OgreMain/include/config.h])
 
 dnl Check for programs
@@ -22,7 +22,6 @@ OGRE_SETUP_FOR_TARGET
 
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
-AC_LIBTOOL_LANG_CXX_CONFIG
 
 dnl GCC version check
 if test x$GCC = xyes; then
@@ -36,31 +35,9 @@ if test x$GCC = xyes; then
     fi
 fi
 
-# Check if compiler supports symbol visibility
-AC_LANG_PUSH(C++)
-AC_LIBTOOL_COMPILER_OPTION([if $CXX supports -fvisibility],
-    [ogre_prog_compiler_supports_visibility],
-    [-fvisibility=hidden -fvisibility-inlines-hidden], [],
-    [CFLAGS_VISIBILITY="-fvisibility=hidden -fvisibility-inlines-hidden"])
-AC_SUBST(CFLAGS_VISIBILITY)
-AC_LANG_POP
-
-# Warn the user on x86_64 and debug builds with gcc < 4.2
-case $target_cpu in
-    x86_64* )
-        if ! echo "$CFLAGS $CXXFLAGS $OGRE_CFLAGS" | grep -q "\-O"; then
-            echo "***********************************************************************"
-            echo "WARNING: It looks like you're doing a debug build for an x86_64 target."
-            echo "The -fvisibility-inlines-hidden flag is known to give problems in such"
-            echo "situations with libstdc++ < 4.2. Disabling the compiler flag."
-            echo "***********************************************************************"
-            CFLAGS_VISIBILITY="-fvisibility=hidden"
-        fi
-	;;
-esac
-
 dnl Other stuff we need
 OGRE_USE_STLPORT
+#AM_PATH_SDL(1.2.0)
 AC_CHECK_FT2(9.0.0)
 
 AC_CHECK_LIB(dl, dlopen)
@@ -76,21 +53,17 @@ PKG_CHECK_MODULES(ZZIPLIB, zziplib)
 AC_SUBST(ZZIPLIB_CFLAGS)
 AC_SUBST(ZZIPLIB_LIBS)
 
-dnl Get the GL and Platform libs for target build
+OGRE_GET_CONFIG_TOOLKIT
 OGRE_GET_PLATFORM
 OGRE_GET_GLSUPPORT
 
 dnl Find the optional components we should build
-OGRE_CHECK_GUI
 OGRE_CHECK_DOUBLE
 OGRE_CHECK_THREADING
-OGRE_CHECK_FREEIMAGE
+OGRE_CHECK_DEVIL
 OGRE_CHECK_CG
 OGRE_CHECK_OPENEXR
 OGRE_CHECK_DX9
-
-dnl Check to see if user wants to disable building of demos (defaults is to build) - also checks for OIS
-OGRE_BUILD_DEMOS
 
 dnl Detect endianness
 OGRE_DETECT_ENDIAN
@@ -101,22 +74,37 @@ OGRE_CHECK_PIC
 dnl Check to see if CEGUI is installed.
 OGRE_CHECK_CEGUI
 
-CFLAGS="$CFLAGS"
-CXXFLAGS="$CXXFLAGS"
-LIBS="$LIBS"
+CFLAGS="$CFLAGS $SDL_CFLAGS"
+CXXFLAGS="$CXXFLAGS $SDL_CFLAGS"
+LIBS="$LIBS $SDL_LIBS"
 
-dnl Define samples absolute install path
-ogreexecdir='${abs_top_builddir}/Samples/Common/bin'
-AC_SUBST(abs_top_builddir)
-AC_SUBST(ogreexecdir)
+dnl versioning info for libtool
+dnl Note this is the ABI version which is not the same as our actual library version
+OGREMAIN_CURRENT=13
+OGREMAIN_REVISION=0
+OGREMAIN_AGE=0
+OGREMAIN_VERSION_INFO=$OGREMAIN_CURRENT:$OGREMAIN_REVISION:$OGREMAIN_AGE
+AC_SUBST(OGREMAIN_VERSION_INFO)
+
 
 dnl Create the makefiles
 AC_CONFIG_FILES([Makefile \
     OgreMain/Makefile \
     OgreMain/src/Makefile \
     OgreMain/include/Makefile \
-    OgreMain/include/GLX/Makefile \
-    OgreMain/include/gtk/Makefile \
+    PlatformManagers/Makefile \
+    PlatformManagers/SDL/Makefile \
+    PlatformManagers/SDL/src/Makefile
+    PlatformManagers/SDL/include/Makefile
+    PlatformManagers/gtk/Makefile \
+    PlatformManagers/gtk/src/Makefile \
+    PlatformManagers/gtk/include/Makefile \
+    PlatformManagers/GLX/Makefile \
+    PlatformManagers/GLX/src/Makefile \
+    PlatformManagers/GLX/include/Makefile \
+    PlatformManagers/Win32/Makefile \
+    PlatformManagers/Win32/src/Makefile \
+    PlatformManagers/Win32/include/Makefile \
     PlugIns/Makefile \
     PlugIns/BSPSceneManager/Makefile \
     PlugIns/BSPSceneManager/src/Makefile \
@@ -161,9 +149,9 @@ AC_CONFIG_FILES([Makefile \
     Samples/CubeMapping/Makefile \
     Samples/CubeMapping/src/Makefile \
     Samples/CubeMapping/include/Makefile \
-    Samples/DeferredShading/Makefile \
-    Samples/DeferredShading/src/Makefile \
-    Samples/DeferredShading/include/Makefile  \
+	Samples/DeferredShading/Makefile \
+	Samples/DeferredShading/src/Makefile \
+	Samples/DeferredShading/include/Makefile  \
     Samples/Dot3Bump/Makefile \
     Samples/Dot3Bump/src/Makefile \
     Samples/EnvMapping/Makefile \
@@ -217,15 +205,12 @@ AC_CONFIG_FILES([Makefile \
     Samples/Water/Makefile \
     Samples/Water/src/Makefile \
     Samples/Water/include/Makefile \
-    Samples/DynTex/Makefile \
-    Samples/DynTex/src/Makefile \
-    Samples/DynTex/include/Makefile \
-    Samples/VolumeTex/Makefile \
-    Samples/VolumeTex/src/Makefile \
-    Samples/VolumeTex/include/Makefile \
-    Samples/Instancing/Makefile \
-    Samples/Instancing/src/Makefile \
-    Samples/Instancing/include/Makefile \
+	Samples/DynTex/Makefile \
+	Samples/DynTex/src/Makefile \
+	Samples/DynTex/include/Makefile \
+	Samples/VolumeTex/Makefile \
+	Samples/VolumeTex/src/Makefile \
+	Samples/VolumeTex/include/Makefile \
     Tests/Makefile \
     Tests/src/Makefile \
     Tools/Makefile \
@@ -244,25 +229,3 @@ AC_CONFIG_FILES([Makefile \
     ])
 
 AC_OUTPUT
-
-dnl Provide a nice final configuration status display
-
-ft_detected=yes
-test "x$no_ft" == "xyes" && ft_detected=no
-
-echo "--------===[ Configuration summary ]===--------"
-echo "    Target platform                 : $OGRE_PLATFORM"
-echo "    OpenGL Ogre support             : $OGRE_GLSUPPORT"
-echo "    GUI library to use              : $with_gui"
-echo "    Use double precision arithmetic : $build_double"
-echo "    Support for threading           : $build_threads"
-echo "    Use STLport                     : $ac_cv_use_stlport"
-echo "    Use FreeType                    : $ft_detected"
-echo "    Use FreeImage                   : $build_freeimage"
-echo "    Build OGRE demos                : $build_ogre_demos"
-test "x$build_ogre_demos" == "xyes" && \
-echo "    Build CEGUI demos               : $build_cegui_sample"
-echo "    Build the OpenEXR plugin        : $build_exr"
-echo "    Build the Cg plugin             : $build_cg"
-echo "    Build the DirectX 9 plugin      : $build_dx9"
-echo "--------===============================--------"
