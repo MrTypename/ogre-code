@@ -116,7 +116,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     Technique* SubEntity::getTechnique(void) const
     {
-        return mpMaterial->getBestTechnique(mMaterialLodIndex, this);
+        return mpMaterial->getBestTechnique(mMaterialLodIndex);
     }
     //-----------------------------------------------------------------------
     void SubEntity::getRenderOperation(RenderOperation& op)
@@ -190,6 +190,17 @@ namespace Ogre {
             }
         }
     }
+    //-----------------------------------------------------------------------
+    const Quaternion& SubEntity::getWorldOrientation(void) const
+    {
+        return mParentEntity->mParentNode->_getDerivedOrientation();
+    }
+    //-----------------------------------------------------------------------
+    const Vector3& SubEntity::getWorldPosition(void) const
+    {
+        return mParentEntity->mParentNode->_getDerivedPosition();
+    }
+
     //-----------------------------------------------------------------------
     unsigned short SubEntity::getNumWorldTransforms(void) const
     {

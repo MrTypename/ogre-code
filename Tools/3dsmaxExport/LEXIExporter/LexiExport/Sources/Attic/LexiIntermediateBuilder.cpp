@@ -504,18 +504,15 @@ CIntermediateMesh* CIntermediateBuilder::CreateMesh(unsigned int iNodeID)
 	unsigned int iNumTriangles = pMesh->getNumFaces();
 	CIntermediateMesh* pIMesh = new CIntermediateMesh(iNumTriangles, iNodeID);
 
-	if(m_bExportSkeleton)
-	{
-		LOGDEBUG "Construct intermediate skeletonbuilder");
-		if(m_pSkeletonBuilder == NULL)
-			m_pSkeletonBuilder = new CIntermediateBuilderSkeleton();
+	LOGDEBUG "Construct intermediate skeletonbuilder");
+	if(m_pSkeletonBuilder == NULL)
+		m_pSkeletonBuilder = new CIntermediateBuilderSkeleton();
 
-		LOGDEBUG "Build skeleton");
-		m_pSkeletonBuilder->BuildIntermediateSkeleton(pRoot);
+	LOGDEBUG "Build skeleton");
+	m_pSkeletonBuilder->BuildIntermediateSkeleton(pRoot);
 
-		LOGDEBUG "Set skeleton");
-		pIMesh->SetSkeleton( m_pSkeletonBuilder->GetSkeleton() );
-	}
+	LOGDEBUG "Set skeleton");
+	pIMesh->SetSkeleton( m_pSkeletonBuilder->GetSkeleton() );
 
 	LOGDEBUG "Iterate triangles");
 	//
@@ -553,8 +550,7 @@ CIntermediateMesh* CIntermediateBuilder::CreateMesh(unsigned int iNodeID)
 
 		// CALL ON_CREATE_INTERMEDIATE_MESH_TRIANGLE_LOOP(pMesh, idx, tri.m_Vertices[wind[j]], x)
 
-		//if(m_pSkeletonBuilder != NULL)
-		if(m_bExportSkeleton)
+		if(m_pSkeletonBuilder != NULL)
 		{
 			for (int j=0; j<3; j++)
 			{
@@ -565,16 +561,12 @@ CIntermediateMesh* CIntermediateBuilder::CreateMesh(unsigned int iNodeID)
 		}
 	}
 
-	if(m_bExportSkeleton)
-	{
-		LOGDEBUG "Finalizing intermediate skeleton");
-		CIntermediateBuilder::Get()->GetSkeletonBuilder()->Finalize();
-	}
+	LOGDEBUG "Finalize");
+	CIntermediateBuilder::Get()->GetSkeletonBuilder()->Finalize();
 
 	LOGDEBUG "CIntermediate::CreateMesh() - Building Material List..");
 
 	pIMesh->BuildMaterialList();
-//	pIMesh->BuildSubmeshIndexMaps();
 
 
 	// CALL ON_CREATE_INTERMEDIATE_MESH_END()

@@ -54,7 +54,6 @@ public:
 
 	// Global settings
 	CDDObject* GetGlobalSettings();
-	CDDObject* GetRootConfig() const;
 
 	//
 	void	ShowLog();

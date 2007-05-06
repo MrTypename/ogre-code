@@ -80,8 +80,7 @@ uint32 SceneManager::ENTITY_TYPE_MASK			= 0x40000000;
 uint32 SceneManager::FX_TYPE_MASK				= 0x20000000;
 uint32 SceneManager::STATICGEOMETRY_TYPE_MASK   = 0x10000000;
 uint32 SceneManager::LIGHT_TYPE_MASK			= 0x08000000;
-uint32 SceneManager::FRUSTUM_TYPE_MASK			= 0x04000000;
-uint32 SceneManager::USER_TYPE_MASK_LIMIT         = SceneManager::FRUSTUM_TYPE_MASK;
+uint32 SceneManager::USER_TYPE_MASK_LIMIT         = SceneManager::LIGHT_TYPE_MASK;
 //-----------------------------------------------------------------------
 SceneManager::SceneManager(const String& name) :
 mName(name),
@@ -2618,7 +2617,7 @@ void SceneManager::renderSingleObject(const Renderable* rend, const Pass* pass,
 		// Precedence is Camera, Object, Material
 		// Camera might not override object if not overrideable
 		PolygonMode reqMode = pass->getPolygonMode();
-		if (pass->getPolygonModeOverrideable() && rend->getPolygonModeOverrideable())
+		if (rend->getPolygonModeOverrideable())
 		{
             PolygonMode camPolyMode = mCameraInProgress->getPolygonMode();
 			// check camera detial only when render detail is overridable

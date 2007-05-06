@@ -45,13 +45,11 @@ static void ModifyCallback(void* param, NotifyInfo* info)
 {
 	switch(info->intcode)
 	{
+		case NOTIFY_SYSTEM_POST_RESET:
 		case NOTIFY_SYSTEM_POST_NEW:
 		case NOTIFY_FILE_POST_MERGE:
 		case NOTIFY_FILE_POST_OPEN:
 		case NOTIFY_POST_IMPORT:
-		case NOTIFY_SYSTEM_POST_RESET:
-		case NOTIFY_FILE_OPEN_FAILED:
-		case NOTIFY_IMPORT_FAILED:
 			((CExporter*)param)->LoadConfig();
 			break;
 	}
@@ -67,11 +65,6 @@ CExporter* CExporter::Get()
 CDDObject* CExporter::GetGlobalSettings()
 {
 	return m_pGlobalSettings;
-}
-
-CDDObject* CExporter::GetRootConfig() const
-{
-	return m_pExportRoot->GetConfig();
 }
 
 //
@@ -97,8 +90,6 @@ CExporter::CExporter(CExporterDesc* pDesc)
 	RegisterNotification(ModifyCallback, this, NOTIFY_FILE_POST_OPEN);
 	RegisterNotification(ModifyCallback, this, NOTIFY_FILE_POST_MERGE);
 	RegisterNotification(ModifyCallback, this, NOTIFY_POST_IMPORT);
-	RegisterNotification(ModifyCallback, this, NOTIFY_FILE_OPEN_FAILED);
-	RegisterNotification(ModifyCallback, this, NOTIFY_IMPORT_FAILED);
 }
 
 CExporter::~CExporter()
@@ -109,8 +100,6 @@ CExporter::~CExporter()
 	UnRegisterNotification(ModifyCallback, this, NOTIFY_FILE_POST_OPEN);
 	UnRegisterNotification(ModifyCallback, this, NOTIFY_FILE_POST_MERGE);
 	UnRegisterNotification(ModifyCallback, this, NOTIFY_POST_IMPORT);
-	UnRegisterNotification(ModifyCallback, this, NOTIFY_FILE_OPEN_FAILED);
-	UnRegisterNotification(ModifyCallback, this, NOTIFY_IMPORT_FAILED);
 
 	try {
 		//
@@ -159,7 +148,7 @@ void CExporter::LoadConfig()
 	} catch(...)
 	{	
 	}
-	//pRootConfig->SaveASCII("C:\\loadStream.txt");
+	pRootConfig->SaveASCII("C:\\loadStream.txt");
 	// Create new export root object
 	m_pExportRoot=(CExportObjectRoot*)CExportObject::Construct(pRootConfig);	
 
@@ -182,7 +171,7 @@ void CExporter::SaveConfig()
 	CDDObject *pConfig=new CDDObject();
 	m_pExportRoot->SaveConfig(pConfig);
 
-	//pConfig->SaveASCII("C:\\saveStream.txt");
+	pConfig->SaveASCII("C:\\saveStream.txt");
 
 	pConfig->ToDataStream(&stream);
 	pConfig->Release();
@@ -381,8 +370,6 @@ void CExporter::ShowLog()
 void CExporter::ExportItems(bool bForceAll)
 {
 	if(m_pExportRoot==NULL || !m_pExportRoot->HasChildren()) return;
-
-	if(!ValidateFilenames()) return;
 
 	m_pMemoryLog->Flush();
 	m_pMemoryLog->LogImportant(true);

@@ -1,7 +1,7 @@
 \input texinfo   @c -*-texinfo-*-
 @c %**start of header
 @setfilename manual.info
-@settitle OGRE Manual v1.6.0 ('Shoggoth')
+@settitle OGRE Manual v1.4.1 ('Eihort')
 @c %**end of header
    
 @titlepage
@@ -509,8 +509,6 @@ Here are the attributes you can use in a 'pass' section of a .material script:
 @ref{shading}
 @item 
 @ref{polygon_mode}
-@item 
-@ref{polygon_mode_overrideable}
 @item
 @ref{fog_override}
 @item
@@ -791,12 +789,6 @@ Only the points of each polygon are rendered.
 @end table
 Default: polygon_mode solid@*@*
 
-@anchor{polygon_mode_overrideable}
-@subheading polygon_mode_overrideable
-
-Sets whether or not the @ref{polygon_mode} set on this pass can be downgraded by the camera, if the camera itself is set to a lower polygon mode. If set to false, this pass will always be rendered at its own chosen polygon mode no matter what the camera says. The default is true.@*@*
-
-Format: polygon_mode_overrideable <true|false>@*@*
 
 @anchor{fog_override}
 @subheading fog_override
@@ -2575,7 +2567,9 @@ default: nonvisible_update_timeout 0@*
 
 @node Particle Emitters
 @subsection Particle Emitters
-Particle emitters are classified by 'type' e.g. 'Point' emitters emit from a single point whilst 'Box' emitters emit randomly from an area. New emitters can be added to Ogre by creating plugins. You add an emitter to a system by nesting another section within it, headed with the keyword 'emitter' followed by the name of the type of emitter (case sensitive). Ogre currently supports 'Point', 'Box', 'Cylinder', 'Ellipsoid', 'HollowEllipsoid' and 'Ring' emitters.
+Particle emitters are classified by 'type' e.g. 'Point' emitters emit from a single point whilst 'Box' emitters emit randomly from an area. New emitters can be added to Ogre by creating plugins. You add an emitter to a system by nesting another section within it, headed with the keyword 'emitter' followed by the name of the type of emitter (case sensitive). Ogre currently supports 'Point', 'Box', 'Cylinder', 'Ellipsoid', 'HollowEllipsoid' and 'Ring' emitters.@*@*
+
+It is also possible to 'emit emitters' - that is, have new emitters spawned based on the position of particles. @xref{Emitting Emitters}
 
 @subheading Particle Emitter Universal Attributes
 @itemize @bullet
@@ -2872,6 +2866,21 @@ The height of the inner area which does not emit any particles.
 @*@*
 
 See also: @ref{Particle Scripts}, @ref{Particle Emitters}
+
+@subheading Emitting Emitters
+@anchor{Emitting Emitters}
+
+It is possible to spawn new emitters on the expiry of particles, for example to product 'firework' style effects. This is controlled via the following directives:
+
+@table @asis
+@item emit_emitter_quota
+This parameter is a system-level parameter telling the system how many emitted emitters may be in use at any one time. This is just to allow for the space allocation process.
+@item name
+This parameter is an emitter-level parameter, giving a name to an emitter. This can then be referred to in another emitter as the new emitter type to spawn when an emitted particle dies.
+@item emit_emitter
+This is an emitter-level parameter, and if specified, it means that when particles emitted by this emitter die, they spawn a new emitter of the named type.
+@end table
+
 
 @node Particle Affectors
 @subsection Particle Affectors

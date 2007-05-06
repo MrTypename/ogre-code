@@ -267,10 +267,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Sources\GDIFolderDialog.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Sources\GDIListBox.cpp"
 				>
 			</File>
@@ -382,10 +378,6 @@
 			</File>
 			<File
 				RelativePath=".\Sources\GDIEdit.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Sources\GDIFolderDialog.h"
 				>
 			</File>
 			<File

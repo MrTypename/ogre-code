@@ -320,7 +320,7 @@ namespace Ogre {
 
 	}
 	//-----------------------------------------------------------------------------
-    Technique* Material::getBestTechnique(unsigned short lodIndex, const Renderable* rend)
+    Technique* Material::getBestTechnique(unsigned short lodIndex)
     {
         if (mSupportedTechniques.empty())
         {
@@ -329,19 +329,13 @@ namespace Ogre {
         else
         {
 			Technique* ret = 0;
-			MaterialManager& matMgr = MaterialManager::getSingleton();
 			// get scheme
 			BestTechniquesBySchemeList::iterator si = 
-				mBestTechniquesBySchemeList.find(matMgr._getActiveSchemeIndex());
+				mBestTechniquesBySchemeList.find(
+				MaterialManager::getSingleton()._getActiveSchemeIndex());
 			// scheme not found?
 			if (si == mBestTechniquesBySchemeList.end())
 			{
-				// listener specified alternative technique available?
-				ret = matMgr._arbitrateMissingTechniqueForActiveScheme(this, lodIndex, rend);
-				if (ret)
-					return ret;
-
-				// Nope, use default
 				// get the first item, will be 0 (the default) if default
 				// scheme techniques exist, otherwise the earliest defined
 				si = mBestTechniquesBySchemeList.begin();

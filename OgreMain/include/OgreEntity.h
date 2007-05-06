@@ -287,6 +287,10 @@ namespace Ogre {
 			~EntityShadowRenderable();
 			/// Overridden from ShadowRenderable
 			void getWorldTransforms(Matrix4* xform) const;
+			/// Overridden from ShadowRenderable
+			const Quaternion& getWorldOrientation(void) const;
+			/// Overridden from ShadowRenderable
+			const Vector3& getWorldPosition(void) const;
 			HardwareVertexBufferSharedPtr getPositionBuffer(void) { return mPositionBuffer; }
 			HardwareVertexBufferSharedPtr getWBuffer(void) { return mWBuffer; }
 			/// Rebind the source positions (for temp buffer users)
@@ -741,11 +745,6 @@ namespace Ogre {
 			complete.
 		*/
 		void backgroundLoadingComplete(Resource* res);
-
-		/// @copydoc MovableObject::visitRenderables
-		void visitRenderables(Renderable::Visitor* visitor, 
-			bool debugRenderables = false);
-
 
 
 
