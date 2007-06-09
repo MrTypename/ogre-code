@@ -441,7 +441,7 @@ protected:
 		headNode->attachObject(e);
 		headNode->setScale(7,7,7);
 		headNode->setPosition(0,200,0);
-		headNode->yaw(Degree(15));
+		e->setNormaliseNormals(true);
 		mCamera->move(Vector3(0,350,0));
 	}
 

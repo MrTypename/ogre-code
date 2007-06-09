@@ -96,7 +96,6 @@ void CExportProgressDlg::LocalStep(const char *pszDesc)
 void CExportProgressDlg::ExportDone(void)
 {
 	DestroyWindow();
-	CProfiler::getSingletonPtr()->WriteLog("Profiler.log");
 }
 
 // Check if we want to abort current export

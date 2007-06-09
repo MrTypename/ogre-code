@@ -1,7 +1,7 @@
 \input texinfo   @c -*-texinfo-*-
 @c %**start of header
 @setfilename manual.info
-@settitle OGRE Manual v1.5.0 ('Shoggoth')
+@settitle OGRE Manual v1.4.2 ('Eihort')
 @c %**end of header
    
 @titlepage
@@ -490,8 +490,6 @@ Here are the attributes you can use in a 'pass' section of a .material script:
 @item
 @ref{scene_blend}
 @item
-@ref{separate_scene_blend}
-@item
 @ref{depth_check}
 @item
 @ref{depth_write}
@@ -502,12 +500,6 @@ Here are the attributes you can use in a 'pass' section of a .material script:
 @item
 @ref{alpha_rejection}
 @item
-@ref{light_scissor}
-@item
-@ref{light_clip_planes}
-@item
-@ref{normalise_normals}
-@item
 @ref{cull_hardware}
 @item
 @ref{cull_software}
@@ -517,8 +509,6 @@ Here are the attributes you can use in a 'pass' section of a .material script:
 @ref{shading}
 @item 
 @ref{polygon_mode}
-@item 
-@ref{polygon_mode_overrideable}
 @item
 @ref{fog_override}
 @item
@@ -656,27 +646,7 @@ The texel alpha value
 @end table
 @*
 Default: scene_blend one zero (opaque)
-@*@*
-Also see @ref{separate_scene_blend}.
-
-@anchor{separate_scene_blend}
-@subheading separate_scene_blend
-
-This option operates in exactly the same way as @ref{scene_blend}, except that it allows you to specify the operations to perform between the rendered pixel and the frame buffer separately for colour and alpha components. By nature this option is only useful when rendering to targets which have an alpha channel which you'll use for later processing, such as a render texture.@*@*
-
-Format1: separate_scene_blend <simple_colour_blend> <simple_alpha_blend>@*@*
-
-Example: separate_scene_blend add modulate@*@*
-
-This example would add colour components but multiply alpha components. The blend modes available are as in @ref{scene_blend}. The more advanced form is also available:@*@*
-
-Format2: separate_scene_blend <colour_src_factor> <colour_dest_factor> <alpha_src_factor> <alpha_dest_factor>@*@*
-
-Example: separate_scene_blend one one_minus_dest_alpha one one @*@*
-
-Again the options available in the second format are the same as those in the second format of @ref{scene_blend}.
-
-
+@*
 @anchor{depth_check}
 @subheading depth_check
 
@@ -749,41 +719,6 @@ Example: alpha_rejection greater_equal 128@*@*
 The function parameter can be any of the options listed in the material depth_function attribute. The value parameter can theoretically be any value between 0 and 255, but is best limited to 0 or 128 for hardware compatibility.@*@*
 
 Default: alpha_rejection always_pass@*@*
-@anchor{light_scissor}
-@subheading light_scissor
-
-Sets whether when rendering this pass, rendering will be limited to a screen-space scissor rectangle representing the coverage of the light(s) being used in this pass, derived from their attenuation ranges.@*@*
-
-Format: light_scissor <on|off>@*@*
-Default: light_scissor off@*@*
-
-This option is usually only useful if this pass is an additive lighting pass, and is at least the second one in the technique. Ie areas which are not affected by the current light(s) will never need to be rendered. If there is more than one light being passed to the pass, then the scissor is defined to be the rectangle which covers all lights in screen-space. Directional lights are ignored since they are infinite.@*@*
-
-This option does not need to be specified if you are using a standard additive shadow mode, ie SHADOWTYPE_STENCIL_ADDITIVE or SHADOWTYPE_TEXTURE_ADDITIVE, since it is the default behaviour to use a scissor for each additive shadow pass. However, if you're not using shadows, or you're using @ref{Integrated Texture Shadows} where passes are specified in a custom manner, then this could be of use to you.
-
-@anchor{light_clip_planes}
-@subheading light_clip_planes
-
-Sets whether when rendering this pass, triangle setup will be limited to clipping volume covered by the light. Directional lights are ignored, point lights clip to a cube the size of the attenuation range or the light, and spotlights clip to a pyramid bounding the spotlight angle and attenuation range.@*@*
-
-Format: light_clip_planes <on|off>@*@*
-Default: light_clip_planes off@*@*
-
-This option will only function if there is a single non-directional light being used in this pass. If there is more than one light, or only directional lights, then no clipping will occur. If there are no lights at all then the objects won't be rendered at all.@*@*
-
-When using a standard additive shadow mode, ie SHADOWTYPE_STENCIL_ADDITIVE or SHADOWTYPE_TEXTURE_ADDITIVE, you have the option of enabling clipping for all light passes by calling SceneManager::setShadowUseLightClipPlanes regardless of this pass setting, since rendering is done lightwise anyway. This is off by default since using clip planes is not always faster - it depends on how much of the scene the light volumes cover. Generally the smaller your lights are the more chance you'll see a benefit rather than a penalty from clipping. If you're not using shadows, or you're using @ref{Integrated Texture Shadows} where passes are specified in a custom manner, then specify the option per-pass using this attribute.@*@*
-A specific note about OpenGL: user clip planes are completely ignored when you use an ARB vertex program. This means light clip planes won't help much if you use ARB vertex programs on GL, although OGRE will perform some optimisation of its own, in that if it sees that the clip volume is completely off-screen, it won't perform a render at all. When using GLSL, user clipping can be used but you have to use glClipVertex in your shader, see the GLSL documentation for more information. In Direct3D user clip planes are always respected.
-
-@anchor{normalise_normals}
-@subheading normalise_normals
-
-Sets whether or not this pass renders with all vertex normals being automatically re-normalised.@*
-
-Format: normalise_normals <on|off>@*@*
-
-Scaling objects causes normals to also change magnitude, which can throw off your lighting calculations. By default, the SceneManager detects this and will automatically renormalise normals for any scaled object, but this has a cost. If you'd prefer to control this manually, call SceneManager::setNormaliseNormalsOnScale(false) and then use this option on materials which are sensitive to normals being resized. @*@*
-
-Default: normalise_normals off@*
 
 @anchor{cull_hardware}
 @subheading cull_hardware
@@ -854,12 +789,6 @@ Only the points of each polygon are rendered.
 @end table
 Default: polygon_mode solid@*@*
 
-@anchor{polygon_mode_overrideable}
-@subheading polygon_mode_overrideable
-
-Sets whether or not the @ref{polygon_mode} set on this pass can be downgraded by the camera, if the camera itself is set to a lower polygon mode. If set to false, this pass will always be rendered at its own chosen polygon mode no matter what the camera says. The default is true.@*@*
-
-Format: polygon_mode_overrideable <true|false>@*@*
 
 @anchor{fog_override}
 @subheading fog_override

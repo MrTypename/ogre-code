@@ -26,8 +26,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "LexiStdAfx.h"
 #include <direct.h>
-#include <dbghelp.h>
-#pragma comment(lib,"Dbghelp.lib")
 
 template<> COgreCore* Ogre::Singleton<COgreCore>::ms_Singleton = 0;
 
@@ -44,7 +42,6 @@ COgreCore* COgreCore::getSingletonPtr( void )
 
 COgreCore::COgreCore(HWND hwnd)
 {
-	REGISTER_MODULE("Ogre Core")
 
 	char* szOldPath;
 	szOldPath = _getcwd(NULL, 0);
@@ -56,30 +53,12 @@ COgreCore::COgreCore(HWND hwnd)
 	Ogre::StringUtil::splitFilename(cwd, fileName, filePath);
 
 	_chdir(filePath.c_str());
-	Ogre::String logFileName = filePath;
-#ifdef _DEBUG
-	filePath+=Ogre::String("plugins_d.cfg");
-#else
 	filePath+=Ogre::String("plugins.cfg");
-#endif
-
-	// Init logmanager so it uses the LEXIExpoter\Logs dir
-	logFileName += "LEXIExporter/Logs/Ogre.log";
-	int n = logFileName.find("/");
-	while(n != Ogre::String::npos)
-	{
-		logFileName.replace(n,1,"\\");
-		n = logFileName.find("/");
-	}
-	::MakeSureDirectoryPathExists(logFileName.c_str());
-	Ogre::LogManager* pLogManager = new Ogre::LogManager();
-	pLogManager->createLog(logFileName, true, true);
 
 	m_pRoot = new Ogre::Root(filePath.c_str());
 
 	// setup resources
 	Ogre::ConfigFile cf;
-
 	cf.load("resources.cfg");
 
 	// Go through all sections & settings in the file
@@ -103,12 +82,6 @@ COgreCore::COgreCore(HWND hwnd)
 
 	Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup( Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
 }
-
-COgreCore::~COgreCore()
-{
-	UNREGISTER_MODULE
-}
-
 
 bool COgreCore::configureRenderer(HWND hwnd)
 {

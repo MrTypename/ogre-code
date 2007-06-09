@@ -80,8 +80,7 @@ uint32 SceneManager::ENTITY_TYPE_MASK			= 0x40000000;
 uint32 SceneManager::FX_TYPE_MASK				= 0x20000000;
 uint32 SceneManager::STATICGEOMETRY_TYPE_MASK   = 0x10000000;
 uint32 SceneManager::LIGHT_TYPE_MASK			= 0x08000000;
-uint32 SceneManager::FRUSTUM_TYPE_MASK			= 0x04000000;
-uint32 SceneManager::USER_TYPE_MASK_LIMIT         = SceneManager::FRUSTUM_TYPE_MASK;
+uint32 SceneManager::USER_TYPE_MASK_LIMIT         = SceneManager::LIGHT_TYPE_MASK;
 //-----------------------------------------------------------------------
 SceneManager::SceneManager(const String& name) :
 mName(name),
@@ -104,7 +103,6 @@ mWorldGeometryRenderQueue(RENDER_QUEUE_WORLD_GEOMETRY_1),
 mLastFrameNumber(0),
 mResetIdentityView(false),
 mResetIdentityProj(false),
-mNormaliseNormalsOnScale(true),
 mLightsDirtyCounter(0),
 mShadowCasterPlainBlackPass(0),
 mShadowReceiverPass(0),
@@ -124,7 +122,6 @@ mIlluminationStage(IRS_NONE),
 mShadowTextureConfigDirty(true),
 mShadowUseInfiniteFarPlane(true),
 mShadowCasterRenderBackFaces(true),
-mShadowAdditiveLightClip(false),
 mShadowCasterSphereQuery(0),
 mShadowCasterAABBQuery(0),
 mShadowFarDist(0),
@@ -923,17 +920,8 @@ const Pass* SceneManager::_setPass(const Pass* pass, bool evenIfSuppressed,
 		// The rest of the settings are the same no matter whether we use programs or not
 
 		// Set scene blending
-		if ( pass->hasSeparateSceneBlending( ) )
-		{
-			mDestRenderSystem->_setSeparateSceneBlending(
-				pass->getSourceBlendFactor(), pass->getDestBlendFactor(),
-				pass->getSourceBlendFactorAlpha(), pass->getDestBlendFactorAlpha());
-		}
-		else
-		{
-			mDestRenderSystem->_setSceneBlending(
-				pass->getSourceBlendFactor(), pass->getDestBlendFactor());
-		}
+		mDestRenderSystem->_setSceneBlending(
+			pass->getSourceBlendFactor(), pass->getDestBlendFactor());
 
 		// Set point parameters
 		mDestRenderSystem->_setPointParameters(
@@ -965,7 +953,7 @@ const Pass* SceneManager::_setPass(const Pass* pass, bool evenIfSuppressed,
 				// say that when texture shadows are enabled, the lights up to the
 				// number of texture shadows will be fixed for all objects
 				// to match the shadow textures that have been generated
-				// see Listener::sortLightsAffectingFrustum and
+				// see ShadowListener::sortLightsAffectingFrustum and
 				// MovableObject::Listener::objectQueryLights
 				// Note that light iteration throws the indexes out so we don't bind here
 				// if that's the case, we have to bind when lights are iterated
@@ -1109,10 +1097,6 @@ void SceneManager::_renderScene(Camera* camera, Viewport* vp, bool includeOverla
 	mActiveQueuedRenderableVisitor->targetSceneMgr = this;
 	mAutoParamDataSource.setCurrentSceneManager(this);
 
-	// clear cached light clipping info
-	// different from finding lights, should always be done here
-	mLightClippingInfoMap.clear();
-
     if (isShadowTechniqueInUse())
     {
         // Prepare shadow materials
@@ -1224,10 +1208,22 @@ void SceneManager::_renderScene(Camera* camera, Viewport* vp, bool includeOverla
 		// Set camera window clipping planes (if any)
 		if (mDestRenderSystem->getCapabilities()->hasCapability(RSC_USER_CLIP_PLANES))
 		{
-			mDestRenderSystem->resetClipPlanes();
 			if (camera->isWindowSet())  
 			{
-				mDestRenderSystem->setClipPlanes(camera->getWindowPlanes());
+				const std::vector<Plane>& planeList = 
+					camera->getWindowPlanes();
+				for (ushort i = 0; i < 4; ++i)
+				{
+					mDestRenderSystem->enableClipPlane(i, true);
+					mDestRenderSystem->setClipPlane(i, planeList[i]);
+				}
+			}
+			else
+			{
+				for (ushort i = 0; i < 4; ++i)
+				{
+					mDestRenderSystem->enableClipPlane(i, false);
+				}
 			}
 		}
 
@@ -1248,10 +1244,8 @@ void SceneManager::_renderScene(Camera* camera, Viewport* vp, bool includeOverla
 			camVisObjIt->second.reset();
 
 			// Parse the scene and tag visibles
-			firePreFindVisibleObjects(vp);
 			_findVisibleObjects(camera, &(camVisObjIt->second),
 				mIlluminationStage == IRS_RENDER_TO_TEXTURE? true : false);
-			firePostFindVisibleObjects(vp);
 
 			mAutoParamDataSource.setMainCamBoundsInfo(&(camVisObjIt->second));
 		}
@@ -1896,9 +1890,9 @@ void SceneManager::renderAdditiveStencilShadowedQueueGroupObjects(
         lightList.clear();
 
         // Render all the ambient passes first, no light iteration, no lights
-        renderObjects(pPriorityGrp->getSolidsBasic(), om, false, false, &lightList);
+        renderObjects(pPriorityGrp->getSolidsBasic(), om, false, &lightList);
         // Also render any objects which have receive shadows disabled
-        renderObjects(pPriorityGrp->getSolidsNoShadowReceive(), om, true, true);
+        renderObjects(pPriorityGrp->getSolidsNoShadowReceive(), om, true);
 
 
         // Now iterate per light
@@ -1910,26 +1904,12 @@ void SceneManager::renderAdditiveStencilShadowedQueueGroupObjects(
         {
             Light* l = *li;
             // Set light state
-			if (lightList.empty())
-				lightList.push_back(l);
-			else
-				lightList[0] = l;
-
-			// set up scissor, will cover shadow vol and regular light rendering
-			ClipResult scissored = buildAndSetScissor(lightList, mCameraInProgress);
-			ClipResult clipped = CLIPPED_NONE;
-			if (mShadowAdditiveLightClip)
-				clipped = buildAndSetLightClip(lightList);
-
-			// skip light if scissored / clipped entirely
-			if (scissored == CLIPPED_ALL || clipped == CLIPPED_ALL)
-				continue;
 
             if (l->getCastShadows())
             {
                 // Clear stencil
                 mDestRenderSystem->clearFrameBuffer(FBT_STENCIL);
-                renderShadowVolumesToStencil(l, mCameraInProgress, false);
+                renderShadowVolumesToStencil(l, mCameraInProgress);
                 // turn stencil check on
                 mDestRenderSystem->setStencilCheckEnabled(true);
                 // NB we render where the stencil is equal to zero to render lit areas
@@ -1937,23 +1917,22 @@ void SceneManager::renderAdditiveStencilShadowedQueueGroupObjects(
             }
 
             // render lighting passes for this light
-            renderObjects(pPriorityGrp->getSolidsDiffuseSpecular(), om, false, false, &lightList);
+            if (lightList.empty())
+                lightList.push_back(l);
+            else
+                lightList[0] = l;
+            renderObjects(pPriorityGrp->getSolidsDiffuseSpecular(), om, false, &lightList);
 
             // Reset stencil params
             mDestRenderSystem->setStencilBufferParams();
             mDestRenderSystem->setStencilCheckEnabled(false);
             mDestRenderSystem->_setDepthBufferParams();
 
-			if (scissored == CLIPPED_SOME)
-				resetScissor();
-			if (clipped == CLIPPED_SOME)
-				resetLightClip();
-
         }// for each light
 
 
         // Now render decal passes, no need to set lights as lighting will be disabled
-        renderObjects(pPriorityGrp->getSolidsDecal(), om, false, false);
+        renderObjects(pPriorityGrp->getSolidsDecal(), om, false);
 
 
     }// for each priority
@@ -1966,7 +1945,7 @@ void SceneManager::renderAdditiveStencilShadowedQueueGroupObjects(
 
         // Do transparents (always descending sort)
         renderObjects(pPriorityGrp->getTransparents(), 
-			QueuedRenderableCollection::OM_SORT_DESCENDING, true, true);
+			QueuedRenderableCollection::OM_SORT_DESCENDING, true);
 
     }// for each priority
 
@@ -1996,7 +1975,7 @@ void SceneManager::renderModulativeStencilShadowedQueueGroupObjects(
         pPriorityGrp->sort(mCameraInProgress);
 
         // Do (shadowable) solids
-        renderObjects(pPriorityGrp->getSolidsBasic(), om, true, true);
+        renderObjects(pPriorityGrp->getSolidsBasic(), om, true);
     }
 
 
@@ -2011,14 +1990,14 @@ void SceneManager::renderModulativeStencilShadowedQueueGroupObjects(
         {
             // Clear stencil
             mDestRenderSystem->clearFrameBuffer(FBT_STENCIL);
-            renderShadowVolumesToStencil(l, mCameraInProgress, true);
+            renderShadowVolumesToStencil(l, mCameraInProgress);
             // render full-screen shadow modulator for all lights
             _setPass(mShadowModulativePass);
             // turn stencil check on
             mDestRenderSystem->setStencilCheckEnabled(true);
             // NB we render where the stencil is not equal to zero to render shadows, not lit areas
             mDestRenderSystem->setStencilBufferParams(CMPF_NOT_EQUAL, 0);
-            renderSingleObject(mFullScreenQuad, mShadowModulativePass, false, false);
+            renderSingleObject(mFullScreenQuad, mShadowModulativePass, false);
             // Reset stencil params
             mDestRenderSystem->setStencilBufferParams();
             mDestRenderSystem->setStencilCheckEnabled(false);
@@ -2034,7 +2013,7 @@ void SceneManager::renderModulativeStencilShadowedQueueGroupObjects(
         RenderPriorityGroup* pPriorityGrp = groupIt2.getNext();
 
         // Do non-shadowable solids
-        renderObjects(pPriorityGrp->getSolidsNoShadowReceive(), om, true, true);
+        renderObjects(pPriorityGrp->getSolidsNoShadowReceive(), om, true);
 
     }// for each priority
 
@@ -2047,7 +2026,7 @@ void SceneManager::renderModulativeStencilShadowedQueueGroupObjects(
 
         // Do transparents (always descending sort)
         renderObjects(pPriorityGrp->getTransparents(), 
-			QueuedRenderableCollection::OM_SORT_DESCENDING, true, true);
+			QueuedRenderableCollection::OM_SORT_DESCENDING, true);
 
     }// for each priority
 
@@ -2088,13 +2067,13 @@ void SceneManager::renderTextureShadowCasterQueueGroupObjects(
         pPriorityGrp->sort(mCameraInProgress);
 
         // Do solids, override light list incase any vertex programs use them
-        renderObjects(pPriorityGrp->getSolidsBasic(), om, false, false, &nullLightList);
-        renderObjects(pPriorityGrp->getSolidsNoShadowReceive(), om, false, false, &nullLightList);
+        renderObjects(pPriorityGrp->getSolidsBasic(), om, false, &nullLightList);
+        renderObjects(pPriorityGrp->getSolidsNoShadowReceive(), om, false, &nullLightList);
 		// Do transparents that cast shadows
 		renderTransparentShadowCasterObjects(
 				pPriorityGrp->getTransparents(), 
 				QueuedRenderableCollection::OM_SORT_DESCENDING, 
-				false, false, &nullLightList);
+				false, &nullLightList);
 
 
     }// for each priority
@@ -2127,8 +2106,8 @@ void SceneManager::renderModulativeTextureShadowedQueueGroupObjects(
         pPriorityGrp->sort(mCameraInProgress);
 
         // Do solids
-        renderObjects(pPriorityGrp->getSolidsBasic(), om, true, true);
-        renderObjects(pPriorityGrp->getSolidsNoShadowReceive(), om, true, true);
+        renderObjects(pPriorityGrp->getSolidsBasic(), om, true);
+        renderObjects(pPriorityGrp->getSolidsNoShadowReceive(), om, true);
     }
 
 
@@ -2234,7 +2213,7 @@ void SceneManager::renderModulativeTextureShadowedQueueGroupObjects(
 
         // Do transparents (always descending)
         renderObjects(pPriorityGrp->getTransparents(), 
-			QueuedRenderableCollection::OM_SORT_DESCENDING, true, true);
+			QueuedRenderableCollection::OM_SORT_DESCENDING, true);
 
     }// for each priority
 
@@ -2258,9 +2237,9 @@ void SceneManager::renderAdditiveTextureShadowedQueueGroupObjects(
 		lightList.clear();
 
 		// Render all the ambient passes first, no light iteration, no lights
-		renderObjects(pPriorityGrp->getSolidsBasic(), om, false, false, &lightList);
+		renderObjects(pPriorityGrp->getSolidsBasic(), om, false, &lightList);
 		// Also render any objects which have receive shadows disabled
-		renderObjects(pPriorityGrp->getSolidsNoShadowReceive(), om, true, true);
+		renderObjects(pPriorityGrp->getSolidsNoShadowReceive(), om, true);
 
 
 		// only perform this next part if we're in the 'normal' render stage, to avoid
@@ -2328,28 +2307,14 @@ void SceneManager::renderAdditiveTextureShadowedQueueGroupObjects(
                     lightList.push_back(l);
                 else
                     lightList[0] = l;
-
-				// set up light scissoring, always useful in additive modes
-				ClipResult scissored = buildAndSetScissor(lightList, mCameraInProgress);
-				ClipResult clipped = CLIPPED_NONE;
-				if(mShadowAdditiveLightClip)
-					clipped = buildAndSetLightClip(lightList);
-				// skip if entirely clipped
-				if(scissored == CLIPPED_ALL || clipped == CLIPPED_ALL)
-					continue;
-
-				renderObjects(pPriorityGrp->getSolidsDiffuseSpecular(), om, false, false, &lightList);
-				if (scissored == CLIPPED_SOME)
-					resetScissor();
-				if (clipped == CLIPPED_SOME)
-					resetLightClip();
+				renderObjects(pPriorityGrp->getSolidsDiffuseSpecular(), om, false, &lightList);
 
 			}// for each light
 
 			mIlluminationStage = IRS_NONE;
 
 			// Now render decal passes, no need to set lights as lighting will be disabled
-			renderObjects(pPriorityGrp->getSolidsDecal(), om, false, false);
+			renderObjects(pPriorityGrp->getSolidsDecal(), om, false);
 
 		}
 
@@ -2364,7 +2329,7 @@ void SceneManager::renderAdditiveTextureShadowedQueueGroupObjects(
 
 		// Do transparents (always descending sort)
 		renderObjects(pPriorityGrp->getTransparents(), 
-			QueuedRenderableCollection::OM_SORT_DESCENDING, true, true);
+			QueuedRenderableCollection::OM_SORT_DESCENDING, true);
 
 	}// for each priority
 
@@ -2388,7 +2353,7 @@ void SceneManager::renderTextureShadowReceiverQueueGroupObjects(
         RenderPriorityGroup* pPriorityGrp = groupIt.getNext();
 
         // Do solids, override light list incase any vertex programs use them
-        renderObjects(pPriorityGrp->getSolidsBasic(), om, false, false, &nullLightList);
+        renderObjects(pPriorityGrp->getSolidsBasic(), om, false, &nullLightList);
 
         // Don't render transparents or passes which have shadow receipt disabled
 
@@ -2406,7 +2371,7 @@ void SceneManager::SceneMgrQueuedRenderableVisitor::visit(const Renderable* r)
 	if (targetSceneMgr->validateRenderableForRendering(mUsedPass, r))
 	{
 		// Render a single object, this will set up auto params if required
-		targetSceneMgr->renderSingleObject(r, mUsedPass, scissoring, autoLights, manualLightList);
+		targetSceneMgr->renderSingleObject(r, mUsedPass, autoLights, manualLightList);
 	}
 }
 //-----------------------------------------------------------------------
@@ -2436,8 +2401,8 @@ void SceneManager::SceneMgrQueuedRenderableVisitor::visit(const RenderablePass* 
 	if (targetSceneMgr->validateRenderableForRendering(rp->pass, rp->renderable))
 	{
 		mUsedPass = targetSceneMgr->_setPass(rp->pass);
-		targetSceneMgr->renderSingleObject(rp->renderable, mUsedPass, scissoring, 
-			autoLights, manualLightList);
+		targetSceneMgr->renderSingleObject(rp->renderable, mUsedPass, autoLights, 
+			manualLightList);
 	}
 }
 //-----------------------------------------------------------------------
@@ -2487,14 +2452,12 @@ bool SceneManager::validateRenderableForRendering(const Pass* pass, const Render
 //-----------------------------------------------------------------------
 void SceneManager::renderObjects(const QueuedRenderableCollection& objs, 
 								 QueuedRenderableCollection::OrganisationMode om, 
-								 bool lightScissoringClipping,
 								 bool doLightIteration, 
                                  const LightList* manualLightList)
 {
 	mActiveQueuedRenderableVisitor->autoLights = doLightIteration;
 	mActiveQueuedRenderableVisitor->manualLightList = manualLightList;
 	mActiveQueuedRenderableVisitor->transparentShadowCastersMode = false;
-	mActiveQueuedRenderableVisitor->scissoring = lightScissoringClipping;
 	// Use visitor
 	objs.acceptVisitor(mActiveQueuedRenderableVisitor, om);
 }
@@ -2574,10 +2537,10 @@ void SceneManager::renderBasicQueueGroupObjects(RenderQueueGroup* pGroup,
         pPriorityGrp->sort(mCameraInProgress);
 
         // Do solids
-        renderObjects(pPriorityGrp->getSolidsBasic(), om, true, true);
+        renderObjects(pPriorityGrp->getSolidsBasic(), om, true);
         // Do transparents (always descending)
         renderObjects(pPriorityGrp->getTransparents(), 
-			QueuedRenderableCollection::OM_SORT_DESCENDING, true, true);
+			QueuedRenderableCollection::OM_SORT_DESCENDING, true);
 
 
     }// for each priority
@@ -2585,14 +2548,12 @@ void SceneManager::renderBasicQueueGroupObjects(RenderQueueGroup* pGroup,
 //-----------------------------------------------------------------------
 void SceneManager::renderTransparentShadowCasterObjects(
 	const QueuedRenderableCollection& objs, 
-	QueuedRenderableCollection::OrganisationMode om, bool lightScissoringClipping, 
-	bool doLightIteration,
+	QueuedRenderableCollection::OrganisationMode om, bool doLightIteration,
 	const LightList* manualLightList)
 {
 	mActiveQueuedRenderableVisitor->transparentShadowCastersMode = true;
 	mActiveQueuedRenderableVisitor->autoLights = doLightIteration;
 	mActiveQueuedRenderableVisitor->manualLightList = manualLightList;
-	mActiveQueuedRenderableVisitor->scissoring = lightScissoringClipping;
 	
 	// Sort descending (transparency)
 	objs.acceptVisitor(mActiveQueuedRenderableVisitor, 
@@ -2602,8 +2563,7 @@ void SceneManager::renderTransparentShadowCasterObjects(
 }
 //-----------------------------------------------------------------------
 void SceneManager::renderSingleObject(const Renderable* rend, const Pass* pass, 
-                                      bool lightScissoringClipping, bool doLightIteration, 
-									  const LightList* manualLightList)
+                                      bool doLightIteration, const LightList* manualLightList)
 {
     unsigned short numMatrices;
     static RenderOperation ro;
@@ -2660,19 +2620,13 @@ void SceneManager::renderSingleObject(const Renderable* rend, const Pass* pass,
         }
 
         // Sort out normalisation
-		// Assume first world matrix representative - shaders that use multiple
-		// matrices should control renormalisation themselves
-		if ((pass->getNormaliseNormals() || mNormaliseNormalsOnScale)
-			&& mTempXform[0].hasScale())
-			mDestRenderSystem->setNormaliseNormals(true);
-		else
-			mDestRenderSystem->setNormaliseNormals(false);
+        mDestRenderSystem->setNormaliseNormals(rend->getNormaliseNormals());
 
         // Set up the solid / wireframe override
 		// Precedence is Camera, Object, Material
 		// Camera might not override object if not overrideable
 		PolygonMode reqMode = pass->getPolygonMode();
-		if (pass->getPolygonModeOverrideable() && rend->getPolygonModeOverrideable())
+		if (rend->getPolygonModeOverrideable())
 		{
             PolygonMode camPolyMode = mCameraInProgress->getPolygonMode();
 			// check camera detial only when render detail is overridable
@@ -2683,6 +2637,8 @@ void SceneManager::renderSingleObject(const Renderable* rend, const Pass* pass,
 			}
 		}
 		mDestRenderSystem->_setPolygonMode(reqMode);
+
+		mDestRenderSystem->setClipPlanes(rend->getClipPlanes());
 
 		if (doLightIteration)
 		{
@@ -2778,7 +2734,7 @@ void SceneManager::renderSingleObject(const Renderable* rend, const Pass* pass,
 					}
 					pLightListToUse = &localLightList;
 				}
-				else // !iterate per light
+				else
 				{
 					// Use complete light list potentially adjusted by start light
 					if (pass->getStartLight())
@@ -2833,35 +2789,10 @@ void SceneManager::renderSingleObject(const Renderable* rend, const Pass* pass,
 				{
 					mDestRenderSystem->_useLights(*pLightListToUse, pass->getMaxSimultaneousLights());
 				}
-				// optional light scissoring & clipping
-				ClipResult scissored = CLIPPED_NONE;
-				ClipResult clipped = CLIPPED_NONE;
-				if (lightScissoringClipping && 
-					(pass->getLightScissoringEnabled() || pass->getLightClipPlanesEnabled()))
-				{
-					// if there's no lights hitting the scene, then we might as 
-					// well stop since clipping cannot include anything
-					if (pLightListToUse->empty())
-						continue;
-
-					if (pass->getLightScissoringEnabled())
-						scissored = buildAndSetScissor(*pLightListToUse, mCameraInProgress);
-				
-					if (pass->getLightClipPlanesEnabled())
-						clipped = buildAndSetLightClip(*pLightListToUse);
-
-					if (scissored == CLIPPED_ALL || clipped == CLIPPED_ALL)
-						continue;
-				}
 				// issue the render op		
 				// nfz: check for gpu_multipass
 				mDestRenderSystem->setCurrentPassIterationCount(pass->getPassIterationCount());
 				mDestRenderSystem->_render(ro);
-
-				if (scissored == CLIPPED_SOME)
-					resetScissor();
-				if (clipped == CLIPPED_SOME)
-					resetLightClip();
 			} // possibly iterate per light
 		}
 		else // no automatic light processing
@@ -2895,32 +2826,10 @@ void SceneManager::renderSingleObject(const Renderable* rend, const Pass* pass,
 			{
 				mDestRenderSystem->_useLights(*manualLightList, pass->getMaxSimultaneousLights());
 			}
-
-			// optional light scissoring
-			ClipResult scissored = CLIPPED_NONE;
-			ClipResult clipped = CLIPPED_NONE;
-			if (lightScissoringClipping && manualLightList && pass->getLightScissoringEnabled())
-			{
-				scissored = buildAndSetScissor(*manualLightList, mCameraInProgress);
-			}
-			if (lightScissoringClipping && manualLightList && pass->getLightClipPlanesEnabled())
-			{
-				clipped = buildAndSetLightClip(*manualLightList);
-			}
-
-			// don't bother rendering if clipped / scissored entirely
-			if (scissored != CLIPPED_ALL && clipped != CLIPPED_ALL)
-			{
-				// issue the render op		
-				// nfz: set up multipass rendering
-				mDestRenderSystem->setCurrentPassIterationCount(pass->getPassIterationCount());
-				mDestRenderSystem->_render(ro);
-			}
-
-			if (scissored == CLIPPED_SOME)
-				resetScissor();
-			if (clipped == CLIPPED_SOME)
-				resetLightClip();
+			// issue the render op		
+			// nfz: set up multipass rendering
+			mDestRenderSystem->setCurrentPassIterationCount(pass->getPassIterationCount());
+			mDestRenderSystem->_render(ro);
 		}
 
 	}
@@ -3178,6 +3087,29 @@ void SceneManager::manualRender(RenderOperation* rend,
         mDestRenderSystem->_beginFrame();
 
     _setPass(pass);
+	// Do we need to update GPU program parameters?
+	if (pass->isProgrammable())
+	{
+		mAutoParamDataSource.setCurrentViewport(vp);
+		mAutoParamDataSource.setCurrentRenderTarget(vp->getTarget());
+		mAutoParamDataSource.setCurrentSceneManager(this);
+		mAutoParamDataSource.setWorldMatrices(&worldMatrix, 1);
+		Camera dummyCam(StringUtil::BLANK, 0);
+		dummyCam.setCustomViewMatrix(true, viewMatrix);
+		dummyCam.setCustomProjectionMatrix(true, projMatrix);
+		pass->_updateAutoParamsNoLights(mAutoParamDataSource);
+		// NOTE: We MUST bind parameters AFTER updating the autos
+		if (pass->hasVertexProgram())
+		{
+			mDestRenderSystem->bindGpuProgramParameters(GPT_VERTEX_PROGRAM, 
+				pass->getVertexProgramParameters());
+		}
+		if (pass->hasFragmentProgram())
+		{
+			mDestRenderSystem->bindGpuProgramParameters(GPT_FRAGMENT_PROGRAM, 
+				pass->getFragmentProgramParameters());
+		}
+	}
     mDestRenderSystem->_render(*rend);
 
     if (doBeginEndFrame)
@@ -3303,20 +3235,20 @@ void SceneManager::removeRenderQueueListener(RenderQueueListener* delListener)
 
 }
 //---------------------------------------------------------------------
-void SceneManager::addListener(Listener* newListener)
+void SceneManager::addShadowListener(ShadowListener* newListener)
 {
-    mListeners.push_back(newListener);
+    mShadowListeners.push_back(newListener);
 }
 //---------------------------------------------------------------------
-void SceneManager::removeListener(Listener* delListener)
+void SceneManager::removeShadowListener(ShadowListener* delListener)
 {
-    ListenerList::iterator i, iend;
-    iend = mListeners.end();
-    for (i = mListeners.begin(); i != iend; ++i)
+    ShadowListenerList::iterator i, iend;
+    iend = mShadowListeners.end();
+    for (i = mShadowListeners.begin(); i != iend; ++i)
     {
         if (*i == delListener)
         {
-            mListeners.erase(i);
+            mShadowListeners.erase(i);
             break;
         }
     }
@@ -3351,10 +3283,10 @@ bool SceneManager::fireRenderQueueEnded(uint8 id, const String& invocation)
 //---------------------------------------------------------------------
 void SceneManager::fireShadowTexturesUpdated(size_t numberOfShadowTextures)
 {
-    ListenerList::iterator i, iend;
+    ShadowListenerList::iterator i, iend;
 
-    iend = mListeners.end();
-    for (i = mListeners.begin(); i != iend; ++i)
+    iend = mShadowListeners.end();
+    for (i = mShadowListeners.begin(); i != iend; ++i)
     {
         (*i)->shadowTexturesUpdated(numberOfShadowTextures);
     }
@@ -3362,10 +3294,10 @@ void SceneManager::fireShadowTexturesUpdated(size_t numberOfShadowTextures)
 //---------------------------------------------------------------------
 void SceneManager::fireShadowTexturesPreCaster(Light* light, Camera* camera)
 {
-    ListenerList::iterator i, iend;
+    ShadowListenerList::iterator i, iend;
 
-    iend = mListeners.end();
-    for (i = mListeners.begin(); i != iend; ++i)
+    iend = mShadowListeners.end();
+    for (i = mShadowListeners.begin(); i != iend; ++i)
     {
         (*i)->shadowTextureCasterPreViewProj(light, camera);
     }
@@ -3373,38 +3305,13 @@ void SceneManager::fireShadowTexturesPreCaster(Light* light, Camera* camera)
 //---------------------------------------------------------------------
 void SceneManager::fireShadowTexturesPreReceiver(Light* light, Frustum* f)
 {
-    ListenerList::iterator i, iend;
+    ShadowListenerList::iterator i, iend;
 
-    iend = mListeners.end();
-    for (i = mListeners.begin(); i != iend; ++i)
+    iend = mShadowListeners.end();
+    for (i = mShadowListeners.begin(); i != iend; ++i)
     {
         (*i)->shadowTextureReceiverPreViewProj(light, f);
     }
-}
-//---------------------------------------------------------------------
-void SceneManager::firePreFindVisibleObjects(Viewport* v)
-{
-	ListenerList::iterator i, iend;
-
-	iend = mListeners.end();
-	for (i = mListeners.begin(); i != iend; ++i)
-	{
-		(*i)->preFindVisibleObjects(this, mIlluminationStage, v);
-	}
-
-}
-//---------------------------------------------------------------------
-void SceneManager::firePostFindVisibleObjects(Viewport* v)
-{
-	ListenerList::iterator i, iend;
-
-	iend = mListeners.end();
-	for (i = mListeners.begin(); i != iend; ++i)
-	{
-		(*i)->postFindVisibleObjects(this, mIlluminationStage, v);
-	}
-
-
 }
 //---------------------------------------------------------------------
 void SceneManager::setViewport(Viewport* vp)
@@ -3661,11 +3568,11 @@ void SceneManager::findLightsAffectingFrustum(const Camera* camera)
 		// used to generate shadow textures and we should pick the most appropriate
 		if (isShadowTechniqueTextureBased())
 		{
-			// Allow a Listener to override light sorting
+			// Allow a ShadowListener to override light sorting
 			// Reverse iterate so last takes precedence
 			bool overridden = false;
-			for (ListenerList::reverse_iterator ri = mListeners.rbegin();
-				ri != mListeners.rend(); ++ri)
+			for (ShadowListenerList::reverse_iterator ri = mShadowListeners.rbegin();
+				ri != mShadowListeners.rend(); ++ri)
 			{
 				overridden = (*ri)->sortLightsAffectingFrustum(mLightsAffectingFrustum);
 				if (overridden)
@@ -4319,219 +4226,7 @@ const Pass* SceneManager::deriveShadowReceiverPass(const Pass* pass)
 
 }
 //---------------------------------------------------------------------
-ClipResult SceneManager::buildAndSetScissor(const LightList& ll, const Camera* cam)
-{
-	if (!mDestRenderSystem->getCapabilities()->hasCapability(RSC_SCISSOR_TEST))
-		return CLIPPED_NONE;
-
-	RealRect finalRect;
-	// init (inverted since we want to grow from nothing)
-	finalRect.left = finalRect.bottom = 1.0f;
-	finalRect.right = finalRect.top = -1.0f;
-
-	for (LightList::const_iterator i = ll.begin(); i != ll.end(); ++i)
-	{
-		Light* l = *i;
-		// a directional light is being used, no scissoring can be done, period.
-		if (l->getType() == Light::LT_DIRECTIONAL)
-			return CLIPPED_NONE;
-		// Re-use calculations if possible
-		LightClippingInfoMap::iterator ci = mLightClippingInfoMap.find(l);
-		if (ci == mLightClippingInfoMap.end())
-		{
-			// create new entry
-			ci = mLightClippingInfoMap.insert(LightClippingInfoMap::value_type(l, LightClippingInfo())).first;
-		}
-		if (!ci->second.scissorValid)
-		{
-
-			buildScissor(l, cam, ci->second.scissorRect);
-			ci->second.scissorValid = true;
-		}
-		// merge with final
-		finalRect.left = std::min(finalRect.left, ci->second.scissorRect.left);
-		finalRect.bottom = std::min(finalRect.bottom, ci->second.scissorRect.bottom);
-		finalRect.right= std::max(finalRect.right, ci->second.scissorRect.right);
-		finalRect.top = std::max(finalRect.top, ci->second.scissorRect.top);
-
-
-	}
-
-	if (finalRect.left >= 1.0f || finalRect.right <= -1.0f ||
-		finalRect.top <= -1.0f || finalRect.bottom >= 1.0f)
-	{
-		// rect was offscreen
-		return CLIPPED_ALL;
-	}
-
-	// Some scissoring?
-	if (finalRect.left > -1.0f || finalRect.right < 1.0f || 
-		finalRect.bottom > -1.0f || finalRect.top < 1.0f)
-	{
-		// Turn normalised device coordinates into pixels
-		int iLeft, iTop, iWidth, iHeight;
-		mCurrentViewport->getActualDimensions(iLeft, iTop, iWidth, iHeight);
-		size_t szLeft, szRight, szTop, szBottom;
-
-		szLeft = (size_t)(iLeft + ((finalRect.left + 1) * 0.5 * iWidth));
-		szRight = (size_t)(iLeft + ((finalRect.right + 1) * 0.5 * iWidth));
-		szTop = (size_t)(iTop + ((-finalRect.top + 1) * 0.5 * iHeight));
-		szBottom = (size_t)(iTop + ((-finalRect.bottom + 1) * 0.5 * iHeight));
-
-		mDestRenderSystem->setScissorTest(true, szLeft, szTop, szRight, szBottom);
-
-		return CLIPPED_SOME;
-	}
-	else
-		return CLIPPED_NONE;
-
-}
-//---------------------------------------------------------------------
-void SceneManager::buildScissor(const Light* light, const Camera* cam, RealRect& rect)
-{
-	// Project the sphere onto the camera
-	Sphere sphere(light->getDerivedPosition(), light->getAttenuationRange());
-	cam->projectSphere(sphere, &(rect.left), &(rect.top), &(rect.right), &(rect.bottom));
-}
-//---------------------------------------------------------------------
-void SceneManager::resetScissor()
-{
-	if (!mDestRenderSystem->getCapabilities()->hasCapability(RSC_SCISSOR_TEST))
-		return;
-
-	mDestRenderSystem->setScissorTest(false);
-}
-//---------------------------------------------------------------------
-ClipResult SceneManager::buildAndSetLightClip(const LightList& ll)
-{
-	if (!mDestRenderSystem->getCapabilities()->hasCapability(RSC_USER_CLIP_PLANES))
-		return CLIPPED_NONE;
-
-	Light* clipBase = 0;
-	for (LightList::const_iterator i = ll.begin(); i != ll.end(); ++i)
-	{
-		// a directional light is being used, no clipping can be done, period.
-		if ((*i)->getType() == Light::LT_DIRECTIONAL)
-			return CLIPPED_NONE;
-
-		if (clipBase)
-		{
-			// we already have a clip base, so we had more than one light
-			// in this list we could clip by, so clip none
-			return CLIPPED_NONE;
-		}
-		clipBase = *i;
-	}
-
-	if (clipBase)
-	{
-		// Try to re-use clipping info if already calculated
-		LightClippingInfoMap::iterator ci = mLightClippingInfoMap.find(clipBase);
-		if (ci == mLightClippingInfoMap.end())
-		{
-			// create new entry
-			ci = mLightClippingInfoMap.insert(LightClippingInfoMap::value_type(clipBase, LightClippingInfo())).first;
-		}
-		if (!ci->second.clipPlanesValid)
-		{
-			buildLightClip(clipBase, ci->second.clipPlanes);
-			ci->second.clipPlanesValid = true;
-		}
-		
-		mDestRenderSystem->setClipPlanes(ci->second.clipPlanes);
-		return CLIPPED_SOME;
-	}
-	else
-	{
-		// Can only get here if no non-directional lights from which to clip from
-		// ie list must be empty
-		return CLIPPED_ALL;
-	}
-
-
-}
-//---------------------------------------------------------------------
-void SceneManager::buildLightClip(const Light* l, PlaneList& planes)
-{
-	if (!mDestRenderSystem->getCapabilities()->hasCapability(RSC_USER_CLIP_PLANES))
-		return;
-
-	planes.clear();
-
-	Vector3 pos = l->getDerivedPosition();
-	Real r = l->getAttenuationRange();
-	switch(l->getType())
-	{
-	case Light::LT_POINT:
-		{
-			planes.push_back(Plane(Vector3::UNIT_X, pos + Vector3(-r, 0, 0)));
-			planes.push_back(Plane(Vector3::NEGATIVE_UNIT_X, pos + Vector3(r, 0, 0)));
-			planes.push_back(Plane(Vector3::UNIT_Y, pos + Vector3(0, -r, 0)));
-			planes.push_back(Plane(Vector3::NEGATIVE_UNIT_Y, pos + Vector3(0, r, 0)));
-			planes.push_back(Plane(Vector3::UNIT_Z, pos + Vector3(0, 0, -r)));
-			planes.push_back(Plane(Vector3::NEGATIVE_UNIT_Z, pos + Vector3(0, 0, r)));
-		}
-		break;
-	case Light::LT_SPOTLIGHT:
-		{
-			Vector3 dir = l->getDerivedDirection();
-			// near & far planes
-			planes.push_back(Plane(dir, pos));
-			planes.push_back(Plane(-dir, pos + dir * r));
-			// 4 sides of pyramids
-			// derive orientation
-			Vector3 up = Vector3::UNIT_Y;
-			// Check it's not coincident with dir
-			if (Math::Abs(up.dotProduct(dir)) >= 1.0f)
-			{
-				up = Vector3::UNIT_Z;
-			}
-			// cross twice to rederive, only direction is unaltered
-			Vector3 right = dir.crossProduct(up);
-			right.normalise();
-			up = right.crossProduct(dir);
-			up.normalise();
-			// Derive quaternion from axes (negate dir since -Z)
-			Quaternion q;
-			q.FromAxes(right, up, -dir);
-
-			// derive pyramid corner vectors in world orientation
-			Vector3 tl, tr, bl, br;
-			Real d = Math::Tan(l->getSpotlightOuterAngle() * 0.5) * r;
-			tl = q * Vector3(-d, d, -r);
-			tr = q * Vector3(d, d, -r);
-			bl = q * Vector3(-d, -d, -r);
-			br = q * Vector3(d, -d, -r);
-
-			// use cross product to derive normals, pass through light world pos
-			// top
-			planes.push_back(Plane(tl.crossProduct(tr).normalisedCopy(), pos));
-			// right
-			planes.push_back(Plane(tr.crossProduct(br).normalisedCopy(), pos));
-			// bottom
-			planes.push_back(Plane(br.crossProduct(bl).normalisedCopy(), pos));
-			// left
-			planes.push_back(Plane(bl.crossProduct(tl).normalisedCopy(), pos));
-
-		}
-		break;
-	default:
-		// do nothing
-		break;
-	};
-
-}
-//---------------------------------------------------------------------
-void SceneManager::resetLightClip()
-{
-	if (!mDestRenderSystem->getCapabilities()->hasCapability(RSC_USER_CLIP_PLANES))
-		return;
-
-	mDestRenderSystem->resetClipPlanes();
-}
-//---------------------------------------------------------------------
-void SceneManager::renderShadowVolumesToStencil(const Light* light, 
-	const Camera* camera, bool calcScissor)
+void SceneManager::renderShadowVolumesToStencil(const Light* light, const Camera* camera)
 {
     // Get the shadow caster list
     const ShadowCasterList& casters = findShadowCastersForLight(light, camera);
@@ -4542,19 +4237,30 @@ void SceneManager::renderShadowVolumesToStencil(const Light* light,
         return;
     }
 
-	// Add light to internal list for use in render call
-	LightList lightList;
-	// const_cast is forgiveable here since we pass this const
-	lightList.push_back(const_cast<Light*>(light));
-
     // Set up scissor test (point & spot lights only)
-    ClipResult scissored = CLIPPED_NONE;
-	if (calcScissor)
-	{
-		scissored = buildAndSetScissor(lightList, camera);
-		if (scissored == CLIPPED_ALL)
-			return; // nothing to do
-	}
+    bool scissored = false;
+    if (light->getType() != Light::LT_DIRECTIONAL && 
+        mDestRenderSystem->getCapabilities()->hasCapability(RSC_SCISSOR_TEST))
+    {
+        // Project the sphere onto the camera
+        Real left, right, top, bottom;
+        Sphere sphere(light->getDerivedPosition(), light->getAttenuationRange());
+        if (camera->projectSphere(sphere, &left, &top, &right, &bottom))
+        {
+            scissored = true;
+            // Turn normalised device coordinates into pixels
+            int iLeft, iTop, iWidth, iHeight;
+            mCurrentViewport->getActualDimensions(iLeft, iTop, iWidth, iHeight);
+            size_t szLeft, szRight, szTop, szBottom;
+
+            szLeft = (size_t)(iLeft + ((left + 1) * 0.5 * iWidth));
+            szRight = (size_t)(iLeft + ((right + 1) * 0.5 * iWidth));
+            szTop = (size_t)(iTop + ((-top + 1) * 0.5 * iHeight));
+            szBottom = (size_t)(iTop + ((-bottom + 1) * 0.5 * iHeight));
+
+            mDestRenderSystem->setScissorTest(true, szLeft, szTop, szRight, szBottom);
+        }
+    }
 
     mDestRenderSystem->unbindGpuProgram(GPT_FRAGMENT_PROGRAM);
 
@@ -4611,6 +4317,11 @@ void SceneManager::renderShadowVolumesToStencil(const Light* light,
     {
         mDestRenderSystem->unbindGpuProgram(GPT_VERTEX_PROGRAM);
     }
+
+    // Add light to internal list for use in render call
+    LightList lightList;
+    // const_cast is forgiveable here since we pass this const
+    lightList.push_back(const_cast<Light*>(light));
 
     // Turn off colour writing and depth writing
     mDestRenderSystem->_setColourBufferWriteEnabled(false, false, false, false);
@@ -4740,10 +4451,10 @@ void SceneManager::renderShadowVolumesToStencil(const Light* light,
 
     mDestRenderSystem->unbindGpuProgram(GPT_VERTEX_PROGRAM);
 
-    if (scissored == CLIPPED_SOME)
+    if (scissored)
     {
         // disable scissor test
-        resetScissor();
+        mDestRenderSystem->setScissorTest(false);
     }
 
 }
@@ -4764,7 +4475,7 @@ void SceneManager::renderShadowVolumeObjects(ShadowCaster::ShadowRenderableListI
         if (sr->isVisible())
         {
             // render volume, including dark and (maybe) light caps
-            renderSingleObject(sr, pass, false, false, manualLightList);
+            renderSingleObject(sr, pass, false, manualLightList);
 
             // optionally render separate light cap
             if (sr->isLightCapSeparate() && (flags & SRF_INCLUDE_LIGHT_CAP))
@@ -4796,13 +4507,13 @@ void SceneManager::renderShadowVolumeObjects(ShadowCaster::ShadowRenderableListI
                     // select back facing light caps to render
                     mDestRenderSystem->_setCullingMode(CULL_ANTICLOCKWISE);
                     // use normal depth function for back facing light caps
-                    renderSingleObject(lightCap, pass, false, false, manualLightList);
+                    renderSingleObject(lightCap, pass, false, manualLightList);
 
                     // select front facing light caps to render
                     mDestRenderSystem->_setCullingMode(CULL_CLOCKWISE);
                     // must always fail depth check for front facing light caps
                     mDestRenderSystem->_setDepthBufferFunction(CMPF_ALWAYS_FAIL);
-                    renderSingleObject(lightCap, pass, false, false, manualLightList);
+                    renderSingleObject(lightCap, pass, false, manualLightList);
 
                     // reset depth function
                     mDestRenderSystem->_setDepthBufferFunction(CMPF_LESS);
@@ -4812,13 +4523,13 @@ void SceneManager::renderShadowVolumeObjects(ShadowCaster::ShadowRenderableListI
                 else if ((secondpass || zfail) && !(secondpass && zfail))
                 {
                     // use normal depth function for back facing light caps
-                    renderSingleObject(lightCap, pass, false, false, manualLightList);
+                    renderSingleObject(lightCap, pass, false, manualLightList);
                 }
                 else
                 {
                     // must always fail depth check for front facing light caps
                     mDestRenderSystem->_setDepthBufferFunction(CMPF_ALWAYS_FAIL);
-                    renderSingleObject(lightCap, pass, false, false, manualLightList);
+                    renderSingleObject(lightCap, pass, false, manualLightList);
 
                     // reset depth function
                     mDestRenderSystem->_setDepthBufferFunction(CMPF_LESS);
@@ -5740,7 +5451,7 @@ void SceneManager::_injectRenderWithPass(Pass *pass, Renderable *rend, bool shad
 {
 	// render something as if it came from the current queue
     const Pass *usedPass = _setPass(pass, false, shadowDerivation);
-    renderSingleObject(rend, usedPass, false, false);
+    renderSingleObject(rend, usedPass, false);
 }
 //---------------------------------------------------------------------
 RenderSystem *SceneManager::getDestinationRenderSystem()

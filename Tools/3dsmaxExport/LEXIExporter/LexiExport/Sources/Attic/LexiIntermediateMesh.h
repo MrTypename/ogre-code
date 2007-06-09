@@ -63,8 +63,6 @@ class CIntermediateMesh : public Ogre::MovableObject {
 	private:
 
 		void BuildMaterialList();
-//		void BuildSubmeshIndexMaps( void );
-		std::map< CIntermediateMaterial*, std::map< unsigned int, unsigned int> > m_lSubmeshIndexMap;
 
 		unsigned int m_iNumTriangles;
 		CTriangleArray m_Triangles;
@@ -108,9 +106,6 @@ class CIntermediateMesh : public Ogre::MovableObject {
 
 		//
 		//  Triangle
-
-		// MovableObject implementation
-		void visitRenderables(Ogre::Renderable::Visitor* visitor,	bool debugRenderables = false){};
 
 		// Get number of triangles
 		unsigned int GetNumTriangles() const;
@@ -167,14 +162,6 @@ class CIntermediateMesh : public Ogre::MovableObject {
 
 		void Reindex(const fastvector<CMeshArray*>& ArrayList);
 		void PostReindex(const fastvector<CMeshArray*>& ArrayList);
-		unsigned int GetReindexedIndex( unsigned int iOldIndex );
-
-		//// Submesh helper Maps
-		//unsigned int GetSubmeshMappedIndex( CIntermediateMaterial* pMat, unsigned int oldIndex );
-		//unsigned int GetSubmeshMappedIndexCount( CIntermediateMaterial* pMat );
-		//bool GetSubmeshMappedIndexMap( CIntermediateMaterial* pMat, std::map< unsigned int, unsigned int>& returnMap );
-		//unsigned int GetSubmeshMappedUniqueIndexCount( CIntermediateMaterial* pMat );
-
 
 };
 

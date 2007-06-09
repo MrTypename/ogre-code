@@ -45,13 +45,11 @@ static void ModifyCallback(void* param, NotifyInfo* info)
 {
 	switch(info->intcode)
 	{
+		case NOTIFY_SYSTEM_POST_RESET:
 		case NOTIFY_SYSTEM_POST_NEW:
 		case NOTIFY_FILE_POST_MERGE:
 		case NOTIFY_FILE_POST_OPEN:
 		case NOTIFY_POST_IMPORT:
-		case NOTIFY_SYSTEM_POST_RESET:
-		case NOTIFY_FILE_OPEN_FAILED:
-		case NOTIFY_IMPORT_FAILED:
 			((CExporter*)param)->LoadConfig();
 			break;
 	}
@@ -69,37 +67,13 @@ CDDObject* CExporter::GetGlobalSettings()
 	return m_pGlobalSettings;
 }
 
-CDDObject* CExporter::GetRootConfig() const
-{
-	return m_pExportRoot->GetConfig();
-}
-
 //
 
 CExporter::CExporter(CExporterDesc* pDesc)
 {
-	REGISTER_MODULE("Exporter")
-
 	LoadGlobalSettings();
 	CExportObject::Initialize();
-
-	// We always write Logs to the <MAXDIR>\LEXIExporter\Logs Directory
-	//--
-	char szAppPath[MAX_PATH] = "";
-	::GetModuleFileName(NULL,szAppPath,sizeof(szAppPath) - 1);
-	Ogre::String cwd(szAppPath);
-	Ogre::String fileNameTMP, filePath;
-	Ogre::StringUtil::splitFilename(cwd, fileNameTMP, filePath);
-	int n = filePath.find("/");
-	while(n != Ogre::String::npos)
-	{
-		filePath.replace(n,1,"\\");
-		n = filePath.find("/");
-	}
-	filePath+="LEXIExporter\\Logs\\LexiExport.log";
-	//--
-
-	CLogSystem::Get()->AddReceiver(new CFileLogger(filePath.c_str()));
+	CLogSystem::Get()->AddReceiver(new CFileLogger("C:\\LexiExport_debug.txt"));
 
 	m_pDesc = pDesc;
 	m_pMax = NULL;
@@ -116,8 +90,6 @@ CExporter::CExporter(CExporterDesc* pDesc)
 	RegisterNotification(ModifyCallback, this, NOTIFY_FILE_POST_OPEN);
 	RegisterNotification(ModifyCallback, this, NOTIFY_FILE_POST_MERGE);
 	RegisterNotification(ModifyCallback, this, NOTIFY_POST_IMPORT);
-	RegisterNotification(ModifyCallback, this, NOTIFY_FILE_OPEN_FAILED);
-	RegisterNotification(ModifyCallback, this, NOTIFY_IMPORT_FAILED);
 }
 
 CExporter::~CExporter()
@@ -128,8 +100,6 @@ CExporter::~CExporter()
 	UnRegisterNotification(ModifyCallback, this, NOTIFY_FILE_POST_OPEN);
 	UnRegisterNotification(ModifyCallback, this, NOTIFY_FILE_POST_MERGE);
 	UnRegisterNotification(ModifyCallback, this, NOTIFY_POST_IMPORT);
-	UnRegisterNotification(ModifyCallback, this, NOTIFY_FILE_OPEN_FAILED);
-	UnRegisterNotification(ModifyCallback, this, NOTIFY_IMPORT_FAILED);
 
 	try {
 		//
@@ -141,10 +111,7 @@ CExporter::~CExporter()
 	}
 
 	// Free ExportObjects
-	FreeConfig();
-
-	UNREGISTER_MODULE
-
+	FreeConfig();	
 }
 
 void CExporter::LoadConfig()
@@ -181,7 +148,7 @@ void CExporter::LoadConfig()
 	} catch(...)
 	{	
 	}
-	//pRootConfig->SaveASCII("C:\\loadStream.txt");
+	pRootConfig->SaveASCII("C:\\loadStream.txt");
 	// Create new export root object
 	m_pExportRoot=(CExportObjectRoot*)CExportObject::Construct(pRootConfig);	
 
@@ -196,7 +163,6 @@ void CExporter::SaveConfig()
 	if(!m_pExportRoot) return;// || !m_pExportRoot->HasChildren()) return;
 
 	CDataStream stream;
-	stream.Reserve(50000);
 
 	//Write Version ID
 	stream.SetPosition(0);
@@ -205,7 +171,7 @@ void CExporter::SaveConfig()
 	CDDObject *pConfig=new CDDObject();
 	m_pExportRoot->SaveConfig(pConfig);
 
-	//pConfig->SaveASCII("C:\\saveStream.txt");
+	pConfig->SaveASCII("C:\\saveStream.txt");
 
 	pConfig->ToDataStream(&stream);
 	pConfig->Release();
@@ -281,7 +247,7 @@ void CExporter::BeginEditParams(Interface* ip, IUtil* iu)
 		}
 		if(!m_bMemoryLogOnOGRE)
 		{
-			Ogre::LogManager::getSingleton().getDefaultLog()->addListener(m_pMemoryLog);
+			Ogre::LogManager::getSingleton().addListener(m_pMemoryLog);
 			m_bMemoryLogOnOGRE=true;
 		}
 
@@ -308,7 +274,7 @@ void CExporter::EndEditParams(Interface* ip, IUtil* iu)
 	m_pMaxUtil = NULL;
 	if(m_bMemoryLogOnOGRE)
 	{
-		Ogre::LogManager::getSingleton().getDefaultLog()->removeListener(m_pMemoryLog);
+		Ogre::LogManager::getSingleton().removeListener(m_pMemoryLog);
 		m_bMemoryLogOnOGRE=false;
 	}
 }
@@ -404,8 +370,6 @@ void CExporter::ShowLog()
 void CExporter::ExportItems(bool bForceAll)
 {
 	if(m_pExportRoot==NULL || !m_pExportRoot->HasChildren()) return;
-
-	if(!ValidateFilenames()) return;
 
 	m_pMemoryLog->Flush();
 	m_pMemoryLog->LogImportant(true);

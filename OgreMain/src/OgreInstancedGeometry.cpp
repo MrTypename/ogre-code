@@ -883,17 +883,6 @@ namespace Ogre {
 		}
 		of << "-------------------------------------------------" << std::endl;
 	}
-	//---------------------------------------------------------------------
-	void InstancedGeometry::visitRenderables(Renderable::Visitor* visitor, 
-		bool debugRenderables)
-	{
-		for (BatchInstanceMap::const_iterator ri = mBatchInstanceMap.begin();
-			ri != mBatchInstanceMap.end(); ++ri)
-		{
-			ri->second->visitRenderables(visitor, debugRenderables);
-		}
-
-	}
 	//--------------------------------------------------------------------------
 	InstancedGeometry::InstancedObject::InstancedObject(int index,SkeletonInstance *skeleton, AnimationStateSet*animations):mIndex(index),
 		mTransformation(Matrix4::ZERO),
@@ -1354,16 +1343,6 @@ namespace Ogre {
 		mLodBucketList[mCurrentLod]->addRenderables(queue, mRenderQueueID,
 			mCamDistanceSquared);
 	}
-	//---------------------------------------------------------------------
-	void InstancedGeometry::BatchInstance::visitRenderables(
-		Renderable::Visitor* visitor, bool debugRenderables)
-	{
-		for (LODBucketList::iterator i = mLodBucketList.begin(); i != mLodBucketList.end(); ++i)
-		{
-			(*i)->visitRenderables(visitor, debugRenderables);
-		}
-
-	}
 	//--------------------------------------------------------------------------
 	bool InstancedGeometry::BatchInstance::isVisible(void) const
 	{
@@ -1474,22 +1453,12 @@ namespace Ogre {
 		// Just pass this on to child buckets
 		MaterialBucketMap::iterator i, iend;
 		iend =  mMaterialBucketMap.end();
+		int j=0;
 		for (i = mMaterialBucketMap.begin(); i != iend; ++i)
 		{
 			i->second->addRenderables(queue, group, camDistanceSquared);
+			j++;
 		}
-	}
-	//---------------------------------------------------------------------
-	void InstancedGeometry::LODBucket::visitRenderables(Renderable::Visitor* visitor, 
-		bool debugRenderables)
-	{
-		MaterialBucketMap::iterator i, iend;
-		iend =  mMaterialBucketMap.end();
-		for (i = mMaterialBucketMap.begin(); i != iend; ++i)
-		{
-			i->second->visitRenderables(visitor, debugRenderables);
-		}
-
 	}
 	//--------------------------------------------------------------------------
 	InstancedGeometry::LODBucket::MaterialIterator
@@ -1596,22 +1565,12 @@ namespace Ogre {
 			mMaterial->getLodIndexSquaredDepth(camDistanceSquared));	
 		GeometryBucketList::iterator i, iend;
 		iend =  mGeometryBucketList.end();
+		int j=0;
 			
 		for (i = mGeometryBucketList.begin(); i != iend; ++i)
 		{
 			queue->addRenderable(*i, group);
-		}
-
-	}
-	//---------------------------------------------------------------------
-	void InstancedGeometry::MaterialBucket::visitRenderables(
-		Renderable::Visitor* visitor, bool debugRenderables)
-	{
-		GeometryBucketList::iterator i, iend;
-		iend =  mGeometryBucketList.end();
-		for (i = mGeometryBucketList.begin(); i != iend; ++i)
-		{
-			(*i)->visitRenderables(visitor, debugRenderables);
+			j++;
 		}
 
 	}
@@ -1823,6 +1782,16 @@ namespace Ogre {
 			return static_cast<ushort>(
 				mBatch->getBaseSkeleton()->getNumBones()*batch->getInstancesMap().size());
 		}
+	}
+	//--------------------------------------------------------------------------
+	const Quaternion& InstancedGeometry::GeometryBucket::getWorldOrientation(void) const
+	{
+		return Quaternion::IDENTITY;
+	}
+	//--------------------------------------------------------------------------
+	const Vector3& InstancedGeometry::GeometryBucket::getWorldPosition(void) const
+	{
+		return Vector3::ZERO;
 	}
 	//--------------------------------------------------------------------------
 	Real InstancedGeometry::GeometryBucket::getSquaredViewDepth(const Camera* cam) const
@@ -2114,12 +2083,6 @@ namespace Ogre {
 
 	}
 	//--------------------------------------------------------------------------
-	void InstancedGeometry::GeometryBucket::visitRenderables(
-		Renderable::Visitor* visitor, bool debugRenderables)
-	{
-		visitor->visit(this, mParent->getParent()->getLod(), false);
-	}
-	//---------------------------------------------------------------------
 
 }
 

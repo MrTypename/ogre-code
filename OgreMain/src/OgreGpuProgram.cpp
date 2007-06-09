@@ -259,9 +259,10 @@ namespace Ogre
 		catch (const Exception&)
 		{
 			// will already have been logged
-			LogManager::getSingleton().stream()
-				<< "Gpu program " << mName << " encountered an error "
+			StringUtil::StrStreamType str;
+			str << "Gpu program " << mName << " encountered an error "
 				<< "during loading and is thus not supported.";
+			LogManager::getSingleton().logMessage(str.str());
 
 			mCompileError = true;
 		}
