@@ -32,7 +32,7 @@ class COgreCore : public Ogre::Singleton<COgreCore>
 public:
 
 	COgreCore(HWND hwnd);
-	virtual ~COgreCore();
+	~COgreCore();
 
 	static COgreCore& getSingleton( void );
 	static COgreCore* getSingletonPtr( void );
@@ -42,8 +42,7 @@ protected:
 	bool configureRenderer(HWND hwnd);
 
 	Ogre::Root* m_pRoot;
-	Ogre::RenderSystem* m_pRenderSystem;
-	Ogre::RenderWindow* m_pWindow;
+	Ogre::RenderSystem	*m_pRenderSystem;
 };
 
 

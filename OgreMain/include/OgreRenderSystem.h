@@ -654,18 +654,6 @@ namespace Ogre
         */
         virtual void _setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor) = 0;
 
-        /** Sets the global blending factors for combining subsequent renders with the existing frame contents.
-            The result of the blending operation is:</p>
-            <p align="center">final = (texture * sourceFactor) + (pixel * destFactor)</p>
-            Each of the factors is specified as one of a number of options, as specified in the SceneBlendFactor
-            enumerated type.
-            @param sourceFactor The source factor in the above calculation, i.e. multiplied by the texture colour components.
-            @param destFactor The destination factor in the above calculation, i.e. multiplied by the pixel colour components.
-            @param sourceFactorAlpha The source factor in the above calculation for the alpha channel, i.e. multiplied by the texture alpha components.
-            @param destFactorAlpha The destination factor in the above calculation for the alpha channel, i.e. multiplied by the pixel alpha components.
-		*/
-		virtual void _setSeparateSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha) = 0;
-
         /** Sets the global alpha rejection approach for future renders.
             By default images are rendered regardless of texture alpha. This method lets you change that.
             @param func The comparison function which must pass for a pixel to be written.
@@ -990,20 +978,11 @@ namespace Ogre
         /** Returns whether or not a Gpu program of the given type is currently bound. */
         virtual bool isGpuProgramBound(GpuProgramType gptype);
 
-        /** Sets the user clipping region.
+        /** sets the clipping region.
         */
-        virtual void setClipPlanes(const PlaneList& clipPlanes);
+        virtual void setClipPlanes(const PlaneList& clipPlanes) = 0;
 
-		/** Add a user clipping plane. */
-		virtual void addClipPlane (const Plane &p);
-		/** Add a user clipping plane. */
-		virtual void addClipPlane (Real A, Real B, Real C, Real D);
-
-		/** Clears the user clipping region.
-		*/
-		virtual void resetClipPlanes();
-
-		/** Utility method for initialising all render targets attached to this rendering system. */
+        /** Utility method for initialising all render targets attached to this rendering system. */
         virtual void _initRenderTargets(void);
 
         /** Utility method to notify all render targets that a camera has been removed, 
@@ -1013,6 +992,13 @@ namespace Ogre
 
         /** Internal method for updating all render targets attached to this rendering system. */
         virtual void _updateAllRenderTargets(void);
+
+        /** Set a clipping plane. */
+        virtual void setClipPlane (ushort index, const Plane &p);
+        /** Set a clipping plane. */
+        virtual void setClipPlane (ushort index, Real A, Real B, Real C, Real D) = 0;
+        /** Enable the clipping plane. */
+        virtual void enableClipPlane (ushort index, bool enable) = 0;
 
         /** Sets whether or not vertex windings set should be inverted; this can be important
             for rendering reflections. */
@@ -1085,25 +1071,7 @@ namespace Ogre
             required.
         @param count Number of times to render the current state.
         */
-        virtual void setCurrentPassIterationCount(const size_t count) { mCurrentPassIterationCount = count; }
-
-		/** Tell the render system whether to derive a depth bias on its own based on 
-			the values passed to it in setCurrentPassIterationCount.
-			The depth bias set will be baseValue + iteration * multiplier
-		@param derive True to tell the RS to derive this automatically
-		@param baseValue The base value to which the multiplier should be
-			added
-		@param multiplier The amount of depth bias to apply per iteration
-		@param slopeScale The constant slope scale bias for completeness
-		*/
-		virtual void setDeriveDepthBias(bool derive, float baseValue = 0.0f,
-			float multiplier = 0.0f, float slopeScale = 0.0f)
-		{
-			mDerivedDepthBias = derive;
-			mDerivedDepthBiasBase = baseValue;
-			mDerivedDepthBiasMultiplier = multiplier;
-			mDerivedDepthBiasSlopeScale = slopeScale;
-		}
+        void setCurrentPassIterationCount(const size_t count) { mCurrentPassIterationCount = count; }
 
 		/** Defines a listener on the custom events that this render system 
 			can raise.
@@ -1233,12 +1201,6 @@ namespace Ogre
 
         /// number of times to render the current state
         size_t mCurrentPassIterationCount;
-		size_t mCurrentPassIterationNum;
-		/// Whether to update the depth bias per render call
-		bool mDerivedDepthBias;
-		float mDerivedDepthBiasBase;
-		float mDerivedDepthBiasMultiplier;
-		float mDerivedDepthBiasSlopeScale;
 
         /** updates pass iteration rendering state including bound gpu program parameter
             pass iteration auto constant entry
@@ -1260,16 +1222,6 @@ namespace Ogre
 		
 		bool mVertexProgramBound;
 		bool mFragmentProgramBound;
-
-		// Recording user clip planes
-		PlaneList mClipPlanes;
-		// Indicator that we need to re-set the clip planes on next render call
-		bool mClipPlanesDirty;
-
-		/// Internal method used to set the underlying clip planes when needed
-		virtual void setClipPlanesImpl(const PlaneList& clipPlanes) = 0;
-
-
 		
 
 

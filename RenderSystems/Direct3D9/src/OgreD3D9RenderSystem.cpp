@@ -290,8 +290,9 @@ namespace Ogre
 	void D3D9RenderSystem::setConfigOption( const String &name, const String &value )
 	{
 
-		LogManager::getSingleton().stream()
-			<< "D3D9 : RenderSystem Option: " << name << " = " << value;
+        StringUtil::StrStreamType str;
+        str << "D3D9 : RenderSystem Option: " << name << " = " << value;
+		LogManager::getSingleton().logMessage(str.str());
 
         bool viewModeChanged = false;
 
@@ -303,7 +304,7 @@ namespace Ogre
 			it->second.currentValue = value;
 		else
 		{
-			StringUtil::StrStreamType str;
+            str.str(StringUtil::BLANK);
             str << "Option named '" << name << "' does not exist.";
 			OGRE_EXCEPT( Exception::ERR_INVALIDPARAMS, str.str(), "D3D9RenderSystem::setConfigOption" );
 		}
@@ -1146,9 +1147,10 @@ namespace Ogre
 			{
 				// cool, at least one supported
 				anySupported = true;
-				LogManager::getSingleton().stream()
-					<< "D3D9: Vertex texture format supported - "
+				StringUtil::StrStreamType str;
+				str << "D3D9: Vertex texture format supported - "
 					<< PixelUtil::getFormatName(pf);
+				LogManager::getSingleton().logMessage(str.str());
 			}
 		}
 
@@ -1490,48 +1492,37 @@ namespace Ogre
         mViewMatrix[2][2] = -mViewMatrix[2][2];
         mViewMatrix[2][3] = -mViewMatrix[2][3];
 
-        mDxViewMat = D3D9Mappings::makeD3DXMatrix( mViewMatrix );
+        D3DXMATRIX d3dmat = D3D9Mappings::makeD3DXMatrix( mViewMatrix );
 
 		HRESULT hr;
-		if( FAILED( hr = mpD3DDevice->SetTransform( D3DTS_VIEW, &mDxViewMat ) ) )
+		if( FAILED( hr = mpD3DDevice->SetTransform( D3DTS_VIEW, &d3dmat ) ) )
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Cannot set D3D9 view matrix", "D3D9RenderSystem::_setViewMatrix" );
-
-		// also mark clip planes dirty
-		if (!mClipPlanes.empty())
-			mClipPlanesDirty = true;
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_setProjectionMatrix( const Matrix4 &m )
 	{
-		// save latest matrix
-		mDxProjMat = D3D9Mappings::makeD3DXMatrix( m );
+		D3DXMATRIX d3dMat = D3D9Mappings::makeD3DXMatrix( m );
 
 		if( mActiveRenderTarget->requiresTextureFlipping() )
         {
             // Invert transformed y
-            mDxProjMat._12 = - mDxProjMat._12;
-			mDxProjMat._22 = - mDxProjMat._22;
-            mDxProjMat._32 = - mDxProjMat._32;
-            mDxProjMat._42 = - mDxProjMat._42;
+            d3dMat._12 = - d3dMat._12;
+			d3dMat._22 = - d3dMat._22;
+            d3dMat._32 = - d3dMat._32;
+            d3dMat._42 = - d3dMat._42;
         }
 
 		HRESULT hr;
-		if( FAILED( hr = mpD3DDevice->SetTransform( D3DTS_PROJECTION, &mDxProjMat ) ) )
+		if( FAILED( hr = mpD3DDevice->SetTransform( D3DTS_PROJECTION, &d3dMat ) ) )
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Cannot set D3D9 projection matrix", "D3D9RenderSystem::_setProjectionMatrix" );
-
-		// also mark clip planes dirty
-		if (!mClipPlanes.empty())
-			mClipPlanesDirty = true;
-
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_setWorldMatrix( const Matrix4 &m )
 	{
-		// save latest matrix
-		mDxWorldMat = D3D9Mappings::makeD3DXMatrix( m );
+		D3DXMATRIX d3dMat = D3D9Mappings::makeD3DXMatrix( m );
 
 		HRESULT hr;
-		if( FAILED( hr = mpD3DDevice->SetTransform( D3DTS_WORLD, &mDxWorldMat ) ) )
+		if( FAILED( hr = mpD3DDevice->SetTransform( D3DTS_WORLD, &d3dMat ) ) )
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Cannot set D3D9 world matrix", "D3D9RenderSystem::_setWorldMatrix" );
 	}
 	//---------------------------------------------------------------------
@@ -2087,38 +2078,10 @@ namespace Ogre
 		{
 			if (FAILED(hr = __SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE)))
 				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set alpha blending option", "D3D9RenderSystem::_setSceneBlending" );
-			if (FAILED(hr = __SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, FALSE)))
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set separate alpha blending option", "D3D9RenderSystem::_setSceneBlending" );
 			if( FAILED( hr = __SetRenderState( D3DRS_SRCBLEND, D3D9Mappings::get(sourceFactor) ) ) )
 				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set source blend", "D3D9RenderSystem::_setSceneBlending" );
 			if( FAILED( hr = __SetRenderState( D3DRS_DESTBLEND, D3D9Mappings::get(destFactor) ) ) )
 				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set destination blend", "D3D9RenderSystem::_setSceneBlending" );
-		}
-	}
-	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setSeparateSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha )
-	{
-		HRESULT hr;
-		if( sourceFactor == SBF_ONE && destFactor == SBF_ZERO && 
-			sourceFactorAlpha == SBF_ONE && destFactorAlpha == SBF_ZERO)
-		{
-			if (FAILED(hr = __SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE)))
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set alpha blending option", "D3D9RenderSystem::_setSceneBlending" );
-		}
-		else
-		{
-			if (FAILED(hr = __SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE)))
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set alpha blending option", "D3D9RenderSystem::_setSeperateSceneBlending" );
-			if (FAILED(hr = __SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, TRUE)))
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set separate alpha blending option", "D3D9RenderSystem::_setSeperateSceneBlending" );
-			if( FAILED( hr = __SetRenderState( D3DRS_SRCBLEND, D3D9Mappings::get(sourceFactor) ) ) )
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set source blend", "D3D9RenderSystem::_setSeperateSceneBlending" );
-			if( FAILED( hr = __SetRenderState( D3DRS_DESTBLEND, D3D9Mappings::get(destFactor) ) ) )
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set destination blend", "D3D9RenderSystem::_setSeperateSceneBlending" );
-			if( FAILED( hr = __SetRenderState( D3DRS_SRCBLENDALPHA, D3D9Mappings::get(sourceFactorAlpha) ) ) )
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set alpha source blend", "D3D9RenderSystem::_setSeperateSceneBlending" );
-			if( FAILED( hr = __SetRenderState( D3DRS_DESTBLENDALPHA, D3D9Mappings::get(destFactorAlpha) ) ) )
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set alpha destination blend", "D3D9RenderSystem::_setSeperateSceneBlending" );
 		}
 	}
 	//---------------------------------------------------------------------
@@ -2723,13 +2686,6 @@ namespace Ogre
 
             do
             {
-				// Update derived depth bias
-				if (mDerivedDepthBias && mCurrentPassIterationNum > 0)
-				{
-					_setDepthBias(mDerivedDepthBiasBase + 
-						mDerivedDepthBiasMultiplier * mCurrentPassIterationNum, 
-						mDerivedDepthBiasSlopeScale);
-				}
                 // do indexed draw operation
 			    hr = mpD3DDevice->DrawIndexedPrimitive(
                     primType, 
@@ -2747,13 +2703,6 @@ namespace Ogre
             // nfz: gpu_iterate
             do
             {
-				// Update derived depth bias
-				if (mDerivedDepthBias && mCurrentPassIterationNum > 0)
-				{
-					_setDepthBias(mDerivedDepthBiasBase + 
-						mDerivedDepthBiasMultiplier * mCurrentPassIterationNum, 
-						mDerivedDepthBiasSlopeScale);
-				}
                 // Unindexed, a little simpler!
 			    hr = mpD3DDevice->DrawPrimitive(
                     primType, 
@@ -2990,35 +2939,24 @@ namespace Ogre
 
         }
     }
-	//---------------------------------------------------------------------
-	void D3D9RenderSystem::setClipPlanesImpl(const PlaneList& clipPlanes)
-	{
+    //---------------------------------------------------------------------
+    void D3D9RenderSystem::setClipPlanes(const PlaneList& clipPlanes)
+    {
         size_t i;
         size_t numClipPlanes;
-        D3DXPLANE dx9ClipPlane;
+        float dx9ClipPlane[4];
         DWORD mask = 0;
         HRESULT hr;
 
-		numClipPlanes = clipPlanes.size();
+        numClipPlanes = clipPlanes.size();
         for (i = 0; i < numClipPlanes; ++i)
         {
             const Plane& plane = clipPlanes[i];
 
-			dx9ClipPlane.a = plane.normal.x;
-			dx9ClipPlane.b = plane.normal.y;
-			dx9ClipPlane.c = plane.normal.z;
-			dx9ClipPlane.d = plane.d;
-
-			if (mVertexProgramBound)
-			{
-				// programmable clips in clip space (ugh)
-				// must transform worldspace planes by view/proj
-				D3DXMATRIX xform;
-				D3DXMatrixMultiply(&xform, &mDxViewMat, &mDxProjMat);
-				D3DXMatrixInverse(&xform, NULL, &xform);
-				D3DXMatrixTranspose(&xform, &xform);
-				D3DXPlaneTransform(&dx9ClipPlane, &dx9ClipPlane, &xform);
-			}
+            dx9ClipPlane[0] = plane.normal.x;
+            dx9ClipPlane[1] = plane.normal.y;
+            dx9ClipPlane[2] = plane.normal.z;
+            dx9ClipPlane[3] = plane.d;
 
             hr = mpD3DDevice->SetClipPlane(i, dx9ClipPlane);
             if (FAILED(hr))
@@ -3297,12 +3235,13 @@ namespace Ogre
 				"D3D9RenderWindow::restoreLostDevice" );
 		}
 
-		LogManager::getSingleton().stream()
-			<< "Reset device ok w:" << presParams->BackBufferWidth
+		StringUtil::StrStreamType str;
+		str << "Reset device ok w:" << presParams->BackBufferWidth
 			<< " h:" << presParams->BackBufferHeight;
+		LogManager::getSingleton().logMessage(str.str());
 		// If windowed, we have to reset the size here
 		// since a fullscreen switch may have occurred
-		if (presParams->Windowed)
+		if (presParams->Windowed && mPrimaryWindow->_getSwitchingFullscreen())
 		{
 			RECT rc;
 			SetRect(&rc, 0, 0, presParams->BackBufferWidth, presParams->BackBufferHeight);
@@ -3315,6 +3254,8 @@ namespace Ogre
 			int top = (screenh - winHeight) / 2;
 			SetWindowPos(mPrimaryWindow->getWindowHandle(), HWND_NOTOPMOST, left, top, winWidth, winHeight,
 				SWP_DRAWFRAME | SWP_FRAMECHANGED | SWP_NOACTIVATE);
+
+			mPrimaryWindow->_finishSwitchingFullscreen();
 
 		}
 

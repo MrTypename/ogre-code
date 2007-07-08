@@ -147,9 +147,6 @@ public:
 	// Enumerate all registered ExportObjects
 	static void EnumObjects(std::vector<Desc>& objlist);
 
-	// Get config
-	CDDObject* GetConfig() const;
-
 protected:
 	std::string m_sType;
 	std::string m_sDesc;

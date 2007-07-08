@@ -2,7 +2,7 @@
  *
  * MilkShape 3D Model Import/Export API
  *
- * Jan 27 2007, Mete Ciragan, chUmbaLum sOft
+ * May 10 2000, Mete Ciragan, chUmbaLum sOft
  *
  **********************************************************************/
 
@@ -40,12 +40,6 @@ extern "C" {
 #define MS_MAX_NAME             32
 #define MS_MAX_PATH             256
 
-#define MAX_VERTICES	65534
-#define MAX_TRIANGLES	65534
-#define MAX_GROUPS		255
-#define MAX_MATERIALS	128
-#define MAX_JOINTS		128
-
 
 
 /**********************************************************************
@@ -71,18 +65,7 @@ typedef enum {
     eSelected = 1, eSelected2 = 2, eHidden = 4, eDirty = 8, eAveraged = 16, eKeepVertex = 32, eSphereMap = 0x80, eHasAlpha = 0x40
 } msFlag;
 
-
-
-/*
-!!!
-!!! Do not use direct structs access like vertex->nFlags. Use msVertex_GetFlags(vertex) instead. This makes sure,
-!!! that your plugin stays compatible with future versions of MilkShape 3D.
-!!!
-*/
-
-
-
-/* msVertex: used internally only, DO NOT USE DIRECTLY, USE API INSTEAD */
+/* msVertex */
 typedef struct msVertex
 {
     byte        nFlags;
@@ -91,15 +74,14 @@ typedef struct msVertex
     char        nBoneIndex;
 } msVertex;
 
-/* msVertexEx: used internally only, DO NOT USE DIRECTLY, USE API INSTEAD */
+/* msVertexEx */
 typedef struct msVertexEx
 {
 	char		nBoneIndices[3];
 	byte		nBoneWeights[3];
-	unsigned int nExtra;
 } msVertexEx;
 
-/* msTriangle: used internally only, DO NOT USE DIRECTLY, USE API INSTEAD */
+/* msTriangle */
 typedef struct msTriangle
 {
     word        nFlags;
@@ -109,14 +91,14 @@ typedef struct msTriangle
     byte        nSmoothingGroup;
 } msTriangle;
 
-/* msTriangleEx: used internally only, DO NOT USE DIRECTLY, USE API INSTEAD */
+/* msTriangleEx */
 typedef struct msTriangleEx
 {
 	msVec3		Normals[3];
 	msVec2		TexCoords[3];
 } msTriangleEx;
 
-/* msMesh: used internally only, DO NOT USE DIRECTLY, USE API INSTEAD */
+/* msMesh */
 typedef struct msMesh
 {
     byte        nFlags;
@@ -140,7 +122,7 @@ typedef struct msMesh
 	msTriangleEx *pTriangleExs;
 } msMesh;
 
-/* msMaterial: used internally only, DO NOT USE DIRECTLY, USE API INSTEAD */
+/* msMaterial */
 typedef struct msMaterial
 {
     int         nFlags;
@@ -171,7 +153,7 @@ typedef struct msRotationKey
     msVec3  Rotation;
 } msRotationKey;
 
-/* msBone: used internally only, DO NOT USE DIRECTLY, USE API INSTEAD */
+/* msBone */
 typedef struct msBone
 {
     int             nFlags;
@@ -190,7 +172,7 @@ typedef struct msBone
 	char*			pszComment;
 } msBone;
 
-/* msModel: used internally only, DO NOT USE DIRECTLY, USE API INSTEAD */
+/* msModel */
 typedef struct msModel
 {
     int         nNumMeshes;
@@ -332,8 +314,6 @@ MSLIB_API int           msVertexEx_SetBoneIndices (msVertexEx* pVertex, int nInd
 MSLIB_API int           msVertexEx_GetBoneIndices (msVertexEx* pVertex, int nIndex);
 MSLIB_API int           msVertexEx_SetBoneWeights (msVertexEx* pVertex, int nIndex, int nWeight);
 MSLIB_API int           msVertexEx_GetBoneWeights (msVertexEx* pVertex, int nIndex);
-MSLIB_API unsigned int  msVertexEx_SetExtra (msVertexEx* pVertex, int nIndex, unsigned int nExtra);
-MSLIB_API unsigned int  msVertexEx_GetExtra (msVertexEx* pVertex, int nIndex);
 
 /**********************************************************************
  * msMaterial
@@ -343,6 +323,7 @@ MSLIB_API void          msMaterial_SetFlags (msMaterial *pMaterial, int nFlags);
 MSLIB_API int           msMaterial_GetFlags (msMaterial *pMaterial);
 MSLIB_API void          msMaterial_SetName (msMaterial *pMaterial, const char *szName);
 MSLIB_API void          msMaterial_GetName (msMaterial *pMaterial, char *szName, int nMaxLength);
+MSLIB_API void          msMaterial_SetAmbient (msMaterial *pMaterial, msVec4 Ambient);
 MSLIB_API void          msMaterial_SetAmbient (msMaterial *pMaterial, msVec4 Ambient);
 MSLIB_API void          msMaterial_GetAmbient (msMaterial *pMaterial, msVec4 Ambient);
 MSLIB_API void          msMaterial_SetDiffuse (msMaterial *pMaterial, msVec4 Diffuse);

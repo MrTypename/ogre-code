@@ -52,18 +52,51 @@ namespace Ogre
 		mBuffer->_clearSliceRTT(0);
     }
 
-	void RenderTexture::copyContentsToMemory(const PixelBox &dst, FrameBuffer buffer)
+	void RenderTexture::writeContentsToFile( const String & filename )
     {
-		if (buffer == FB_AUTO) buffer = FB_FRONT;
-		if (buffer != FB_FRONT)
-		{
-			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS,
-						"Invalid buffer.",
-						"RenderTexture::copyContentsToMemory" );
-		}
+		// copyToMemory
+        ImageCodec::ImageData *imgData = new ImageCodec::ImageData();
+        
+        imgData->width = mWidth;
+        imgData->height = mHeight;
+		imgData->depth = 1;
+        imgData->format = PF_BYTE_RGBA;
+		size_t size = imgData->width * imgData->height * 4;
 
-		mBuffer->blitToMemory(dst);
-	}
+        // Allocate buffer 
+        uchar* pBuffer = new uchar[size];
+
+        // Read pixels
+        mBuffer->blitToMemory(
+			Box(0,0,mZOffset,mWidth,mHeight,mZOffset+1), 
+			PixelBox(mWidth, mHeight, 1, imgData->format, pBuffer)
+		);
+
+        // Wrap buffer in a chunk
+        MemoryDataStreamPtr stream(new MemoryDataStream(
+            pBuffer, size, false));
+
+        // Get codec 
+        size_t pos = filename.find_last_of(".");
+            String extension;
+        if( pos == String::npos )
+            OGRE_EXCEPT(
+                Exception::ERR_INVALIDPARAMS, 
+            "Unable to determine image type for '" + filename + "' - invalid extension.",
+                "GLRenderTexture::writeContentsToFile" );
+
+        while( pos != filename.length() - 1 )
+            extension += filename[++pos];
+
+        // Get the codec
+        Codec * pCodec = Codec::getCodec(extension);
+
+        // Write out
+        Codec::CodecDataPtr codecDataPtr(imgData);
+        pCodec->codeToFile(stream, filename, codecDataPtr);
+
+		delete [] pBuffer;
+    }
 	//-----------------------------------------------------------------------------
 	MultiRenderTarget::MultiRenderTarget(const String &name)
     {
@@ -73,10 +106,11 @@ namespace Ogre
 		mWidth = mHeight = 0;
     }
 	//-----------------------------------------------------------------------------
-	void MultiRenderTarget::copyContentsToMemory(const PixelBox &dst, FrameBuffer buffer)
+	void MultiRenderTarget::writeContentsToFile( const String & filename )
 	{
 		OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
-					"Cannot get MultiRenderTargets pixels",
-					"MultiRenderTarget::copyContentsToMemory");
+				"Cannot write MultiRenderTargets to disk",
+                "MultiRenderTarget::writeContentsToFile");
 	}
+
 }

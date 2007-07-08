@@ -68,9 +68,6 @@ namespace Ogre {
         mutable Matrix4 mInverseTransposeWorldViewMatrix;
         mutable Vector4 mCameraPositionObjectSpace;
         mutable Matrix4 mTextureViewProjMatrix[OGRE_MAX_SIMULTANEOUS_LIGHTS];
-		mutable Matrix4 mTextureWorldViewProjMatrix[OGRE_MAX_SIMULTANEOUS_LIGHTS];
-		mutable Matrix4 mSpotlightViewProjMatrix[OGRE_MAX_SIMULTANEOUS_LIGHTS];
-		mutable Matrix4 mSpotlightWorldViewProjMatrix[OGRE_MAX_SIMULTANEOUS_LIGHTS];
         mutable Matrix4 mViewMatrix;
         mutable Matrix4 mProjectionMatrix;
 		mutable Real mDirLightExtrusionDistance;
@@ -90,9 +87,6 @@ namespace Ogre {
         mutable bool mCameraPositionObjectSpaceDirty;
         mutable bool mCameraPositionDirty;
         mutable bool mTextureViewProjMatrixDirty[OGRE_MAX_SIMULTANEOUS_LIGHTS];
-		mutable bool mTextureWorldViewProjMatrixDirty[OGRE_MAX_SIMULTANEOUS_LIGHTS];
-		mutable bool mSpotlightViewProjMatrixDirty[OGRE_MAX_SIMULTANEOUS_LIGHTS];
-		mutable bool mSpotlightWorldViewProjMatrixDirty[OGRE_MAX_SIMULTANEOUS_LIGHTS];
 		mutable ColourValue mAmbientLight;
         mutable ColourValue mFogColour;
         mutable Vector4 mFogParams;
@@ -123,7 +117,7 @@ namespace Ogre {
         void setWorldMatrices(const Matrix4* m, size_t count);
         /** Updates the current camera */
         void setCurrentCamera(const Camera* cam);
-        /** Sets the light list that should be used, and it's base index from the global list */
+        /** Sets the light list that should be used */
         void setCurrentLightList(const LightList* ll);
         /** Sets the current texture projector for a index */
         void setTextureProjector(const Frustum* frust, size_t index);
@@ -159,7 +153,6 @@ namespace Ogre {
         const Vector4& getCameraPositionObjectSpace(void) const;
         /** Get the light which is 'index'th closest to the current object */
         const Light& getLight(size_t index) const;
-		float getLightNumber(size_t index) const;
 		void setAmbientLightColour(const ColourValue& ambient);
 		const ColourValue& getAmbientLightColour(void) const;
         const ColourValue& getSurfaceAmbientColour(void) const;
@@ -173,9 +166,6 @@ namespace Ogre {
         const ColourValue& getFogColour(void) const;
         const Vector4& getFogParams(void) const;
         const Matrix4& getTextureViewProjMatrix(size_t index) const;
-		const Matrix4& getTextureWorldViewProjMatrix(size_t index) const;
-		const Matrix4& getSpotlightViewProjMatrix(size_t index) const;
-		const Matrix4& getSpotlightWorldViewProjMatrix(size_t index) const;
         const RenderTarget* getCurrentRenderTarget(void) const;
         const Renderable* getCurrentRenderable(void) const;
         const Pass* getCurrentPass(void) const;

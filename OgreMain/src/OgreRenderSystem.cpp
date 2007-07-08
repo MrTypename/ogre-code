@@ -48,6 +48,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
+    const PlaneList Renderable::msDummyPlaneList; // FIX ME: temporary
     static const TexturePtr sNullTexPtr;
 
     //-----------------------------------------------------------------------
@@ -64,10 +65,8 @@ namespace Ogre {
         , mInvertVertexWinding(false)
         , mDisabledTexUnitsFrom(0)
         , mCurrentPassIterationCount(0)
-		, mDerivedDepthBias(false)
         , mVertexProgramBound(false)
         , mFragmentProgramBound(false)
-		, mClipPlanesDirty(true)
     {
         // instanciate RenderSystemCapabilities
         mCapabilities = new RenderSystemCapabilities();
@@ -476,7 +475,6 @@ namespace Ogre {
         // account for a pass having multiple iterations
         if (mCurrentPassIterationCount > 1)
             val *= mCurrentPassIterationCount;
-		mCurrentPassIterationNum = 0;
 
         switch(op.operationType)
         {
@@ -495,49 +493,17 @@ namespace Ogre {
 
         mVertexCount += op.vertexData->vertexCount;
         mBatchCount += mCurrentPassIterationCount;
-
-		// sort out clip planes
-		// have to do it here in case of matrix issues
-		if (mClipPlanesDirty)
-		{
-			setClipPlanesImpl(mClipPlanes);
-			mClipPlanesDirty = false;
-		}
     }
     //-----------------------------------------------------------------------
     void RenderSystem::setInvertVertexWinding(bool invert)
     {
         mInvertVertexWinding = invert;
     }
-	//---------------------------------------------------------------------
-	void RenderSystem::addClipPlane (const Plane &p)
-	{
-		mClipPlanes.push_back(p);
-		mClipPlanesDirty = true;
-	}
-	//---------------------------------------------------------------------
-	void RenderSystem::addClipPlane (Real A, Real B, Real C, Real D)
-	{
-		addClipPlane(Plane(A, B, C, D));
-	}
-	//---------------------------------------------------------------------
-	void RenderSystem::setClipPlanes(const PlaneList& clipPlanes)
-	{
-		if (clipPlanes != mClipPlanes)
-		{
-			mClipPlanes = clipPlanes;
-			mClipPlanesDirty = true;
-		}
-	}
-	//---------------------------------------------------------------------
-	void RenderSystem::resetClipPlanes()
-	{
-		if (!mClipPlanes.empty())
-		{
-			mClipPlanes.clear();
-			mClipPlanesDirty = true;
-		}
-	}
+    //-----------------------------------------------------------------------
+    void RenderSystem::setClipPlane (ushort index, const Plane &p)
+    {
+        setClipPlane (index, p.normal.x, p.normal.y, p.normal.z, p.d);
+    }
     //-----------------------------------------------------------------------
     void RenderSystem::_notifyCameraRemoved(const Camera* cam)
     {
@@ -557,7 +523,6 @@ namespace Ogre {
             return false;
 
         --mCurrentPassIterationCount;
-		++mCurrentPassIterationNum;
         if (!mActiveVertexGpuProgramParameters.isNull())
         {
             mActiveVertexGpuProgramParameters->incPassIterationNumber();
@@ -607,10 +572,6 @@ namespace Ogre {
 	    switch(prg->getType())
 	    {
         case GPT_VERTEX_PROGRAM:
-			// mark clip planes dirty if changed (programmable can change space)
-			if (!mVertexProgramBound && !mClipPlanes.empty())
-				mClipPlanesDirty = true;
-
             mVertexProgramBound = true;
 	        break;
         case GPT_FRAGMENT_PROGRAM:
@@ -624,9 +585,6 @@ namespace Ogre {
 	    switch(gptype)
 	    {
         case GPT_VERTEX_PROGRAM:
-			// mark clip planes dirty if changed (programmable can change space)
-			if (mVertexProgramBound && !mClipPlanes.empty())
-				mClipPlanesDirty = true;
             mVertexProgramBound = false;
 	        break;
         case GPT_FRAGMENT_PROGRAM:

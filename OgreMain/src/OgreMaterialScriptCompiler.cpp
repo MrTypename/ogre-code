@@ -77,13 +77,12 @@ namespace Ogre {
         // Pass section rules
         "    <Pass> ::= 'pass' [<Label>] '{' {<Pass_Properties>} '}' \n"
         "        <Pass_Properties> ::= <Ambient> | <Diffuse> | <Specular> | <Emissive> | \n"
-        "                              <Scene_Blend> | <Separate_Scene_Blend> | \n"
-		"							   <Depth_Check> | <Depth_Write> | <Illumination_Stage> | \n"
-		"                              <Light_Scissor> | <Light_Clip> | <Texture_Unit> | \n"
-		"                              <Depth_Func> | <Depth_Bias> | <Iteration_Depth_Bias> | <Alpha_Rejection> | \n"
+        "                              <Scene_Blend> | <Depth_Check> | <Depth_Write> | \n"
+        "                              <Texture_Unit> | \n"
+        "                              <Depth_Func> | <Depth_Bias> | <Alpha_Rejection> | \n"
         "                              <Cull_Hardware> | <Cull_Software> | <Lighting> | \n"
-		"                              <GPU_Program_Ref> | <NormaliseNormals> | \n"
-        "                              <Shading> | <PolygonMode> | <PolygonModeOverride> | <Fog_Override> | <Colour_Write> | \n"
+        "                              <GPU_Program_Ref> | \n"
+        "                              <Shading> | <PolygonMode> | <Fog_Override> | <Colour_Write> | \n"
 		"                              <Max_Lights> | <Start_Light> | <Iteration> | \n"
 		"                              <Point_Sprites> | <Point_Size_Attenuation> | \n"
 		"                              <Point_Size_Min> | <Point_Size_Max> | <Point_Size> \n"
@@ -108,18 +107,10 @@ namespace Ogre {
         "                               'dest_alpha' | 'src_alpha' | 'one_minus_dest_alpha' | \n"
         "                               'one_minus_src_alpha' | 'one' | 'zero' \n"
 
-        "        <Separate_Scene_Blend> ::= 'separate_scene_blend' <SeparateSceneBlend_Options> \n"
-		"          <SeparateSceneBlend_Options> ::= <Simple_Blend> <Simple_Blend> | <User_Blend> <User_Blend> \n"
-
         "        <Depth_Check> ::= 'depth_check' <On_Off> \n"
         "        <Depth_Write> ::= 'depth_write' <On_Off> \n"
         "        <Depth_Func> ::= 'depth_func' <Compare_Func> \n"
 		"        <Depth_Bias> ::= 'depth_bias' <#constant> [<#slopescale>] \n"
-		"        <Iteration_Depth_Bias> ::= 'iteration_depth_bias' <#bias> \n"
-		"        <Illumination_Stage> ::= 'illumination_stage' <Illum_Stage_Options> \n"
-		"        <Illum_Stage_Options> ::=  'ambient' | 'per_light' | 'decal' \n"
-		"        <Light_Scissor> ::= 'light_scissor' <On_Off> \n"
-		"        <Light_Clip> ::= 'light_clip_planes' <On_Off> \n"
         "        <Alpha_Rejection> ::= 'alpha_rejection' <Compare_Func> <#value> \n"
         "        <Compare_Func> ::= 'always_fail' | 'always_pass' | 'less_equal' | 'less' | \n"
         "                           'equal' | 'not_equal' | 'greater_equal' | 'greater' \n"
@@ -130,10 +121,8 @@ namespace Ogre {
         "        <Lighting> ::= 'lighting' <On_Off> \n"
         "        <Shading> ::= 'shading' <Shading_Options> \n"
         "           <Shading_Options> ::= 'flat' | 'gouraud' | 'phong' \n"
-		"        <NormaliseNormals> ::= 'normalise_normals' <On_Off> \n"
         "        <PolygonMode> ::= 'polygon_mode' <PolygonMode_Options> \n"
         "           <PolygonMode_Options> ::= 'solid' | 'wireframe' | 'points' \n"
-		"        <PolygonModeOverride> ::= 'polygon_mode_overrideable' <True_False> \n"
         "        <Colour_Write> ::= 'colour_write' <On_Off> \n"
 		"        <Point_Size> ::= 'point_size' <#size> \n"
 		"        <Point_Sprites> ::= 'point_sprites' <On_Off> \n"
@@ -352,13 +341,10 @@ namespace Ogre {
                 addLexemeToken("one_minus_dest_alpha", ID_ONE_MINUS_DEST_ALPHA);
                 addLexemeToken("one_minus_src_alpha", ID_ONE_MINUS_SRC_ALPHA);
 
-            addLexemeAction("separate_scene_blend", &MaterialScriptCompiler::parseSeparateSceneBlend);
-
             addLexemeAction("depth_check", &MaterialScriptCompiler::parseDepthCheck);
             addLexemeAction("depth_write", &MaterialScriptCompiler::parseDepthWrite);
             addLexemeAction("depth_func", &MaterialScriptCompiler::parseDepthFunc);
             addLexemeAction("depth_bias", &MaterialScriptCompiler::parseDepthBias);
-			addLexemeAction("iteration_depth_bias", &MaterialScriptCompiler::parseIterationDepthBias);
                 addLexemeToken("always_fail", ID_ALWAYS_FAIL);
                 addLexemeToken("always_pass", ID_ALWAYS_PASS);
                 addLexemeToken("less_equal", ID_LESS_EQUAL);
@@ -368,18 +354,12 @@ namespace Ogre {
                 addLexemeToken("greater_equal", ID_GREATER_EQUAL);
                 addLexemeToken("greater", ID_GREATER);
             addLexemeAction("alpha_rejection", &MaterialScriptCompiler::parseAlphaRejection);
-			addLexemeAction("light_scissor", &MaterialScriptCompiler::parseLightScissor);
-			addLexemeAction("light_clip_planes", &MaterialScriptCompiler::parseLightClip);
-			addLexemeAction("illumination_stage", &MaterialScriptCompiler::parseIlluminationStage);
-				addLexemeToken("ambient", ID_AMBIENT);
-				addLexemeToken("decal", ID_DECAL);
             addLexemeAction("cull_hardware", &MaterialScriptCompiler::parseCullHardware);
                 addLexemeToken("clockwise", ID_CLOCKWISE);
                 addLexemeToken("anticlockwise", ID_ANTICLOCKWISE);
             addLexemeAction("cull_software", &MaterialScriptCompiler::parseCullSoftware);
                 addLexemeToken("back", ID_CULL_BACK);
                 addLexemeToken("front", ID_CULL_FRONT);
-			addLexemeAction("normalise_normals", &MaterialScriptCompiler::parseNormaliseNormals);
             addLexemeAction("lighting", &MaterialScriptCompiler::parseLighting);
             addLexemeAction("shading", &MaterialScriptCompiler::parseShading);
                 addLexemeTokenAction("flat", ID_FLAT);
@@ -389,7 +369,6 @@ namespace Ogre {
                 addLexemeTokenAction("solid", ID_SOLID);
                 addLexemeToken("wireframe", ID_WIREFRAME);
                 addLexemeToken("points", ID_POINTS);
-			addLexemeAction("polygon_mode_overrideable", &MaterialScriptCompiler::parsePolygonModeOverrideable);
             addLexemeAction("fog_override", &MaterialScriptCompiler::parseFogOverride);
                 addLexemeToken("exp", ID_EXP);
                 addLexemeToken("exp2", ID_EXP2);
@@ -1172,123 +1151,17 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    void MaterialScriptCompiler::parseSeparateSceneBlend(void)
-    {
-        assert(mScriptContext.pass);
-        const size_t paramCount = getRemainingTokensForAction();
-        // Should be 2 or 4 params
-        if (paramCount == 2)
-        {
-            //simple blend types
-            SceneBlendType sbtype = SBT_REPLACE;
-            switch(getNextTokenID())
-            {
-            case ID_ADD:
-                sbtype = SBT_ADD;
-                break;
-            case ID_MODULATE:
-                sbtype = SBT_MODULATE;
-                break;
-			case ID_COLOUR_BLEND:
-				sbtype = SBT_TRANSPARENT_COLOUR;
-				break;
-            case ID_ALPHA_BLEND:
-                sbtype = SBT_TRANSPARENT_ALPHA;
-                break;
-            default:
-                break;
-            }
-
-            //simple blend types
-            SceneBlendType sbtypea = SBT_REPLACE;
-            switch(getNextTokenID())
-            {
-            case ID_ADD:
-                sbtypea = SBT_ADD;
-                break;
-            case ID_MODULATE:
-                sbtypea = SBT_MODULATE;
-                break;
-			case ID_COLOUR_BLEND:
-				sbtypea = SBT_TRANSPARENT_COLOUR;
-				break;
-            case ID_ALPHA_BLEND:
-                sbtypea = SBT_TRANSPARENT_ALPHA;
-                break;
-            default:
-                break;
-            }
-
-            mScriptContext.pass->setSeparateSceneBlending(sbtype, sbtypea);
-        }
-        else if (paramCount == 4)
-        {
-            const SceneBlendFactor src = convertBlendFactor();
-            const SceneBlendFactor dest = convertBlendFactor();
-
-            const SceneBlendFactor srca = convertBlendFactor();
-            const SceneBlendFactor desta = convertBlendFactor();
-
-			mScriptContext.pass->setSeparateSceneBlending(src,dest,srca,desta);
-        }
-        else
-        {
-            logParseError(
-                "Bad separate_scene_blend attribute, wrong number of parameters (expected 2 or 4)");
-        }
-    }
-    //-----------------------------------------------------------------------
     void MaterialScriptCompiler::parseDepthCheck(void)
     {
         assert(mScriptContext.pass);
         mScriptContext.pass->setDepthCheckEnabled(testNextTokenID(ID_ON));
     }
-	//-----------------------------------------------------------------------
-	void MaterialScriptCompiler::parseNormaliseNormals(void)
-	{
-		assert(mScriptContext.pass);
-		mScriptContext.pass->setNormaliseNormals(testNextTokenID(ID_ON));
-	}
     //-----------------------------------------------------------------------
     void MaterialScriptCompiler::parseDepthWrite(void)
     {
         assert(mScriptContext.pass);
         mScriptContext.pass->setDepthWriteEnabled(testNextTokenID(ID_ON));
     }
-	//-----------------------------------------------------------------------
-	void MaterialScriptCompiler::parseLightScissor(void)
-	{
-		assert(mScriptContext.pass);
-		mScriptContext.pass->setLightScissoringEnabled(testNextTokenID(ID_ON));
-	}
-	//-----------------------------------------------------------------------
-	void MaterialScriptCompiler::parseLightClip(void)
-	{
-		assert(mScriptContext.pass);
-		mScriptContext.pass->setLightClipPlanesEnabled(testNextTokenID(ID_ON));
-	}
-	//---------------------------------------------------------------------
-	void MaterialScriptCompiler::parseIlluminationStage(void)
-	{
-		assert(mScriptContext.pass);
-		switch(getNextTokenID())
-		{
-		case ID_AMBIENT:
-			mScriptContext.pass->setIlluminationStage(IS_AMBIENT);
-			break;
-		case ID_PER_LIGHT:
-			mScriptContext.pass->setIlluminationStage(IS_PER_LIGHT);
-			break;
-		case ID_DECAL:
-			mScriptContext.pass->setIlluminationStage(IS_DECAL);
-			break;
-		default:
-			mScriptContext.pass->setIlluminationStage(IS_UNKNOWN);
-			break;
-		}
-
-
-	}
     //-----------------------------------------------------------------------
     CompareFunction MaterialScriptCompiler::convertCompareFunction(void)
     {
@@ -1335,14 +1208,6 @@ namespace Ogre {
 
         mScriptContext.pass->setDepthBias(constantBias, slopeScaleBias);
     }
-	//-----------------------------------------------------------------------
-	void MaterialScriptCompiler::parseIterationDepthBias(void)
-	{
-		assert(mScriptContext.pass);
-		float bias = static_cast<float>(getNextTokenValue());
-
-		mScriptContext.pass->setIterationDepthBias(bias);
-	}
     //-----------------------------------------------------------------------
     void MaterialScriptCompiler::parseAlphaRejection(void)
     {
@@ -1432,12 +1297,6 @@ namespace Ogre {
             break;
         }
     }
-	//-----------------------------------------------------------------------
-	void MaterialScriptCompiler::parsePolygonModeOverrideable(void)
-	{
-		assert(mScriptContext.pass);
-		mScriptContext.pass->setPolygonModeOverrideable(testNextTokenID(ID_TRUE));
-	}
     //-----------------------------------------------------------------------
     void MaterialScriptCompiler::parseFogOverride(void)
     {
@@ -2771,11 +2630,7 @@ namespace Ogre {
 							index, autoConstantDef->acType, mScriptContext.numAnimationParametrics++);
 				}
 				// Special case texture projector - assume 0 if data not specified
-				else if (
-					(autoConstantDef->acType == GpuProgramParameters::ACT_TEXTURE_VIEWPROJ_MATRIX ||
-					 autoConstantDef->acType == GpuProgramParameters::ACT_TEXTURE_WORLDVIEWPROJ_MATRIX ||
-					 autoConstantDef->acType == GpuProgramParameters::ACT_SPOTLIGHT_VIEWPROJ_MATRIX ||
-					 autoConstantDef->acType == GpuProgramParameters::ACT_SPOTLIGHT_WORLDVIEWPROJ_MATRIX)
+				else if (autoConstantDef->acType == GpuProgramParameters::ACT_TEXTURE_VIEWPROJ_MATRIX
 					&& getRemainingTokensForAction() == 0)
 				{
 					if (isNamed)

@@ -70,8 +70,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 //
 #include "..\res\resource.h"
 
-
-#include "LexiProfiler.h"
 #include "SharedUtilities.h"
 #include "GDIMetaLib.h"
 #include "LexiIncludes.h"
@@ -81,18 +79,21 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "LexiExportObject.h"
 #include "LexiExportObjectRoot.h"
 
-#include "..\..\LexiExportProxy\Sources\LexiCommon.h"
+//
+
+#define NDS_EXPORTER_TITLE			"LEXIExporter"
+// Remember to change every release
+#define NDS_EXPORTER_VERSION		"1.0.3"
+// Change only at config protocol break
+#define NDS_EXPORTER_CONFIG_VERSION	10002
+
+
 
 //
 
 extern HINSTANCE GetCurrentInstance();
 extern void RemoveIllegalChars(std::string& sString);
-extern std::string FixupFilename(const char* pszFilename, const char* pszType);
-extern std::string ResolveMacros(const char* pszString);
-extern bool ValidateFilenames();
 
 //
-
-extern std::string GetLEXIRoot(void);
 
 #endif // __stdafx_h__
