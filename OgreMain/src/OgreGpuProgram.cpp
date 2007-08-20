@@ -120,7 +120,6 @@ namespace Ogre
 		AutoConstantDefinition(ACT_LIGHT_DIRECTION_VIEW_SPACE_ARRAY,         "light_direction_view_space_array",   4, ET_REAL, ACDT_INT),
 		AutoConstantDefinition(ACT_LIGHT_DISTANCE_OBJECT_SPACE_ARRAY,   "light_distance_object_space_array",  1, ET_REAL, ACDT_INT),
 		AutoConstantDefinition(ACT_LIGHT_POWER_SCALE_ARRAY,   		  "light_power_array",  1, ET_REAL, ACDT_INT),
-		AutoConstantDefinition(ACT_LIGHT_NUMBER,   					  "light_number",  1, ET_REAL, ACDT_INT),
 		AutoConstantDefinition(ACT_SPOTLIGHT_PARAMS_ARRAY,              "spotlight_params_array",             4, ET_REAL, ACDT_INT),
 
         AutoConstantDefinition(ACT_DERIVED_AMBIENT_LIGHT_COLOUR,    "derived_ambient_light_colour",     4, ET_REAL, ACDT_NONE),
@@ -134,9 +133,6 @@ namespace Ogre
         AutoConstantDefinition(ACT_CAMERA_POSITION,               "camera_position",              3, ET_REAL, ACDT_NONE),
         AutoConstantDefinition(ACT_CAMERA_POSITION_OBJECT_SPACE,  "camera_position_object_space", 3, ET_REAL, ACDT_NONE),
         AutoConstantDefinition(ACT_TEXTURE_VIEWPROJ_MATRIX,       "texture_viewproj_matrix",     16, ET_REAL, ACDT_INT),
-		AutoConstantDefinition(ACT_TEXTURE_WORLDVIEWPROJ_MATRIX,  "texture_worldviewproj_matrix",16, ET_REAL, ACDT_INT),
-		AutoConstantDefinition(ACT_SPOTLIGHT_VIEWPROJ_MATRIX,       "spotlight_viewproj_matrix",     16, ET_REAL, ACDT_INT),
-		AutoConstantDefinition(ACT_SPOTLIGHT_WORLDVIEWPROJ_MATRIX,  "spotlight_worldviewproj_matrix",16, ET_REAL, ACDT_INT),
         AutoConstantDefinition(ACT_CUSTOM,                        "custom",                       4, ET_REAL, ACDT_INT),  // *** needs to be tested
         AutoConstantDefinition(ACT_TIME,                               "time",                               1, ET_REAL, ACDT_REAL),
         AutoConstantDefinition(ACT_TIME_0_X,                      "time_0_x",                     4, ET_REAL, ACDT_REAL),
@@ -263,9 +259,10 @@ namespace Ogre
 		catch (const Exception&)
 		{
 			// will already have been logged
-			LogManager::getSingleton().stream()
-				<< "Gpu program " << mName << " encountered an error "
+			StringUtil::StrStreamType str;
+			str << "Gpu program " << mName << " encountered an error "
 				<< "during loading and is thus not supported.";
+			LogManager::getSingleton().logMessage(str.str());
 
 			mCompileError = true;
 		}
@@ -1389,9 +1386,6 @@ namespace Ogre
             case ACT_LIGHT_POWER_SCALE:
 				_writeRawConstant(i->physicalIndex, source.getLight(i->data).getPowerScale());
 				break;
-			case ACT_LIGHT_NUMBER:
-				_writeRawConstant(i->physicalIndex, source.getLightNumber(i->data));
-				break;
             case ACT_LIGHT_ATTENUATION:
             {
                 // range, const, linear, quad
@@ -1586,16 +1580,6 @@ namespace Ogre
 			case ACT_TEXTURE_VIEWPROJ_MATRIX:
 				// can also be updated in lights
 				_writeRawConstant(i->physicalIndex, source.getTextureViewProjMatrix(i->data));
-				break;
-			case ACT_TEXTURE_WORLDVIEWPROJ_MATRIX:
-				// can also be updated in lights
-				_writeRawConstant(i->physicalIndex, source.getTextureWorldViewProjMatrix(i->data));
-				break;
-			case ACT_SPOTLIGHT_VIEWPROJ_MATRIX:
-				_writeRawConstant(i->physicalIndex, source.getSpotlightViewProjMatrix(i->data));
-				break;
-			case ACT_SPOTLIGHT_WORLDVIEWPROJ_MATRIX:
-				_writeRawConstant(i->physicalIndex, source.getSpotlightWorldViewProjMatrix(i->data));
 				break;
             default:
                 // do nothing

@@ -121,11 +121,11 @@ public:
 			->setCaption("[5/6]theta: "+StringConverter::toString(global_theta));
 	}
 
-    bool frameRenderingQueued( const FrameEvent& evt )
+    bool frameStarted( const FrameEvent& evt )
     {
 	using namespace OIS;
 	static float mTimeUntilNextToggle = 0.0f;
-        if( ExampleFrameListener::frameRenderingQueued( evt ) == false )
+        if( ExampleFrameListener::frameStarted( evt ) == false )
 		return false;
 		
 		mTimeUntilNextToggle -= evt.timeSinceLastFrame;

@@ -38,20 +38,6 @@ Torus Knot Software Ltd.
 #include "OgreTextureUnitState.h"
 
 namespace Ogre {
-
-	/// Categorisation of passes for the purpose of additive lighting
-	enum IlluminationStage
-	{
-		/// Part of the rendering which occurs without any kind of direct lighting
-		IS_AMBIENT,
-		/// Part of the rendering which occurs per light
-		IS_PER_LIGHT,
-		/// Post-lighting rendering
-		IS_DECAL, 
-		/// Not determined
-		IS_UNKNOWN
-	};
-
     /** Class defining a single pass of a Technique (of a Material), ie
         a single rendering call.
     @remarks
@@ -109,11 +95,6 @@ namespace Ogre {
         // Blending factors
         SceneBlendFactor mSourceBlendFactor;
         SceneBlendFactor mDestBlendFactor;
-		SceneBlendFactor mSourceBlendFactorAlpha;
-		SceneBlendFactor mDestBlendFactorAlpha;
-
-		// Used to determine if separate alpha blending should be used for color and alpha channels
-		bool mSeparateBlend;
         //-------------------------------------------------------------------------
 
         //-------------------------------------------------------------------------
@@ -123,7 +104,6 @@ namespace Ogre {
         CompareFunction mDepthFunc;
         float mDepthBiasConstant;
 		float mDepthBiasSlopeScale;
-		float mDepthBiasPerIteration;
 
         // Colour buffer settings
         bool mColourWrite;
@@ -157,9 +137,7 @@ namespace Ogre {
         ShadeOptions mShadeOptions;
 		/// Polygon mode
 		PolygonMode mPolygonMode;
-		/// Normalisation
-		bool mNormaliseNormals;
-		bool mPolygonModeOverrideable;
+
         //-------------------------------------------------------------------------
         // Fog
         bool mFogOverride;
@@ -200,15 +178,6 @@ namespace Ogre {
 		typedef std::vector<unsigned short> ContentTypeLookup;
 		mutable ContentTypeLookup mShadowContentTypeLookup;
 		mutable bool mContentTypeLookupBuilt;
-		/// Scissoring for the light?
-		bool mLightScissoring;
-		/// User clip planes for light?
-		bool mLightClipPlanes;
-		/// Illumination stage?
-		IlluminationStage mIlluminationStage;
-
-		// Used to get scene blending flags from a blending type
-		void _getBlendFlags(SceneBlendType type, SceneBlendFactor& source, SceneBlendFactor& dest);
 
 	public:
 		typedef std::set<Pass*> PassSet;
@@ -228,7 +197,7 @@ namespace Ogre {
         Pass(Technique* parent, unsigned short index, const Pass& oth );
         /// Operator = overload
         Pass& operator=(const Pass& oth);
-        virtual ~Pass();
+        ~Pass();
 
         /// Returns true if this pass is programmable ie includes either a vertex or fragment program.
         bool isProgrammable(void) const { return mVertexProgramUsage || mFragmentProgramUsage; }
@@ -557,26 +526,6 @@ namespace Ogre {
         */
         void setSceneBlending( const SceneBlendType sbt );
 
-       /** Sets the kind of blending this pass has with the existing contents of the scene, separately for color and alpha channels
-        @remarks
-        Wheras the texture blending operations seen in the TextureUnitState class are concerned with
-        blending between texture layers, this blending is about combining the output of the Pass
-        as a whole with the existing contents of the rendering target. This blending therefore allows
-        object transparency and other special effects. If all passes in a technique have a scene
-        blend, then the whole technique is considered to be transparent.
-        @par
-        This method allows you to select one of a number of predefined blending types. If you require more
-        control than this, use the alternative version of this method which allows you to specify source and
-        destination blend factors.
-        @note
-        This method is applicable for both the fixed-function and programmable pipelines.
-        @param
-        sbt One of the predefined SceneBlendType blending types for the color channel
-        @param
-        sbta One of the predefined SceneBlendType blending types for the alpha channel
-        */
-        void setSeparateSceneBlending( const SceneBlendType sbt, const SceneBlendType sbta );
-
         /** Allows very fine control of blending this Pass with the existing contents of the scene.
         @remarks
         Wheras the texture blending operations seen in the TextureUnitState class are concerned with
@@ -601,37 +550,6 @@ namespace Ogre {
         */
         void setSceneBlending( const SceneBlendFactor sourceFactor, const SceneBlendFactor destFactor);
 
-        /** Allows very fine control of blending this Pass with the existing contents of the scene.
-        @remarks
-        Wheras the texture blending operations seen in the TextureUnitState class are concerned with
-        blending between texture layers, this blending is about combining the output of the material
-        as a whole with the existing contents of the rendering target. This blending therefore allows
-        object transparency and other special effects.
-        @par
-        This version of the method allows complete control over the blending operation, by specifying the
-        source and destination blending factors. The result of the blending operation is:
-        <span align="center">
-        final = (texture * sourceFactor) + (pixel * destFactor)
-        </span>
-        @par
-        Each of the factors is specified as one of a number of options, as specified in the SceneBlendFactor
-        enumerated type.
-        @param
-        sourceFactor The source factor in the above calculation, i.e. multiplied by the texture colour components.
-        @param
-        destFactor The destination factor in the above calculation, i.e. multiplied by the pixel colour components.
-        @param
-        sourceFactorAlpha The alpha source factor in the above calculation, i.e. multiplied by the texture alpha component.
-        @param
-        destFactorAlpha The alpha destination factor in the above calculation, i.e. multiplied by the pixel alpha component.
-		@note
-        This method is applicable for both the fixed-function and programmable pipelines.
-        */
-		void setSeparateSceneBlending( const SceneBlendFactor sourceFactor, const SceneBlendFactor destFactor, const SceneBlendFactor sourceFactorAlpha, const SceneBlendFactor destFactorAlpha );
-
-		/** Return true if this pass uses separate scene blending */
-		bool hasSeparateSceneBlending() const;
-
         /** Retrieves the source blending factor for the material (as set using Materiall::setSceneBlending).
         */
         SceneBlendFactor getSourceBlendFactor() const;
@@ -639,14 +557,6 @@ namespace Ogre {
         /** Retrieves the destination blending factor for the material (as set using Materiall::setSceneBlending).
         */
         SceneBlendFactor getDestBlendFactor() const;
-
-	    /** Retrieves the alpha source blending factor for the material (as set using Materiall::setSeparateSceneBlending).
-        */
-		SceneBlendFactor getSourceBlendFactorAlpha() const;
-
-	    /** Retrieves the alpha destination blending factor for the material (as set using Materiall::setSeparateSceneBlending).
-        */
-		SceneBlendFactor getDestBlendFactorAlpha() const;
 
 		/** Returns true if this pass has some element of transparency. */
 		bool isTransparent(void) const;
@@ -816,23 +726,6 @@ namespace Ogre {
 		*/
 		PolygonMode getPolygonMode(void) const;
 
-		/** Sets whether this pass's chosen detail level can be
-			overridden (downgraded) by the camera setting. 
-		@param override true means that a lower camera detail will override this
-			pass's detail level, false means it won't (default true).
-		*/
-		virtual void setPolygonModeOverrideable(bool override)
-		{
-			mPolygonModeOverrideable = override;
-		}
-
-		/** Gets whether this renderable's chosen detail level can be
-			overridden (downgraded) by the camera setting. 
-		*/
-		virtual bool getPolygonModeOverrideable(void) const
-		{
-			return mPolygonModeOverrideable;
-		}
         /** Sets the fogging mode applied to this pass.
         @remarks
         Fogging is an effect that is applied as polys are rendered. Sometimes, you want
@@ -925,17 +818,6 @@ namespace Ogre {
         float getDepthBiasConstant(void) const;
 		/** Retrieves the slope-scale depth bias value as set by setDepthBias. */
 		float getDepthBiasSlopeScale(void) const;
-		/** Sets a factor which derives an additional depth bias from the number 
-			of times a pass is iterated.
-		@remarks
-			The Final depth bias will be the constant depth bias as set through
-			setDepthBias, plus this value times the iteration number. 
-		*/
-		void setIterationDepthBias(float biasPerIteration);
-		/** Gets a factor which derives an additional depth bias from the number 
-			of times a pass is iterated.
-		*/
-		float getIterationDepthBias() const;
 
         /** Sets the way the pass will have use alpha to totally reject pixels from the pipeline.
         @remarks
@@ -1295,22 +1177,6 @@ namespace Ogre {
         @see TextureUnitState::setTextureAnisotropy
         */
         void setTextureAnisotropy(unsigned int maxAniso);
-		/** If set to true, this forces normals to be normalised dynamically 
-			by the hardware for this pass.
-		@remarks
-			This option can be used to prevent lighting variations when scaling an
-			object - normally because this scaling is hardware based, the normals 
-			get scaled too which causes lighting to become inconsistent. By default the
-			SceneManager detects scaled objects and does this for you, but 
-			this has an overhead so you might want to turn that off through
-			SceneManager::setNormaliseNormalsOnScale(false) and only do it per-Pass
-			when you need to.
-		*/
-		void setNormaliseNormals(bool normalise) { mNormaliseNormals = normalise; }
-
-		/** Returns true if this pass has auto-normalisation of normals set. */
-		bool getNormaliseNormals(void) const {return mNormaliseNormals; }
-
 		/** Static method to retrieve all the Passes which need their
 		    hash values recalculated.
 		*/
@@ -1371,85 +1237,7 @@ namespace Ogre {
         */
         bool applyTextureAliases(const AliasTextureNamePairList& aliasList, const bool apply = true) const;
 
-		/** Sets whether or not this pass will be clipped by a scissor rectangle
-			encompassing the lights that are being used in it.
-		@remarks
-			In order to cut down on fillrate when you have a number of fixed-range
-			lights in the scene, you can enable this option to request that
-			during rendering, only the region of the screen which is covered by
-			the lights is rendered. This region is the screen-space rectangle 
-			covering the union of the spheres making up the light ranges. Directional
-			lights are ignored for this.
-		@par
-			This is only likely to be useful for multipass additive lighting 
-			algorithms, where the scene has already been 'seeded' with an ambient 
-			pass and this pass is just adding light in affected areas.
-		@note
-			When using SHADOWTYPE_STENCIL_ADDITIVE or SHADOWTYPE_TEXTURE_ADDITIVE,
-			this option is implicitly used for all per-light passes and does
-			not need to be specified. If you are not using shadows or are using
-			a modulative or an integrated shadow technique then this could be useful.
 
-		*/
-		void setLightScissoringEnabled(bool enabled) { mLightScissoring = enabled; }
-		/** Gets whether or not this pass will be clipped by a scissor rectangle
-			encompassing the lights that are being used in it.
-		*/
-		bool getLightScissoringEnabled() const { return mLightScissoring; }
-
-		/** Gets whether or not this pass will be clipped by user clips planes
-			bounding the area covered by the light.
-		@remarks
-			In order to cut down on the geometry set up to render this pass 
-			when you have a single fixed-range light being rendered through it, 
-			you can enable this option to request that during triangle setup, 
-			clip planes are defined to bound the range of the light. In the case
-			of a point light these planes form a cube, and in the case of 
-			a spotlight they form a pyramid. Directional lights are never clipped.
-		@par
-			This option is only likely to be useful for multipass additive lighting 
-			algorithms, where the scene has already been 'seeded' with an ambient 
-			pass and this pass is just adding light in affected areas. In addition,
-			it will only be honoured if there is exactly one non-directional light
-			being used in this pass. Also, these clip planes override any user clip
-			planes set on Camera.
-		@note
-			When using SHADOWTYPE_STENCIL_ADDITIVE or SHADOWTYPE_TEXTURE_ADDITIVE,
-			this option is automatically used for all per-light passes if you 
-			enable SceneManager::setShadowUseLightClipPlanes and does
-			not need to be specified. It is disabled by default since clip planes have
-			a cost of their own which may not always exceed the benefits they give you.
-		*/
-		void setLightClipPlanesEnabled(bool enabled) { mLightClipPlanes = enabled; }
-		/** Gets whether or not this pass will be clipped by user clips planes
-			bounding the area covered by the light.
-		*/
-		bool getLightClipPlanesEnabled() const { return mLightClipPlanes; }
-
-		/** Manually set which illumination stage this pass is a member of.
-		@remarks
-			When using an additive lighting mode (SHADOWTYPE_STENCIL_ADDITIVE or
-			SHADOWTYPE_TEXTURE_ADDITIVE), the scene is rendered in 3 discrete
-			stages, ambient (or pre-lighting), per-light (once per light, with 
-			shadowing) and decal (or post-lighting). Usually OGRE figures out how
-			to categorise your passes automatically, but there are some effects you
-			cannot achieve without manually controlling the illumination. For example
-			specular effects are muted by the typical sequence because all textures
-			are saved until the IS_DECAL stage which mutes the specular effect. 
-			Instead, you could do texturing within the per-light stage if it's
-			possible for your material and thus add the specular on after the
-			decal texturing, and have no post-light rendering. 
-		@par
-			If you assign an illumination stage to a pass you have to assign it
-			to all passes in the technique otherwise it will be ignored. Also note
-			that whilst you can have more than one pass in each group, they cannot
-			alternate, ie all ambient passes will be before all per-light passes, 
-			which will also be before all decal passes. Within their categories
-			the passes will retain their ordering though.
-		*/
-		void setIlluminationStage(IlluminationStage is) { mIlluminationStage = is; }
-		/// Get the manually assigned illumination stage, if any
-		IlluminationStage getIlluminationStage() const { return mIlluminationStage; }
 		/** There are some default hash functions used to order passes so that
 			render state changes are minimised, this enumerates them.
 		*/
@@ -1496,6 +1284,15 @@ namespace Ogre {
         
     };
 
+    enum IlluminationStage
+    {
+        /// Part of the rendering which occurs without any kind of direct lighting
+        IS_AMBIENT,
+        /// Part of the rendering which occurs per light
+        IS_PER_LIGHT,
+        /// Post-lighting rendering
+        IS_DECAL
+    };
     /** Struct recording a pass which can be used for a specific illumination stage.
     @remarks
         This structure is used to record categorised passes which fit into a

@@ -223,6 +223,8 @@ namespace Ogre {
 			Technique* getTechnique(void) const;
 	        void getWorldTransforms(Matrix4* xform) const;
 			virtual unsigned short getNumWorldTransforms(void) const ;
+	        const Quaternion& getWorldOrientation(void) const;
+	        const Vector3& getWorldPosition(void) const;
 			Real getSquaredViewDepth(const Camera* cam) const;
 	        const LightList& getLights(void) const;
 			bool getCastsShadows(void) const;
@@ -237,9 +239,6 @@ namespace Ogre {
 			void dump(std::ofstream& of) const;
 			/// retun the BoundingBox information. Usefull when cloning the batch instance.
 			AxisAlignedBox & getAABB(void){return mAABB;};
-			/// @copydoc MovableObject::visitRenderables
-			void visitRenderables(Renderable::Visitor* visitor, bool debugRenderables);
-
 		};
 		class _OgreExport  InstancedObject
 		{
@@ -352,7 +351,6 @@ namespace Ogre {
 			void setLastIndex(int index){mLastIndex=index;}
 			int getLastIndex(){return mLastIndex;}
 			void setMaterial(const String & name);
-			void visitRenderables(Renderable::Visitor* visitor, bool debugRenderables);
 		
 		};
 		/** A LODBucket is a collection of smaller buckets with the same LOD. 
@@ -399,7 +397,6 @@ namespace Ogre {
 			void dump(std::ofstream& of) const;
 			/// fill the map
 			void updateContainers(MaterialBucket* bucket, String& name );
-			void visitRenderables(Renderable::Visitor* visitor, bool debugRenderables);
 			
 		};
 		/** The details of a topological BatchInstance which is the highest level of
@@ -468,10 +465,6 @@ namespace Ogre {
 			Real getBoundingRadius(void) const;
 			void _updateRenderQueue(RenderQueue* queue);
 			bool isVisible(void) const;
-			/// @copydoc MovableObject::visitRenderables
-			void visitRenderables(Renderable::Visitor* visitor, 
-				bool debugRenderables = false);
-
 		//	uint32 getTypeFlags(void) const;
 
 			typedef VectorIterator<LODBucketList> LODIterator;
@@ -805,10 +798,6 @@ namespace Ogre {
 		BatchInstanceIterator getBatchInstanceIterator(void);
 		/// get the mRenderOps vector.
 		RenderOperationVector& getRenderOperationVector(){return mRenderOps;}
-		/// @copydoc MovableObject::visitRenderables
-		void visitRenderables(Renderable::Visitor* visitor, 
-			bool debugRenderables = false);
-
 		/** Dump the contents of this InstancedGeometry to a file for diagnostic
 		 	purposes.
 		*/

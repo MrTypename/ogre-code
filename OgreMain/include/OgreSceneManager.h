@@ -104,6 +104,88 @@ namespace Ogre {
 
 	};
 
+	/** Interface definition for classes which can listen in on the process
+		of rendering shadows, in order to implement custom behaviour.
+	*/
+	class _OgreExport ShadowListener
+	{
+	public:
+		ShadowListener() {}
+		virtual ~ShadowListener() {}
+
+		/** Event raised after all shadow textures have been rendered into for 
+			all queues / targets but before any other geometry has been rendered
+		    (including main scene geometry and any additional shadow receiver 
+			passes). 
+		@remarks
+			This callback is useful for those that wish to perform some 
+			additional processing on shadow textures before they are used to 
+			render shadows. For example you could perform some filtering by 
+			rendering the existing shadow textures into another alternative 
+			shadow texture with a shader.]
+		@note
+			This event will only be fired when texture shadows are in use.
+		@param numberOfShadowTextures The number of shadow textures in use
+		*/
+		virtual void shadowTexturesUpdated(size_t numberOfShadowTextures) = 0;
+
+		/** This event occurs just before the view & projection matrices are
+		 	set for rendering into a shadow texture.
+		@remarks
+			You can use this event hook to perform some custom processing,
+			such as altering the camera being used for rendering the light's
+			view, including setting custom view & projection matrices if you
+			want to perform an advanced shadow technique.
+		@note
+			This event will only be fired when texture shadows are in use.
+		@param light Pointer to the light for which shadows are being rendered
+		@param camera Pointer to the camera being used to render
+		*/
+		virtual void shadowTextureCasterPreViewProj(Light* light, 
+			Camera* camera) = 0;
+		/** This event occurs just before the view & projection matrices are
+		 	set for re-rendering a shadow receiver.
+		@remarks
+			You can use this event hook to perform some custom processing,
+			such as altering the projection frustum being used for rendering 
+			the shadow onto the receiver to perform an advanced shadow 
+			technique.
+		@note
+			This event will only be fired when texture shadows are in use.
+		@param light Pointer to the light for which shadows are being rendered
+		@param frustum Pointer to the projection frustum being used to project
+			the shadow texture
+		*/
+		virtual void shadowTextureReceiverPreViewProj(Light* light, 
+			Frustum* frustum) = 0;
+
+		/** Hook to allow the listener to override the ordering of lights for
+			the entire frustum.
+		@remarks
+			Whilst ordinarily lights are sorted per rendered object 
+			(@see MovableObject::queryLights), texture shadows adds another issue
+			in that, given there is a finite number of shadow textures, we must
+			choose which lights to render texture shadows from based on the entire
+			frustum. These lights should always be listed first in every objects
+			own list, followed by any other lights which will not cast texture 
+			shadows (either because they have shadow casting off, or there aren't
+			enough shadow textures to service them).
+		@par
+			This hook allows you to override the detailed ordering of the lights
+			per frustum. The default ordering is shadow casters first (which you 
+			must also respect if you override this method), and ordered
+			by distance from the camera within those 2 groups. Obviously the closest
+			lights with shadow casting enabled will be listed first. Only lights 
+			within the range of the frustum will be in the list.
+		@param lightList The list of lights within range of the frustum which you
+			may sort.
+		@returns true if you sorted the list, false otherwise.
+		*/
+		virtual bool sortLightsAffectingFrustum(LightList& lightList) { return false; }
+
+		
+	};
+
     /** Manages the organisation and rendering of a 'scene' i.e. a collection 
 		of objects and potentially world geometry.
     @remarks
@@ -146,8 +228,6 @@ namespace Ogre {
 		static uint32 STATICGEOMETRY_TYPE_MASK;
 		/// Query type mask which will be used for lights  @see SceneQuery
 		static uint32 LIGHT_TYPE_MASK;
-		/// Query type mask which will be used for frusta and cameras @see SceneQuery
-		static uint32 FRUSTUM_TYPE_MASK;
 		/// User type mask limit
 		static uint32 USER_TYPE_MASK_LIMIT;
         /** Comparator for material map, for sorting materials into render order (e.g. transparent last).
@@ -207,113 +287,6 @@ namespace Ogre {
 		struct SkyBoxGenParameters
 		{
 			Real skyBoxDistance;
-		};
-
-		/** Class that allows listening in on the various stages of SceneManager
-			processing, so that custom behaviour can be implemented from outside.
-		*/
-		class Listener
-		{
-		public:
-			Listener() {}
-			virtual ~Listener() {}
-
-			/** Called prior to searching for visible objects in this SceneManager.
-			@remarks
-				Note that the render queue at this stage will be full of the last
-				render's contents and will be cleared after this method is called.
-			@param source The SceneManager instance raising this event.
-			@param irs The stage of illumination being dealt with. IRS_NONE for 
-				a regular render, IRS_RENDER_TO_TEXTURE for a shadow caster render.
-			@param v The viewport being updated. You can get the camera from here.
-			*/
-			virtual void preFindVisibleObjects(SceneManager* source, 
-				IlluminationRenderStage irs, Viewport* v) = 0;
-			/** Called after searching for visible objects in this SceneManager.
-			@remarks
-				Note that the render queue at this stage will be full of the current
-				scenes contents, ready for rendering. You may manually add renderables
-				to this queue if you wish.
-			@param source The SceneManager instance raising this event.
-			@param irs The stage of illumination being dealt with. IRS_NONE for 
-				a regular render, IRS_RENDER_TO_TEXTURE for a shadow caster render.
-			@param v The viewport being updated. You can get the camera from here.
-			*/
-			virtual void postFindVisibleObjects(SceneManager* source, 
-				IlluminationRenderStage irs, Viewport* v) = 0;
-
-			/** Event raised after all shadow textures have been rendered into for 
-				all queues / targets but before any other geometry has been rendered
-				(including main scene geometry and any additional shadow receiver 
-				passes). 
-			@remarks
-				This callback is useful for those that wish to perform some 
-				additional processing on shadow textures before they are used to 
-				render shadows. For example you could perform some filtering by 
-				rendering the existing shadow textures into another alternative 
-				shadow texture with a shader.]
-			@note
-				This event will only be fired when texture shadows are in use.
-			@param numberOfShadowTextures The number of shadow textures in use
-			*/
-			virtual void shadowTexturesUpdated(size_t numberOfShadowTextures) = 0;
-
-			/** This event occurs just before the view & projection matrices are
-		 		set for rendering into a shadow texture.
-			@remarks
-				You can use this event hook to perform some custom processing,
-				such as altering the camera being used for rendering the light's
-				view, including setting custom view & projection matrices if you
-				want to perform an advanced shadow technique.
-			@note
-				This event will only be fired when texture shadows are in use.
-			@param light Pointer to the light for which shadows are being rendered
-			@param camera Pointer to the camera being used to render
-			*/
-			virtual void shadowTextureCasterPreViewProj(Light* light, 
-				Camera* camera) = 0;
-			/** This event occurs just before the view & projection matrices are
-		 		set for re-rendering a shadow receiver.
-			@remarks
-				You can use this event hook to perform some custom processing,
-				such as altering the projection frustum being used for rendering 
-				the shadow onto the receiver to perform an advanced shadow 
-				technique.
-			@note
-				This event will only be fired when texture shadows are in use.
-			@param light Pointer to the light for which shadows are being rendered
-			@param frustum Pointer to the projection frustum being used to project
-				the shadow texture
-			*/
-			virtual void shadowTextureReceiverPreViewProj(Light* light, 
-				Frustum* frustum) = 0;
-
-			/** Hook to allow the listener to override the ordering of lights for
-				the entire frustum.
-			@remarks
-				Whilst ordinarily lights are sorted per rendered object 
-				(@see MovableObject::queryLights), texture shadows adds another issue
-				in that, given there is a finite number of shadow textures, we must
-				choose which lights to render texture shadows from based on the entire
-				frustum. These lights should always be listed first in every objects
-				own list, followed by any other lights which will not cast texture 
-				shadows (either because they have shadow casting off, or there aren't
-				enough shadow textures to service them).
-			@par
-				This hook allows you to override the detailed ordering of the lights
-				per frustum. The default ordering is shadow casters first (which you 
-				must also respect if you override this method), and ordered
-				by distance from the camera within those 2 groups. Obviously the closest
-				lights with shadow casting enabled will be listed first. Only lights 
-				within the range of the frustum will be in the list.
-			@param lightList The list of lights within range of the frustum which you
-				may sort.
-			@returns true if you sorted the list, false otherwise.
-			*/
-			virtual bool sortLightsAffectingFrustum(LightList& lightList) { return false; }
-
-
-
 		};
 
     protected:
@@ -404,8 +377,6 @@ namespace Ogre {
 		Matrix4 mTempXform[256];
 		bool mResetIdentityView;
 		bool mResetIdentityProj;
-
-		bool mNormaliseNormalsOnScale;
 
 	protected:
 
@@ -565,8 +536,8 @@ namespace Ogre {
         typedef std::vector<RenderQueueListener*> RenderQueueListenerList;
         RenderQueueListenerList mRenderQueueListeners;
 
-        typedef std::vector<Listener*> ListenerList;
-        ListenerList mListeners;
+        typedef std::vector<ShadowListener*> ShadowListenerList;
+        ShadowListenerList mShadowListeners;
         /// Internal method for firing the queue start event, returns true if queue is to be skipped
         bool fireRenderQueueStarted(uint8 id, const String& invocation);
         /// Internal method for firing the queue end event, returns true if queue is to be repeated
@@ -578,10 +549,6 @@ namespace Ogre {
         void fireShadowTexturesPreCaster(Light* light, Camera* camera);
 		/// Internal method for firing the pre receiver texture shadows event
         void fireShadowTexturesPreReceiver(Light* light, Frustum* f);
-		/// Internal method for firing find visible objects event
-		void firePreFindVisibleObjects(Viewport* v);
-		/// Internal method for firing find visible objects event
-		void firePostFindVisibleObjects(Viewport* v);
         /** Internal method for setting the destination viewport for the next render. */
         virtual void setViewport(Viewport *vp);
 
@@ -601,9 +568,6 @@ namespace Ogre {
             Assumes that the pass has already been set up.
         @param rend The renderable to issue to the pipeline
         @param pass The pass which is being used
-		@param lightScissoringClipping If true, passes that have the getLightScissorEnabled
-			and/or getLightClipPlanesEnabled flags will cause calculation and setting of 
-			scissor rectangle and user clip planes. 
         @param doLightIteration If true, this method will issue the renderable to
             the pipeline possibly multiple times, if the pass indicates it should be
             done once per light
@@ -612,7 +576,7 @@ namespace Ogre {
             which will be used for a single render of this object.
         */
         virtual void renderSingleObject(const Renderable* rend, const Pass* pass, 
-			bool lightScissoringClipping, bool doLightIteration, const LightList* manualLightList = 0);
+			bool doLightIteration, const LightList* manualLightList = 0);
 
         /// Utility class for calculating automatic parameters for gpu programs
         AutoParamDataSource mAutoParamDataSource;
@@ -638,20 +602,6 @@ namespace Ogre {
         Texture* mCurrentShadowTexture;
 		bool mShadowUseInfiniteFarPlane;
 		bool mShadowCasterRenderBackFaces;
-		bool mShadowAdditiveLightClip;
-		/// Struct for cacheing light clipping information for re-use in a frame
-		struct LightClippingInfo
-		{
-			RealRect scissorRect;
-			PlaneList clipPlanes;
-			bool scissorValid;
-			unsigned long clipPlanesValid;
-			LightClippingInfo() : scissorValid(false), clipPlanesValid(false) {}
-
-		};
-		typedef std::map<Light*, LightClippingInfo> LightClippingInfoMap;
-		LightClippingInfoMap mLightClippingInfoMap;
-		unsigned long mLightClippingInfoMapFrameNumber;
 
 		/// default shadow camera setup
 		ShadowCameraSetupPtr mDefaultShadowCameraSetup;
@@ -690,11 +640,8 @@ namespace Ogre {
             stencil buffer.
         @param light The light source
         @param cam The camera being viewed from
-		@param calcScissor Whether the method should set up any scissor state, or
-			false if that's already been done
         */
-        virtual void renderShadowVolumesToStencil(const Light* light, const Camera* cam, 
-			bool calcScissor);
+        virtual void renderShadowVolumesToStencil(const Light* light, const Camera* cam);
         /** Internal utility method for setting stencil state for rendering shadow volumes. 
         @param secondpass Is this the second pass?
         @param zfail Should we be using the zfail method?
@@ -803,7 +750,7 @@ namespace Ogre {
 			QueuedRenderableCollection::OrganisationMode om);
 		/** Render a set of objects, see renderSingleObject for param definitions */
 		virtual void renderObjects(const QueuedRenderableCollection& objs, 
-			QueuedRenderableCollection::OrganisationMode om, bool lightScissoringClipping,
+			QueuedRenderableCollection::OrganisationMode om, 
             bool doLightIteration, const LightList* manualLightList = 0);
 		/** Render those objects in the transparent pass list which have shadow casting forced on
 		@remarks
@@ -811,7 +758,7 @@ namespace Ogre {
 			transparency_casts_shadows set to 'on' in their material
 		*/
 		virtual void renderTransparentShadowCasterObjects(const QueuedRenderableCollection& objs, 
-			QueuedRenderableCollection::OrganisationMode om, bool lightScissoringClipping,
+			QueuedRenderableCollection::OrganisationMode om, 
 			bool doLightIteration, const LightList* manualLightList = 0);
 
 		/** Update the state of the global render queue splitting based on a shadow
@@ -821,17 +768,6 @@ namespace Ogre {
 		option change. */
 		virtual void updateRenderQueueGroupSplitOptions(RenderQueueGroup* group, 
 			bool suppressShadows, bool suppressRenderState);
-
-		/// Set up a scissor rectangle from a group of lights
-		virtual ClipResult buildAndSetScissor(const LightList& ll, const Camera* cam);
-		/// Update a scissor rectangle from a single light
-		virtual void buildScissor(const Light* l, const Camera* cam, RealRect& rect);
-		virtual void resetScissor();
-		/// Build a set of user clip planes from a single non-directional light
-		virtual ClipResult buildAndSetLightClip(const LightList& ll);
-		virtual void buildLightClip(const Light* l, PlaneList& planes);
-		virtual void resetLightClip();
-		virtual void checkCachedLightClippingInfo();
 
 		/** Inner helper class to implement the visitor pattern for rendering objects
 			in a queue. 
@@ -857,8 +793,6 @@ namespace Ogre {
 			bool autoLights;
 			/// Manual light list
 			const LightList* manualLightList;
-			/// Scissoring if requested?
-			bool scissoring;
 
 		};
 		/// Allow visitor helper to access protected methods
@@ -982,14 +916,6 @@ namespace Ogre {
 		*/
 		virtual bool hasLight(const String& name) const;
 
-		/** Retrieve a set of clipping planes for a given light. 
-		*/
-		virtual const PlaneList& getLightClippingPlanes(Light* l);
-
-		/** Retrieve a scissor rectangle for a given light and camera. 
-		*/
-		virtual const RealRect& getLightScissorRect(Light* l, const Camera* cam);
-
 		/** Removes the named light from the scene and destroys it.
             @remarks
                 Any pointers held to this light after calling this method will be invalid.
@@ -1105,13 +1031,6 @@ namespace Ogre {
         */
         virtual void destroySceneNode(const String& name);
 
-        /** Destroys a SceneNode.
-        @remarks
-            This allows you to physically delete an individual SceneNode if you want to.
-            Note that this is not normally recommended, it's better to allow SceneManager
-            to delete the nodes when the scene is cleared.
-        */
-        virtual void destroySceneNode(SceneNode* sn);
         /** Gets the SceneNode at the root of the scene hierarchy.
             @remarks
                 The entire scene is held as a hierarchy of nodes, which
@@ -2561,21 +2480,14 @@ namespace Ogre {
 		/** Is there any shadowing technique in use? */
 		virtual bool isShadowTechniqueInUse(void) const 
 		{ return mShadowTechnique != SHADOWTYPE_NONE; }
-		/** Sets whether when using a built-in additive shadow mode, user clip
-			planes should be used to restrict light rendering.
-		*/
-		virtual void setShadowUseLightClipPlanes(bool enabled) { mShadowAdditiveLightClip = enabled; }
-		/** Gets whether when using a built-in additive shadow mode, user clip
-		planes should be used to restrict light rendering.
-		*/
-		virtual bool getShadowUseLightClipPlanes() const { return mShadowAdditiveLightClip; }
 
-		/** Add a listener which will get called back on scene manager events.
+		/** Add a shadow listener which will get called back on shadow
+			events.
 		*/
-		virtual void addListener(Listener* s);
-		/** Remove a listener
+		virtual void addShadowListener(ShadowListener* s);
+		/** Remove a shadow listener
 		*/
-		virtual void removeListener(Listener* s);
+		virtual void removeShadowListener(ShadowListener* s);
 
 		/** Creates a StaticGeometry instance suitable for use with this
 			SceneManager.
@@ -2725,21 +2637,6 @@ namespace Ogre {
             whether they are being manually handled.
  		*/
 		virtual bool getFindVisibleObjects(void) { return mFindVisibleObjects; }
-
-		/** Set whether to automatically normalise normals on objects whenever they
-			are scaled.
-		@remarks
-			Scaling can distort normals so the default behaviour is to compensate
-			for this, but it has a cost. If you would prefer to manually manage 
-			this, set this option to 'false' and use Pass::setNormaliseNormals
-			only when needed.
-		*/
-		virtual void setNormaliseNormalsOnScale(bool n) { mNormaliseNormalsOnScale = n; }
-
-		/** Get whether to automatically normalise normals on objects whenever they
-			are scaled.
-		*/
-		virtual bool getNormaliseNormalsOnScale() const { return mNormaliseNormalsOnScale; }
 
 		/** Render something as if it came from the current queue.
 			@param pass		Material pass to use for setting up this quad.

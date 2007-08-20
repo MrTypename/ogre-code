@@ -39,7 +39,6 @@ Torus Knot Software Ltd.
 #include "OgreGLSLGpuProgram.h"
 #include "OgreGLSLExtSupport.h"
 #include "OgreGLSLLinkProgramManager.h"
-#include "OgreGLSLPreprocessor.h"
 
 namespace Ogre {
 
@@ -62,25 +61,27 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-	void GLSLProgram::loadFromSource(void)
-	{
-		// only create a shader object if glsl is supported
-		if (isSupported())
+    void GLSLProgram::loadFromSource(void)
+    {
+        // only create a shader object if glsl is supported
+        if (isSupported())
+        {
+            checkForGLSLError( "GLSLProgram::GLSLProgram", "GL Errors before creating shader object", 0 );
+            // create shader object
+            mGLHandle = glCreateShaderObjectARB(
+                (mType == GPT_VERTEX_PROGRAM) ? GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB );
+
+            checkForGLSLError( "GLSLProgram::GLSLProgram", "Error creating GLSL shader Object", 0 );
+        }
+
+		// build preprocessor defines
+		// GLSL has no explicit interface for defining preprocessor flags outside
+		// of the source code, so we'll prepend some extra source code
+		String preprocessorSource;
+		if (!mPreprocessorDefines.empty())
 		{
-			checkForGLSLError( "GLSLProgram::GLSLProgram", "GL Errors before creating shader object", 0 );
-			// create shader object
-			mGLHandle = glCreateShaderObjectARB(
-				(mType == GPT_VERTEX_PROGRAM) ? GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB );
-
-			checkForGLSLError( "GLSLProgram::GLSLProgram", "Error creating GLSL shader Object", 0 );
-		}
-
-		// Preprocess the GLSL shader in order to get a clean source
-		CPreprocessor cpp;
-
-		// Pass all user-defined macros to preprocessor
-		if (!mPreprocessorDefines.empty ())
-		{
+			StringUtil::StrStreamType tempStr;
+			// Split preprocessor defines and build up macro array
 			String::size_type pos = 0;
 			while (pos != String::npos)
 			{
@@ -88,68 +89,57 @@ namespace Ogre {
 				String::size_type endPos = mPreprocessorDefines.find_first_of(";,=", pos);
 				if (endPos != String::npos)
 				{
-					String::size_type macro_name_start = pos;
-					size_t macro_name_len = endPos - pos;
+					// ok, we have a definition
+					tempStr << "#define ";
+					// name
+					tempStr << mPreprocessorDefines.substr(pos, endPos - pos) << " ";
 					pos = endPos;
-
+					
 					// Check definition part
 					if (mPreprocessorDefines[pos] == '=')
 					{
 						// set up a definition, skip delim
 						++pos;
-						String::size_type macro_val_start = pos;
-						size_t macro_val_len;
-
 						endPos = mPreprocessorDefines.find_first_of(";,", pos);
 						if (endPos == String::npos)
 						{
-							macro_val_len = mPreprocessorDefines.size () - pos;
+							tempStr << mPreprocessorDefines.substr(pos, String::npos);
 							pos = endPos;
 						}
 						else
 						{
-							macro_val_len = endPos - pos;
+							tempStr << mPreprocessorDefines.substr(pos, endPos - pos);
 							pos = endPos+1;
 						}
-						cpp.Define (
-							mPreprocessorDefines.c_str () + macro_name_start, macro_name_len,
-							mPreprocessorDefines.c_str () + macro_val_start, macro_val_len);
 					}
 					else
 					{
 						// No definition part, define as "1"
 						++pos;
-						cpp.Define (
-							mPreprocessorDefines.c_str () + macro_name_start, macro_name_len, 1);
+						tempStr << "1";
 					}
+
+					tempStr << std::endl;
 				}
 				else
+				{
 					pos = endPos;
+				}
 			}
+
+			preprocessorSource = tempStr.str();
 		}
 
-		size_t out_size = 0;
-		const char *src = mSource.c_str ();
-		size_t src_len = mSource.size ();
-		char *out = cpp.Parse (src, src_len, out_size);
-		if (!out || !out_size)
-			// Failed to preprocess, break out
-			OGRE_EXCEPT (Exception::ERR_RENDERINGAPI_ERROR,
-						 "Failed to preprocess shader " + mName,
-						 __FUNCTION__);
-
-		mSource = String (out, out_size);
-		if (out < src || out > src + src_len)
-			free (out);
-
 		// Add preprocessor extras and main source
-		const char *source = mSource.c_str();
-		glShaderSourceARB(mGLHandle, 1, &source, NULL);
+		const char* sources[2];
+		sources[0] = preprocessorSource.c_str();
+		sources[1] = mSource.c_str();
+		glShaderSourceARB(mGLHandle, 2, sources, NULL);
 		// check for load errors
 		checkForGLSLError( "GLSLProgram::loadFromSource", "Cannot load GLSL high-level shader source : " + mName, 0 );
 
 		compile();
-	}
+    }
     
     //---------------------------------------------------------------------------
 	bool GLSLProgram::compile(const bool checkErrors)
@@ -192,23 +182,25 @@ namespace Ogre {
 		unloadHighLevel();
 	}
 	//-----------------------------------------------------------------------
-	void GLSLProgram::unloadHighLevelImpl(void)
-	{
+    void GLSLProgram::unloadHighLevelImpl(void)
+    {
 		if (isSupported())
 		{
 			glDeleteObjectARB(mGLHandle);
 		}
-	}
+
+
+    }
 
 	//-----------------------------------------------------------------------
-	void GLSLProgram::populateParameterNames(GpuProgramParametersSharedPtr params)
-	{
+    void GLSLProgram::populateParameterNames(GpuProgramParametersSharedPtr params)
+    {
 		params->_setNamedConstants(&getConstantDefinitions());
 		// Don't set logical / physical maps here, as we can't access parameters by logical index in GLHL.
-	}
+    }
 	//-----------------------------------------------------------------------
-	void GLSLProgram::buildConstantDefinitions() const
-	{
+    void GLSLProgram::buildConstantDefinitions() const
+    {
 		// We need an accurate list of all the uniforms in the shader, but we
 		// can't get at them until we link all the shaders into a program object.
 
@@ -216,8 +208,7 @@ namespace Ogre {
 		// Therefore instead, parse the source code manually and extract the uniforms
 		mConstantDefs.floatBufferSize = 0;
 		mConstantDefs.intBufferSize = 0;
-		GLSLLinkProgramManager::getSingleton().extractConstantDefs(
-			mSource, mConstantDefs, mName);
+		GLSLLinkProgramManager::getSingleton().extractConstantDefs(mSource, mConstantDefs, mName);
 
 		// Also parse any attached sources
 		for (GLSLProgramContainer::const_iterator i = mAttachedGLSLPrograms.begin();
@@ -229,7 +220,10 @@ namespace Ogre {
 				childShader->getSource(), mConstantDefs, childShader->getName());
 
 		}
-	}
+
+
+
+    }
 
 	//-----------------------------------------------------------------------
     GLSLProgram::GLSLProgram(ResourceManager* creator, 

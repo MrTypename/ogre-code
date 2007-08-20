@@ -31,8 +31,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 CIntermediateBuilder::CIntermediateBuilder()
 {
-	REGISTER_MODULE("Intermediate Builder")
-
 	m_iBoneIndex = 0;
 	m_fAnimTotalLength=0.0;
 	m_pSkeletonBuilder = NULL;
@@ -48,8 +46,6 @@ CIntermediateBuilder::~CIntermediateBuilder()
 	m_lMaterials.clear();
 
 	delete m_pSkeletonBuilder;
-
-	UNREGISTER_MODULE
 }
 
 //
@@ -335,22 +331,14 @@ Ogre::SceneNode* CIntermediateBuilder::CreateHierarchy(unsigned int iNodeID, boo
 
 Ogre::SceneNode* CIntermediateBuilder::CreateHierarchy(unsigned int iNodeID, Ogre::SceneNode* pParent, bool bRecursive, bool bHidden)
 {
-	LOGDEBUG "CIntermediate::CreateHierarchy() - recursive call (MaxNode: %i)..", iNodeID);
+	LOGDEBUG "CIntermediate::CreateHierarchy() - recursive call..");
 	INode* pRoot = GetNodeFromID(iNodeID);
-	if(!pRoot)
-	{
-		LOGERROR "No node with such ID: %d", iNodeID);
-		return NULL;
-	}
+	if(!pRoot) return NULL;
 
 	LOGDEBUG "CIntermediate::CreateHierarchy() - Creating Intermediate Mesh");
 
 	CIntermediateMesh* pIMesh = CreateMesh(iNodeID);
-	if(!pIMesh)
-	{
-		LOGERROR "Error reading mesh data from Max. Sinner mesh is: %s", pRoot->NodeName());
-		return NULL;
-	}
+	if(!pIMesh) return NULL;
 
 	m_lIMPool.push_back(pIMesh);
 
@@ -427,11 +415,6 @@ Ogre::SceneNode* CIntermediateBuilder::CreateHierarchy(unsigned int iNodeID, Ogr
 
 void CIntermediateBuilder::CleanUpHierarchy( Ogre::SceneNode* pNode )
 {
-	if(pNode == NULL)
-	{
-		return;
-	}
-
 	std::vector<Ogre::MovableObject*> lDeleteThese;
 
 	Ogre::SceneNode::ObjectIterator it = pNode->getAttachedObjectIterator();
@@ -521,18 +504,15 @@ CIntermediateMesh* CIntermediateBuilder::CreateMesh(unsigned int iNodeID)
 	unsigned int iNumTriangles = pMesh->getNumFaces();
 	CIntermediateMesh* pIMesh = new CIntermediateMesh(iNumTriangles, iNodeID);
 
-	if(m_bExportSkeleton)
-	{
-		LOGDEBUG "Construct intermediate skeletonbuilder");
-		if(m_pSkeletonBuilder == NULL)
-			m_pSkeletonBuilder = new CIntermediateBuilderSkeleton();
+	LOGDEBUG "Construct intermediate skeletonbuilder");
+	if(m_pSkeletonBuilder == NULL)
+		m_pSkeletonBuilder = new CIntermediateBuilderSkeleton();
 
-		LOGDEBUG "Build skeleton");
-		m_pSkeletonBuilder->BuildIntermediateSkeleton(pRoot);
+	LOGDEBUG "Build skeleton");
+	m_pSkeletonBuilder->BuildIntermediateSkeleton(pRoot);
 
-		LOGDEBUG "Set skeleton");
-		pIMesh->SetSkeleton( m_pSkeletonBuilder->GetSkeleton() );
-	}
+	LOGDEBUG "Set skeleton");
+	pIMesh->SetSkeleton( m_pSkeletonBuilder->GetSkeleton() );
 
 	LOGDEBUG "Iterate triangles");
 	//
@@ -562,28 +542,15 @@ CIntermediateMesh* CIntermediateBuilder::CreateMesh(unsigned int iNodeID)
 		tri.m_Vertices[wind[1]] = iVIndex++;
 		tri.m_Vertices[wind[2]] = iVIndex++;
 
-		
-
 		Mtl* pMat = maxMtl;
 		if (bMultiMat)
-		{
-			int subCount = maxMtl->NumSubMtls();
-			MtlID matID = pMesh->getFaceMtlIndex(x) %subCount;
-			pMat = maxMtl->GetSubMtl( matID );
-			if(pMat == NULL)
-			{
-				Ogre::String str("No SubMaterial with ID"+Ogre::StringConverter::toString(matID) );
-				LOGERROR str.c_str());
-				return NULL;
-			}
-		}
+			pMat = maxMtl->GetSubMtl( pMesh->getFaceMtlIndex(x) );
 
 		tri.m_pMaterial = CreateMaterial( pMat );
 
 		// CALL ON_CREATE_INTERMEDIATE_MESH_TRIANGLE_LOOP(pMesh, idx, tri.m_Vertices[wind[j]], x)
 
-		//if(m_pSkeletonBuilder != NULL)
-		if(m_bExportSkeleton)
+		if(m_pSkeletonBuilder != NULL)
 		{
 			for (int j=0; j<3; j++)
 			{
@@ -594,16 +561,12 @@ CIntermediateMesh* CIntermediateBuilder::CreateMesh(unsigned int iNodeID)
 		}
 	}
 
-	if(m_bExportSkeleton)
-	{
-		LOGDEBUG "Finalizing intermediate skeleton");
-		CIntermediateBuilder::Get()->GetSkeletonBuilder()->Finalize();
-	}
+	LOGDEBUG "Finalize");
+	CIntermediateBuilder::Get()->GetSkeletonBuilder()->Finalize();
 
 	LOGDEBUG "CIntermediate::CreateMesh() - Building Material List..");
 
 	pIMesh->BuildMaterialList();
-//	pIMesh->BuildSubmeshIndexMaps();
 
 
 	// CALL ON_CREATE_INTERMEDIATE_MESH_END()
@@ -815,18 +778,13 @@ CIntermediateMaterial* CIntermediateBuilder::CreateMaterial( Mtl* pMaxMaterial )
 
 		newMat->SetGlosiness( pMaxMaterial->GetShininess() );
 		newMat->SetSpecularLevel( pMaxMaterial->GetShinStr() );
-		//LOGDEBUG "newMat->SetOpacity( 1.0f - pMaxMaterial->GetXParency()");
-		//newMat->SetOpacity( 1.0f - pMaxMaterial->GetXParency() );
 
 		// Check to see if it's a Standard material
 		if (pMaxMaterial->ClassID() == Class_ID(DMTL_CLASS_ID, 0))
 		{
-			
 			StdMat* std = (StdMat *)pMaxMaterial;
 			newMat->Set2Sided( std->GetTwoSided() ? true : false );
 			newMat->SetWired( std->GetWire() ? true : false );
-			//LOGDEBUG "newMat->SetOpacity( std->GetOpacity(0) )");
-			newMat->SetOpacity( std->GetOpacity(0) );
 
 			//if (std->ClassID() == Class_ID(DMTL2_CLASS_ID, 0))
 				newMat->SetFaceted( ((StdMat2 *)std)->IsFaceted() ? true : false );

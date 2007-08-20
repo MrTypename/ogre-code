@@ -3,27 +3,23 @@
 set CONFIGURATION=release
 set EXPORTERDIR=LEXIExporter
 
-set SDKSUBPATH_OGRE=..\..\SDK\Ogre\1.4.1\bin\bin
+set SDKSUBPATH_OGRE=D:\ITE5000-SDK\SDK\Ogre\1.2.2\bin\bin
 
 set OUTDIR=.\LexiExportInstall\InstallData
-set DLL_OUTDIR=%OUTDIR%\%EXPORTERDIR%\Dlls\
 set COPY_PARAMS=/F /H /R /Y
 
-rmdir /S /Q %OUTDIR%
-mkdir %OUTDIR%
-mkdir %OUTDIR%\%EXPORTERDIR%\
-mkdir %OUTDIR%\%EXPORTERDIR%\Logs
-
-xcopy %COPY_PARAMS% .\Config\*.cfg "%DLL_OUTDIR%"
-del "%DLL_OUTDIR%\plugins_d.cfg"
+xcopy %COPY_PARAMS% .\Config\*.cfg "%OUTDIR%"
 xcopy /D /S .\Config\shaders "%OUTDIR%\%EXPORTERDIR%\shaders\"
-xcopy %COPY_PARAMS% .\LexiExport\bin\LEXIExporter.dll "%DLL_OUTDIR%"
-xcopy %COPY_PARAMS% .\LexiExportProxy\bin\LEXIExportProxy.dlu "%OUTDIR%\plugins\"
-xcopy %COPY_PARAMS% %SDKSUBPATH_OGRE%\%CONFIGURATION%\ILUT.dll "%DLL_OUTDIR%"
-xcopy %COPY_PARAMS% %SDKSUBPATH_OGRE%\%CONFIGURATION%\OIS.dll "%DLL_OUTDIR%"
-xcopy %COPY_PARAMS% %SDKSUBPATH_OGRE%\%CONFIGURATION%\cg.dll "%DLL_OUTDIR%"
-xcopy %COPY_PARAMS% %SDKSUBPATH_OGRE%\%CONFIGURATION%\OgreMain.dll "%DLL_OUTDIR%"
-xcopy %COPY_PARAMS% %SDKSUBPATH_OGRE%\%CONFIGURATION%\Plugin_CgProgramManager.dll "%DLL_OUTDIR%"
-xcopy %COPY_PARAMS% %SDKSUBPATH_OGRE%\%CONFIGURATION%\RenderSystem_GL.dll "%DLL_OUTDIR%"
-
-pause
+xcopy %COPY_PARAMS% .\LexiExport\bin\LEXIExport.dlu "%OUTDIR%\plugins\"
+del "%OUTDIR%\plugins\LEXIExport(debug).dlu"
+del "%OUTDIR%\OgreMain.dll"
+del "%OUTDIR%\OgrePlatform.dll"
+xcopy %COPY_PARAMS% %SDKSUBPATH_OGRE%\%CONFIGURATION%\zlib1.dll "%OUTDIR%"
+xcopy %COPY_PARAMS% %SDKSUBPATH_OGRE%\%CONFIGURATION%\DevIL.dll "%OUTDIR%"
+xcopy %COPY_PARAMS% %SDKSUBPATH_OGRE%\%CONFIGURATION%\ILU.dll "%OUTDIR%"
+xcopy %COPY_PARAMS% %SDKSUBPATH_OGRE%\%CONFIGURATION%\ILUT.dll "%OUTDIR%"
+xcopy %COPY_PARAMS% %SDKSUBPATH_OGRE%\%CONFIGURATION%\cg.dll "%OUTDIR%"
+xcopy %COPY_PARAMS% %SDKSUBPATH_OGRE%\%CONFIGURATION%\OgreMain.dll "%OUTDIR%"
+xcopy %COPY_PARAMS% %SDKSUBPATH_OGRE%\%CONFIGURATION%\OgrePlatform.dll "%OUTDIR%"
+xcopy %COPY_PARAMS% %SDKSUBPATH_OGRE%\%CONFIGURATION%\Plugin_CgProgramManager.dll "%OUTDIR%\%EXPORTERDIR%\"
+xcopy %COPY_PARAMS% %SDKSUBPATH_OGRE%\%CONFIGURATION%\RenderSystem_GL.dll "%OUTDIR%\%EXPORTERDIR%\"

@@ -147,11 +147,11 @@ public:
         mLights[i]->setVisible(mLightState[i]);
         mLightFlareSets[i]->setVisible(mLightState[i]);
     }
-    bool frameRenderingQueued(const FrameEvent& evt)
+    bool frameStarted(const FrameEvent& evt)
     {
 	using namespace OIS;
 
-        if(!ExampleFrameListener::frameRenderingQueued(evt))
+        if(!ExampleFrameListener::frameStarted(evt))
             return false;
         
         static Real timeDelay = 0;

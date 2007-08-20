@@ -69,9 +69,9 @@ namespace Ogre {
 			if (DevMode.dmBitsPerPel < 16 || DevMode.dmPelsHeight < 480)
 				continue;
 			mDevModes.push_back(DevMode);
-			char szBuf[16];
-			snprintf(szBuf, 16, "%d x %d", DevMode.dmPelsWidth, DevMode.dmPelsHeight);
-			optVideoMode.possibleValues.push_back(szBuf);
+			StringUtil::StrStreamType str;
+			str << DevMode.dmPelsWidth << " x " << DevMode.dmPelsHeight;
+			optVideoMode.possibleValues.push_back(str.str());
 		}
 		remove_duplicates(optVideoMode.possibleValues);
 		optVideoMode.currentValue = optVideoMode.possibleValues.front();
@@ -287,8 +287,10 @@ namespace Ogre {
 		if(!_wglGetExtensionsStringARB)
 			return;
 		const char *wgl_extensions = _wglGetExtensionsStringARB(mInitialWindow->getHDC());
-        LogManager::getSingleton().stream()
-			<< "Supported WGL extensions: " << wgl_extensions;
+        StringUtil::StrStreamType str;
+        str << "Supported WGL extensions: " << wgl_extensions;
+		LogManager::getSingleton().logMessage(
+			LML_NORMAL, str.str());
 		// Parse them, and add them to the main list
 		std::stringstream ext;
         String instr;

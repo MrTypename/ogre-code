@@ -47,13 +47,13 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="-Zm123"
+				AdditionalOptions="-Zm110"
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				FavorSizeOrSpeed="0"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="&quot;$(MAX_SDK_DIR)\include&quot;;&quot;$(OGRE_HOME)\Include&quot;;&quot;$(SolutionDir)Include&quot;;&quot;$(SolutionDir)\LexiExport\XMLConverter\include&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TIXML_USE_STL"
+				AdditionalIncludeDirectories="&quot;..\..\..\SDK\3DSMax\8.0\Bin\include&quot;;&quot;..\..\..\SDK\Ogre\1.2.2\bin\Include&quot;;$(SolutionDir)Include"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				StructMemberAlignment="4"
@@ -87,10 +87,10 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
 				AdditionalDependencies="comctl32.lib Msimg32.lib shlwapi.lib"
-				OutputFile="Bin\LEXIExporter.dll"
+				OutputFile="Bin\LEXIExport.dlu"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="&quot;$(MAX_SDK_DIR)\lib&quot;;&quot;$(OGRE_HOME)\Lib&quot;;..\lib"
+				AdditionalLibraryDirectories="&quot;..\..\..\SDK\3DSMax\8.0\Bin\lib&quot;;&quot;..\..\..\SDK\Ogre\1.2.2\bin\Lib&quot;"
 				GenerateManifest="true"
 				GenerateDebugInformation="false"
 				ProgramDatabaseFile=".\Release/LEXIExport.pdb"
@@ -157,10 +157,10 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="-Zm131"
+				AdditionalOptions="-Zm118"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(MAX_SDK_DIR)\include&quot;;&quot;$(OGRE_HOME)\Include&quot;;&quot;$(SolutionDir)Include&quot;;&quot;$(SolutionDir)\LexiExport\XMLConverter\include&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;TIXML_USE_STL"
+				AdditionalIncludeDirectories="..\..\..\SDK\3DSMax\8.0\Bin\include;..\..\..\SDK\Ogre\1.2.2\bin\Include;&quot;$(SolutionDir)Include&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -192,13 +192,13 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
 				AdditionalDependencies="comctl32.lib Msimg32.lib shlwapi.lib"
-				OutputFile="Bin\LEXIExporter_d.dll"
+				OutputFile="Bin\LEXIExport(debug).dlu"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="&quot;$(MAX_SDK_DIR)\lib&quot;;&quot;$(OGRE_HOME)\Lib&quot;;..\lib"
+				AdditionalLibraryDirectories="&quot;..\..\..\SDK\3DSMax\8.0\Bin\lib&quot;;&quot;..\..\..\SDK\Ogre\1.2.2\bin\Lib&quot;"
 				GenerateManifest="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/LEXIExporter_d.pdb"
+				ProgramDatabaseFile=".\Debug/LEXIExport(debug).pdb"
 				ImportLibrary=".\Debug/LEXIExport(debug).lib"
 				TargetMachine="1"
 			/>
@@ -266,7 +266,7 @@
 				InlineFunctionExpansion="1"
 				FavorSizeOrSpeed="0"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="&quot;..\..\..\SDK\3DSMax\9.0\include&quot;;&quot;..\..\..\SDK\Ogre\1.2.5\bin\Include&quot;;$(SolutionDir)Include"
+				AdditionalIncludeDirectories="&quot;..\..\..\SDK\3DSMax\8.0\Bin\include&quot;;&quot;..\..\..\SDK\Ogre\1.2.2\bin\Include&quot;;$(SolutionDir)Include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -303,7 +303,7 @@
 				OutputFile="Bin\ITEExport.dlu"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\..\SDK\3DSMax\9.0\lib;..\..\..\SDK\Ogre\1.2.5\bin\Lib"
+				AdditionalLibraryDirectories="&quot;..\..\..\SDK\3DSMax\8.0\Bin\lib&quot;;&quot;..\..\..\SDK\Ogre\1.2.2\bin\Lib&quot;"
 				GenerateManifest="false"
 				ProgramDatabaseFile=".\Release/ITEExport.pdb"
 				ImportLibrary=".\Release/ITEExport.lib"
@@ -388,19 +388,19 @@
 				>
 			</File>
 			<File
+				RelativePath="Sources\LexiMaxExportDesc.cpp"
+				>
+			</File>
+			<File
+				RelativePath="Sources\LexiMaxExportDesc.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Sources\LexiMemoryLog.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Sources\LexiMemoryLog.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Sources\LexiProfiler.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Sources\LexiProfiler.h"
 				>
 			</File>
 			<File
@@ -783,54 +783,6 @@
 			</File>
 			<File
 				RelativePath=".\Sources\LexiIntermediateSkeleton.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="XMLConverter"
-			>
-			<File
-				RelativePath=".\XMLConverter\src\OgreXMLMeshSerializer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\XMLConverter\include\OgreXMLMeshSerializer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\XMLConverter\include\OgreXMLPrerequisites.h"
-				>
-			</File>
-			<File
-				RelativePath=".\XMLConverter\src\OgreXMLSkeletonSerializer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\XMLConverter\include\OgreXMLSkeletonSerializer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\XMLConverter\src\tinystr.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\XMLConverter\include\tinystr.h"
-				>
-			</File>
-			<File
-				RelativePath=".\XMLConverter\src\tinyxml.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\XMLConverter\include\tinyxml.h"
-				>
-			</File>
-			<File
-				RelativePath=".\XMLConverter\src\tinyxmlerror.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\XMLConverter\src\tinyxmlparser.cpp"
 				>
 			</File>
 		</Filter>

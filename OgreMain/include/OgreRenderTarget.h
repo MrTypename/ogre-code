@@ -82,13 +82,6 @@ namespace Ogre {
             size_t batchCount;
         };
 
-		enum FrameBuffer
-		{
-			FB_FRONT,
-			FB_BACK,
-			FB_AUTO
-		};
-
         RenderTarget();
         virtual ~RenderTarget();
 
@@ -114,38 +107,8 @@ namespace Ogre {
                 This allows OGRE to be used in multi-windowed utilities
                 and for contents to be refreshed only when required, rather than
                 constantly as with the automatic rendering loop.
-			@param swapBuffers For targets that support double-buffering, if set 
-				to true, the target will immediately
-				swap it's buffers after update. Otherwise, the buffers are
-				not swapped, and you have to call swapBuffers yourself sometime
-				later. You might want to do this on some rendersystems which 
-				pause for queued rendering commands to complete before accepting
-				swap buffers calls - so you could do other CPU tasks whilst the 
-				queued commands complete. Or, you might do this if you want custom
-				control over your windows, such as for externally created windows.
         */
-        virtual void update(bool swapBuffers = true);
-        /** Swaps the frame buffers to display the next frame.
-            @remarks
-                For targets that are double-buffered so that no
-                'in-progress' versions of the scene are displayed
-                during rendering. Once rendering has completed (to
-                an off-screen version of the window) the buffers
-                are swapped to display the new frame.
-
-            @param
-                waitForVSync If true, the system waits for the
-                next vertical blank period (when the CRT beam turns off
-                as it travels from bottom-right to top-left at the
-                end of the pass) before flipping. If false, flipping
-                occurs no matter what the beam position. Waiting for
-                a vertical blank can be slower (and limits the
-                framerate to the monitor refresh rate) but results
-                in a steadier image with no 'tearing' (a flicker
-                resulting from flipping buffers when the beam is
-                in the progress of drawing the last frame).
-        */
-        virtual void swapBuffers(bool waitForVSync = true) {}
+        virtual void update(void);
 
         /** Adds a viewport to the rendering target.
             @remarks
@@ -299,15 +262,12 @@ namespace Ogre {
         */
         virtual bool isAutoUpdated(void) const;
 
-		/** Copies the current contents of the render target to a pixelbox. */
-		virtual void copyContentsToMemory(const PixelBox &dst, FrameBuffer buffer = FB_AUTO) = 0;
-		
         /** Writes the current contents of the render target to the named file. */
-        void writeContentsToFile(const String& filename);
+        virtual void writeContentsToFile(const String& filename) = 0;
 
-		/** Writes the current contents of the render target to the (PREFIX)(time-stamp)(SUFFIX) file.
-			@returns the name of the file used.*/
-		virtual String writeContentsToTimestampedFile(const String& filenamePrefix, const String& filenameSuffix);
+	/** Writes the current contents of the render target to the (PREFIX)(time-stamp)(SUFFIX) file.
+		@returns the name of the file used.*/
+	virtual String writeContentsToTimestampedFile(const String& filenamePrefix, const String& filenameSuffix);
 
 		virtual bool requiresTextureFlipping() const = 0;
 
@@ -392,9 +352,6 @@ namespace Ogre {
 		virtual void fireViewportAdded(Viewport* vp);
 		/// internal method for firing events
 		virtual void fireViewportRemoved(Viewport* vp);
-		
-		/// Internal implementation of update()
-		virtual void updateImpl();
     };
 
 } // Namespace

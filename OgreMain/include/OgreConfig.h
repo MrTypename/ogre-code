@@ -125,10 +125,4 @@ WARNING: Use only when you want to provide your own image loading code via codec
 #define OGRE_NO_DDS_CODEC 0
 #endif
 
-/** Enables the use of the new script compilers when Ogre compiles resource scripts.
-*/
-#ifndef OGRE_USE_NEW_COMPILERS
-#define OGRE_USE_NEW_COMPILERS 0
-#endif
-
 #endif

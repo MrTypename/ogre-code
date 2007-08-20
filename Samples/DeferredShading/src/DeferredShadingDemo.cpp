@@ -93,9 +93,9 @@ public:
 		mode = (DeferredShadingSystem::DSMode)1;
 	}
 
-	bool frameRenderingQueued(const FrameEvent& evt)
+	bool frameStarted(const FrameEvent& evt)
 	{
-		if( ExampleFrameListener::frameRenderingQueued(evt) == false )
+		if( ExampleFrameListener::frameStarted(evt) == false )
 			return false;
 
 		SharedData::getSingleton().iLastFrameTime = evt.timeSinceLastFrame;

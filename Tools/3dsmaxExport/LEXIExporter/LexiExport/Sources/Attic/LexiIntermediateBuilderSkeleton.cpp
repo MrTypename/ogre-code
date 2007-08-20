@@ -28,8 +28,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 CIntermediateBuilderSkeleton::CIntermediateBuilderSkeleton()
 {
-	REGISTER_MODULE("Intermediate Builder Skeleton")
-
 	//
 	m_iBoneIndex = 0;
 	m_pMaxNode = NULL;
@@ -41,8 +39,6 @@ CIntermediateBuilderSkeleton::CIntermediateBuilderSkeleton()
 CIntermediateBuilderSkeleton::~CIntermediateBuilderSkeleton()
 {
 	//
-
-	UNREGISTER_MODULE
 }
 
 bool CIntermediateBuilderSkeleton::BuildIntermediateSkeleton( INode* pMaxNode )

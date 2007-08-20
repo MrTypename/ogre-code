@@ -70,14 +70,10 @@ namespace Ogre {
 
 		// Create primary thread copies of script compiler / serializer
 		// other copies for other threads may also be instantiated
-#if OGRE_USE_NEW_COMPILERS
-		OGRE_THREAD_POINTER_SET(mScriptCompiler2, new MaterialScriptCompiler2());
-#else
 #if OGRE_MATERIAL_SCRIPT_COMPILER
         OGRE_THREAD_POINTER_SET(mScriptCompiler, new MaterialScriptCompiler());
 #endif
 		OGRE_THREAD_POINTER_SET(mSerializer, new MaterialSerializer());
-#endif
 
         // Loading order
         mLoadOrder = 100.0f;
@@ -109,14 +105,10 @@ namespace Ogre {
 
 		// delete primary thread instances directly, other threads will delete
 		// theirs automatically when the threads end (part of boost::thread_specific_ptr)
-#if OGRE_USE_NEW_COMPILERS
-		OGRE_THREAD_POINTER_DELETE(mScriptCompiler2);
-#else
 #if OGRE_MATERIAL_SCRIPT_COMPILER
         OGRE_THREAD_POINTER_DELETE(mScriptCompiler);
 #endif
 		OGRE_THREAD_POINTER_DELETE(mSerializer);
-#endif
 
     }
 	//-----------------------------------------------------------------------
@@ -145,18 +137,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void MaterialManager::parseScript(DataStreamPtr& stream, const String& groupName)
     {
-#if OGRE_USE_NEW_COMPILERS
-		// Use the new compilers here
-#if OGRE_THREAD_SUPPORT
-		if(!mScriptCompiler2.get())
-			mScriptCompiler2.reset(new MaterialScriptCompiler2());
-#endif
-
-		// Set the listener
-
-		// Compile
-		mScriptCompiler2->compile(stream, groupName);
-#else
         // Delegate to serializer
 #if OGRE_MATERIAL_SCRIPT_COMPILER
 #if OGRE_THREAD_SUPPORT
@@ -180,7 +160,6 @@ namespace Ogre {
 		}
 #endif
         mSerializer->parseScript(stream, groupName);
-#endif
 #endif
     }
     //-----------------------------------------------------------------------
@@ -292,34 +271,19 @@ namespace Ogre {
     //-----------------------------------------------------------------------
 	void MaterialManager::setActiveScheme(const String& schemeName)
 	{
-		// Allow the creation of new scheme indexes on demand
-		// even if they're not specified in any Technique
-		mActiveSchemeIndex = _getSchemeIndex(schemeName);
-	}
-    //-----------------------------------------------------------------------
-	void MaterialManager::addListener(Listener* l)
-	{
-		mListenerList.push_back(l);
-	}
-	//---------------------------------------------------------------------
-	void MaterialManager::removeListener(Listener* l)
-	{
-		mListenerList.remove(l);
-	}
-	//---------------------------------------------------------------------
-	Technique* MaterialManager::_arbitrateMissingTechniqueForActiveScheme(
-		Material* mat, unsigned short lodIndex, const Renderable* rend)
-	{
-		for (ListenerList::iterator i = mListenerList.begin(); i != mListenerList.end(); ++i)
+		SchemeMap::iterator i = mSchemes.find(schemeName);
+		if (i == mSchemes.end())
 		{
-			Technique* t = (*i)->handleSchemeNotFound(mActiveSchemeIndex, 
-				mActiveSchemeName, mat, lodIndex, rend);
-			if (t)
-				return t;
+			// Invalid scheme, use default
+			mActiveSchemeName = DEFAULT_SCHEME_NAME;
+			mActiveSchemeIndex = 0;
+		}
+		else
+		{
+			mActiveSchemeName = schemeName;
+			mActiveSchemeIndex = i->second;
 		}
 
-		return 0;
-
 	}
-
+    //-----------------------------------------------------------------------
 }

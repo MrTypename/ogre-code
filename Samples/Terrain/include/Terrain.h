@@ -36,9 +36,9 @@ public:
 
     }
 
-    bool frameRenderingQueued(const FrameEvent& evt)
+    bool frameStarted(const FrameEvent& evt)
     {
-        if( ExampleFrameListener::frameRenderingQueued(evt) == false )
+        if( ExampleFrameListener::frameStarted(evt) == false )
 		return false;
 
         // clamp to terrain
@@ -119,9 +119,6 @@ protected:
         mWindow->getViewport(0)->setBackgroundColour(fadeColour);
 
         std::string terrain_cfg("terrain.cfg");
-#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-        terrain_cfg = mResourcePath + terrain_cfg;
-#endif
         mSceneMgr -> setWorldGeometry( terrain_cfg );
         // Infinite far plane?
         if (mRoot->getRenderSystem()->getCapabilities()->hasCapability(RSC_INFINITE_FAR_PLANE))

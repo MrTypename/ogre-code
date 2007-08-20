@@ -164,9 +164,9 @@ public:
 
 	}
 
-	bool frameRenderingQueued(const FrameEvent& evt)
+	bool frameStarted(const FrameEvent& evt)
 	{
-		if( ExampleFrameListener::frameRenderingQueued(evt) == false )
+		if( ExampleFrameListener::frameStarted(evt) == false )
 			return false;
 
 		static Real timeDelay = 0;
@@ -441,7 +441,7 @@ protected:
 		headNode->attachObject(e);
 		headNode->setScale(7,7,7);
 		headNode->setPosition(0,200,0);
-		headNode->yaw(Degree(15));
+		e->setNormaliseNormals(true);
 		mCamera->move(Vector3(0,350,0));
 	}
 

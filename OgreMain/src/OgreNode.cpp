@@ -223,9 +223,6 @@ namespace Ogre {
 	{
 		updateFromParentImpl();
 
-		mCachedTransformOutOfDate = true;
-		mNeedParentUpdate = false;
-
 		// Call listener (note, this method only called if there's something to do)
 		if (mListener)
 		{
@@ -277,6 +274,9 @@ namespace Ogre {
             mDerivedPosition = mPosition;
             mDerivedScale = mScale;
         }
+
+		mCachedTransformOutOfDate = true;
+		mNeedParentUpdate = false;
 
     }
     //-----------------------------------------------------------------------
@@ -661,6 +661,16 @@ namespace Ogre {
     {
         // Assumes up to date
         *xform = this->_getFullTransform();
+    }
+    //-----------------------------------------------------------------------
+    const Quaternion& Node::getWorldOrientation(void) const
+    {
+        return _getDerivedOrientation();
+    }
+    //-----------------------------------------------------------------------
+    const Vector3& Node::getWorldPosition(void) const
+    {
+        return _getDerivedPosition();
     }
     //-----------------------------------------------------------------------
     void Node::setInitialState(void)

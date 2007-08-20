@@ -186,6 +186,11 @@ LRESULT CALLBACK WindowEventUtilities::_WndProc(HWND hWnd, UINT uMsg, WPARAM wPa
 		for( ; start != end; ++start )
 			(start->second)->windowMoved(win);
 		break;
+	case WM_DISPLAYCHANGE:
+		win->windowMovedOrResized();
+		for( ; start != end; ++start )
+			(start->second)->windowResized(win);
+		break;
 	case WM_SIZE:
 		//log->logMessage("WM_SIZE");
 		win->windowMovedOrResized();
@@ -198,21 +203,11 @@ LRESULT CALLBACK WindowEventUtilities::_WndProc(HWND hWnd, UINT uMsg, WPARAM wPa
 		((MINMAXINFO*)lParam)->ptMinTrackSize.y = 100;
 		break;
 	case WM_CLOSE:
-	{
 		//log->logMessage("WM_CLOSE");
-		bool close = true;
-		for( ; start != end; ++start )
-		{
-			if (!(start->second)->windowClosing(win))
-				close = false;
-		}
-		if (!close) return 0;
-
+		win->destroy();
 		for( ; start != end; ++start )
 			(start->second)->windowClosed(win);
-		win->destroy();
 		return 0;
-	}
 	}
 
 	return DefWindowProc( hWnd, uMsg, wParam, lParam );
@@ -255,14 +250,6 @@ void GLXProc( const XEvent &event )
 		{	//Window Closed (via X button)
 			//Send message first, to allow app chance to unregister things that need done before
 			//window is shutdown
-			bool close = true;
-			for( ; start != end; ++start )
-			{
-				if (!(start->second)->windowClosing(win))
-					close = false;
-			}
-			if (!close) return;
-
 			for( ; start != end; ++start )
 				(start->second)->windowClosed(win);
 			win->destroy();

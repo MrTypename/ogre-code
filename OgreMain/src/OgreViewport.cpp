@@ -60,12 +60,14 @@ namespace Ogre {
 		, mMaterialSchemeName(MaterialManager::DEFAULT_SCHEME_NAME)
     {
 
-		LogManager::getSingleton().stream()
-			<< "Creating viewport on target '" << target->getName() << "'"
+		StringUtil::StrStreamType msg;
+
+        msg << "Creating viewport on target '" << target->getName() << "'"
 			<< ", rendering from camera '" << (cam != 0 ? cam->getName() : "NULL") << "'"
 			<< ", relative dimensions "	<< std::fixed << std::setprecision(2) 
 			<< "L: " << left << " T: " << top << " W: " << width << " H: " << height
 			<< " ZOrder: " << ZOrder;
+        LogManager::getSingleton().logMessage(msg.str());
 
         // Calculate actual dimensions
         _updateDimensions();
@@ -110,11 +112,13 @@ namespace Ogre {
             mCamera->setAspectRatio((Real) mActWidth / (Real) mActHeight);
         }
 
-		LogManager::getSingleton().stream(LML_TRIVIAL)
-			<< "Viewport for camera '" << (mCamera != 0 ? mCamera->getName() : "NULL") << "'"
+		StringUtil::StrStreamType msg;
+
+		msg << "Viewport for camera '" << (mCamera != 0 ? mCamera->getName() : "NULL") << "'"
 			<< ", actual dimensions "	<< std::fixed << std::setprecision(2) 
 			<< "L: " << mActLeft << " T: " << mActTop << " W: " << mActWidth << " H: " << mActHeight;
 
+        LogManager::getSingleton().logMessage(msg.str(), LML_TRIVIAL);
 
         mUpdated = true;
     }

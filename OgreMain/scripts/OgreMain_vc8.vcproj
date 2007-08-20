@@ -399,10 +399,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgreAxisAlignedBox.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\src\OgreBillboard.cpp"
 				>
 			</File>

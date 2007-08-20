@@ -5,9 +5,6 @@
 	Name="GDITestApp"
 	ProjectGUID="{981A4576-5AC5-4C00-8181-ADC71C11ADDD}"
 	RootNamespace="GDITestApp"
-	SccProjectName=""
-	SccLocalPath=""
-	SccProvider=""
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -119,7 +116,6 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\SharedUtilities\Sources;..\GDIMetaLib\Sources"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"

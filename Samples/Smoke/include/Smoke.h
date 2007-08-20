@@ -35,14 +35,14 @@ public:
         mFountainNode = fountainNode;
     }
 
-    bool frameRenderingQueued(const FrameEvent& evt)
+    bool frameStarted(const FrameEvent& evt)
     {
 
         // Rotate fountains
 //        mFountainNode->yaw(evt.timeSinceLastFrame * 30);
 
         // Call default
-        return ExampleFrameListener::frameRenderingQueued(evt);
+        return ExampleFrameListener::frameStarted(evt);
 
     }
 };

@@ -112,13 +112,13 @@ const ColourValue &CompositionPass::getClearColour()
     return mClearColour;
 }
 //-----------------------------------------------------------------------
-void CompositionPass::setInput(size_t id, const String &input, size_t mrtIndex)
+void CompositionPass::setInput(size_t id, const String &input)
 {
     assert(id<OGRE_MAX_TEXTURE_LAYERS);
-    mInputs[id] = InputTex(input, mrtIndex);
+    mInputs[id] = input;
 }
 //-----------------------------------------------------------------------
-const CompositionPass::InputTex &CompositionPass::getInput(size_t id)
+const String &CompositionPass::getInput(size_t id)
 {
     assert(id<OGRE_MAX_TEXTURE_LAYERS);
     return mInputs[id];
@@ -129,7 +129,7 @@ size_t CompositionPass::getNumInputs()
     size_t count = 0;
     for(size_t x=0; x<OGRE_MAX_TEXTURE_LAYERS; ++x)
     {
-        if(!mInputs[x].name.empty())
+        if(!mInputs[x].empty())
             count = x+1;
     }
     return count;
@@ -139,7 +139,7 @@ void CompositionPass::clearAllInputs()
 {
     for(size_t x=0; x<OGRE_MAX_TEXTURE_LAYERS; ++x)
     {
-        mInputs[x].name.clear();
+        mInputs[x].clear();
     }
 }
 //-----------------------------------------------------------------------
