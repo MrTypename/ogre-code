@@ -236,8 +236,6 @@
 		<Unit filename="..\include\OgreRenderQueueSortingGrouping.h" />
 		<Unit filename="..\include\OgreRenderSystem.h" />
 		<Unit filename="..\include\OgreRenderSystemCapabilities.h" />
-		<Unit filename="..\include\OgreRenderSystemCapabilitiesManager.h" />
-		<Unit filename="..\include\OgreRenderSystemCapabilitiesSerializer.h" />
 		<Unit filename="..\include\OgreRenderTarget.h" />
 		<Unit filename="..\include\OgreRenderTargetListener.h" />
 		<Unit filename="..\include\OgreRenderTexture.h" />
@@ -289,7 +287,6 @@
 		<Unit filename="..\include\OgreSubEntity.h" />
 		<Unit filename="..\include\OgreSubMesh.h" />
 		<Unit filename="..\include\OgreTagPoint.h" />
-		<Unit filename="..\include\OgreTangentSpaceCalc.h" />
 		<Unit filename="..\include\OgreTechnique.h" />
 		<Unit filename="..\include\OgreTextAreaOverlayElement.h" />
 		<Unit filename="..\include\OgreTexture.h" />
@@ -320,7 +317,6 @@
 		<Unit filename="..\src\OgreAnimationTrack.cpp" />
 		<Unit filename="..\src\OgreArchiveManager.cpp" />
 		<Unit filename="..\src\OgreAutoParamDataSource.cpp" />
-		<Unit filename="..\src\OgreAxisAlignedBox.cpp" />
 		<Unit filename="..\src\OgreBillboard.cpp" />
 		<Unit filename="..\src\OgreBillboardChain.cpp" />
 		<Unit filename="..\src\OgreBillboardParticleRenderer.cpp" />
@@ -435,8 +431,6 @@
 		<Unit filename="..\src\OgreRenderQueueSortingGrouping.cpp" />
 		<Unit filename="..\src\OgreRenderSystem.cpp" />
 		<Unit filename="..\src\OgreRenderSystemCapabilities.cpp" />
-		<Unit filename="..\src\OgreRenderSystemCapabilitiesManager.cpp" />
-		<Unit filename="..\src\OgreRenderSystemCapabilitiesSerializer.cpp" />
 		<Unit filename="..\src\OgreRenderTarget.cpp" />
 		<Unit filename="..\src\OgreRenderTexture.cpp" />
 		<Unit filename="..\src\OgreRenderWindow.cpp" />
@@ -474,7 +468,6 @@
 		<Unit filename="..\src\OgreSubEntity.cpp" />
 		<Unit filename="..\src\OgreSubMesh.cpp" />
 		<Unit filename="..\src\OgreTagPoint.cpp" />
-		<Unit filename="..\src\OgreTangentSpaceCalc.cpp" />
 		<Unit filename="..\src\OgreTechnique.cpp" />
 		<Unit filename="..\src\OgreTextAreaOverlayElement.cpp" />
 		<Unit filename="..\src\OgreTexture.cpp" />

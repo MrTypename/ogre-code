@@ -201,13 +201,9 @@ namespace Ogre
 		/// @copydoc ManualObject::textureCoord(Real)
 		virtual void textureCoord(Real u, Real v, Real w);
 		/// @copydoc ManualObject::textureCoord(Real)
-		virtual void textureCoord(Real x, Real y, Real z, Real w);
-		/// @copydoc ManualObject::textureCoord(Real)
 		virtual void textureCoord(const Vector2& uv);
 		/// @copydoc ManualObject::textureCoord(Real)
 		virtual void textureCoord(const Vector3& uvw);
-		/// @copydoc ManualObject::textureCoord(Real)
-		virtual void textureCoord(const Vector4& xyzw);
 
 		/** Add a vertex colour to a vertex.
 		*/
@@ -389,6 +385,10 @@ namespace Ogre
 			void getRenderOperation(RenderOperation& op);
 			/** @copydoc Renderable::getWorldTransforms. */
 			void getWorldTransforms(Matrix4* xform) const;
+			/** @copydoc Renderable::getWorldOrientation. */
+			const Quaternion& getWorldOrientation(void) const;
+			/** @copydoc Renderable::getWorldPosition. */
+			const Vector3& getWorldPosition(void) const;
 			/** @copydoc Renderable::getSquaredViewDepth. */
 			Real getSquaredViewDepth(const Ogre::Camera *) const;
 			/** @copydoc Renderable::getLights. */
@@ -412,17 +412,16 @@ namespace Ogre
 			~ManualObjectSectionShadowRenderable();
 			/// Overridden from ShadowRenderable
 			void getWorldTransforms(Matrix4* xform) const;
+			/// Overridden from ShadowRenderable
+			const Quaternion& getWorldOrientation(void) const;
+			/// Overridden from ShadowRenderable
+			const Vector3& getWorldPosition(void) const;
 			HardwareVertexBufferSharedPtr getPositionBuffer(void) { return mPositionBuffer; }
 			HardwareVertexBufferSharedPtr getWBuffer(void) { return mWBuffer; }
 
 		};
 
 		typedef std::vector<ManualObjectSection*> SectionList;
-
-		/// @copydoc MovableObject::visitRenderables
-		void visitRenderables(Renderable::Visitor* visitor, 
-			bool debugRenderables = false);
-		
 		
 	protected:
 		/// Dynamic?
@@ -438,7 +437,7 @@ namespace Ogre
 		{
 			Vector3 position;
 			Vector3 normal;
-			Vector4 texCoord[OGRE_MAX_TEXTURE_COORD_SETS];
+			Vector3 texCoord[OGRE_MAX_TEXTURE_COORD_SETS];
 			ushort texCoordDims[OGRE_MAX_TEXTURE_COORD_SETS];
 			ColourValue colour;
 		};

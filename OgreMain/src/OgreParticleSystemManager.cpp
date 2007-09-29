@@ -66,7 +66,6 @@ namespace Ogre {
     ParticleSystemManager::~ParticleSystemManager()
     {
 		OGRE_LOCK_AUTO_MUTEX
-
         // Destroy all templates
         ParticleTemplateMap::iterator t;
         for (t = mSystemTemplates.begin(); t != mSystemTemplates.end(); ++t)
@@ -179,6 +178,8 @@ namespace Ogre {
 
 
         }
+
+
     }
     //-----------------------------------------------------------------------
     void ParticleSystemManager::addEmitterFactory(ParticleEmitterFactory* factory)

@@ -41,12 +41,10 @@ CDDObject* CPoseAnimExportObject::m_pDDMetaDesc=NULL;
 
 CPoseAnimExportObject::CPoseAnimExportObject(CDDObject *pConfig) : CExportObject(pConfig)
 {
-	REGISTER_MODULE("Pose Animation Export Object")
 }
 
 CPoseAnimExportObject::~CPoseAnimExportObject()
 {
-	UNREGISTER_MODULE
 }
 
 // Get window for editing ExportObject properties
@@ -138,7 +136,7 @@ CDDObject* CPoseAnimExportObject::BuildMetaDesc( void )
 	pDDAnimElement->SetString("ID","AnimationStartID");
 	pDDAnimElement->SetString("Type","Int");
 	pDDAnimElement->SetBool("EnableSlider", false);
-	pDDAnimElement->SetString("Group","Animation");
+	pDDAnimElement->SetString("Group","Bone");
 	pDDAnimElement->SetString("Caption","Start Frame");
 	pDDAnimElement->SetString("Help","Frame which the animation begins");
 	pDDAnimElement->SetInt("Default", iStartFrame);
@@ -148,7 +146,7 @@ CDDObject* CPoseAnimExportObject::BuildMetaDesc( void )
 	pDDAnimElement->SetString("ID","AnimationEndID");
 	pDDAnimElement->SetString("Type","Int");
 	pDDAnimElement->SetBool("EnableSlider", false);
-	pDDAnimElement->SetString("Group","Animation");
+	pDDAnimElement->SetString("Group","Bone");
 	pDDAnimElement->SetString("Caption","End Frame");
 	pDDAnimElement->SetString("Help","Frame which the animation stops");
 	pDDAnimElement->SetInt("Default", iEndFrame);
@@ -158,21 +156,11 @@ CDDObject* CPoseAnimExportObject::BuildMetaDesc( void )
 	pDDAnimElement->SetString("ID","AnimationSampleRateID");
 	pDDAnimElement->SetString("Type","Float");
 	pDDAnimElement->SetBool("EnableSlider", false);
-	pDDAnimElement->SetString("Group","Animation");
+	pDDAnimElement->SetString("Group","Bone");
 	pDDAnimElement->SetString("Caption","Samplerate");
-	pDDAnimElement->SetString("Help","Number of samples per second");
-	pDDAnimElement->SetFloat("Default", (float)GetFrameRate());
-	lAnimSettings.push_back(pDDAnimElement);
-
-	pDDAnimElement = new CDDObject();
-	pDDAnimElement->SetString("ID","OptimizeID");
-	pDDAnimElement->SetString("Type","Bool");
-	pDDAnimElement->SetString("Group","Animation");
-	pDDAnimElement->SetString("Caption","Optimize");
 	pDDAnimElement->SetString("Help","Rate at which samples should be done. e.g 2 yields every second frame in max.");
-	pDDAnimElement->SetBool("Default", true);
+	pDDAnimElement->SetFloat("Default", 1.0);
 	lAnimSettings.push_back(pDDAnimElement);
-	
 
 	AnimContainer->SetDDList("MetaList", lAnimSettings, false);
 	return AnimContainer;
@@ -210,9 +198,7 @@ bool CPoseAnimExportObject::Export(CExportProgressDlg *pProgressDlg, bool bForce
 
 		int iStartFrame = m_pDDConfig->GetInt("AnimationStartID",0);
 		int iEndFrame = m_pDDConfig->GetInt("AnimationEndID",0);
-		float fRate = m_pDDConfig->GetFloat("AnimationSampleRateID",(float)GetFrameRate());
-		if(fRate < 0.0001f) fRate = 1.0f;
-		fRate = ((float)GetFrameRate()) / fRate;
+		float fRate = m_pDDConfig->GetFloat("AnimationSampleRateID",1.0f);
 
 		faststring sPoseAnimName = m_pDDConfig->GetString("Name");
 		bool bOptimize = m_pDDConfig->GetBool("OptimizeID",true);

@@ -41,26 +41,15 @@ Interface* CExporter::m_pMax = NULL;
 
 //
 
-extern "C" __declspec(dllexport) UtilityObj* CreateLEXI()
-{
-	return new CExporter();
-}
-extern "C" __declspec(dllexport) void DestroyLEXI(UtilityObj* pObj)
-{
-	pObj->DeleteThis();
-}
-
 static void ModifyCallback(void* param, NotifyInfo* info)
 {
 	switch(info->intcode)
 	{
+		case NOTIFY_SYSTEM_POST_RESET:
 		case NOTIFY_SYSTEM_POST_NEW:
 		case NOTIFY_FILE_POST_MERGE:
 		case NOTIFY_FILE_POST_OPEN:
 		case NOTIFY_POST_IMPORT:
-		case NOTIFY_SYSTEM_POST_RESET:
-		case NOTIFY_FILE_OPEN_FAILED:
-		case NOTIFY_IMPORT_FAILED:
 			((CExporter*)param)->LoadConfig();
 			break;
 	}
@@ -78,29 +67,15 @@ CDDObject* CExporter::GetGlobalSettings()
 	return m_pGlobalSettings;
 }
 
-CDDObject* CExporter::GetRootConfig() const
-{
-	return m_pExportRoot->GetConfig();
-}
-
-CExportObjectRoot* CExporter::GetExportRoot() const
-{
-	return m_pExportRoot;
-}
-
 //
 
-CExporter::CExporter()//CExporterDesc* pDesc)
+CExporter::CExporter(CExporterDesc* pDesc)
 {
-	REGISTER_MODULE("Exporter")
-
 	LoadGlobalSettings();
 	CExportObject::Initialize();
+	CLogSystem::Get()->AddReceiver(new CFileLogger("C:\\LexiExport_debug.txt"));
 
-	std::string sLogFile = GetLEXIRoot()+"/Logs/LexiExport.log";
-	CLogSystem::Get()->AddReceiver(new CFileLogger(sLogFile.c_str()));
-
-//	m_pDesc = pDesc;
+	m_pDesc = pDesc;
 	m_pMax = NULL;
 	m_pMaxUtil = NULL;
 	m_hPanel = NULL;
@@ -115,8 +90,6 @@ CExporter::CExporter()//CExporterDesc* pDesc)
 	RegisterNotification(ModifyCallback, this, NOTIFY_FILE_POST_OPEN);
 	RegisterNotification(ModifyCallback, this, NOTIFY_FILE_POST_MERGE);
 	RegisterNotification(ModifyCallback, this, NOTIFY_POST_IMPORT);
-	RegisterNotification(ModifyCallback, this, NOTIFY_FILE_OPEN_FAILED);
-	RegisterNotification(ModifyCallback, this, NOTIFY_IMPORT_FAILED);
 }
 
 CExporter::~CExporter()
@@ -127,25 +100,18 @@ CExporter::~CExporter()
 	UnRegisterNotification(ModifyCallback, this, NOTIFY_FILE_POST_OPEN);
 	UnRegisterNotification(ModifyCallback, this, NOTIFY_FILE_POST_MERGE);
 	UnRegisterNotification(ModifyCallback, this, NOTIFY_POST_IMPORT);
-	UnRegisterNotification(ModifyCallback, this, NOTIFY_FILE_OPEN_FAILED);
-	UnRegisterNotification(ModifyCallback, this, NOTIFY_IMPORT_FAILED);
 
 	try {
 		//
 		GDI::Window::Cleanup();
 		delete m_pMemoryLog;
-		m_pMemoryLog=NULL;
+		m_pMemoryLog=0;
 	} catch(...)
 	{
-		MessageBox(NULL,"Exception caught while cleaning GDI Window","ERROR",MB_ICONSTOP);
 	}
 
 	// Free ExportObjects
-	FreeConfig();
-
-	m_pThis = NULL;
-
-	UNREGISTER_MODULE
+	FreeConfig();	
 }
 
 void CExporter::LoadConfig()
@@ -181,10 +147,8 @@ void CExporter::LoadConfig()
 		}
 	} catch(...)
 	{	
-		MessageBox(NULL,"ERROR Loading LEXI Config from file", "ERROR", MB_ICONSTOP);
-		pRootConfig->Clear();
 	}
-	//pRootConfig->SaveASCII("C:\\loadStream.txt");
+	pRootConfig->SaveASCII("C:\\loadStream.txt");
 	// Create new export root object
 	m_pExportRoot=(CExportObjectRoot*)CExportObject::Construct(pRootConfig);	
 
@@ -199,7 +163,6 @@ void CExporter::SaveConfig()
 	if(!m_pExportRoot) return;// || !m_pExportRoot->HasChildren()) return;
 
 	CDataStream stream;
-	stream.Reserve(50000);
 
 	//Write Version ID
 	stream.SetPosition(0);
@@ -208,7 +171,7 @@ void CExporter::SaveConfig()
 	CDDObject *pConfig=new CDDObject();
 	m_pExportRoot->SaveConfig(pConfig);
 
-	//pConfig->SaveASCII("C:\\saveStream.txt");
+	pConfig->SaveASCII("C:\\saveStream.txt");
 
 	pConfig->ToDataStream(&stream);
 	pConfig->Release();
@@ -277,19 +240,20 @@ void CExporter::BeginEditParams(Interface* ip, IUtil* iu)
 
 		m_hPanel = ip->AddRollupPage(m_hInstance, MAKEINTRESOURCE(IDD_DIALOG_CONFIG), ConfigDlgProc, NDS_EXPORTER_TITLE, 0);
 
+
 		if (COgreCore::getSingletonPtr() == NULL)
 		{
 			new COgreCore(m_hPanel);			
 		}
 		if(!m_bMemoryLogOnOGRE)
 		{
-			Ogre::LogManager::getSingleton().getDefaultLog()->addListener(m_pMemoryLog);
+			Ogre::LogManager::getSingleton().addListener(m_pMemoryLog);
 			m_bMemoryLogOnOGRE=true;
 		}
 
+		LoadConfig();
 		Ogre::String sVersionInfo = Ogre::String("Version: ") + Ogre::String(NDS_EXPORTER_VERSION);
 		Static_SetText( GetDlgItem(m_hPanel, IDC_VERSION_INFO), sVersionInfo.c_str());
-		LoadConfig();
 
 	}
 	catch (...)
@@ -306,17 +270,13 @@ void CExporter::EndEditParams(Interface* ip, IUtil* iu)
 	ip->DeleteRollupPage(m_hPanel);
 	m_hPanel = NULL;
 
-
-	if(m_bMemoryLogOnOGRE)
-	{
-		Ogre::LogManager::getSingleton().getDefaultLog()->removeListener(m_pMemoryLog);
-		m_bMemoryLogOnOGRE=false;
-	}
-#if(NDS_EXPORTER_AUTOUNLOAD)	
 	m_pMax = NULL;
 	m_pMaxUtil = NULL;
-	delete COgreCore::getSingletonPtr();
-#endif
+	if(m_bMemoryLogOnOGRE)
+	{
+		Ogre::LogManager::getSingleton().removeListener(m_pMemoryLog);
+		m_bMemoryLogOnOGRE=false;
+	}
 }
 
 void CExporter::DeleteThis()
@@ -347,9 +307,9 @@ INT_PTR CALLBACK CExporter::ConfigDlgProc(HWND hWnd, UINT Msg, WPARAM wParam, LP
 					m_pThis->OnPanelButtonExport();
 					break;
 
-				//case IDC_CLOSE_BUTTON:
-				//	m_pThis->m_pMaxUtil->CloseUtility();
-				//	return 0; // do not process further
+				case IDC_CLOSE_BUTTON:
+					m_pThis->m_pMaxUtil->CloseUtility();
+					break;
 
 				case IDOK:
 				case IDCANCEL:
@@ -411,8 +371,6 @@ void CExporter::ExportItems(bool bForceAll)
 {
 	if(m_pExportRoot==NULL || !m_pExportRoot->HasChildren()) return;
 
-	if(!ValidateFilenames()) return;
-
 	m_pMemoryLog->Flush();
 	m_pMemoryLog->LogImportant(true);
 	LOGINFO "Memory log flushed");
@@ -423,16 +381,14 @@ void CExporter::ExportItems(bool bForceAll)
 	LOGINFO "Progress created");
 	dlg.ShowWindow(SW_SHOW);
 	LOGINFO "Progress show");
-	m_pExportRoot->PreExport();
-	unsigned int iCount = m_pExportRoot->GetChildCount(true) - 1;
-//	iCount++; // Inclusive Root Object
+	unsigned int iCount=m_pExportRoot->GetChildCount(true);
+	iCount++; // Inclusive Root Object
 	LOGINFO "Counted: %d", iCount);
 	dlg.InitGlobal(iCount);
 	LOGINFO "Progress initglobal");
 
 	LOGINFO "Exporting %i topitem(s)", m_pExportRoot->GetChildren().size());
 	m_pExportRoot->Export(&dlg, bForceAll);
-	m_pExportRoot->PostExport();
 
 //	dlg.MessageBox("Done", NDS_EXPORTER_TITLE, MB_ICONINFORMATION);
 //	dlg.DestroyWindow();

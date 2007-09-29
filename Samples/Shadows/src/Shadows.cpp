@@ -333,7 +333,7 @@ public:
     }
 
 
-	bool frameRenderingQueued(const FrameEvent& evt)
+	bool frameStarted(const FrameEvent& evt)
 	{
 		CEGUI::System::getSingleton().injectTimePulse(evt.timeSinceLastFrame);
 

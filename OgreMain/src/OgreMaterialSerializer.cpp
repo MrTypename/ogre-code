@@ -306,79 +306,6 @@ namespace Ogre
 
     }
     //-----------------------------------------------------------------------
-    bool parseSeparateSceneBlend(String& params, MaterialScriptContext& context)
-    {
-        StringUtil::toLowerCase(params);
-        StringVector vecparams = StringUtil::split(params, " \t");
-        // Should be 2 or 4 params
-        if (vecparams.size() == 2)
-        {
-            //simple
-            SceneBlendType stype;
-            if (vecparams[0] == "add")
-                stype = SBT_ADD;
-            else if (vecparams[0] == "modulate")
-                stype = SBT_MODULATE;
-			else if (vecparams[0] == "colour_blend")
-				stype = SBT_TRANSPARENT_COLOUR;
-            else if (vecparams[0] == "alpha_blend")
-                stype = SBT_TRANSPARENT_ALPHA;
-            else
-            {
-                logParseError(
-                    "Bad separate_scene_blend attribute, unrecognised parameter '" + vecparams[0] + "'",
-                    context);
-                return false;
-            }
-
-            SceneBlendType stypea;
-            if (vecparams[0] == "add")
-                stypea = SBT_ADD;
-            else if (vecparams[0] == "modulate")
-                stypea = SBT_MODULATE;
-			else if (vecparams[0] == "colour_blend")
-				stypea = SBT_TRANSPARENT_COLOUR;
-            else if (vecparams[0] == "alpha_blend")
-                stypea = SBT_TRANSPARENT_ALPHA;
-            else
-            {
-                logParseError(
-                    "Bad separate_scene_blend attribute, unrecognised parameter '" + vecparams[1] + "'",
-                    context);
-                return false;
-            }
-			
-			context.pass->setSeparateSceneBlending(stype, stypea);
-        }
-        else if (vecparams.size() == 4)
-        {
-            //src/dest
-            SceneBlendFactor src, dest;
-			SceneBlendFactor srca, desta;
-
-            try {
-                src = convertBlendFactor(vecparams[0]);
-                dest = convertBlendFactor(vecparams[1]);
-                srca = convertBlendFactor(vecparams[2]);
-                desta = convertBlendFactor(vecparams[3]);
-				context.pass->setSeparateSceneBlending(src,dest,srca,desta);
-            }
-            catch (Exception& e)
-            {
-                logParseError("Bad separate_scene_blend attribute, " + e.getDescription(), context);
-            }
-
-        }
-        else
-        {
-            logParseError(
-                "Bad separate_scene_blend attribute, wrong number of parameters (expected 2 or 4)",
-                context);
-        }
-
-        return false;
-    }
-    //-----------------------------------------------------------------------
     CompareFunction convertCompareFunction(const String& param)
     {
         if (param == "always_fail")
@@ -430,34 +357,7 @@ namespace Ogre
                 context);
         return false;
     }
-	//-----------------------------------------------------------------------
-	bool parseLightScissor(String& params, MaterialScriptContext& context)
-	{
-		StringUtil::toLowerCase(params);
-		if (params == "on")
-			context.pass->setLightScissoringEnabled(true);
-		else if (params == "off")
-			context.pass->setLightScissoringEnabled(false);
-		else
-			logParseError(
-			"Bad light_scissor attribute, valid parameters are 'on' or 'off'.",
-			context);
-		return false;
-	}
-	//-----------------------------------------------------------------------
-	bool parseLightClip(String& params, MaterialScriptContext& context)
-	{
-		StringUtil::toLowerCase(params);
-		if (params == "on")
-			context.pass->setLightClipPlanesEnabled(true);
-		else if (params == "off")
-			context.pass->setLightClipPlanesEnabled(false);
-		else
-			logParseError(
-			"Bad light_clip_planes attribute, valid parameters are 'on' or 'off'.",
-			context);
-		return false;
-	}
+
     //-----------------------------------------------------------------------
     bool parseDepthFunc(String& params, MaterialScriptContext& context)
     {
@@ -473,20 +373,6 @@ namespace Ogre
 
         return false;
     }
-	//-----------------------------------------------------------------------
-	bool parseNormaliseNormals(String& params, MaterialScriptContext& context)
-	{
-		StringUtil::toLowerCase(params);
-		if (params == "on")
-			context.pass->setNormaliseNormals(true);
-		else if (params == "off")
-			context.pass->setNormaliseNormals(false);
-		else
-			logParseError(
-			"Bad normalise_normals attribute, valid parameters are 'on' or 'off'.",
-			context);
-		return false;
-	}
     //-----------------------------------------------------------------------
     bool parseColourWrite(String& params, MaterialScriptContext& context)
     {
@@ -816,15 +702,6 @@ namespace Ogre
 			logParseError("Bad polygon_mode attribute, valid parameters are 'solid', "
 			"'wireframe' or 'points'.", context);
 
-		return false;
-	}
-	//-----------------------------------------------------------------------
-	bool parsePolygonModeOverrideable(String& params, MaterialScriptContext& context)
-	{
-		StringUtil::toLowerCase(params);
-
-		context.pass->setPolygonModeOverrideable(
-			StringConverter::parseBool(params));
 		return false;
 	}
     //-----------------------------------------------------------------------
@@ -1593,16 +1470,6 @@ namespace Ogre
 
         return false;
     }
-	//-----------------------------------------------------------------------
-	bool parseIterationDepthBias(String& params, MaterialScriptContext& context)
-	{
-		StringVector vecparams = StringUtil::split(params, " \t");
-
-		float bias = static_cast<float>(StringConverter::parseReal(vecparams[0]));
-		context.pass->setIterationDepthBias(bias);
-
-		return false;
-	}
     //-----------------------------------------------------------------------
     bool parseAnisotropy(String& params, MaterialScriptContext& context)
     {
@@ -1640,27 +1507,6 @@ namespace Ogre
 		else
 		{
 			logParseError("Invalid content_type specified.", context);
-		}
-		return false;
-	}
-	//-----------------------------------------------------------------------
-	bool parseIlluminationStage(String& params, MaterialScriptContext& context)
-	{
-		if (params == "ambient")
-		{
-			context.pass->setIlluminationStage(IS_AMBIENT);
-		}
-		else if (params == "per_light")
-		{
-			context.pass->setIlluminationStage(IS_PER_LIGHT);
-		}
-		else if (params == "decal")
-		{
-			context.pass->setIlluminationStage(IS_DECAL);
-		}
-		else
-		{
-			logParseError("Invalid illumination_stage specified.", context);
 		}
 		return false;
 	}
@@ -1923,10 +1769,7 @@ namespace Ogre
 							index, autoConstantDef->acType, context.numAnimationParametrics++);
 				}
 				// Special case texture projector - assume 0 if data not specified
-				else if ((autoConstantDef->acType == GpuProgramParameters::ACT_TEXTURE_VIEWPROJ_MATRIX ||
-						autoConstantDef->acType == GpuProgramParameters::ACT_TEXTURE_WORLDVIEWPROJ_MATRIX ||
-						autoConstantDef->acType == GpuProgramParameters::ACT_SPOTLIGHT_VIEWPROJ_MATRIX ||
-						autoConstantDef->acType == GpuProgramParameters::ACT_SPOTLIGHT_WORLDVIEWPROJ_MATRIX)
+				else if (autoConstantDef->acType == GpuProgramParameters::ACT_TEXTURE_VIEWPROJ_MATRIX
 					&& vecparams.size() == 2)
 				{
 					if (isNamed)
@@ -2758,24 +2601,18 @@ namespace Ogre
         mPassAttribParsers.insert(AttribParserList::value_type("specular", (ATTRIBUTE_PARSER)parseSpecular));
         mPassAttribParsers.insert(AttribParserList::value_type("emissive", (ATTRIBUTE_PARSER)parseEmissive));
         mPassAttribParsers.insert(AttribParserList::value_type("scene_blend", (ATTRIBUTE_PARSER)parseSceneBlend));
-        mPassAttribParsers.insert(AttribParserList::value_type("separate_scene_blend", (ATTRIBUTE_PARSER)parseSeparateSceneBlend));
-		mPassAttribParsers.insert(AttribParserList::value_type("depth_check", (ATTRIBUTE_PARSER)parseDepthCheck));
+        mPassAttribParsers.insert(AttribParserList::value_type("depth_check", (ATTRIBUTE_PARSER)parseDepthCheck));
         mPassAttribParsers.insert(AttribParserList::value_type("depth_write", (ATTRIBUTE_PARSER)parseDepthWrite));
         mPassAttribParsers.insert(AttribParserList::value_type("depth_func", (ATTRIBUTE_PARSER)parseDepthFunc));
-		mPassAttribParsers.insert(AttribParserList::value_type("normalise_normals", (ATTRIBUTE_PARSER)parseNormaliseNormals));
 		mPassAttribParsers.insert(AttribParserList::value_type("alpha_rejection", (ATTRIBUTE_PARSER)parseAlphaRejection));
         mPassAttribParsers.insert(AttribParserList::value_type("colour_write", (ATTRIBUTE_PARSER)parseColourWrite));
-		mPassAttribParsers.insert(AttribParserList::value_type("light_scissor", (ATTRIBUTE_PARSER)parseLightScissor));
-		mPassAttribParsers.insert(AttribParserList::value_type("light_clip_planes", (ATTRIBUTE_PARSER)parseLightClip));
         mPassAttribParsers.insert(AttribParserList::value_type("cull_hardware", (ATTRIBUTE_PARSER)parseCullHardware));
         mPassAttribParsers.insert(AttribParserList::value_type("cull_software", (ATTRIBUTE_PARSER)parseCullSoftware));
         mPassAttribParsers.insert(AttribParserList::value_type("lighting", (ATTRIBUTE_PARSER)parseLighting));
         mPassAttribParsers.insert(AttribParserList::value_type("fog_override", (ATTRIBUTE_PARSER)parseFogging));
         mPassAttribParsers.insert(AttribParserList::value_type("shading", (ATTRIBUTE_PARSER)parseShading));
 		mPassAttribParsers.insert(AttribParserList::value_type("polygon_mode", (ATTRIBUTE_PARSER)parsePolygonMode));
-		mPassAttribParsers.insert(AttribParserList::value_type("polygon_mode_overrideable", (ATTRIBUTE_PARSER)parsePolygonModeOverrideable));
         mPassAttribParsers.insert(AttribParserList::value_type("depth_bias", (ATTRIBUTE_PARSER)parseDepthBias));
-		mPassAttribParsers.insert(AttribParserList::value_type("iteration_depth_bias", (ATTRIBUTE_PARSER)parseIterationDepthBias));
         mPassAttribParsers.insert(AttribParserList::value_type("texture_unit", (ATTRIBUTE_PARSER)parseTextureUnit));
         mPassAttribParsers.insert(AttribParserList::value_type("vertex_program_ref", (ATTRIBUTE_PARSER)parseVertexProgramRef));
         mPassAttribParsers.insert(AttribParserList::value_type("shadow_caster_vertex_program_ref", (ATTRIBUTE_PARSER)parseShadowCasterVertexProgramRef));
@@ -2790,7 +2627,6 @@ namespace Ogre
 		mPassAttribParsers.insert(AttribParserList::value_type("point_size_attenuation", (ATTRIBUTE_PARSER)parsePointAttenuation));
 		mPassAttribParsers.insert(AttribParserList::value_type("point_size_min", (ATTRIBUTE_PARSER)parsePointSizeMin));
 		mPassAttribParsers.insert(AttribParserList::value_type("point_size_max", (ATTRIBUTE_PARSER)parsePointSizeMax));
-		mPassAttribParsers.insert(AttribParserList::value_type("illumination_stage", (ATTRIBUTE_PARSER)parseIlluminationStage));
 
         // Set up texture unit attribute parsers
 		mTextureUnitAttribParsers.insert(AttribParserList::value_type("texture_source", (ATTRIBUTE_PARSER)parseTextureSource));
@@ -3580,29 +3416,13 @@ namespace Ogre
             }
 
             // scene blend factor
-			if (pPass->hasSeparateSceneBlending())
-			{
-				if (mDefaults ||
-					pPass->getSourceBlendFactor() != SBF_ONE ||
-					pPass->getDestBlendFactor() != SBF_ZERO ||
-					pPass->getSourceBlendFactorAlpha() != SBF_ONE ||
-					pPass->getDestBlendFactorAlpha() != SBF_ZERO)
-				{
-					writeAttribute(3, "separate_scene_blend");
-					writeSceneBlendFactor(pPass->getSourceBlendFactor(), pPass->getDestBlendFactor(), 
-						pPass->getSourceBlendFactorAlpha(), pPass->getDestBlendFactorAlpha());
-				}
-			}
-			else
-			{
-				if (mDefaults ||
-					pPass->getSourceBlendFactor() != SBF_ONE ||
-					pPass->getDestBlendFactor() != SBF_ZERO)
-				{
-					writeAttribute(3, "scene_blend");
-					writeSceneBlendFactor(pPass->getSourceBlendFactor(), pPass->getDestBlendFactor());
-				}
-			}
+            if (mDefaults ||
+                pPass->getSourceBlendFactor() != SBF_ONE ||
+                pPass->getDestBlendFactor() != SBF_ZERO)
+            {
+                writeAttribute(3, "scene_blend");
+                writeSceneBlendFactor(pPass->getSourceBlendFactor(), pPass->getDestBlendFactor());
+            }
 
 
             //depth check
@@ -3648,49 +3468,8 @@ namespace Ogre
                 writeValue(StringConverter::toString(pPass->getDepthBiasConstant()));
 				writeValue(StringConverter::toString(pPass->getDepthBiasSlopeScale()));
             }
-			//iteration depth bias
-			if (mDefaults ||
-				pPass->getIterationDepthBias() != 0)
-			{
-				writeAttribute(3, "iteration_depth_bias");
-				writeValue(StringConverter::toString(pPass->getIterationDepthBias()));
-			}
 
-			//light scissor
-			if (mDefaults ||
-				pPass->getLightScissoringEnabled() != false)
-			{
-				writeAttribute(3, "light_scissor");
-				writeValue(pPass->getLightScissoringEnabled() ? "on" : "off");
-			}
-
-			//light clip planes
-			if (mDefaults ||
-				pPass->getLightClipPlanesEnabled() != false)
-			{
-				writeAttribute(3, "light_clip_planes");
-				writeValue(pPass->getLightClipPlanesEnabled() ? "on" : "off");
-			}
-
-			// illumination stage
-			if (pPass->getIlluminationStage() != IS_UNKNOWN)
-			{
-				writeAttribute(3, "illumination_stage");
-				switch(pPass->getIlluminationStage())
-				{
-				case IS_AMBIENT:
-					writeValue("ambient");
-					break;
-				case IS_PER_LIGHT:
-					writeValue("per_light");
-					break;
-				case IS_DECAL:
-					writeValue("decal");
-					break;
-				};
-			}
-
-			// hardware culling mode
+            // hardware culling mode
             if (mDefaults ||
                 pPass->getCullingMode() != CULL_CLOCKWISE)
             {
@@ -3766,22 +3545,6 @@ namespace Ogre
 					writeValue("solid");
 					break;
 				}
-			}
-
-			// polygon mode overrideable
-			if (mDefaults ||
-				!pPass->getPolygonModeOverrideable())
-			{
-				writeAttribute(3, "polygon_mode_overrideable");
-				writeValue(pPass->getPolygonModeOverrideable() ? "on" : "off");
-			}
-
-			// normalise normals
-			if (mDefaults ||
-				pPass->getNormaliseNormals() != false)
-			{
-				writeAttribute(3, "normalise_normals");
-				writeValue(pPass->getNormaliseNormals() ? "on" : "off");
 			}
 
             //fog override
@@ -4361,14 +4124,6 @@ namespace Ogre
             writeSceneBlendFactor(sbf_dst);
         }
     }
-	//-----------------------------------------------------------------------
-	void MaterialSerializer::writeSceneBlendFactor(
-		const SceneBlendFactor c_src, const SceneBlendFactor c_dest, 
-		const SceneBlendFactor a_src, const SceneBlendFactor a_dest)
-	{
-		writeSceneBlendFactor(c_src, c_dest);
-		writeSceneBlendFactor(a_src, a_dest);
-	}
     //-----------------------------------------------------------------------
     void MaterialSerializer::writeCompareFunction(const CompareFunction cf)
     {

@@ -96,8 +96,6 @@ void CExportProgressDlg::LocalStep(const char *pszDesc)
 void CExportProgressDlg::ExportDone(void)
 {
 	DestroyWindow();
-	std::string sLogFile = GetLEXIRoot()+"/Logs/Profiler.log";
-	CProfiler::getSingletonPtr()->WriteLog(sLogFile.c_str());
 }
 
 // Check if we want to abort current export

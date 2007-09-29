@@ -443,13 +443,6 @@ namespace Ogre {
             ACT_DERIVED_LIGHT_DIFFUSE_COLOUR_ARRAY,
 			/// Array of derived light specular colours (count set by extra param)
             ACT_DERIVED_LIGHT_SPECULAR_COLOUR_ARRAY,
-			/** The absolute light number of a local light index. Each pass may have
-				a number of lights passed to it, and each of these lights will have
-				an index in the overall light list, which will differ from the local
-				light index due to factors like setStartLight and setIteratePerLight.
-				This binding provides the global light index for a local index.
-			*/
-			ACT_LIGHT_NUMBER,
 
 
 			/** The distance a shadow volume should be extruded when using
@@ -462,16 +455,6 @@ namespace Ogre {
             ACT_CAMERA_POSITION_OBJECT_SPACE,
             /// The view/projection matrix of the assigned texture projection frustum
             ACT_TEXTURE_VIEWPROJ_MATRIX,
-			/** The view/projection matrix of the assigned texture projection frustum, 
-				combined with the current world matrix
-			*/
-			ACT_TEXTURE_WORLDVIEWPROJ_MATRIX,
-			/// The view/projection matrix of a given spotlight
-			ACT_SPOTLIGHT_VIEWPROJ_MATRIX,
-			/** The view/projection matrix of a given spotlight projection frustum, 
-			combined with the current world matrix
-			*/
-			ACT_SPOTLIGHT_WORLDVIEWPROJ_MATRIX,
             /// A custom parameter which will come from the renderable, using 'data' as the identifier
             ACT_CUSTOM,
             /** provides current elapsed time
@@ -1068,9 +1051,9 @@ namespace Ogre {
 		const AutoConstantEntry* _findRawAutoConstantEntryInt(size_t physicalIndex);
 
         /** Updates the automatic parameters (except lights) based on the details provided. */
-        void _updateAutoParamsNoLights(const AutoParamDataSource* source);
+        void _updateAutoParamsNoLights(const AutoParamDataSource& source);
         /** Updates the automatic parameters for lights based on the details provided. */
-        void _updateAutoParamsLightsOnly(const AutoParamDataSource* source);
+        void _updateAutoParamsLightsOnly(const AutoParamDataSource& source);
 
 		/** Tells the program whether to ignore missing parameters or not.
 		*/

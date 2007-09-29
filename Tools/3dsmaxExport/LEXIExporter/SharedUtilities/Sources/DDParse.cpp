@@ -27,11 +27,11 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 CDDParse::CDDParse(void)
 {
-	REGISTER_MODULE("ASCII to DDObject Parser")
+	REGISTER_MODULE("DDParse");
 }
 CDDParse::~CDDParse(void)
 {
-	UNREGISTER_MODULE
+	UNREGISTER_MODULE;
 }
 
 // Parse the ASCII string to a DDObject

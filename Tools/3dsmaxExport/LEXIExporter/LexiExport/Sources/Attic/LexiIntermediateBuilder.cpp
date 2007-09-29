@@ -26,18 +26,11 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "LexiStdAfx.h"
 #include "LexiIntermediateAPI.h"
-#include <iInstanceMgr.h>
-
-//
-
-static std::map<Ogre::SceneNode*, unsigned int> g_OgreMaxLink;
 
 //
 
 CIntermediateBuilder::CIntermediateBuilder()
 {
-	REGISTER_MODULE("Intermediate Builder")
-
 	m_iBoneIndex = 0;
 	m_fAnimTotalLength=0.0;
 	m_pSkeletonBuilder = NULL;
@@ -53,8 +46,6 @@ CIntermediateBuilder::~CIntermediateBuilder()
 	m_lMaterials.clear();
 
 	delete m_pSkeletonBuilder;
-
-	UNREGISTER_MODULE
 }
 
 //
@@ -78,11 +69,8 @@ void CIntermediateBuilder::SetConfig( CDDObject* pConfig )
 	m_bExportSkeleton = pConfig->GetBool("SkeletonID", false);
 	m_iAnimStart = pConfig->GetInt("AnimationStartID", 0);
 	m_iAnimEnd = pConfig->GetInt("AnimationEndID", 1);
-	m_fSampleRate = pConfig->GetFloat("AnimationSampleRateID", (float)GetFrameRate());
-	if(m_fSampleRate < 0.0001f) m_fSampleRate = 1.0f;
+	m_fSampleRate = pConfig->GetFloat("AnimationSampleRateID", 1.0);
 	m_sAnimationName = pConfig->GetString("AnimationNameID", "Anim1");
-
-	m_iBindingPoseFrame = pConfig->GetInt("SkeletonBindingPoseFrameID", 0);
 
 	// Read Animation Settings
 
@@ -99,7 +87,7 @@ void CIntermediateBuilder::SetConfig( CDDObject* pConfig )
 	//	curAnimSetting.m_sAnimName = pCurAnim->GetString("AnimationNameID","NO_NAME");
 	//	curAnimSetting.m_iStartFrame = pCurAnim->GetInt("AnimationStartID",0);
 	//	curAnimSetting.m_iEndFrame = pCurAnim->GetInt("AnimationEndID",100);
-	//	curAnimSetting.m_fSampleRate = pCurAnim->GetFloat("AnimationSampleRateID",(float)GetFrameRate());
+	//	curAnimSetting.m_fSampleRate = pCurAnim->GetFloat("AnimationSampleRateID",1.0);
 	//	curAnimSetting.m_bOptimize = pCurAnim->GetBool("AnimationOptimizeID",true);
 
 
@@ -214,15 +202,6 @@ CMeshArray* CIntermediateBuilder::BuildMeshArray(unsigned int iNodeID, const cha
 	Object* pObj = os.obj;
 	if(!pObj) return NULL;
 
-	// Build object offset transform (so we can export vertices/normals relative to pivot point)
-	Matrix3 objOffsetXform(1);
-	Point3 pos = pNode->GetObjOffsetPos();
-	objOffsetXform.PreTranslate(pos);
-	Quat quat = pNode->GetObjOffsetRot();
-	PreRotateMatrix(objOffsetXform, quat);
-	ScaleValue scaleValue = pNode->GetObjOffsetScale();
-	ApplyScaling(objOffsetXform, scaleValue);
-
 	TriObject* pTri = (TriObject*)pObj->ConvertToType(iTime, Class_ID(TRIOBJ_CLASS_ID, 0));
 	bool bDeleteTri = (pObj != pTri) ? true : false;
 
@@ -260,8 +239,8 @@ CMeshArray* CIntermediateBuilder::BuildMeshArray(unsigned int iNodeID, const cha
 		{
 			Face* face = &pMesh->faces[x];
 			for(unsigned int y = 0; y < 3; y++)
-			{ // transformed by object offset
-				const Point3& v = pMesh->verts[face->v[wind[y]]] * objOffsetXform;
+			{
+				const Point3& v = pMesh->verts[face->v[wind[y]]];
 				(*pArray)[iVIndex++] = Ogre::Vector3(v.x, v.z, -v.y);
 			}
 		}
@@ -282,7 +261,6 @@ CMeshArray* CIntermediateBuilder::BuildMeshArray(unsigned int iNodeID, const cha
 			for(unsigned int y = 0; y < 3; y++)
 			{
 				GetVertexNormal(pMesh, x, pMesh->getRVertPtr(face->v[wind[y]]), vn);
-				vn = (Ogre::Vector3)(*((Point3*)&vn) * objOffsetXform); // transform by object offset
 				(*pArray)[iVIndex++] = Ogre::Vector3(vn.x, vn.z, -vn.y);
 			}
 		}
@@ -348,64 +326,26 @@ CMeshArray* CIntermediateBuilder::BuildMeshArray(unsigned int iNodeID, const cha
 Ogre::SceneNode* CIntermediateBuilder::CreateHierarchy(unsigned int iNodeID, bool bRecursive, bool bHidden)
 {
 	LOGDEBUG "CIntermediate::CreateHierarchy() - Main call..");
-
-	Ogre::SceneNode *pSceneNode = CreateHierarchy(iNodeID, NULL, bRecursive, bHidden);
-
-	// Set the base instance object of each object.
-	// This is so any objects that are instances of the same Max object can all refer to one object as the "base".
-	std::map<unsigned int,CIntermediateObject*>::iterator it;
-	for (it = m_mapIObjects.begin(); it != m_mapIObjects.end(); ++it)
-	{
-		CIntermediateObject *pObject = it->second;
-		std::set<unsigned int> *pIIDs = pObject->GetInstanceIDs();
-		if (pIIDs->size() > 1)
-		{ // choose lowest node ID as base instance
-			unsigned int minID = INT_MAX;
-			std::set<unsigned int>::iterator itID;
-			for (itID = pIIDs->begin(); itID != pIIDs->end(); ++itID)
-				if (*itID < minID) minID = *itID;
-			pObject->SetBaseInstanceObject(GetObjectByNodeID(minID));
-		}
-	}
-
-	return pSceneNode;
+	return CreateHierarchy(iNodeID, NULL, bRecursive, bHidden);
 }
 
 Ogre::SceneNode* CIntermediateBuilder::CreateHierarchy(unsigned int iNodeID, Ogre::SceneNode* pParent, bool bRecursive, bool bHidden)
 {
-	LOGDEBUG "CIntermediate::CreateHierarchy() - recursive call (MaxNode: %i)..", iNodeID);
+	LOGDEBUG "CIntermediate::CreateHierarchy() - recursive call..");
 	INode* pRoot = GetNodeFromID(iNodeID);
-	if(!pRoot)
-	{
-		LOGERROR "No node with such ID: %d", iNodeID);
-		return NULL;
-	}
+	if(!pRoot) return NULL;
+
+	LOGDEBUG "CIntermediate::CreateHierarchy() - Creating Intermediate Mesh");
+
+	CIntermediateMesh* pIMesh = CreateMesh(iNodeID);
+	if(!pIMesh) return NULL;
+
+	m_lIMPool.push_back(pIMesh);
 
 	LOGDEBUG "CIntermediate::CreateHierarchy() - Creating Scenenode");
+
 	Ogre::SceneNode* pSceneNode = new Ogre::SceneNode(NULL, pRoot->GetName());
-	g_OgreMaxLink[pSceneNode] = iNodeID;
-
-	LOGDEBUG "CIntermediate::CreateHierarchy() - Checking for mesh");
-	CIntermediateMesh* pIMesh = CreateMesh(iNodeID);
-	if(pIMesh)
-	{
-		pSceneNode->attachObject(pIMesh);
-		m_mapIObjects[iNodeID] = pIMesh;
-	}
-
-	CIntermediateLight* pILight = CreateLight(iNodeID);
-	if(pILight)
-	{
-		pSceneNode->attachObject(pILight);
-		m_mapIObjects[iNodeID] = pILight;
-	}
-
-	CIntermediateCamera* pICamera = CreateCamera(iNodeID);
-	if (pICamera)
-	{
-		pSceneNode->attachObject(pICamera);
-		m_mapIObjects[iNodeID] = pICamera;
-	}
+	pSceneNode->attachObject(pIMesh);
 
 	//
 	LOGDEBUG "CIntermediate::CreateHierarchy() - Getting transformation");
@@ -451,8 +391,9 @@ Ogre::SceneNode* CIntermediateBuilder::CreateHierarchy(unsigned int iNodeID, Ogr
 	Rotate90DegreesAroundX(pos);
 	pSceneNode->setPosition(Ogre::Vector3(pos.x, pos.y, pos.z));
 
-	// Scale
-	pSceneNode->setScale(Ogre::Vector3(scale.x, scale.z, scale.y));
+	// NOTICE! Double tjeck if we really doesn´t need to transfrom the Scale ?
+	//pSceneNode->setScale(Ogre::Vector3(scale.x, scale.z, scale.y));
+	pSceneNode->setScale(Ogre::Vector3(1, 1, 1));
 
 	//
 	LOGDEBUG "CIntermediate::CreateHierarchy() - Add to parent");
@@ -472,147 +413,8 @@ Ogre::SceneNode* CIntermediateBuilder::CreateHierarchy(unsigned int iNodeID, Ogr
 	return pSceneNode;
 }
 
-//
-
-Ogre::SceneNode* CIntermediateBuilder::CreateNodeHierarchy(unsigned int iNodeID, bool bHidden)
-{
-	g_OgreMaxLink.clear();
-	return CreateNodeHierarchy(iNodeID, NULL, bHidden);
-}
-
-Ogre::SceneNode* CIntermediateBuilder::CreateNodeHierarchy(unsigned int iNodeID, Ogre::SceneNode* pParent, bool bHidden)
-{
-	INode* pRoot = GetNodeFromID(iNodeID);
-	if(!pRoot) return NULL;
-
-	Ogre::SceneNode* pSceneNode = new Ogre::SceneNode(NULL, pRoot->GetName());
-	g_OgreMaxLink[pSceneNode] = iNodeID;
-
-	//
-
-	Matrix3 mTransform = GetTransformFromNode(0, pRoot);
-
-	INode* pRootParent = pRoot->GetParentNode();
-	if(pRootParent)
-	{
-		Matrix3 mParentT = GetTransformFromNode(0, pRootParent);
-		mParentT.Invert();
-		mTransform = mTransform * mParentT;
-	}
-
-	Point3 pos;
-	Point3 scale;
-	Quat quat;
-	DecomposeMatrix(mTransform, pos, quat, scale);
-
-	Ogre::Quaternion oquat;
-	oquat.x = quat.x;
-	oquat.y = quat.z;
-	oquat.z = -quat.y;
-	oquat.w = quat.w;
-	Ogre::Vector3 axis;
-	Ogre::Radian w;
-	oquat.ToAngleAxis(w, axis);
-	oquat.FromAngleAxis(-w, axis);
-
-	pSceneNode->setOrientation(oquat);
-
-	Rotate90DegreesAroundX(pos);
-	pSceneNode->setPosition(Ogre::Vector3(pos.x, pos.y, pos.z));
-
-	pSceneNode->setScale(Ogre::Vector3(scale.x, scale.z, scale.y));
-
-	//
-
-	if(pParent) pParent->addChild(pSceneNode);
-
-	unsigned int iNumSubNodes = pRoot->NumberOfChildren();
-	for(unsigned int x = 0; x < iNumSubNodes; x++)
-	{
-		INode* pSubNode = pRoot->GetChildNode(x);
-		CreateNodeHierarchy(pSubNode->GetHandle(), pSceneNode, bHidden);
-	}
-
-	return pSceneNode;
-}
-
-void CIntermediateBuilder::UpdateNodeHierarchy(TimeValue iTime, Ogre::SceneNode* pSceneNode)
-{
-	unsigned int iNodeID = g_OgreMaxLink[pSceneNode];
-	INode* pRoot = GetNodeFromID(iNodeID);
-
-	Matrix3 mTransform = GetTransformFromNode(iTime, pRoot);
-
-	INode* pRootParent = pRoot->GetParentNode();
-	if(pRootParent)
-	{
-		Matrix3 mParentT = GetTransformFromNode(iTime, pRootParent);
-		mParentT.Invert();
-		mTransform = mTransform * mParentT;
-	}
-
-	Point3 pos;
-	Point3 scale;
-	Quat quat;
-	DecomposeMatrix(mTransform, pos, quat, scale);
-
-	Ogre::Quaternion oquat;
-	oquat.x = quat.x;
-	oquat.y = quat.z;
-	oquat.z = -quat.y;
-	oquat.w = quat.w;
-	Ogre::Vector3 axis;
-	Ogre::Radian w;
-	oquat.ToAngleAxis(w, axis);
-	oquat.FromAngleAxis(-w, axis);
-
-	pSceneNode->setOrientation(oquat);
-	Rotate90DegreesAroundX(pos);
-	pSceneNode->setPosition(Ogre::Vector3(pos.x, pos.y, pos.z));
-	pSceneNode->setScale(Ogre::Vector3(scale.x, scale.z, scale.y));
-
-	//
-
-	for(Ogre::Node::ChildNodeIterator it = pSceneNode->getChildIterator(); it.hasMoreElements(); )
-	{
-		Ogre::SceneNode* pN = (Ogre::SceneNode*)it.getNext();
-		UpdateNodeHierarchy(iTime, pN);
-	}
-}
-
-void CIntermediateBuilder::CleanupNodeHierarchy(Ogre::SceneNode* pNode)
-{
-	std::vector<Ogre::SceneNode*> lDeleteTheseNodes;
-
-	Ogre::Node::ChildNodeIterator it = pNode->getChildIterator();
-	while(it.hasMoreElements())
-	{
-		Ogre::SceneNode* pChild = (Ogre::SceneNode*)it.peekNextValue();
-		CleanupNodeHierarchy(pChild);
-		lDeleteTheseNodes.push_back(pChild);
-		it.moveNext();
-	}
-
-	for(unsigned int x = 0; x < lDeleteTheseNodes.size(); x++)
-	{
-		Ogre::SceneNode* pChild = lDeleteTheseNodes[x];
-		pNode->removeChild(pChild);
-		delete pChild;
-	}
-	lDeleteTheseNodes.clear();
-
-	g_OgreMaxLink.clear();
-}
-
-//
-
 void CIntermediateBuilder::CleanUpHierarchy( Ogre::SceneNode* pNode )
 {
-	if(pNode == NULL)
-	{
-		return;
-	}
-
 	std::vector<Ogre::MovableObject*> lDeleteThese;
 
 	Ogre::SceneNode::ObjectIterator it = pNode->getAttachedObjectIterator();
@@ -643,133 +445,6 @@ void CIntermediateBuilder::CleanUpHierarchy( Ogre::SceneNode* pNode )
 		pNode->removeChild(lDeleteTheseNodes[i]);
 		delete lDeleteTheseNodes[i];
 	}
-
-	m_mapIObjects.clear();
-}
-
-CIntermediateLight *CIntermediateBuilder::CreateLight(unsigned int iNodeID)
-{
-	CIntermediateLight *pILight = NULL;
-
-	LOGDEBUG "Verify Node ID");
-
-	// Verify Node ID
-	INode* pRoot = GetNodeFromID(iNodeID);
-	if(!pRoot) return NULL;
-
-	LOGDEBUG "Get object on node");
-
-	// Retrieve object on node
-	ObjectState os = pRoot->EvalWorldState(0, TRUE);
-	Object* pObj = os.obj;
-	if(!pObj) return NULL;
-
-	LOGDEBUG "Validate");
-
-	// We only use the Light objects
-	if(pObj->ClassID() == Class_ID(TARGET_CLASS_ID, 0)) return NULL;
-	if(pObj->SuperClassID() != LIGHT_CLASS_ID) return NULL;
-
-	LightState ls;
-	((LightObject*)pObj)->EvalLightState(0, Interval(0,0), &ls);
-	if (ls.type == AMBIENT_LGT)
-		return NULL;
-
-	pILight = new CIntermediateLight(iNodeID);
-	SetInstanceIDs(pILight);
-
-	switch(ls.type)
-	{
-		case OMNI_LGT:
-			pILight->SetValue("type", "point");
-			break;
-
-		case SPOT_LGT:
-			pILight->SetValue("type", "spot");
-			break;
-
-		case DIRECT_LGT:
-			pILight->SetValue("type", "directional");
-			break;
-	}
-
-	pILight->SetValue("visible", ls.on != 0);
-
-	pILight->SetValue("castShadows", ls.shadow != 0);
-
-	Ogre::ColourValue col = Ogre::ColourValue(ls.color.r, ls.color.g, ls.color.b) * ls.intens;
-	pILight->SetValue("colourDiffuse", ls.affectDiffuse ? col : Ogre::ColourValue::Black);
-	pILight->SetValue("colourSpecular", ls.affectSpecular ? col : Ogre::ColourValue::Black);
-
-	if (ls.type == SPOT_LGT)
-	{
-		pILight->SetValue("lightRange.inner", Ogre::Math::DegreesToRadians(ls.hotsize));
-		pILight->SetValue("lightRange.outer", Ogre::Math::DegreesToRadians(ls.fallsize));
-		pILight->SetValue("lightRange.falloff", 1.0f);
-	}
-
-	if (ls.type == SPOT_LGT || ls.type == DIRECT_LGT)
-	{ // Max lights look along -z, which is -y in Ogre
-		pILight->SetValue("normal", -Ogre::Vector3::UNIT_Y);
-	}
-
-	INode* pTarget = pRoot->GetTarget();
-	if(pTarget)
-	{
-		pILight->SetValue("trackTarget.nodeName", pTarget->GetName());
-	}
-
-	// TODO: lightAttenuation: range, constant, linear, quadratic
-
-	return pILight;
-}
-
-CIntermediateCamera *CIntermediateBuilder::CreateCamera(unsigned int iNodeID)
-{
-	CIntermediateCamera* pICamera = NULL;
-
-	LOGDEBUG "Verify Node ID");
-
-	// Verify Node ID
-	INode* pRoot = GetNodeFromID(iNodeID);
-	if(!pRoot) return NULL;
-
-	LOGDEBUG "Get object on node");
-
-	// Retrieve object on node
-	ObjectState os = pRoot->EvalWorldState(0, TRUE);
-	Object* pObj = os.obj;
-	if(!pObj) return NULL;
-
-	LOGDEBUG "Validate");
-
-	// We only use the Camera objects
-	if(pObj->ClassID() == Class_ID(TARGET_CLASS_ID, 0)) return NULL;
-	if(pObj->SuperClassID() != CAMERA_CLASS_ID) return NULL;
-
-	CameraState cs;
-	((CameraObject*)pObj)->EvalCameraState(0, Interval(0,0), &cs);
-
-	pICamera = new CIntermediateCamera(iNodeID);
-	SetInstanceIDs(pICamera);
-
-	pICamera->SetValue("fov", cs.fov * 57.295779513f);
-
-	pICamera->SetValue("projectionType", cs.isOrtho ? "orthographic" : "perspective");
-
-	pICamera->SetValue("clipping.near", cs.hither);
-	pICamera->SetValue("clipping.far", cs.yon);
-
-	INode* pTarget = pRoot->GetTarget();
-	if(pTarget)
-	{
-		pICamera->SetValue("trackTarget.nodeName", pTarget->GetName());
-	}
-
-	// to compensate for Ogre cameras looking along a different axis than Max cameras
-	pICamera->SetValue("rotation", Ogre::Quaternion(-Ogre::Radian(Ogre::Math::HALF_PI), Ogre::Vector3::UNIT_X));
-
-	return pICamera;
 }
 
 CIntermediateMesh* CIntermediateBuilder::CreateMesh(unsigned int iNodeID)
@@ -828,29 +503,19 @@ CIntermediateMesh* CIntermediateBuilder::CreateMesh(unsigned int iNodeID)
 	LOGDEBUG "Construct intermediate mesh");
 	unsigned int iNumTriangles = pMesh->getNumFaces();
 	CIntermediateMesh* pIMesh = new CIntermediateMesh(iNumTriangles, iNodeID);
-	SetInstanceIDs(pIMesh);
 
-	pIMesh->SetValue("castShadows", pRoot->CastShadows() ? "true" : "false");
+	LOGDEBUG "Construct intermediate skeletonbuilder");
+	if(m_pSkeletonBuilder == NULL)
+		m_pSkeletonBuilder = new CIntermediateBuilderSkeleton();
 
-	if(m_bExportSkeleton)
-	{
-		LOGDEBUG "Construct intermediate skeletonbuilder");
-		if(m_pSkeletonBuilder == NULL)
-			m_pSkeletonBuilder = new CIntermediateBuilderSkeleton();
+	LOGDEBUG "Build skeleton");
+	m_pSkeletonBuilder->BuildIntermediateSkeleton(pRoot);
 
-		LOGDEBUG "Build skeleton");
-		m_pSkeletonBuilder->BuildIntermediateSkeleton(pRoot);
-
-		LOGDEBUG "Set skeleton");
-		pIMesh->SetSkeleton( m_pSkeletonBuilder->GetSkeleton() );
-	}
+	LOGDEBUG "Set skeleton");
+	pIMesh->SetSkeleton( m_pSkeletonBuilder->GetSkeleton() );
 
 	LOGDEBUG "Iterate triangles");
 	//
-	const Matrix3& tm = pRoot->GetObjTMAfterWSM(0);
-	unsigned int wind[3] = { 0, 1, 2 };
-	if(TMNegParity(tm)) { wind[0] = 2; wind[2] = 0; }
-
 	unsigned int iBoneIndex = 0;
 	unsigned int iVIndex = 0;
 	for(unsigned int x = 0; x < iNumTriangles; x++)
@@ -866,6 +531,10 @@ CIntermediateMesh* CIntermediateBuilder::CreateMesh(unsigned int iNodeID)
 		//	wind[2]=0;
 		//}
 
+		const Matrix3& tm = pRoot->GetObjTMAfterWSM(0);
+		unsigned int wind[3] = { 0, 1, 2 };
+		if(TMNegParity(tm)) { wind[0] = 2; wind[2] = 0; }
+
 		// Create a flat indexing to the verticies.
 
 		CTriangle& tri = pIMesh->GetTriangle(x);
@@ -873,30 +542,15 @@ CIntermediateMesh* CIntermediateBuilder::CreateMesh(unsigned int iNodeID)
 		tri.m_Vertices[wind[1]] = iVIndex++;
 		tri.m_Vertices[wind[2]] = iVIndex++;
 
-		
-
 		Mtl* pMat = maxMtl;
 		if (bMultiMat)
-		{
-			int subCount = maxMtl->NumSubMtls();
-			MtlID matID = pMesh->getFaceMtlIndex(x) %subCount;
-			pMat = maxMtl->GetSubMtl( matID );
-			if(pMat == NULL)
-			{
-				char buf[256];
-				sprintf (buf, "Mesh \"%s\" references submaterial ID %d.  No such submaterial in Material \"%s\".",
-						pRoot->GetName(), matID, maxMtl->GetName());
-				LOGERROR buf);
-				return NULL;
-			}
-		}
+			pMat = maxMtl->GetSubMtl( pMesh->getFaceMtlIndex(x) );
 
 		tri.m_pMaterial = CreateMaterial( pMat );
 
 		// CALL ON_CREATE_INTERMEDIATE_MESH_TRIANGLE_LOOP(pMesh, idx, tri.m_Vertices[wind[j]], x)
 
-		//if(m_pSkeletonBuilder != NULL)
-		if(m_bExportSkeleton)
+		if(m_pSkeletonBuilder != NULL)
 		{
 			for (int j=0; j<3; j++)
 			{
@@ -907,16 +561,12 @@ CIntermediateMesh* CIntermediateBuilder::CreateMesh(unsigned int iNodeID)
 		}
 	}
 
-	if(m_bExportSkeleton)
-	{
-		LOGDEBUG "Finalizing intermediate skeleton");
-		CIntermediateBuilder::Get()->GetSkeletonBuilder()->Finalize();
-	}
+	LOGDEBUG "Finalize");
+	CIntermediateBuilder::Get()->GetSkeletonBuilder()->Finalize();
 
 	LOGDEBUG "CIntermediate::CreateMesh() - Building Material List..");
 
 	pIMesh->BuildMaterialList();
-//	pIMesh->BuildSubmeshIndexMaps();
 
 
 	// CALL ON_CREATE_INTERMEDIATE_MESH_END()
@@ -926,27 +576,6 @@ CIntermediateMesh* CIntermediateBuilder::CreateMesh(unsigned int iNodeID)
 
 	return pIMesh;
 }
-
-// Let this object know of any nodes it shares an instance with
-void CIntermediateBuilder::SetInstanceIDs(CIntermediateObject *pIObject)
-{
-	INode *pNode = GetNodeFromID(pIObject->GetNodeID());
-	if (!pNode) return;
-
-	ObjectState os = pNode->EvalWorldState(0, TRUE);
-	Object* pObj = os.obj;
-	if(!pObj) return;
-
-	INodeTab instances;
-	IInstanceMgr::GetInstanceMgr()->GetInstances(*pNode, instances);
-	for (int i = 0; i < instances.Count(); i++)
-	{
-		os = instances[i]->EvalWorldState(0, TRUE);
-		if (os.obj == pObj)
-			pIObject->AddInstanceID(instances[i]->GetHandle());
-	}
-}
-
 
 void CIntermediateBuilder::Clamp( Point3& inVec, float threshold )
 {
@@ -991,6 +620,8 @@ Ogre::SceneNode* CIntermediateBuilder::CollapseHierarchy(Ogre::SceneNode* pHiera
 
 	//
 	CIntermediateMesh* pMesh = new CIntermediateMesh(iNumTriangles, 0);
+
+	m_lIMPool.push_back( pMesh );
 
 	for(std::list<std::string>::const_iterator it = Arrays.begin(); it != Arrays.end(); it++)
 	{
@@ -1117,9 +748,6 @@ void CIntermediateBuilder::CountTriangles(Ogre::SceneNode* pNode, unsigned int& 
 
 CIntermediateMaterial* CIntermediateBuilder::CreateMaterial( Mtl* pMaxMaterial )
 {
-	if (pMaxMaterial == NULL)
-		return NULL;
-
 	// Tjeck to see if it's a Standard material
 	if (pMaxMaterial->ClassID() != Class_ID(DMTL_CLASS_ID, 0))
 	{
@@ -1150,18 +778,13 @@ CIntermediateMaterial* CIntermediateBuilder::CreateMaterial( Mtl* pMaxMaterial )
 
 		newMat->SetGlosiness( pMaxMaterial->GetShininess() );
 		newMat->SetSpecularLevel( pMaxMaterial->GetShinStr() );
-		//LOGDEBUG "newMat->SetOpacity( 1.0f - pMaxMaterial->GetXParency()");
-		//newMat->SetOpacity( 1.0f - pMaxMaterial->GetXParency() );
 
 		// Check to see if it's a Standard material
 		if (pMaxMaterial->ClassID() == Class_ID(DMTL_CLASS_ID, 0))
 		{
-			
 			StdMat* std = (StdMat *)pMaxMaterial;
 			newMat->Set2Sided( std->GetTwoSided() ? true : false );
 			newMat->SetWired( std->GetWire() ? true : false );
-			//LOGDEBUG "newMat->SetOpacity( std->GetOpacity(0) )");
-			newMat->SetOpacity( std->GetOpacity(0) );
 
 			//if (std->ClassID() == Class_ID(DMTL2_CLASS_ID, 0))
 				newMat->SetFaceted( ((StdMat2 *)std)->IsFaceted() ? true : false );
@@ -1185,12 +808,6 @@ bool CIntermediateBuilder::GetMaterials( std::map<Ogre::String, CIntermediateMat
 
 	materialMap = m_lMaterials;
 	return true;
-}
-
-CIntermediateObject *CIntermediateBuilder::GetObjectByNodeID(unsigned int iNode)
-{
-	std::map<unsigned int, CIntermediateObject*>::iterator it = m_mapIObjects.find(iNode);
-	return (it == m_mapIObjects.end()) ? NULL : it->second;
 }
 
 void CIntermediateBuilder::RegisterMaps( CIntermediateMaterial* pIMat, Mtl* pMaxMaterial ) 

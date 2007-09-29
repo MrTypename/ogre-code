@@ -46,9 +46,9 @@ public:
 		mDebugText = debugText;
     }
 
-    bool frameRenderingQueued(const FrameEvent& evt)
+    bool frameStarted(const FrameEvent& evt)
     {
-	if( ExampleFrameListener::frameRenderingQueued(evt) == false )
+	if( ExampleFrameListener::frameStarted(evt) == false )
 		return false;
 
         for (int i = 0; i < NUM_JAIQUAS; ++i)

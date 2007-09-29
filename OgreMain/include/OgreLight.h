@@ -245,6 +245,11 @@ namespace Ogre {
                 falloff The rate of falloff between the inner and outer cones. 1.0 means a linear falloff, less means slower falloff, higher means faster falloff.
         */
         void setSpotlightRange(const Radian& innerAngle, const Radian& outerAngle, Real falloff = 1.0);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline void setSpotlightRange(Real innerAngle, Real outerAngle, Real falloff = 1.0) {
+            setSpotlightRange ( Angle(innerAngle), Angle(outerAngle), falloff );
+        }
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Returns the angle covered by the spotlights inner cone.
         */
@@ -366,22 +371,6 @@ namespace Ogre {
 		/** return a pointer to the custom shadow camera setup (null means use SceneManager global version). */
 		const ShadowCameraSetupPtr& getCustomShadowCameraSetup(void) const;
 
-		/// @copydoc MovableObject::visitRenderables
-		void visitRenderables(Renderable::Visitor* visitor, 
-			bool debugRenderables = false);
-
-		/** Gets the index at which this light is in the current render. 
-		@remarks
-			Lights will be present in the in a list for every renderable,
-			detected and sorted appropriately, and sometimes it's useful to know 
-			what position in that list a given light occupies. This can vary 
-			from frame to frame (and object to object) so you should not use this
-			value unless you're sure the context is correct.
-		*/
-		size_t _getIndexInFrame() const { return mIndexInFrame; }
-		void _notifyIndexInFrame(size_t i) { mIndexInFrame = i; }
-
-
     protected:
         /// internal method for synchronising with parent node (if any)
         virtual void update(void) const;
@@ -406,7 +395,6 @@ namespace Ogre {
         Real mAttenuationLinear;
         Real mAttenuationQuad;
 		Real mPowerScale;
-		size_t mIndexInFrame;
 
 
         mutable Vector3 mDerivedPosition;

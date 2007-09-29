@@ -399,10 +399,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgreAxisAlignedBox.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\src\OgreBillboard.cpp"
 				>
 			</File>
@@ -883,14 +879,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgreRenderSystemCapabilitiesManager.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreRenderSystemCapabilitiesSerializer.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\src\OgreRenderTarget.cpp"
 				>
 			</File>
@@ -1032,10 +1020,6 @@
 			</File>
 			<File
 				RelativePath="..\src\OgreTagPoint.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\OgreTangentSpaceCalc.cpp"
 				>
 			</File>
 			<File
@@ -1704,14 +1688,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OgreRenderSystemCapabilitiesManager.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreRenderSystemCapabilitiesSerializer.h"
-				>
-			</File>
-			<File
 				RelativePath="..\include\OgreRenderTarget.h"
 				>
 			</File>
@@ -1897,10 +1873,6 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreTagPoint.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreTangentSpaceCalc.h"
 				>
 			</File>
 			<File

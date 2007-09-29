@@ -459,18 +459,38 @@ namespace Ogre {
         /** Rotate the node around the Z-axis.
         */
         virtual void roll(const Radian& angle, TransformSpace relativeTo = TS_LOCAL);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline void roll(Real degrees, TransformSpace relativeTo = TS_LOCAL) {
+			roll ( Angle(degrees), relativeTo );
+		}
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Rotate the node around the X-axis.
         */
         virtual void pitch(const Radian& angle, TransformSpace relativeTo = TS_LOCAL);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline void pitch(Real degrees, TransformSpace relativeTo = TS_LOCAL) {
+			pitch ( Angle(degrees), relativeTo );
+		}
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Rotate the node around the Y-axis.
         */
         virtual void yaw(const Radian& angle, TransformSpace relativeTo = TS_LOCAL);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline void yaw(Real degrees, TransformSpace relativeTo = TS_LOCAL) {
+			yaw ( Angle(degrees), relativeTo );
+		}
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Rotate the node around an arbitrary axis.
         */
         virtual void rotate(const Vector3& axis, const Radian& angle, TransformSpace relativeTo = TS_LOCAL);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline void rotate(const Vector3& axis, Real degrees, TransformSpace relativeTo = TS_LOCAL) {
+			rotate ( axis, Angle(degrees), relativeTo );
+		}
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Rotate the node around an aritrary axis using a Quarternion.
         */
@@ -642,6 +662,10 @@ namespace Ogre {
             models using Entity::setDisplaySkeleton()
         */
         void getWorldTransforms(Matrix4* xform) const;
+        /** @copydoc Renderable::getWorldOrientation */
+        const Quaternion& getWorldOrientation(void) const;
+        /** @copydoc Renderable::getWorldPosition */
+        const Vector3& getWorldPosition(void) const;
 
         /** Sets the current transform of this node to be the 'initial state' ie that
             position / orientation / scale to be used as a basis for delta values used

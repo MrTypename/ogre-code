@@ -76,7 +76,6 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="xcopy /T /Y &quot;$(ProjectDir)\Sources\SharedUtilities.h&quot; &quot;$(OutDir)\..\include\&quot;&#x0D;&#x0A;copy &quot;$(ProjectDir)\Sources\SharedUtilities.h&quot; &quot;$(OutDir)\..\include\&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -138,7 +137,6 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="xcopy /T /Y &quot;$(ProjectDir)\Sources\SharedUtilities.h&quot; &quot;$(OutDir)\..\include\&quot;&#x0D;&#x0A;copy &quot;$(ProjectDir)\Sources\SharedUtilities.h&quot; &quot;$(OutDir)\..\include\&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -374,8 +372,8 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine=""
-						Outputs=""
+						CommandLine="$(SolutionDir)..\Bin\IncMerge $(InputPath) $(SolutionDir)Include\$(InputFileName)"
+						Outputs="$(SolutionDir)Include\$(InputFileName)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -383,8 +381,8 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine=""
-						Outputs=""
+						CommandLine="$(SolutionDir)..\Bin\IncMerge $(InputPath) $(SolutionDir)Include\$(InputFileName)"
+						Outputs="$(SolutionDir)Include\$(InputFileName)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -392,7 +390,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="$(SolutionDir)..\Bin\IncMerge $(InputPath) $(SolutionDir)Include\$(InputFileName)&#x0D;&#x0A;"
+						CommandLine="$(SolutionDir)..\Bin\IncMerge $(InputPath) $(SolutionDir)Include\$(InputFileName)"
 						Outputs="$(SolutionDir)Include\$(InputFileName)"
 					/>
 				</FileConfiguration>

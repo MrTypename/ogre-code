@@ -48,12 +48,14 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
+    const PlaneList Renderable::msDummyPlaneList; // FIX ME: temporary
     static const TexturePtr sNullTexPtr;
 
     //-----------------------------------------------------------------------
     RenderSystem::RenderSystem()
         : mActiveRenderTarget(0)
         , mTextureManager(0)
+        , mCapabilities(0)
         , mActiveViewport(0)
         // This means CULL clockwise vertices, i.e. front of poly is counter-clockwise
         // This makes it the same as OpenGL and other right-handed systems
@@ -63,24 +65,19 @@ namespace Ogre {
         , mInvertVertexWinding(false)
         , mDisabledTexUnitsFrom(0)
         , mCurrentPassIterationCount(0)
-		, mDerivedDepthBias(false)
         , mVertexProgramBound(false)
         , mFragmentProgramBound(false)
-		, mClipPlanesDirty(true)
-		, mRealCapabilities(0)
-		, mCurrentCapabilities(0)
-		, mUseCustomCapabilities(false)
     {
+        // instanciate RenderSystemCapabilities
+        mCapabilities = new RenderSystemCapabilities();
     }
 
     //-----------------------------------------------------------------------
     RenderSystem::~RenderSystem()
     {
         shutdown();
-		delete mRealCapabilities;
-		mRealCapabilities = 0;
-		// Current capabilities managed externally
-		mCurrentCapabilities = 0;
+		delete mCapabilities;
+		mCapabilities = 0;
     }
     //-----------------------------------------------------------------------
     void RenderSystem::_initRenderTargets(void)
@@ -97,7 +94,7 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    void RenderSystem::_updateAllRenderTargets(bool swapBuffers)
+    void RenderSystem::_updateAllRenderTargets(void)
     {
         // Update all in order of priority
         // This ensures render-to-texture targets get updated before render windows
@@ -106,20 +103,7 @@ namespace Ogre {
 		for( itarg = mPrioritisedRenderTargets.begin(); itarg != itargend; ++itarg )
 		{
 			if( itarg->second->isActive() && itarg->second->isAutoUpdated())
-				itarg->second->update(swapBuffers);
-		}
-    }
-    //-----------------------------------------------------------------------
-    void RenderSystem::_swapAllRenderTargetBuffers(bool waitForVSync)
-    {
-        // Update all in order of priority
-        // This ensures render-to-texture targets get updated before render windows
-		RenderTargetPriorityMap::iterator itarg, itargend;
-		itargend = mPrioritisedRenderTargets.end();
-		for( itarg = mPrioritisedRenderTargets.begin(); itarg != itargend; ++itarg )
-		{
-			if( itarg->second->isActive() && itarg->second->isAutoUpdated())
-				itarg->second->swapBuffers(waitForVSync);
+				itarg->second->update();
 		}
     }
     //-----------------------------------------------------------------------
@@ -143,12 +127,6 @@ namespace Ogre {
 
         return 0;
     }
-
-		void RenderSystem::useCustomRenderSystemCapabilities(RenderSystemCapabilities* capabilities)
-		{
-				mCurrentCapabilities = capabilities;
-				mUseCustomCapabilities = true;
-		}
 	//---------------------------------------------------------------------
 	RenderTexture * RenderSystem::createRenderTexture( const String & name, 
 		unsigned int width, unsigned int height,
@@ -246,8 +224,8 @@ namespace Ogre {
 
         const TexturePtr& tex = tl._getTexturePtr();
 		// Vertex texture binding?
-		if (mCurrentCapabilities->hasCapability(RSC_VERTEX_TEXTURE_FETCH) &&
-			!mCurrentCapabilities->getVertexTextureUnitsShared())
+		if (mCapabilities->hasCapability(RSC_VERTEX_TEXTURE_FETCH) && 
+			!mCapabilities->getVertexTextureUnitsShared())
 		{
 			if (tl.getBindingType() == TextureUnitState::BT_VERTEX)
 			{
@@ -380,7 +358,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void RenderSystem::_disableTextureUnitsFrom(size_t texUnit)
     {
-        size_t disableTo = mCurrentCapabilities->getNumTextureUnits();
+        size_t disableTo = mCapabilities->getNumTextureUnits();
         if (disableTo > mDisabledTexUnitsFrom)
             disableTo = mDisabledTexUnitsFrom;
         mDisabledTexUnitsFrom = texUnit;
@@ -497,7 +475,6 @@ namespace Ogre {
         // account for a pass having multiple iterations
         if (mCurrentPassIterationCount > 1)
             val *= mCurrentPassIterationCount;
-		mCurrentPassIterationNum = 0;
 
         switch(op.operationType)
         {
@@ -516,49 +493,17 @@ namespace Ogre {
 
         mVertexCount += op.vertexData->vertexCount;
         mBatchCount += mCurrentPassIterationCount;
-
-		// sort out clip planes
-		// have to do it here in case of matrix issues
-		if (mClipPlanesDirty)
-		{
-			setClipPlanesImpl(mClipPlanes);
-			mClipPlanesDirty = false;
-		}
     }
     //-----------------------------------------------------------------------
     void RenderSystem::setInvertVertexWinding(bool invert)
     {
         mInvertVertexWinding = invert;
     }
-	//---------------------------------------------------------------------
-	void RenderSystem::addClipPlane (const Plane &p)
-	{
-		mClipPlanes.push_back(p);
-		mClipPlanesDirty = true;
-	}
-	//---------------------------------------------------------------------
-	void RenderSystem::addClipPlane (Real A, Real B, Real C, Real D)
-	{
-		addClipPlane(Plane(A, B, C, D));
-	}
-	//---------------------------------------------------------------------
-	void RenderSystem::setClipPlanes(const PlaneList& clipPlanes)
-	{
-		if (clipPlanes != mClipPlanes)
-		{
-			mClipPlanes = clipPlanes;
-			mClipPlanesDirty = true;
-		}
-	}
-	//---------------------------------------------------------------------
-	void RenderSystem::resetClipPlanes()
-	{
-		if (!mClipPlanes.empty())
-		{
-			mClipPlanes.clear();
-			mClipPlanesDirty = true;
-		}
-	}
+    //-----------------------------------------------------------------------
+    void RenderSystem::setClipPlane (ushort index, const Plane &p)
+    {
+        setClipPlane (index, p.normal.x, p.normal.y, p.normal.z, p.d);
+    }
     //-----------------------------------------------------------------------
     void RenderSystem::_notifyCameraRemoved(const Camera* cam)
     {
@@ -578,7 +523,6 @@ namespace Ogre {
             return false;
 
         --mCurrentPassIterationCount;
-		++mCurrentPassIterationNum;
         if (!mActiveVertexGpuProgramParameters.isNull())
         {
             mActiveVertexGpuProgramParameters->incPassIterationNumber();
@@ -628,10 +572,6 @@ namespace Ogre {
 	    switch(prg->getType())
 	    {
         case GPT_VERTEX_PROGRAM:
-			// mark clip planes dirty if changed (programmable can change space)
-			if (!mVertexProgramBound && !mClipPlanes.empty())
-				mClipPlanesDirty = true;
-
             mVertexProgramBound = true;
 	        break;
         case GPT_FRAGMENT_PROGRAM:
@@ -645,9 +585,6 @@ namespace Ogre {
 	    switch(gptype)
 	    {
         case GPT_VERTEX_PROGRAM:
-			// mark clip planes dirty if changed (programmable can change space)
-			if (mVertexProgramBound && !mClipPlanes.empty())
-				mClipPlanesDirty = true;
             mVertexProgramBound = false;
 	        break;
         case GPT_FRAGMENT_PROGRAM:

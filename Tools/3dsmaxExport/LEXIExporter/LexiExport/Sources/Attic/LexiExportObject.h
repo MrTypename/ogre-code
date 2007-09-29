@@ -32,8 +32,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define DECLARE_EXPORT_OBJECT(classname, type, typname, icon) \
 static CExportObject* _construct##classname(CDDObject *pConfig) { return new classname(pConfig); } \
 static bool bDummyExp##classname = CExportObject::RegisterObject(type, typname, icon, _construct##classname); \
-static classname* dummyGetPtrToClassName_##classname() { bool bDummy = bDummyExp##classname; return NULL; } \
-class classname##Helper { public: static const char* Type() { return type; } };
+static classname* dummyGetPtrToClassName_##classname() { bool bDummy = bDummyExp##classname; return NULL; }
 
 //
 class CExporterPropertiesDlg;
@@ -121,8 +120,6 @@ public:
 	// NOTE: Base implementation calls Export() on all children and increments GlobalStep on
 	// supplied Progress Dialog.
 	virtual bool Export(CExportProgressDlg *pProgressDlg, bool bForceAll);
-	virtual void PreExport();
-	virtual void PostExport();
 
 public:
 	//
@@ -150,10 +147,6 @@ public:
 	// Enumerate all registered ExportObjects
 	static void EnumObjects(std::vector<Desc>& objlist);
 
-	// Get config
-	CDDObject* GetConfig() const;
-	void SetConfig(const CDDObject* pConfig);
-
 protected:
 	std::string m_sType;
 	std::string m_sDesc;
@@ -163,8 +156,6 @@ protected:
 
 	CDDObject* m_pDDConfig;	
 	bool	m_bEnabled;
-
-	std::vector<CExportObject*> m_DefaultChildren;
 
 private:
 	CExportObject	*m_pParent;

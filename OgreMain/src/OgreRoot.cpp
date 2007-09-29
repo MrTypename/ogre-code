@@ -41,7 +41,6 @@ Torus Knot Software Ltd.
 #include "OgreDynLib.h"
 #include "OgreConfigFile.h"
 #include "OgreMaterialManager.h"
-#include "OgreRenderSystemCapabilitiesManager.h"
 #include "OgreMeshManager.h"
 #include "OgreTextureManager.h"
 #include "OgreParticleSystemManager.h"
@@ -108,12 +107,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     Root::Root(const String& pluginFileName, const String& configFileName, 
 		const String& logFileName)
-      : mLogManager(0)
-	  , mRenderSystemCapabilitiesManager(0)
-	  , mNextFrame(0)
-	  , mFrameSmoothingTime(0.0f)
-	  , mNextMovableObjectTypeFlag(1)
-	  , mIsInitialised(false)
+      : mLogManager(0), mCurrentFrame(0), mFrameSmoothingTime(0.0f),
+	  mNextMovableObjectTypeFlag(1), mIsInitialised(false)
     {
         // superclass will do singleton checking
         String msg;
@@ -150,8 +145,6 @@ namespace Ogre {
         mCurrentSceneManager = NULL;
 
 		mShadowTextureManager = new ShadowTextureManager();
-
-		mRenderSystemCapabilitiesManager = new RenderSystemCapabilitiesManager();
 
         // ..material manager
         mMaterialManager = new MaterialManager();
@@ -246,7 +239,6 @@ namespace Ogre {
         shutdown();
         delete mSceneManagerEnum;
 		delete mShadowTextureManager;
-		delete mRenderSystemCapabilitiesManager;
 
 		destroyAllRenderQueueInvocationSequences();
         delete mCompositorManager;
@@ -492,7 +484,7 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    RenderWindow* Root::initialise(bool autoCreateWindow, const String& windowTitle, const String& customCapabilitiesConfig)
+    RenderWindow* Root::initialise(bool autoCreateWindow, const String& windowTitle)
     {
         if (!mActiveRenderer)
             OGRE_EXCEPT(Exception::ERR_INVALID_STATE,
@@ -501,40 +493,6 @@ namespace Ogre {
 
         if (!mControllerManager)
 			mControllerManager = new ControllerManager();
-
-        // .rendercaps manager
-        RenderSystemCapabilitiesManager& rscManager = RenderSystemCapabilitiesManager::getSingleton();
-        // caller wants to load custom RenderSystemCapabilities form a config file
-        if(customCapabilitiesConfig != StringUtil::BLANK)
-        {
-            ConfigFile cfg;
-            cfg.load(customCapabilitiesConfig, "\t:=", false);
-
-            // Capabilities Database setting must be in the same format as
-            // resources.cfg in Ogre examples.
-            ConfigFile::SettingsIterator iter = cfg.getSettingsIterator("Capabilities Database");
-            while(iter.hasMoreElements())
-            {
-                String archType = iter.peekNextKey();
-                String filename = iter.getNext();
-
-                rscManager.parseCapabilitiesFromArchive(filename, archType, true);
-            }
-
-            String capsName = cfg.getSetting("Custom Capabilities");
-            // The custom capabilities have been parsed, let's retrieve them
-            RenderSystemCapabilities* rsc = rscManager.loadParsedCapabilities(capsName);
-			if(rsc == 0)
-			{
-				OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND,
-					String("Cannot load a RenderSystemCapability named ") + capsName,
-					"Root::initialise");
-			}
-
-            // Tell RenderSystem to use the comon rsc
-            useCustomRenderSystemCapabilities(rsc);
-        }
-
 
 		PlatformInformation::log(LogManager::getSingleton().getDefaultLog());
 		mAutoWindow =  mActiveRenderer->initialise(autoCreateWindow, windowTitle);
@@ -556,11 +514,6 @@ namespace Ogre {
 
         return mAutoWindow;
 
-    }
-    //-----------------------------------------------------------------------
-    void Root::useCustomRenderSystemCapabilities(RenderSystemCapabilities* capabilities)
-    {
-        mActiveRenderer->useCustomRenderSystemCapabilities(capabilities);
     }
     //-----------------------------------------------------------------------
     String Root::getErrorDescription(long errorNumber)
@@ -654,6 +607,9 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     bool Root::_fireFrameStarted(FrameEvent& evt)
     {
+        // Increment frame number
+        ++mCurrentFrame;
+
         // Remove all marked listeners
         std::set<FrameListener*>::iterator i;
         for (i = mRemovedFrameListeners.begin();
@@ -667,31 +623,6 @@ namespace Ogre {
         for (i= mFrameListeners.begin(); i != mFrameListeners.end(); ++i)
         {
             if (!(*i)->frameStarted(evt))
-                return false;
-        }
-
-        return true;
-
-    }
-	//-----------------------------------------------------------------------
-    bool Root::_fireFrameRenderingQueued(FrameEvent& evt)
-    {
-		// Increment next frame number
-		++mNextFrame;
-
-        // Remove all marked listeners
-        std::set<FrameListener*>::iterator i;
-        for (i = mRemovedFrameListeners.begin();
-            i != mRemovedFrameListeners.end(); i++)
-        {
-            mFrameListeners.erase(*i);
-        }
-        mRemovedFrameListeners.clear();
-
-        // Tell all listeners
-        for (i= mFrameListeners.begin(); i != mFrameListeners.end(); ++i)
-        {
-            if (!(*i)->frameRenderingQueued(evt))
                 return false;
         }
 
@@ -739,16 +670,6 @@ namespace Ogre {
         evt.timeSinceLastFrame = calculateEventTime(now, FETT_STARTED);
 
         return _fireFrameStarted(evt);
-    }
-    //-----------------------------------------------------------------------
-    bool Root::_fireFrameRenderingQueued()
-    {
-        unsigned long now = mTimer->getMilliseconds();
-        FrameEvent evt;
-        evt.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
-        evt.timeSinceLastFrame = calculateEventTime(now, FETT_QUEUED);
-
-        return _fireFrameRenderingQueued(evt);
     }
     //-----------------------------------------------------------------------
     bool Root::_fireFrameEnded()
@@ -805,7 +726,8 @@ namespace Ogre {
         mActiveRenderer->_initRenderTargets();
 
         // Clear event times
-		clearEventTimes();
+        for(int i=0; i!=3; ++i)
+            mEventTimes[i].clear();
 
         // Infinite loop, until broken out of by frame listeners
         // or break out by calling queueEndRendering()
@@ -826,8 +748,7 @@ namespace Ogre {
         if(!_fireFrameStarted())
             return false;
 
-		if (!_updateAllRenderTargets())
-			return false;
+        _updateAllRenderTargets();
 
         return _fireFrameEnded();
     }
@@ -1108,22 +1029,16 @@ namespace Ogre {
 
     }
     //-----------------------------------------------------------------------
-    bool Root::_updateAllRenderTargets(void)
+    void Root::_updateAllRenderTargets(void)
     {
-        // update all targets but don't swap buffers
-        mActiveRenderer->_updateAllRenderTargets(false);
-		// give client app opportunity to use queued GPU time
-		bool ret = _fireFrameRenderingQueued();
-		// block for final swap
-		mActiveRenderer->_swapAllRenderTargetBuffers(mActiveRenderer->getWaitForVerticalBlank());
-		
-		return ret;
-	}
+        // delegate
+        mActiveRenderer->_updateAllRenderTargets();
+    }
 	//-----------------------------------------------------------------------
 	void Root::clearEventTimes(void)
 	{
 		// Clear event times
-		for(int i=0; i<FETT_COUNT; ++i)
+		for(int i=0; i<3; ++i)
 			mEventTimes[i].clear();
 	}
 	//---------------------------------------------------------------------

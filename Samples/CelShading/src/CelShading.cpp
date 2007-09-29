@@ -33,9 +33,9 @@ public:
     {
     }
 
-    bool frameRenderingQueued(const FrameEvent& evt)
+    bool frameStarted(const FrameEvent& evt)
     {
-	if( ExampleFrameListener::frameRenderingQueued(evt) == false )
+	if( ExampleFrameListener::frameStarted(evt) == false )
 		return false;
 
         rotNode->yaw(Degree(evt.timeSinceLastFrame * 30));
@@ -74,7 +74,7 @@ protected:
 		const RenderSystemCapabilities* caps = Root::getSingleton().getRenderSystem()->getCapabilities();
         if (!caps->hasCapability(RSC_VERTEX_PROGRAM) || !(caps->hasCapability(RSC_FRAGMENT_PROGRAM)))
         {
-			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support vertex and fragment programs (or you selected D3D7), so cannot "
+			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support vertex and fragment programs, so cannot "
                 "run this demo. Sorry!", 
                 "CelShading::createScene");
         }

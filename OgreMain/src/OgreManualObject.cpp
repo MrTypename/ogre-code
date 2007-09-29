@@ -355,30 +355,6 @@ namespace Ogre {
 		++mTexCoordIndex;
 	}
 	//-----------------------------------------------------------------------------
-	void ManualObject::textureCoord(Real x, Real y, Real z, Real w)
-	{
-		if (!mCurrentSection)
-		{
-			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS,
-				"You must call begin() before this method",
-				"ManualObject::textureCoord");
-		}
-		if (mFirstVertex && !mCurrentUpdating)
-		{
-			// defining declaration
-			mCurrentSection->getRenderOperation()->vertexData->vertexDeclaration
-				->addElement(0, mDeclSize, VET_FLOAT4, VES_TEXTURE_COORDINATES, mTexCoordIndex);
-			mDeclSize += VertexElement::getTypeSize(VET_FLOAT4);
-		}
-		mTempVertex.texCoordDims[mTexCoordIndex] = 4;
-		mTempVertex.texCoord[mTexCoordIndex].x = x;
-		mTempVertex.texCoord[mTexCoordIndex].y = y;
-		mTempVertex.texCoord[mTexCoordIndex].z = z;
-		mTempVertex.texCoord[mTexCoordIndex].w = w;
-
-		++mTexCoordIndex;
-	}
-	//-----------------------------------------------------------------------------
 	void ManualObject::textureCoord(const Vector2& uv)
 	{
 		textureCoord(uv.x, uv.y);
@@ -387,11 +363,6 @@ namespace Ogre {
 	void ManualObject::textureCoord(const Vector3& uvw)
 	{
 		textureCoord(uvw.x, uvw.y, uvw.z);
-	}
-	//---------------------------------------------------------------------
-	void ManualObject::textureCoord(const Vector4& xyzw)
-	{
-		textureCoord(xyzw.x, xyzw.y, xyzw.z, xyzw.w);
 	}
 	//-----------------------------------------------------------------------------
 	void ManualObject::colour(const ColourValue& col)
@@ -807,16 +778,6 @@ namespace Ogre {
 		}
 	}
 	//-----------------------------------------------------------------------------
-	void ManualObject::visitRenderables(Renderable::Visitor* visitor, 
-		bool debugRenderables)
-	{
-		for (SectionList::iterator i = mSectionList.begin(); i != mSectionList.end(); ++i)
-		{
-			visitor->visit(*i, 0, false);
-		}
-
-	}
-	//-----------------------------------------------------------------------------
 	EdgeData* ManualObject::getEdgeList(void)
 	{
 		// Build on demand
@@ -905,7 +866,7 @@ namespace Ogre {
 				MaterialPtr mat = (*seci)->getMaterial();
 				mat->load();
 				bool vertexProgram = false;
-				Technique* t = mat->getBestTechnique(0, *seci);
+				Technique* t = mat->getBestTechnique();
 				for (int p = 0; p < t->getNumPasses(); ++p)
 				{
 					Pass* pass = t->getPass(p);
@@ -1004,6 +965,16 @@ namespace Ogre {
 		xform[0] = mParent->_getParentNodeFullTransform();
 	}
 	//-----------------------------------------------------------------------------
+	const Quaternion& ManualObject::ManualObjectSection::getWorldOrientation(void) const
+	{
+		return mParent->getParentNode()->_getDerivedOrientation();
+	}
+	//-----------------------------------------------------------------------------
+	const Vector3& ManualObject::ManualObjectSection::getWorldPosition(void) const
+	{
+		return mParent->getParentNode()->_getDerivedPosition();
+	}
+	//-----------------------------------------------------------------------------
 	Real ManualObject::ManualObjectSection::getSquaredViewDepth(const Ogre::Camera *cam) const
 	{
 		Node* n = mParent->getParentNode();
@@ -1078,6 +1049,18 @@ namespace Ogre {
 	{
 		// pretransformed
 		*xform = mParent->_getParentNodeFullTransform();
+	}
+	//--------------------------------------------------------------------------
+	const Quaternion&
+		ManualObject::ManualObjectSectionShadowRenderable::getWorldOrientation(void) const
+	{
+		return mParent->getParentNode()->_getDerivedOrientation();
+	}
+	//--------------------------------------------------------------------------
+	const Vector3&
+		ManualObject::ManualObjectSectionShadowRenderable::getWorldPosition(void) const
+	{
+		return mParent->getParentNode()->_getDerivedPosition();
 	}
 	//-----------------------------------------------------------------------------
 	//-----------------------------------------------------------------------------

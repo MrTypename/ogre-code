@@ -93,9 +93,9 @@ public:
 		mode = (DeferredShadingSystem::DSMode)1;
 	}
 
-	bool frameRenderingQueued(const FrameEvent& evt)
+	bool frameStarted(const FrameEvent& evt)
 	{
-		if( ExampleFrameListener::frameRenderingQueued(evt) == false )
+		if( ExampleFrameListener::frameStarted(evt) == false )
 			return false;
 
 		SharedData::getSingleton().iLastFrameTime = evt.timeSinceLastFrame;
@@ -235,11 +235,11 @@ protected:
 		const RenderSystemCapabilities* caps = rs->getCapabilities();
         if (!caps->hasCapability(RSC_VERTEX_PROGRAM) || !(caps->hasCapability(RSC_FRAGMENT_PROGRAM)))
         {
-            OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support vertex and fragment programs (or you selected D3D7), so cannot "
+            OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support vertex and fragment programs, so cannot "
                 "run this demo. Sorry!", 
                 "DeferredShading::createScene");
         }
-		if (caps->getNumMultiRenderTargets()<2)
+		if (caps->numMultiRenderTargets()<2)
         {
             OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support at least two simulataneous render targets, so cannot "
                 "run this demo. Sorry!", 

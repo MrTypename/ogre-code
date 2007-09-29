@@ -121,11 +121,11 @@ public:
 			->setCaption("[5/6]theta: "+StringConverter::toString(global_theta));
 	}
 
-    bool frameRenderingQueued( const FrameEvent& evt )
+    bool frameStarted( const FrameEvent& evt )
     {
 	using namespace OIS;
 	static float mTimeUntilNextToggle = 0.0f;
-        if( ExampleFrameListener::frameRenderingQueued( evt ) == false )
+        if( ExampleFrameListener::frameStarted( evt ) == false )
 		return false;
 		
 		mTimeUntilNextToggle -= evt.timeSinceLastFrame;
@@ -212,7 +212,7 @@ protected:
 		const RenderSystemCapabilities* caps = Root::getSingleton().getRenderSystem()->getCapabilities();
         if (!caps->hasCapability(RSC_TEXTURE_3D))
         {
-            OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support 3D textures (or you selected D3D7), so cannot "
+            OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support 3D textures, so cannot "
                 "run this demo. Sorry!", 
                 "VolTex::createScene");
         }

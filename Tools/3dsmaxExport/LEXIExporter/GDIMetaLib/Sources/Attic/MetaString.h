@@ -51,10 +51,6 @@ private:
 	void	SetEnabled(bool bEnabled);
 
 	Edit	*m_pEditCtrl;
-
-	Button*	m_pBrowseButton;
-	unsigned int m_iBrowseButtonType;
-
 };
 
 }

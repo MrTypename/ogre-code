@@ -27,10 +27,9 @@ http://www.gnu.org/copyleft/lesser.txt.
 #ifndef __NDS_LexiExporter_IntermediateMesh__
 #define __NDS_LexiExporter_IntermediateMesh__
 
-#include "LexiIntermediateObject.h"
 //
 
-class CIntermediateMesh : public Ogre::MovableObject, public CIntermediateObject {
+class CIntermediateMesh : public Ogre::MovableObject {
 
 	friend class CIntermediateBuilder;
 
@@ -64,8 +63,6 @@ class CIntermediateMesh : public Ogre::MovableObject, public CIntermediateObject
 	private:
 
 		void BuildMaterialList();
-//		void BuildSubmeshIndexMaps( void );
-		std::map< CIntermediateMaterial*, std::map< unsigned int, unsigned int> > m_lSubmeshIndexMap;
 
 		unsigned int m_iNumTriangles;
 		CTriangleArray m_Triangles;
@@ -86,7 +83,7 @@ class CIntermediateMesh : public Ogre::MovableObject, public CIntermediateObject
 
 	protected:
 
-//		unsigned int m_iNodeID;
+		unsigned int m_iNodeID;
 		bool	m_bIsCollapsed;
 
 		//
@@ -165,14 +162,6 @@ class CIntermediateMesh : public Ogre::MovableObject, public CIntermediateObject
 
 		void Reindex(const fastvector<CMeshArray*>& ArrayList);
 		void PostReindex(const fastvector<CMeshArray*>& ArrayList);
-		unsigned int GetReindexedIndex( unsigned int iOldIndex );
-
-		//// Submesh helper Maps
-		//unsigned int GetSubmeshMappedIndex( CIntermediateMaterial* pMat, unsigned int oldIndex );
-		//unsigned int GetSubmeshMappedIndexCount( CIntermediateMaterial* pMat );
-		//bool GetSubmeshMappedIndexMap( CIntermediateMaterial* pMat, std::map< unsigned int, unsigned int>& returnMap );
-		//unsigned int GetSubmeshMappedUniqueIndexCount( CIntermediateMaterial* pMat );
-
 
 };
 

@@ -22,8 +22,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GDITestApp", "GDITestApp\GD
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "LexiExportInstall", "LexiExportInstall\LexiExportInstall.vdproj", "{769972B1-78C8-4903-A499-2B0AF63E6B94}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LexiExportProxy", "LexiExportProxy\LEXIExportProxy.vcproj", "{088726F7-F64F-4C9F-A669-D2222CD4640A}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -75,16 +73,6 @@ Global
 		{769972B1-78C8-4903-A499-2B0AF63E6B94}.GDI DLL Release|Win32.ActiveCfg = Distribution
 		{769972B1-78C8-4903-A499-2B0AF63E6B94}.GDI Test|Win32.ActiveCfg = Release
 		{769972B1-78C8-4903-A499-2B0AF63E6B94}.Release|Win32.ActiveCfg = Release
-		{088726F7-F64F-4C9F-A669-D2222CD4640A}.Debug|Win32.ActiveCfg = Debug|Win32
-		{088726F7-F64F-4C9F-A669-D2222CD4640A}.Debug|Win32.Build.0 = Debug|Win32
-		{088726F7-F64F-4C9F-A669-D2222CD4640A}.Distribution|Win32.ActiveCfg = Release|Win32
-		{088726F7-F64F-4C9F-A669-D2222CD4640A}.Distribution|Win32.Build.0 = Release|Win32
-		{088726F7-F64F-4C9F-A669-D2222CD4640A}.GDI DLL Release|Win32.ActiveCfg = GDI DLL Release|Win32
-		{088726F7-F64F-4C9F-A669-D2222CD4640A}.GDI DLL Release|Win32.Build.0 = GDI DLL Release|Win32
-		{088726F7-F64F-4C9F-A669-D2222CD4640A}.GDI Test|Win32.ActiveCfg = GDI DLL Release|Win32
-		{088726F7-F64F-4C9F-A669-D2222CD4640A}.GDI Test|Win32.Build.0 = GDI DLL Release|Win32
-		{088726F7-F64F-4C9F-A669-D2222CD4640A}.Release|Win32.ActiveCfg = Release|Win32
-		{088726F7-F64F-4C9F-A669-D2222CD4640A}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

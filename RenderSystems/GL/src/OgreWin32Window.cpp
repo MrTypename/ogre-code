@@ -37,7 +37,6 @@ Torus Knot Software Ltd.
 #include "OgreWin32GLSupport.h"
 #include "OgreWin32Context.h"
 #include "OgreWindowEventUtilities.h"
-#include "OgreGLPixelFormat.h"
 
 namespace Ogre {
 
@@ -229,10 +228,11 @@ namespace Ogre {
 
 			WindowEventUtilities::_addRenderWindow(this);
 
-			LogManager::getSingleton().stream()
-				<< "Created Win32Window '"
+			StringUtil::StrStreamType str;
+			str << "Created Win32Window '"
 				<< mName << "' : " << mWidth << "x" << mHeight
 				<< ", " << mColourDepth << "bpp";
+			LogManager::getSingleton().logMessage(LML_NORMAL, str.str());
 
 			if (mIsFullScreen)
 			{
@@ -500,32 +500,16 @@ namespace Ogre {
 	  }
 	}
 
-	void Win32Window::copyContentsToMemory(const PixelBox &dst, FrameBuffer buffer)
+	void Win32Window::writeContentsToFile(const String& filename)
 	{
-		if ((dst.left < 0) || (dst.right > mWidth) ||
-			(dst.top < 0) || (dst.bottom > mHeight) ||
-			(dst.front != 0) || (dst.back != 1))
-		{
-			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS,
-						"Invalid box.",
-						"Win32Window::copyContentsToMemory" );
-		}
+		ImageCodec::ImageData *imgData = new ImageCodec::ImageData();
+		imgData->width = mWidth;
+		imgData->height = mHeight;
+		imgData->depth = 1;
+		imgData->format = PF_BYTE_RGB;
 
-		if (buffer == FB_AUTO)
-		{
-			buffer = mIsFullScreen? FB_FRONT : FB_BACK;
-		}
-
-		GLenum format = Ogre::GLPixelUtil::getGLOriginFormat(dst.format);
-		GLenum type = Ogre::GLPixelUtil::getGLOriginDataType(dst.format);
-
-		if ((format == GL_NONE) || (type == 0))
-		{
-			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS,
-						"Unsupported format.",
-						"Win32Window::copyContentsToMemory" );
-		}
-
+		// Allocate buffer 
+		uchar* pBuffer = new uchar[mWidth * mHeight * 3];
 
 		// Switch context if different from current one
 		RenderSystem* rsys = Root::getSingleton().getRenderSystem();
@@ -534,31 +518,45 @@ namespace Ogre {
 		// Must change the packing to ensure no overruns!
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-		glReadBuffer((buffer == FB_FRONT)? GL_FRONT : GL_BACK);
-		glReadPixels((GLint)dst.left, (GLint)dst.top,
-					 (GLsizei)dst.getWidth(), (GLsizei)dst.getHeight(),
-					 format, type, dst.data);
+		// Read pixels
+		// I love GL: it does all the locking & colour conversion for us
+		if (mIsFullScreen)
+			glReadBuffer(GL_FRONT);
+		glReadPixels(0,0, mWidth, mHeight, GL_RGB, GL_UNSIGNED_BYTE, pBuffer);
 
 		// restore default alignment
 		glPixelStorei(GL_PACK_ALIGNMENT, 4);
 
-		//vertical flip
-		{
-			size_t rowSpan = dst.getWidth() * PixelUtil::getNumElemBytes(dst.format);
-			size_t height = dst.getHeight();
-			uchar *tmpData = new uchar[rowSpan * height];
-			uchar *srcRow = (uchar *)dst.data, *tmpRow = tmpData + (height - 1) * rowSpan;
+		// Wrap buffer in a memory stream
+		DataStreamPtr stream(new MemoryDataStream(pBuffer, mWidth * mHeight * 3, false));
 
-			while (tmpRow >= tmpData)
-			{
-				memcpy(tmpRow, srcRow, rowSpan);
-				srcRow += rowSpan;
-				tmpRow -= rowSpan;
-			}
-			memcpy(dst.data, tmpData, rowSpan * height);
+		// Need to flip the read data over in Y though
+		Image img;
+		img.loadRawData(stream, mWidth, mHeight, imgData->format );
+		img.flipAroundX();
 
-			delete [] tmpData;
-		}
+		MemoryDataStreamPtr streamFlipped(new MemoryDataStream(img.getData(), stream->size(), false));
+
+		// Get codec 
+		size_t pos = filename.find_last_of(".");
+		String extension;
+		if( pos == String::npos )
+			OGRE_EXCEPT(
+			Exception::ERR_INVALIDPARAMS, 
+			"Unable to determine image type for '" + filename + "' - invalid extension.",
+			"Win32Window::writeContentsToFile" );
+
+		while( pos != filename.length() - 1 )
+			extension += filename[++pos];
+
+		// Get the codec
+		Codec * pCodec = Codec::getCodec(extension);
+
+		// Write out
+		Codec::CodecDataPtr ptr(imgData);
+		pCodec->codeToFile(streamFlipped, filename, ptr);
+
+		delete [] pBuffer;
 	}
 
 	void Win32Window::getCustomAttribute( const String& name, void* pData )

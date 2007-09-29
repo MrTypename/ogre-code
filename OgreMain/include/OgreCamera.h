@@ -43,7 +43,6 @@ Torus Knot Software Ltd.
 #include "OgreCommon.h"
 #include "OgreFrustum.h"
 #include "OgreRay.h"
-#include "OgrePlaneBoundedVolume.h"
 
 
 namespace Ogre {
@@ -273,18 +272,30 @@ namespace Ogre {
         /** Rolls the camera anticlockwise, around its local z axis.
         */
         void roll(const Radian& angle);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        void roll(Real degrees) { roll ( Angle(degrees) ); }
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Rotates the camera anticlockwise around it's local y axis.
         */
         void yaw(const Radian& angle);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        void yaw(Real degrees) { yaw ( Angle(degrees) ); }
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Pitches the camera up/down anticlockwise around it's local z axis.
         */
         void pitch(const Radian& angle);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        void pitch(Real degrees) { pitch ( Angle(degrees) ); }
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Rotate the camera around an arbitrary axis.
         */
         void rotate(const Vector3& axis, const Radian& angle);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        void rotate(const Vector3& axis, Real degrees) { rotate ( axis, Angle(degrees) ); }
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Rotate the camera around an aritrary axis using a Quarternion.
         */
@@ -434,36 +445,6 @@ namespace Ogre {
             in normalised screen coordinates [0,1]
         */
         Ray getCameraToViewportRay(Real screenx, Real screeny) const;
-        /** Gets a world space ray as cast from the camera through a viewport position.
-        @param screenx, screeny The x and y position at which the ray should intersect the viewport, 
-            in normalised screen coordinates [0,1]
-		@param outRay Ray instance to populate with result
-        */
-        void getCameraToViewportRay(Real screenx, Real screeny, Ray* outRay) const;
-
-		/** Gets a world-space list of planes enclosing a volume based on a viewport
-			rectangle. 
-		@remarks
-			Can be useful for populating a PlaneBoundedVolumeListSceneQuery, e.g. 
-			for a rubber-band selection. 
-		@param screenLeft, screenTop, screenRight, screenBottom The bounds of the
-			on-screen rectangle, expressed in normalised screen coordinates [0,1]
-		*/
-		PlaneBoundedVolume getCameraToViewportBoxVolume(Real screenLeft, 
-			Real screenTop, Real screenRight, Real screenBottom);
-
-		/** Gets a world-space list of planes enclosing a volume based on a viewport
-			rectangle. 
-		@remarks
-			Can be useful for populating a PlaneBoundedVolumeListSceneQuery, e.g. 
-			for a rubber-band selection. 
-		@param screenLeft, screenTop, screenRight, screenBottom The bounds of the
-			on-screen rectangle, expressed in normalised screen coordinates [0,1]
-		@param outVolume The plane list to populate with the result
-		*/
-		void getCameraToViewportBoxVolume(Real screenLeft, 
-			Real screenTop, Real screenRight, Real screenBottom, 
-			PlaneBoundedVolume* outVolume);
 
 		/** Internal method for OGRE to use for LOD calculations. */
 		Real _getLodBiasInverse(void) const;

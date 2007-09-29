@@ -123,15 +123,11 @@ namespace Ogre {
 		, mTracking(TVC_NONE)
 		, mSourceBlendFactor(SBF_ONE)
 		, mDestBlendFactor(SBF_ZERO)
-		, mSourceBlendFactorAlpha(SBF_ONE)
-		, mDestBlendFactorAlpha(SBF_ZERO)
-		, mSeparateBlend(false)
 		, mDepthCheck(true)
 		, mDepthWrite(true)
 		, mDepthFunc(CMPF_LESS_EQUAL)
 		, mDepthBiasConstant(0.0f)
 		, mDepthBiasSlopeScale(0.0f)
-		, mDepthBiasPerIteration(0.0f)
 		, mColourWrite(true)
 		, mAlphaRejectFunc(CMPF_ALWAYS_PASS)
 		, mAlphaRejectVal(0)
@@ -146,8 +142,6 @@ namespace Ogre {
 		, mOnlyLightType(Light::LT_POINT)
 		, mShadeOptions(SO_GOURAUD)
 		, mPolygonMode(PM_SOLID)
-		, mNormaliseNormals(false)
-		, mPolygonModeOverrideable(true)
 		, mFogOverride(false)
 		, mFogMode(FOG_NONE)
 		, mFogColour(ColourValue::White)
@@ -167,9 +161,6 @@ namespace Ogre {
 		, mPointSpritesEnabled(false)
 		, mPointAttenuationEnabled(false)
 		, mContentTypeLookupBuilt(false)
-		, mLightScissoring(false)
-		, mLightClipPlanes(false)
-		, mIlluminationStage(IS_UNKNOWN)
     {
 		mPointAttenuationCoeffs[0] = 1.0f;
 		mPointAttenuationCoeffs[1] = mPointAttenuationCoeffs[2] = 0.0f;
@@ -218,9 +209,6 @@ namespace Ogre {
 	    // Default blending (overwrite)
 	    mSourceBlendFactor = oth.mSourceBlendFactor;
 	    mDestBlendFactor = oth.mDestBlendFactor;
-		mSourceBlendFactorAlpha = oth.mSourceBlendFactorAlpha;
-		mDestBlendFactorAlpha = oth.mDestBlendFactorAlpha;
-		mSeparateBlend = oth.mSeparateBlend;
 
 	    mDepthCheck = oth.mDepthCheck;
 	    mDepthWrite = oth.mDepthWrite;
@@ -230,7 +218,6 @@ namespace Ogre {
 	    mDepthFunc = oth.mDepthFunc;
         mDepthBiasConstant = oth.mDepthBiasConstant;
 		mDepthBiasSlopeScale = oth.mDepthBiasSlopeScale;
-		mDepthBiasPerIteration = oth.mDepthBiasPerIteration;
 	    mCullMode = oth.mCullMode;
 	    mManualCullMode = oth.mManualCullMode;
 	    mLightingEnabled = oth.mLightingEnabled;
@@ -239,11 +226,9 @@ namespace Ogre {
 		mIteratePerLight = oth.mIteratePerLight;
 		mLightsPerIteration = oth.mLightsPerIteration;
         mRunOnlyForOneLightType = oth.mRunOnlyForOneLightType;
-		mNormaliseNormals = oth.mNormaliseNormals;
         mOnlyLightType = oth.mOnlyLightType;
 	    mShadeOptions = oth.mShadeOptions;
 		mPolygonMode = oth.mPolygonMode;
-		mPolygonModeOverrideable = oth.mPolygonModeOverrideable;
         mPassIterationCount = oth.mPassIterationCount;
 		mPointSize = oth.mPointSize;
 		mPointMinSize = oth.mPointMinSize;
@@ -253,9 +238,6 @@ namespace Ogre {
 		memcpy(mPointAttenuationCoeffs, oth.mPointAttenuationCoeffs, sizeof(Real)*3);
 		mShadowContentTypeLookup = oth.mShadowContentTypeLookup;
 		mContentTypeLookupBuilt = oth.mContentTypeLookupBuilt;
-		mLightScissoring = oth.mLightScissoring;
-		mLightClipPlanes = oth.mLightClipPlanes;
-		mIlluminationStage = oth.mIlluminationStage;
 
 
 		if (oth.mVertexProgramUsage)
@@ -666,87 +648,37 @@ namespace Ogre {
         _dirtyHash();
 		mContentTypeLookupBuilt = false;
     }
-	//-----------------------------------------------------------------------
-	void Pass::_getBlendFlags(SceneBlendType type, SceneBlendFactor& source, SceneBlendFactor& dest)
-	{
-		switch ( type )
-		{
-	    case SBT_TRANSPARENT_ALPHA:
-		    source = SBF_SOURCE_ALPHA;
-			dest = SBF_ONE_MINUS_SOURCE_ALPHA;
-		    return;
-	    case SBT_TRANSPARENT_COLOUR:
-		    source = SBF_SOURCE_COLOUR;
-			dest = SBF_ONE_MINUS_SOURCE_COLOUR;
-		    return;
-		case SBT_MODULATE:
-			source = SBF_DEST_COLOUR;
-			dest = SBF_ZERO;
-			return;
-	    case SBT_ADD:
-		    source = SBF_ONE;
-			dest = SBF_ONE;
-		    return;
-        case SBT_REPLACE:
-            source = SBF_ONE;
-			dest = SBF_ZERO;
-            return;
-		}
-
-		// Default to SBT_REPLACE
-
-		source = SBF_ONE;
-		dest = SBF_ZERO;
-	}
     //-----------------------------------------------------------------------
     void Pass::setSceneBlending(SceneBlendType sbt)
     {
-		// Convert type into blend factors
+	    // Turn predefined type into blending factors
+	    switch (sbt)
+	    {
+	    case SBT_TRANSPARENT_ALPHA:
+		    setSceneBlending(SBF_SOURCE_ALPHA, SBF_ONE_MINUS_SOURCE_ALPHA);
+		    break;
+	    case SBT_TRANSPARENT_COLOUR:
+		    setSceneBlending(SBF_SOURCE_COLOUR, SBF_ONE_MINUS_SOURCE_COLOUR);
+		    break;
+		case SBT_MODULATE:
+			setSceneBlending(SBF_DEST_COLOUR, SBF_ZERO);
+			break;
+	    case SBT_ADD:
+		    setSceneBlending(SBF_ONE, SBF_ONE);
+		    break;
+        case SBT_REPLACE:
+            setSceneBlending(SBF_ONE, SBF_ZERO);
+            break;
+	    // TODO: more
+	    }
 
-		SceneBlendFactor source;
-		SceneBlendFactor dest;
-		_getBlendFlags(sbt, source, dest);
-
-		// Set blend factors
-
-		setSceneBlending(source, dest);
     }
-	//-----------------------------------------------------------------------
-	void Pass::setSeparateSceneBlending( const SceneBlendType sbt, const SceneBlendType sbta )
-	{
-		// Convert types into blend factors
-
-		SceneBlendFactor source;
-		SceneBlendFactor dest;
-		_getBlendFlags(sbt, source, dest);
-
-		SceneBlendFactor sourceAlpha;
-		SceneBlendFactor destAlpha;
-		_getBlendFlags(sbta, sourceAlpha, destAlpha);
-
-		// Set blend factors
-
-		setSeparateSceneBlending(source, dest, sourceAlpha, destAlpha);
-	}
-
     //-----------------------------------------------------------------------
     void Pass::setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor)
     {
 	    mSourceBlendFactor = sourceFactor;
 	    mDestBlendFactor = destFactor;
-
-		mSeparateBlend = false;
     }
-	//-----------------------------------------------------------------------
-	void Pass::setSeparateSceneBlending( const SceneBlendFactor sourceFactor, const SceneBlendFactor destFactor, const SceneBlendFactor sourceFactorAlpha, const SceneBlendFactor destFactorAlpha )
-	{
-		mSourceBlendFactor = sourceFactor;
-		mDestBlendFactor = destFactor;
-		mSourceBlendFactorAlpha = sourceFactorAlpha;
-		mDestBlendFactorAlpha = destFactorAlpha;
-
-		mSeparateBlend = true;
-	}
     //-----------------------------------------------------------------------
     SceneBlendFactor Pass::getSourceBlendFactor(void) const
     {
@@ -757,21 +689,6 @@ namespace Ogre {
     {
 	    return mDestBlendFactor;
     }
-    //-----------------------------------------------------------------------
-    SceneBlendFactor Pass::getSourceBlendFactorAlpha(void) const
-    {
-	    return mSourceBlendFactorAlpha;
-    }
-    //-----------------------------------------------------------------------
-    SceneBlendFactor Pass::getDestBlendFactorAlpha(void) const
-    {
-	    return mDestBlendFactorAlpha;
-    }
-	//-----------------------------------------------------------------------
-	bool Pass::hasSeparateSceneBlending() const
-	{
-		return mSeparateBlend;
-	}
     //-----------------------------------------------------------------------
     bool Pass::isTransparent(void) const
     {
@@ -991,16 +908,6 @@ namespace Ogre {
 	float Pass::getDepthBiasSlopeScale(void) const
 	{
 		return mDepthBiasSlopeScale;
-	}
-	//---------------------------------------------------------------------
-	void Pass::setIterationDepthBias(float biasPerIteration)
-	{
-		mDepthBiasPerIteration = biasPerIteration;
-	}
-	//---------------------------------------------------------------------
-	float Pass::getIterationDepthBias() const
-	{
-		return mDepthBiasPerIteration;
 	}
     //-----------------------------------------------------------------------
 	Pass* Pass::_split(unsigned short numUnits)
@@ -1282,7 +1189,7 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    void Pass::_updateAutoParamsNoLights(const AutoParamDataSource* source) const
+    void Pass::_updateAutoParamsNoLights(const AutoParamDataSource& source) const
     {
         if (hasVertexProgram())
         {
@@ -1297,7 +1204,7 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    void Pass::_updateAutoParamsLightsOnly(const AutoParamDataSource* source) const
+    void Pass::_updateAutoParamsLightsOnly(const AutoParamDataSource& source) const
     {
         if (hasVertexProgram())
         {

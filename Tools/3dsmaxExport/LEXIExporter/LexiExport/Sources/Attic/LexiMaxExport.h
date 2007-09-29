@@ -35,8 +35,8 @@ class CExporter : public UtilityObj
 {
 public:
 	// Constructor/Destructor
-	CExporter();//CExporterDesc* pDesc);
-	virtual ~CExporter();
+	CExporter(CExporterDesc* pDesc);
+	~CExporter();
 
 	// From UtilityObj
 	void	BeginEditParams(Interface* ip,IUtil* iu);
@@ -52,12 +52,8 @@ public:
 	// Singleton
 	static CExporter* Get();
 
-	// Root
-	CExportObjectRoot* GetExportRoot() const;
-
 	// Global settings
 	CDDObject* GetGlobalSettings();
-	CDDObject* GetRootConfig() const;
 
 	//
 	void	ShowLog();
@@ -78,7 +74,7 @@ public:
 	void	ExportItems(bool bForceAll);
 
 private:	
-	//CExporterDesc* m_pDesc;
+	CExporterDesc* m_pDesc;
 	static Interface* m_pMax;
 	IUtil* m_pMaxUtil;
 

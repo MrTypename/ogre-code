@@ -19,7 +19,6 @@
 
 namespace OgreMayaExporter
 {
-	// Restore the scene to a state previous to the export, clean up memory and exit
 	void OgreExporter::exit()
 	{
 		// Restore active selection list
@@ -36,7 +35,6 @@ namespace OgreMayaExporter
 		std::cout.flush();
 	}
 
-	// Execute the command
 	MStatus OgreExporter::doIt(const MArgList& args)
 	{
 		// Parse the arguments.
@@ -226,8 +224,8 @@ namespace OgreMayaExporter
 		for (unsigned int i=0; i<dagPath.childCount(); i++)
 		{
 			MObject child = dagPath.child(i);
-			 MDagPath childPath = dagPath;
-			stat = childPath.push(child);
+			MDagPath childPath;
+			stat = MDagPath::getAPathTo(child,childPath);
 			if (MS::kSuccess != stat)
 			{
 				std::cout << "Error retrieving path to child " << i << " of: " << dagPath.fullPathName().asChar();
@@ -296,7 +294,6 @@ namespace OgreMayaExporter
 		// write translation data
 		m_params.outCameras << "\ttranslation\n";
 		m_params.outCameras << "\t{\n";
-		//translateX
 		m_params.outCameras << "\t\tx ";
 		plug = cameraTransform->findPlug("translateX");
 		if (plug.isConnected() && m_params.exportCamerasAnim)
@@ -324,7 +321,6 @@ namespace OgreMayaExporter
 			plug.getValue(dist);
 			m_params.outCameras << "= " << dist << "\n";
 		}
-		//translateY
 		m_params.outCameras << "\t\ty ";
 		plug = cameraTransform->findPlug("translateY");
 		if (plug.isConnected() && m_params.exportCamerasAnim)
@@ -352,7 +348,6 @@ namespace OgreMayaExporter
 			plug.getValue(dist);
 			m_params.outCameras << "= " << dist << "\n";
 		}
-		//translateZ
 		m_params.outCameras << "\t\tz ";
 		plug = cameraTransform->findPlug("translateZ");
 		if (plug.isConnected() && m_params.exportCamerasAnim)
@@ -386,7 +381,6 @@ namespace OgreMayaExporter
 		m_params.outCameras << "\trotation\n";
 		m_params.outCameras << "\t{\n";
 		m_params.outCameras << "\t\tx ";
-		//rotateX
 		plug = cameraTransform->findPlug("rotateX");
 		if (plug.isConnected() && m_params.exportCamerasAnim)
 		{
@@ -413,7 +407,6 @@ namespace OgreMayaExporter
 			plug.getValue(angle);
 			m_params.outCameras << "= " << angle.asDegrees() << "\n";
 		}
-		//rotateY
 		m_params.outCameras << "\t\ty ";
 		plug = cameraTransform->findPlug("rotateY");
 		if (plug.isConnected() && m_params.exportCamerasAnim)
@@ -441,7 +434,6 @@ namespace OgreMayaExporter
 			plug.getValue(angle);
 			m_params.outCameras << "= " << angle.asDegrees() << "\n";
 		}
-		//rotateZ
 		m_params.outCameras << "\t\tz ";
 		plug = cameraTransform->findPlug("rotateZ");
 		if (plug.isConnected() && m_params.exportCamerasAnim)

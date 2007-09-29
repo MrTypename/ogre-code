@@ -1,7 +1,7 @@
 \input texinfo   @c -*-texinfo-*-
 @c %**start of header
 @setfilename manual.info
-@settitle OGRE Manual v1.5.0 ('Shoggoth')
+@settitle OGRE Manual v1.4.5 ('Eihort')
 @c %**end of header
    
 @titlepage
@@ -490,8 +490,6 @@ Here are the attributes you can use in a 'pass' section of a .material script:
 @item
 @ref{scene_blend}
 @item
-@ref{separate_scene_blend}
-@item
 @ref{depth_check}
 @item
 @ref{depth_write}
@@ -500,17 +498,7 @@ Here are the attributes you can use in a 'pass' section of a .material script:
 @item
 @ref{depth_bias}
 @item
-@ref{iteration_depth_bias}
-@item
 @ref{alpha_rejection}
-@item
-@ref{light_scissor}
-@item
-@ref{light_clip_planes}
-@item
-@ref{illumination_stage}
-@item
-@ref{normalise_normals}
 @item
 @ref{cull_hardware}
 @item
@@ -521,8 +509,6 @@ Here are the attributes you can use in a 'pass' section of a .material script:
 @ref{shading}
 @item 
 @ref{polygon_mode}
-@item 
-@ref{polygon_mode_overrideable}
 @item
 @ref{fog_override}
 @item
@@ -660,27 +646,7 @@ The texel alpha value
 @end table
 @*
 Default: scene_blend one zero (opaque)
-@*@*
-Also see @ref{separate_scene_blend}.
-
-@anchor{separate_scene_blend}
-@subheading separate_scene_blend
-
-This option operates in exactly the same way as @ref{scene_blend}, except that it allows you to specify the operations to perform between the rendered pixel and the frame buffer separately for colour and alpha components. By nature this option is only useful when rendering to targets which have an alpha channel which you'll use for later processing, such as a render texture.@*@*
-
-Format1: separate_scene_blend <simple_colour_blend> <simple_alpha_blend>@*@*
-
-Example: separate_scene_blend add modulate@*@*
-
-This example would add colour components but multiply alpha components. The blend modes available are as in @ref{scene_blend}. The more advanced form is also available:@*@*
-
-Format2: separate_scene_blend <colour_src_factor> <colour_dest_factor> <alpha_src_factor> <alpha_dest_factor>@*@*
-
-Example: separate_scene_blend one one_minus_dest_alpha one one @*@*
-
-Again the options available in the second format are the same as those in the second format of @ref{scene_blend}.
-
-
+@*
 @anchor{depth_check}
 @subheading depth_check
 
@@ -739,16 +705,7 @@ Sets the bias applied to the depth value of this pass. Can be used to make copla
 
 Format: depth_bias <constant_bias> [<slopescale_bias>]@*@*
 
-The final depth bias value is constant_bias * minObservableDepth + maxSlope * slopescale_bias. Slope scale biasing is relative to the angle of the polygon to the camera, which makes for a more appropriate bias value, but this is ignored on some older hardware. Constant biasing is expressed as a factor of the minimum depth value, so a value of 1 will nudge the depth by one 'notch' if you will. Also see @ref{iteration_depth_bias}@*@*
-
-@anchor{iteration_depth_bias}
-@subheading iteration_depth_bias
-
-Sets an additional bias derived from the number of times a given pass has been iterated. Operates just like @ref{depth_bias} except that it applies an additional bias factor to the base depth_bias value, multiplying the provided value by the number of times this pass has been iterated before, through one of the @ref{iteration} variants. So the first time the pass will get the depth_bias value, the second time it will get depth_bias + iteration_depth_bias, the third time it will get depth_bias + iteration_depth_bias * 2, and so on. The default is zero. @*@*
-
-Format: iteration_depth_bias <bias_per_iteration>@*@*
-
-@*@*
+The final depth bias value is constant_bias * minObservableDepth + maxSlope * slopescale_bias. Slope scale biasing is relative to the angle of the polygon to the camera, which makes for a more appropriate bias value, but this is ignored on some older hardware. Constant biasing is expressed as a factor of the minimum depth value, so a value of 1 will nudge the depth by one 'notch' if you will.@*@*
 
 @anchor{alpha_rejection}
 @subheading alpha_rejection
@@ -762,51 +719,6 @@ Example: alpha_rejection greater_equal 128@*@*
 The function parameter can be any of the options listed in the material depth_function attribute. The value parameter can theoretically be any value between 0 and 255, but is best limited to 0 or 128 for hardware compatibility.@*@*
 
 Default: alpha_rejection always_pass@*@*
-@anchor{light_scissor}
-@subheading light_scissor
-
-Sets whether when rendering this pass, rendering will be limited to a screen-space scissor rectangle representing the coverage of the light(s) being used in this pass, derived from their attenuation ranges.@*@*
-
-Format: light_scissor <on|off>@*@*
-Default: light_scissor off@*@*
-
-This option is usually only useful if this pass is an additive lighting pass, and is at least the second one in the technique. Ie areas which are not affected by the current light(s) will never need to be rendered. If there is more than one light being passed to the pass, then the scissor is defined to be the rectangle which covers all lights in screen-space. Directional lights are ignored since they are infinite.@*@*
-
-This option does not need to be specified if you are using a standard additive shadow mode, ie SHADOWTYPE_STENCIL_ADDITIVE or SHADOWTYPE_TEXTURE_ADDITIVE, since it is the default behaviour to use a scissor for each additive shadow pass. However, if you're not using shadows, or you're using @ref{Integrated Texture Shadows} where passes are specified in a custom manner, then this could be of use to you.
-
-@anchor{light_clip_planes}
-@subheading light_clip_planes
-
-Sets whether when rendering this pass, triangle setup will be limited to clipping volume covered by the light. Directional lights are ignored, point lights clip to a cube the size of the attenuation range or the light, and spotlights clip to a pyramid bounding the spotlight angle and attenuation range.@*@*
-
-Format: light_clip_planes <on|off>@*@*
-Default: light_clip_planes off@*@*
-
-This option will only function if there is a single non-directional light being used in this pass. If there is more than one light, or only directional lights, then no clipping will occur. If there are no lights at all then the objects won't be rendered at all.@*@*
-
-When using a standard additive shadow mode, ie SHADOWTYPE_STENCIL_ADDITIVE or SHADOWTYPE_TEXTURE_ADDITIVE, you have the option of enabling clipping for all light passes by calling SceneManager::setShadowUseLightClipPlanes regardless of this pass setting, since rendering is done lightwise anyway. This is off by default since using clip planes is not always faster - it depends on how much of the scene the light volumes cover. Generally the smaller your lights are the more chance you'll see a benefit rather than a penalty from clipping. If you're not using shadows, or you're using @ref{Integrated Texture Shadows} where passes are specified in a custom manner, then specify the option per-pass using this attribute.@*@*
-A specific note about OpenGL: user clip planes are completely ignored when you use an ARB vertex program. This means light clip planes won't help much if you use ARB vertex programs on GL, although OGRE will perform some optimisation of its own, in that if it sees that the clip volume is completely off-screen, it won't perform a render at all. When using GLSL, user clipping can be used but you have to use glClipVertex in your shader, see the GLSL documentation for more information. In Direct3D user clip planes are always respected.
-
-@anchor{illumination_stage}
-@subheading illumination_stage
-
-When using an additive lighting mode (SHADOWTYPE_STENCIL_ADDITIVE or SHADOWTYPE_TEXTURE_ADDITIVE), the scene is rendered in 3 discrete stages, ambient (or pre-lighting), per-light (once per light, with shadowing) and decal (or post-lighting). Usually OGRE figures out how to categorise your passes automatically, but there are some effects you cannot achieve without manually controlling the illumination. For example specular effects are muted by the typical sequence because all textures are saved until the 'decal' stage which mutes the specular effect. Instead, you could do texturing within the per-light stage if it's possible for your material and thus add the specular on after the decal texturing, and have no post-light rendering. @*@*
-
-If you assign an illumination stage to a pass you have to assign it to all passes in the technique otherwise it will be ignored. Also note that whilst you can have more than one pass in each group, they cannot alternate, ie all ambient passes will be before all per-light passes, which will also be before all decal passes. Within their categories the passes will retain their ordering though.
-
-Format: illumination_stage <ambient|per_light|decal>@*@*
-Default: none (autodetect)@*@*
-
-@anchor{normalise_normals}
-@subheading normalise_normals
-
-Sets whether or not this pass renders with all vertex normals being automatically re-normalised.@*
-
-Format: normalise_normals <on|off>@*@*
-
-Scaling objects causes normals to also change magnitude, which can throw off your lighting calculations. By default, the SceneManager detects this and will automatically renormalise normals for any scaled object, but this has a cost. If you'd prefer to control this manually, call SceneManager::setNormaliseNormalsOnScale(false) and then use this option on materials which are sensitive to normals being resized. @*@*
-
-Default: normalise_normals off@*
 
 @anchor{cull_hardware}
 @subheading cull_hardware
@@ -877,12 +789,6 @@ Only the points of each polygon are rendered.
 @end table
 Default: polygon_mode solid@*@*
 
-@anchor{polygon_mode_overrideable}
-@subheading polygon_mode_overrideable
-
-Sets whether or not the @ref{polygon_mode} set on this pass can be downgraded by the camera, if the camera itself is set to a lower polygon mode. If set to false, this pass will always be rendered at its own chosen polygon mode no matter what the camera says. The default is true.@*@*
-
-Format: polygon_mode_overrideable <true|false>@*@*
 
 @anchor{fog_override}
 @subheading fog_override
@@ -2115,8 +2021,6 @@ The position of a given light in view space (ie when the camera is at (0,0,0)). 
 The direction of a given light in view space (ie when the camera is at (0,0,0)). This requires an index in the 'extra_params' field, and relates to the 'nth' closest light which could affect this object (ie 0 refers to the closest light). NB if there are no lights this close, then the parameter will be set to all zeroes.  DEPRECATED, except for spotlights - for directional lights we recommend that you use light_position_view_space instead since that returns a generic 4D vector.
 @item light_power
 The 'power' scaling for a given light, useful in HDR rendering. This requires an index in the 'extra_params' field, and relates to the 'nth' closest light which could affect this object (ie 0 refers to the closest light).
-@item light_number
-When rendering, there is generally a list of lights available for use by all of the passes for a given object, and those lights may or may not be referenced in one or more passes. Sometimes it can be useful to know where in that overall list a given light light (as seen from a pass) is. For example if you use iterate once_per_light, the pass always sees the light as index 0, but in each iteration the actual light referenced is different. This binding lets you pass through the actual index of the light in that overall list. You just need to give it a parameter of the pass-relative light number and it will map it to the overall list index.
 @item light_diffuse_colour_array
 As light_diffuse_colour, except that this populates an array of parameters with a number of lights, and the 'extra_params' field refers to the number of 'nth closest' lights to be processed. This parameter is not compatible with light-based pass_iteration options but can be used for single-pass lighting.
 @item light_specular_colour_array
@@ -2240,12 +2144,6 @@ Near clip distance, in world units
 Far clip distance, in world units (may be 0 for infinite view projection)
 @item texture_viewproj_matrix
 Applicable to vertex programs which have been specified as the 'shadow receiver' vertex program alternative, or where a texture unit is marked as content_type shadow; this provides details of the view/projection matrix for the current shadow projector. The optional 'extra_params' entry specifies which light the projector refers to (for the case of content_type shadow where more than one shadow texture may be present in a single pass), where 0 is the default and refers to the first light referenced in this pass.
-@item texture_worldviewproj_matrix
-As texture_viewproj_matrix except it also includes the world matrix.
-@item spotlight_viewproj_matrix
-Provides a view / projection matrix which matches the set up of a given spotlight (requires an 'extra_params' entry to indicate the light index, which must be a spotlight). Can be used to project a texture from a given spotlight.
-@item spotlight_worldviewproj_matrix
-As spotlight_viewproj_matrix except it also includes the world matrix.
 @item scene_depth_range
 Provides information about the depth range as viewed from the current camera being used to render. Provided as float4(minDepth, maxDepth, depthRange, 1 / depthRange).
 @item shadow_scene_depth_range

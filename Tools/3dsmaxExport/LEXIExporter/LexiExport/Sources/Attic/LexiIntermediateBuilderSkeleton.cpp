@@ -28,8 +28,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 CIntermediateBuilderSkeleton::CIntermediateBuilderSkeleton()
 {
-	REGISTER_MODULE("Intermediate Builder Skeleton")
-
 	//
 	m_iBoneIndex = 0;
 	m_pMaxNode = NULL;
@@ -41,8 +39,6 @@ CIntermediateBuilderSkeleton::CIntermediateBuilderSkeleton()
 CIntermediateBuilderSkeleton::~CIntermediateBuilderSkeleton()
 {
 	//
-
-	UNREGISTER_MODULE
 }
 
 bool CIntermediateBuilderSkeleton::BuildIntermediateSkeleton( INode* pMaxNode )
@@ -129,11 +125,8 @@ void CIntermediateBuilderSkeleton::CreateAnimation( CDDObject* pDDConfig, CExpor
 	CAnimationSetting curAnim;
 	curAnim.m_iStartFrame = pDDConfig->GetInt("AnimationStartID", 0);
 	curAnim.m_iEndFrame = pDDConfig->GetInt("AnimationEndID", 1);
-	curAnim.m_fSampleRate = pDDConfig->GetFloat("AnimationSampleRateID", (float)GetFrameRate());
+	curAnim.m_fSampleRate = pDDConfig->GetFloat("AnimationSampleRateID", 1.0);
 	curAnim.m_sAnimName = pDDConfig->GetString("Name", "Anim1");
-
-	if(curAnim.m_fSampleRate < 0.0001f) curAnim.m_fSampleRate = 1.0f;
-	curAnim.m_fSampleRate = ((float)GetFrameRate()) / curAnim.m_fSampleRate;
 
 	AddFrame( curAnim );
 }

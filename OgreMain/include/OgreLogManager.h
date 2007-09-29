@@ -120,10 +120,6 @@ namespace Ogre
         void logMessage( LogMessageLevel lml, const String& message,  
 			bool maskDebug = false) { logMessage(message, lml, maskDebug); }
 
-		/** Get a stream on the default log. */
-		Log::Stream stream(LogMessageLevel lml = LML_NORMAL, 
-			bool maskDebug = false);
-
 		/** Sets the level of detail of the default log.
         */
         void setLogDetail(LoggingLevel ll);
@@ -161,7 +157,6 @@ namespace Ogre
         static LogManager* getSingletonPtr(void);
 
     };
-
 
 }
 

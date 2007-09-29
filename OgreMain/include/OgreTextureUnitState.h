@@ -601,6 +601,11 @@ namespace Ogre {
         angle The angle of rotation (anticlockwise).
         */
         void setTextureRotate(const Radian& angle);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline void setTextureRotate(Real angle) {
+            setTextureRotate ( Degree(angle) );
+        }
+#endif//OGRE_FORCE_ANGLE_TYPES
         // get texture rotation effects angle value
         const Radian& getTextureRotate(void) const;
 
