@@ -82,8 +82,8 @@ namespace Ogre {
           mSkeletonInstance(0),
 		  mInitialised(false),
 		  mLastParentXform(Matrix4::ZERO),
-		  mMeshStateCount(0),
-          mFullBoundingBox()
+          mFullBoundingBox(),
+		  mNormaliseNormals(false)
     {
     }
     //-----------------------------------------------------------------------
@@ -116,8 +116,8 @@ namespace Ogre {
 		mSkeletonInstance(0),
 		mInitialised(false),
 		mLastParentXform(Matrix4::ZERO),
-		mMeshStateCount(0),
-        mFullBoundingBox()
+        mFullBoundingBox(),
+		mNormaliseNormals(false)
 	{
 		_initialise();
     }
@@ -205,7 +205,6 @@ namespace Ogre {
 		}
 
 		mInitialised = true;
-		mMeshStateCount = mMesh->getStateCount();
 
 	}
 	//-----------------------------------------------------------------------
@@ -479,13 +478,6 @@ namespace Ogre {
 		// Do nothing if not initialised yet
 		if (!mInitialised)
 			return;
-
-		// Check mesh state count, will be incremented if reloaded
-		if (mMesh->getStateCount() != mMeshStateCount)
-		{
-			// force reinitialise
-			_initialise(true);
-		}
 
         // Check we're not using a manual LOD
         if (mMeshLodIndex > 0 && mMesh->isLodManual())
@@ -1057,7 +1049,7 @@ namespace Ogre {
     void Entity::cacheBoneMatrices(void)
     {
         Root& root = Root::getSingleton();
-        unsigned long currentFrameNumber = root.getNextFrameNumber();
+        unsigned long currentFrameNumber = root.getCurrentFrameNumber();
         if (*mFrameBonesLastUpdated  != currentFrameNumber) {
 
             mSkeletonInstance->setAnimationState(*mAnimationState);
@@ -1401,7 +1393,7 @@ namespace Ogre {
             const MaterialPtr& m = sub->getMaterial();
             // Make sure it's loaded
             m->load();
-            Technique* t = m->getBestTechnique(0, sub);
+            Technique* t = m->getBestTechnique();
             if (!t)
             {
                 // No supported techniques
@@ -1809,6 +1801,16 @@ namespace Ogre {
         *xform = mParent->_getParentNodeFullTransform();
     }
     //-----------------------------------------------------------------------
+    const Quaternion& Entity::EntityShadowRenderable::getWorldOrientation(void) const
+    {
+        return mParent->getParentNode()->_getDerivedOrientation();
+    }
+    //-----------------------------------------------------------------------
+    const Vector3& Entity::EntityShadowRenderable::getWorldPosition(void) const
+    {
+        return mParent->getParentNode()->_getDerivedPosition();
+    }
+    //-----------------------------------------------------------------------
     void Entity::EntityShadowRenderable::rebindPositionBuffer(const VertexData* vertexData, bool force)
     {
         if (force || mCurrentVertexData != vertexData)
@@ -2000,29 +2002,6 @@ namespace Ogre {
 		else
 		{
 			return BIND_ORIGINAL;
-		}
-
-	}
-	//---------------------------------------------------------------------
-	void Entity::visitRenderables(Renderable::Visitor* visitor, 
-		bool debugRenderables)
-	{
-		// Visit each SubEntity
-		for (SubEntityList::iterator i = mSubEntityList.begin(); i != mSubEntityList.end(); ++i)
-		{
-			visitor->visit(*i, 0, false);
-		}
-		// if manual LOD is in use, visit those too
-		ushort lodi = 1;
-		for (LODEntityList::iterator e = mLodEntityList.begin(); 
-			e != mLodEntityList.end(); ++e, ++lodi)
-		{
-			
-			uint nsub = (*e)->getNumSubEntities();
-			for (uint s = 0; s < nsub; ++s)
-			{
-				visitor->visit((*e)->getSubEntity(s), lodi, false);
-			}
 		}
 
 	}

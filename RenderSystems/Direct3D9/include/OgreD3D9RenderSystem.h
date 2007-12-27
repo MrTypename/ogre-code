@@ -33,14 +33,12 @@ Torus Knot Software Ltd.
 #include "OgreString.h"
 #include "OgreStringConverter.h"
 #include "OgreRenderSystem.h"
-#include "OgreRenderSystemCapabilities.h"
 #include "OgreD3D9Mappings.h"
 
 #include "OgreNoMemoryMacros.h"
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <dxerr9.h>
-#include <dxdiag.h>
 #include "OgreMemoryMacros.h"
 
 namespace Ogre 
@@ -145,23 +143,15 @@ namespace Ogre
 
 
         /// Internal method for populating the capabilities structure
-		RenderSystemCapabilities* createRenderSystemCapabilities() const;
+        void initCapabilities(void);
 
-		/** See RenderSystem definition */
-		virtual void initialiseFromRenderSystemCapabilities(RenderSystemCapabilities* caps, RenderTarget* primary);
-
-
-        void convertVertexShaderCaps(RenderSystemCapabilities* rsc) const;
-        void convertPixelShaderCaps(RenderSystemCapabilities* rsc) const;
-		bool checkVertexTextureFormats(void) const;
-
-		DriverVersion getDxDiagDriverVersion(int deviceIndex);
+        void convertVertexShaderCaps(void);
+        void convertPixelShaderCaps(void);
+		bool checkVertexTextureFormats(void);
 
         unsigned short mCurrentLights;
         /// Saved last view matrix
         Matrix4 mViewMatrix;
-
-		D3DXMATRIX mDxViewMat, mDxProjMat, mDxWorldMat;
 
 		// What follows is a set of duplicated lists just to make it
 		// easier to deal with lost devices
@@ -194,8 +184,6 @@ namespace Ogre
 		};
 		typedef std::map<ZBufferFormat, ZBufferRef> ZBufferHash;
 		ZBufferHash mZBufferHash;
-	protected:
-		void setClipPlanesImpl(const PlaneList& clipPlanes);
 	public:
 		// constructor
 		D3D9RenderSystem( HINSTANCE hInstance );
@@ -207,10 +195,15 @@ namespace Ogre
 		// Overridden RenderSystem functions
 		ConfigOptionMap& getConfigOptions(void);
 		String validateConfigOptions(void);
-		RenderWindow* _initialise( bool autoCreateWindow, const String& windowTitle = "OGRE Render Window"  );
-		/// @copydoc RenderSystem::_createRenderWindow
-		RenderWindow* _createRenderWindow(const String &name, unsigned int width, unsigned int height, 
+		RenderWindow* initialise( bool autoCreateWindow, const String& windowTitle = "OGRE Render Window"  );
+		/// @copydoc RenderSystem::createRenderWindow
+		RenderWindow* createRenderWindow(const String &name, unsigned int width, unsigned int height, 
 			bool fullScreen, const NameValuePairList *miscParams = 0);
+
+		/// @copydoc RenderSystem::createRenderTexture
+		RenderTexture * createRenderTexture( const String & name, unsigned int width, unsigned int height,
+		 	TextureType texType = TEX_TYPE_2D, PixelFormat internalFormat = PF_X8R8G8B8, 
+			const NameValuePairList *miscParams = 0 ); 
 
 		/// @copydoc RenderSystem::createMultiRenderTarget
 		virtual MultiRenderTarget * createMultiRenderTarget(const String & name);
@@ -256,7 +249,6 @@ namespace Ogre
 		void _setTextureMipmapBias(size_t unit, float bias);
 		void _setTextureMatrix( size_t unit, const Matrix4 &xform );
 		void _setSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor );
-		void _setSeparateSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha );
 		void _setAlphaRejectSettings( CompareFunction func, unsigned char value );
 		void _setViewport( Viewport *vp );
 		void _beginFrame(void);
@@ -301,6 +293,10 @@ namespace Ogre
           RenderSystem
          */
         void bindGpuProgramPassIterationParameters(GpuProgramType gptype);
+        /** See
+          RenderSystem
+         */
+        void setClipPlanes(const PlaneList& clipPlanes);
 
         void setScissorTest(bool enabled, size_t left = 0, size_t top = 0, size_t right = 800, size_t bottom = 600);
         void clearFrameBuffer(unsigned int buffers, 
@@ -324,8 +320,6 @@ namespace Ogre
 		bool isDeviceLost(void);
 		/** Notify that a device has been lost */
 		void _notifyDeviceLost(void);
-		/// Get the current device
-		LPDIRECT3DDEVICE9 getDevice() const { return mpD3DDevice; }
 
 		/** Check which depthStencil formats can be used with a certain pixel format,
 			and return the best suited.

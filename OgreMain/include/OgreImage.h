@@ -291,13 +291,7 @@ namespace Ogre {
         /** Save the image as a file. */
         void save(const String& filename);
 
-		/** Encode the image and return a stream to the data. 
-			@param formatextension An extension to identify the image format
-				to encode into, e.g. "jpg" or "png"
-		*/
-		DataStreamPtr encode(const String& formatextension);
-
-		/** Returns a pointer to the internal image buffer.
+        /** Returns a pointer to the internal image buffer.
 		@remarks
 			Be careful with this method. You will almost certainly
 			prefer to use getPixelBox, especially with complex images
@@ -370,7 +364,7 @@ namespace Ogre {
          * is only valid for cubemaps and volume textures. This uses the first (largest)
          * mipmap.
          */
-        ColourValue getColourAt(int x, int y, int z) const;
+        ColourValue getColourAt(int x, int y, int z);
         
         /**
          * Get a PixelBox encapsulating the image data of a mipmap
@@ -400,7 +394,7 @@ namespace Ogre {
 		
         // Static function to calculate size in bytes from the number of mipmaps, faces and the dimensions
         static size_t calculateSize(size_t mipmaps, size_t faces, size_t width, size_t height, size_t depth, PixelFormat format);
-    protected:
+    private:
         // The width of the image in pixels
         size_t m_uWidth;
         // The height of the image in pixels

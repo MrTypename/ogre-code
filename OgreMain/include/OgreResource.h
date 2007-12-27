@@ -127,8 +127,6 @@ namespace Ogre {
 		String mOrigin;
 		/// Optional manual loader; if provided, data is loaded from here instead of a file
 		ManualResourceLoader* mLoader;
-		/// State count, the number of times this resource has changed state
-		size_t mStateCount;
 
 		typedef std::list<Listener*> ListenerList;
 		ListenerList mListenerList;
@@ -227,14 +225,14 @@ namespace Ogre {
 
         /** Returns true if the Resource is reloadable, false otherwise.
         */
-        virtual bool isReloadable(void) const
+        bool isReloadable(void) const
         {
             return !mIsManual || mLoader;
         }
 
         /** Is this resource manually loaded?
 		*/
-		virtual bool isManuallyLoaded(void) const
+		bool isManuallyLoaded(void) const
 		{
 			return mIsManual;
 		}
@@ -246,7 +244,7 @@ namespace Ogre {
 
         /** Retrieves info about the size of the resource.
         */
-        virtual size_t getSize(void) const
+        size_t getSize(void) const
         { 
             return mSize; 
         }
@@ -257,19 +255,19 @@ namespace Ogre {
 
         /** Gets resource name.
         */
-        virtual const String& getName(void) const 
+        const String& getName(void) const 
         { 
             return mName; 
         }
 
-        virtual ResourceHandle getHandle(void) const
+        ResourceHandle getHandle(void) const
         {
             return mHandle;
         }
 
         /** Returns true if the Resource has been loaded, false otherwise.
         */
-        virtual bool isLoaded(void) const 
+        bool isLoaded(void) const 
         { 
 			// No lock required to read this state since no modify
             return (mLoadingState == LOADSTATE_LOADED); 
@@ -278,14 +276,14 @@ namespace Ogre {
 		/** Returns whether the resource is currently in the process of
 			background loading.
 		*/
-		virtual bool isLoading() const
+		LoadingState isLoading() const
 		{
-			return (mLoadingState == LOADSTATE_LOADING);
+			return mLoadingState;
 		}
 
 		/** Returns the current loading state.
 		*/
-		virtual LoadingState getLoadingState() const
+		LoadingState getLoadingState() const
 		{
 			return mLoadingState;
 		}
@@ -302,7 +300,7 @@ namespace Ogre {
 			other users of this resource should check isLoaded(), and if that
 			returns false, don't use the resource and come back later.
 		*/
-		virtual bool isBackgroundLoaded(void) const { return mIsBackgroundLoaded; }
+		bool isBackgroundLoaded(void) const { return mIsBackgroundLoaded; }
 
 		/** Tells the resource whether it is background loaded or not.
 		@remarks
@@ -312,7 +310,7 @@ namespace Ogre {
 			loaded in the background. You should use ResourceBackgroundLoadingQueue
 			to manage the actual loading (which will call this method itself).
 		*/
-		virtual void setBackgroundLoaded(bool bl) { mIsBackgroundLoaded = bl; }
+		void setBackgroundLoaded(bool bl) { mIsBackgroundLoaded = bl; }
 
 		/** Escalates the loading of a background loaded resource. 
 		@remarks
@@ -323,20 +321,20 @@ namespace Ogre {
 			If the resource is already being loaded but just hasn't quite finished
 			then this method will simply wait until the background load is complete.
 		*/
-		virtual void escalateLoading();
+		void escalateLoading();
 
 		/** Register a listener on this resource.
 			@see Resource::Listener
 		*/
-		virtual void addListener(Listener* lis);
+		void addListener(Listener* lis);
 
 		/** Remove a listener on this resource.
 			@see Resource::Listener
 		*/
-		virtual void removeListener(Listener* lis);
+		void removeListener(Listener* lis);
 
 		/// Gets the group which this resource is a member of
-		virtual const String& getGroup(void) { return mGroup; }
+		const String& getGroup(void) { return mGroup; }
 
 		/** Change the resource group ownership of a Resource.
 		@remarks
@@ -345,36 +343,19 @@ namespace Ogre {
 			this resource from one group to another.
 		@param newGroup Name of the new group
 		*/
-		virtual void changeGroupOwnership(const String& newGroup);
+		void changeGroupOwnership(const String& newGroup);
 
 		/// Gets the manager which created this resource
-		virtual ResourceManager* getCreator(void) { return mCreator; }
+		ResourceManager* getCreator(void) { return mCreator; }
 		/** Get the origin of this resource, e.g. a script file name.
 		@remarks
 			This property will only contain something if the creator of
 			this resource chose to populate it. Script loaders are advised
 			to populate it.
 		*/
-		virtual const String& getOrigin(void) const { return mOrigin; }
+		const String& getOrigin(void) const { return mOrigin; }
 		/// Notify this resource of it's origin
-		virtual void _notifyOrigin(const String& origin) { mOrigin = origin; }
-
-		/** Returns the number of times this resource has changed state, which 
-			generally means teh number of times it has been loaded. Objects that 
-			build derived data based on the resource can check this value against 
-			a copy they kept last time they built this derived data, in order to
-			know whether it needs rebuilding. This is a nice way of monitoring
-			changes without having a tightly-bound callback.
-		*/
-		virtual size_t getStateCount() const { return mStateCount; }
-
-		/** Manually mark the state of this resource as having been changed.
-		@remarks
-			You only need to call this from outside if you explicitly want derived
-			objects to think this object has changed. @see getStateCount.
-		*/
-		virtual void _dirtyState();
-
+		void _notifyOrigin(const String& origin) { mOrigin = origin; }
 
     };
 

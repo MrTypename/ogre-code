@@ -57,9 +57,7 @@ namespace Ogre {
     ParticleSystemManager::ParticleSystemManager()
     {
 		OGRE_LOCK_AUTO_MUTEX
-#if OGRE_USE_NEW_COMPILERS == 0
         mScriptPatterns.push_back("*.particle");
-#endif
         ResourceGroupManager::getSingleton()._registerScriptLoader(this);
 		mFactory = new ParticleSystemFactory();
 		Root::getSingleton().addMovableObjectFactory(mFactory);
@@ -68,7 +66,6 @@ namespace Ogre {
     ParticleSystemManager::~ParticleSystemManager()
     {
 		OGRE_LOCK_AUTO_MUTEX
-
         // Destroy all templates
         ParticleTemplateMap::iterator t;
         for (t = mSystemTemplates.begin(); t != mSystemTemplates.end(); ++t)
@@ -123,11 +120,6 @@ namespace Ogre {
                 {
                     // No current system
                     // So first valid data should be a system name
-					if (StringUtil::startsWith(line, "particle_system "))
-					{
-						// chop off the 'particle_system ' needed by new compilers
-						line = line.substr(16);
-					}
                     pSys = createTemplate(line, groupName);
 					pSys->_notifyOrigin(stream->getName());
                     // Skip to and over next {
@@ -186,6 +178,8 @@ namespace Ogre {
 
 
         }
+
+
     }
     //-----------------------------------------------------------------------
     void ParticleSystemManager::addEmitterFactory(ParticleEmitterFactory* factory)

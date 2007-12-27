@@ -40,9 +40,6 @@ namespace Ogre {
     public:
         GLHardwarePixelBuffer *buffer;
         size_t zoffset;
-		uint numSamples;
-
-		GLSurfaceDesc() :buffer(0), zoffset(0), numSamples(0) {}
     };
     
     /** Base class for GL Render Textures
@@ -50,7 +47,7 @@ namespace Ogre {
     class _OgrePrivate GLRenderTexture: public RenderTexture
     {
     public:
-        GLRenderTexture(const String &name, const GLSurfaceDesc &target, bool writeGamma, uint fsaa);
+        GLRenderTexture(const String &name, const GLSurfaceDesc &target);
         virtual ~GLRenderTexture();
         
         bool requiresTextureFlipping() const { return true; }
@@ -65,7 +62,7 @@ namespace Ogre {
         
         /** Create a texture rendertarget object
         */
-        virtual RenderTexture *createRenderTexture(const String &name, const GLSurfaceDesc &target, bool writeGamma, uint fsaa) = 0;
+        virtual RenderTexture *createRenderTexture(const String &name, const GLSurfaceDesc &target) = 0;
         
          /** Check if a certain format is usable as rendertexture format
         */
@@ -96,8 +93,7 @@ namespace Ogre {
     class _OgrePrivate GLCopyingRenderTexture: public GLRenderTexture
     {
     public:
-        GLCopyingRenderTexture(GLCopyingRTTManager *manager, const String &name, const GLSurfaceDesc &target, 
-			bool writeGamma, uint fsaa);
+        GLCopyingRenderTexture(GLCopyingRTTManager *manager, const String &name, const GLSurfaceDesc &target);
         
         virtual void getCustomAttribute(const String& name, void* pData);
     };
@@ -113,7 +109,7 @@ namespace Ogre {
         
         /** @copydoc GLRTTManager::createRenderTexture
         */
-        virtual RenderTexture *createRenderTexture(const String &name, const GLSurfaceDesc &target, bool writeGamma, uint fsaa);
+        virtual RenderTexture *createRenderTexture(const String &name, const GLSurfaceDesc &target);
         
          /** @copydoc GLRTTManager::checkFormat
         */

@@ -671,17 +671,6 @@ namespace Ogre {
 		}
 		of << "-------------------------------------------------" << std::endl;
 	}
-	//---------------------------------------------------------------------
-	void StaticGeometry::visitRenderables(Renderable::Visitor* visitor, 
-		bool debugRenderables)
-	{
-		for (RegionMap::const_iterator ri = mRegionMap.begin();
-			ri != mRegionMap.end(); ++ri)
-		{
-			ri->second->visitRenderables(visitor, debugRenderables);
-		}
-
-	}
 	//--------------------------------------------------------------------------
 	StaticGeometry::RegionIterator StaticGeometry::getRegionIterator(void)
 	{
@@ -900,16 +889,6 @@ namespace Ogre {
 		mLodBucketList[mCurrentLod]->addRenderables(queue, mRenderQueueID,
 			mCamDistanceSquared);
 	}
-	//---------------------------------------------------------------------
-	void StaticGeometry::Region::visitRenderables(Renderable::Visitor* visitor, 
-		bool debugRenderables)
-	{
-		for (LODBucketList::iterator i = mLodBucketList.begin(); i != mLodBucketList.end(); ++i)
-		{
-			(*i)->visitRenderables(visitor, debugRenderables);
-		}
-
-	}
 	//--------------------------------------------------------------------------
 	bool StaticGeometry::Region::isVisible(void) const
 	{
@@ -1087,6 +1066,18 @@ namespace Ogre {
 		*xform = mParent->_getParentNodeFullTransform();
 	}
 	//--------------------------------------------------------------------------
+	const Quaternion&
+	StaticGeometry::Region::RegionShadowRenderable::getWorldOrientation(void) const
+	{
+		return mParent->getParentNode()->_getDerivedOrientation();
+	}
+	//--------------------------------------------------------------------------
+	const Vector3&
+	StaticGeometry::Region::RegionShadowRenderable::getWorldPosition(void) const
+	{
+		return mParent->getCentre();
+	}
+	//--------------------------------------------------------------------------
 	//--------------------------------------------------------------------------
 	StaticGeometry::LODBucket::LODBucket(Region* parent, unsigned short lod,
 		Real lodDist)
@@ -1188,17 +1179,6 @@ namespace Ogre {
 			i->second->dump(of);
 		}
 		of << "------------------" << std::endl;
-
-	}
-	//---------------------------------------------------------------------
-	void StaticGeometry::LODBucket::visitRenderables(Renderable::Visitor* visitor, 
-		bool debugRenderables)
-	{
-		for (MaterialBucketMap::const_iterator i = mMaterialBucketMap.begin();
-			i != mMaterialBucketMap.end(); ++i)
-		{
-			i->second->visitRenderables(visitor, debugRenderables);
-		}
 
 	}
 	//--------------------------------------------------------------------------
@@ -1339,17 +1319,6 @@ namespace Ogre {
 		of << "--------------------------------------------------" << std::endl;
 
 	}
-	//---------------------------------------------------------------------
-	void StaticGeometry::MaterialBucket::visitRenderables(Renderable::Visitor* visitor, 
-		bool debugRenderables)
-	{
-		for (GeometryBucketList::const_iterator i = mGeometryBucketList.begin();
-			i != mGeometryBucketList.end(); ++i)
-		{
-			visitor->visit(*i, mParent->getLod(), false);
-		}
-
-	}
 	//--------------------------------------------------------------------------
 	//--------------------------------------------------------------------------
 	StaticGeometry::GeometryBucket::GeometryBucket(MaterialBucket* parent,
@@ -1432,6 +1401,16 @@ namespace Ogre {
 		// Should be the identity transform, but lets allow transformation of the
 		// nodes the regions are attached to for kicks
 		*xform = mParent->getParent()->getParent()->_getParentNodeFullTransform();
+	}
+	//--------------------------------------------------------------------------
+	const Quaternion& StaticGeometry::GeometryBucket::getWorldOrientation(void) const
+	{
+		return Quaternion::IDENTITY;
+	}
+	//--------------------------------------------------------------------------
+	const Vector3& StaticGeometry::GeometryBucket::getWorldPosition(void) const
+	{
+		return mParent->getParent()->getParent()->getCentre();
 	}
 	//--------------------------------------------------------------------------
 	Real StaticGeometry::GeometryBucket::getSquaredViewDepth(const Camera* cam) const

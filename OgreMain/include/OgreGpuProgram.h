@@ -164,25 +164,6 @@ namespace Ogre {
 		void generateConstantDefinitionArrayEntries(const String& paramName, 
 			const GpuConstantDefinition& baseDef);
 
-        /// Indicates whether all array entries will be generated and added to the definitions map
-        static bool getGenerateAllConstantDefinitionArrayEntries();
-
-        /** Sets whether all array entries will be generated and added to the definitions map.
-		@remarks
-			Usually, array entries can only be individually indexed if they're up to 16 entries long,
-			to save memory - arrays larger than that can be set but only via the bulk setting
-			methods. This option allows you to choose to individually index every array entry. 
-		*/
-        static void setGenerateAllConstantDefinitionArrayEntries(bool generateAll);
-
-    protected:
-        /** Indicates whether all array entries will be generated and added to the definitions map
-        @remarks
-            Normally, the number of array entries added to the definitions map is capped at 16
-            to save memory. Setting this value to <code>true</code> allows all of the entries
-            to be generated and added to the map.
-        */
-        static bool msGenerateAllConstantDefinitionArrayEntries;
 	};
 
 	/** Structure recording the use of a physical buffer by a logical parameter
@@ -365,10 +346,6 @@ namespace Ogre {
             ACT_SURFACE_SHININESS,
 
 
-			/// The number of active light sources (better than gl_MaxLights)
-			ACT_LIGHT_COUNT,
-
-
 			/// The ambient light colour set in the scene
 			ACT_AMBIENT_LIGHT_COLOUR, 
 
@@ -403,18 +380,10 @@ namespace Ogre {
 			ACT_LIGHT_DISTANCE_OBJECT_SPACE,
 			/** Light power level, a single scalar as set in Light::setPowerScale  (index determined by setAutoConstant call) */
 			ACT_LIGHT_POWER_SCALE,
-			/// Light diffuse colour pre-scaled by Light::setPowerScale (index determined by setAutoConstant call)
-			ACT_LIGHT_DIFFUSE_COLOUR_POWER_SCALED,
-			/// Light specular colour pre-scaled by Light::setPowerScale (index determined by setAutoConstant call)
-			ACT_LIGHT_SPECULAR_COLOUR_POWER_SCALED,
 			/// Array of light diffuse colours (count set by extra param)
 			ACT_LIGHT_DIFFUSE_COLOUR_ARRAY,
 			/// Array of light specular colours (count set by extra param)
 			ACT_LIGHT_SPECULAR_COLOUR_ARRAY,
-			/// Array of light diffuse colours scaled by light power (count set by extra param)
-			ACT_LIGHT_DIFFUSE_COLOUR_POWER_SCALED_ARRAY,
-			/// Array of light specular colours scaled by light power (count set by extra param)
-			ACT_LIGHT_SPECULAR_COLOUR_POWER_SCALED_ARRAY,
 			/// Array of light attenuation parameters, Vector4(range, constant, linear, quadric) (count set by extra param)
 			ACT_LIGHT_ATTENUATION_ARRAY,
 			/// Array of light positions in world space (count set by extra param)
@@ -458,8 +427,8 @@ namespace Ogre {
             ACT_DERIVED_SCENE_COLOUR,
 
             /** The derived light diffuse colour (index determined by setAutoConstant call),
-                with 'r', 'g' and 'b' components filled with product of surface diffuse colour,
-				light power scale and light diffuse colour, respectively, and 'a' component filled with surface
+                with 'r', 'g' and 'b' components filled with product of surface diffuse colour
+                and light diffuse colour, respectively, and 'a' component filled with surface
                 diffuse alpha component.
             */
             ACT_DERIVED_LIGHT_DIFFUSE_COLOUR,
@@ -474,13 +443,6 @@ namespace Ogre {
             ACT_DERIVED_LIGHT_DIFFUSE_COLOUR_ARRAY,
 			/// Array of derived light specular colours (count set by extra param)
             ACT_DERIVED_LIGHT_SPECULAR_COLOUR_ARRAY,
-			/** The absolute light number of a local light index. Each pass may have
-				a number of lights passed to it, and each of these lights will have
-				an index in the overall light list, which will differ from the local
-				light index due to factors like setStartLight and setIteratePerLight.
-				This binding provides the global light index for a local index.
-			*/
-			ACT_LIGHT_NUMBER,
 
 
 			/** The distance a shadow volume should be extruded when using
@@ -493,16 +455,6 @@ namespace Ogre {
             ACT_CAMERA_POSITION_OBJECT_SPACE,
             /// The view/projection matrix of the assigned texture projection frustum
             ACT_TEXTURE_VIEWPROJ_MATRIX,
-			/** The view/projection matrix of the assigned texture projection frustum, 
-				combined with the current world matrix
-			*/
-			ACT_TEXTURE_WORLDVIEWPROJ_MATRIX,
-			/// The view/projection matrix of a given spotlight
-			ACT_SPOTLIGHT_VIEWPROJ_MATRIX,
-			/** The view/projection matrix of a given spotlight projection frustum, 
-			combined with the current world matrix
-			*/
-			ACT_SPOTLIGHT_WORLDVIEWPROJ_MATRIX,
             /// A custom parameter which will come from the renderable, using 'data' as the identifier
             ACT_CUSTOM,
             /** provides current elapsed time
@@ -652,7 +604,7 @@ namespace Ogre {
             /** Provides packed texture size of the texture unit (index determined by setAutoConstant
                 call). Packed as float4(width, height, 1 / width, 1 / height)
             */
-            ACT_PACKED_TEXTURE_SIZE
+            ACT_PACKED_TEXTURE_SIZE,
 
 
         };
@@ -1099,9 +1051,9 @@ namespace Ogre {
 		const AutoConstantEntry* _findRawAutoConstantEntryInt(size_t physicalIndex);
 
         /** Updates the automatic parameters (except lights) based on the details provided. */
-        void _updateAutoParamsNoLights(const AutoParamDataSource* source);
+        void _updateAutoParamsNoLights(const AutoParamDataSource& source);
         /** Updates the automatic parameters for lights based on the details provided. */
-        void _updateAutoParamsLightsOnly(const AutoParamDataSource* source);
+        void _updateAutoParamsLightsOnly(const AutoParamDataSource& source);
 
 		/** Tells the program whether to ignore missing parameters or not.
 		*/

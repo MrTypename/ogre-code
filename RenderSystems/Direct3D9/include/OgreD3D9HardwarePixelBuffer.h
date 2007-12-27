@@ -46,7 +46,7 @@ namespace Ogre {
 		void unlockImpl(void);
 
 		/// Create (or update) render textures for slices
-		void createRenderTextures(bool update, bool writeGamma, uint fsaa);
+		void createRenderTextures(bool update);
 		/// Destroy render textures for slices
 		void destroyRenderTextures();
 		
@@ -55,8 +55,6 @@ namespace Ogre {
 		
 		/// Surface abstracted by this buffer
 		IDirect3DSurface9 *mSurface;
-		/// AA Surface abstracted by this buffer
-		IDirect3DSurface9 *mFSAASurface;
 		/// Volume abstracted by this buffer
 		IDirect3DVolume9 *mVolume;
 		/// Temporary surface in main memory if direct locking of mSurface is not possible
@@ -76,9 +74,8 @@ namespace Ogre {
 		D3D9HardwarePixelBuffer(HardwareBuffer::Usage usage);
 		
 		/// Call this to associate a D3D surface or volume with this pixel buffer
-		void bind(IDirect3DDevice9 *dev, IDirect3DSurface9 *mSurface, bool update, 
-			bool writeGamma, uint fsaa, IDirect3DSurface9* fsaaSurface);
-		void bind(IDirect3DDevice9 *dev, IDirect3DVolume9 *mVolume, bool update, bool writeGamma);
+		void bind(IDirect3DDevice9 *dev, IDirect3DSurface9 *mSurface, bool update);
+		void bind(IDirect3DDevice9 *dev, IDirect3DVolume9 *mVolume, bool update);
 		
 		/// @copydoc HardwarePixelBuffer::blit
         void blit(const HardwarePixelBufferSharedPtr &src, const Image::Box &srcBox, const Image::Box &dstBox);
@@ -102,8 +99,6 @@ namespace Ogre {
 
 		/// Accessor for surface
 		IDirect3DSurface9 *getSurface() { return mSurface; }
-		/// Accessor for AA surface
-		IDirect3DSurface9 *getFSAASurface() { return mFSAASurface; }
 
 		/// Notify TextureBuffer of destruction of render target
         virtual void _clearSliceRTT(size_t zoffset)

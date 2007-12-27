@@ -293,6 +293,10 @@ namespace Ogre {
 
         /** See Renderable */
         void getWorldTransforms(Matrix4* xform) const;
+        /** @copydoc Renderable::getWorldOrientation */
+        const Quaternion& getWorldOrientation(void) const;
+        /** @copydoc Renderable::getWorldPosition */
+        const Vector3& getWorldPosition(void) const;
 
         /** Tell the object to recalculate */
         virtual void _positionsOutOfDate(void);
@@ -329,11 +333,8 @@ namespace Ogre {
         nested within this to ensure that containers are displayed behind contained
         items. This method is used internally to notify the element of a change in
         final zorder which is used to render the element.
-		@return Return the next zordering number availble. For single elements, this
-		is simply newZOrder + 1, but for containers, they increment it once for each
-		child (more if those children are also containers).
         */
-        virtual ushort _notifyZOrder(ushort newZOrder);
+        virtual void _notifyZOrder(ushort newZOrder);
 
         /** Internal method to notify the element when it's world transform
          of parent overlay has changed.
@@ -347,10 +348,6 @@ namespace Ogre {
 
         /** Internal method to put the contents onto the render queue. */
         virtual void _updateRenderQueue(RenderQueue* queue);
-
-		/// @copydoc MovableObject::visitRenderables
-		void visitRenderables(Renderable::Visitor* visitor, 
-			bool debugRenderables = false);
 
         /** Gets the type name of the element. All concrete subclasses must implement this. */
         virtual const String& getTypeName(void) const = 0;

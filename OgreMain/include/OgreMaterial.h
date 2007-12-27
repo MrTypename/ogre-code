@@ -249,12 +249,8 @@ namespace Ogre {
             which typically happens on loading the material. Therefore, if this method returns
             NULL, try calling Material::load.
 		@param lodIndex The material lod index to use
-		@param rend Optional parameter specifying the Renderable that is requesting
-			this technique. Only used if no valid technique for the active material 
-			scheme is found, at which point it is passed to 
-			MaterialManager::Listener::handleSchemeNotFound as information.
         */
-        Technique* getBestTechnique(unsigned short lodIndex = 0, const Renderable* rend = 0);
+        Technique* getBestTechnique(unsigned short lodIndex = 0);
 
 
         /** Creates a new copy of this material with the same settings but a new name.
@@ -547,17 +543,6 @@ namespace Ogre {
         */
         void setSceneBlending( const SceneBlendType sbt );
 
-        /** Sets the kind of blending every pass has with the existing contents of the scene, using individual factors for color and alpha channels
-        @note
-            This property has been moved to the Pass class, which is accessible via the 
-            Technique. For simplicity, this method allows you to set these properties for 
-            every current Technique, and for every current Pass within those Techniques. If 
-            you need more precision, retrieve the Technique and Pass instances and set the
-            property there.
-        @see Pass::setSeparateSceneBlending
-        */
-        void setSeparateSceneBlending( const SceneBlendType sbt, const SceneBlendType sbta );
-
         /** Allows very fine control of blending every Pass with the existing contents of the scene.
         @note
             This property has been moved to the Pass class, which is accessible via the 
@@ -569,16 +554,6 @@ namespace Ogre {
         */
         void setSceneBlending( const SceneBlendFactor sourceFactor, const SceneBlendFactor destFactor);
 
-        /** Allows very fine control of blending every Pass with the existing contents of the scene, using individual factors for color and alpha channels
-        @note
-            This property has been moved to the Pass class, which is accessible via the 
-            Technique. For simplicity, this method allows you to set these properties for 
-            every current Technique, and for every current Pass within those Techniques. If 
-            you need more precision, retrieve the Technique and Pass instances and set the
-            property there.
-        @see Pass::setSeparateSceneBlending
-        */
-        void setSeparateSceneBlending( const SceneBlendFactor sourceFactor, const SceneBlendFactor destFactor, const SceneBlendFactor sourceFactorAlpha, const SceneBlendFactor destFactorAlpha);
 
         /** Tells the material that it needs recompilation. */
         void _notifyNeedsRecompile(void);

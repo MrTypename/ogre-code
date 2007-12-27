@@ -39,7 +39,7 @@ namespace Ogre {
     class _OgrePrivate GLFrameBufferObject
     {
     public:
-        GLFrameBufferObject(GLFBOManager *manager, uint fsaa);
+        GLFrameBufferObject(GLFBOManager *manager);
         ~GLFrameBufferObject();
         //void bindSurface(size_t attachment, RenderTarget *target);
         /** Bind a surface to a certain attachment point.
@@ -53,10 +53,6 @@ namespace Ogre {
         /** Bind FrameBufferObject
         */
         void bind();
-
-		/** Swap buffers - only useful when using multisample buffers.
-		*/
-		void swapBuffers();
         
         /// Accessors
         size_t getWidth();
@@ -67,15 +63,11 @@ namespace Ogre {
 		const GLSurfaceDesc &getSurface(size_t attachment) { return mColour[attachment]; }
     private:
         GLFBOManager *mManager;
-		GLsizei mNumSamples;
         GLuint mFB;
-		GLuint mMultisampleFB;
-		GLSurfaceDesc mMultisampleColourBuffer;
         GLSurfaceDesc mDepth;
         GLSurfaceDesc mStencil;
         // Arbitrary number of texture surfaces
         GLSurfaceDesc mColour[OGRE_MAX_MULTIPLE_RENDER_TARGETS];
-
 
 		/** Initialise object (find suitable depth and stencil format).
             Must be called every time the bindings change.

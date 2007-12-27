@@ -38,7 +38,7 @@ namespace Ogre {
 
 	GLFBOMultiRenderTarget::GLFBOMultiRenderTarget(GLFBOManager *manager, const String &name):
 		MultiRenderTarget(name),
-		fbo(manager, 0 /* TODO: multisampling on MRTs? */)
+		fbo(manager)
 	{
 	}
 	GLFBOMultiRenderTarget::~GLFBOMultiRenderTarget()
@@ -46,7 +46,7 @@ namespace Ogre {
 	}
 
 
-	void GLFBOMultiRenderTarget::bindSurfaceImpl(size_t attachment, RenderTexture *target)
+	void GLFBOMultiRenderTarget::bindSurface(size_t attachment, RenderTexture *target)
 
 	{
 
@@ -72,7 +72,7 @@ namespace Ogre {
 
 
 
-	void GLFBOMultiRenderTarget::unbindSurfaceImpl(size_t attachment)
+	void GLFBOMultiRenderTarget::unbindSurface(size_t attachment)
 	{
 		fbo.unbindSurface(attachment);
 

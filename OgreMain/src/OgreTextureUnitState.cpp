@@ -50,7 +50,6 @@ namespace Ogre {
 		, mBorderColour(ColourValue::Black)
 		, mTextureLoadFailed(false)
 		, mIsAlpha(false)
-		, mHwGamma(false)
 		, mRecalcTexMatrix(false)
 		, mUMod(0)
 		, mVMod(0)
@@ -102,7 +101,6 @@ namespace Ogre {
 		, mBorderColour(ColourValue::Black)
 		, mTextureLoadFailed(false)
 		, mIsAlpha(false)
-		, mHwGamma(false)
 		, mRecalcTexMatrix(false)
 		, mUMod(0)
 		, mVMod(0)
@@ -521,16 +519,6 @@ namespace Ogre {
     {
         return mIsAlpha;
     }
-	//-----------------------------------------------------------------------
-	void TextureUnitState::setHardwareGammaEnabled(bool g)
-	{
-		mHwGamma = g;
-	}
-	//-----------------------------------------------------------------------
-	bool TextureUnitState::isHardwareGammaEnabled() const
-	{
-		return mHwGamma;
-	}
     //-----------------------------------------------------------------------
     unsigned int TextureUnitState::getTextureCoordSet(void) const
     {
@@ -1025,7 +1013,7 @@ namespace Ogre {
 					mFramePtrs[frame] = 
 						TextureManager::getSingleton().load(mFrames[frame], 
 							mParent->getResourceGroup(), mTextureType, 
-							mTextureSrcMipmaps, 1.0f, mIsAlpha, mDesiredFormat, mHwGamma);
+							mTextureSrcMipmaps, 1.0f, mIsAlpha, mDesiredFormat);
 				}
 				catch (Exception &e) {
 					String msg;

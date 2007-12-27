@@ -489,11 +489,6 @@ namespace Ogre {
 		*/
         bool getIsAlpha(void) const;
 
-		/// @copydoc Texture::setHardwareGammaEnabled
-		void setHardwareGammaEnabled(bool enabled);
-		/// @copydoc Texture::isHardwareGammaEnabled
-		bool isHardwareGammaEnabled() const;
-
         /** Gets the index of the set of texture co-ords this layer uses.
         @note
         Applies to both fixed-function and programmable pipeline.
@@ -606,6 +601,11 @@ namespace Ogre {
         angle The angle of rotation (anticlockwise).
         */
         void setTextureRotate(const Radian& angle);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline void setTextureRotate(Real angle) {
+            setTextureRotate ( Degree(angle) );
+        }
+#endif//OGRE_FORCE_ANGLE_TYPES
         // get texture rotation effects angle value
         const Radian& getTextureRotate(void) const;
 
@@ -1108,7 +1108,6 @@ protected:
         LayerBlendModeEx mAlphaBlendMode;
         mutable bool mTextureLoadFailed;
         bool mIsAlpha;
-		bool mHwGamma;
 
         mutable bool mRecalcTexMatrix;
         Real mUMod, mVMod;

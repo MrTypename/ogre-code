@@ -200,31 +200,18 @@ namespace Ogre {
 		*/
 		bool getStencilTwoSidedOperation();
 
-		/// Inputs (for material used for rendering the quad)
-		struct InputTex
-		{
-			/// Name (local) of the input texture (empty == no input)
-			String name;
-			/// MRT surface index if applicable
-			size_t mrtIndex;
-			InputTex() : name(StringUtil::BLANK), mrtIndex(0) {}
-			InputTex(const String& _name, size_t _mrtIndex = 0)
-				: name(_name), mrtIndex(_mrtIndex) {}
-		};
-
         /** Set an input local texture. An empty string clears the input.
             @param id    Input to set. Must be in 0..OGRE_MAX_TEXTURE_LAYERS-1
             @param input Which texture to bind to this input. An empty string clears the input.
-			@param mrtIndex Which surface of an MRT to retrieve
 			@note applies when PassType is RENDERQUAD 
         */
-        void setInput(size_t id, const String &input=StringUtil::BLANK, size_t mrtIndex=0);
+        void setInput(size_t id, const String &input="");
         
         /** Get the value of an input.
             @param id    Input to get. Must be in 0..OGRE_MAX_TEXTURE_LAYERS-1.
 			@note applies when PassType is RENDERQUAD 
         */
-        const InputTex &getInput(size_t id);
+        const String &getInput(size_t id);
         
         /** Get the number of inputs used.
 			@note applies when PassType is RENDERQUAD 
@@ -245,16 +232,6 @@ namespace Ogre {
          */
         bool _isSupported(void);
 
-        /** Set quad normalised positions [-1;1]x[-1;1]
-            @note applies when PassType is RENDERQUAD
-         */
-        void setQuadCorners(Real left,Real top,Real right,Real bottom);
-
-        /** Get quad normalised positions [-1;1]x[-1;1]
-            @note applies when PassType is RENDERQUAD 
-         */
-        bool getQuadCorners(Real & left,Real & top,Real & right,Real & bottom) const;
-            
     private:
         /// Parent technique
         CompositionTargetPass *mParent;
@@ -277,7 +254,7 @@ namespace Ogre {
 		uint32 mClearStencil;
         /// Inputs (for material used for rendering the quad)
         /// An empty string signifies that no input is used
-        InputTex mInputs[OGRE_MAX_TEXTURE_LAYERS];
+        String mInputs[OGRE_MAX_TEXTURE_LAYERS];
 		/// Stencil operation parameters
 		bool mStencilCheck;
 		CompareFunction mStencilFunc; 
@@ -287,14 +264,6 @@ namespace Ogre {
 		StencilOperation mStencilDepthFailOp;
 		StencilOperation mStencilPassOp;
 		bool mStencilTwoSidedOperation;
-
-        /// true if quad should not cover whole screen
-        bool mQuadCornerModified;
-        /// quad positions in normalised coordinates [-1;1]x[-1;1] (in case of PT_RENDERQUAD)
-        Real mQuadLeft;
-        Real mQuadTop;
-        Real mQuadRight;
-        Real mQuadBottom;
     };
 
 }

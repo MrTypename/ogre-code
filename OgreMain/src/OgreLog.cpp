@@ -110,10 +110,4 @@ namespace Ogre
 		OGRE_LOCK_AUTO_MUTEX
         mListeners.erase(std::find(mListeners.begin(), mListeners.end(), listener));
     }
-	//---------------------------------------------------------------------
-	Log::Stream Log::stream(LogMessageLevel lml, bool maskDebug) 
-	{
-		return Stream(this, lml, maskDebug);
-
-	}
 }

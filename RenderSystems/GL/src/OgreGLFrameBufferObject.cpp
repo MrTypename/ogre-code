@@ -38,34 +38,11 @@ Torus Knot Software Ltd.
 namespace Ogre {
 
 //-----------------------------------------------------------------------------
-    GLFrameBufferObject::GLFrameBufferObject(GLFBOManager *manager, uint fsaa):
-        mManager(manager), mNumSamples(fsaa)
+    GLFrameBufferObject::GLFrameBufferObject(GLFBOManager *manager):
+        mManager(manager)
     {
         /// Generate framebuffer object
         glGenFramebuffersEXT(1, &mFB);
-		// check multisampling
-		if (GLEW_EXT_framebuffer_blit && GLEW_EXT_framebuffer_multisample)
-		{
-			// check samples supported
-			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, mFB);
-			int maxSamples;
-			glGetIntegerv(GL_MAX_SAMPLES_EXT, &maxSamples);
-			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-			mNumSamples = std::min(mNumSamples, (GLsizei)maxSamples);
-		}
-		else
-		{
-			mNumSamples = 0;
-		}
-		// will we need a second FBO to do multisampling?
-		if (mNumSamples)
-		{
-			glGenFramebuffersEXT(1, &mMultisampleFB);
-		}
-		else
-		{
-			mMultisampleFB = 0;
-		}
         /// Initialise state
         mDepth.buffer=0;
         mStencil.buffer=0;
@@ -78,12 +55,8 @@ namespace Ogre {
     {
         mManager->releaseRenderBuffer(mDepth);
         mManager->releaseRenderBuffer(mStencil);
-		mManager->releaseRenderBuffer(mMultisampleColourBuffer);
         /// Delete framebuffer object
         glDeleteFramebuffersEXT(1, &mFB);        
-		if (mMultisampleFB)
-			glDeleteFramebuffersEXT(1, &mMultisampleFB);
-
     }
     void GLFrameBufferObject::bindSurface(size_t attachment, const GLSurfaceDesc &target)
     {
@@ -108,7 +81,6 @@ namespace Ogre {
 		// Release depth and stencil, if they were bound
         mManager->releaseRenderBuffer(mDepth);
         mManager->releaseRenderBuffer(mStencil);
-		mManager->releaseRenderBuffer(mMultisampleColourBuffer);
         /// First buffer must be bound
         if(!mColour[0].buffer)
         {
@@ -116,21 +88,13 @@ namespace Ogre {
             "Attachment 0 must have surface attached",
 		 	"GLFrameBufferObject::initialise");
         }
-
-		// If we're doing multisampling, then we need another FBO which contains a
-		// renderbuffer which is set up to multisample, and we'll blit it to the final 
-		// FBO afterwards to perform the multisample resolve. In that case, the 
-		// mMultisampleFB is bound during rendering and is the one with a depth/stencil
-
+        /// Bind FBO to frame buffer
+        bind();
         /// Store basic stats
         size_t width = mColour[0].buffer->getWidth();
         size_t height = mColour[0].buffer->getHeight();
         GLuint format = mColour[0].buffer->getGLFormat();
         PixelFormat ogreFormat = mColour[0].buffer->getFormat();
-
-		// Bind simple buffer to add colour attachments
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, mFB);
-
         /// Bind all attachment points to frame buffer
         for(size_t x=0; x<OGRE_MAX_MULTIPLE_RENDER_TARGETS; ++x)
         {
@@ -161,33 +125,12 @@ namespace Ogre {
                     GL_RENDERBUFFER_EXT, 0);
             }
         }
-
-		// Now deal with depth / stencil
-		if (mMultisampleFB)
-		{
-			// Bind multisample buffer
-			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, mMultisampleFB);
-
-			// Create AA render buffer (colour)
-			// note, this can be shared too because we blit it to the final FBO
-			// right after the render is finished
-			mMultisampleColourBuffer = mManager->requestRenderBuffer(format, width, height, mNumSamples);
-
-			// Attach it, because we won't be attaching below and non-multisample has
-			// actually been attached to other FBO
-			mMultisampleColourBuffer.buffer->bindToFramebuffer(GL_COLOR_ATTACHMENT0_EXT, 
-				mMultisampleColourBuffer.zoffset);
-
-			// depth & stencil will be dealt with below
-
-		}
-
         /// Find suitable depth and stencil format that is compatible with colour format
         GLenum depthFormat, stencilFormat;
         mManager->getBestDepthStencil(ogreFormat, &depthFormat, &stencilFormat);
         
         /// Request surfaces
-        mDepth = mManager->requestRenderBuffer(depthFormat, width, height, mNumSamples);
+        mDepth = mManager->requestRenderBuffer(depthFormat, width, height);
 		if (depthFormat == GL_DEPTH24_STENCIL8_EXT)
 		{
 			// bind same buffer to depth and stencil attachments
@@ -197,7 +140,7 @@ namespace Ogre {
 		else
 		{
 			// separate stencil
-			mStencil = mManager->requestRenderBuffer(stencilFormat, width, height, mNumSamples);
+			mStencil = mManager->requestRenderBuffer(stencilFormat, width, height);
 		}
         
         /// Attach/detach surfaces
@@ -247,16 +190,8 @@ namespace Ogre {
 			/// In this case, the capabilities will not show more than 1 simultaneaous render target.
 			glDrawBuffer(bufs[0]);
 		}
-		if (mMultisampleFB)
-		{
-			// we need a read buffer because we'll be blitting to mFB
-			glReadBuffer(bufs[0]);
-		}
-		else
-		{
-			/// No read buffer, by default, if we want to read anyway we must not forget to set this.
-			glReadBuffer(GL_NONE);
-		}
+		/// No read buffer, by default, if we want to read anyway we must not forget to set this.
+		glReadBuffer(GL_NONE);
         
         /// Check status
         GLuint status;
@@ -284,26 +219,8 @@ namespace Ogre {
     void GLFrameBufferObject::bind()
     {
         /// Bind it to FBO
-		if (mMultisampleFB)
-			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, mMultisampleFB);
-		else
-			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, mFB);
+        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, mFB);
     }
-
-	void GLFrameBufferObject::swapBuffers()
-	{
-		if (mMultisampleFB)
-		{
-			// blit from multisample buffer to final buffer, triggers resolve
-			size_t width = mColour[0].buffer->getWidth();
-			size_t height = mColour[0].buffer->getHeight();
-			glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, mMultisampleFB);
-			glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, mFB);
-			glBlitFramebufferEXT(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-		}
-	}
-
     size_t GLFrameBufferObject::getWidth()
     {
         assert(mColour[0].buffer);

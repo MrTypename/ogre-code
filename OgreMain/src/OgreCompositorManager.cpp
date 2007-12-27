@@ -54,9 +54,7 @@ CompositorManager::CompositorManager():
 	// Loading order (just after materials)
 	mLoadOrder = 110.0f;
 	// Scripting is supported by this manager
-#if OGRE_USE_NEW_COMPILERS == 0
 	mScriptPatterns.push_back("*.compositor");
-#endif
 	ResourceGroupManager::getSingleton()._registerScriptLoader(this);
 
 	// Resource type

@@ -96,9 +96,9 @@ public:
     void init( AxisAlignedBox &box, int d );
 
     /** Creates a specialized OctreeNode */
-    virtual SceneNode * createSceneNodeImpl ( void );
+    virtual	SceneNode * createSceneNode ( void );
     /** Creates a specialized OctreeNode */
-    virtual SceneNode * createSceneNodeImpl ( const String &name );
+    virtual SceneNode * createSceneNode ( const String &name );
     /** Creates a specialized OctreeCamera */
     virtual Camera * createCamera( const String &name );
 

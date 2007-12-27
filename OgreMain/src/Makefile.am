@@ -13,7 +13,6 @@ libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
                          OgreAnimationTrack.cpp \
                          OgreArchiveManager.cpp \
 			 OgreAutoParamDataSource.cpp \
-			 OgreAxisAlignedBox.cpp \
                          OgreBillboard.cpp \
 			 OgreBillboardChain.cpp \
                          OgreBillboardParticleRenderer.cpp \
@@ -108,8 +107,6 @@ libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
 			 OgreRenderQueueSortingGrouping.cpp \
                          OgreRenderSystem.cpp \
                          OgreRenderSystemCapabilities.cpp \
-                         OgreRenderSystemCapabilitiesManager.cpp \
-                         OgreRenderSystemCapabilitiesSerializer.cpp \
                          OgreRenderTarget.cpp \
                          OgreRenderTexture.cpp \
                          OgreRenderWindow.cpp \
@@ -124,9 +121,6 @@ libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
                          OgreSceneManagerEnumerator.cpp \
                          OgreSceneNode.cpp \
                          OgreSceneQuery.cpp \
-                         OgreScriptCompiler.cpp \
-                         OgreScriptLexer.cpp \
-                         OgreScriptParser.cpp \
                          OgreSearchOps.cpp \
                          OgreSerializer.cpp \
 						 OgreShadowCameraSetup.cpp \
@@ -149,7 +143,6 @@ libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
                          OgreSubEntity.cpp \
                          OgreSubMesh.cpp \
                          OgreTagPoint.cpp \
-						 OgreTangentSpaceCalc.cpp \
                          OgreTechnique.cpp \
                          OgreTextAreaOverlayElement.cpp \
                          OgreTexture.cpp \

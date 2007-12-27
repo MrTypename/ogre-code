@@ -20,7 +20,6 @@ namespace Ogre {
         : mInitialWindow(0)
         , mHasPixelFormatARB(false)
         , mHasMultisample(false)
-		, mHasHardwareGamma(false)
     {
 		// immediately test WGL_ARB_pixel_format and FSAA support
 		// so we can set configuration options appropriately
@@ -52,7 +51,6 @@ namespace Ogre {
 		ConfigOption optVSync;
 		ConfigOption optFSAA;
 		ConfigOption optRTTMode;
-		ConfigOption optSRGB;
 
 		// FS setting possiblities
 		optFullScreen.name = "Full Screen";
@@ -107,14 +105,6 @@ namespace Ogre {
 		optRTTMode.immutable = false;
 
 
-		// SRGB on auto window
-		optSRGB.name = "sRGB Gamma Conversion";
-		optSRGB.possibleValues.push_back("Yes");
-		optSRGB.possibleValues.push_back("No");
-		optSRGB.currentValue = "No";
-		optSRGB.immutable = false;
-
-
 		mOptions[optFullScreen.name] = optFullScreen;
 		mOptions[optVideoMode.name] = optVideoMode;
 		mOptions[optColourDepth.name] = optColourDepth;
@@ -122,7 +112,6 @@ namespace Ogre {
 		mOptions[optVSync.name] = optVSync;
 		mOptions[optFSAA.name] = optFSAA;
 		mOptions[optRTTMode.name] = optRTTMode;
-		mOptions[optSRGB.name] = optSRGB;
 
 		refreshConfig();
 	}
@@ -248,13 +237,7 @@ namespace Ogre {
 				StringConverter::parseUnsignedInt(opt->second.currentValue);
 			winOptions["FSAA"] = StringConverter::toString(multisample);
 
-			opt = mOptions.find("sRGB Gamma Conversion");
-			if (opt == mOptions.end())
-				OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Can't find sRGB options!", "Win32GLSupport::createWindow");
-			bool hwGamma = (opt->second.currentValue == "Yes");
-			winOptions["gamma"] = StringConverter::toString(hwGamma);
-
-            return renderSystem->_createRenderWindow(windowTitle, w, h, fullscreen, &winOptions);
+            return renderSystem->createRenderWindow(windowTitle, w, h, fullscreen, &winOptions);
         }
         else
         {
@@ -304,8 +287,10 @@ namespace Ogre {
 		if(!_wglGetExtensionsStringARB)
 			return;
 		const char *wgl_extensions = _wglGetExtensionsStringARB(mInitialWindow->getHDC());
-        LogManager::getSingleton().stream()
-			<< "Supported WGL extensions: " << wgl_extensions;
+        StringUtil::StrStreamType str;
+        str << "Supported WGL extensions: " << wgl_extensions;
+		LogManager::getSingleton().logMessage(
+			LML_NORMAL, str.str());
 		// Parse them, and add them to the main list
 		std::stringstream ext;
         String instr;
@@ -321,6 +306,24 @@ namespace Ogre {
 	{
         	return (void*)wglGetProcAddress( procname.c_str() );
 	}
+/*
+	RenderTexture * Win32GLSupport::createRenderTexture( const String & name, 
+		unsigned int width, unsigned int height,
+		TextureType texType, PixelFormat internalFormat, 
+		const NameValuePairList *miscParams ) 
+	{
+#ifdef HW_RTT
+		bool useBind = checkExtension("WGL_ARB_render_texture");
+
+		if(Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_HWRENDER_TO_TEXTURE))
+			return new Win32RenderTexture(*this, name, width, height, texType, 
+				internalFormat, miscParams, useBind);
+		else
+#endif
+			return new GLRenderTexture(name, width, height, texType, internalFormat, miscParams);
+	}
+
+*/
 	void Win32GLSupport::initialiseWGL()
 	{
 		// wglGetProcAddress does not work without an active OpenGL context,
@@ -400,8 +403,6 @@ namespace Ogre {
 						mHasPixelFormatARB = true;
 					else if (ext == "WGL_ARB_multisample")
 						mHasMultisample = true;
-					else if (ext == "WGL_EXT_framebuffer_sRGB")
-						mHasHardwareGamma = true;
 				}
 			}
 
@@ -461,7 +462,7 @@ namespace Ogre {
 		return DefWindowProc(hwnd, umsg, wp, lp);
 	}
 
-	bool Win32GLSupport::selectPixelFormat(HDC hdc, int colourDepth, int multisample, bool hwGamma)
+	bool Win32GLSupport::selectPixelFormat(HDC hdc, int colourDepth, int multisample)
 	{
 		PIXELFORMATDESCRIPTOR pfd;
 		memset(&pfd, 0, sizeof(pfd));
@@ -476,43 +477,39 @@ namespace Ogre {
 
 		int format = 0;
 
-		int useHwGamma = hwGamma? GL_TRUE : GL_FALSE;
-
-		if (multisample && (!mHasMultisample || !mHasPixelFormatARB))
-			return false;
-
-		if (hwGamma && !mHasHardwareGamma)
-			return false;
-			
-		// Use WGL to test extended caps (multisample, sRGB)
-		std::vector<int> attribList;
-		attribList.push_back(WGL_DRAW_TO_WINDOW_ARB); attribList.push_back(GL_TRUE);
-		attribList.push_back(WGL_SUPPORT_OPENGL_ARB); attribList.push_back(GL_TRUE);
-		attribList.push_back(WGL_DOUBLE_BUFFER_ARB); attribList.push_back(GL_TRUE);
-		attribList.push_back(WGL_SAMPLE_BUFFERS_ARB); attribList.push_back(GL_TRUE);
-		attribList.push_back(WGL_ACCELERATION_ARB); attribList.push_back(WGL_FULL_ACCELERATION_ARB);
-		attribList.push_back(WGL_COLOR_BITS_ARB); attribList.push_back(pfd.cColorBits);
-		attribList.push_back(WGL_ALPHA_BITS_ARB); attribList.push_back(pfd.cAlphaBits);
-		attribList.push_back(WGL_DEPTH_BITS_ARB); attribList.push_back(24);
-		attribList.push_back(WGL_STENCIL_BITS_ARB); attribList.push_back(8);
-		attribList.push_back(WGL_SAMPLES_ARB); attribList.push_back(multisample);
-		if (useHwGamma && checkExtension("WGL_EXT_framebuffer_sRGB"))
+		if (multisample)
 		{
-			attribList.push_back(WGL_FRAMEBUFFER_SRGB_CAPABLE_EXT); attribList.push_back(GL_TRUE);
+			// only available with driver support
+			if (!mHasMultisample || !mHasPixelFormatARB)
+				return false;
+			
+			int iattr[] = {
+				WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+				WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+				WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+				WGL_SAMPLE_BUFFERS_ARB, GL_TRUE,
+				WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
+				WGL_COLOR_BITS_ARB, pfd.cColorBits,
+				WGL_ALPHA_BITS_ARB, pfd.cAlphaBits,
+				WGL_DEPTH_BITS_ARB, 24,
+				WGL_STENCIL_BITS_ARB, 8,
+				WGL_SAMPLES_ARB, multisample,
+				0
+			};
+
+			UINT nformats;
+            assert(__wglewChoosePixelFormatARB && "failed to get proc address for ChoosePixelFormatARB");
+            // ChoosePixelFormatARB proc address was obtained when setting up a dummy GL context in initialiseWGL()
+            // since glew hasn't been initialized yet, we have to cheat and use the previously obtained address
+			if (!__wglewChoosePixelFormatARB(hdc, iattr, NULL, 1, &format, &nformats) || nformats <= 0)
+                return false;
 		}
-		// terminator
-		attribList.push_back(0);
+		else
+		{
+			format = ChoosePixelFormat(hdc, &pfd);
+		}
 
-
-		UINT nformats;
-        assert(__wglewChoosePixelFormatARB && "failed to get proc address for ChoosePixelFormatARB");
-        // ChoosePixelFormatARB proc address was obtained when setting up a dummy GL context in initialiseWGL()
-        // since glew hasn't been initialized yet, we have to cheat and use the previously obtained address
-		if (!__wglewChoosePixelFormatARB(hdc, &(attribList[0]), NULL, 1, &format, &nformats) || nformats <= 0)
-            return false;
-
-
-		return (format && SetPixelFormat(hdc, format, &pfd));
+		return (format != 0 && SetPixelFormat(hdc, format, &pfd));
 	}
 
 	bool Win32GLSupport::supportsPBuffers()
@@ -523,29 +520,4 @@ namespace Ogre {
 	{
 		return new Win32PBuffer(format, width, height);
 	}
-
-
-	String translateWGLError()
-	{
-
-		int winError = GetLastError();
-		char* errDesc;
-		int i;
-
-		errDesc = new char[255];
-		// Try windows errors first
-		i = FormatMessage(
-			FORMAT_MESSAGE_FROM_SYSTEM |
-			FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL,
-			winError,
-			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-			(LPTSTR) errDesc,
-			255,
-			NULL
-			);
-
-		return String(errDesc);
-	}
-
 }

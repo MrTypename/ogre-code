@@ -85,6 +85,11 @@ namespace Ogre
         }
 
 
+        inline Vector3( const Vector3& rkVector )
+            : x( rkVector.x ), y( rkVector.y ), z( rkVector.z )
+        {
+        }
+
 		inline Real operator [] ( const size_t i ) const
         {
             assert( i < 3 );
@@ -605,25 +610,15 @@ namespace Ogre
             q.FromAngleAxis( angle, newUp );
             return q * (*this);
         }
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline Vector3 randomDeviant(
+            Real angle,
+            const Vector3& up = Vector3::ZERO ) const
+        {
+            return randomDeviant ( Radian(angle), up );
+        }
+#endif//OGRE_FORCE_ANGLE_TYPES
 
-		/** Gets the angle between 2 vectors.
-		@remarks
-			Vectors do not have to be unit-length but must represent directions.
-		*/
-		inline Radian angleBetween(const Vector3& dest)
-		{
-			Real lenProduct = length() * dest.length();
-
-			// Divide by zero check
-			if(lenProduct < 1e-6f)
-				lenProduct = 1e-6f;
-
-			Real f = dotProduct(dest) / lenProduct;
-
-			f = Math::Clamp(f, (Real)-1.0, (Real)1.0);
-			return Math::ACos(f);
-
-		}
         /** Gets the shortest arc quaternion to rotate this vector to the destination
             vector.
         @remarks

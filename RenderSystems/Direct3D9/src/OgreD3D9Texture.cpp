@@ -53,13 +53,9 @@ namespace Ogre
         mpNormTex(NULL),
         mpCubeTex(NULL),
 		mpVolumeTex(NULL),
-		mFSAASurface(NULL),
         mpTex(NULL),
         mD3DPool(D3DPOOL_MANAGED),
-		mDynamicTextures(false),
-		mHwGammaReadSupported(false),
-		mHwGammaWriteSupported(false),
-		mFSAALevelSupported(false)
+		mDynamicTextures(false)
 	{
         _initDevice();
 	}
@@ -218,7 +214,6 @@ namespace Ogre
 		SAFE_RELEASE(mpNormTex);
 		SAFE_RELEASE(mpCubeTex);
 		SAFE_RELEASE(mpVolumeTex);
-		SAFE_RELEASE(mFSAASurface);
 	}
 	/****************************************************************************************/
 	void D3D9Texture::_loadCubeTex()
@@ -581,18 +576,6 @@ namespace Ogre
 				mDynamicTextures = false;
 			}
 		}
-		// Check sRGB support
-		if (mHwGamma)
-		{
-			mHwGammaReadSupported = _canUseHardwareGammaCorrection(usage, D3DRTYPE_TEXTURE, d3dPF, false);
-			if (mUsage & TU_RENDERTARGET)
-				mHwGammaWriteSupported = _canUseHardwareGammaCorrection(usage, D3DRTYPE_TEXTURE, d3dPF, true);
-		}
-		// Check FSAA level
-		if (mFSAA > 0 && (mUsage & TU_RENDERTARGET))
-		{
-			mFSAALevelSupported = _canUseFSAALevel(usage, D3DRTYPE_TEXTURE, d3dPF, mFSAA);
-		}
 		// check if mip maps are supported on hardware
 		mMipmapsHardwareGenerated = false;
 		if (mDevCaps.TextureCaps & D3DPTEXTURECAPS_MIPMAP)
@@ -649,25 +632,6 @@ namespace Ogre
 			this->freeInternalResources();
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get texture description", "D3D9Texture::_createNormTex" );
 		}
-
-		if (mFSAA > 0 && mFSAALevelSupported)
-		{
-			// create AA surface
-			HRESULT hr = mpDev->CreateRenderTarget(desc.Width, desc.Height, d3dPF, 
-				(D3DMULTISAMPLE_TYPE)mFSAA, 
-				0, // Only supporting regular sampling, not nonmaskable 
-				FALSE, // not lockable
-				&mFSAASurface, NULL);
-
-			if (FAILED(hr))
-			{
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-					"Unable to create AA render target: " + String(DXGetErrorDescription9(hr)), 
-					"D3D9Texture::_createNormTex");
-			}
-
-		}
-
 		this->_setFinalAttributes(desc.Width, desc.Height, 1, D3D9Mappings::_getPF(desc.Format));
 		
 		// Set best filter type
@@ -679,7 +643,6 @@ namespace Ogre
 				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Could not set best autogen filter type", "D3D9Texture::_createNormTex" );
 			}
 		}
-
 	}
 	/****************************************************************************************/
 	void D3D9Texture::_createCubeTex()
@@ -709,18 +672,6 @@ namespace Ogre
 			{
 				mDynamicTextures = false;
 			}
-		}
-		// Check sRGB support
-		if (mHwGamma)
-		{
-			mHwGammaReadSupported = _canUseHardwareGammaCorrection(usage, D3DRTYPE_CUBETEXTURE, d3dPF, false);
-			if (mUsage & TU_RENDERTARGET)
-				mHwGammaWriteSupported = _canUseHardwareGammaCorrection(usage, D3DRTYPE_CUBETEXTURE, d3dPF, true);
-		}
-		// Check FSAA level
-		if (mFSAA > 0 && (mUsage & TU_RENDERTARGET))
-		{
-			mFSAALevelSupported = _canUseFSAALevel(usage, D3DRTYPE_CUBETEXTURE, d3dPF, mFSAA);
 		}
 		// check if mip map cube textures are supported
 		mMipmapsHardwareGenerated = false;
@@ -777,25 +728,6 @@ namespace Ogre
 			this->freeInternalResources();
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Can't get texture description", "D3D9Texture::_createCubeTex" );
 		}
-
-		if (mFSAA > 0 && mFSAALevelSupported)
-		{
-			// create AA surface
-			HRESULT hr = mpDev->CreateRenderTarget(desc.Width, desc.Height, d3dPF, 
-				(D3DMULTISAMPLE_TYPE)mFSAA, 
-				0, // Only supporting regular sampling, not nonmaskable 
-				FALSE, // not lockable
-				&mFSAASurface, NULL);
-
-			if (FAILED(hr))
-			{
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-					"Unable to create AA render target: " + String(DXGetErrorDescription9(hr)), 
-					"D3D9Texture::_createCubeTex");
-			}
-
-		}
-
 		this->_setFinalAttributes(desc.Width, desc.Height, 1, D3D9Mappings::_getPF(desc.Format));
 
 		// Set best filter type
@@ -807,7 +739,6 @@ namespace Ogre
 				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Could not set best autogen filter type", "D3D9Texture::_createCubeTex" );
 			}
 		}
-
 	}
 	/****************************************************************************************/
 	void D3D9Texture::_createVolumeTex()
@@ -837,13 +768,6 @@ namespace Ogre
 			{
 				mDynamicTextures = false;
 			}
-		}
-		// Check sRGB support
-		if (mHwGamma)
-		{
-			mHwGammaReadSupported = _canUseHardwareGammaCorrection(usage, D3DRTYPE_VOLUMETEXTURE, d3dPF, false);
-			if (mUsage & TU_RENDERTARGET)
-				mHwGammaWriteSupported = _canUseHardwareGammaCorrection(usage, D3DRTYPE_VOLUMETEXTURE, d3dPF, true);
 		}
 		// check if mip map volume textures are supported
 		mMipmapsHardwareGenerated = false;
@@ -1079,60 +1003,6 @@ namespace Ogre
 			return false;
 	}
 	/****************************************************************************************/
-	bool D3D9Texture::_canUseHardwareGammaCorrection(DWORD srcUsage, 
-		D3DRESOURCETYPE srcType, D3DFORMAT srcFormat, bool forwriting)
-	{
-		// those MUST be initialized !!!
-		assert(mpDev);
-		assert(mpD3D);
-
-
-		// Always check 'read' capability here
-		// We will check 'write' capability only in the context of a render target
-		if (forwriting)
-			srcUsage |= D3DUSAGE_QUERY_SRGBWRITE;
-		else
-			srcUsage |= D3DUSAGE_QUERY_SRGBREAD;
-
-		// Check for sRGB support
-		HRESULT hr;
-		// check for auto gen. mip maps support
-		hr = mpD3D->CheckDeviceFormat(
-			mDevCreParams.AdapterOrdinal, 
-			mDevCreParams.DeviceType, 
-			mBBPixelFormat, 
-			srcUsage,
-			srcType,
-			srcFormat);
-		if (hr == D3D_OK)
-			return true;
-		else
-			return false;
-
-	}
-	/****************************************************************************************/
-	bool D3D9Texture::_canUseFSAALevel(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat, uint fsaa)
-	{
-		// those MUST be initialized !!!
-		assert(mpDev);
-		assert(mpD3D);
-
-
-		HRESULT hr = mpD3D->CheckDeviceMultiSampleType(
-			mDevCreParams.AdapterOrdinal, 
-			mDevCreParams.DeviceType, 
-			srcFormat, 
-			false,
-			(D3DMULTISAMPLE_TYPE)fsaa,
-			0);
-		if (hr == D3D_OK)
-			return true;
-		else
-			return false;
-
-
-	}
-	/****************************************************************************************/
 	bool D3D9Texture::_canAutoGenMipmaps(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat)
 	{
 		// those MUST be initialized !!!
@@ -1235,8 +1105,7 @@ namespace Ogre
 				// this is safe because the texture keeps a reference as well
 				surface->Release();
 
-				GETLEVEL(0, mip)->bind(mpDev, surface, updateOldList, mHwGammaWriteSupported, 
-					mFSAALevelSupported? mFSAA : 0, mFSAASurface);
+				GETLEVEL(0, mip)->bind(mpDev, surface, updateOldList);
 			}
 			break;
 		case TEX_TYPE_CUBE_MAP:
@@ -1253,8 +1122,7 @@ namespace Ogre
 					// this is safe because the texture keeps a reference as well
 					surface->Release();
 					
-					GETLEVEL(face, mip)->bind(mpDev, surface, updateOldList, mHwGammaWriteSupported, 
-						mFSAALevelSupported? mFSAA : 0, mFSAASurface);
+					GETLEVEL(face, mip)->bind(mpDev, surface, updateOldList);
 				}
 			}
 			break;
@@ -1270,7 +1138,7 @@ namespace Ogre
 				// this is safe because the texture keeps a reference as well
 				volume->Release();
 						
-				GETLEVEL(0, mip)->bind(mpDev, volume, updateOldList, mHwGammaWriteSupported);
+				GETLEVEL(0, mip)->bind(mpDev, volume, updateOldList);
 			}
 			break;
 		};
@@ -1367,60 +1235,4 @@ namespace Ogre
 
         RenderTexture::update();
     }
-	//---------------------------------------------------------------------
-	void D3D9RenderTexture::getCustomAttribute( const String& name, void *pData )
-	{
-		if(name == "DDBACKBUFFER")
-		{
-			if (mFSAA > 0)
-			{
-				// rendering to AA surface
-				IDirect3DSurface9 ** pSurf = (IDirect3DSurface9 **)pData;
-				*pSurf = static_cast<D3D9HardwarePixelBuffer*>(mBuffer)->getFSAASurface();
-				return;
-			}
-			else
-			{
-				IDirect3DSurface9 ** pSurf = (IDirect3DSurface9 **)pData;
-				*pSurf = static_cast<D3D9HardwarePixelBuffer*>(mBuffer)->getSurface();
-				return;
-			}
-		}
-		else if(name == "HWND")
-		{
-			HWND *pHwnd = (HWND*)pData;
-			*pHwnd = NULL;
-			return;
-		}
-		else if(name == "BUFFER")
-		{
-			*static_cast<HardwarePixelBuffer**>(pData) = mBuffer;
-			return;
-		}
-	}
-	//---------------------------------------------------------------------
-	void D3D9RenderTexture::swapBuffers(bool waitForVSync /* = true */)
-	{
-		// Only needed if we have to blit from AA surface
-		if (mFSAA > 0)
-		{
-			D3D9RenderSystem* rs = static_cast<D3D9RenderSystem*>(
-				Root::getSingleton().getRenderSystem());
-			if (rs->isDeviceLost())
-				return;
-
-			D3D9HardwarePixelBuffer* buf = static_cast<D3D9HardwarePixelBuffer*>(mBuffer);
-			HRESULT hr = rs->getDevice()->StretchRect(buf->getFSAASurface(), 0, buf->getSurface(), 0, D3DTEXF_NONE);
-			if (FAILED(hr))
-			{
-				OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
-					"Unable to copy AA buffer to final buffer: " + String(DXGetErrorDescription9(hr)), 
-					"D3D9RenderTexture::swapBuffers");
-			}
-			
-
-		}
-	}
-
-
 }

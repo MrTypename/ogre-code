@@ -25,6 +25,9 @@ http://www.gnu.org/copyleft/lesser.txt
 #ifndef __OgrePrerequisites_H__
 #define __OgrePrerequisites_H__
 
+// undefine this to not require new angular units where applicable
+#define OGRE_FORCE_ANGLE_TYPES
+
 // Platform-specific stuff
 #include "OgrePlatform.h"
 
@@ -86,10 +89,10 @@ http://www.gnu.org/copyleft/lesser.txt
 namespace Ogre {
     // Define ogre version
     #define OGRE_VERSION_MAJOR 1
-    #define OGRE_VERSION_MINOR 5
-    #define OGRE_VERSION_PATCH 0
+    #define OGRE_VERSION_MINOR 4
+    #define OGRE_VERSION_PATCH 6
 	#define OGRE_VERSION_SUFFIX ""
-    #define OGRE_VERSION_NAME "Shoggoth"
+    #define OGRE_VERSION_NAME "Eihort"
 
     #define OGRE_VERSION    ((OGRE_VERSION_MAJOR << 16) | (OGRE_VERSION_MINOR << 8) | OGRE_VERSION_PATCH)
 
@@ -316,8 +319,6 @@ namespace Ogre {
     class RenderQueueListener;
     class RenderSystem;
     class RenderSystemCapabilities;
-    class RenderSystemCapabilitiesManager;
-    class RenderSystemCapabilitiesSerializer;
     class RenderTarget;
     class RenderTargetListener;
     class RenderTexture;
@@ -335,8 +336,6 @@ namespace Ogre {
     class SceneNode;
     class SceneQuery;
     class SceneQueryListener;
-	class ScriptCompiler;
-	class ScriptCompilerManager;
 	class ScriptLoader;
     class Serializer;
     class ShadowCaster;

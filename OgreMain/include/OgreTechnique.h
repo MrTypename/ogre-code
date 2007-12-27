@@ -71,31 +71,7 @@ namespace Ogre {
 
         /// Internal method for clearing illumination pass list
         void clearIlluminationPasses(void);
-		/// Internal method - check for manually assigned illumination passes
-		bool checkManuallyOrganisedIlluminationPasses();
-
-
-		/** When casting shadow, if not using default Ogre shadow casting material, or 
-		* nor using fixed function casting, mShadowCasterMaterial let you customize per material
-		* shadow caster behavior
-		*/
-		MaterialPtr mShadowCasterMaterial;
-		/** When casting shadow, if not using default Ogre shadow casting material, or 
-		* nor using fixed function casting, mShadowCasterMaterial let you customize per material
-		* shadow caster behavior.There only material name is stored so that it can be loaded once all file parsed in a resource group.
-		*/
-		String mShadowCasterMaterialName;
-		/** When receiving shadow, if not using default Ogre shadow receiving material, or 
-		* nor using fixed function texture projection receiving, mShadowReceiverMaterial let you customize per material
-		* shadow caster behavior
-		*/
-		MaterialPtr mShadowReceiverMaterial;
-		/** When receiving shadow, if not using default Ogre shadow receiving material, or 
-		* nor using fixed function texture projection receiving, mShadowReceiverMaterial let you customize per material
-		* shadow caster behavior. There only material name is stored so that it can be loaded once all file parsed in a resource group.
-		*/
-		String mShadowReceiverMaterialName;	
-	public:
+    public:
         /// Constructor
         Technique(Material* parent);
         /// Copy constructor
@@ -178,24 +154,6 @@ namespace Ogre {
         /** Tells the technique that it needs recompilation. */
         void _notifyNeedsRecompile(void);
 
-		/** return this material specific  shadow casting specific material
-		*/
-		Ogre::MaterialPtr getShadowCasterMaterial() const;
-		/** set this material specific  shadow casting specific material
-		*/
-		void setShadowCasterMaterial(Ogre::MaterialPtr val);
-		/** set this material specific  shadow casting specific material
-		*/
-		void setShadowCasterMaterial(const Ogre::String &name);
-		/** return this material specific shadow receiving specific material
-		*/
-		Ogre::MaterialPtr getShadowReceiverMaterial() const;
-		/** set this material specific  shadow receiving specific material
-		*/
-		void setShadowReceiverMaterial(Ogre::MaterialPtr val);
-		/** set this material specific  shadow receiving specific material
-		*/
-		void setShadowReceiverMaterial(const Ogre::String &name);
 
         // -------------------------------------------------------------------------------
         // The following methods are to make migration from previous versions simpler
@@ -435,16 +393,6 @@ namespace Ogre {
         */
         void setSceneBlending( const SceneBlendType sbt );
 
-        /** Sets the kind of blending every pass has with the existing contents of the scene, using individual factors both color and alpha channels
-        @note
-            This property actually exists on the Pass class. For simplicity, this method allows 
-            you to set these properties for every current Pass within this Technique. If 
-            you need more precision, retrieve the Pass instance and set the
-            property there.
-        @see Pass::setSeparateSceneBlending
-        */
-        void setSeparateSceneBlending( const SceneBlendType sbt, const SceneBlendType sbta );
-
         /** Allows very fine control of blending every Pass with the existing contents of the scene.
         @note
             This property actually exists on the Pass class. For simplicity, this method allows 
@@ -454,16 +402,6 @@ namespace Ogre {
         @see Pass::setSceneBlending
         */
         void setSceneBlending( const SceneBlendFactor sourceFactor, const SceneBlendFactor destFactor);
-
-        /** Allows very fine control of blending every Pass with the existing contents of the scene, using individual factors both color and alpha channels
-        @note
-            This property actually exists on the Pass class. For simplicity, this method allows 
-            you to set these properties for every current Pass within this Technique. If 
-            you need more precision, retrieve the Pass instance and set the
-            property there.
-        @see Pass::setSeparateSceneBlending
-        */
-        void setSeparateSceneBlending( const SceneBlendFactor sourceFactor, const SceneBlendFactor destFactor, const SceneBlendFactor sourceFactorAlpha, const SceneBlendFactor destFactorAlpha);
 
         /** Assigns a level-of-detail (LOD) index to this Technique.
         @remarks
@@ -522,8 +460,8 @@ namespace Ogre {
 
         /** Set the name of the technique.
         @remarks
-		The use of technique name is optional.  Its useful in material scripts where a material could inherit
-		from another material and only want to modify a particular technique.
+        The use of technique name is optional.  Its usefull in material scripts where a material could inherit
+        from another material and only want to modify a particalar technique.
         */
         void setName(const String& name);
         /// Gets the name of the technique
