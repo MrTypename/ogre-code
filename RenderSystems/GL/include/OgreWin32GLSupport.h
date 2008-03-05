@@ -28,7 +28,7 @@ namespace Ogre
 
 		virtual RenderWindow* createWindow(bool autoCreateWindow, GLRenderSystem* renderSystem, const String& windowTitle = "OGRE Render Window");
 
-		/// @copydoc RenderSystem::_createRenderWindow
+		/// @copydoc RenderSystem::createRenderWindow
 		virtual RenderWindow* newWindow(const String &name, unsigned int width, unsigned int height, 
 			bool fullScreen, const NameValuePairList *miscParams = 0);
 
@@ -53,7 +53,7 @@ namespace Ogre
 		virtual void initialiseExtensions();
 		
 
-		bool selectPixelFormat(HDC hdc, int colourDepth, int multisample, bool hwGamma);
+		bool selectPixelFormat(HDC hdc, int colourDepth, int multisample = 0);
 
 		virtual bool supportsPBuffers();
 		virtual GLPBuffer *createPBuffer(PixelComponentType format, size_t width, size_t height);
@@ -64,7 +64,6 @@ namespace Ogre
 		std::vector<int> mFSAALevels;
 		bool mHasPixelFormatARB;
         bool mHasMultisample;
-		bool mHasHardwareGamma;
 
 		void refreshConfig();
 		void initialiseWGL();

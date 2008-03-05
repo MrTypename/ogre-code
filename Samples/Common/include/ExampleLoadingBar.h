@@ -178,15 +178,5 @@ public:
 	{
 	}
 
-	Ogre::DataStreamPtr resourceLoading(const String &name, const String &group, Resource *resource)
-	{
-		return Ogre::DataStreamPtr();
-	}
-
-	bool resourceCollision(ResourcePtr &resource, ResourceManager *resourceManager)
-	{
-		return false;
-	}
-
 };
 

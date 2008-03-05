@@ -34,7 +34,7 @@ Torus Knot Software Ltd.
 #include "OgreTexture.h"
 #include "OgreRenderQueue.h"
 namespace Ogre {
-    const size_t RENDER_QUEUE_COUNT = RENDER_QUEUE_OVERLAY+1;       
+    const size_t RENDER_QUEUE_COUNT = RENDER_QUEUE_MAX+1;       
             
     /** An instance of a Compositor object for one Viewport. It is part of the CompositorChain
 		for a Viewport.
@@ -53,9 +53,9 @@ namespace Ogre {
 			virtual ~Listener();
 
 			/** Notification of when a render target operation involving a material (like
-				rendering a quad) is compiled, so that miscellaneous parameters that are different
+				rendering a quad) is compiled, so that miscelleneous parameters that are different
 				per Compositor instance can be set up.
-				@param pass_id	Pass identifier within Compositor instance, this is specified 
+				@param pass_id	Pass identifier within Compositor instance, this is speficied 
 								by the user by CompositionPass::setIdentifier().
 				@param mat		Material, this may be changed at will and will only affect
 								the current instance of the Compositor, not the global material
@@ -65,7 +65,7 @@ namespace Ogre {
 
 			/** Notification before a render target operation involving a material (like
 				rendering a quad), so that material parameters can be varied.
-				@param pass_id	Pass identifier within Compositor instance, this is specified 
+				@param pass_id	Pass identifier within Compositor instance, this is speficied 
 								by the user by CompositionPass::setIdentifier().
 				@param mat		Material, this may be changed at will and will only affect
 								the current instance of the Compositor, not the global material
@@ -158,12 +158,11 @@ namespace Ogre {
 			which in practice means that the compositor instance is active. Calling
 			it at other times will cause an exception. Note that since textures
 			are cleaned up aggressively, this name is not guaranteed to stay the
-			same if you disable and re-enable the compositor instance.
+			same if you disable and renable the compositor instance.
 		@param name The name of the texture in the original compositor definition
-		@param mrtIndex If name identifies a MRT, which texture attachment to retrieve
 		@returns The instance name for the texture, corresponds to a real texture
 		*/
-		const String& getTextureInstanceName(const String& name, size_t mrtIndex);
+		const String& getTextureInstanceName(const String& name);
 
        
         /** Recursively collect target states (except for final Pass).
@@ -171,7 +170,7 @@ namespace Ogre {
         */
         virtual void _compileTargetOperations(CompiledState &compiledState);
         
-        /** Compile the final (output) operation. This is done separately because this
+        /** Compile the final (output) operation. This is done seperately because this
             is combined with the input in chained filters.
         */
         virtual void _compileOutputOperation(TargetOperation &finalState);
@@ -219,9 +218,6 @@ namespace Ogre {
         /// Map from name->local texture
         typedef std::map<String,TexturePtr> LocalTextureMap;
         LocalTextureMap mLocalTextures;
-		/// Store a list of MRTs we've created
-		typedef std::map<String,MultiRenderTarget*> LocalMRTMap;
-		LocalMRTMap mLocalMRTs;
 
 		/// Vector of listeners
 		typedef std::vector<Listener*> Listeners;
@@ -239,7 +235,7 @@ namespace Ogre {
             The material is detached from the Material Manager to make sure it is destroyed
 			when going out of scope.
         */
-        MaterialPtr createLocalMaterial(const String& srcName);
+        MaterialPtr createLocalMaterial();
         
         /** Create local rendertextures and other resources. Builds mLocalTextures.
         */
@@ -254,24 +250,13 @@ namespace Ogre {
         RenderTarget *getTargetForTex(const String &name);
         
         /** Get source texture name for a named local texture.
-		@param name The local name of the texture as given to it in the compositor
-		@param mrtIndex For MRTs, which attached surface to retrieve
         */
-        const String &getSourceForTex(const String &name, size_t mrtIndex = 0);
+        const String &getSourceForTex(const String &name);
 
 		/** Queue a render system operation.
 			@returns destination pass
 		 */
 		void queueRenderSystemOp(TargetOperation &finalState, RenderSystemOperation *op);
-
-		/// Util method for assigning a local texture name to a MRT attachment
-		String getMRTTexLocalName(const String& baseName, size_t attachment);
-
-		/** Search for options like AA and hardware gamma which we may want to 
-			inherit from the main render target to which we're attached. 
-		*/
-		void deriveTextureRenderTargetOptions(const String& texname,
-			bool *hwGammaWrite, uint *fsaa);
         
         friend class CompositorChain;
     };

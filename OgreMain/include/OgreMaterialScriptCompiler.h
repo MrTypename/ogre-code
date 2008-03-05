@@ -45,11 +45,11 @@ namespace Ogre {
         MaterialScriptCompiler(void);
         ~MaterialScriptCompiler(void);
 
-        /** gets BNF Grammar for Compositor script.
+        /** gets BNF Grammer for Compositor script.
         */
         virtual const String& getClientBNFGrammer(void) const;
 
-        /** get the name of the BNF grammar.
+        /** get the name of the BNF grammer.
         */
         virtual const String& getClientGrammerName(void) const;
 
@@ -99,12 +99,10 @@ namespace Ogre {
             ID_EXP, ID_EXP2,
             // iteration
             ID_ONCE, ID_ONCE_PER_LIGHT, ID_PER_LIGHT, ID_PER_N_LIGHTS, ID_DIRECTIONAL, ID_SPOT,
-			// illumination stage
-			ID_AMBIENT, /* ID_PER_LIGHT, */ ID_DECAL,
 
             // texture unit state
             // texture
-            ID_1D, ID_2D, ID_3D, ID_CUBIC, ID_UNLIMITED, ID_ALPHA, ID_GAMMA,
+            ID_1D, ID_2D, ID_3D, ID_CUBIC, ID_UNLIMITED, ID_ALPHA,
             // cubic texture
             ID_SEPARATE_UV, ID_COMBINED_UVW,
             // address mode
@@ -133,7 +131,7 @@ namespace Ogre {
             ID_ON, ID_OFF, ID_TRUE, ID_FALSE, ID_NONE, ID_POINT, ID_LINEAR, ID_ADD, ID_MODULATE, ID_ALPHA_BLEND,
             ID_ONE, ID_ZERO, ID_VERTEX, ID_FRAGMENT,
 
-            // where auto generated tokens start so do not remove
+            // where auto generated tokens start so donot remove
             ID_AUTOTOKENSTART
         };
 
@@ -245,25 +243,17 @@ namespace Ogre {
         void parseSpecular(void);
         void parseEmissive(void);
         void parseSceneBlend(void);
-		void parseSeparateSceneBlend(void);
         SceneBlendFactor convertBlendFactor(void);
         void parseDepthCheck(void);
         void parseDepthWrite(void);
         void parseDepthFunc(void);
         void parseDepthBias(void);
-		void parseIterationDepthBias(void);
-		void parseNormaliseNormals(void);
         void parseAlphaRejection(void);
-		void parseTransparentSorting(void);
-		void parseLightScissor(void);
-		void parseLightClip(void);
-		void parseIlluminationStage(void);
         void parseCullHardware(void);
         void parseCullSoftware(void);
         void parseLighting(void);
         void parseShading(void);
         void parsePolygonMode(void);
-		void parsePolygonModeOverrideable(void);
         void parseFogOverride(void);
         void parseMaxLights(void);
 		void parseStartLight(void);
@@ -322,8 +312,6 @@ namespace Ogre {
         void parseShadowCasterVertexProgramRef(void);
         void parseShadowReceiverVertexProgramRef(void);
         void parseShadowReceiverFragmentProgramRef(void);
-		void parseShadowReceiverMaterial(void);
-		void parseShadowCasterMaterial(void);
         void parseParamIndexed(void);
         void parseParamIndexedAuto(void);
         void parseParamNamed(void);

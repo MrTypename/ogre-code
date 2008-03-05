@@ -200,9 +200,7 @@ void GLHardwarePixelBuffer::bindToFramebuffer(GLenum attachment, size_t zoffset)
         "GLHardwarePixelBuffer::bindToFramebuffer");
 }
 //********* GLTextureBuffer
-GLTextureBuffer::GLTextureBuffer(const String &baseName, GLenum target, GLuint id, 
-								 GLint face, GLint level, Usage usage, bool crappyCard, 
-								 bool writeGamma, uint fsaa):
+GLTextureBuffer::GLTextureBuffer(const String &baseName, GLenum target, GLuint id, GLint face, GLint level, Usage usage, bool crappyCard):
 	GLHardwarePixelBuffer(0, 0, 0, PF_UNKNOWN, usage),
 	mTarget(target), mTextureID(id), mFace(face), mLevel(level), mSoftwareMipmap(crappyCard)
 {
@@ -272,11 +270,11 @@ GLTextureBuffer::GLTextureBuffer(const String &baseName, GLenum target, GLuint i
         for(size_t zoffset=0; zoffset<mDepth; ++zoffset)
         {
             String name;
-			name = "rtt/" + StringConverter::toString((size_t)this) + "/" + baseName;
+			name = "rtt/" + baseName + "/" + StringConverter::toString((size_t)this);
             GLSurfaceDesc target;
             target.buffer = this;
             target.zoffset = zoffset;
-            RenderTexture *trt = GLRTTManager::getSingleton().createRenderTexture(name, target, writeGamma, fsaa);
+            RenderTexture *trt = GLRTTManager::getSingleton().createRenderTexture(name, target);
             mSliceTRT.push_back(trt);
             Root::getSingleton().getRenderSystem()->attachRenderTarget(*mSliceTRT[zoffset]);
         }
@@ -783,7 +781,7 @@ void GLTextureBuffer::blitFromMemory(const PixelBox &src_orig, const Image::Box 
         glTexImage2D(target, 0, format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
     /// GL texture buffer
-    GLTextureBuffer tex(StringUtil::BLANK, target, id, 0, 0, (Usage)(TU_AUTOMIPMAP|HBU_STATIC_WRITE_ONLY), false, false, 0);
+    GLTextureBuffer tex(StringUtil::BLANK, target, id, 0, 0, (Usage)(TU_AUTOMIPMAP|HBU_STATIC_WRITE_ONLY), false);
     
     /// Upload data to 0,0,0 in temporary texture
     PixelBox tempTarget(src.getWidth(), src.getHeight(), src.getDepth(), src.format, src.data);
@@ -807,7 +805,7 @@ RenderTexture *GLTextureBuffer::getRenderTarget(size_t zoffset)
 }
 //********* GLRenderBuffer
 //----------------------------------------------------------------------------- 
-GLRenderBuffer::GLRenderBuffer(GLenum format, size_t width, size_t height, GLsizei numSamples):
+GLRenderBuffer::GLRenderBuffer(GLenum format, size_t width, size_t height):
     GLHardwarePixelBuffer(width, height, 1, GLPixelUtil::getClosestOGREFormat(format),HBU_WRITE_ONLY)
 {
     mGLInternalFormat = format;
@@ -817,16 +815,8 @@ GLRenderBuffer::GLRenderBuffer(GLenum format, size_t width, size_t height, GLsiz
     glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, mRenderbufferID);
     
     /// Allocate storage for depth buffer
-	if (numSamples > 0)
-	{
-		glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT, 
-			numSamples, format, width, height);
-	}
-	else
-	{
-		glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, format,
-							width, height);
-	}
+    glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, format,
+                        width, height);
 }
 //----------------------------------------------------------------------------- 
 GLRenderBuffer::~GLRenderBuffer()

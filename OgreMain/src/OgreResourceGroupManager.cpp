@@ -57,7 +57,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     //-----------------------------------------------------------------------
     ResourceGroupManager::ResourceGroupManager()
-        : mCurrentGroup(0), mLoadingListener(0)
+        : mCurrentGroup(0)
     {
         // Create the 'General' group
         createResourceGroup(DEFAULT_RESOURCE_GROUP_NAME);
@@ -156,9 +156,10 @@ namespace Ogre {
 		// Can only bulk-load one group at a time (reasonable limitation I think)
 		OGRE_LOCK_AUTO_MUTEX
 
-		LogManager::getSingleton().stream()
-			<< "Loading resource group '" << name << "' - Resources: "
+		StringUtil::StrStreamType str;
+		str << "Loading resource group '" << name << "' - Resources: "
 			<< loadMainResources << " World Geometry: " << loadWorldGeom;
+		LogManager::getSingleton().logMessage(str.str());
 		// load all created resources
 		ResourceGroup* grp = getResourceGroup(name);
 		if (!grp)
@@ -533,14 +534,6 @@ namespace Ogre {
 		bool searchGroupsIfNotFound, Resource* resourceBeingLoaded)
     {
 		OGRE_LOCK_AUTO_MUTEX
-
-		if(mLoadingListener)
-		{
-			DataStreamPtr stream = mLoadingListener->resourceLoading(resourceName, groupName, resourceBeingLoaded);
-			if(!stream.isNull())
-				return stream;
-		}
-
 		// Try to find in resource index first
 		ResourceGroup* grp = getResourceGroup(groupName);
 		if (!grp)
@@ -1437,16 +1430,6 @@ namespace Ogre {
 
 		OGRE_LOCK_MUTEX(grp->OGRE_AUTO_MUTEX_NAME) // lock group mutex
 		return grp->resourceDeclarations;
-	}
-	//-------------------------------------------------------------------------
-	void ResourceGroupManager::setLoadingListener(ResourceLoadingListener *listener)
-	{
-		mLoadingListener = listener;
-	}
-	//-------------------------------------------------------------------------
-	ResourceLoadingListener *ResourceGroupManager::getLoadingListener()
-	{
-		return mLoadingListener;
 	}
 	//-----------------------------------------------------------------------
 	ScriptLoader::~ScriptLoader()

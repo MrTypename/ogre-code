@@ -196,6 +196,7 @@
 		000E1EB70B38D566004EA2DF /* OgreSceneManagerEnumerator.h in Headers */ = {isa = PBXBuildFile; fileRef = 000E1DE70B38D566004EA2DF /* OgreSceneManagerEnumerator.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		000E1EB80B38D566004EA2DF /* OgreSceneNode.h in Headers */ = {isa = PBXBuildFile; fileRef = 000E1DE80B38D566004EA2DF /* OgreSceneNode.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		000E1EB90B38D566004EA2DF /* OgreSceneQuery.h in Headers */ = {isa = PBXBuildFile; fileRef = 000E1DE90B38D566004EA2DF /* OgreSceneQuery.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		000E1EBA0B38D566004EA2DF /* OgreScriptLoader.h in Headers */ = {isa = PBXBuildFile; fileRef = 000E1DEA0B38D566004EA2DF /* OgreScriptLoader.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		000E1EBB0B38D566004EA2DF /* OgreSearchOps.h in Headers */ = {isa = PBXBuildFile; fileRef = 000E1DEB0B38D566004EA2DF /* OgreSearchOps.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		000E1EBC0B38D566004EA2DF /* OgreSerializer.h in Headers */ = {isa = PBXBuildFile; fileRef = 000E1DEC0B38D566004EA2DF /* OgreSerializer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		000E1EBD0B38D566004EA2DF /* OgreShadowCameraSetup.h in Headers */ = {isa = PBXBuildFile; fileRef = 000E1DED0B38D566004EA2DF /* OgreShadowCameraSetup.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -531,7 +532,6 @@
 		000E24450B3904B0004EA2DF /* OgreCgProgramFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 000E24420B3904B0004EA2DF /* OgreCgProgramFactory.cpp */; };
 		000E24460B3904B0004EA2DF /* OgreCgProgramManagerDll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 000E24430B3904B0004EA2DF /* OgreCgProgramManagerDll.cpp */; };
 		000E24490B3904D5004EA2DF /* Ogre.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 000E1D350B38D380004EA2DF /* Ogre.framework */; };
-		000E244D0B39050D004EA2DF /* Cg.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 000E244C0B39050D004EA2DF /* Cg.framework */; };
 		000E24900B390BCB004EA2DF /* RenderSystem_GL.bundle in CopyFiles */ = {isa = PBXBuildFile; fileRef = 000E20560B38D600004EA2DF /* RenderSystem_GL.bundle */; };
 		000E24910B390BCB004EA2DF /* Plugin_ParticleFX.bundle in CopyFiles */ = {isa = PBXBuildFile; fileRef = 000E235C0B38F852004EA2DF /* Plugin_ParticleFX.bundle */; };
 		000E24920B390BCB004EA2DF /* Plugin_BSPSceneManager.bundle in CopyFiles */ = {isa = PBXBuildFile; fileRef = 000E23C80B38FD6F004EA2DF /* Plugin_BSPSceneManager.bundle */; };
@@ -568,22 +568,7 @@
 		00DDBBD80B4CEEE100E8E1C9 /* OgreOSXContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DDBB9C0B4CE1C700E8E1C9 /* OgreOSXContext.cpp */; };
 		00DDBBD90B4CEEEF00E8E1C9 /* OgreOSXCarbonContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DDBB790B4CDB7000E8E1C9 /* OgreOSXCarbonContext.cpp */; };
 		00DDBBDA0B4CEEFA00E8E1C9 /* OgreOSXCGLContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DDBB980B4CE0E500E8E1C9 /* OgreOSXCGLContext.cpp */; };
-		AA06EFE60CEE58080013023A /* OgreScriptCompiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA06EFE30CEE58080013023A /* OgreScriptCompiler.cpp */; };
-		AA06EFE70CEE58080013023A /* OgreScriptLexer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA06EFE40CEE58080013023A /* OgreScriptLexer.cpp */; };
-		AA06EFE80CEE58080013023A /* OgreScriptParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA06EFE50CEE58080013023A /* OgreScriptParser.cpp */; };
-		AA06EFEB0CEE58310013023A /* OgreScriptLexer.h in Headers */ = {isa = PBXBuildFile; fileRef = AA06EFE90CEE58310013023A /* OgreScriptLexer.h */; };
-		AA06EFEC0CEE58310013023A /* OgreScriptLoader.h in Headers */ = {isa = PBXBuildFile; fileRef = AA06EFEA0CEE58310013023A /* OgreScriptLoader.h */; };
-		AA123E6F0C53FAB9000009B6 /* OgreGLSLPreprocessor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA123E390C53F7F9000009B6 /* OgreGLSLPreprocessor.cpp */; };
-		AA261E870CA17D99000A3707 /* OgreRenderSystemCapabilitiesManager.h in Headers */ = {isa = PBXBuildFile; fileRef = AA261E850CA17D99000A3707 /* OgreRenderSystemCapabilitiesManager.h */; };
-		AA261E880CA17D9A000A3707 /* OgreRenderSystemCapabilitiesSerializer.h in Headers */ = {isa = PBXBuildFile; fileRef = AA261E860CA17D99000A3707 /* OgreRenderSystemCapabilitiesSerializer.h */; };
-		AA261E8C0CA17DC2000A3707 /* OgreRenderSystemCapabilitiesManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA261E8A0CA17DC2000A3707 /* OgreRenderSystemCapabilitiesManager.cpp */; };
-		AA261E8D0CA17DC2000A3707 /* OgreRenderSystemCapabilitiesSerializer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA261E8B0CA17DC2000A3707 /* OgreRenderSystemCapabilitiesSerializer.cpp */; };
-		AA508FB50C972C1B00D6EAD0 /* OgreTangentSpaceCalc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA508FB40C972C1B00D6EAD0 /* OgreTangentSpaceCalc.cpp */; };
-		AA508FB70C972C9000D6EAD0 /* OgreTangentSpaceCalc.h in Headers */ = {isa = PBXBuildFile; fileRef = AA508FB60C972C8F00D6EAD0 /* OgreTangentSpaceCalc.h */; };
-		AAA8B9700CC6A4FC001AD86E /* OgreScriptCompiler.h in Headers */ = {isa = PBXBuildFile; fileRef = AAA8B96E0CC6A4FC001AD86E /* OgreScriptCompiler.h */; };
-		AAA8B9710CC6A4FC001AD86E /* OgreScriptParser.h in Headers */ = {isa = PBXBuildFile; fileRef = AAA8B96F0CC6A4FC001AD86E /* OgreScriptParser.h */; };
-		AAD22CA50D7D708600928C53 /* OgreScriptTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = AAD22CA40D7D708600928C53 /* OgreScriptTranslator.h */; };
-		AAD22CA70D7D70B400928C53 /* OgreScriptTranslator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD22CA60D7D70B400928C53 /* OgreScriptTranslator.cpp */; };
+		AAD4EA270C80CC4B00AE4E5D /* Cg.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 000E244C0B39050D004EA2DF /* Cg.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -842,6 +827,7 @@
 		000E1DE70B38D566004EA2DF /* OgreSceneManagerEnumerator.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreSceneManagerEnumerator.h; path = ../../OgreMain/include/OgreSceneManagerEnumerator.h; sourceTree = SOURCE_ROOT; };
 		000E1DE80B38D566004EA2DF /* OgreSceneNode.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreSceneNode.h; path = ../../OgreMain/include/OgreSceneNode.h; sourceTree = SOURCE_ROOT; };
 		000E1DE90B38D566004EA2DF /* OgreSceneQuery.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreSceneQuery.h; path = ../../OgreMain/include/OgreSceneQuery.h; sourceTree = SOURCE_ROOT; };
+		000E1DEA0B38D566004EA2DF /* OgreScriptLoader.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreScriptLoader.h; path = ../../OgreMain/include/OgreScriptLoader.h; sourceTree = SOURCE_ROOT; };
 		000E1DEB0B38D566004EA2DF /* OgreSearchOps.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreSearchOps.h; path = ../../OgreMain/include/OgreSearchOps.h; sourceTree = SOURCE_ROOT; };
 		000E1DEC0B38D566004EA2DF /* OgreSerializer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreSerializer.h; path = ../../OgreMain/include/OgreSerializer.h; sourceTree = SOURCE_ROOT; };
 		000E1DED0B38D566004EA2DF /* OgreShadowCameraSetup.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreShadowCameraSetup.h; path = ../../OgreMain/include/OgreShadowCameraSetup.h; sourceTree = SOURCE_ROOT; };
@@ -1331,23 +1317,6 @@
 		00DDBB8C0B4CDE9100E8E1C9 /* OgreOSXCGLContext.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreOSXCGLContext.h; path = ../../RenderSystems/GL/include/OSX/OgreOSXCGLContext.h; sourceTree = SOURCE_ROOT; };
 		00DDBB980B4CE0E500E8E1C9 /* OgreOSXCGLContext.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = OgreOSXCGLContext.cpp; path = ../../RenderSystems/GL/src/OSX/OgreOSXCGLContext.cpp; sourceTree = SOURCE_ROOT; };
 		00DDBB9C0B4CE1C700E8E1C9 /* OgreOSXContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OgreOSXContext.cpp; path = ../../RenderSystems/GL/src/OSX/OgreOSXContext.cpp; sourceTree = SOURCE_ROOT; };
-		AA06EFE30CEE58080013023A /* OgreScriptCompiler.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = OgreScriptCompiler.cpp; path = ../../OgreMain/src/OgreScriptCompiler.cpp; sourceTree = SOURCE_ROOT; };
-		AA06EFE40CEE58080013023A /* OgreScriptLexer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = OgreScriptLexer.cpp; path = ../../OgreMain/src/OgreScriptLexer.cpp; sourceTree = SOURCE_ROOT; };
-		AA06EFE50CEE58080013023A /* OgreScriptParser.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = OgreScriptParser.cpp; path = ../../OgreMain/src/OgreScriptParser.cpp; sourceTree = SOURCE_ROOT; };
-		AA06EFE90CEE58310013023A /* OgreScriptLexer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreScriptLexer.h; path = ../../OgreMain/include/OgreScriptLexer.h; sourceTree = SOURCE_ROOT; };
-		AA06EFEA0CEE58310013023A /* OgreScriptLoader.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreScriptLoader.h; path = ../../OgreMain/include/OgreScriptLoader.h; sourceTree = SOURCE_ROOT; };
-		AA123E380C53F7DA000009B6 /* OgreGLSLPreprocessor.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreGLSLPreprocessor.h; path = ../../RenderSystems/GL/src/GLSL/include/OgreGLSLPreprocessor.h; sourceTree = SOURCE_ROOT; };
-		AA123E390C53F7F9000009B6 /* OgreGLSLPreprocessor.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = OgreGLSLPreprocessor.cpp; path = ../../RenderSystems/GL/src/GLSL/src/OgreGLSLPreprocessor.cpp; sourceTree = SOURCE_ROOT; };
-		AA261E850CA17D99000A3707 /* OgreRenderSystemCapabilitiesManager.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreRenderSystemCapabilitiesManager.h; path = ../../OgreMain/include/OgreRenderSystemCapabilitiesManager.h; sourceTree = SOURCE_ROOT; };
-		AA261E860CA17D99000A3707 /* OgreRenderSystemCapabilitiesSerializer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreRenderSystemCapabilitiesSerializer.h; path = ../../OgreMain/include/OgreRenderSystemCapabilitiesSerializer.h; sourceTree = SOURCE_ROOT; };
-		AA261E8A0CA17DC2000A3707 /* OgreRenderSystemCapabilitiesManager.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = OgreRenderSystemCapabilitiesManager.cpp; path = ../../OgreMain/src/OgreRenderSystemCapabilitiesManager.cpp; sourceTree = SOURCE_ROOT; };
-		AA261E8B0CA17DC2000A3707 /* OgreRenderSystemCapabilitiesSerializer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = OgreRenderSystemCapabilitiesSerializer.cpp; path = ../../OgreMain/src/OgreRenderSystemCapabilitiesSerializer.cpp; sourceTree = SOURCE_ROOT; };
-		AA508FB40C972C1B00D6EAD0 /* OgreTangentSpaceCalc.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = OgreTangentSpaceCalc.cpp; path = ../../OgreMain/src/OgreTangentSpaceCalc.cpp; sourceTree = SOURCE_ROOT; };
-		AA508FB60C972C8F00D6EAD0 /* OgreTangentSpaceCalc.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreTangentSpaceCalc.h; path = ../../OgreMain/include/OgreTangentSpaceCalc.h; sourceTree = SOURCE_ROOT; };
-		AAA8B96E0CC6A4FC001AD86E /* OgreScriptCompiler.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreScriptCompiler.h; path = ../../OgreMain/include/OgreScriptCompiler.h; sourceTree = SOURCE_ROOT; };
-		AAA8B96F0CC6A4FC001AD86E /* OgreScriptParser.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreScriptParser.h; path = ../../OgreMain/include/OgreScriptParser.h; sourceTree = SOURCE_ROOT; };
-		AAD22CA40D7D708600928C53 /* OgreScriptTranslator.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreScriptTranslator.h; path = ../../OgreMain/include/OgreScriptTranslator.h; sourceTree = SOURCE_ROOT; };
-		AAD22CA60D7D70B400928C53 /* OgreScriptTranslator.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = OgreScriptTranslator.cpp; path = ../../OgreMain/src/OgreScriptTranslator.cpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1405,7 +1374,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				000E24490B3904D5004EA2DF /* Ogre.framework in Frameworks */,
-				000E244D0B39050D004EA2DF /* Cg.framework in Frameworks */,
+				AAD4EA270C80CC4B00AE4E5D /* Cg.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1532,6 +1501,12 @@
 		000E1D4A0B38D531004EA2DF /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				005E5EA50B7F39CB00658C32 /* OgreInstancedGeometry.cpp */,
+				0054A5060B5465940037D8B9 /* OgrePrefabFactory.cpp */,
+				0054A5070B5465940037D8B9 /* OgreUnifiedHighLevelGpuProgram.cpp */,
+				000E204C0B38D5C8004EA2DF /* OgreConfigDialog.cpp */,
+				000E204D0B38D5C8004EA2DF /* OgreErrorDialog.cpp */,
+				000E204E0B38D5C8004EA2DF /* OgreTimer.cpp */,
 				000E1EF20B38D5AA004EA2DF /* OgreAlignedAllocator.cpp */,
 				000E1EF30B38D5AA004EA2DF /* OgreAnimable.cpp */,
 				000E1EF40B38D5AA004EA2DF /* OgreAnimation.cpp */,
@@ -1559,7 +1534,6 @@
 				000E1F0C0B38D5AA004EA2DF /* OgreCompositorManager.cpp */,
 				000E1F0D0B38D5AA004EA2DF /* OgreCompositorScriptCompiler.cpp */,
 				000E1F0E0B38D5AA004EA2DF /* OgreCompositorSerializer.cpp */,
-				000E204C0B38D5C8004EA2DF /* OgreConfigDialog.cpp */,
 				000E1F0F0B38D5AA004EA2DF /* OgreConfigFile.cpp */,
 				000E1F120B38D5AA004EA2DF /* OgreControllerManager.cpp */,
 				000E1F130B38D5AA004EA2DF /* OgreConvexBody.cpp */,
@@ -1571,7 +1545,6 @@
 				000E1F190B38D5AA004EA2DF /* OgreDynLibManager.cpp */,
 				000E1F1A0B38D5AA004EA2DF /* OgreEdgeListBuilder.cpp */,
 				000E1F1B0B38D5AA004EA2DF /* OgreEntity.cpp */,
-				000E204D0B38D5C8004EA2DF /* OgreErrorDialog.cpp */,
 				000E1F1C0B38D5AA004EA2DF /* OgreException.cpp */,
 				000E1F1D0B38D5AA004EA2DF /* OgreExternalTextureSource.cpp */,
 				000E1F1E0B38D5AA004EA2DF /* OgreExternalTextureSourceManager.cpp */,
@@ -1592,7 +1565,6 @@
 				000E1F2D0B38D5AA004EA2DF /* OgreHighLevelGpuProgramManager.cpp */,
 				000E1F2E0B38D5AA004EA2DF /* OgreImage.cpp */,
 				000E1F2F0B38D5AA004EA2DF /* OgreImageResampler.h */,
-				005E5EA50B7F39CB00658C32 /* OgreInstancedGeometry.cpp */,
 				000E1F300B38D5AA004EA2DF /* OgreKeyFrame.cpp */,
 				000E1F310B38D5AA004EA2DF /* OgreLight.cpp */,
 				000E1F320B38D5AA004EA2DF /* OgreLog.cpp */,
@@ -1641,7 +1613,6 @@
 				000E1F5D0B38D5AA004EA2DF /* OgrePose.cpp */,
 				000E1F5E0B38D5AA004EA2DF /* OgrePrecompiledHeaders.cpp */,
 				000E1F5F0B38D5AA004EA2DF /* OgrePredefinedControllers.cpp */,
-				0054A5060B5465940037D8B9 /* OgrePrefabFactory.cpp */,
 				000E1F600B38D5AA004EA2DF /* OgreProfiler.cpp */,
 				000E1F610B38D5AA004EA2DF /* OgreProgressiveMesh.cpp */,
 				000E1F620B38D5AA004EA2DF /* OgreQuaternion.cpp */,
@@ -1651,8 +1622,6 @@
 				000E1F660B38D5AA004EA2DF /* OgreRenderQueueSortingGrouping.cpp */,
 				000E1F670B38D5AA004EA2DF /* OgreRenderSystem.cpp */,
 				000E1F680B38D5AA004EA2DF /* OgreRenderSystemCapabilities.cpp */,
-				AA261E8A0CA17DC2000A3707 /* OgreRenderSystemCapabilitiesManager.cpp */,
-				AA261E8B0CA17DC2000A3707 /* OgreRenderSystemCapabilitiesSerializer.cpp */,
 				000E1F690B38D5AA004EA2DF /* OgreRenderTarget.cpp */,
 				000E1F6A0B38D5AA004EA2DF /* OgreRenderTexture.cpp */,
 				000E1F6B0B38D5AA004EA2DF /* OgreRenderWindow.cpp */,
@@ -1667,10 +1636,6 @@
 				000E1F740B38D5AA004EA2DF /* OgreSceneManagerEnumerator.cpp */,
 				000E1F750B38D5AA004EA2DF /* OgreSceneNode.cpp */,
 				000E1F760B38D5AA004EA2DF /* OgreSceneQuery.cpp */,
-				AA06EFE30CEE58080013023A /* OgreScriptCompiler.cpp */,
-				AA06EFE40CEE58080013023A /* OgreScriptLexer.cpp */,
-				AA06EFE50CEE58080013023A /* OgreScriptParser.cpp */,
-				AAD22CA60D7D70B400928C53 /* OgreScriptTranslator.cpp */,
 				000E1F770B38D5AA004EA2DF /* OgreSearchOps.cpp */,
 				000E1F780B38D5AA004EA2DF /* OgreSerializer.cpp */,
 				000E1F790B38D5AA004EA2DF /* OgreShadowCameraSetup.cpp */,
@@ -1694,14 +1659,11 @@
 				000E1F8D0B38D5AA004EA2DF /* OgreSubEntity.cpp */,
 				000E1F8E0B38D5AA004EA2DF /* OgreSubMesh.cpp */,
 				000E1F8F0B38D5AA004EA2DF /* OgreTagPoint.cpp */,
-				AA508FB40C972C1B00D6EAD0 /* OgreTangentSpaceCalc.cpp */,
 				000E1F900B38D5AA004EA2DF /* OgreTechnique.cpp */,
 				000E1F910B38D5AA004EA2DF /* OgreTextAreaOverlayElement.cpp */,
 				000E1F920B38D5AA004EA2DF /* OgreTexture.cpp */,
 				000E1F930B38D5AA004EA2DF /* OgreTextureManager.cpp */,
 				000E1F940B38D5AA004EA2DF /* OgreTextureUnitState.cpp */,
-				000E204E0B38D5C8004EA2DF /* OgreTimer.cpp */,
-				0054A5070B5465940037D8B9 /* OgreUnifiedHighLevelGpuProgram.cpp */,
 				000E1F960B38D5AA004EA2DF /* OgreUserDefinedObject.cpp */,
 				000E1F970B38D5AA004EA2DF /* OgreVector2.cpp */,
 				000E1F980B38D5AA004EA2DF /* OgreVector3.cpp */,
@@ -1718,6 +1680,14 @@
 		000E1D4B0B38D537004EA2DF /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				005E5E9F0B7F399C00658C32 /* OgreInstancedGeometry.h */,
+				005E5EA00B7F399C00658C32 /* OgrePlugin.h */,
+				005E5EA10B7F399C00658C32 /* OgreUTFString.h */,
+				0054A4FF0B5465250037D8B9 /* OgrePrefabFactory.h */,
+				0054A5000B5465250037D8B9 /* OgreUnifiedHighLevelGpuProgram.h */,
+				000E1EEC0B38D587004EA2DF /* OgreConfigDialogImp.h */,
+				000E1EED0B38D587004EA2DF /* OgreErrorDialogImp.h */,
+				000E1EEE0B38D587004EA2DF /* OgreTimerImp.h */,
 				000E1D4C0B38D565004EA2DF /* asm_math.h */,
 				000E1D4D0B38D565004EA2DF /* Ogre.h */,
 				000E1D4E0B38D565004EA2DF /* OgreAlignedAllocator.h */,
@@ -1755,7 +1725,6 @@
 				000E1D6E0B38D565004EA2DF /* OgreCompositorSerializer.h */,
 				000E1D6F0B38D565004EA2DF /* OgreConfig.h */,
 				000E1D700B38D565004EA2DF /* OgreConfigDialog.h */,
-				000E1EEC0B38D587004EA2DF /* OgreConfigDialogImp.h */,
 				000E1D710B38D565004EA2DF /* OgreConfigFile.h */,
 				000E1D720B38D565004EA2DF /* OgreConfigOptionMap.h */,
 				000E1D730B38D565004EA2DF /* OgreController.h */,
@@ -1769,7 +1738,6 @@
 				000E1D7B0B38D565004EA2DF /* OgreEdgeListBuilder.h */,
 				000E1D7C0B38D565004EA2DF /* OgreEntity.h */,
 				000E1D7D0B38D565004EA2DF /* OgreErrorDialog.h */,
-				000E1EED0B38D587004EA2DF /* OgreErrorDialogImp.h */,
 				000E1D7E0B38D565004EA2DF /* OgreException.h */,
 				000E1D7F0B38D565004EA2DF /* OgreExternalTextureSource.h */,
 				000E1D800B38D565004EA2DF /* OgreExternalTextureSourceManager.h */,
@@ -1793,7 +1761,6 @@
 				000E1D920B38D566004EA2DF /* OgreHighLevelGpuProgramManager.h */,
 				000E1D930B38D566004EA2DF /* OgreImage.h */,
 				000E1D940B38D566004EA2DF /* OgreImageCodec.h */,
-				005E5E9F0B7F399C00658C32 /* OgreInstancedGeometry.h */,
 				000E1D950B38D566004EA2DF /* OgreIteratorWrappers.h */,
 				000E1D960B38D566004EA2DF /* OgreKeyFrame.h */,
 				000E1D970B38D566004EA2DF /* OgreLight.h */,
@@ -1845,11 +1812,9 @@
 				000E1DC50B38D566004EA2DF /* OgrePlaneBoundedVolume.h */,
 				000E1DC60B38D566004EA2DF /* OgrePlatform.h */,
 				000E1DC70B38D566004EA2DF /* OgrePlatformInformation.h */,
-				005E5EA00B7F399C00658C32 /* OgrePlugin.h */,
 				000E1DC80B38D566004EA2DF /* OgrePolygon.h */,
 				000E1DC90B38D566004EA2DF /* OgrePose.h */,
 				000E1DCA0B38D566004EA2DF /* OgrePredefinedControllers.h */,
-				0054A4FF0B5465250037D8B9 /* OgrePrefabFactory.h */,
 				000E1DCB0B38D566004EA2DF /* OgrePrerequisites.h */,
 				000E1DCC0B38D566004EA2DF /* OgreProfiler.h */,
 				000E1DCD0B38D566004EA2DF /* OgreProgressiveMesh.h */,
@@ -1866,8 +1831,6 @@
 				000E1DD80B38D566004EA2DF /* OgreRenderQueueSortingGrouping.h */,
 				000E1DD90B38D566004EA2DF /* OgreRenderSystem.h */,
 				000E1DDA0B38D566004EA2DF /* OgreRenderSystemCapabilities.h */,
-				AA261E850CA17D99000A3707 /* OgreRenderSystemCapabilitiesManager.h */,
-				AA261E860CA17D99000A3707 /* OgreRenderSystemCapabilitiesSerializer.h */,
 				000E1DDB0B38D566004EA2DF /* OgreRenderTarget.h */,
 				000E1DDC0B38D566004EA2DF /* OgreRenderTargetListener.h */,
 				000E1DDD0B38D566004EA2DF /* OgreRenderTexture.h */,
@@ -1883,11 +1846,7 @@
 				000E1DE70B38D566004EA2DF /* OgreSceneManagerEnumerator.h */,
 				000E1DE80B38D566004EA2DF /* OgreSceneNode.h */,
 				000E1DE90B38D566004EA2DF /* OgreSceneQuery.h */,
-				AAA8B96E0CC6A4FC001AD86E /* OgreScriptCompiler.h */,
-				AA06EFE90CEE58310013023A /* OgreScriptLexer.h */,
-				AA06EFEA0CEE58310013023A /* OgreScriptLoader.h */,
-				AAA8B96F0CC6A4FC001AD86E /* OgreScriptParser.h */,
-				AAD22CA40D7D708600928C53 /* OgreScriptTranslator.h */,
+				000E1DEA0B38D566004EA2DF /* OgreScriptLoader.h */,
 				000E1DEB0B38D566004EA2DF /* OgreSearchOps.h */,
 				000E1DEC0B38D566004EA2DF /* OgreSerializer.h */,
 				000E1DED0B38D566004EA2DF /* OgreShadowCameraSetup.h */,
@@ -1919,17 +1878,13 @@
 				000E1E070B38D566004EA2DF /* OgreSubEntity.h */,
 				000E1E080B38D566004EA2DF /* OgreSubMesh.h */,
 				000E1E090B38D566004EA2DF /* OgreTagPoint.h */,
-				AA508FB60C972C8F00D6EAD0 /* OgreTangentSpaceCalc.h */,
 				000E1E0B0B38D566004EA2DF /* OgreTechnique.h */,
 				000E1E0C0B38D566004EA2DF /* OgreTextAreaOverlayElement.h */,
 				000E1E0D0B38D566004EA2DF /* OgreTexture.h */,
 				000E1E0E0B38D566004EA2DF /* OgreTextureManager.h */,
 				000E1E0F0B38D566004EA2DF /* OgreTextureUnitState.h */,
 				000E1E100B38D566004EA2DF /* OgreTimer.h */,
-				000E1EEE0B38D587004EA2DF /* OgreTimerImp.h */,
-				0054A5000B5465250037D8B9 /* OgreUnifiedHighLevelGpuProgram.h */,
 				000E1E110B38D566004EA2DF /* OgreUserDefinedObject.h */,
-				005E5EA10B7F399C00658C32 /* OgreUTFString.h */,
 				000E1E120B38D566004EA2DF /* OgreVector2.h */,
 				000E1E130B38D566004EA2DF /* OgreVector3.h */,
 				000E1E140B38D566004EA2DF /* OgreVector4.h */,
@@ -1946,9 +1901,18 @@
 		000E20690B38D754004EA2DF /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				005E5EB30B7F3B7900658C32 /* OgreGLPlugin.h */,
 				000E231D0B38EDAF004EA2DF /* gl.h */,
-				000E208B0B38D863004EA2DF /* glew.h */,
 				000E231E0B38EDAF004EA2DF /* glext.h */,
+				00DDBB7F0B4CDC9600E8E1C9 /* OgreOSXContext.h */,
+				000E20910B38D887004EA2DF /* OgreOSXCarbonContext.h */,
+				00DDBB7C0B4CDC2100E8E1C9 /* OgreOSXCocoaContext.h */,
+				00DDBB8C0B4CDE9100E8E1C9 /* OgreOSXCGLContext.h */,
+				000E20920B38D887004EA2DF /* OgreOSXGLSupport.h */,
+				000E20930B38D887004EA2DF /* OgreOSXRenderTexture.h */,
+				003C21070B51AB990090A344 /* OgreOSXWindow.h */,
+				000E20940B38D887004EA2DF /* OgreOSXCarbonWindow.h */,
+				00ABEB0B0B4D6A6F0059129A /* OgreOSXCocoaWindow.h */,
 				000E206B0B38D82E004EA2DF /* OgreGLATIFSInit.h */,
 				000E206C0B38D82E004EA2DF /* OgreGLContext.h */,
 				000E206D0B38D82E004EA2DF /* OgreGLDefaultHardwareBufferManager.h */,
@@ -1966,22 +1930,13 @@
 				000E20790B38D82E004EA2DF /* OgreGLPBRenderTexture.h */,
 				000E207A0B38D82E004EA2DF /* OgreGLPBuffer.h */,
 				000E207B0B38D82E004EA2DF /* OgreGLPixelFormat.h */,
-				005E5EB30B7F3B7900658C32 /* OgreGLPlugin.h */,
 				000E207C0B38D82E004EA2DF /* OgreGLPrerequisites.h */,
 				000E207D0B38D82E004EA2DF /* OgreGLRenderSystem.h */,
 				000E207E0B38D82E004EA2DF /* OgreGLRenderTexture.h */,
 				000E207F0B38D82E004EA2DF /* OgreGLSupport.h */,
 				000E20800B38D82E004EA2DF /* OgreGLTexture.h */,
 				000E20810B38D82E004EA2DF /* OgreGLTextureManager.h */,
-				000E20910B38D887004EA2DF /* OgreOSXCarbonContext.h */,
-				000E20940B38D887004EA2DF /* OgreOSXCarbonWindow.h */,
-				00DDBB8C0B4CDE9100E8E1C9 /* OgreOSXCGLContext.h */,
-				00DDBB7C0B4CDC2100E8E1C9 /* OgreOSXCocoaContext.h */,
-				00ABEB0B0B4D6A6F0059129A /* OgreOSXCocoaWindow.h */,
-				00DDBB7F0B4CDC9600E8E1C9 /* OgreOSXContext.h */,
-				000E20920B38D887004EA2DF /* OgreOSXGLSupport.h */,
-				000E20930B38D887004EA2DF /* OgreOSXRenderTexture.h */,
-				003C21070B51AB990090A344 /* OgreOSXWindow.h */,
+				000E208B0B38D863004EA2DF /* glew.h */,
 			);
 			name = Headers;
 			sourceTree = "<group>";
@@ -1989,7 +1944,17 @@
 		000E206A0B38D778004EA2DF /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				000E231B0B38ED7A004EA2DF /* glew.cpp */,
+				005E5EB40B7F3BA700658C32 /* OgreGLPlugin.cpp */,
+				000E20C70B38D8FB004EA2DF /* OgreGLUtil.h */,
+				00DDBB9C0B4CE1C700E8E1C9 /* OgreOSXContext.cpp */,
+				00DDBB790B4CDB7000E8E1C9 /* OgreOSXCarbonContext.cpp */,
+				00DDBB980B4CE0E500E8E1C9 /* OgreOSXCGLContext.cpp */,
+				000E20C80B38D8FB004EA2DF /* OgreOSXCocoaContext.mm */,
+				000E20C90B38D8FB004EA2DF /* OgreOSXGLSupport.mm */,
+				000E20CA0B38D8FB004EA2DF /* OgreOSXRenderTexture.cpp */,
+				003C21110B51AE990090A344 /* OgreOSXWindow.cpp */,
+				000E20CB0B38D8FB004EA2DF /* OgreOSXCarbonWindow.cpp */,
+				00ABEAF60B4D69960059129A /* OgreOSXCocoaWindow.mm */,
 				000E20950B38D8DA004EA2DF /* OgreGLATIFSInit.cpp */,
 				000E20960B38D8DA004EA2DF /* OgreGLContext.cpp */,
 				000E20970B38D8DA004EA2DF /* OgreGLDefaultHardwareBufferManager.cpp */,
@@ -2007,22 +1972,12 @@
 				000E20A30B38D8DB004EA2DF /* OgreGLHardwareVertexBuffer.cpp */,
 				000E20A40B38D8DB004EA2DF /* OgreGLPBRenderTexture.cpp */,
 				000E20A50B38D8DB004EA2DF /* OgreGLPixelFormat.cpp */,
-				005E5EB40B7F3BA700658C32 /* OgreGLPlugin.cpp */,
 				000E20A60B38D8DB004EA2DF /* OgreGLRenderSystem.cpp */,
 				000E20A70B38D8DB004EA2DF /* OgreGLRenderTexture.cpp */,
 				000E20A80B38D8DB004EA2DF /* OgreGLSupport.cpp */,
 				000E20A90B38D8DB004EA2DF /* OgreGLTexture.cpp */,
 				000E20AA0B38D8DB004EA2DF /* OgreGLTextureManager.cpp */,
-				000E20C70B38D8FB004EA2DF /* OgreGLUtil.h */,
-				00DDBB790B4CDB7000E8E1C9 /* OgreOSXCarbonContext.cpp */,
-				000E20CB0B38D8FB004EA2DF /* OgreOSXCarbonWindow.cpp */,
-				00DDBB980B4CE0E500E8E1C9 /* OgreOSXCGLContext.cpp */,
-				000E20C80B38D8FB004EA2DF /* OgreOSXCocoaContext.mm */,
-				00ABEAF60B4D69960059129A /* OgreOSXCocoaWindow.mm */,
-				00DDBB9C0B4CE1C700E8E1C9 /* OgreOSXContext.cpp */,
-				000E20C90B38D8FB004EA2DF /* OgreOSXGLSupport.mm */,
-				000E20CA0B38D8FB004EA2DF /* OgreOSXRenderTexture.cpp */,
-				003C21110B51AE990090A344 /* OgreOSXWindow.cpp */,
+				000E231B0B38ED7A004EA2DF /* glew.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -2086,20 +2041,18 @@
 		000E21210B38D98D004EA2DF /* GLSL */ = {
 			isa = PBXGroup;
 			children = (
-				000E21220B38D9C0004EA2DF /* OgreGLSLExtSupport.cpp */,
-				000E21230B38D9C0004EA2DF /* OgreGLSLGpuProgram.cpp */,
-				000E21240B38D9C0004EA2DF /* OgreGLSLLinkProgram.cpp */,
-				000E21250B38D9C0004EA2DF /* OgreGLSLLinkProgramManager.cpp */,
-				AA123E390C53F7F9000009B6 /* OgreGLSLPreprocessor.cpp */,
-				000E21260B38D9C0004EA2DF /* OgreGLSLProgram.cpp */,
-				000E21270B38D9C0004EA2DF /* OgreGLSLProgramFactory.cpp */,
 				000E212E0B38D9DE004EA2DF /* OgreGLSLExtSupport.h */,
 				000E212F0B38D9DE004EA2DF /* OgreGLSLGpuProgram.h */,
 				000E21300B38D9DE004EA2DF /* OgreGLSLLinkProgram.h */,
 				000E21310B38D9DE004EA2DF /* OgreGLSLLinkProgramManager.h */,
-				AA123E380C53F7DA000009B6 /* OgreGLSLPreprocessor.h */,
 				000E21320B38D9DE004EA2DF /* OgreGLSLProgram.h */,
 				000E21330B38D9DE004EA2DF /* OgreGLSLProgramFactory.h */,
+				000E21220B38D9C0004EA2DF /* OgreGLSLExtSupport.cpp */,
+				000E21230B38D9C0004EA2DF /* OgreGLSLGpuProgram.cpp */,
+				000E21240B38D9C0004EA2DF /* OgreGLSLLinkProgram.cpp */,
+				000E21250B38D9C0004EA2DF /* OgreGLSLLinkProgramManager.cpp */,
+				000E21260B38D9C0004EA2DF /* OgreGLSLProgram.cpp */,
+				000E21270B38D9C0004EA2DF /* OgreGLSLProgramFactory.cpp */,
 			);
 			name = GLSL;
 			sourceTree = "<group>";
@@ -2476,6 +2429,7 @@
 				000E1EB70B38D566004EA2DF /* OgreSceneManagerEnumerator.h in Headers */,
 				000E1EB80B38D566004EA2DF /* OgreSceneNode.h in Headers */,
 				000E1EB90B38D566004EA2DF /* OgreSceneQuery.h in Headers */,
+				000E1EBA0B38D566004EA2DF /* OgreScriptLoader.h in Headers */,
 				000E1EBB0B38D566004EA2DF /* OgreSearchOps.h in Headers */,
 				000E1EBC0B38D566004EA2DF /* OgreSerializer.h in Headers */,
 				000E1EBD0B38D566004EA2DF /* OgreShadowCameraSetup.h in Headers */,
@@ -2539,14 +2493,6 @@
 				005E5EA20B7F399C00658C32 /* OgreInstancedGeometry.h in Headers */,
 				005E5EA30B7F399C00658C32 /* OgrePlugin.h in Headers */,
 				005E5EA40B7F399C00658C32 /* OgreUTFString.h in Headers */,
-				AA508FB70C972C9000D6EAD0 /* OgreTangentSpaceCalc.h in Headers */,
-				AA261E870CA17D99000A3707 /* OgreRenderSystemCapabilitiesManager.h in Headers */,
-				AA261E880CA17D9A000A3707 /* OgreRenderSystemCapabilitiesSerializer.h in Headers */,
-				AAA8B9700CC6A4FC001AD86E /* OgreScriptCompiler.h in Headers */,
-				AAA8B9710CC6A4FC001AD86E /* OgreScriptParser.h in Headers */,
-				AA06EFEB0CEE58310013023A /* OgreScriptLexer.h in Headers */,
-				AA06EFEC0CEE58310013023A /* OgreScriptLoader.h in Headers */,
-				AAD22CA50D7D708600928C53 /* OgreScriptTranslator.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2905,13 +2851,6 @@
 				0054A5080B5465940037D8B9 /* OgrePrefabFactory.cpp in Sources */,
 				0054A5090B5465940037D8B9 /* OgreUnifiedHighLevelGpuProgram.cpp in Sources */,
 				005E5EA60B7F39CB00658C32 /* OgreInstancedGeometry.cpp in Sources */,
-				AA508FB50C972C1B00D6EAD0 /* OgreTangentSpaceCalc.cpp in Sources */,
-				AA261E8C0CA17DC2000A3707 /* OgreRenderSystemCapabilitiesManager.cpp in Sources */,
-				AA261E8D0CA17DC2000A3707 /* OgreRenderSystemCapabilitiesSerializer.cpp in Sources */,
-				AA06EFE60CEE58080013023A /* OgreScriptCompiler.cpp in Sources */,
-				AA06EFE70CEE58080013023A /* OgreScriptLexer.cpp in Sources */,
-				AA06EFE80CEE58080013023A /* OgreScriptParser.cpp in Sources */,
-				AAD22CA70D7D70B400928C53 /* OgreScriptTranslator.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2983,7 +2922,6 @@
 				00ABEAF70B4D69960059129A /* OgreOSXCocoaWindow.mm in Sources */,
 				003C21120B51AE990090A344 /* OgreOSXWindow.cpp in Sources */,
 				005E5EB50B7F3BA700658C32 /* OgreGLPlugin.cpp in Sources */,
-				AA123E6F0C53FAB9000009B6 /* OgreGLSLPreprocessor.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -65,20 +65,17 @@ template<> GLRTTManager* Singleton<GLRTTManager>::ms_Singleton = 0;
         return PF_A8R8G8B8;
     }
 //-----------------------------------------------------------------------------  
-    GLRenderTexture::GLRenderTexture(const String &name, const GLSurfaceDesc &target, bool writeGamma, uint fsaa):
+    GLRenderTexture::GLRenderTexture(const String &name, const GLSurfaceDesc &target):
         RenderTexture(target.buffer, target.zoffset)
     {
         mName = name;
-		mHwGamma = writeGamma;
-		mFSAA = fsaa;
     }
     GLRenderTexture::~GLRenderTexture()
     {
     }
 //-----------------------------------------------------------------------------  
-    GLCopyingRenderTexture::GLCopyingRenderTexture(GLCopyingRTTManager *manager, 
-		const String &name, const GLSurfaceDesc &target, bool writeGamma, uint fsaa):
-        GLRenderTexture(name, target, writeGamma, fsaa)
+    GLCopyingRenderTexture::GLCopyingRenderTexture(GLCopyingRTTManager *manager, const String &name, const GLSurfaceDesc &target):
+        GLRenderTexture(name, target)
     {
     }
     void GLCopyingRenderTexture::getCustomAttribute(const String& name, void* pData)
@@ -98,10 +95,9 @@ template<> GLRTTManager* Singleton<GLRTTManager>::ms_Singleton = 0;
     {
     }
 
-    RenderTexture *GLCopyingRTTManager::createRenderTexture(const String &name, const GLSurfaceDesc &target, 
-		bool writeGamma, uint fsaa)
+    RenderTexture *GLCopyingRTTManager::createRenderTexture(const String &name, const GLSurfaceDesc &target)
     {
-        return new GLCopyingRenderTexture(this, name, target, writeGamma, fsaa);
+        return new GLCopyingRenderTexture(this, name, target);
     }
     
     bool GLCopyingRTTManager::checkFormat(PixelFormat format) 

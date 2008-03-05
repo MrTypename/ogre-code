@@ -201,15 +201,14 @@ namespace Ogre
 	}
 	//-----------------------------------------------------------------------
 	Matrix4 LiSPSMShadowCameraSetup::buildFrustumProjection(Real left, Real right, 
-		Real bottom, Real top, Real nearf, Real farf) const
+		Real bottom, Real top, Real near, Real far) const
 	{
-		// Changed to nearf because windows defines near and far as a macros
-		Real m00 = 2 * nearf / (right - left),
+		Real m00 = 2 * near / (right - left),
 			m02 = (right + left) / (right - left),
-			m11 = 2 * nearf / (top - bottom),
+			m11 = 2 * near / (top - bottom),
 			m12 = (top + bottom) / (top - bottom),
-			m22 = -(farf + nearf) / (farf - nearf),
-			m23 = -2 * farf * nearf / (farf - nearf),
+			m22 = -(far + near) / (far - near),
+			m23 = -2 * far * near / (far - near),
 			m32 = -1;
 
 		Matrix4 m(m00, 0.0, m02, 0.0,
@@ -238,7 +237,7 @@ namespace Ogre
 		// build scene bounding box
 		const VisibleObjectsBoundsInfo& visInfo = sm->getShadowCasterBoundsInfo(light);
 		AxisAlignedBox sceneBB = visInfo.aabb;
-		sceneBB.merge(sm->getVisibleObjectsBoundsInfo(cam).receiverAabb);
+		sceneBB.merge(sm->getVisibleObjectsBoundsInfo(cam).aabb);
 		sceneBB.merge(cam->getDerivedPosition());
 
 		// in case the sceneBB is empty (e.g. nothing visible to the cam) simply

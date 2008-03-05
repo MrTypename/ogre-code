@@ -53,6 +53,12 @@ namespace Ogre {
         #define MAX_LIGHTS 8
         Light* mLights[MAX_LIGHTS];
 
+        // clip planes
+        typedef std::vector<Vector4> PlaneList2;
+        PlaneList2 mClipPlanes;
+        void setGLClipPlanes() const;
+
+
         // view matrix to set world against
         Matrix4 mViewMatrix;
         Matrix4 mWorldMatrix;
@@ -80,7 +86,6 @@ namespace Ogre {
  
         GLint getBlendMode(SceneBlendFactor ogreBlend) const;
 		GLint getTextureAddressingMode(TextureUnitState::TextureAddressingMode tam) const;
-				void initialiseContext(RenderWindow* primary);
 
         void setLights();
 
@@ -108,6 +113,8 @@ namespace Ogre {
 
         // check if the GL system has already been initialized
         bool mGLInitialized;
+        // Initialise GL system and capabilities
+        void initGL(RenderTarget *primary);
 
         HardwareBufferManager* mHardwareBufferManager;
         GLGpuProgramManager* mGpuProgramManager;
@@ -134,8 +141,6 @@ namespace Ogre {
 			unwieldy and slow. However, FBO support for stencil buffers is poor.
         */
         GLRTTManager *mRTTManager;
-	protected:
-		void setClipPlanesImpl(const PlaneList& clipPlanes);
     public:
         // Default constructor / destructor
         GLRenderSystem();
@@ -163,15 +168,7 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        RenderWindow* _initialise(bool autoCreateWindow, const String& windowTitle = "OGRE Render Window");
-        /** See
-          RenderSystem
-         */
-				virtual RenderSystemCapabilities* createRenderSystemCapabilities() const;
-        /** See
-          RenderSystem
-         */
-				void initialiseFromRenderSystemCapabilities(RenderSystemCapabilities* caps, RenderTarget* primary);
+        RenderWindow* initialise(bool autoCreateWindow, const String& windowTitle = "OGRE Render Window");
         /** See
           RenderSystem
          */
@@ -194,8 +191,8 @@ namespace Ogre {
          */
         void setLightingEnabled(bool enabled);
         
-		/// @copydoc RenderSystem::_createRenderWindow
-		RenderWindow* _createRenderWindow(const String &name, unsigned int width, unsigned int height, 
+		/// @copydoc RenderSystem::createRenderWindow
+		RenderWindow* createRenderWindow(const String &name, unsigned int width, unsigned int height, 
 			bool fullScreen, const NameValuePairList *miscParams = 0);
 
 		/// @copydoc RenderSystem::createMultiRenderTarget
@@ -291,10 +288,6 @@ namespace Ogre {
           RenderSystem
          */
         void _setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor);
-        /** See
-          RenderSystem
-         */
-		void _setSeparateSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha);
         /** See
           RenderSystem
          */
@@ -428,6 +421,10 @@ namespace Ogre {
 		RenderSystem
 		*/
 		void bindGpuProgramPassIterationParameters(GpuProgramType gptype);
+        /** See
+          RenderSystem
+         */
+        void setClipPlanes(const PlaneList& clipPlanes);
         /** See
           RenderSystem
          */

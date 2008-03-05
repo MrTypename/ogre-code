@@ -62,6 +62,13 @@ namespace Ogre {
 			y = fY;
 			z = fZ;
 		}
+        inline Quaternion (const Quaternion& rkQ)
+		{
+			w = rkQ.w;
+			x = rkQ.x;
+			y = rkQ.y;
+			z = rkQ.z;
+		}
         /// Construct a quaternion from a rotation matrix
         inline Quaternion(const Matrix3& rot)
         {
@@ -72,6 +79,12 @@ namespace Ogre {
         {
             this->FromAngleAxis(rfAngle, rkAxis);
         }
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline Quaternion(const Real& rfAngle, const Vector3& rkAxis)
+		{
+			this->FromAngleAxis(rfAngle, rkAxis);
+		}
+#endif//OGRE_FORCE_ANGLE_TYPES
         /// Construct a quaternion from 3 orthonormal local axes
         inline Quaternion(const Vector3& xaxis, const Vector3& yaxis, const Vector3& zaxis)
         {
@@ -125,6 +138,16 @@ namespace Ogre {
             ToAngleAxis ( rAngle, rkAxis );
             dAngle = rAngle;
         }
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline void FromAngleAxis (const Real& rfAngle, const Vector3& rkAxis) {
+			FromAngleAxis ( Angle(rfAngle), rkAxis );
+		}
+        inline void ToAngleAxis (Real& rfAngle, Vector3& rkAxis) const {
+			Radian r;
+			ToAngleAxis ( r, rkAxis );
+			rfAngle = r.valueAngleUnits();
+		}
+#endif//OGRE_FORCE_ANGLE_TYPES
         void FromAxes (const Vector3* akAxis);
         void FromAxes (const Vector3& xAxis, const Vector3& yAxis, const Vector3& zAxis);
         void ToAxes (Vector3* akAxis) const;
@@ -175,7 +198,7 @@ namespace Ogre {
 
    		/** Calculate the local roll element of this quaternion.
 		@param reprojectAxis By default the method returns the 'intuitive' result
-			that is, if you projected the local Y of the quaternion onto the X and
+			that is, if you projected the local Y of the quaterion onto the X and
 			Y axes, the angle between them is returned. If set to false though, the
 			result is the actual yaw that will be used to implement the quaternion,
 			which is the shortest possible path to get to the same orientation and 
@@ -184,7 +207,7 @@ namespace Ogre {
 		Radian getRoll(bool reprojectAxis = true) const;
    		/** Calculate the local pitch element of this quaternion
 		@param reprojectAxis By default the method returns the 'intuitive' result
-			that is, if you projected the local Z of the quaternion onto the X and
+			that is, if you projected the local Z of the quaterion onto the X and
 			Y axes, the angle between them is returned. If set to true though, the
 			result is the actual yaw that will be used to implement the quaternion,
 			which is the shortest possible path to get to the same orientation and 
@@ -193,7 +216,7 @@ namespace Ogre {
 		Radian getPitch(bool reprojectAxis = true) const;
    		/** Calculate the local yaw element of this quaternion
 		@param reprojectAxis By default the method returns the 'intuitive' result
-			that is, if you projected the local Z of the quaternion onto the X and
+			that is, if you projected the local Z of the quaterion onto the X and
 			Z axes, the angle between them is returned. If set to true though, the
 			result is the actual yaw that will be used to implement the quaternion,
 			which is the shortest possible path to get to the same orientation and 

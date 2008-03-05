@@ -49,11 +49,9 @@ namespace Ogre {
             String name;
             size_t width;       // 0 means adapt to target width
             size_t height;      // 0 means adapt to target height
-			float widthFactor;  // multiple of target width to use (if width = 0)
-			float heightFactor; // multiple of target height to use (if height = 0)
-            PixelFormatList formatList; // more than one means MRT
+            PixelFormat format;
 
-			TextureDefinition() :width(0), height(0), widthFactor(1.0f), heightFactor(1.0f) {}
+			TextureDefinition() :width(0), height(0), format(PF_R8G8B8A8){}
         };
         /// Typedefs for several iterators
         typedef std::vector<CompositionTargetPass *> TargetPasses;

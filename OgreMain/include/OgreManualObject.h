@@ -75,7 +75,7 @@ namespace Ogre
 		  -# If you want to define triangles (or lines/points) by indexing into the vertex list, 
 			 you can call index() as many times as you need to define them.
 			 If you don't do this, the class will assume you want triangles drawn
-			 directly as defined by the vertex list, i.e. non-indexed geometry. Note
+			 directly as defined by the vertex list, ie non-indexed geometry. Note
 			 that stencil shadows are only supported on indexed geometry, and that
 			 indexed geometry is a little faster; so you should try to use it.
 		  -# Call end() to finish entering data.
@@ -148,7 +148,7 @@ namespace Ogre
 		virtual void begin(const String& materialName, 
 			RenderOperation::OperationType opType = RenderOperation::OT_TRIANGLE_LIST);
 
-		/** Use before defining geometry to indicate that you intend to update the
+		/** Use before defining gometry to indicate that you intend to update the
 			geometry regularly and want the internal structure to reflect that.
 		*/
 		virtual void setDynamic(bool dyn) { mDynamic = dyn; }
@@ -201,13 +201,9 @@ namespace Ogre
 		/// @copydoc ManualObject::textureCoord(Real)
 		virtual void textureCoord(Real u, Real v, Real w);
 		/// @copydoc ManualObject::textureCoord(Real)
-		virtual void textureCoord(Real x, Real y, Real z, Real w);
-		/// @copydoc ManualObject::textureCoord(Real)
 		virtual void textureCoord(const Vector2& uv);
 		/// @copydoc ManualObject::textureCoord(Real)
 		virtual void textureCoord(const Vector3& uvw);
-		/// @copydoc ManualObject::textureCoord(Real)
-		virtual void textureCoord(const Vector4& xyzw);
 
 		/** Add a vertex colour to a vertex.
 		*/
@@ -332,29 +328,14 @@ namespace Ogre
 				AxisAlignedBox::setInfinite */
 		void setBoundingBox(const AxisAlignedBox& box) { mAABB = box; }
 
-		/** Gets a pointer to a ManualObjectSection, i.e. a part of a ManualObject.
+		/** Gets a pointer to a ManualObjectSection, ie a part of a ManualObject.
 		*/
 		ManualObjectSection* getSection(unsigned int index) const;
 
 		/** Retrieves the number of ManualObjectSection objects making up this ManualObject.
 		*/
 		unsigned int getNumSections(void) const;
-		/** Sets whether or not to keep the original declaration order when 
-			queuing the renderables.
-		@remarks
-			This overrides the default behavior of the rendering queue, 
-			specifically stating the desired order of rendering. Might result in a 
-			performance loss, but lets the user to have more direct control when 
-			creating geometry through this class.
-		@param keepOrder Whether to keep the declaration order or not.
-		*/
-		void setKeepDeclarationOrder(bool keepOrder) { mKeepDeclarationOrder = keepOrder; }
 
-		/** Gets whether or not the declaration order is to be kept or not.
-		@return A flag indication if the declaration order will be kept when 
-			queuing the renderables.
-		*/
-		bool getKeepDeclarationOrder() const { return mKeepDeclarationOrder; }
 		// MovableObject overrides
 
 		/** @copydoc MovableObject::getMovableType. */
@@ -404,6 +385,10 @@ namespace Ogre
 			void getRenderOperation(RenderOperation& op);
 			/** @copydoc Renderable::getWorldTransforms. */
 			void getWorldTransforms(Matrix4* xform) const;
+			/** @copydoc Renderable::getWorldOrientation. */
+			const Quaternion& getWorldOrientation(void) const;
+			/** @copydoc Renderable::getWorldPosition. */
+			const Vector3& getWorldPosition(void) const;
 			/** @copydoc Renderable::getSquaredViewDepth. */
 			Real getSquaredViewDepth(const Ogre::Camera *) const;
 			/** @copydoc Renderable::getLights. */
@@ -427,17 +412,16 @@ namespace Ogre
 			~ManualObjectSectionShadowRenderable();
 			/// Overridden from ShadowRenderable
 			void getWorldTransforms(Matrix4* xform) const;
+			/// Overridden from ShadowRenderable
+			const Quaternion& getWorldOrientation(void) const;
+			/// Overridden from ShadowRenderable
+			const Vector3& getWorldPosition(void) const;
 			HardwareVertexBufferSharedPtr getPositionBuffer(void) { return mPositionBuffer; }
 			HardwareVertexBufferSharedPtr getWBuffer(void) { return mWBuffer; }
 
 		};
 
 		typedef std::vector<ManualObjectSection*> SectionList;
-
-		/// @copydoc MovableObject::visitRenderables
-		void visitRenderables(Renderable::Visitor* visitor, 
-			bool debugRenderables = false);
-		
 		
 	protected:
 		/// Dynamic?
@@ -453,7 +437,7 @@ namespace Ogre
 		{
 			Vector3 position;
 			Vector3 normal;
-			Vector4 texCoord[OGRE_MAX_TEXTURE_COORD_SETS];
+			Vector3 texCoord[OGRE_MAX_TEXTURE_COORD_SETS];
 			ushort texCoordDims[OGRE_MAX_TEXTURE_COORD_SETS];
 			ColourValue colour;
 		};
@@ -483,7 +467,7 @@ namespace Ogre
 		AxisAlignedBox mAABB;
 		/// Bounding sphere
 		Real mRadius;
-		/// Any indexed geometry on any sections?
+		/// Any indexed geoemtry on any sections?
 		bool mAnyIndexed;
 		/// Edge list, used if stencil shadow casting is enabled 
 		EdgeData* mEdgeList;
@@ -493,8 +477,6 @@ namespace Ogre
 		bool mUseIdentityProjection;
 		/// Whether to use identity view for sections
 		bool mUseIdentityView;
-		/// Keep declaration order or let the queue optimize it
-		bool mKeepDeclarationOrder;
 
 
 		/// Delete temp buffers and reset init counts

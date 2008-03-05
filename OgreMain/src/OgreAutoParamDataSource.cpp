@@ -75,9 +75,6 @@ namespace Ogre {
 		for(size_t i = 0; i < OGRE_MAX_SIMULTANEOUS_LIGHTS; ++i)
 		{
 			mTextureViewProjMatrixDirty[i] = true;
-			mTextureWorldViewProjMatrixDirty[i] = true;
-			mSpotlightViewProjMatrixDirty[i] = true;
-			mSpotlightWorldViewProjMatrixDirty[i] = true;
 			mCurrentTextureProjector[i] = 0;
 		}
 
@@ -85,19 +82,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     AutoParamDataSource::~AutoParamDataSource()
     {
-    }
-	//-----------------------------------------------------------------------------
-    const Light& AutoParamDataSource::getLight(size_t index) const
-    {
-        // If outside light range, return a blank light to ensure zeroised for program
-		if (index < mCurrentLightList->size())
-		{
-			return *((*mCurrentLightList)[index]);
-		}
-		else
-        {
-            return mBlankLight;
-        }        
     }
     //-----------------------------------------------------------------------------
     void AutoParamDataSource::setCurrentRenderable(const Renderable* rend)
@@ -115,12 +99,6 @@ namespace Ogre {
 		mInverseTransposeWorldMatrixDirty = true;
 		mInverseTransposeWorldViewMatrixDirty = true;
 		mCameraPositionObjectSpaceDirty = true;
-		for(size_t i = 0; i < OGRE_MAX_SIMULTANEOUS_LIGHTS; ++i)
-		{
-			mTextureWorldViewProjMatrixDirty[i] = true;
-			mSpotlightWorldViewProjMatrixDirty[i] = true;
-		}
-
     }
     //-----------------------------------------------------------------------------
     void AutoParamDataSource::setCurrentCamera(const Camera* cam)
@@ -142,106 +120,7 @@ namespace Ogre {
     {
         mCurrentLightList = ll;
 		mShadowCamDepthRangesDirty = true;
-		for(size_t i = 0; i < ll->size(); ++i)
-		{
-			mSpotlightViewProjMatrixDirty[i] = true;
-			mSpotlightWorldViewProjMatrixDirty[i] = true;
-		}
-
     }
-	//---------------------------------------------------------------------
-	float AutoParamDataSource::getLightNumber(size_t index) const
-	{
-		return static_cast<float>(getLight(index)._getIndexInFrame());
-	}
-	//-----------------------------------------------------------------------------
-	const ColourValue& AutoParamDataSource::getLightDiffuseColour(size_t index) const
-	{
-		return getLight(index).getDiffuseColour();
-	}
-	//-----------------------------------------------------------------------------
-	const ColourValue& AutoParamDataSource::getLightSpecularColour(size_t index) const
-	{
-		return getLight(index).getSpecularColour();
-	}
-	//-----------------------------------------------------------------------------
-	const ColourValue AutoParamDataSource::getLightDiffuseColourWithPower(size_t index) const
-	{
-		const Light& l = getLight(index);
-		ColourValue scaled(l.getDiffuseColour());
-		Real power = l.getPowerScale();
-		// scale, but not alpha
-		scaled.r *= power;
-		scaled.g *= power;
-		scaled.b *= power;
-		return scaled;
-	}
-	//-----------------------------------------------------------------------------
-	const ColourValue AutoParamDataSource::getLightSpecularColourWithPower(size_t index) const
-	{
-		const Light& l = getLight(index);
-		ColourValue scaled(l.getSpecularColour());
-		Real power = l.getPowerScale();
-		// scale, but not alpha
-		scaled.r *= power;
-		scaled.g *= power;
-		scaled.b *= power;
-		return scaled;
-	}
-	//-----------------------------------------------------------------------------
-	const Vector3& AutoParamDataSource::getLightPosition(size_t index) const
-	{
-		return getLight(index).getDerivedPosition();
-	}
-	//-----------------------------------------------------------------------------
-	Vector4 AutoParamDataSource::getLightAs4DVector(size_t index) const
-	{
-		return getLight(index).getAs4DVector();
-	}
-	//-----------------------------------------------------------------------------
-	const Vector3& AutoParamDataSource::getLightDirection(size_t index) const
-	{
-		return getLight(index).getDerivedDirection();
-	}
-	//-----------------------------------------------------------------------------
-	Real AutoParamDataSource::getLightPowerScale(size_t index) const
-	{
-		return getLight(index).getPowerScale();
-	}
-	//-----------------------------------------------------------------------------
-	Vector4 AutoParamDataSource::getLightAttenuation(size_t index) const
-	{
-		// range, const, linear, quad
-        const Light& l = getLight(index);
-		return Vector4(l.getAttenuationRange(),
-				       l.getAttenuationConstant(),
-					   l.getAttenuationLinear(),
-					   l.getAttenuationQuadric());
-	}
-	//-----------------------------------------------------------------------------
-	Vector4 AutoParamDataSource::getSpotlightParams(size_t index) const
-	{
-		// inner, outer, fallof, isSpot
-		const Light& l = getLight(index);
-		if (l.getType() == Light::LT_SPOTLIGHT)
-		{
-			return Vector4(Math::Cos(l.getSpotlightInnerAngle().valueRadians() * 0.5),
-						   Math::Cos(l.getSpotlightOuterAngle().valueRadians() * 0.5),
-						   l.getSpotlightFalloff(),
-						   1.0);
-		}
-		else
-		{
-			// Use safe values which result in no change to point & dir light calcs
-			// The spot factor applied to the usual lighting calc is 
-			// pow((dot(spotDir, lightDir) - y) / (x - y), z)
-			// Therefore if we set z to 0.0f then the factor will always be 1
-			// since pow(anything, 0) == 1
-			// However we also need to ensure we don't overflow because of the division
-			// therefore set x = 1 and y = 0 so divisor doesn't change scale
-			return Vector4(1.0, 0.0, 0.0, 1.0); // since the main op is pow(.., vec4.z), this will result in 1.0
-		}
-	}
 	//-----------------------------------------------------------------------------
 	void AutoParamDataSource::setMainCamBoundsInfo(VisibleObjectsBoundsInfo* info)
 	{
@@ -443,21 +322,24 @@ namespace Ogre {
             mCameraPositionObjectSpaceDirty = false;
         }
         return mCameraPositionObjectSpace;
-    }    
+    }
+    //-----------------------------------------------------------------------------
+    const Light& AutoParamDataSource::getLight(size_t index) const
+    {
+        // If outside light range, return a blank light to ensure zeroised for program
+        if (mCurrentLightList->size() <= index)
+        {
+            return mBlankLight;
+        }
+        else
+        {
+            return *((*mCurrentLightList)[index]);
+        }
+    }
     //-----------------------------------------------------------------------------
 	void AutoParamDataSource::setAmbientLightColour(const ColourValue& ambient)
 	{
 		mAmbientLight = ambient;
-	}
-	//---------------------------------------------------------------------
-	float AutoParamDataSource::getLightCount() const
-	{
-		return static_cast<float>(mCurrentLightList->size());
-	}
-	//---------------------------------------------------------------------
-	int AutoParamDataSource::getLightCastsShadows(size_t index) const
-	{
-		return static_cast<int>(getLight(index).getCastShadows() ? 1 : 0);
 	}
     //-----------------------------------------------------------------------------
 	const ColourValue& AutoParamDataSource::getAmbientLightColour(void) const
@@ -569,7 +451,6 @@ namespace Ogre {
     {
         mCurrentTextureProjector[index] = frust;
         mTextureViewProjMatrixDirty[index] = true;
-		mTextureWorldViewProjMatrixDirty[index] = true;
 
     }
     //-----------------------------------------------------------------------------
@@ -585,98 +466,6 @@ namespace Ogre {
         }
         return mTextureViewProjMatrix[index];
     }
-	//-----------------------------------------------------------------------------
-	const Matrix4& AutoParamDataSource::getTextureWorldViewProjMatrix(size_t index) const
-	{
-		if (mTextureWorldViewProjMatrixDirty[index] && mCurrentTextureProjector[index])
-		{
-			mTextureWorldViewProjMatrix[index] = 
-				getTextureViewProjMatrix(index)	* getWorldMatrix();
-			mTextureWorldViewProjMatrixDirty[index] = false;
-		}
-		return mTextureWorldViewProjMatrix[index];
-	}
-	//-----------------------------------------------------------------------------
-	const Matrix4& AutoParamDataSource::getSpotlightViewProjMatrix(size_t index) const
-	{
-		const Light& l = getLight(index);
-
-		if (&l != &mBlankLight && 
-			l.getType() == Light::LT_SPOTLIGHT &&
-			mSpotlightViewProjMatrixDirty[index])
-		{
-			Frustum frust;
-			SceneNode dummyNode(0);
-			dummyNode.attachObject(&frust);
-
-			frust.setProjectionType(PT_PERSPECTIVE);
-			frust.setFOVy(l.getSpotlightOuterAngle());
-			frust.setAspectRatio(1.0f);
-			// set near clip the same as main camera, since they are likely
-			// to both reflect the nature of the scene
-			frust.setNearClipDistance(mCurrentCamera->getNearClipDistance());
-			// Calculate position, which same as spotlight position
-			dummyNode.setPosition(l.getDerivedPosition());
-			// Calculate direction, which same as spotlight direction
-			Vector3 dir = - l.getDerivedDirection(); // backwards since point down -z
-			dir.normalise();
-			Vector3 up = Vector3::UNIT_Y;
-			// Check it's not coincident with dir
-			if (Math::Abs(up.dotProduct(dir)) >= 1.0f)
-			{
-				// Use camera up
-				up = Vector3::UNIT_Z;
-			}
-			// cross twice to rederive, only direction is unaltered
-			Vector3 left = dir.crossProduct(up);
-			left.normalise();
-			up = dir.crossProduct(left);
-			up.normalise();
-			// Derive quaternion from axes
-			Quaternion q;
-			q.FromAxes(left, up, dir);
-			dummyNode.setOrientation(q);
-
-			mSpotlightViewProjMatrix[index] = 
-				PROJECTIONCLIPSPACE2DTOIMAGESPACE_PERSPECTIVE * 
-				frust.getProjectionMatrixWithRSDepth() * 
-				frust.getViewMatrix();
-			mSpotlightViewProjMatrixDirty[index] = false;
-		}
-		return mSpotlightViewProjMatrix[index];
-	}
-	//-----------------------------------------------------------------------------
-	const Matrix4& AutoParamDataSource::getSpotlightWorldViewProjMatrix(size_t index) const
-	{
-		const Light& l = getLight(index);
-
-		if (&l != &mBlankLight && 
-			l.getType() == Light::LT_SPOTLIGHT &&
-			mSpotlightWorldViewProjMatrixDirty[index])
-		{
-			mSpotlightWorldViewProjMatrix[index] = 
-				getSpotlightViewProjMatrix(index) * getWorldMatrix();
-			mSpotlightWorldViewProjMatrixDirty[index] = false;
-		}
-		return mSpotlightWorldViewProjMatrix[index];
-	}
-//-----------------------------------------------------------------------------
-  const Matrix4& AutoParamDataSource::getTextureTransformMatrix(size_t index) const
-  {
-    // make sure the current pass is set
-    assert(mCurrentPass && "current pass is NULL!");
-    // check if there is a texture unit with the given index in the current pass
-    if(index < mCurrentPass->getNumTextureUnitStates())
-    {
-      // texture unit existent, return its currently set transform
-      return mCurrentPass->getTextureUnitState(index)->getTextureTransform();
-    }
-    else
-    {
-      // no such texture unit, return unity
-      return Matrix4::IDENTITY;
-    }
-  }
     //-----------------------------------------------------------------------------
     void AutoParamDataSource::setCurrentRenderTarget(const RenderTarget* target)
     {
@@ -998,11 +787,6 @@ namespace Ogre {
 			return mShadowCamDepthRanges[lightIndex];
 		}
 
-	}
-	//---------------------------------------------------------------------
-	const ColourValue& AutoParamDataSource::getShadowColour() const
-	{
-		return mCurrentSceneManager->getShadowColour();
 	}
 
 }

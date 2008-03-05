@@ -214,9 +214,7 @@ protected:
 
 
         // Setup Render To Texture for preview window
-		TexturePtr rttTex = TextureManager::getSingleton().createManual("RttTex", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, TEX_TYPE_2D, 
-			512, 512, 1, 0, PF_R8G8B8, TU_RENDERTARGET);
+        RenderTexture* rttTex = mRoot->getRenderSystem()->createRenderTexture( "RttTex", 512, 512, TEX_TYPE_2D, PF_R8G8B8 );
         {
             Camera* rttCam = mSceneMgr->createCamera("RttCam");
             SceneNode* camNode = 
@@ -225,7 +223,7 @@ protected:
             rttCam->setPosition(0,0,200);
             //rttCam->setVisible(true);
 
-            Viewport *v = rttTex->getBuffer()->getRenderTarget()->addViewport( rttCam );
+            Viewport *v = rttTex->addViewport( rttCam );
             v->setOverlaysEnabled(false);
             v->setClearEveryFrame( true );
             v->setBackgroundColour( ColourValue::Black );

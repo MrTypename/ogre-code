@@ -48,7 +48,7 @@ namespace Ogre {
             use different vertex formats, such that a rendering state
             change is required between them.
         @par
-            Like the Mesh class, instantiations of 3D objects in the scene
+            Like the Mesh class, instatiations of 3D objects in the scene
             share the SubMesh instances, and have the option of overriding
             their material differences on a per-object basis if required.
             See the SubEntity class for more information.
@@ -177,11 +177,6 @@ namespace Ogre {
         */
         BoneAssignmentIterator getBoneAssignmentIterator(void);
 
-		/** Gets a const reference to the list of bone assignments
-		*/
-		const VertexBoneAssignmentList& getBoneAssignments() { return mBoneAssignments; }
-
-
         /** Must be called once to compile bone assignments into geometry buffer. */
         void _compileBoneAssignments(void);
 
@@ -239,11 +234,6 @@ namespace Ogre {
         */
         void generateExtremes(size_t count);
 
-		/** Returns true(by default) if the submesh should be included in the mesh EdgeList, otherwise returns false.
-        */		
-		bool isBuildEdgesEnabled(void) const { return mBuildEdgesEnabled; }
-		void setBuildEdgesEnabled(bool b);
-
     protected:
 
         /// Name of the material this SubMesh uses.
@@ -263,11 +253,10 @@ namespace Ogre {
 		/// Type of vertex animation for dedicated vertex data (populated by Mesh)
 		mutable VertexAnimationType mVertexAnimationType;
 
-		/// Is Build Edges Enabled
-		bool mBuildEdgesEnabled;
 
         /// Internal method for removing LOD data
         void removeLodLevels(void);
+
 
 
     };

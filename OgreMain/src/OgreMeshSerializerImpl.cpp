@@ -30,7 +30,6 @@ Torus Knot Software Ltd.
 
 #include "OgreMeshSerializerImpl.h"
 #include "OgreMeshFileFormat.h"
-#include "OgreMeshSerializer.h"
 #include "OgreMesh.h"
 #include "OgreSubMesh.h"
 #include "OgreException.h"
@@ -102,7 +101,7 @@ namespace Ogre {
         LogManager::getSingleton().logMessage("MeshSerializer export successful.");
     }
     //---------------------------------------------------------------------
-    void MeshSerializerImpl::importMesh(DataStreamPtr& stream, Mesh* pMesh, MeshSerializerListener *listener)
+    void MeshSerializerImpl::importMesh(DataStreamPtr& stream, Mesh* pMesh)
     {
 		// Determine endianness (must be the first thing we do!)
 		determineEndianness(stream);
@@ -117,7 +116,7 @@ namespace Ogre {
             switch (streamID)
             {
             case M_MESH:
-                readMesh(stream, pMesh, listener);
+                readMesh(stream, pMesh);
                 break;
 			}
 
@@ -716,10 +715,11 @@ namespace Ogre {
 
 		if (vType == VET_COLOUR)
 		{
-			LogManager::getSingleton().stream()
-				<< "Warning: VET_COLOUR element type is deprecated, you should use "
+			StringUtil::StrStreamType s;
+			s << "Warning: VET_COLOUR element type is deprecated, you should use "
 				<< "one of the more specific types to indicate the byte order. "
 				<< "Use OgreMeshUpgrade on " << pMesh->getName() << " as soon as possible. ";
+			LogManager::getSingleton().logMessage(s.str());
 		}
 
 	}
@@ -822,7 +822,7 @@ namespace Ogre {
 
 	}
     //---------------------------------------------------------------------
-    void MeshSerializerImpl::readMesh(DataStreamPtr& stream, Mesh* pMesh, MeshSerializerListener *listener)
+    void MeshSerializerImpl::readMesh(DataStreamPtr& stream, Mesh* pMesh)
     {
         unsigned short streamID;
 
@@ -875,10 +875,10 @@ namespace Ogre {
 					}
 					break;
                 case M_SUBMESH:
-                    readSubMesh(stream, pMesh, listener);
+                    readSubMesh(stream, pMesh);
                     break;
                 case M_MESH_SKELETON_LINK:
-                    readSkeletonLink(stream, pMesh, listener);
+                    readSkeletonLink(stream, pMesh);
                     break;
                 case M_MESH_BONE_ASSIGNMENT:
                     readMeshBoneAssignment(stream, pMesh);
@@ -921,18 +921,14 @@ namespace Ogre {
 
     }
     //---------------------------------------------------------------------
-    void MeshSerializerImpl::readSubMesh(DataStreamPtr& stream, Mesh* pMesh, MeshSerializerListener *listener)
+    void MeshSerializerImpl::readSubMesh(DataStreamPtr& stream, Mesh* pMesh)
     {
         unsigned short streamID;
 
         SubMesh* sm = pMesh->createSubMesh();
-
         // char* materialName
         String materialName = readString(stream);
-		if(listener)
-			listener->processMaterialName(pMesh, &materialName);
         sm->setMaterialName(materialName);
-
         // bool useSharedVertices
         readBools(stream,&sm->useSharedVertices, 1);
 
@@ -1054,13 +1050,9 @@ namespace Ogre {
 
     }
     //---------------------------------------------------------------------
-    void MeshSerializerImpl::readSkeletonLink(DataStreamPtr& stream, Mesh* pMesh, MeshSerializerListener *listener)
+    void MeshSerializerImpl::readSkeletonLink(DataStreamPtr& stream, Mesh* pMesh)
     {
         String skelName = readString(stream);
-
-		if(listener)
-			listener->processSkeletonName(pMesh, &skelName);
-
         pMesh->setSkeletonName(skelName);
     }
     //---------------------------------------------------------------------
@@ -2712,9 +2704,9 @@ namespace Ogre {
     {
     }
     //---------------------------------------------------------------------
-    void MeshSerializerImpl_v1_2::readMesh(DataStreamPtr& stream, Mesh* pMesh, MeshSerializerListener *listener)
+    void MeshSerializerImpl_v1_2::readMesh(DataStreamPtr& stream, Mesh* pMesh)
     {
-        MeshSerializerImpl::readMesh(stream, pMesh, listener);
+        MeshSerializerImpl::readMesh(stream, pMesh);
         // Always automatically build edge lists for this version
         pMesh->mAutoBuildEdgeLists = true;
 

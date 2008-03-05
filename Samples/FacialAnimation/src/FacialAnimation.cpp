@@ -131,9 +131,9 @@ public:
             return ExampleFrameListener::frameEnded(evt);
     }
 
-	bool frameRenderingQueued(const FrameEvent& evt)
+	bool frameStarted(const FrameEvent& evt)
 	{
-		if( ExampleFrameListener::frameRenderingQueued(evt) == false )
+		if( ExampleFrameListener::frameStarted(evt) == false )
 			return false;
 		speakAnimState->addTime(evt.timeSinceLastFrame);
 		return true;

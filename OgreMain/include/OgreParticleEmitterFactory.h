@@ -64,7 +64,7 @@ namespace Ogre {
         */
         virtual ParticleEmitter* createEmitter(ParticleSystem* psys) = 0;
 
-        /** Destroys the emitter pointed to by the parameter (for early clean up if required). */
+        /** Destroys the emitter pointed to by the parameter (for early clean up if reauired). */
         virtual void destroyEmitter(ParticleEmitter* e);
 
     };

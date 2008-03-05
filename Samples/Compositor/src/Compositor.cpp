@@ -288,8 +288,6 @@ void CompositorDemo::createViewports(void)
 
 		mCamera->setPosition(-400, 50, 900);
 		mCamera->lookAt(0,80,0);
-		
-		createTextures();
 
         connectEventHandlers();
 		/// Create a couple of hard coded postfilter effects as an example of how to do it
@@ -403,19 +401,19 @@ void CompositorDemo::createViewports(void)
 				Ogre::CompositionTechnique::TextureDefinition *def = t->createTextureDefinition("scene");
 				def->width = 0;
 				def->height = 0;
-				def->formatList.push_back(Ogre::PF_R8G8B8);
+				def->format = Ogre::PF_R8G8B8;
 			}
 			{
 				Ogre::CompositionTechnique::TextureDefinition *def = t->createTextureDefinition("sum");
 				def->width = 0;
 				def->height = 0;
-				def->formatList.push_back(Ogre::PF_R8G8B8);
+				def->format = Ogre::PF_R8G8B8;
 			}
 			{
 				Ogre::CompositionTechnique::TextureDefinition *def = t->createTextureDefinition("temp");
 				def->width = 0;
 				def->height = 0;
-				def->formatList.push_back(Ogre::PF_R8G8B8);
+				def->format = Ogre::PF_R8G8B8;
 			}
 			/// Render scene
 			{
@@ -474,13 +472,13 @@ void CompositorDemo::createViewports(void)
 				Ogre::CompositionTechnique::TextureDefinition *def = t->createTextureDefinition("scene");
 				def->width = 256;
 				def->height = 256;
-				def->formatList.push_back(Ogre::PF_R8G8B8);
+				def->format = Ogre::PF_R8G8B8;
 			}
 			{
 				Ogre::CompositionTechnique::TextureDefinition *def = t->createTextureDefinition("temp");
 				def->width = 256;
 				def->height = 256;
-				def->formatList.push_back(Ogre::PF_R8G8B8);
+				def->format = Ogre::PF_R8G8B8;
 			}
 			/// Render scene
 			{
@@ -513,80 +511,6 @@ void CompositorDemo::createViewports(void)
 				}
 			}
 		}
-	}
-	
-//--------------------------------------------------------------------------
-	void CompositorDemo::createTextures(void)
-	{
-		using namespace Ogre;
-
-		TexturePtr tex = TextureManager::getSingleton().createManual(
-			"HalftoneVolume",
-			"General",
-			TEX_TYPE_3D,
-			64,64,64,
-			0,
-			PF_A8
-		);
-
-		HardwarePixelBufferSharedPtr ptr = tex->getBuffer(0,0);
-		ptr->lock(HardwareBuffer::HBL_DISCARD);
-		const PixelBox &pb = ptr->getCurrentLock();
-		uint8 *data = static_cast<uint8*>(pb.data);
-
-		size_t height = pb.getHeight();
-		size_t width = pb.getWidth();
-		size_t depth = pb.getDepth();
-		size_t rowPitch = pb.rowPitch;
-		size_t slicePitch = pb.slicePitch;
-
-		for (size_t z = 0; z < depth; ++z)
-		{
-			for (size_t y = 0; y < height; ++y)
-			{
-				for(size_t x = 0; x < width; ++x)
-				{
-					float fx = 32-(float)x+0.5f;
-					float fy = 32-(float)y+0.5f;
-					float fz = 32-((float)z)/3+0.5f;
-					float distanceSquare = fx*fx+fy*fy+fz*fz;
-					data[slicePitch*z + rowPitch*y + x] =  0x00;
-					if (distanceSquare < 1024.0f)
-						data[slicePitch*z + rowPitch*y + x] +=  0xFF;
-				}
-			}
-		}
-		ptr->unlock();
-
-		Ogre::Viewport *vp = mRoot->getAutoCreatedWindow()->getViewport(0); 
-
-		TexturePtr tex2 = TextureManager::getSingleton().createManual(
-			"DitherTex",
-			"General",
-			TEX_TYPE_2D,
-			vp->getActualWidth(),vp->getActualHeight(),1,
-			0,
-			PF_A8
-		);
-
-		HardwarePixelBufferSharedPtr ptr2 = tex2->getBuffer(0,0);
-		ptr2->lock(HardwareBuffer::HBL_DISCARD);
-		const PixelBox &pb2 = ptr2->getCurrentLock();
-		uint8 *data2 = static_cast<uint8*>(pb2.data);
-		
-		size_t height2 = pb2.getHeight();
-		size_t width2 = pb2.getWidth();
-		size_t rowPitch2 = pb2.rowPitch;
-
-		for (size_t y = 0; y < height2; ++y)
-		{
-			for(size_t x = 0; x < width2; ++x)
-			{
-				data2[rowPitch2*y + x] = Ogre::Math::RangeRandom(64.0,192);
-			}
-		}
-		
-		ptr2->unlock();
 	}
 //--------------------------------------------------------------------------
     bool CompositorDemo::handleQuit(const CEGUI::EventArgs& e)

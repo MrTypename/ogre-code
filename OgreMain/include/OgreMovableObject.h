@@ -46,7 +46,7 @@ namespace Ogre {
 	// Forward declaration
 	class MovableObjectFactory;
 
-    /** Abstract class defining a movable object in a scene.
+    /** Abstract class definining a movable object in a scene.
         @remarks
             Instances of this class are discrete, relatively small, movable objects
             which are attached to SceneNode objects to define their position.
@@ -80,7 +80,7 @@ namespace Ogre {
 				this method and hook into MovableObject via MovableObject::setListener.
 				Be aware that the default method caches results within a frame to 
 				prevent unnecessary recalculation, so if you override this you 
-				should provide your own caching to maintain performance.
+				should provide your own cacheing to maintain performance.
 			@note
 				If you use texture shadows, there is an additional restriction - 
 				since the lights which should have shadow textures rendered for
@@ -108,8 +108,6 @@ namespace Ogre {
         bool mParentIsTagPoint;
         /// Is this object visible?
         bool mVisible;
-		/// Is debug display enabled?
-		bool mDebugDisplay;
 		/// Upper distance to still render
 		Real mUpperDistance;
 		Real mSquaredUpperDistance;
@@ -213,7 +211,7 @@ namespace Ogre {
 		/** Internal method to notify the object of the camera to be used for the next rendering operation.
             @remarks
                 Certain objects may want to do specific processing based on the camera position. This method notifies
-                them in case they wish to do this.
+                them incase they wish to do this.
         */
         virtual void _notifyCurrentCamera(Camera* cam);
 
@@ -244,12 +242,12 @@ namespace Ogre {
 			from it's SceneNode, or to remove the SceneNode entirely. 
 			Detaching a node means that structurally the scene graph changes. 
 			Once this change has taken place, the objects / nodes that have been 
-			removed have less overhead to the visibility detection pass than simply
+			removed have less overhead to the visbility detection pass than simply
 			making the object invisible, so if you do this and leave the objects 
 			out of the tree for a long time, it's faster. However, the act of 
 			detaching / reattaching nodes is in itself more expensive than 
 			setting an object visibility flag, since in the latter case 
-			structural changes are not made. Therefore, small or frequent visibility
+			structural changes are not made. Therefore, small or frequent visbility
 			changes are best done using this method; large or more longer term
 			changes are best done by detaching.
 		*/
@@ -455,32 +453,6 @@ namespace Ogre {
 			override this if they want to be included in queries.
 		*/
 		virtual uint32 getTypeFlags(void) const;
-
-		/** Method to allow a caller to abstractly iterate over the Renderable
-			instances that this MovableObject will add to the render queue when
-			asked, if any. 
-		@param visitor Pointer to a class implementing the Renderable::Visitor 
-			interface which will be called back for each Renderable which will
-			be queued. Bear in mind that the state of the Renderable instances
-			may not be finalised depending on when you call this.
-		@param debugRenderables If false, only regular renderables will be visited
-			(those for normal display). If true, debug renderables will be
-			included too.
-		*/
-		virtual void visitRenderables(Renderable::Visitor* visitor, 
-			bool debugRenderables = false) = 0;
-
-		/** Sets whether or not the debug display of this object is enabled.
-		@remarks
-			Some objects aren't visible themselves but it can be useful to display
-			a debug representation of them. Or, objects may have an additional 
-			debug display on top of their regular display. This option enables / 
-			disables that debug display. Objects that are not visible never display
-			debug geometry regardless of this setting.
-		*/
-		virtual void setDebugDisplayEnabled(bool enabled) { mDebugDisplay = enabled; }
-		/// Gets whether debug display of this object is enabled. 
-		virtual bool isDebugDisplayEnabled(void) const { return mDebugDisplay; }
 
 
 

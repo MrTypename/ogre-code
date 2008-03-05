@@ -154,7 +154,7 @@ namespace Ogre {
         Real mDerivedTop;
         bool mDerivedOutOfDate;
 
-        /// Flag indicating if the vertex positions need recalculating
+        /// Flag indicating if the vertex positons need recalculating
         bool mGeomPositionsOutOfDate;
 		/// Flag indicating if the vertex uvs need recalculating
 		bool mGeomUVsOutOfDate;
@@ -293,6 +293,10 @@ namespace Ogre {
 
         /** See Renderable */
         void getWorldTransforms(Matrix4* xform) const;
+        /** @copydoc Renderable::getWorldOrientation */
+        const Quaternion& getWorldOrientation(void) const;
+        /** @copydoc Renderable::getWorldPosition */
+        const Vector3& getWorldPosition(void) const;
 
         /** Tell the object to recalculate */
         virtual void _positionsOutOfDate(void);
@@ -303,7 +307,7 @@ namespace Ogre {
         /** Updates this elements transform based on it's parent. */
         virtual void _updateFromParent(void);
 
-        /** Internal method for notifying the GUI element of it's parent and ultimate overlay. */
+        /** Internal method for notifying the gui element of it's parent and ultimate overlay. */
         virtual void _notifyParent(OverlayContainer* parent, Overlay* overlay);
 
         /** Gets the 'left' position as derived from own left and that of parents. */
@@ -329,11 +333,8 @@ namespace Ogre {
         nested within this to ensure that containers are displayed behind contained
         items. This method is used internally to notify the element of a change in
         final zorder which is used to render the element.
-		@return Return the next zordering number available. For single elements, this
-		is simply newZOrder + 1, but for containers, they increment it once for each
-		child (more if those children are also containers).
         */
-        virtual ushort _notifyZOrder(ushort newZOrder);
+        virtual void _notifyZOrder(ushort newZOrder);
 
         /** Internal method to notify the element when it's world transform
          of parent overlay has changed.
@@ -347,10 +348,6 @@ namespace Ogre {
 
         /** Internal method to put the contents onto the render queue. */
         virtual void _updateRenderQueue(RenderQueue* queue);
-
-		/// @copydoc MovableObject::visitRenderables
-		void visitRenderables(Renderable::Visitor* visitor, 
-			bool debugRenderables = false);
 
         /** Gets the type name of the element. All concrete subclasses must implement this. */
         virtual const String& getTypeName(void) const = 0;

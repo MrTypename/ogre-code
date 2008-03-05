@@ -2,7 +2,7 @@
 
 # """
 # Name: 'OGRE Meshes'
-# Blender: 244
+# Blender: 242
 # Group: 'Export'
 # Tooltip: 'Export meshes and animations to OGRE'
 # """
@@ -1743,6 +1743,5 @@ else:
 					QuitAction.execute(self)
 					return
 
-		if (__name__ == '__main__'):
-			application = MeshExporterApplication()
-			application.go()
+		application = MeshExporterApplication()
+		application.go()

@@ -781,7 +781,7 @@ namespace Ogre
             Real area  = u1 * v2 - u2 * v1;
 
             // epsilon to avoid float precision error
-            const Real EPSILON = 1e-6f;
+            const Real EPSILON = 1e-3f;
 
             Real tolerance = - EPSILON * area;
 

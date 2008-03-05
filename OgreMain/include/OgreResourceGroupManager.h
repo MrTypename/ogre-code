@@ -118,24 +118,8 @@ namespace Ogre {
 
 		/** This event is fired when a resource group finished loading. */
 		virtual void resourceGroupLoadEnded(const String& groupName) = 0;
+
     };
-
-	/**
-	 @remarks	This class allows users to override resource loading behavior.
-				By overriding this class' methods, you can change how resources
-				are loaded and the behavior for resource name collisions.
-	*/
-	class ResourceLoadingListener
-	{
-	public:
-		/** This event is called when a resource beings loading. */
-		virtual Ogre::DataStreamPtr resourceLoading(const String &name, const String &group, Resource *resource) = 0;
-
-		/** This event is called when a resource collides with another existing one in a resource manager
-		  */
-		virtual bool resourceCollision(Resource *resource, ResourceManager *resourceManager) = 0;
-	};
-
     /** This singleton class manages the list of resource groups, and notifying
         the various resource managers of their obligations to load / unload
         resources in a group. It also provides facilities to monitor resource
@@ -220,8 +204,6 @@ namespace Ogre {
 
 		typedef std::vector<ResourceGroupListener*> ResourceGroupListenerList;
         ResourceGroupListenerList mResourceGroupListenerList;
-
-		ResourceLoadingListener *mLoadingListener;
 
         /// Resource index entry, resourcename->location 
         typedef std::map<String, Archive*> ResourceLocationIndex;
@@ -319,6 +301,8 @@ namespace Ogre {
 		void fireResourceEnded(void);
 		/// Internal event firing method
 		void fireResourceGroupLoadEnded(const String& groupName);
+
+
 
 		/// Stored current group - optimisation for when bulk loading a group
 		ResourceGroup* mCurrentGroup;
@@ -793,7 +777,7 @@ namespace Ogre {
 		*/
 		void _notifyResourceRemoved(ResourcePtr& res);
 
-		/** Internal method to notify the group manager that a resource has
+		/** Internale method to notify the group manager that a resource has
 			changed group (only applicable for autodetect group) */
 		void _notifyResourceGroupChanged(const String& oldGroup, Resource* res);
 
@@ -834,10 +818,6 @@ namespace Ogre {
 		*/
 		ResourceDeclarationList getResourceDeclarationList(const String& groupName);
 
-		/// Sets a new loading listener
-		void setLoadingListener(ResourceLoadingListener *listener);
-		/// Returns the current loading listener
-		ResourceLoadingListener *getLoadingListener();
 
 		/** Override standard Singleton retrieval.
         @remarks

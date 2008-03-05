@@ -150,6 +150,13 @@ namespace Ogre {
         /** Overridden - see Renderable.
         */
         void getWorldTransforms(Matrix4* xform) const;
+        /** @copydoc Renderable::getWorldOrientation */
+        const Quaternion& getWorldOrientation(void) const;
+        /** @copydoc Renderable::getWorldPosition */
+        const Vector3& getWorldPosition(void) const;
+        /** Overridden - see Renderable.
+        */
+        bool getNormaliseNormals(void) const;      
         /** Overridden - see Renderable.
         */
         unsigned short getNumWorldTransforms(void) const;
@@ -207,7 +214,7 @@ namespace Ogre {
 		*/
 		void _restoreBuffersForUnusedAnimation(bool hardwareAnimation);
 
-		/** Overridden from Renderable to provide some custom behaviour. */
+		/** Overridden from Renderble to provide some custom behaviour. */
 		void _updateCustomGpuParameter(
 			const GpuProgramParameters::AutoConstantEntry& constantEntry,
 			GpuProgramParameters* params) const;

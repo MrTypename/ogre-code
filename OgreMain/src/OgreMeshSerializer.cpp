@@ -42,7 +42,6 @@ namespace Ogre {
     const unsigned short HEADER_CHUNK_ID = 0x1000;
     //---------------------------------------------------------------------
     MeshSerializer::MeshSerializer()
-		:mListener(0)
     {
         // Set up map
         mImplementations.insert(
@@ -116,7 +115,7 @@ namespace Ogre {
         }
 
         // Call implementation
-        impl->second->importMesh(stream, pDest, mListener);
+        impl->second->importMesh(stream, pDest);
         // Warn on old version of mesh
         if (ver != msCurrentVersion)
         {
@@ -127,14 +126,6 @@ namespace Ogre {
 
     }
     //---------------------------------------------------------------------
-	void MeshSerializer::setListener(Ogre::MeshSerializerListener *listener)
-	{
-		mListener = listener;
-	}
-	//-------------------------------------------------------------------------
-	MeshSerializerListener *MeshSerializer::getListener()
-	{
-		return mListener;
-	}
+
 }
 

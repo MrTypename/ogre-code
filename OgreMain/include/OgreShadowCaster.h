@@ -66,6 +66,10 @@ namespace Ogre {
         /// Overridden from Renderable
         void getWorldTransforms(Matrix4* xform) const = 0;
         /// Overridden from Renderable
+        const Quaternion& getWorldOrientation(void) const = 0;
+        /// Overridden from Renderable
+        const Vector3& getWorldPosition(void) const = 0;
+        /// Overridden from Renderable
         Real getSquaredViewDepth(const Camera*) const{ return 0; /* not used */}
         /// Overridden from Renderable
         const LightList& getLights(void) const;
@@ -145,7 +149,7 @@ namespace Ogre {
 
         /** Utility method for extruding vertices based on a light. 
         @remarks
-            Unfortunately, because D3D cannot handle homogeneous (4D) position
+            Unfortunately, because D3D cannot handle homogenous (4D) position
             coordinates in the fixed-function pipeline (GL can, but we have to
             be cross-API), when we extrude in software we cannot extrude to 
             infinity the way we do in the vertex program (by setting w to
@@ -155,7 +159,7 @@ namespace Ogre {
         @param vertexBuffer The vertex buffer containing ONLY xyz position
         values, which must be originalVertexCount * 2 * 3 floats long.
         @param originalVertexCount The count of the original number of
-        vertices, i.e. the number in the mesh, not counting the doubling
+        vertices, ie the number in the mesh, not counting the doubling
         which has already been done (by VertexData::prepareForShadowVolume)
         to provide the extruded area of the buffer.
         @param lightPos 4D light position in object space, when w=0.0f this
@@ -167,7 +171,7 @@ namespace Ogre {
         /** Get the distance to extrude for a point/spot light */
         virtual Real getPointExtrusionDistance(const Light* l) const = 0;
     protected:
-        /// Helper method for calculating extrusion distance
+        /// Helper moethod for calculating extrusion distance
         Real getExtrusionDistance(const Vector3& objectPos, const Light* light) const;
         /** Tells the caster to perform the tasks necessary to update the 
             edge data's light listing. Can be overridden if the subclass needs 

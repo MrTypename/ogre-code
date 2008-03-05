@@ -383,10 +383,6 @@ namespace Ogre {
         */
         virtual void _updateRenderQueue(RenderQueue* queue);
 
-		/// @copydoc MovableObject::visitRenderables
-		void visitRenderables(Renderable::Visitor* visitor, 
-			bool debugRenderables = false);
-
         /** Fast-forwards this system by the required number of seconds.
         @remarks
             This method allows you to fast-forward a system so that it effectively looks like
@@ -584,7 +580,7 @@ namespace Ogre {
 		/** Sets whether particles (and any affector effects) remain relative 
 			to the node the particle system is attached to.
 		@remarks
-			By default particles are in world space once emitted, so they are not
+			By defalt particles are in world space once emitted, so they are not
 			affected by movement in the parent node of the particle system. This
 			makes the most sense when dealing with completely independent particles, 
 			but if you want to constrain them to follow local motion too, you
@@ -704,8 +700,8 @@ namespace Ogre {
             @remarks
                 This is a linked list of pointers to particles in the particle pool.
             @par
-                This allows very fast insertions and deletions from anywhere in 
-                the list to activate / deactivate particles as well as reuse of 
+                This allows very fast instertions and deletions from anywhere in 
+                the list to activate / deactivate particles as well as resuse of 
                 Particle instances in the pool without construction & destruction 
                 which avoids memory thrashing.
         */

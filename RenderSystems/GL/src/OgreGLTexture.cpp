@@ -138,7 +138,7 @@ namespace Ogre {
 		
 		// Allocate internal buffer so that glTexSubImageXD can be used
 		// Internal format
-		GLenum format = GLPixelUtil::getClosestGLInternalFormat(mFormat, mHwGamma);
+		GLenum format = GLPixelUtil::getClosestGLInternalFormat(mFormat);
 		size_t width = mWidth;
 		size_t height = mHeight;
 		size_t depth = mDepth;
@@ -246,10 +246,15 @@ namespace Ogre {
         {
 			String baseName, ext;
 			size_t pos = mName.find_last_of(".");
-			baseName = mName.substr(0, pos);
-			if( pos != String::npos )
-				ext = mName.substr(pos+1);
+			if( pos == String::npos )
+				OGRE_EXCEPT(
+					Exception::ERR_INVALIDPARAMS, 
+					"Unable to load image file '"+ mName + "' - invalid extension.",
+					"GLTexture::loadImpl" );
 
+			baseName = mName.substr(0, pos);
+			ext = mName.substr(pos+1);
+    
 			if(mTextureType == TEX_TYPE_1D || mTextureType == TEX_TYPE_2D || 
                 mTextureType == TEX_TYPE_3D)
             {
@@ -277,7 +282,7 @@ namespace Ogre {
             }
             else if (mTextureType == TEX_TYPE_CUBE_MAP)
             {
-				if(getSourceFileType() == "dds")
+				if(StringUtil::endsWith(getName(), ".dds"))
 				{
 					// XX HACK there should be a better way to specify whether 
 					// all faces are in the same file or not
@@ -303,9 +308,7 @@ namespace Ogre {
 	
 					for(size_t i = 0; i < 6; i++)
 					{
-						String fullName = baseName + suffixes[i];
-						if (!ext.empty())
-							fullName = fullName + "." + ext;
+						String fullName = baseName + suffixes[i] + "." + ext;
 		            	// find & load resource data intro stream to allow resource
 						// group changes if required
 						DataStreamPtr dstream = 
@@ -350,7 +353,7 @@ namespace Ogre {
 			for(size_t mip=0; mip<=getNumMipmaps(); mip++)
 			{
                 GLHardwarePixelBuffer *buf = new GLTextureBuffer(mName, getGLTextureTarget(), mTextureID, face, mip,
-						static_cast<HardwareBuffer::Usage>(mUsage), doSoftware && mip==0, mHwGamma, mFSAA);
+						static_cast<HardwareBuffer::Usage>(mUsage), doSoftware && mip==0);
 				mSurfaceList.push_back(HardwarePixelBufferSharedPtr(buf));
                 
                 /// Check for error

@@ -49,7 +49,7 @@ namespace Ogre {
 		TU_DYNAMIC_WRITE_ONLY_DISCARDABLE = HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE,
 		/// mipmaps will be automatically generated for this texture
 		TU_AUTOMIPMAP = 0x100,
-		/// this texture will be a render target, i.e. used as a target for render to texture
+		/// this texture will be a render target, ie. used as a target for render to texture
 		/// setting this flag will ignore all other texture usages except TU_AUTOMIPMAP
 		TU_RENDERTARGET = 0x200,
 		/// default to automatic mipmap generation static textures
@@ -123,58 +123,17 @@ namespace Ogre {
 		*/
 		virtual bool getMipmapsHardwareGenerated(void) const { return mMipmapsHardwareGenerated; }
 
-        /** Returns the gamma adjustment factor applied to this texture on loading.
+        /** Returns the gamma adjustment factor applied to this texture.
         */
         virtual float getGamma(void) const { return mGamma; }
 
-        /** Sets the gamma adjustment factor applied to this texture on loading the
-			data.
+        /** Sets the gamma adjustment factor applied to this texture.
             @note
-                Must be called before any 'load' method. This gamma factor will
-				be premultiplied in and may reduce the precision of your textures.
-				You can use setHardwareGamma if supported to apply gamma on 
-				sampling the texture instead.
+                Must be called before any 'load' method.
         */
         virtual void setGamma(float g) { mGamma = g; }
 
-		/** Sets whether this texture will be set up so that on sampling it, 
-			hardware gamma correction is applied.
-		@remarks
-			24-bit textures are often saved in gamma colour space; this preserves
-			precision in the 'darks'. However, if you're performing blending on 
-			the sampled colours, you really want to be doing it in linear space. 
-			One way is to apply a gamma correction value on loading (see setGamma),
-			but this means you lose precision in those dark colours. An alternative
-			is to get the hardware to do the gamma correction when reading the 
-			texture and converting it to a floating point value for the rest of
-			the pipeline. This option allows you to do that; it's only supported
-			in relatively recent hardware (others will ignore it) but can improve
-			the quality of colour reproduction.
-		@note
-			Must be called before any 'load' method since it may affect the
-			construction of the underlying hardware resources.
-			Also note this only useful on textures using 8-bit colour channels.
-		*/
-		virtual void setHardwareGammaEnabled(bool enabled) { mHwGamma = enabled; }
-
-		/** Gets whether this texture will be set up so that on sampling it, 
-		hardware gamma correction is applied.
-		*/
-		virtual bool isHardwareGammaEnabled() const { return mHwGamma; }
-
-		/** Set the level of multisample AA to be used if this texture is a 
-			rendertarget.
-		@note This option will be ignored if TU_RENDERTARGET is not part of the
-			usage options on this texture, or if the hardware does not support it. 
-		*/
-		virtual void setFSAA(uint fsaa) { mFSAA = fsaa; }
-
-		/** Get the level of multisample AA to be used if this texture is a 
-		rendertarget.
-		*/
-		virtual uint getFSAA() const { return mFSAA; }
-
-		/** Returns the height of the texture.
+        /** Returns the height of the texture.
         */
         virtual size_t getHeight(void) const { return mHeight; }
 
@@ -364,8 +323,6 @@ namespace Ogre {
 		size_t mNumMipmaps;
 		bool mMipmapsHardwareGenerated;
         float mGamma;
-		bool mHwGamma;
-		uint mFSAA;
 
         TextureType mTextureType;
 		PixelFormat mFormat;
@@ -395,11 +352,6 @@ namespace Ogre {
 
 		/** Default implementation of unload which calls freeInternalResources */
 		void unloadImpl(void);
-
-		/** Identify the source file type as a string, either from the extension
-			or from a magic number.
-		*/
-		String getSourceFileType() const;
 
     };
 

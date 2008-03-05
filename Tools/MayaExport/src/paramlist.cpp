@@ -147,22 +147,10 @@ namespace OgreMayaExporter
 			{
 				buildTangents = true;
 				MString tanSem = args.asString(++i,&stat);
-				if (tanSem == "TEXCOORD")
+				if (tanSem == "TECOORD")
 					tangentSemantic = TS_TEXCOORD;
 				else if (tanSem == "TANGENT")
 					tangentSemantic = TS_TANGENT;
-			}
-			else if ((MString("-tangentsplitmirrored") == args.asString(i,&stat)) && (MS::kSuccess == stat))
-			{
-				tangentsSplitMirrored = true;
-			}
-			else if ((MString("-tangentsplitrotated") == args.asString(i,&stat)) && (MS::kSuccess == stat))
-			{
-				tangentsSplitRotated = true;
-			}
-			else if ((MString("-tangentuseparity") == args.asString(i,&stat)) && (MS::kSuccess == stat))
-			{
-				tangentsUseParity = true;
 			}
 			else if ((MString("-camAnim") == args.asString(i,&stat)) && (MS::kSuccess == stat))
 			{

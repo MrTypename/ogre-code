@@ -35,9 +35,9 @@ public:
         mFountainNode = fountainNode;
     }
 
-    bool frameRenderingQueued(const FrameEvent& evt)
+    bool frameStarted(const FrameEvent& evt)
     {
-        if( ExampleFrameListener::frameRenderingQueued(evt) == false )
+        if( ExampleFrameListener::frameStarted(evt) == false )
             return false;
         // Rotate fountains
         mFountainNode->yaw(Degree(evt.timeSinceLastFrame * 30));
@@ -77,7 +77,6 @@ protected:
         //        mSceneMgr->createParticleSystem("Nimbus", "Examples/GreenyNimbus"));
 
         // Create some nice fireworks
-
         mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(
                 mSceneMgr->createParticleSystem("Fireworks", "Examples/Fireworks"));
 

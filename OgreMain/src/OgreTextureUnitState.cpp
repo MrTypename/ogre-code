@@ -50,7 +50,6 @@ namespace Ogre {
 		, mBorderColour(ColourValue::Black)
 		, mTextureLoadFailed(false)
 		, mIsAlpha(false)
-		, mHwGamma(false)
 		, mRecalcTexMatrix(false)
 		, mUMod(0)
 		, mVMod(0)
@@ -102,7 +101,6 @@ namespace Ogre {
 		, mBorderColour(ColourValue::Black)
 		, mTextureLoadFailed(false)
 		, mIsAlpha(false)
-		, mHwGamma(false)
 		, mRecalcTexMatrix(false)
 		, mUMod(0)
 		, mVMod(0)
@@ -521,16 +519,6 @@ namespace Ogre {
     {
         return mIsAlpha;
     }
-	//-----------------------------------------------------------------------
-	void TextureUnitState::setHardwareGammaEnabled(bool g)
-	{
-		mHwGamma = g;
-	}
-	//-----------------------------------------------------------------------
-	bool TextureUnitState::isHardwareGammaEnabled() const
-	{
-		return mHwGamma;
-	}
     //-----------------------------------------------------------------------
     unsigned int TextureUnitState::getTextureCoordSet(void) const
     {
@@ -879,13 +867,6 @@ namespace Ogre {
         removeEffect(ET_UVSCROLL);
         removeEffect(ET_USCROLL);
         removeEffect(ET_VSCROLL);
-
-        // don't create an effect if the speeds are both 0
-        if(uSpeed == 0.0f && vSpeed == 0.0f) 
-        {
-          return;
-        }
-
         // Create new effect
         TextureEffect eff;
 	if(uSpeed == vSpeed) 
@@ -915,11 +896,6 @@ namespace Ogre {
     {
         // Remove existing effect
         removeEffect(ET_ROTATE);
-        // don't create an effect if the speed is 0
-        if(speed == 0.0f) 
-        {
-          return;
-        }
         // Create new effect
         TextureEffect eff;
         eff.type = ET_ROTATE;
@@ -948,12 +924,6 @@ namespace Ogre {
 				break;
 			}
 		}
-
-    // don't create an effect if the given values are all 0
-    if(base == 0.0f && phase == 0.0f && frequency == 0.0f && amplitude == 0.0f) 
-    {
-      return;
-    }
         // Create new effect
         TextureEffect eff;
         eff.type = ET_TRANSFORM;
@@ -1043,7 +1013,7 @@ namespace Ogre {
 					mFramePtrs[frame] = 
 						TextureManager::getSingleton().load(mFrames[frame], 
 							mParent->getResourceGroup(), mTextureType, 
-							mTextureSrcMipmaps, 1.0f, mIsAlpha, mDesiredFormat, mHwGamma);
+							mTextureSrcMipmaps, 1.0f, mIsAlpha, mDesiredFormat);
 				}
 				catch (Exception &e) {
 					String msg;

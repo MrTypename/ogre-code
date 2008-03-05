@@ -194,7 +194,7 @@ namespace Ogre {
 		/** Sets the position of this emitter relative to the particle system center. */
         virtual void setPosition(const Vector3& pos);
 
-        /** Returns the position of this emitter relative to the center of the particle system. */
+        /** Returns the position of this emitter relative to thte center of the particle system. */
         virtual const Vector3& getPosition(void) const;
 
         /** Sets the direction of the emitter.
@@ -216,12 +216,17 @@ namespace Ogre {
             Whilst the direction property defines the general direction of emission for particles, 
             this property defines how far the emission angle can deviate away from this base direction.
             This allows you to create a scatter effect - if set to 0, all particles will be emitted
-            exactly along the emitters direction vector, whereas if you set it to 180 degrees or more,
+            exactly along the emitters direction vector, wheras if you set it to 180 degrees or more,
             particles will be emitted in a sphere, i.e. in all directions.
         @param degrees
             Maximum angle which initial particle direction can deviate from the emitter base direction vector.
         */
         virtual void setAngle(const Radian& angle);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline void setAngle(Real angle) {
+            setAngle ( Angle(angle) );
+        }
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Returns the maximum angle which the initial particle direction can deviate from the emitters base direction. */
         virtual const Radian& getAngle(void) const;
@@ -369,7 +374,7 @@ namespace Ogre {
             ParticleSystem can reuse Particle instances, and can also set defaults itself.
         */
         virtual void _initParticle(Particle* pParticle) {
-            // Initialise size in case it's been altered
+            // Initialise size incase it's been altered
             pParticle->resetDimensions();
         }
 

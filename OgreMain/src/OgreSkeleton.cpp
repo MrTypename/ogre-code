@@ -74,8 +74,9 @@ namespace Ogre {
     void Skeleton::loadImpl(void)
     {
         SkeletonSerializer serializer;
-		LogManager::getSingleton().stream()
-			<< "Skeleton: Loading " << mName;
+		StringUtil::StrStreamType msg;
+		msg << "Skeleton: Loading " << mName;
+        LogManager::getSingleton().logMessage(msg.str());
 
         DataStreamPtr stream = 
             ResourceGroupManager::getSingleton().openResource(
@@ -520,11 +521,6 @@ namespace Ogre {
         return i->second;
 
     }
-	//---------------------------------------------------------------------
-	bool Skeleton::hasBone(const String& name) const 
-	{	
-		return mBoneListByName.find(name) != mBoneListByName.end();
-	}
     //---------------------------------------------------------------------
     void Skeleton::deriveRootBone(void) const
     {

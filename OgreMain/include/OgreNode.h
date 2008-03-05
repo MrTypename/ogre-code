@@ -232,8 +232,8 @@ namespace Ogre {
 
         /** Sets the orientation of this node via a quaternion.
         @remarks
-            Orientations, unlike other transforms, are not always inherited by child nodes.
-            Whether or not orientations affect the orientation of the child nodes depends on
+            Orientatings, unlike other transforms, are not always inherited by child nodes.
+            Whether or not orientatings affect the orientation of the child nodes depends on
             the setInheritOrientation option of the child. In some cases you want a orientating
             of a parent node to apply to a child node (e.g. where the child node is a part of
             the same object, so you want it to be the same relative orientation based on the
@@ -247,8 +247,8 @@ namespace Ogre {
 
         /** Sets the orientation of this node via quaternion parameters.
         @remarks
-            Orientations, unlike other transforms, are not always inherited by child nodes.
-            Whether or not orientations affect the orientation of the child nodes depends on
+            Orientatings, unlike other transforms, are not always inherited by child nodes.
+            Whether or not orientatings affect the orientation of the child nodes depends on
             the setInheritOrientation option of the child. In some cases you want a orientating
             of a parent node to apply to a child node (e.g. where the child node is a part of
             the same object, so you want it to be the same relative orientation based on the
@@ -262,8 +262,8 @@ namespace Ogre {
 
         /** Resets the nodes orientation (local axes as world axes, no rotation).
         @remarks
-            Orientations, unlike other transforms, are not always inherited by child nodes.
-            Whether or not orientations affect the orientation of the child nodes depends on
+            Orientatings, unlike other transforms, are not always inherited by child nodes.
+            Whether or not orientatings affect the orientation of the child nodes depends on
             the setInheritOrientation option of the child. In some cases you want a orientating
             of a parent node to apply to a child node (e.g. where the child node is a part of
             the same object, so you want it to be the same relative orientation based on the
@@ -321,8 +321,8 @@ namespace Ogre {
 
         /** Tells the node whether it should inherit orientation from it's parent node.
         @remarks
-            Orientations, unlike other transforms, are not always inherited by child nodes.
-            Whether or not orientations affect the orientation of the child nodes depends on
+            Orientatings, unlike other transforms, are not always inherited by child nodes.
+            Whether or not orientatings affect the orientation of the child nodes depends on
             the setInheritOrientation option of the child. In some cases you want a orientating
             of a parent node to apply to a child node (e.g. where the child node is a part of
             the same object, so you want it to be the same relative orientation based on the
@@ -336,8 +336,8 @@ namespace Ogre {
 
         /** Returns true if this node is affected by orientation applied to the parent node. 
         @remarks
-            Orientations, unlike other transforms, are not always inherited by child nodes.
-            Whether or not orientations affect the orientation of the child nodes depends on
+            Orientatings, unlike other transforms, are not always inherited by child nodes.
+            Whether or not orientatings affect the orientation of the child nodes depends on
             the setInheritOrientation option of the child. In some cases you want a orientating
             of a parent node to apply to a child node (e.g. where the child node is a part of
             the same object, so you want it to be the same relative orientation based on the
@@ -391,20 +391,20 @@ namespace Ogre {
         */
         virtual void scale(Real x, Real y, Real z);
 
-        /** Moves the node along the Cartesian axes.
+        /** Moves the node along the cartesian axes.
             @par
                 This method moves the node by the supplied vector along the
-                world Cartesian axes, i.e. along world x,y,z
+                world cartesian axes, i.e. along world x,y,z
             @param 
                 d Vector with x,y,z values representing the translation.
             @param
                 relativeTo The space which this transform is relative to.
         */
         virtual void translate(const Vector3& d, TransformSpace relativeTo = TS_PARENT);
-        /** Moves the node along the Cartesian axes.
+        /** Moves the node along the cartesian axes.
             @par
                 This method moves the node by the supplied vector along the
-                world Cartesian axes, i.e. along world x,y,z
+                world cartesian axes, i.e. along world x,y,z
             @param 
                 x
             @param
@@ -459,18 +459,38 @@ namespace Ogre {
         /** Rotate the node around the Z-axis.
         */
         virtual void roll(const Radian& angle, TransformSpace relativeTo = TS_LOCAL);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline void roll(Real degrees, TransformSpace relativeTo = TS_LOCAL) {
+			roll ( Angle(degrees), relativeTo );
+		}
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Rotate the node around the X-axis.
         */
         virtual void pitch(const Radian& angle, TransformSpace relativeTo = TS_LOCAL);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline void pitch(Real degrees, TransformSpace relativeTo = TS_LOCAL) {
+			pitch ( Angle(degrees), relativeTo );
+		}
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Rotate the node around the Y-axis.
         */
         virtual void yaw(const Radian& angle, TransformSpace relativeTo = TS_LOCAL);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline void yaw(Real degrees, TransformSpace relativeTo = TS_LOCAL) {
+			yaw ( Angle(degrees), relativeTo );
+		}
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Rotate the node around an arbitrary axis.
         */
         virtual void rotate(const Vector3& axis, const Radian& angle, TransformSpace relativeTo = TS_LOCAL);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline void rotate(const Vector3& axis, Real degrees, TransformSpace relativeTo = TS_LOCAL) {
+			rotate ( axis, Angle(degrees), relativeTo );
+		}
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Rotate the node around an aritrary axis using a Quarternion.
         */
@@ -642,6 +662,10 @@ namespace Ogre {
             models using Entity::setDisplaySkeleton()
         */
         void getWorldTransforms(Matrix4* xform) const;
+        /** @copydoc Renderable::getWorldOrientation */
+        const Quaternion& getWorldOrientation(void) const;
+        /** @copydoc Renderable::getWorldPosition */
+        const Vector3& getWorldPosition(void) const;
 
         /** Sets the current transform of this node to be the 'initial state' ie that
             position / orientation / scale to be used as a basis for delta values used
@@ -690,7 +714,7 @@ namespace Ogre {
         virtual void cancelUpdate(Node* child);
 
 		/** Queue a 'needUpdate' call to a node safely.
-		@remarks
+		@ramarks
 			You can't call needUpdate() during the scene graph update, e.g. in
 			response to a Node::Listener hook, because the graph is already being 
 			updated, and update flag changes cannot be made reliably in that context. 

@@ -78,7 +78,6 @@ LGPL like the rest of the engine.
         void createScene(void);
         void createFrameListener(void);
         void createEffects(void);
-		void createTextures(void);
 
         void connectEventHandlers(void);
         //void configureShaderControls(void);

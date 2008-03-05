@@ -43,7 +43,6 @@ Torus Knot Software Ltd.
 #include "OgreCommon.h"
 #include "OgreFrustum.h"
 #include "OgreRay.h"
-#include "OgrePlaneBoundedVolume.h"
 
 
 namespace Ogre {
@@ -65,7 +64,7 @@ namespace Ogre {
             each rendering to a subset of the target, allowing split screen
             and picture-in-picture views.
         @par
-            Cameras maintain their own aspect ratios, field of view, and frustum,
+            Cameras maintain their own aspect ratios, field of view, and frustrum,
             and project co-ordinates into a space measured from -1 to 1 in x and y,
             and 0 to 1 in z. At render time, the camera will be rendering to a
             Viewport which will translate these parametric co-ordinates into real screen
@@ -141,8 +140,8 @@ namespace Ogre {
         mutable bool mRecalcWindow;
         /// The last viewport to be added using this camera
         Viewport* mLastViewport;
-        /** Whether aspect ratio will automatically be recalculated 
-            when a viewport changes its size
+        /** Whether aspect ratio will automaticaally be recalculated 
+            when a vieport changes its size
         */
         bool mAutoAspectRatio;
 		/// Custom culling frustum
@@ -273,20 +272,32 @@ namespace Ogre {
         /** Rolls the camera anticlockwise, around its local z axis.
         */
         void roll(const Radian& angle);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        void roll(Real degrees) { roll ( Angle(degrees) ); }
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Rotates the camera anticlockwise around it's local y axis.
         */
         void yaw(const Radian& angle);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        void yaw(Real degrees) { yaw ( Angle(degrees) ); }
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Pitches the camera up/down anticlockwise around it's local z axis.
         */
         void pitch(const Radian& angle);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        void pitch(Real degrees) { pitch ( Angle(degrees) ); }
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Rotate the camera around an arbitrary axis.
         */
         void rotate(const Vector3& axis, const Radian& angle);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        void rotate(const Vector3& axis, Real degrees) { rotate ( axis, Angle(degrees) ); }
+#endif//OGRE_FORCE_ANGLE_TYPES
 
-        /** Rotate the camera around an arbitrary axis using a Quaternion.
+        /** Rotate the camera around an aritrary axis using a Quarternion.
         */
         void rotate(const Quaternion& q);
 
@@ -434,36 +445,6 @@ namespace Ogre {
             in normalised screen coordinates [0,1]
         */
         Ray getCameraToViewportRay(Real screenx, Real screeny) const;
-        /** Gets a world space ray as cast from the camera through a viewport position.
-        @param screenx, screeny The x and y position at which the ray should intersect the viewport, 
-            in normalised screen coordinates [0,1]
-		@param outRay Ray instance to populate with result
-        */
-        void getCameraToViewportRay(Real screenx, Real screeny, Ray* outRay) const;
-
-		/** Gets a world-space list of planes enclosing a volume based on a viewport
-			rectangle. 
-		@remarks
-			Can be useful for populating a PlaneBoundedVolumeListSceneQuery, e.g. 
-			for a rubber-band selection. 
-		@param screenLeft, screenTop, screenRight, screenBottom The bounds of the
-			on-screen rectangle, expressed in normalised screen coordinates [0,1]
-		*/
-		PlaneBoundedVolume getCameraToViewportBoxVolume(Real screenLeft, 
-			Real screenTop, Real screenRight, Real screenBottom);
-
-		/** Gets a world-space list of planes enclosing a volume based on a viewport
-			rectangle. 
-		@remarks
-			Can be useful for populating a PlaneBoundedVolumeListSceneQuery, e.g. 
-			for a rubber-band selection. 
-		@param screenLeft, screenTop, screenRight, screenBottom The bounds of the
-			on-screen rectangle, expressed in normalised screen coordinates [0,1]
-		@param outVolume The plane list to populate with the result
-		*/
-		void getCameraToViewportBoxVolume(Real screenLeft, 
-			Real screenTop, Real screenRight, Real screenBottom, 
-			PlaneBoundedVolume* outVolume);
 
 		/** Internal method for OGRE to use for LOD calculations. */
 		Real _getLodBiasInverse(void) const;
@@ -506,7 +487,7 @@ namespace Ogre {
         /** Notifies this camera that a viewport is using it.*/
         void _notifyViewport(Viewport* viewport) {mLastViewport = viewport;}
 
-        /** If set to true a viewport that owns this frustum will be able to 
+        /** If set to true a vieport that owns this frustum will be able to 
             recalculate the aspect ratio whenever the frustum is resized.
         @remarks
             You should set this to true only if the frustum / camera is used by 
@@ -515,7 +496,7 @@ namespace Ogre {
         */    
         void setAutoAspectRatio(bool autoratio);
 
-        /** Retrieves if AutoAspectRatio is currently set or not
+        /** Retreives if AutoAspectRatio is currently set or not
         */
         bool getAutoAspectRatio(void) const;
 
@@ -578,14 +559,6 @@ namespace Ogre {
 			objects to exclude distant objects from the final image.
 		*/
 		virtual bool getUseRenderingDistance(void) const { return mUseRenderingDistance; }
-
-		/** Synchronise core camera settings with another. 
-		@remarks
-			Copies the position, orientation, clip distances, projection type 
-			and aspect ratio from another camera. Other settings like query flags, 
-			reflection etc are preserved.
-		*/
-		virtual void synchroniseBaseSettingsWith(const Camera* cam);
 
      };
 
