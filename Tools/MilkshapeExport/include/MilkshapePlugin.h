@@ -71,9 +71,6 @@ public:
     bool generateEdgeLists;
     bool generateTangents;
 	Ogre::VertexElementSemantic tangentSemantic;
-	bool tangentsSplitMirrored;
-	bool tangentsSplitRotated;
-	bool tangentsUseParity;
     unsigned short numLods;
     float lodDepthIncrement;
     Ogre::ProgressiveMesh::VertexReductionQuota lodReductionMethod;

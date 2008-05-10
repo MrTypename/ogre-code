@@ -319,7 +319,7 @@ namespace Ogre {
 		{
 			OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND,
 				"chainIndex out of bounds",
-				"BillboardChain::clearChain");
+				"BillboardChain::removeChainElement");
 		}
 		ChainSegment& seg = mChainSegmentList[chainIndex];
 
@@ -383,7 +383,7 @@ namespace Ogre {
 		{
 			OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND,
 				"chainIndex out of bounds",
-				"BillboardChain::getChainElement");
+				"BillboardChain::updateChainElement");
 		}
 		const ChainSegment& seg = mChainSegmentList[chainIndex];
 
@@ -392,19 +392,6 @@ namespace Ogre {
 		idx = (idx % mMaxElementsPerChain) + seg.start;
 
 		return mChainElementList[idx];
-	}
-	//-----------------------------------------------------------------------
-	size_t BillboardChain::getNumChainElements(size_t chainIndex) const
-	{
-		if (chainIndex >= mChainCount)
-		{
-			OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND,
-				"chainIndex out of bounds",
-				"BillboardChain::getNumChainElements");
-		}
-		const ChainSegment& seg = mChainSegmentList[chainIndex];
-
-		return seg.tail - seg.head + 1;
 	}
 	//-----------------------------------------------------------------------
 	void BillboardChain::updateBoundingBox(void) const
@@ -750,16 +737,19 @@ namespace Ogre {
 		*xform = _getParentNodeFullTransform();
 	}
 	//-----------------------------------------------------------------------
+	const Quaternion& BillboardChain::getWorldOrientation(void) const
+	{
+		return getParentNode()->_getDerivedOrientation();
+	}
+	//-----------------------------------------------------------------------
+	const Vector3& BillboardChain::getWorldPosition(void) const
+	{
+		return getParentNode()->_getDerivedPosition();
+	}
+	//-----------------------------------------------------------------------
 	const LightList& BillboardChain::getLights(void) const
 	{
 		return queryLights();
-	}
-	//---------------------------------------------------------------------
-	void BillboardChain::visitRenderables(Renderable::Visitor* visitor, 
-		bool debugRenderables)
-	{
-		// only one renderable
-		visitor->visit(this, 0, false);
 	}
 	//-----------------------------------------------------------------------
 	//-----------------------------------------------------------------------

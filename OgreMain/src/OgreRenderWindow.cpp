@@ -39,7 +39,6 @@ namespace Ogre {
     RenderWindow::RenderWindow()
         : RenderTarget(), mIsPrimary(false)
     {
-        mAutoDeactivatedOnFocusChange = true;
     }
 
     //-----------------------------------------------------------------------
@@ -62,14 +61,23 @@ namespace Ogre {
     {
         return mIsPrimary;
     }
-
-    bool RenderWindow::isDeactivatedOnFocusChange() const
+    //-----------------------------------------------------------------------
+    void RenderWindow::update(void)
     {
-        return mAutoDeactivatedOnFocusChange;
+		update(true);
+	}
+    //-----------------------------------------------------------------------
+    void RenderWindow::update(bool swap)
+    {
+        // call superclass
+        RenderTarget::update();
+
+
+		if (swap)
+		{
+			// Swap buffers
+    	    swapBuffers(Root::getSingleton().getRenderSystem()->getWaitForVerticalBlank());
+		}
     }
 
-    void RenderWindow::setDeactivateOnFocusChange(bool deactivate)
-    {
-        mAutoDeactivatedOnFocusChange = deactivate;
-    }
 }

@@ -396,7 +396,7 @@ LGPL like the rest of the engine.
         wndw->subscribeEvent(CEGUI::Window::EventKeyUp, CEGUI::Event::Subscriber(&CompositorDemo_FrameListener::handleKeyUpEvent, this ));
     }
 //--------------------------------------------------------------------------
-    bool CompositorDemo_FrameListener::frameRenderingQueued(const Ogre::FrameEvent& evt)
+    bool CompositorDemo_FrameListener::frameStarted(const Ogre::FrameEvent& evt)
     {
 	mMouse->capture();
 	mKeyboard->capture();
@@ -816,8 +816,8 @@ LGPL like the rest of the engine.
 				{
 					Ogre::CompositionTechnique::TextureDefinition* texDef = texIt.getNext();
 
-					// Get instance name of texture (NB only index 0 if MRTs for now)
-					const Ogre::String& instName = inst->getTextureInstanceName(texDef->name, 0);
+					// Get instance name of texture
+					const Ogre::String& instName = inst->getTextureInstanceName(texDef->name);
 					// Create CEGUI texture from name of OGRE texture
 					CEGUI::Texture* tex = mMain->getGuiRenderer()->createTexture(instName);
 					// Create imageset

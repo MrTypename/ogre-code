@@ -169,9 +169,6 @@ namespace Ogre {
 
         /** Overridden from OverlayContainer */
         void _updateRenderQueue(RenderQueue* queue);
-		/// @copydoc OvelayElement::visitRenderables
-		void visitRenderables(Renderable::Visitor* visitor, 
-			bool debugRenderables = false);
 
         /** Overridden from OverlayElement */
         void setMetricsMode(GuiMetricsMode gmm);
@@ -310,7 +307,7 @@ namespace Ogre {
     /** Class for rendering the border of a BorderPanelOverlayElement.
     @remarks
         We need this because we have to render twice, once with the inner panel's repeating
-        material (handled by superclass) and once for the border's separate material. 
+        material (handled by superclass) and once for the border's separate meterial. 
     */
     class _OgreExport BorderRenderable : public Renderable
     {
@@ -326,6 +323,8 @@ namespace Ogre {
         const MaterialPtr& getMaterial(void) const { return mParent->mpBorderMaterial; }
         void getRenderOperation(RenderOperation& op) { op = mParent->mRenderOp2; }
         void getWorldTransforms(Matrix4* xform) const { mParent->getWorldTransforms(xform); }
+        const Quaternion& getWorldOrientation(void) const { return Quaternion::IDENTITY; }
+        const Vector3& getWorldPosition(void) const { return Vector3::ZERO; }
         unsigned short getNumWorldTransforms(void) const { return 1; }
         Real getSquaredViewDepth(const Camera* cam) const { return mParent->getSquaredViewDepth(cam); }
         const LightList& getLights(void) const

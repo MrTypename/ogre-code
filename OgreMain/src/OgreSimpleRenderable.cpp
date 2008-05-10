@@ -91,6 +91,16 @@ namespace Ogre {
     {
         *xform = m_matWorldTransform * mParentNode->_getFullTransform();
     }
+    //-----------------------------------------------------------------------
+    const Quaternion& SimpleRenderable::getWorldOrientation(void) const
+    {
+        return mParentNode->_getDerivedOrientation();
+    }
+    //-----------------------------------------------------------------------
+    const Vector3& SimpleRenderable::getWorldPosition(void) const
+    {
+        return mParentNode->_getDerivedPosition();
+    }
 
     void SimpleRenderable::_notifyCurrentCamera(Camera* cam)
     {
@@ -113,12 +123,6 @@ namespace Ogre {
     {
         queue->addRenderable( this, mRenderQueueID, OGRE_RENDERABLE_DEFAULT_PRIORITY); 
     }
-
-	void SimpleRenderable::visitRenderables(Renderable::Visitor* visitor, 
-		bool debugRenderables)
-	{
-		visitor->visit(this, 0, false);
-	}
 
     SimpleRenderable::~SimpleRenderable()
     {

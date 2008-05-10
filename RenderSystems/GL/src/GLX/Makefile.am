@@ -10,4 +10,5 @@ noinst_LTLIBRARIES = libsupport.la
 libsupport_la_SOURCES = OgreGLXGLSupport.cpp \
 			OgreGLXWindow.cpp \
 			OgreGLXRenderTexture.cpp \
-			OgreGLXContext.cpp
+			OgreGLXContext.cpp \
+			OgreGLXUtils.cpp

@@ -57,10 +57,7 @@ namespace Ogre {
         /// Volume texture
         IDirect3DVolumeTexture9 *mpVolumeTex;
         /// actual texture pointer
-		IDirect3DBaseTexture9	*mpTex;
-		/// Optional FSAA surface
-		IDirect3DSurface9* mFSAASurface;
-
+		IDirect3DBaseTexture9	*mpTex;		
 
 		/// cube texture individual face names
 		String							mCubeFaceNames[6];
@@ -78,13 +75,6 @@ namespace Ogre {
 		typedef std::vector<HardwarePixelBufferSharedPtr> SurfaceList;
 		SurfaceList						mSurfaceList;
 	
-		/// Is hardware gamma supported (read)?
-		bool mHwGammaReadSupported;
-		/// Is hardware gamma supported (write)?
-		bool mHwGammaWriteSupported;
-		/// Is requested FSAA level supported?
-		bool mFSAALevelSupported;
-
         /// Initialise the device and get formats
         void _initDevice(void);
 		/// internal method, load a cube texture
@@ -118,10 +108,6 @@ namespace Ogre {
 		bool _canUseDynamicTextures(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat);
 		/// internal method, return true if the device/texture combination can auto gen. mip maps
 		bool _canAutoGenMipmaps(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat);
-		/// internal method, return true if the device/texture combination can use hardware gamma
-		bool _canUseHardwareGammaCorrection(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat, bool forwriting);
-		/// internal method, return true if the device/texture combination can use FSAA
-		bool _canUseFSAALevel(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat, uint fsaa);
 		
 		/// internal method, the cube map face name for the spec. face index
 		String _getCubeFaceName(unsigned char face) const
@@ -157,15 +143,6 @@ namespace Ogre {
 		/// retrieves a pointer to the cube texture
 		IDirect3DCubeTexture9 *getCubeTexture()
 		{ assert(mpCubeTex); return mpCubeTex; }
-
-		/** Indicates whether the hardware gamma is actually enabled and supported. 
-		@remarks
-			Because hardware gamma might not actually be supported, we need to 
-			ignore it sometimes. Because D3D doesn't encode sRGB in the format but
-			as a sampler state, and we don't want to change the original requested
-			hardware gamma flag (e.g. serialisation) we need another indicator.
-		*/
-		bool isHardwareGammaReadToBeUsed() const { return mHwGamma && mHwGammaReadSupported; }
 		
 		
 
@@ -266,12 +243,10 @@ namespace Ogre {
     class D3D9RenderTexture : public RenderTexture
     {
     public:
-		D3D9RenderTexture(const String &name, D3D9HardwarePixelBuffer *buffer, bool writeGamma, uint fsaa):
+		D3D9RenderTexture(const String &name, D3D9HardwarePixelBuffer *buffer):
 			RenderTexture(buffer, 0)
 		{ 
 			mName = name;
-			mHwGamma = writeGamma;
-			mFSAA = fsaa;
 		}
         ~D3D9RenderTexture() {}
 
@@ -285,13 +260,28 @@ namespace Ogre {
 
         virtual void update(void);
 
-		virtual void getCustomAttribute( const String& name, void *pData );
+		virtual void getCustomAttribute( const String& name, void *pData )
+        {
+			if(name == "DDBACKBUFFER")
+            {
+                IDirect3DSurface9 ** pSurf = (IDirect3DSurface9 **)pData;
+				*pSurf = static_cast<D3D9HardwarePixelBuffer*>(mBuffer)->getSurface();
+				return;
+            }
+            else if(name == "HWND")
+            {
+                HWND *pHwnd = (HWND*)pData;
+                *pHwnd = NULL;
+                return;
+            }
+			else if(name == "BUFFER")
+			{
+				*static_cast<HardwarePixelBuffer**>(pData) = mBuffer;
+				return;
+			}
+		}
 
 		bool requiresTextureFlipping() const { return false; }
-
-		/// Override needed to deal with FSAA
-		void swapBuffers(bool waitForVSync = true);
-
 	};
 
 }

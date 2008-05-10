@@ -40,8 +40,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	class MeshSerializerListener;
-
     /** Handles the management of mesh resources.
         @remarks
             This class deals with the runtime management of
@@ -115,9 +113,9 @@ namespace Ogre {
             @param
                 height The height of the plane in world coordinates
             @param
-                xsegments The number of segments to the plane in the x direction
+                xsegments The number of segements to the plane in the x direction
             @param
-                ysegments The number of segments to the plane in the y direction
+                ysegments The number of segements to the plane in the y direction
             @param
                 normals If true, normals are created perpendicular to the plane
             @param
@@ -171,9 +169,9 @@ namespace Ogre {
                 a smoother effect, lower values are less curved meaning
                 more distortion at the horizons but a better distance effect.
 			@param
-                xsegments The number of segments to the plane in the x direction
+                xsegments The number of segements to the plane in the x direction
             @param
-                ysegments The number of segments to the plane in the y direction
+                ysegments The number of segements to the plane in the y direction
             @param
                 normals If true, normals are created perpendicular to the plane
             @param
@@ -227,11 +225,11 @@ namespace Ogre {
             @param
                 height The height of the plane in world coordinates
 			@param
-				bow The amount of 'bow' in the curved plane.  (Could also be considered the depth.)
+				bow The amount of 'bow' in the curved plane.  (Could also be concidered the depth.)
             @param
-                xsegments The number of segments to the plane in the x direction
+                xsegments The number of segements to the plane in the x direction
             @param
-                ysegments The number of segments to the plane in the y direction
+                ysegments The number of segements to the plane in the y direction
             @param
                 normals If true, normals are created perpendicular to the plane
             @param
@@ -277,7 +275,7 @@ namespace Ogre {
                 just position information, but potentially normals and texture coordinates too. The
                 format of the buffer is defined in the VertexDeclaration parameter
             @param
-                declaration VertexDeclaration describing the contents of the buffer. 
+                decaration VertexDeclaration describing the contents of the buffer. 
                 Note this declaration must _only_ draw on buffer source 0!
             @param
                 width Specifies the width of the patch in control points.
@@ -361,14 +359,6 @@ namespace Ogre {
 	    */
         void setBoundsPaddingFactor(Real paddingFactor);
 
-		/** Sets the listener used to control mesh loading through the serializer.
-		*/
-		void setListener(MeshSerializerListener *listener);
-		
-		/** Gets the listener used to control mesh loading through the serializer.
-		*/
-		MeshSerializerListener *getListener();
-
         /** @see ManualResourceLoader::loadResource */
         void loadResource(Resource* res);
 
@@ -378,7 +368,7 @@ namespace Ogre {
             const String& group, bool isManual, ManualResourceLoader* loader, 
             const NameValuePairList* createParams);
         
-        /** Utility method for tessellating 2D meshes.
+        /** Utility method for tesselating 2D meshes.
         */
         void tesselate2DMesh(SubMesh* pSub, int meshWidth, int meshHeight, 
 			bool doubleSided = false, 
@@ -431,11 +421,8 @@ namespace Ogre {
 
         bool mPrepAllMeshesForShadowVolumes;
 	
-		//the factor by which the bounding box of an entity is padded	
-		Real mBoundsPaddingFactor;
-
-		// The listener to pass to serializers
-		MeshSerializerListener *mListener;
+	//the factor by which the bounding box of an entity is padded	
+	Real mBoundsPaddingFactor;
     };
 
 

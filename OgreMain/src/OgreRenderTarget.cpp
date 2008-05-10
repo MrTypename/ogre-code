@@ -35,16 +35,13 @@ Torus Knot Software Ltd.
 #include "OgreLogManager.h"
 #include "OgreRenderTargetListener.h"
 #include "OgreRoot.h"
-#include "OgreRenderSystem.h"
 
 namespace Ogre {
 
     RenderTarget::RenderTarget()
 		:mPriority(OGRE_DEFAULT_RT_GROUP),
 		mActive(true),
-		mAutoUpdate(true),
-		mHwGamma(false), 
-		mFSAA(0)
+		mAutoUpdate(true)
     {
         mTimer = Root::getSingleton().getTimer();
         resetStatistics();
@@ -62,11 +59,12 @@ namespace Ogre {
 
 
         // Write closing message
-		LogManager::getSingleton().stream()
-			<< "Render Target '" << mName << "' "
+		StringUtil::StrStreamType msg;
+		msg << "Render Target '" << mName << "' "
 			<< "Average FPS: " << mStats.avgFPS << " "
 			<< "Best FPS: " << mStats.bestFPS << " "
 			<< "Worst FPS: " << mStats.worstFPS; 
+        LogManager::getSingleton().logMessage(msg.str());
 
     }
 
@@ -96,7 +94,7 @@ namespace Ogre {
         return mColourDepth;
     }
 
-    void RenderTarget::updateImpl(void)
+    void RenderTarget::update(void)
     {
 
         // notify listeners (pre)
@@ -444,20 +442,6 @@ namespace Ogre {
         return filename;
 
     }
-	//-----------------------------------------------------------------------
-	void RenderTarget::writeContentsToFile(const String& filename)
-	{
-		PixelFormat pf = suggestPixelFormat();
-
-		uchar *data = new uchar[mWidth * mHeight * PixelUtil::getNumElemBytes(pf)];
-		PixelBox pb(mWidth, mHeight, 1, pf, data);
-
-		copyContentsToMemory(pb);
-
-		Image().loadDynamicImage(data, mWidth, mHeight, 1, pf, false, 1, 0).save(filename);
-
-		delete [] data;
-	}
     //-----------------------------------------------------------------------
     void RenderTarget::_notifyCameraRemoved(const Camera* cam)
     {
@@ -494,19 +478,5 @@ namespace Ogre {
     {
         return 0;
     }
-    //-----------------------------------------------------------------------
-    void RenderTarget::update(bool swap)
-    {
-        // call implementation
-        updateImpl();
-
-
-		if (swap)
-		{
-			// Swap buffers
-    	    swapBuffers(Root::getSingleton().getRenderSystem()->getWaitForVerticalBlank());
-		}
-    }
-	
 
 }        

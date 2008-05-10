@@ -54,9 +54,7 @@ CompositorManager::CompositorManager():
 	// Loading order (just after materials)
 	mLoadOrder = 110.0f;
 	// Scripting is supported by this manager
-#if OGRE_USE_NEW_COMPILERS == 0
 	mScriptPatterns.push_back("*.compositor");
-#endif
 	ResourceGroupManager::getSingleton()._registerScriptLoader(this);
 
 	// Resource type
@@ -126,7 +124,7 @@ void CompositorManager::initialise(void)
 		CompositionPass *pass = tp->createPass();
 		pass->setType(CompositionPass::PT_RENDERSCENE);
 		/// Render everything, including skies
-		pass->setFirstRenderQueue(RENDER_QUEUE_BACKGROUND);
+		pass->setFirstRenderQueue(RENDER_QUEUE_SKIES_EARLY);
 		pass->setLastRenderQueue(RENDER_QUEUE_SKIES_LATE);
 	}
 

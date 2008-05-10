@@ -89,32 +89,26 @@ bool mLightState[NUM_LIGHTS] =
 	false
 };
 // The materials
-#define NUM_MATERIALS 6
+#define NUM_MATERIALS 4
 String mMaterialNames[NUM_ENTITIES][NUM_MATERIALS] = 
 {
     // athene
+    "Examples/Athene/Basic",
     "Examples/Athene/NormalMapped",
     "Examples/Athene/NormalMappedSpecular",
     "Examples/Athene/NormalMapped",
-	"Examples/ShowUV",
-	"Examples/ShowNormals",
-	"Examples/ShowTangents",
     // knot
+	"Examples/BumpMapping/SingleLight",
 	"Examples/BumpMapping/MultiLight",
 	"Examples/BumpMapping/MultiLightSpecular",
     "Examples/OffsetMapping/Specular",
-	"Examples/ShowUV",
-	"Examples/ShowNormals",
-	"Examples/ShowTangents",
     // ogre head
+    "Examples/BumpMapping/SingleLight",
     "Examples/BumpMapping/MultiLight",
     "Examples/BumpMapping/MultiLightSpecular",
-    "Examples/OffsetMapping/Specular",
-	"Examples/ShowUV",
-	"Examples/ShowNormals",
-	"Examples/ShowTangents",
+    "Examples/OffsetMapping/Specular"
 };
-size_t mCurrentMaterial = 0;
+size_t mCurrentMaterial = 1;
 
 // the scene node of the entity
 SceneNode *mMainNode;
@@ -153,11 +147,11 @@ public:
         mLights[i]->setVisible(mLightState[i]);
         mLightFlareSets[i]->setVisible(mLightState[i]);
     }
-    bool frameRenderingQueued(const FrameEvent& evt)
+    bool frameStarted(const FrameEvent& evt)
     {
 	using namespace OIS;
 
-        if(!ExampleFrameListener::frameRenderingQueued(evt))
+        if(!ExampleFrameListener::frameStarted(evt))
             return false;
         
         static Real timeDelay = 0;
@@ -207,24 +201,21 @@ protected:
 
 	void createScene(void)
     {
-		// Check prerequisites first
+        // First check that vertex programs and dot3 or fragment programs are supported
 		const RenderSystemCapabilities* caps = Root::getSingleton().getRenderSystem()->getCapabilities();
-		if (!caps->hasCapability(RSC_VERTEX_PROGRAM) || !(caps->hasCapability(RSC_FRAGMENT_PROGRAM)))
-		{
-			OGRE_EXCEPT(1, "Your card does not support vertex and fragment programs, so cannot "
-				"run this demo. Sorry!", 
-				"Fresnel::createScene");
-		}
-		else
-		{
-			if (!GpuProgramManager::getSingleton().isSyntaxSupported("arbfp1") &&
-				!GpuProgramManager::getSingleton().isSyntaxSupported("ps_2_0"))
-			{
-				OGRE_EXCEPT(1, "Your card does not support shader model 2, "
-					"so cannot run this demo. Sorry!", 
-					"Fresnel::createScene");
-			}
-		}
+        if (!caps->hasCapability(RSC_VERTEX_PROGRAM))
+        {
+            OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support vertex programs, so cannot "
+                "run this demo. Sorry!", 
+                "Dot3Bump::createScene");
+        }
+        if (!(caps->hasCapability(RSC_FRAGMENT_PROGRAM) 
+			|| caps->hasCapability(RSC_DOT3)) )
+        {
+            OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support dot3 blending or fragment programs, so cannot "
+                "run this demo. Sorry!", 
+                "Dot3Bump::createScene");
+        }
 
         // Set ambient light and fog
         mSceneMgr->setAmbientLight(ColourValue(0.0, 0.0, 0.0));
@@ -255,8 +246,6 @@ protected:
             if (!pMesh->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
             {
                 pMesh->buildTangentVectors(VES_TANGENT, src, dest);
-				// Second mode cleans mirrored / rotated UVs but requires quality models
-				//pMesh->buildTangentVectors(VES_TANGENT, src, dest, true, true);
             }
             // Create entity
             mEntities[mn] = mSceneMgr->createEntity("Ent" + StringConverter::toString(mn), 

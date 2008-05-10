@@ -609,13 +609,6 @@ namespace Ogre {
             PanelOverlayElement::_updateRenderQueue(queue);
         }
     }
-	//---------------------------------------------------------------------
-	void BorderPanelOverlayElement::visitRenderables(Renderable::Visitor* visitor, 
-		bool debugRenderables)
-	{
-		visitor->visit(mBorderRenderable, 0, false);
-		PanelOverlayElement::visitRenderables(visitor, debugRenderables);
-	}
     //-----------------------------------------------------------------------
     void BorderPanelOverlayElement::setMetricsMode(GuiMetricsMode gmm)
     {

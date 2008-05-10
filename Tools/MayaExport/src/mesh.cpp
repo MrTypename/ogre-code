@@ -118,11 +118,6 @@ namespace OgreMayaExporter
 			std::cout << "Error retrieving blend shape deformer linked to current mesh\n";
 			std::cout.flush();
 		}
-		// Set blend shape defeormer envelope to 0, to get base mesh
-		if (pBlendShape)
-		{
-			pBlendShape->setEnvelope(0.0f);
-		}
 		// Get connected shaders
 		stat = getShaders(meshDag);
 		if (stat != MS::kSuccess)
@@ -170,11 +165,6 @@ namespace OgreMayaExporter
 		{
 			std::cout << "Error creating submeshes for current mesh\n";
 			std::cout.flush();
-		}
-		// Restore blendshape envelope
-		if (pBlendShape)
-		{
-			pBlendShape->restoreEnvelope();
 		}
 		// Free up memory
 		newvertices.clear();
@@ -1301,8 +1291,7 @@ namespace OgreMayaExporter
 				canBuild = false;
 			}
 			if (canBuild)
-				pMesh->buildTangentVectors(targetSemantic, srcTex, destTex, 
-					params.tangentsSplitMirrored, params.tangentsSplitRotated, params.tangentsUseParity);
+				pMesh->buildTangentVectors(targetSemantic, srcTex, destTex);
 		}
 		// Export the binary mesh
 		Ogre::MeshSerializer serializer;

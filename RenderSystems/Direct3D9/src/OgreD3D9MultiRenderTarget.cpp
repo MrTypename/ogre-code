@@ -50,7 +50,7 @@ namespace Ogre
 	{
 	}
 
-	void D3D9MultiRenderTarget::bindSurfaceImpl(size_t attachment, RenderTexture *target)
+	void D3D9MultiRenderTarget::bindSurface(size_t attachment, RenderTexture *target)
 	{
 		assert(attachment<OGRE_MAX_MULTIPLE_RENDER_TARGETS);
 		/// Get buffer and surface to bind to
@@ -66,21 +66,13 @@ namespace Ogre
 		{
 			/// If there is another target bound, compare sizes
 			if(targets[y]->getWidth() != buffer->getWidth() ||
-				targets[y]->getHeight() != buffer->getHeight())
+				targets[y]->getHeight() != buffer->getHeight() ||
+				PixelUtil::getNumElemBits(targets[y]->getFormat()) != 
+					PixelUtil::getNumElemBits(buffer->getFormat()))
 			{
 				OGRE_EXCEPT(
 					Exception::ERR_INVALIDPARAMS, 
-					"MultiRenderTarget surfaces are not of same size", 
-					"D3D9MultiRenderTarget::bindSurface");
-			}
-
-			if (!Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_MRT_DIFFERENT_BIT_DEPTHS)
-				&& (PixelUtil::getNumElemBits(targets[y]->getFormat()) != 
-					PixelUtil::getNumElemBits(buffer->getFormat())))
-			{
-				OGRE_EXCEPT(
-					Exception::ERR_INVALIDPARAMS, 
-					"MultiRenderTarget surfaces are not of same bit depth and hardware requires it", 
+					"MultiRenderTarget surfaces are not of same size or bit depth", 
 					"D3D9MultiRenderTarget::bindSurface"
 				);
 			}
@@ -90,7 +82,7 @@ namespace Ogre
 		checkAndUpdate();
 	}
 
-	void D3D9MultiRenderTarget::unbindSurfaceImpl(size_t attachment)
+	void D3D9MultiRenderTarget::unbindSurface(size_t attachment)
 	{
 		assert(attachment<OGRE_MAX_MULTIPLE_RENDER_TARGETS);
 		targets[attachment] = 0;

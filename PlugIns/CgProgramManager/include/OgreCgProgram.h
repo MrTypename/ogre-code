@@ -109,8 +109,6 @@ namespace Ogre {
         void buildArgs(void);
         /// Releases memory for the horrible Cg char**
         void freeCgArgs(void);
-		/// Preprocess the file for #include support
-		String preprocess(const String& source);
 
 
     public:

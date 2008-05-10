@@ -666,6 +666,18 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
+    const Quaternion& BillboardSet::getWorldOrientation(void) const
+    {
+        return mParentNode->_getDerivedOrientation();
+    }
+
+    //-----------------------------------------------------------------------
+    const Vector3& BillboardSet::getWorldPosition(void) const
+    {
+        return mParentNode->_getDerivedPosition();
+    }
+
+    //-----------------------------------------------------------------------
     void BillboardSet::setAutoextend( bool autoextend )
     {
         mAutoExtendPool = autoextend;
@@ -1366,14 +1378,6 @@ namespace Ogre {
         // because most billboards are unlit, but here we go anyway
         return queryLights();
     }
-	//---------------------------------------------------------------------
-	void BillboardSet::visitRenderables(Renderable::Visitor* visitor, 
-		bool debugRenderables)
-	{
-		// only one renderable
-		visitor->visit(this, 0, false);
-	}
-
 
     void BillboardSet::setTextureCoords( Ogre::FloatRect const * coords, uint16 numCoords )
     {

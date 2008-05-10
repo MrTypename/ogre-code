@@ -78,6 +78,7 @@ pkginclude_HEADERS = Ogre.h \
                      OgreMaterial.h \
                      OgreMaterialManager.h \
                      OgreMaterialSerializer.h \
+                     OgreMaterialScriptCompiler.h \
                      OgreMath.h \
                      OgreMatrix3.h \
                      OgreMatrix4.h \
@@ -139,8 +140,6 @@ pkginclude_HEADERS = Ogre.h \
                      OgreRenderQueueSortingGrouping.h \
                      OgreRenderSystem.h \
                      OgreRenderSystemCapabilities.h \
-                     OgreRenderSystemCapabilitiesManager.h \
-                     OgreRenderSystemCapabilitiesSerializer.h \
                      OgreRenderTarget.h \
                      OgreRenderTargetListener.h \
                      OgreRenderTexture.h \
@@ -157,11 +156,7 @@ pkginclude_HEADERS = Ogre.h \
                      OgreSceneManagerEnumerator.h \
                      OgreSceneNode.h \
                      OgreSceneQuery.h \
-                     OgreScriptCompiler.h \
-                     OgreScriptLexer.h \
                      OgreScriptLoader.h \
-                     OgreScriptParser.h \
-                     OgreScriptTranslator.h \
                      OgreSearchOps.h \
                      OgreSerializer.h \
                      OgreShadowCameraSetup.h \
@@ -193,7 +188,6 @@ pkginclude_HEADERS = Ogre.h \
                      OgreSubEntity.h \
                      OgreSubMesh.h \
                      OgreTagPoint.h \
-					 OgreTangentSpaceCalc.h \
                      OgreTechnique.h \
                      OgreTextAreaOverlayElement.h \
                      OgreTextureUnitState.h \

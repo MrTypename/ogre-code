@@ -55,9 +55,6 @@ void help(void)
     cout << "-t         = Generate tangents (for normal mapping)" << endl;
 	cout << "-td [uvw|tangent]" << endl;
 	cout << "           = Tangent vertex semantic destination (default tangent)" << endl;
-	cout << "-ts [3|4]      = Tangent size (3 or 4 components, 4 includes parity, default 3)" << endl;
-	cout << "-tm            = Split tangent vertices at UV mirror points" << endl;
-	cout << "-tr            = Split tangent vertices where basis is rotated > 90 degrees" << endl;
 	cout << "-r         = DON'T reorganise buffers to recommended format" << endl;
 	cout << "-d3d       = Convert to D3D colour formats" << endl;
 	cout << "-gl        = Convert to GL colour formats" << endl;
@@ -78,9 +75,6 @@ struct UpgradeOptions
 	bool suppressEdgeLists;
 	bool generateTangents;
 	VertexElementSemantic tangentSemantic;
-	bool tangentUseParity;
-	bool tangentSplitMirrored;
-	bool tangentSplitRotated;
 	bool dontReorganise;
 	bool destColourFormatSet;
 	VertexElementType destColourFormat;
@@ -117,9 +111,6 @@ void parseOpts(UnaryOptionList& unOpts, BinaryOptionList& binOpts)
 	opts.suppressEdgeLists = false;
 	opts.generateTangents = false;
 	opts.tangentSemantic = VES_TANGENT;
-	opts.tangentUseParity = false;
-	opts.tangentSplitMirrored = false;
-	opts.tangentSplitRotated = false;
 	opts.dontReorganise = false;
 	opts.endian = Serializer::ENDIAN_NATIVE;
 	opts.destColourFormatSet = false;
@@ -137,11 +128,6 @@ void parseOpts(UnaryOptionList& unOpts, BinaryOptionList& binOpts)
 	opts.suppressEdgeLists = ui->second;
 	ui = unOpts.find("-t");
 	opts.generateTangents = ui->second;
-	ui = unOpts.find("-tm");
-	opts.tangentSplitMirrored = ui->second;
-	ui = unOpts.find("-tr");
-	opts.tangentSplitRotated = ui->second;
-
 	ui = unOpts.find("-i");
 	opts.interactive = ui->second;
 	ui = unOpts.find("-r");
@@ -221,12 +207,6 @@ void parseOpts(UnaryOptionList& unOpts, BinaryOptionList& binOpts)
 			opts.tangentSemantic = VES_TEXTURE_COORDINATES;
 		else // if (bi->second == "tangent"), or anything else
 			opts.tangentSemantic = VES_TANGENT;
-	}
-	bi = binOpts.find("-ts");
-	if (!bi->second.empty())
-	{
-		if (bi->second == "4")
-			opts.tangentUseParity = true;
 	}
 }
 
@@ -917,8 +897,6 @@ int main(int numargs, char** args)
 		unOptList["-i"] = false;
 		unOptList["-e"] = false;
 		unOptList["-t"] = false;
-		unOptList["-tm"] = false;
-		unOptList["-tr"] = false;
 		unOptList["-r"] = false;
 		unOptList["-gl"] = false;
 		unOptList["-d3d"] = false;
@@ -931,7 +909,6 @@ int main(int numargs, char** args)
 		binOptList["-f"] = "";
 		binOptList["-E"] = "";
 		binOptList["-td"] = "";
-		binOptList["-ts"] = "";
 
 		int startIdx = findCommandLineOpts(numargs, args, unOptList, binOptList);
 		parseOpts(unOptList, binOptList);
@@ -1029,9 +1006,7 @@ int main(int numargs, char** args)
 			if (opts.generateTangents)
 			{
 				cout << "Generating tangent vectors...." << std::endl;
-				mesh.buildTangentVectors(opts.tangentSemantic, srcTex, destTex, 
-					opts.tangentSplitMirrored, opts.tangentSplitRotated, 
-					opts.tangentUseParity);
+				mesh.buildTangentVectors(opts.tangentSemantic, srcTex, destTex);
 			}
 		}
 

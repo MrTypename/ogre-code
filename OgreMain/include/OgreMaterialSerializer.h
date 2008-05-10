@@ -155,8 +155,6 @@ namespace Ogre {
 			const GpuProgramParametersSharedPtr& params, GpuProgramParameters* defaultParams,
 			const int level, const bool useMainBuffer);
 		void writeTextureUnit(const TextureUnitState *pTex);
-		void writeSceneBlendFactor(const SceneBlendFactor c_src, const SceneBlendFactor c_dest, 
-			const SceneBlendFactor a_src, const SceneBlendFactor a_dest);
 		void writeSceneBlendFactor(const SceneBlendFactor sbf_src, const SceneBlendFactor sbf_dest);
 		void writeSceneBlendFactor(const SceneBlendFactor sbf);
 		void writeCompareFunction(const CompareFunction cf);
@@ -200,7 +198,7 @@ namespace Ogre {
         @param exportDefaults if true then exports all values including defaults
         @param includeProgDef if true includes Gpu shader program definitions in the
             export material script otherwise if false then program definitions will
-            be exported to a separate file with name programFilename if
+            be exported to a seperate file with name programFilename if
             programFilename is not empty
         @param programFilename the file name of the vertex / fragment program 
 			script to be exported. This is only used if includeProgDef is false.

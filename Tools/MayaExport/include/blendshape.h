@@ -25,12 +25,6 @@
 
 namespace OgreMayaExporter
 {
-	typedef struct
-	{
-		MPlugArray srcConnections;
-		MPlugArray dstConnections;
-	} weightConnections;
-
 	// Blend Shape Class
 	class BlendShape
 	{
@@ -56,10 +50,6 @@ namespace OgreMayaExporter
 		void setEnvelope(float envelope);
 		// Restore maya blend shape deformer original envelope
 		void restoreEnvelope();
-		// Break connections to this blendshape
-		void breakConnections();
-		// Restore connections on this blendshape
-		void restoreConnections();
 		// Public members
 		MFnBlendShapeDeformer* m_pBlendShapeFn;
 
@@ -80,8 +70,6 @@ namespace OgreMayaExporter
 		//blend shape target (shared geometry or submesh)
 		target m_target;
 		int m_index;
-		//blend shape weights connections
-		std::vector<weightConnections> m_weightConnections;
 	};
 
 

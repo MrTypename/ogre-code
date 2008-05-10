@@ -94,8 +94,6 @@ namespace Ogre {
         void updateTransform(void) const;
 		/** Internal method for initialising an overlay */
 		void initialise(void);
-		/** Internal method for updating container elements' Z-ordering */
-		void assignZOrders(void);
 
     public:
         /// Constructor: do not call direct, use OverlayManager::create
@@ -133,7 +131,7 @@ namespace Ogre {
             could be as simple as a square panel, or something more complex like
             a grid or tree view. Containers group collections of other elements,
             giving them a relative coordinate space and a common z-order.
-            If you want to attach a GUI widget to an overlay, you have to do it via
+            If you want to attach a gui widget to an overlay, you have to do it via
             a container.
         @param cont Pointer to a container to add, created using OverlayManager.
         */
@@ -213,12 +211,22 @@ namespace Ogre {
 
         /** Sets the rotation applied to this overlay.*/
         void setRotate(const Radian& angle);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline void setRotate(Real degrees) {
+			setRotate ( Angle(degrees) );
+		}
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Gets the rotation applied to this overlay, in degrees.*/
         const Radian &getRotate(void) const { return mRotate; }
 
         /** Adds the passed in angle to the rotation applied to this overlay. */
         void rotate(const Radian& angle);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+		inline void rotate(Real degrees) {
+			rotate ( Angle(degrees) );
+		}
+#endif//OGRE_FORCE_ANGLE_TYPES
 
         /** Sets the scaling factor of this overlay.
         @remarks
@@ -237,6 +245,10 @@ namespace Ogre {
 
         /** Used to transform the overlay when scrolling, scaling etc. */
         void _getWorldTransforms(Matrix4* xform) const;
+        /** @copydoc Renderable::getWorldOrientation */
+        const Quaternion& getWorldOrientation(void) const;
+        /** @copydoc Renderable::getWorldPosition */
+        const Vector3& getWorldPosition(void) const;
 
         /** Internal method to put the overlay contents onto the render queue. */
         void _findVisibleObjects(Camera* cam, RenderQueue* queue);

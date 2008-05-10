@@ -34,7 +34,6 @@ Torus Knot Software Ltd.
 #include "OgreFactoryObj.h"
 #include "OgreRenderQueue.h"
 #include "OgreCommon.h"
-#include "OgreRenderable.h"
 
 namespace Ogre {
 
@@ -110,13 +109,6 @@ namespace Ogre {
 
         /** Gets the desired particles sort mode of this renderer */
         virtual SortMode _getSortMode(void) const = 0;
-
-		/** Required method to allow the renderer to communicate the Renderables
-			it will be using to render the system to a visitor.
-		@see MovableObject::visitRenderables
-		*/
-		virtual void visitRenderables(Renderable::Visitor* visitor, 
-			bool debugRenderables = false) = 0;
 
     };
 

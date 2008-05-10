@@ -29,9 +29,6 @@ Torus Knot Software Ltd.
 #include "OgreStableHeaders.h"
 #include "OgreGpuProgramManager.h"
 #include "OgreHighLevelGpuProgramManager.h"
-#include "OgreRoot.h"
-#include "OgreRenderSystem.h"
-
 
 namespace Ogre {
     //-----------------------------------------------------------------------
@@ -134,24 +131,16 @@ namespace Ogre {
         return prg;
     }
     //---------------------------------------------------------------------------
-		const GpuProgramManager::SyntaxCodes& GpuProgramManager::getSupportedSyntax(void) const
-        {
-				// Use the current render system
-			  RenderSystem* rs = Root::getSingleton().getRenderSystem();
-
-				// Get the supported syntaxed from RenderSystemCapabilities 
-				return rs->getCapabilities()->getSupportedShaderProfiles();
-        }
-
-    //---------------------------------------------------------------------------
     bool GpuProgramManager::isSyntaxSupported(const String& syntaxCode) const
+    {
+        if (std::find(mSyntaxCodes.begin(), mSyntaxCodes.end(), syntaxCode) != mSyntaxCodes.end())
         {
-				// Use the current render system
-			  RenderSystem* rs = Root::getSingleton().getRenderSystem();
-
-				// Get the supported syntaxed from RenderSystemCapabilities 
-				return rs->getCapabilities()->isShaderProfileSupported(syntaxCode);
-
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     //---------------------------------------------------------------------------
     ResourcePtr GpuProgramManager::getByName(const String& name, bool preferHighLevelPrograms)

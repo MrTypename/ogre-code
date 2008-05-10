@@ -152,7 +152,7 @@ namespace Ogre {
         static String toString(const ColourValue& val);
         /** Converts a StringVector to a string.
         @remarks
-            Strings must not contain spaces since space is used as a delimiter in
+            Strings must not contain spaces since space is used as a delimeter in
             the output.
         */
         static String toString(const StringVector& val);
@@ -195,24 +195,12 @@ namespace Ogre {
 			matches "true", "yes" or "1", false otherwise.
         */
         static bool parseBool(const String& val);
-		/** Parses a Vector2 out of a String.
-        @remarks
-            Format is "x y" ie. 2 Real components, space delimited. Failure to parse returns
-            Vector2::ZERO.
-        */
-        static Vector2 parseVector2(const String& val);
-		/** Parses a Vector3 out of a String.
+        /** Parses a Vector3 out of a String.
         @remarks
             Format is "x y z" ie. 3 Real components, space delimited. Failure to parse returns
             Vector3::ZERO.
         */
         static Vector3 parseVector3(const String& val);
-        /** Parses a Vector4 out of a String.
-        @remarks
-            Format is "x y z w" ie. 4 Real components, space delimited. Failure to parse returns
-            Vector4::ZERO.
-        */
-        static Vector4 parseVector4(const String& val);
         /** Parses a Matrix3 out of a String.
         @remarks
             Format is "00 01 02 10 11 12 20 21 22" where '01' means row 0 column 1 etc.
@@ -241,7 +229,7 @@ namespace Ogre {
 
         /** Pareses a StringVector from a string.
         @remarks
-            Strings must not contain spaces since space is used as a delimiter in
+            Strings must not contain spaces since space is used as a delimeter in
             the output.
         */
         static StringVector parseStringVector(const String& val);

@@ -49,7 +49,6 @@ namespace Ogre {
         , mParentNode(0)
         , mParentIsTagPoint(false)
         , mVisible(true)
-		, mDebugDisplay(false)
         , mUpperDistance(0)
         , mSquaredUpperDistance(0)
         , mBeyondFarDistance(false)
@@ -71,7 +70,6 @@ namespace Ogre {
         , mParentNode(0)
         , mParentIsTagPoint(false)
         , mVisible(true)
-		, mDebugDisplay(false)
         , mUpperDistance(0)
         , mSquaredUpperDistance(0)
         , mBeyondFarDistance(false)
@@ -158,23 +156,6 @@ namespace Ogre {
         return (mParentNode != 0);
 
     }
-	//---------------------------------------------------------------------
-	void MovableObject::detatchFromParent(void)
-	{
-		if (isAttached())
-		{
-			if (mParentIsTagPoint)
-			{
-				TagPoint* tp = static_cast<TagPoint*>(mParentNode);
-				tp->getParentEntity()->detachObjectFromBone(this);
-			}
-			else
-			{
-				SceneNode* sn = static_cast<SceneNode*>(mParentNode);
-				sn->detachObject(this);
-			}
-		}
-	}
     //-----------------------------------------------------------------------
 	bool MovableObject::isInScene(void) const
 	{

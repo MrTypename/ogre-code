@@ -282,23 +282,16 @@ namespace Ogre {
                 stream The source data.
             @param
                 type The type of the image. Used to decide what decompression
-                codec to use. Can be left blank if the stream data includes
-				a header to identify the data.
+                codec to use.
             @see
                 Image::load( const String& strFileName )
         */
-		Image & load(DataStreamPtr& stream, const String& type = StringUtil::BLANK );
+        Image & load(DataStreamPtr& stream, const String& type );
         
         /** Save the image as a file. */
         void save(const String& filename);
 
-		/** Encode the image and return a stream to the data. 
-			@param formatextension An extension to identify the image format
-				to encode into, e.g. "jpg" or "png"
-		*/
-		DataStreamPtr encode(const String& formatextension);
-
-		/** Returns a pointer to the internal image buffer.
+        /** Returns a pointer to the internal image buffer.
 		@remarks
 			Be careful with this method. You will almost certainly
 			prefer to use getPixelBox, especially with complex images
@@ -338,7 +331,7 @@ namespace Ogre {
         */
         size_t getDepth(void) const;
 		
-		/** Get the number of faces of the image. This is usually 6 for a cubemap, and
+		/** Get the numer of faces of the image. This is usually 6 for a cubemap, and
 		    1 for a normal image.
 		*/
 		size_t getNumFaces(void) const;
@@ -371,7 +364,7 @@ namespace Ogre {
          * is only valid for cubemaps and volume textures. This uses the first (largest)
          * mipmap.
          */
-        ColourValue getColourAt(int x, int y, int z) const;
+        ColourValue getColourAt(int x, int y, int z);
         
         /**
          * Get a PixelBox encapsulating the image data of a mipmap
@@ -401,11 +394,7 @@ namespace Ogre {
 		
         // Static function to calculate size in bytes from the number of mipmaps, faces and the dimensions
         static size_t calculateSize(size_t mipmaps, size_t faces, size_t width, size_t height, size_t depth, PixelFormat format);
-
-		/// Static function to get an image type string from a stream via magic numbers
-		static String getFileExtFromMagic(DataStreamPtr stream);
-
-    protected:
+    private:
         // The width of the image in pixels
         size_t m_uWidth;
         // The height of the image in pixels

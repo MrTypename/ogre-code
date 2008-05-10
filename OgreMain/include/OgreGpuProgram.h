@@ -34,7 +34,6 @@ Torus Knot Software Ltd.
 #include "OgreResource.h"
 #include "OgreSharedPtr.h"
 #include "OgreIteratorWrappers.h"
-#include "OgreSerializer.h"
 
 namespace Ogre {
 
@@ -52,30 +51,30 @@ namespace Ogre {
 	*/
 	enum GpuConstantType
 	{
-		GCT_FLOAT1 = 1,
-		GCT_FLOAT2 = 2,
-		GCT_FLOAT3 = 3,
-		GCT_FLOAT4 = 4,
-		GCT_SAMPLER1D = 5,
-		GCT_SAMPLER2D = 6,
-		GCT_SAMPLER3D = 7,
-		GCT_SAMPLERCUBE = 8,
-		GCT_SAMPLER1DSHADOW = 9,
-		GCT_SAMPLER2DSHADOW = 10,
-		GCT_MATRIX_2X2 = 11,
-		GCT_MATRIX_2X3 = 12,
-		GCT_MATRIX_2X4 = 13,
-		GCT_MATRIX_3X2 = 14,
-		GCT_MATRIX_3X3 = 15,
-		GCT_MATRIX_3X4 = 16,
-		GCT_MATRIX_4X2 = 17,
-		GCT_MATRIX_4X3 = 18,
-		GCT_MATRIX_4X4 = 19,
-		GCT_INT1 = 20,
-		GCT_INT2 = 21,
-		GCT_INT3 = 22,
-		GCT_INT4 = 23,
-		GCT_UNKNOWN = 99
+		GCT_FLOAT1,
+		GCT_FLOAT2,
+		GCT_FLOAT3,
+		GCT_FLOAT4,
+		GCT_SAMPLER1D,
+		GCT_SAMPLER2D,
+		GCT_SAMPLER3D,
+		GCT_SAMPLERCUBE,
+		GCT_SAMPLER1DSHADOW,
+		GCT_SAMPLER2DSHADOW,
+		GCT_MATRIX_2X2,
+		GCT_MATRIX_2X3,
+		GCT_MATRIX_2X4,
+		GCT_MATRIX_3X2,
+		GCT_MATRIX_3X3,
+		GCT_MATRIX_3X4,
+		GCT_MATRIX_4X2,
+		GCT_MATRIX_4X3,
+		GCT_MATRIX_4X4,
+		GCT_INT1,
+		GCT_INT2,
+		GCT_INT3,
+		GCT_INT4,
+		GCT_UNKNOWN
 	};
 
 	/** Information about predefined program constants. 
@@ -88,8 +87,6 @@ namespace Ogre {
 		GpuConstantType constType;
 		/// Physical start index in buffer (either float or int buffer)
 		size_t physicalIndex;
-		/// Logical index - used to communicate this constant to the rendersystem
-		size_t logicalIndex;
 		/** Number of raw buffer slots per element 
 		(some programs pack each array element to float4, some do not) */
 		size_t elementSize;
@@ -167,45 +164,6 @@ namespace Ogre {
 		void generateConstantDefinitionArrayEntries(const String& paramName, 
 			const GpuConstantDefinition& baseDef);
 
-        /// Indicates whether all array entries will be generated and added to the definitions map
-        static bool getGenerateAllConstantDefinitionArrayEntries();
-
-        /** Sets whether all array entries will be generated and added to the definitions map.
-		@remarks
-			Usually, array entries can only be individually indexed if they're up to 16 entries long,
-			to save memory - arrays larger than that can be set but only via the bulk setting
-			methods. This option allows you to choose to individually index every array entry. 
-		*/
-        static void setGenerateAllConstantDefinitionArrayEntries(bool generateAll);
-
-		/** Saves constant definitions to a file, compatible with GpuProgram::setManualNamedParametersFile. 
-		@see GpuProgram::setManualNamedParametersFile
-		*/
-		void save(const String& filename) const;
-		/** Loads constant definitions from a stream, compatible with GpuProgram::setManualNamedParametersFile. 
-		@see GpuProgram::setManualNamedParametersFile
-		*/
-		void load(DataStreamPtr& stream);
-
-    protected:
-        /** Indicates whether all array entries will be generated and added to the definitions map
-        @remarks
-            Normally, the number of array entries added to the definitions map is capped at 16
-            to save memory. Setting this value to <code>true</code> allows all of the entries
-            to be generated and added to the map.
-        */
-        static bool msGenerateAllConstantDefinitionArrayEntries;
-	};
-
-	/// Simple class for loading / saving GpuNamedConstants
-	class _OgreExport GpuNamedConstantsSerializer : public Serializer
-	{
-	public:
-		GpuNamedConstantsSerializer();
-		virtual ~GpuNamedConstantsSerializer();
-		void exportNamedConstants(const GpuNamedConstants* pConsts, const String& filename,
-			Endian endianMode = ENDIAN_NATIVE);
-		void importNamedConstants(DataStreamPtr& stream, GpuNamedConstants* pDest);
 	};
 
 	/** Structure recording the use of a physical buffer by a logical parameter
@@ -342,7 +300,7 @@ namespace Ogre {
  				Equivalent to RenderMonkey's "WorldViewTranspose".
  			*/
  			ACT_TRANSPOSE_WORLDVIEW_MATRIX,
-            /// The current world & view matrices concatenated, then inverted & transposed
+            /// The current world & view matrices concatenated, then inverted & tranposed
             ACT_INVERSE_TRANSPOSE_WORLDVIEW_MATRIX,
 			/// view matrices.
 
@@ -388,10 +346,6 @@ namespace Ogre {
             ACT_SURFACE_SHININESS,
 
 
-			/// The number of active light sources (better than gl_MaxLights)
-			ACT_LIGHT_COUNT,
-
-
 			/// The ambient light colour set in the scene
 			ACT_AMBIENT_LIGHT_COLOUR, 
 
@@ -426,18 +380,10 @@ namespace Ogre {
 			ACT_LIGHT_DISTANCE_OBJECT_SPACE,
 			/** Light power level, a single scalar as set in Light::setPowerScale  (index determined by setAutoConstant call) */
 			ACT_LIGHT_POWER_SCALE,
-			/// Light diffuse colour pre-scaled by Light::setPowerScale (index determined by setAutoConstant call)
-			ACT_LIGHT_DIFFUSE_COLOUR_POWER_SCALED,
-			/// Light specular colour pre-scaled by Light::setPowerScale (index determined by setAutoConstant call)
-			ACT_LIGHT_SPECULAR_COLOUR_POWER_SCALED,
 			/// Array of light diffuse colours (count set by extra param)
 			ACT_LIGHT_DIFFUSE_COLOUR_ARRAY,
 			/// Array of light specular colours (count set by extra param)
 			ACT_LIGHT_SPECULAR_COLOUR_ARRAY,
-			/// Array of light diffuse colours scaled by light power (count set by extra param)
-			ACT_LIGHT_DIFFUSE_COLOUR_POWER_SCALED_ARRAY,
-			/// Array of light specular colours scaled by light power (count set by extra param)
-			ACT_LIGHT_SPECULAR_COLOUR_POWER_SCALED_ARRAY,
 			/// Array of light attenuation parameters, Vector4(range, constant, linear, quadric) (count set by extra param)
 			ACT_LIGHT_ATTENUATION_ARRAY,
 			/// Array of light positions in world space (count set by extra param)
@@ -481,8 +427,8 @@ namespace Ogre {
             ACT_DERIVED_SCENE_COLOUR,
 
             /** The derived light diffuse colour (index determined by setAutoConstant call),
-                with 'r', 'g' and 'b' components filled with product of surface diffuse colour,
-				light power scale and light diffuse colour, respectively, and 'a' component filled with surface
+                with 'r', 'g' and 'b' components filled with product of surface diffuse colour
+                and light diffuse colour, respectively, and 'a' component filled with surface
                 diffuse alpha component.
             */
             ACT_DERIVED_LIGHT_DIFFUSE_COLOUR,
@@ -497,15 +443,6 @@ namespace Ogre {
             ACT_DERIVED_LIGHT_DIFFUSE_COLOUR_ARRAY,
 			/// Array of derived light specular colours (count set by extra param)
             ACT_DERIVED_LIGHT_SPECULAR_COLOUR_ARRAY,
-			/** The absolute light number of a local light index. Each pass may have
-				a number of lights passed to it, and each of these lights will have
-				an index in the overall light list, which will differ from the local
-				light index due to factors like setStartLight and setIteratePerLight.
-				This binding provides the global light index for a local index.
-			*/
-			ACT_LIGHT_NUMBER,
-			/// Returns (int) 1 if the  given light casts shadows, 0 otherwise (index set in extra param)
-			ACT_LIGHT_CASTS_SHADOWS,
 
 
 			/** The distance a shadow volume should be extruded when using
@@ -518,20 +455,6 @@ namespace Ogre {
             ACT_CAMERA_POSITION_OBJECT_SPACE,
             /// The view/projection matrix of the assigned texture projection frustum
             ACT_TEXTURE_VIEWPROJ_MATRIX,
-			/// Array of view/projection matrices of the first n texture projection frustums
-			ACT_TEXTURE_VIEWPROJ_MATRIX_ARRAY,
-			/** The view/projection matrix of the assigned texture projection frustum, 
-				combined with the current world matrix
-			*/
-			ACT_TEXTURE_WORLDVIEWPROJ_MATRIX,
-			/// Array of world/view/projection matrices of the first n texture projection frustums
-			ACT_TEXTURE_WORLDVIEWPROJ_MATRIX_ARRAY,
-			/// The view/projection matrix of a given spotlight
-			ACT_SPOTLIGHT_VIEWPROJ_MATRIX,
-			/** The view/projection matrix of a given spotlight projection frustum, 
-			combined with the current world matrix
-			*/
-			ACT_SPOTLIGHT_WORLDVIEWPROJ_MATRIX,
             /// A custom parameter which will come from the renderable, using 'data' as the identifier
             ACT_CUSTOM,
             /** provides current elapsed time
@@ -640,7 +563,7 @@ namespace Ogre {
 
             /** provides the current iteration number of the pass. The iteration
                 number is the number of times the current render operation has
-                been drawn for the active pass.
+                been drawn for the acitve pass.
             */
             ACT_PASS_ITERATION_NUMBER,
 
@@ -670,10 +593,6 @@ namespace Ogre {
 			*/
 			ACT_SHADOW_SCENE_DEPTH_RANGE,
 
-			/** Provides the fixed shadow colour as configured via SceneManager::setShadowColour;
-				useful for integrated modulative shadows.
-			*/
-			ACT_SHADOW_COLOUR,
             /** Provides texture size of the texture unit (index determined by setAutoConstant
                 call). Packed as float4(width, height, depth, 1)
             */
@@ -687,10 +606,7 @@ namespace Ogre {
             */
             ACT_PACKED_TEXTURE_SIZE,
 
-			/** Provides the current transform matrix of the texture unit (index determined by setAutoConstant
-				call), as seen by the fixed-function pipeline. 
-			*/
-			ACT_TEXTURE_MATRIX
+
         };
 
         /** Defines the type of the extra data item used by the auto constant.
@@ -843,7 +759,7 @@ namespace Ogre {
 		@param index The logical constant index at which to place the parameter (each constant is
             a 4D float).
             Note that since you're passing a Vector3, the last element of the 4-element
-            value will be set to 1 (a homogeneous vector)
+            value will be set to 1 (a homogenous vector)
 		@param vec The value to set
 		*/
 		void setConstant(size_t index, const Vector3& vec);
@@ -1106,7 +1022,7 @@ namespace Ogre {
         size_t getAutoConstantCount(void) const { return mAutoConstants.size(); }
 		/** Gets a specific Auto Constant entry if index is in valid range
 			otherwise returns a NULL
-		@param index which entry is to be retrieved
+		@parem index which entry is to be retrieved
 		*/
 		AutoConstantEntry* getAutoConstantEntry(const size_t index);
         /** Returns true if this instance has any automatic constants. */
@@ -1135,9 +1051,9 @@ namespace Ogre {
 		const AutoConstantEntry* _findRawAutoConstantEntryInt(size_t physicalIndex);
 
         /** Updates the automatic parameters (except lights) based on the details provided. */
-        void _updateAutoParamsNoLights(const AutoParamDataSource* source);
+        void _updateAutoParamsNoLights(const AutoParamDataSource& source);
         /** Updates the automatic parameters for lights based on the details provided. */
-        void _updateAutoParamsLightsOnly(const AutoParamDataSource* source);
+        void _updateAutoParamsLightsOnly(const AutoParamDataSource& source);
 
 		/** Tells the program whether to ignore missing parameters or not.
 		*/
@@ -1429,12 +1345,6 @@ namespace Ogre {
 			String doGet(const void* target) const;
 			void doSet(void* target, const String& val);
 		};
-		class _OgreExport CmdManualNamedConstsFile : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
 		// Command object for setting / getting parameters
 		static CmdType msTypeCmd;
 		static CmdSyntax msSyntaxCmd;
@@ -1442,7 +1352,6 @@ namespace Ogre {
 		static CmdMorph msMorphCmd;
 		static CmdPose msPoseCmd;
 		static CmdVTF msVTFCmd;
-		static CmdManualNamedConstsFile msManNamedConstsFileCmd;
 	
 		/// The type of the program
 		GpuProgramType mType;
@@ -1452,7 +1361,7 @@ namespace Ogre {
         String mSource;
         /// Whether we need to load source from file or not
         bool mLoadFromFile;
-        /// Syntax code e.g. arbvp1, vs_2_0 etc
+        /// Syntax code eg arbvp1, vs_2_0 etc
         String mSyntaxCode;
         /// Does this (vertex) program include skeletal animation?
         bool mSkeletalAnimation;
@@ -1474,12 +1383,6 @@ namespace Ogre {
 		/** Record of logical to physical buffer maps. Mandatory for low-level
 			programs or high-level programs which set their params the same way. */
 		mutable GpuLogicalBufferStruct mIntLogicalToPhysical;
-		/// Parameter name -> ConstantDefinition map, shared instance used by all parameter objects
-		mutable GpuNamedConstants mConstantDefs;
-		/// File from which to load named constants manually
-		String mManualNamedConstantsFile;
-		bool mLoadedManualNamedConstants;
-
 
 		/** Internal method for setting up the basic parameter definitions for a subclass. 
 		@remarks
@@ -1660,45 +1563,6 @@ namespace Ogre {
 		/** Reset a compile error if it occurred, allowing the load to be retried
 		*/
 		virtual void resetCompileError(void) { mCompileError = false; }
-
-		/** Allows you to manually provide a set of named parameter mappings
-			to a program which would not be able to derive named parameters itself.
-		@remarks
-			You may wish to use this if you have assembler programs that were compiled
-			from a high-level source, and want the convenience of still being able
-			to use the named parameters from the original high-level source.
-		@see setManualNamedConstantsFile
-		*/
-		virtual void setManualNamedConstants(const GpuNamedConstants& namedConstants);
-
-		/// Get a read-only reference to the named constants registered for this program (manually or automatically)
-		virtual const GpuNamedConstants& getNamedConstants() const { return mConstantDefs; }
-
-		/** Specifies the name of a file from which to load named parameters mapping
-			for a program which would not be able to derive named parameters itself.
-		@remarks
-			You may wish to use this if you have assembler programs that were compiled
-			from a high-level source, and want the convenience of still being able
-			to use the named parameters from the original high-level source. This
-			method will make a low-level program search in the resource group of the
-			program for the named file from which to load parameter names from. 
-			The file must be in the format produced by GpuNamedConstants::save.
-		*/
-		virtual void setManualNamedConstantsFile(const String& paramDefFile);
-
-		/** Gets the name of a file from which to load named parameters mapping
-			for a program which would not be able to derive named parameters itself.
-		*/
-		virtual const String& getManualNamedConstantsFile() const { return mManualNamedConstantsFile; }
-		/** Get the full list of named constants.
-		@note
-		Only available if this parameters object has named parameters, which means either
-		a high-level program which loads them, or a low-level program which has them
-		specified manually.
-		*/
-		virtual const GpuNamedConstants& getConstantDefinitions() const { return mConstantDefs; }
-
-
     protected:
         /// Virtual method which must be implemented by subclasses, load from mSource
         virtual void loadFromSource(void) = 0;

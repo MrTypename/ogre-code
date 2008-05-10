@@ -183,7 +183,7 @@ namespace Ogre  {
         }
     }
     
-    GLenum GLPixelUtil::getGLInternalFormat(PixelFormat mFormat, bool hwGamma)
+    GLenum GLPixelUtil::getGLInternalFormat(PixelFormat mFormat)
     {
         switch(mFormat) {
             case PF_L8:
@@ -209,16 +209,10 @@ namespace Ogre  {
             case PF_B8G8R8:
 			case PF_X8B8G8R8:
 			case PF_X8R8G8B8:
-				if (hwGamma)
-					return GL_SRGB8;
-				else
-					return GL_RGB8;
+                return GL_RGB8;
             case PF_A8R8G8B8:
             case PF_B8G8R8A8:
-				if (hwGamma)
-					return GL_SRGB8_ALPHA8;
-				else
-					return GL_RGBA8;
+                return GL_RGBA8;
             case PF_A2R10G10B10:
             case PF_A2B10G10R10:
                 return GL_RGB10_A2;
@@ -245,35 +239,21 @@ namespace Ogre  {
 			case PF_SHORT_GR:
 				return GL_LUMINANCE16_ALPHA16;
 			case PF_DXT1:
-				if (hwGamma)
-					return GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
-				else
-					return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+                return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
             case PF_DXT3:
-				if (hwGamma)
-					return GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
-				else
-	                return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+                return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
             case PF_DXT5:
-				if (hwGamma)
-					return GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
-				else
-	                return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+                return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
             default:
                 return GL_NONE;
         }
     }
 
-    GLenum GLPixelUtil::getClosestGLInternalFormat(PixelFormat mFormat, bool hwGamma)
+    GLenum GLPixelUtil::getClosestGLInternalFormat(PixelFormat mFormat)
     {
-        GLenum format = getGLInternalFormat(mFormat, hwGamma);
+        GLenum format = getGLInternalFormat(mFormat);
         if(format==GL_NONE)
-		{
-			if (hwGamma)
-				return GL_SRGB8;
-			else
-				return GL_RGBA8;
-		}
+            return GL_RGBA8;
         else
             return format;
     }
@@ -303,10 +283,8 @@ namespace Ogre  {
 		case GL_RGBA4:
 			return PF_A4R4G4B4;
 		case GL_RGB8:
-		case GL_SRGB8:
 			return PF_X8R8G8B8;
 		case GL_RGBA8:
-		case GL_SRGB8_ALPHA8:
 			return PF_A8R8G8B8;
 		case GL_RGB10_A2:
 			return PF_A2R10G10B10;
@@ -334,14 +312,10 @@ namespace Ogre  {
 			return PF_FLOAT32_RGBA;
 		case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
 		case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-		case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
-		case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
 			return PF_DXT1;
 		case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-		case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
 			return PF_DXT3;
 		case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-		case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
 			return PF_DXT5;
 		default:
 			return PF_A8R8G8B8;

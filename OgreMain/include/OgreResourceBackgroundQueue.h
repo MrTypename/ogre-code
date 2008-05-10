@@ -57,7 +57,7 @@ namespace Ogre {
 		process, your request is placed on a queue ready for the background
 		thread to be picked up, and you will get a 'ticket' back, identifying
 		the request. Your call will then return and your thread can
-		proceed, knowing that at some point in the background the operation will 
+		proceed, knowing that at some point in the background the operation wil 
 		be performed. In it's own thread, the resource operation will be 
 		performed, and once finished the ticket will be marked as complete. 
 		You can check the status of tickets by calling isProcessComplete() 
@@ -115,7 +115,7 @@ namespace Ogre {
 		/// Init notification mutex (must lock before waiting on initCondition)
 		OGRE_MUTEX(initMutex)
 		/// Synchroniser token to wait / notify on thread init (public incase external thread)
-		OGRE_THREAD_SYNCHRONISER(initSync)
+		OGRE_THREAD_SYNCHRONISER(initSync);
 
 	protected:
 		/** Enumerates the type of requests */
@@ -347,7 +347,7 @@ namespace Ogre {
 		@param ticket The ticket which was returned when the process was queued
 		@returns true if process has completed (or if the ticket is 
 			unrecognised), false otherwise
-		@note Tickets are not stored once complete so do not accumulate over 
+		@note Tickets are not stored onced complete so do not accumulate over 
 			time.
 		This is why a non-existent ticket will return 'true'.
 		*/

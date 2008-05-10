@@ -46,11 +46,11 @@ namespace Ogre {
 		CompositorScriptCompiler(void);
 		~CompositorScriptCompiler(void);
 
-        /** gets BNF Grammar for Compositor script.
+        /** gets BNF Grammer for Compositor script.
         */
         virtual const String& getClientBNFGrammer(void) const;
 
-        /** get the name of the Compositor script BNF grammar.
+        /** get the name of the Compositor script BNF grammer.
         */
         virtual const String& getClientGrammerName(void) const;
 
@@ -74,7 +74,6 @@ namespace Ogre {
 			ID_UNKOWN = 0,
 			// Techniques
 			ID_TARGET_WIDTH, ID_TARGET_HEIGHT,
-			ID_TARGET_WIDTH_SCALED, ID_TARGET_HEIGHT_SCALED,
 			ID_PF_A8R8G8B8, ID_PF_R8G8B8A8, ID_PF_R8G8B8, 
 			ID_PF_FLOAT16_R, ID_PF_FLOAT16_RGB, ID_PF_FLOAT16_RGBA,
 			ID_PF_FLOAT32_R, ID_PF_FLOAT32_RGB, ID_PF_FLOAT32_RGBA,
@@ -99,7 +98,7 @@ namespace Ogre {
 
 			// general
 			ID_ON, ID_OFF, ID_TRUE, ID_FALSE,
-            // where auto generated tokens start so do not remove
+            // where auto generated tokens start so donot remove
             ID_AUTOTOKENSTART
 		};
 

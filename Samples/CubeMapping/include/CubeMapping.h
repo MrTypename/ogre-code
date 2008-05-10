@@ -615,10 +615,10 @@ public:
 		updateInfoDensity();
 		updateInfoTimeDensity();
     }
-    virtual bool frameRenderingQueued(const FrameEvent& evt)
+    virtual bool frameStarted(const FrameEvent& evt)
     {
 		// Call default
-		if( ExampleFrameListener::frameRenderingQueued(evt) == false )
+		if( ExampleFrameListener::frameStarted(evt) == false )
 			return false;
 
 		tm += evt.timeSinceLastFrame / timeDensity ;

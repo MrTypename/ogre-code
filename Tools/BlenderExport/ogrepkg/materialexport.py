@@ -87,9 +87,13 @@ class GameEngineMaterial(DefaultMaterial):
 		return
 	def writeTechniques(self, f):
 		mat = self.material
+#Mesh#		if (not(mat)
+#Mesh#			and not(self.mesh.vertexColors)
+#Mesh#			and not(self.mesh.vertexUV or self.mesh.faceUV)):
 		if (not(mat)
-			and not(self.mesh.vertexColors)
-			and not(self.mesh.vertexUV or self.mesh.faceUV)):
+			and not(self.mesh.hasVertexColours())
+			and not(self.mesh.hasVertexUV())
+			and not(self.mesh.hasFaceUV())):
 			# default material
 			DefaultMaterial.writeTechniques(self, f)
 		else:
@@ -120,7 +124,8 @@ class GameEngineMaterial(DefaultMaterial):
 			#  diffuse is defined as
 			#  (mat->r, mat->g, mat->b)*(mat->emit + mat->ref)
 			#  but it's not used.)
-			if self.mesh.vertexColors:
+			#Mesh#if self.mesh.vertexColors:
+			if self.mesh.hasVertexColours():
 				#TODO: Broken in Blender 2.36.
 				# Blender does not handle "texface" mesh with vertex colours
 				f.write(indent(3)+"diffuse vertexcolour\n")
@@ -150,7 +155,8 @@ class GameEngineMaterial(DefaultMaterial):
 					emG = clamp(mat.emit * mat.rgbCol[1])
 					emB = clamp(mat.emit * mat.rgbCol[2])
 					##f.write(indent(3)+"emissive %f %f %f\n" % (emR, emG, emB))
-			if self.mesh.faceUV:
+			#Mesh#if self.mesh.faceUV:
+			if self.mesh.hasFaceUV():
 				# mesh has texture values, resp. tface data
 				# scene_blend <- transp
 				if (self.face.transp == Blender.Mesh.FaceTranspModes["ALPHA"]):
@@ -192,22 +198,27 @@ class GameEngineMaterial(DefaultMaterial):
 		if self.material:
 			materialName += self.material.getName() + '/'
 		# blend mode
-		if self.mesh.faceUV and (self.face.transp == Blender.Mesh.FaceTranspModes['ALPHA']):
+		#Mesh#if self.mesh.faceUV and (self.face.transp == Blender.Mesh.FaceTranspModes['ALPHA']):
+		if self.mesh.hasFaceUV() and (self.face.transp == Blender.Mesh.FaceTranspModes['ALPHA']):
 			materialName += 'ALPHA'
-		elif self.mesh.faceUV and (self.face.transp == Blender.Mesh.FaceTranspModes['ADD']):
+		#Mesh#elif self.mesh.faceUV and (self.face.transp == Blender.Mesh.FaceTranspModes['ADD']):
+		elif self.mesh.hasFaceUV() and (self.face.transp == Blender.Mesh.FaceTranspModes['ADD']):
 			materialName += 'ADD'
 		else:
 			materialName += 'SOLID'
 		# TEX face mode and texture?
-		if self.mesh.faceUV and (self.face.mode & Blender.Mesh.FaceModes['TEX']):
+		#Mesh#if self.mesh.faceUV and (self.face.mode & Blender.Mesh.FaceModes['TEX']):
+		if self.mesh.hasFaceUV() and (self.face.mode & Blender.Mesh.FaceModes['TEX']):
 			materialName += '/TEX'
 			if self.face.image:
 				materialName += '/' + PathName(self.face.image.filename).basename()
 		# vertex colours?
-		if self.mesh.vertexColors:
+		#Mesh#if self.mesh.vertexColors:
+		if self.mesh.hasVertexColours():
 			materialName += '/VertCol'
 		# two sided?
-		if self.mesh.faceUV and (self.face.mode & Blender.Mesh.FaceModes['TWOSIDE']):
+		#Mesh#if self.mesh.faceUV and (self.face.mode & Blender.Mesh.FaceModes['TWOSIDE']):
+		if self.mesh.hasFaceUV() and (self.face.mode & Blender.Mesh.FaceModes['TWOSIDE']):
 			materialName += '/TWOSIDE'
 		return materialName
 
@@ -282,7 +293,8 @@ class RenderingMaterial(DefaultMaterial):
 		if self.mTexUVCol:
 			# COL MTex replaces UV/Image Editor texture
 			imageFileName = self.manager.registerTextureFile(self.mTexUVCol.tex.getImage().getFilename())
-		elif (self.mesh.faceUV and self.face.image):
+		#Mesh#elif (self.mesh.faceUV and self.face.image):
+		elif (self.mesh.hasFaceUV() and self.face.image):
 			# UV/Image Editor texture 
 			imageFileName = self.manager.registerTextureFile(self.face.image.filename)
 		
@@ -571,7 +583,8 @@ class RenderingMaterial(DefaultMaterial):
 		elif (self.material.mode & Blender.Material.Modes['ZINVERT']):
 			f.write(indent(indentation)+"depth_func greater_equal\n")
 		# twoside
-		if self.mesh.faceUV and (self.face.mode & Blender.NMesh.FaceModes['TWOSIDE']):
+		#Mesh#if self.mesh.faceUV and (self.face.mode & Blender.NMesh.FaceModes['TWOSIDE']):
+		if self.mesh.hasFaceUV() and (self.face.mode & Blender.NMesh.FaceModes['TWOSIDE']):
 			f.write(indent(3) + "cull_hardware none\n")
 			f.write(indent(3) + "cull_software none\n")
 		# lighting <- SHADELESS
@@ -636,7 +649,8 @@ class RenderingMaterial(DefaultMaterial):
 		# must be called after _generateKey()
 		materialName = self.material.getName()
 		# two sided?
-		if self.mesh.faceUV and (self.face.mode & Blender.NMesh.FaceModes['TWOSIDE']):
+		#Mesh#if self.mesh.faceUV and (self.face.mode & Blender.NMesh.FaceModes['TWOSIDE']):
+		if self.mesh.hasFaceUV() and (self.face.mode & Blender.NMesh.FaceModes['TWOSIDE']):
 			materialName += '/TWOSIDE'
 		# use UV/Image Editor texture?
 		if ((self.key & self.TEXFACE) and not(self.key & self.IMAGEUVCOL)):
@@ -739,7 +753,8 @@ class MaterialManager:
 		## get name of export material for Blender's material settings of that face.
 		faceMaterial = None
 		if gameEngineMaterial:
-			if bMesh.faceUV and not(bMFace.mode & Blender.Mesh.FaceModes['INVISIBLE']):
+			#Mesh#if bMesh.faceUV and not(bMFace.mode & Blender.Mesh.FaceModes['INVISIBLE']):
+			if bMesh.hasFaceUV() and not(bMFace.mode & Blender.Mesh.FaceModes['INVISIBLE']):
 				if (bMFace.image and (bMFace.mode & Blender.Mesh.FaceModes['TEX'])):
 					# image texture
 					faceMaterial = GameEngineMaterial(self, bMesh, bMFace, colouredAmbient)

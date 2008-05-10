@@ -74,8 +74,9 @@ namespace Ogre {
     void Skeleton::loadImpl(void)
     {
         SkeletonSerializer serializer;
-		LogManager::getSingleton().stream()
-			<< "Skeleton: Loading " << mName;
+		StringUtil::StrStreamType msg;
+		msg << "Skeleton: Loading " << mName;
+        LogManager::getSingleton().logMessage(msg.str());
 
         DataStreamPtr stream = 
             ResourceGroupManager::getSingleton().openResource(
@@ -252,16 +253,16 @@ namespace Ogre {
             // tolerate state entries for animations we're not aware of
             if (anim)
             {
-              if(animState->hasBlendMask())
-              {
-                anim->apply(this, animState->getTimePosition(), animState->getWeight() * weightFactor,
-                  animState->getBlendMask(), linked ? linked->scale : 1.0f);
-              }
-              else
-              {
-                anim->apply(this, animState->getTimePosition(), 
-                  animState->getWeight() * weightFactor, linked ? linked->scale : 1.0f);
-              }
+                if (linked)
+                {
+                    anim->apply(this, animState->getTimePosition(), 
+						animState->getWeight() * weightFactor, linked->scale);
+                }
+                else
+                {
+                    anim->apply(this, animState->getTimePosition(), 
+						animState->getWeight() * weightFactor);
+                }
             }
         }
 
@@ -520,11 +521,6 @@ namespace Ogre {
         return i->second;
 
     }
-	//---------------------------------------------------------------------
-	bool Skeleton::hasBone(const String& name) const 
-	{	
-		return mBoneListByName.find(name) != mBoneListByName.end();
-	}
     //---------------------------------------------------------------------
     void Skeleton::deriveRootBone(void) const
     {

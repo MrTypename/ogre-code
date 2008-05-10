@@ -66,7 +66,7 @@ namespace Ogre {
                 The library that contains the data-handling code
             @returns
                 If the function succeeds, a valid pointer to an Archive
-                object is returned.
+                object is returened.
             @par
                 If the function fails, an exception is thrown.
         */
@@ -82,9 +82,7 @@ namespace Ogre {
 			You must ensure that this archive is not being used before removing it.
 		*/
 		void unload(const String& filename);
-		typedef MapIterator<ArchiveMap> ArchiveMapIterator;
-		/** Get an iterator over the Archives in this Manager. */
-		ArchiveMapIterator getArchiveIterator(void);
+
 
         /** Adds a new ArchiveFactory to the list of available factories.
             @remarks

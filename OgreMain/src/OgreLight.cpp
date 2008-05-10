@@ -50,7 +50,6 @@ namespace Ogre {
 		  mAttenuationLinear(0.0f),
           mAttenuationQuad(0.0f),
 		  mPowerScale(1.0f),
-		  mIndexInFrame(0),
           mDerivedPosition(Vector3::ZERO),
           mDerivedDirection(Vector3::UNIT_Z),
           mDerivedTransformDirty(false),
@@ -72,7 +71,6 @@ namespace Ogre {
 		mAttenuationLinear(0.0f),
         mAttenuationQuad(0.0f),
 		mPowerScale(1.0f),
-		mIndexInFrame(0),
         mDerivedPosition(Vector3::ZERO),
         mDerivedDirection(Vector3::UNIT_Z),
         mDerivedTransformDirty(false),
@@ -296,12 +294,6 @@ namespace Ogre {
     {
         // Do nothing
     }
-	//-----------------------------------------------------------------------
-	void Light::visitRenderables(Renderable::Visitor* visitor, 
-		bool debugRenderables)
-	{
-		// nothing to render
-	}
     //-----------------------------------------------------------------------
     const String& Light::getMovableType(void) const
     {

@@ -196,9 +196,6 @@ namespace Ogre {
         /// @copydoc ParticleSystemRenderer::_updateRenderQueue
         void _updateRenderQueue(RenderQueue* queue, 
             std::list<Particle*>& currentParticles, bool cullIndividually);
-		/// @copydoc ParticleSystemRenderer::visitRenderables
-		void visitRenderables(Renderable::Visitor* visitor, 
-			bool debugRenderables = false);
         /// @copydoc ParticleSystemRenderer::_setMaterial
         void _setMaterial(MaterialPtr& mat);
         /// @copydoc ParticleSystemRenderer::_notifyCurrentCamera

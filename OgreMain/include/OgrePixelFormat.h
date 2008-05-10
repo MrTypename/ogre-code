@@ -47,7 +47,7 @@ namespace Ogre {
         /// 8-bit pixel format, all bits alpha.
         PF_A8 = 3,
 		PF_BYTE_A = PF_A8,
-        /// 8-bit pixel format, 4 bits alpha, 4 bits luminance.
+        /// 8-bit pixel format, 4 bits alpha, 4 bits luminace.
         PF_A4L4 = 4,
 		/// 2 byte pixel format, 1 byte luminance, 1 byte alpha
 		PF_BYTE_LA = 5,
@@ -139,7 +139,6 @@ namespace Ogre {
 		// Number of pixel formats currently defined
         PF_COUNT = 38
     };
-	typedef std::vector<PixelFormat> PixelFormatList;
 
     /**
      * Flags defining some on/off properties of pixel formats

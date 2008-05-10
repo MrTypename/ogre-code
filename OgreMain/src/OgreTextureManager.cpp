@@ -61,8 +61,7 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     TexturePtr TextureManager::load(const String &name, const String& group,
-        TextureType texType, int numMipmaps, Real gamma, bool isAlpha, PixelFormat desiredFormat, 
-		bool hwGamma)
+        TextureType texType, int numMipmaps, Real gamma, bool isAlpha, PixelFormat desiredFormat)
     {
 		ResourceCreateOrRetrieveResult res = createOrRetrieve(name, group);
         TexturePtr tex = res.first;
@@ -75,7 +74,6 @@ namespace Ogre {
             tex->setGamma(gamma);
             tex->setTreatLuminanceAsAlpha(isAlpha);
             tex->setFormat(desiredFormat);
-			tex->setHardwareGammaEnabled(hwGamma);
         }
 		tex->load();
 
@@ -84,8 +82,7 @@ namespace Ogre {
 
     //-----------------------------------------------------------------------
     TexturePtr TextureManager::loadImage( const String &name, const String& group,
-        const Image &img, TextureType texType, int numMipmaps, Real gamma, bool isAlpha, 
-		PixelFormat desiredFormat, bool hwGamma)
+        const Image &img, TextureType texType, int numMipmaps, Real gamma, bool isAlpha, PixelFormat desiredFormat)
     {
         TexturePtr tex = create(name, group, true);
 
@@ -95,7 +92,6 @@ namespace Ogre {
         tex->setGamma(gamma);
         tex->setTreatLuminanceAsAlpha(isAlpha);
         tex->setFormat(desiredFormat);
-		tex->setHardwareGammaEnabled(hwGamma);
         tex->loadImage(img);
 
         return tex;
@@ -104,7 +100,7 @@ namespace Ogre {
     TexturePtr TextureManager::loadRawData(const String &name, const String& group,
         DataStreamPtr& stream, ushort uWidth, ushort uHeight, 
         PixelFormat format, TextureType texType, 
-        int numMipmaps, Real gamma, bool hwGamma)
+        int numMipmaps, Real gamma)
 	{
         TexturePtr tex = create(name, group, true);
 
@@ -112,7 +108,6 @@ namespace Ogre {
         tex->setNumMipmaps((numMipmaps == MIP_DEFAULT)? mDefaultNumMipmaps :
 			static_cast<size_t>(numMipmaps));
         tex->setGamma(gamma);
-		tex->setHardwareGammaEnabled(hwGamma);
 		tex->loadRawData(stream, uWidth, uHeight, format);
 		
         return tex;
@@ -120,7 +115,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     TexturePtr TextureManager::createManual(const String & name, const String& group,
         TextureType texType, uint width, uint height, uint depth, int numMipmaps,
-        PixelFormat format, int usage, ManualResourceLoader* loader, bool hwGamma, uint fsaa)
+        PixelFormat format, int usage, ManualResourceLoader* loader)
     {
         TexturePtr ret = create(name, group, true, loader);
         ret->setTextureType(texType);
@@ -131,8 +126,6 @@ namespace Ogre {
 			static_cast<size_t>(numMipmaps));
         ret->setFormat(format);
         ret->setUsage(usage);
-		ret->setHardwareGammaEnabled(hwGamma);
-		ret->setFSAA(fsaa);
 		ret->createInternalResources();
 		return ret;
     }
