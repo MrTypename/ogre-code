@@ -118,34 +118,11 @@ namespace Ogre {
 
 
     //-----------------------------------------------------------------------
-    void Material::prepareImpl(void)
+    void Material::loadImpl(void)
     {
 		// compile if required
         if (mCompilationRequired)
             compile();
-
-        // Load all supported techniques
-        Techniques::iterator i, iend;
-        iend = mSupportedTechniques.end();
-        for (i = mSupportedTechniques.begin(); i != iend; ++i)
-        {
-            (*i)->_prepare();
-        }
-    }
-    //-----------------------------------------------------------------------
-    void Material::unprepareImpl(void)
-    {
-        // Load all supported techniques
-        Techniques::iterator i, iend;
-        iend = mSupportedTechniques.end();
-        for (i = mSupportedTechniques.begin(); i != iend; ++i)
-        {
-            (*i)->_unprepare();
-        }
-    }
-    //-----------------------------------------------------------------------
-    void Material::loadImpl(void)
-    {
 
         // Load all supported techniques
         Techniques::iterator i, iend;
@@ -343,7 +320,7 @@ namespace Ogre {
 
 	}
 	//-----------------------------------------------------------------------------
-    Technique* Material::getBestTechnique(unsigned short lodIndex, const Renderable* rend)
+    Technique* Material::getBestTechnique(unsigned short lodIndex)
     {
         if (mSupportedTechniques.empty())
         {
@@ -352,19 +329,13 @@ namespace Ogre {
         else
         {
 			Technique* ret = 0;
-			MaterialManager& matMgr = MaterialManager::getSingleton();
 			// get scheme
 			BestTechniquesBySchemeList::iterator si = 
-				mBestTechniquesBySchemeList.find(matMgr._getActiveSchemeIndex());
+				mBestTechniquesBySchemeList.find(
+				MaterialManager::getSingleton()._getActiveSchemeIndex());
 			// scheme not found?
 			if (si == mBestTechniquesBySchemeList.end())
 			{
-				// listener specified alternative technique available?
-				ret = matMgr._arbitrateMissingTechniqueForActiveScheme(this, lodIndex, rend);
-				if (ret)
-					return ret;
-
-				// Nope, use default
 				// get the first item, will be 0 (the default) if default
 				// scheme techniques exist, otherwise the earliest defined
 				si = mBestTechniquesBySchemeList.begin();
@@ -489,9 +460,10 @@ namespace Ogre {
         // Did we find any?
         if (mSupportedTechniques.empty())
         {
-			LogManager::getSingleton().stream()
-				<< "WARNING: material " << mName << " has no supportable "
-				<< "Techniques and will be blank. Explanation: \n" << mUnsupportedReasons;
+			StringUtil::StrStreamType str;
+			str << "WARNING: material " << mName << " has no supportable "
+				"Techniques and will be blank. Explanation: " << std::endl << mUnsupportedReasons;
+            LogManager::getSingleton().logMessage(str.str());               
         }
     }
 	//-----------------------------------------------------------------------
@@ -718,16 +690,6 @@ namespace Ogre {
         }
     }
     // --------------------------------------------------------------------
-    void Material::setSeparateSceneBlending( const SceneBlendType sbt, const SceneBlendType sbta )
-    {
-        Techniques::iterator i, iend;
-        iend = mTechniques.end();
-        for (i = mTechniques.begin(); i != iend; ++i)
-        {
-            (*i)->setSeparateSceneBlending(sbt, sbta);
-        }
-    }
-    // --------------------------------------------------------------------
     void Material::setSceneBlending( const SceneBlendFactor sourceFactor, 
         const SceneBlendFactor destFactor)
     {
@@ -738,16 +700,6 @@ namespace Ogre {
             (*i)->setSceneBlending(sourceFactor, destFactor);
         }
     }
-    // --------------------------------------------------------------------
-    void Material::setSeparateSceneBlending( const SceneBlendFactor sourceFactor, const SceneBlendFactor destFactor, const SceneBlendFactor sourceFactorAlpha, const SceneBlendFactor destFactorAlpha)
-	{
-        Techniques::iterator i, iend;
-        iend = mTechniques.end();
-        for (i = mTechniques.begin(); i != iend; ++i)
-        {
-            (*i)->setSeparateSceneBlending(sourceFactor, destFactor, sourceFactorAlpha, destFactorAlpha);
-        }
-	}
     // --------------------------------------------------------------------
     void Material::_notifyNeedsRecompile(void)
     {

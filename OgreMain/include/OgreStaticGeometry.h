@@ -69,7 +69,7 @@ namespace Ogre {
 	@par
 		In order to retain some sort of culling, this class will batch up 
 		meshes in localised regions. The size and shape of these blocks is
-		controlled by the SceneManager which constructs this object, since it
+		controlled by the SceneManager which contructs this object, since it
 		makes sense to batch things up in the most appropriate way given the 
 		existing partitioning of the scene. 
 	@par
@@ -110,7 +110,7 @@ namespace Ogre {
 		Warning: this class only works with triangle lists at the moment,
 		do not pass it triangle strips, fans or lines / points.
 	*/
-	class _OgreExport StaticGeometry : public BatchedGeometryAlloc
+	class _OgreExport StaticGeometry
 	{
 	public:
 		/** Struct holding geometry optimised per SubMesh / lod level, ready
@@ -125,7 +125,7 @@ namespace Ogre {
 			a given LOD has wastage, we create an optimised version of it's
 			geometry which is ready for copying with no wastage.
 		*/
-		class _OgrePrivate OptimisedSubMeshGeometry : public BatchedGeometryAlloc
+		class _OgrePrivate OptimisedSubMeshGeometry
 		{
 		public:
 			OptimisedSubMeshGeometry() :vertexData(0), indexData(0) {}
@@ -148,7 +148,7 @@ namespace Ogre {
 		typedef std::vector<SubMeshLodGeometryLink> SubMeshLodGeometryLinkList;
 		typedef std::map<SubMesh*, SubMeshLodGeometryLinkList*> SubMeshGeometryLookup;
 		/// Structure recording a queued submesh for the build
-		struct QueuedSubMesh : public BatchedGeometryAlloc
+		struct QueuedSubMesh
 		{
 			SubMesh* submesh;
 			/// Link to LOD list of geometry, potentially optimised
@@ -162,7 +162,7 @@ namespace Ogre {
 		};
 		typedef std::vector<QueuedSubMesh*> QueuedSubMeshList;
 		/// Structure recording a queued geometry for low level builds
-		struct QueuedGeometry : public BatchedGeometryAlloc
+		struct QueuedGeometry
 		{
 			SubMeshLodGeometryLink* geometry;
 			Vector3 position;
@@ -180,7 +180,7 @@ namespace Ogre {
 			the same vertex & index format is stored. It also acts as the 
 			renderable.
 		*/
-		class _OgreExport GeometryBucket :	public Renderable,  public BatchedGeometryAlloc
+		class _OgreExport GeometryBucket :	public Renderable
 		{
 		protected:
 			/// Geometry which has been queued up pre-build (not for deallocation)
@@ -229,6 +229,8 @@ namespace Ogre {
 			Technique* getTechnique(void) const;
 			void getRenderOperation(RenderOperation& op);
 	        void getWorldTransforms(Matrix4* xform) const;
+	        const Quaternion& getWorldOrientation(void) const;
+	        const Vector3& getWorldPosition(void) const;
 			Real getSquaredViewDepth(const Camera* cam) const;
 	        const LightList& getLights(void) const;
 			bool getCastsShadows(void) const;
@@ -244,7 +246,7 @@ namespace Ogre {
 		};
 		/** A MaterialBucket is a collection of smaller buckets with the same 
 			Material (and implicitly the same LOD). */
-		class _OgreExport MaterialBucket : public BatchedGeometryAlloc
+		class _OgreExport MaterialBucket
 		{
 		public:
 			/// list of Geometry Buckets in this region
@@ -290,14 +292,13 @@ namespace Ogre {
 			Technique* getCurrentTechnique(void) const { return mTechnique; }
 			/// Dump contents for diagnostics
 			void dump(std::ofstream& of) const;
-			void visitRenderables(Renderable::Visitor* visitor, bool debugRenderables);
 		};
 		/** A LODBucket is a collection of smaller buckets with the same LOD. 
 		@remarks
 			LOD refers to Mesh LOD here. Material LOD can change separately
 			at the next bucket down from this.
 		*/
-		class _OgreExport LODBucket : public BatchedGeometryAlloc
+		class _OgreExport LODBucket
 		{
 		public:
 			/// Lookup of Material Buckets in this region
@@ -334,7 +335,6 @@ namespace Ogre {
 			MaterialIterator getMaterialIterator(void);
 			/// Dump contents for diagnostics
 			void dump(std::ofstream& of) const;
-			void visitRenderables(Renderable::Visitor* visitor, bool debugRenderables);
 			
 		};
 		/** The details of a topological region which is the highest level of
@@ -368,6 +368,10 @@ namespace Ogre {
 				~RegionShadowRenderable();
 				/// Overridden from ShadowRenderable
 				void getWorldTransforms(Matrix4* xform) const;
+				/// Overridden from ShadowRenderable
+				const Quaternion& getWorldOrientation(void) const;
+				/// Overridden from ShadowRenderable
+				const Vector3& getWorldPosition(void) const;
 				HardwareVertexBufferSharedPtr getPositionBuffer(void) { return mPositionBuffer; }
 				HardwareVertexBufferSharedPtr getWBuffer(void) { return mWBuffer; }
 
@@ -428,9 +432,6 @@ namespace Ogre {
 			const AxisAlignedBox& getBoundingBox(void) const;
 			Real getBoundingRadius(void) const;
 			void _updateRenderQueue(RenderQueue* queue);
-			/// @copydoc MovableObject::visitRenderables
-			void visitRenderables(Renderable::Visitor* visitor, 
-				bool debugRenderables = false);
 			bool isVisible(void) const;
 			uint32 getTypeFlags(void) const;
 
@@ -727,9 +728,6 @@ namespace Ogre {
 
         /** Gets the queue group for this entity, see setRenderQueueGroup for full details. */
         virtual uint8 getRenderQueueGroup(void) const;
-		/// @copydoc MovableObject::visitRenderables
-		void visitRenderables(Renderable::Visitor* visitor, 
-			bool debugRenderables = false);
 		
 		/// Iterator for iterating over contained regions
 		typedef MapIterator<RegionMap> RegionIterator;

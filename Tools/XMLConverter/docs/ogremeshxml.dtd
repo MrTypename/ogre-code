@@ -70,7 +70,6 @@
 	texture_coord_dimensions_6 	(0|1|2|3)		 	"2"
 	texture_coord_dimensions_7 	(0|1|2|3)		 	"2"
 	tangents					(true|false)	"false"
-	tangent_dimensions			(3|4)			"3"
 	binormals					(true|false)	"false">
 <!ELEMENT vertex (position, normal?, tangent?, binormal?, colour_diffuse?, colour_specular?, 
 	texcoord*)>
@@ -88,8 +87,7 @@
 <!ATTLIST tangent 
 	x	CDATA	#REQUIRED	
 	y	CDATA	#REQUIRED	
-	z	CDATA	#REQUIRED
-	w   CDATA   "1">
+	z	CDATA	#REQUIRED >
 <!ELEMENT binormal EMPTY>
 <!ATTLIST binormal 
 	x	CDATA	#REQUIRED	

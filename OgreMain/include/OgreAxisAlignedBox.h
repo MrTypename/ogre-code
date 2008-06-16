@@ -48,14 +48,13 @@ namespace Ogre {
 	*/
 	class _OgreExport AxisAlignedBox
 	{
-	public:
+	protected:
 		enum Extent
 		{
 			EXTENT_NULL,
 			EXTENT_FINITE,
 			EXTENT_INFINITE
 		};
-	protected:
 
 		Vector3 mMinimum;
 		Vector3 mMaximum;
@@ -89,12 +88,6 @@ namespace Ogre {
 			setMinimum( -0.5, -0.5, -0.5 );
 			setMaximum( 0.5, 0.5, 0.5 );
 			mExtent = EXTENT_NULL;
-		}
-		inline AxisAlignedBox(Extent e) : mpCorners(0)
-		{
-			setMinimum( -0.5, -0.5, -0.5 );
-			setMaximum( 0.5, 0.5, 0.5 );
-			mExtent = e;
 		}
 
 		inline AxisAlignedBox(const AxisAlignedBox & rkBox) : mpCorners(0)
@@ -135,7 +128,7 @@ namespace Ogre {
 		~AxisAlignedBox()
 		{
 			if (mpCorners)
-				OGRE_FREE(mpCorners, MEMCATEGORY_SCENE_CONTROL);
+				delete [] mpCorners;
 		}
 
 
@@ -304,7 +297,7 @@ namespace Ogre {
 			//   around face (looking onto the face)
 			// Only for optimization/compatibility.
 			if (!mpCorners)
-				mpCorners = OGRE_ALLOC_T(Vector3, 8, MEMCATEGORY_SCENE_CONTROL);
+				mpCorners = new Vector3[8];
 
 			mpCorners[0] = mMinimum;
 			mpCorners[1].x = mMinimum.x; mpCorners[1].y = mMaximum.y; mpCorners[1].z = mMinimum.z;
@@ -792,11 +785,6 @@ namespace Ogre {
         {
             return !(*this == rhs);
         }
-
-		// special values
-		static const AxisAlignedBox BOX_NULL;
-		static const AxisAlignedBox BOX_INFINITE;
-
 
 	};
 

@@ -294,20 +294,60 @@ namespace Ogre {
 			eFormat, true, numFaces, numMipMaps);
 
 	}
+
 	//-----------------------------------------------------------------------------
 	Image & Image::load(const String& strFileName, const String& group)
 	{
 
+		if( m_pBuffer && m_bAutoDelete )
+		{
+			delete[] m_pBuffer;
+			m_pBuffer = NULL;
+		}
+
 		String strExt;
 
 		size_t pos = strFileName.find_last_of(".");
-		if( pos != String::npos && pos < (strFileName.length() - 1))
-		{
-			strExt = strFileName.substr(pos+1);
-		}
+		if( pos == String::npos )
+			OGRE_EXCEPT(
+			Exception::ERR_INVALIDPARAMS, 
+			"Unable to load image file '" + strFileName + "' - invalid extension.",
+			"Image::load" );
 
-		DataStreamPtr encoded = ResourceGroupManager::getSingleton().openResource(strFileName, group);
-		return load(encoded, strExt);
+		while( pos != strFileName.length() - 1 )
+			strExt += strFileName[++pos];
+
+		Codec * pCodec = Codec::getCodec(strExt);
+		if( !pCodec )
+			OGRE_EXCEPT(
+			Exception::ERR_INVALIDPARAMS, 
+			"Unable to load image file '" + strFileName + "' - invalid extension.",
+			"Image::load" );
+
+		DataStreamPtr encoded = 
+			ResourceGroupManager::getSingleton().openResource(strFileName, group);
+
+		Codec::DecodeResult res = pCodec->decode(encoded);
+
+		ImageCodec::ImageData* pData = 
+			static_cast<ImageCodec::ImageData*>(res.second.getPointer());
+
+		// Get the format and compute the pixel size
+		m_uWidth = pData->width;
+		m_uHeight = pData->height;
+		m_uDepth = pData->depth;
+		m_uSize = pData->size;
+		m_eFormat = pData->format;
+		m_uNumMipmaps = pData->num_mipmaps;
+		m_ucPixelSize = static_cast<uchar>(PixelUtil::getNumElemBytes( m_eFormat ));
+		m_uFlags = pData->flags;
+
+		// re-use the decoded buffer
+		m_pBuffer = res.first->getPtr();
+		// ensure we don't delete when stream is closed
+		res.first->setFreeOnClose(false);
+
+		return *this;
 
 	}
 	//-----------------------------------------------------------------------------
@@ -349,34 +389,6 @@ namespace Ogre {
 
 		pCodec->codeToFile(wrapper, filename, codeDataPtr);
 	}
-	//---------------------------------------------------------------------
-	DataStreamPtr Image::encode(const String& formatextension)
-	{
-		if( !m_pBuffer )
-		{
-			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "No image data loaded", 
-				"Image::encode");
-		}
-
-		Codec * pCodec = Codec::getCodec(formatextension);
-		if( !pCodec )
-			OGRE_EXCEPT(
-			Exception::ERR_INVALIDPARAMS, 
-			"Unable to encode image data as '" + formatextension + "' - invalid extension.",
-			"Image::encode" );
-
-		ImageCodec::ImageData* imgData = new ImageCodec::ImageData();
-		imgData->format = m_eFormat;
-		imgData->height = m_uHeight;
-		imgData->width = m_uWidth;
-		imgData->depth = m_uDepth;
-		// Wrap in CodecDataPtr, this will delete
-		Codec::CodecDataPtr codeDataPtr(imgData);
-		// Wrap memory, be sure not to delete when stream destroyed
-		MemoryDataStreamPtr wrapper(new MemoryDataStream(m_pBuffer, m_uSize, false));
-
-		return pCodec->code(wrapper, codeDataPtr);
-	}
 	//-----------------------------------------------------------------------------
 	Image & Image::load(DataStreamPtr& stream, const String& type )
 	{
@@ -386,29 +398,13 @@ namespace Ogre {
 			m_pBuffer = NULL;
 		}
 
-		Codec * pCodec = 0;
-		if (!type.empty())
-		{
-			// use named codec
-			pCodec = Codec::getCodec(type);
-		}
-		else
-		{
-			// derive from magic number
-			// read the first 32 bytes or file size, if less
-			size_t magicLen = std::min(stream->size(), (size_t)32);
-			char magicBuf[32];
-			stream->read(magicBuf, magicLen);
-			// return to start
-			stream->seek(0);
-			pCodec = Codec::getCodec(magicBuf, magicLen);
-		}
+		String strType = type;
 
+		Codec * pCodec = Codec::getCodec(strType);
 		if( !pCodec )
 			OGRE_EXCEPT(
 			Exception::ERR_INVALIDPARAMS, 
-			"Unable to load image - unable to identify codec. Check file extension "
-			"and file format.",
+			"Unable to load image - invalid extension.",
 			"Image::load" );
 
 		Codec::DecodeResult res = pCodec->decode(stream);
@@ -433,23 +429,7 @@ namespace Ogre {
 
 		return *this;
 	}
-	//---------------------------------------------------------------------
-	String Image::getFileExtFromMagic(DataStreamPtr stream)
-	{
-		// read the first 32 bytes or file size, if less
-		size_t magicLen = std::min(stream->size(), (size_t)32);
-		char magicBuf[32];
-		stream->read(magicBuf, magicLen);
-		// return to start
-		stream->seek(0);
-		Codec* pCodec = Codec::getCodec(magicBuf, magicLen);
 
-		if(pCodec)
-			return pCodec->getType();
-		else
-			return StringUtil::BLANK;
-
-	}
 	//-----------------------------------------------------------------------------
 	uchar* Image::getData()
 	{
@@ -697,7 +677,7 @@ namespace Ogre {
 
 	//-----------------------------------------------------------------------------    
 
-	ColourValue Image::getColourAt(int x, int y, int z) const
+	ColourValue Image::getColourAt(int x, int y, int z) 
 	{
 		ColourValue rval;
 		PixelUtil::unpackColour(&rval, m_eFormat, &m_pBuffer[m_ucPixelSize * (z * m_uWidth * m_uHeight + m_uWidth * y + x)]);

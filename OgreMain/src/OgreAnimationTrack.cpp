@@ -51,7 +51,7 @@ namespace Ogre {
     //---------------------------------------------------------------------
     //---------------------------------------------------------------------
     AnimationTrack::AnimationTrack(Animation* parent, unsigned short handle) :
-		mParent(parent), mHandle(handle), mListener(0)
+		mParent(parent), mHandle(handle)
     {
     }
     //---------------------------------------------------------------------
@@ -282,12 +282,6 @@ namespace Ogre {
 	void NumericAnimationTrack::getInterpolatedKeyFrame(const TimeIndex& timeIndex,
 		KeyFrame* kf) const
 	{
-		if (mListener)
-		{
-			if (mListener->getInterpolatedKeyFrame(this, timeIndex, kf))
-				return;
-		}
-
 		NumericKeyFrame* kret = static_cast<NumericKeyFrame*>(kf);
 
         // Keyframe pointers
@@ -378,12 +372,6 @@ namespace Ogre {
 	//---------------------------------------------------------------------
     void NodeAnimationTrack::getInterpolatedKeyFrame(const TimeIndex& timeIndex, KeyFrame* kf) const
     {
-		if (mListener)
-		{
-			if (mListener->getInterpolatedKeyFrame(this, timeIndex, kf))
-				return;
-		}
-
 		TransformKeyFrame* kret = static_cast<TransformKeyFrame*>(kf);
 
         // Keyframe pointers

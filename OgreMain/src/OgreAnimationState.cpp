@@ -43,8 +43,7 @@ namespace Ogre
         , mWeight(rhs.mWeight)
         , mEnabled(rhs.mEnabled)
         , mLoop(rhs.mLoop)
-        , mBlendMask(0)
-  {
+	{
 		mParent->_notifyDirty();
 	}
 	//---------------------------------------------------------------------
@@ -62,7 +61,6 @@ namespace Ogre
         , mWeight(weight)
         , mEnabled(enabled)
         , mLoop(true)
-        , mBlendMask(0)
     {
 		mParent->_notifyDirty();
     }
@@ -181,60 +179,6 @@ namespace Ogre
 
     }
 	//---------------------------------------------------------------------
-    void AnimationState::setBlendMaskEntry(size_t boneHandle, float weight)
-    {
-      assert(mBlendMask && mBlendMask->size() > boneHandle);
-      (*mBlendMask)[boneHandle] = weight;
-      if (mEnabled)
-        mParent->_notifyDirty();
-    }
-	//---------------------------------------------------------------------
-    void AnimationState::_setBlendMaskData(const float* blendMaskData) 
-    {
-      assert(mBlendMask && "No BlendMask set!");
-      // input 0?
-      if(!blendMaskData)
-      {
-        destroyBlendMask();
-        return;
-      }
-      // dangerous memcpy
-      memcpy(&((*mBlendMask)[0]), blendMaskData, sizeof(float) * mBlendMask->size());
-      if (mEnabled)
-        mParent->_notifyDirty();
-    }
-	//---------------------------------------------------------------------
-    void AnimationState::_setBlendMask(const BoneBlendMask* blendMask) 
-    {
-      if(!mBlendMask)
-      {
-        createBlendMask(blendMask->size(), false);
-      }
-      _setBlendMaskData(&(*blendMask)[0]);
-    }
-	//---------------------------------------------------------------------
-    void AnimationState::createBlendMask(size_t blendMaskSizeHint, float initialWeight)
-    {
-      if(!mBlendMask)
-      {
-        if(initialWeight >= 0)
-        {
-          mBlendMask = new BoneBlendMask(blendMaskSizeHint, initialWeight);
-        }
-        else
-        {
-          mBlendMask = new BoneBlendMask(blendMaskSizeHint);
-        }
-      }
-    }
-	//---------------------------------------------------------------------
-    void AnimationState::destroyBlendMask()
-    {
-      delete mBlendMask;
-      mBlendMask = 0;
-    }
-	//---------------------------------------------------------------------
-
 	//---------------------------------------------------------------------
 	AnimationStateSet::AnimationStateSet()
 		: mDirtyFrameNumber(std::numeric_limits<unsigned long>::max())

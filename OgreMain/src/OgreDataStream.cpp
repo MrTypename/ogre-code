@@ -192,7 +192,6 @@ namespace Ogre {
         mSize = size;
         mEnd = mData + mSize;
         mFreeOnClose = freeOnClose;
-        assert(mEnd >= mPos);
     }
     //-----------------------------------------------------------------------
     MemoryDataStream::MemoryDataStream(const String& name, void* pMem, size_t size, 
@@ -203,7 +202,6 @@ namespace Ogre {
         mSize = size;
         mEnd = mData + mSize;
         mFreeOnClose = freeOnClose;
-        assert(mEnd >= mPos);
     }
     //-----------------------------------------------------------------------
     MemoryDataStream::MemoryDataStream(DataStream& sourceStream, 
@@ -216,7 +214,6 @@ namespace Ogre {
         mPos = mData;
         mEnd = mData + sourceStream.read(mData, mSize);
         mFreeOnClose = freeOnClose;
-        assert(mEnd >= mPos);
     }
     //-----------------------------------------------------------------------
     MemoryDataStream::MemoryDataStream(DataStreamPtr& sourceStream, 
@@ -229,7 +226,6 @@ namespace Ogre {
         mPos = mData;
         mEnd = mData + sourceStream->read(mData, mSize);
         mFreeOnClose = freeOnClose;
-        assert(mEnd >= mPos);
     }
     //-----------------------------------------------------------------------
     MemoryDataStream::MemoryDataStream(const String& name, DataStream& sourceStream, 
@@ -242,7 +238,6 @@ namespace Ogre {
         mPos = mData;
         mEnd = mData + sourceStream.read(mData, mSize);
         mFreeOnClose = freeOnClose;
-        assert(mEnd >= mPos);
     }
     //-----------------------------------------------------------------------
     MemoryDataStream::MemoryDataStream(const String& name, const DataStreamPtr& sourceStream, 
@@ -255,7 +250,6 @@ namespace Ogre {
         mPos = mData;
         mEnd = mData + sourceStream->read(mData, mSize);
         mFreeOnClose = freeOnClose;
-        assert(mEnd >= mPos);
     }
     //-----------------------------------------------------------------------
     MemoryDataStream::MemoryDataStream(size_t size, bool freeOnClose)
@@ -266,7 +260,6 @@ namespace Ogre {
         mData = new uchar[size];
         mPos = mData;
         mEnd = mData + mSize;
-        assert(mEnd >= mPos);
     }
     //-----------------------------------------------------------------------
     MemoryDataStream::MemoryDataStream(const String& name, size_t size, 
@@ -278,7 +271,6 @@ namespace Ogre {
         mData = new uchar[size];
         mPos = mData;
         mEnd = mData + mSize;
-        assert(mEnd >= mPos);
     }
     //-----------------------------------------------------------------------
     MemoryDataStream::~MemoryDataStream()
@@ -294,8 +286,6 @@ namespace Ogre {
             cnt = mEnd - mPos;
         if (cnt == 0)
             return 0;
-
-        assert (cnt<=count);
 
         memcpy(buf, mPos, cnt);
         mPos += cnt;

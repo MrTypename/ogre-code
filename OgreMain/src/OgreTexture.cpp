@@ -49,8 +49,6 @@ namespace Ogre {
             mNumMipmaps(0),
 			mMipmapsHardwareGenerated(false),
             mGamma(1.0f),
-			mHwGamma(false),
-			mFSAA(0),
             mTextureType(TEX_TYPE_2D),            
             mFormat(PF_UNKNOWN),
             mUsage(TU_DEFAULT),
@@ -93,11 +91,16 @@ namespace Ogre {
 	//--------------------------------------------------------------------------    
 	void Texture::loadImage( const Image &img )
 	{
-
-        LoadingState old = mLoadingState.get();
-        if (old!=LOADSTATE_UNLOADED && old!=LOADSTATE_PREPARED) return;
-
-        if (!mLoadingState.cas(old,LOADSTATE_LOADING)) return;
+		// Scope lock over load status
+		{
+			OGRE_LOCK_MUTEX(mLoadingStatusMutex)
+			if (mLoadingState != LOADSTATE_UNLOADED)
+			{
+				// no loading to be done
+				return;
+			}
+			mLoadingState = LOADSTATE_LOADING;
+		}
 
 		// Scope lock for actual loading
 		try
@@ -111,12 +114,19 @@ namespace Ogre {
 		catch (...)
 		{
 			// Reset loading in-progress flag in case failed for some reason
-			mLoadingState.set(old);
+			OGRE_LOCK_MUTEX(mLoadingStatusMutex)
+			mLoadingState = LOADSTATE_UNLOADED;
 			// Re-throw
 			throw;
 		}
 
-        mLoadingState.set(LOADSTATE_LOADED);
+		// Scope lock for loading progress
+		{
+			OGRE_LOCK_MUTEX(mLoadingStatusMutex)
+
+			// Now loaded
+			mLoadingState = LOADSTATE_LOADED;
+		}
 
 		// Notify manager
 		if(mCreator)
@@ -245,40 +255,38 @@ namespace Ogre {
 		if(faces > getNumFaces())
 			faces = getNumFaces();
 		
-        if (TextureManager::getSingleton().getVerbose()) {
-            // Say what we're doing
-            StringUtil::StrStreamType str;
-            str << "Texture: " << mName << ": Loading " << faces << " faces"
-                << "(" << PixelUtil::getFormatName(images[0]->getFormat()) << "," <<
-                images[0]->getWidth() << "x" << images[0]->getHeight() << "x" << images[0]->getDepth() <<
-                ") with ";
-            if (!(mMipmapsHardwareGenerated && mNumMipmaps == 0))
-                str << mNumMipmaps;
-            if(mUsage & TU_AUTOMIPMAP)
-            {
-                if (mMipmapsHardwareGenerated)
-                    str << " hardware";
+		// Say what we're doing
+		StringUtil::StrStreamType str;
+		str << "Texture: " << mName << ": Loading " << faces << " faces"
+			<< "(" << PixelUtil::getFormatName(images[0]->getFormat()) << "," <<
+			images[0]->getWidth() << "x" << images[0]->getHeight() << "x" << images[0]->getDepth() <<
+			") with ";
+		if (!(mMipmapsHardwareGenerated && mNumMipmaps == 0))
+			str << mNumMipmaps;
+		if(mUsage & TU_AUTOMIPMAP)
+		{
+			if (mMipmapsHardwareGenerated)
+				str << " hardware";
 
-                str << " generated mipmaps";
-            }
-            else
-            {
-                str << " custom mipmaps";
-            }
-            if(multiImage)
-                str << " from multiple Images.";
-            else
-                str << " from Image.";
-            // Scoped
-            {
-                // Print data about first destination surface
-                HardwarePixelBufferSharedPtr buf = getBuffer(0, 0); 
-                str << " Internal format is " << PixelUtil::getFormatName(buf->getFormat()) << 
-                "," << buf->getWidth() << "x" << buf->getHeight() << "x" << buf->getDepth() << ".";
-            }
-            LogManager::getSingleton().logMessage( 
-                    LML_NORMAL, str.str());
-        }
+			str << " generated mipmaps";
+		}
+		else
+		{
+			str << " custom mipmaps";
+		}
+ 		if(multiImage)
+			str << " from multiple Images.";
+		else
+			str << " from Image.";
+		// Scoped
+		{
+			// Print data about first destination surface
+			HardwarePixelBufferSharedPtr buf = getBuffer(0, 0); 
+			str << " Internal format is " << PixelUtil::getFormatName(buf->getFormat()) << 
+			"," << buf->getWidth() << "x" << buf->getHeight() << "x" << buf->getDepth() << ".";
+		}
+		LogManager::getSingleton().logMessage( 
+				LML_NORMAL, str.str());
 		
 		// Main loading loop
         // imageMips == 0 if the image has no custom mipmaps, otherwise contains the number of custom mips
@@ -375,53 +383,6 @@ namespace Ogre {
             }
         }
     }
-	//---------------------------------------------------------------------
-	String Texture::getSourceFileType() const
-	{
-		if (mName.empty())
-			return StringUtil::BLANK;
-
-		String::size_type pos = mName.find_last_of(".");
-		if (pos != String::npos && pos < (mName.length() - 1))
-		{
-			String ext = mName.substr(pos+1);
-			StringUtil::toLowerCase(ext);
-			return ext;
-		}
-		else
-		{
-			// No extension
-			DataStreamPtr dstream;
-			try
-			{
-				dstream = ResourceGroupManager::getSingleton().openResource(
-						mName, mGroup, true, 0);
-			}
-			catch (Exception&)
-			{
-			}
-			if (dstream.isNull() && getTextureType() == TEX_TYPE_CUBE_MAP)
-			{
-				// try again with one of the faces (non-dds)
-				try
-				{
-					dstream = ResourceGroupManager::getSingleton().openResource(
-						mName + "_rt", mGroup, true, 0);
-				}
-				catch (Exception&)
-				{
-				}
-			}
-
-			if (!dstream.isNull())
-			{
-				return Image::getFileExtFromMagic(dstream);
-			}
-		}
-
-		return StringUtil::BLANK;
-
-	}
 
 
 }

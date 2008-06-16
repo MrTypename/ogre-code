@@ -66,9 +66,6 @@ namespace Ogre {
         
         virtual String getType() const;        
 
-		/// @copydoc Codec::magicNumberToFileExt
-		String magicNumberToFileExt(const char *magicNumberPtr, size_t maxbytes) const;
-
 		/// Static method to startup FreeImage and register the FreeImage codecs
 		static void startup(void);
 		/// Static method to shutdown FreeImage and unregister the FreeImage codecs

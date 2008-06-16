@@ -79,7 +79,7 @@ namespace Ogre {
             backgrounds and overlays, and also could be used in the future for more
             complex multipass routines like stenciling.
     */
-    class _OgreExport RenderQueue : public RenderQueueAlloc
+    class _OgreExport RenderQueue
     {
     public:
         typedef std::map< uint8, RenderQueueGroup* > RenderQueueGroupMap;
@@ -109,14 +109,11 @@ namespace Ogre {
 				intended to be used; you can alter this to an alternate Technique
 				if you so wish (the Technique doesn't have to be from the same
 				Material either).
-			@param pQueue Pointer to the render queue that this object is being
-				added to. You can for example call this back to duplicate the 
-				object with a different technique
 			@returns true to allow the Renderable to be added to the queue, 
 				false if you want to prevent it being added
 			*/
 			virtual bool renderableQueued(Renderable* rend, uint8 groupID, 
-				ushort priority, Technique** ppTech, RenderQueue* pQueue) = 0;
+				ushort priority, Technique** ppTech) = 0;
 		};
     protected:
         RenderQueueGroupMap mGroups;

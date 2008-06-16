@@ -155,13 +155,13 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    String ConfigFile::getSetting(const String& key, const String& section, const String& defaultValue) const
+    String ConfigFile::getSetting(const String& key, const String& section) const
     {
         
         SettingsBySection::const_iterator seci = mSettings.find(section);
         if (seci == mSettings.end())
         {
-            return defaultValue;
+            return StringUtil::BLANK;
         }
         else
         {

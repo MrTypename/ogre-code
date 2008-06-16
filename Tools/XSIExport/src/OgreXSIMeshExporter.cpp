@@ -108,7 +108,6 @@ namespace Ogre {
 	DeformerMap& XsiMeshExporter::buildMeshForExport(
 		bool mergeSubMeshes, bool exportChildren, 
 		bool edgeLists, bool tangents, VertexElementSemantic tangentSemantic, 
-		bool tangentsSplitMirrored, bool tangentsSplitRotated, bool tangentsUseParity,
 		bool vertexAnimation, AnimationList& animList, Real fps, const String& materialPrefix, 
 		LodData* lod, const String& skeletonName)
     {
@@ -166,8 +165,7 @@ namespace Ogre {
             unsigned short src, dest;
             if (!mMesh->suggestTangentVectorBuildParams(tangentSemantic, src, dest))
             {
-                mMesh->buildTangentVectors(tangentSemantic, src, dest, tangentsSplitMirrored, 
-					tangentsSplitRotated, tangentsUseParity);
+                mMesh->buildTangentVectors(tangentSemantic, src, dest);
             }
             else
             {
@@ -1030,10 +1028,7 @@ namespace Ogre {
 		// Process all mixers
 		Model root = mXsiApp.GetActiveSceneRoot();
 		if (root.HasMixer())
-		{
-			XSI::Mixer mixer = root.GetMixer();
-			buildShapeClipList(mixer, listToPopulate);
-		}
+			buildShapeClipList(root.GetMixer(), listToPopulate);
 
 		// Get all child models (recursive)
 		CRefArray models = root.GetModels();
@@ -1041,10 +1036,7 @@ namespace Ogre {
 		{
 			Model model(models[m]);
 			if (model.HasMixer())
-			{
-				XSI::Mixer mixer = root.GetMixer();
-				buildShapeClipList(mixer, listToPopulate);
-			}
+				buildShapeClipList(model.GetMixer(), listToPopulate);
 		}
 
 	}

@@ -30,6 +30,7 @@ Torus Knot Software Ltd.
 #include "OgreGLHardwareVertexBuffer.h"
 #include "OgreGLHardwareIndexBuffer.h"
 #include "OgreHardwareBuffer.h"
+#include "OgreAlignedAllocator.h"
 
 namespace Ogre {
     //-----------------------------------------------------------------------
@@ -42,14 +43,13 @@ namespace Ogre {
 		uint32 free: 1;
 	};
 	#define SCRATCH_POOL_SIZE 1 * 1024 * 1024
-	#define SCRATCH_ALIGNMENT 32
 	//---------------------------------------------------------------------
     GLHardwareBufferManager::GLHardwareBufferManager()
     {
 		// Init scratch pool
 		// TODO make it a configurable size?
 		// 32-bit aligned buffer
-		mScratchBufferPool = static_cast<char*>(OGRE_MALLOC_ALIGN(SCRATCH_POOL_SIZE, MEMCATEGORY_GEOMETRY, SCRATCH_ALIGNMENT));
+		mScratchBufferPool = static_cast<char*>(AlignedMemory::allocate(SCRATCH_POOL_SIZE, 32));
 		GLScratchBufferAlloc* ptrAlloc = (GLScratchBufferAlloc*)mScratchBufferPool;
 		ptrAlloc->size = SCRATCH_POOL_SIZE - sizeof(GLScratchBufferAlloc);
 		ptrAlloc->free = 1;
@@ -60,7 +60,7 @@ namespace Ogre {
         destroyAllDeclarations();
         destroyAllBindings();
 
-		OGRE_FREE_ALIGN(mScratchBufferPool, MEMCATEGORY_GEOMETRY, SCRATCH_ALIGNMENT);
+		AlignedMemory::deallocate(mScratchBufferPool);
     }
     //-----------------------------------------------------------------------
     HardwareVertexBufferSharedPtr GLHardwareBufferManager::createVertexBuffer(

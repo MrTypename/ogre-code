@@ -102,7 +102,6 @@
 		<Unit filename="..\include\OgreArchive.h" />
 		<Unit filename="..\include\OgreArchiveFactory.h" />
 		<Unit filename="..\include\OgreArchiveManager.h" />
-		<Unit filename="..\include\OgreAtomicWrappers.h" />
 		<Unit filename="..\include\OgreAutoParamDataSource.h" />
 		<Unit filename="..\include\OgreAxisAlignedBox.h" />
 		<Unit filename="..\include\OgreBillboard.h" />
@@ -174,16 +173,13 @@
 		<Unit filename="..\include\OgreManualObject.h" />
 		<Unit filename="..\include\OgreMaterial.h" />
 		<Unit filename="..\include\OgreMaterialManager.h" />
+		<Unit filename="..\include\OgreMaterialScriptCompiler.h" />
 		<Unit filename="..\include\OgreMaterialSerializer.h" />
 		<Unit filename="..\include\OgreMath.h" />
 		<Unit filename="..\include\OgreMatrix3.h" />
 		<Unit filename="..\include\OgreMatrix4.h" />
-		<Unit filename="..\include\OgreMemoryAllocatedObject.h" />
-		<Unit filename="..\include\OgreMemoryAllocatorConfig.h" />
-		<Unit filename="..\include\OgreMemoryNedAlloc.h" />
-		<Unit filename="..\include\OgreMemoryStdAlloc.h" />
-		<Unit filename="..\include\OgreMemorySTLAllocator.h" />
-		<Unit filename="..\include\OgreMemoryTracker.h" />
+		<Unit filename="..\include\OgreMemoryMacros.h" />
+		<Unit filename="..\include\OgreMemoryManager.h" />
 		<Unit filename="..\include\OgreMesh.h" />
 		<Unit filename="..\include\OgreMeshFileFormat.h" />
 		<Unit filename="..\include\OgreMeshManager.h" />
@@ -191,6 +187,7 @@
 		<Unit filename="..\include\OgreMeshSerializerImpl.h" />
 		<Unit filename="..\include\OgreMovableObject.h" />
 		<Unit filename="..\include\OgreMovablePlane.h" />
+		<Unit filename="..\include\OgreNoMemoryMacros.h" />
 		<Unit filename="..\include\OgreNode.h" />
 		<Unit filename="..\include\OgreNumerics.h" />
 		<Unit filename="..\include\OgreOptimisedUtil.h" />
@@ -239,8 +236,6 @@
 		<Unit filename="..\include\OgreRenderQueueSortingGrouping.h" />
 		<Unit filename="..\include\OgreRenderSystem.h" />
 		<Unit filename="..\include\OgreRenderSystemCapabilities.h" />
-		<Unit filename="..\include\OgreRenderSystemCapabilitiesManager.h" />
-		<Unit filename="..\include\OgreRenderSystemCapabilitiesSerializer.h" />
 		<Unit filename="..\include\OgreRenderTarget.h" />
 		<Unit filename="..\include\OgreRenderTargetListener.h" />
 		<Unit filename="..\include\OgreRenderTexture.h" />
@@ -257,10 +252,7 @@
 		<Unit filename="..\include\OgreSceneManagerEnumerator.h" />
 		<Unit filename="..\include\OgreSceneNode.h" />
 		<Unit filename="..\include\OgreSceneQuery.h" />
-		<Unit filename="..\include\OgreScriptCompiler.h" />
-		<Unit filename="..\include\OgreScriptLexer.h" />
 		<Unit filename="..\include\OgreScriptLoader.h" />
-		<Unit filename="..\include\OgreScriptParser.h" />
 		<Unit filename="..\include\OgreSearchOps.h" />
 		<Unit filename="..\include\OgreSerializer.h" />
 		<Unit filename="..\include\OgreShadowCameraSetup.h" />
@@ -295,7 +287,6 @@
 		<Unit filename="..\include\OgreSubEntity.h" />
 		<Unit filename="..\include\OgreSubMesh.h" />
 		<Unit filename="..\include\OgreTagPoint.h" />
-		<Unit filename="..\include\OgreTangentSpaceCalc.h" />
 		<Unit filename="..\include\OgreTechnique.h" />
 		<Unit filename="..\include\OgreTextAreaOverlayElement.h" />
 		<Unit filename="..\include\OgreTexture.h" />
@@ -326,7 +317,6 @@
 		<Unit filename="..\src\OgreAnimationTrack.cpp" />
 		<Unit filename="..\src\OgreArchiveManager.cpp" />
 		<Unit filename="..\src\OgreAutoParamDataSource.cpp" />
-		<Unit filename="..\src\OgreAxisAlignedBox.cpp" />
 		<Unit filename="..\src\OgreBillboard.cpp" />
 		<Unit filename="..\src\OgreBillboardChain.cpp" />
 		<Unit filename="..\src\OgreBillboardParticleRenderer.cpp" />
@@ -386,12 +376,12 @@
 		<Unit filename="..\src\OgreManualObject.cpp" />
 		<Unit filename="..\src\OgreMaterial.cpp" />
 		<Unit filename="..\src\OgreMaterialManager.cpp" />
+		<Unit filename="..\src\OgreMaterialScriptCompiler.cpp" />
 		<Unit filename="..\src\OgreMaterialSerializer.cpp" />
 		<Unit filename="..\src\OgreMath.cpp" />
 		<Unit filename="..\src\OgreMatrix3.cpp" />
 		<Unit filename="..\src\OgreMatrix4.cpp" />
-		<Unit filename="..\src\OgreMemoryNedAlloc.cpp" />
-		<Unit filename="..\src\OgreMemoryTracker.cpp" />
+		<Unit filename="..\src\OgreMemoryManager.cpp" />
 		<Unit filename="..\src\OgreMesh.cpp" />
 		<Unit filename="..\src\OgreMeshManager.cpp" />
 		<Unit filename="..\src\OgreMeshSerializer.cpp" />
@@ -441,8 +431,6 @@
 		<Unit filename="..\src\OgreRenderQueueSortingGrouping.cpp" />
 		<Unit filename="..\src\OgreRenderSystem.cpp" />
 		<Unit filename="..\src\OgreRenderSystemCapabilities.cpp" />
-		<Unit filename="..\src\OgreRenderSystemCapabilitiesManager.cpp" />
-		<Unit filename="..\src\OgreRenderSystemCapabilitiesSerializer.cpp" />
 		<Unit filename="..\src\OgreRenderTarget.cpp" />
 		<Unit filename="..\src\OgreRenderTexture.cpp" />
 		<Unit filename="..\src\OgreRenderWindow.cpp" />
@@ -454,9 +442,6 @@
 		<Unit filename="..\src\OgreRoot.cpp" />
 		<Unit filename="..\src\OgreRotationSpline.cpp" />
 		<Unit filename="..\src\OgreSIMDHelper.h" />
-		<Unit filename="..\src\OgreScriptCompiler.cpp" />
-		<Unit filename="..\src\OgreScriptLexer.cpp" />
-		<Unit filename="..\src\OgreScriptParser.cpp" />
 		<Unit filename="..\src\OgreSceneManager.cpp" />
 		<Unit filename="..\src\OgreSceneManagerEnumerator.cpp" />
 		<Unit filename="..\src\OgreSceneNode.cpp" />
@@ -483,7 +468,6 @@
 		<Unit filename="..\src\OgreSubEntity.cpp" />
 		<Unit filename="..\src\OgreSubMesh.cpp" />
 		<Unit filename="..\src\OgreTagPoint.cpp" />
-		<Unit filename="..\src\OgreTangentSpaceCalc.cpp" />
 		<Unit filename="..\src\OgreTechnique.cpp" />
 		<Unit filename="..\src\OgreTextAreaOverlayElement.cpp" />
 		<Unit filename="..\src\OgreTexture.cpp" />

@@ -92,7 +92,7 @@ namespace Ogre {
 		wishes, and also handles the memory management for you like other 
 		classes.
 	*/
-	class _OgreExport  InstancedGeometry : public BatchedGeometryAlloc
+	class _OgreExport  InstancedGeometry
 	{
 	public:
 		/** Struct holding geometry optimised per SubMesh / lod level, ready
@@ -107,7 +107,7 @@ namespace Ogre {
 			a given LOD has wastage, we create an optimised version of it's
 			geometry which is ready for copying with no wastage.
 		*/
-		class _OgrePrivate OptimisedSubMeshGeometry : public BatchedGeometryAlloc
+		class _OgrePrivate OptimisedSubMeshGeometry
 		{
 		public:
 			OptimisedSubMeshGeometry() :vertexData(0), indexData(0) {}
@@ -130,7 +130,7 @@ namespace Ogre {
 		typedef std::vector<SubMeshLodGeometryLink> SubMeshLodGeometryLinkList;
 		typedef std::map<SubMesh*, SubMeshLodGeometryLinkList*> SubMeshGeometryLookup;
 		/// Structure recording a queued submesh for the build
-		struct QueuedSubMesh : public BatchedGeometryAlloc
+		struct QueuedSubMesh
 		{
 			SubMesh* submesh;
 			/// Link to LOD list of geometry, potentially optimised
@@ -146,7 +146,7 @@ namespace Ogre {
 		typedef std::vector<QueuedSubMesh*> QueuedSubMeshList;
 		typedef std::vector<String> QueuedSubMeshOriginList;
 		/// Structure recording a queued geometry for low level builds
-		struct QueuedGeometry : public BatchedGeometryAlloc
+		struct QueuedGeometry
 		{
 			SubMeshLodGeometryLink* geometry;
 			Vector3 position;
@@ -223,6 +223,8 @@ namespace Ogre {
 			Technique* getTechnique(void) const;
 	        void getWorldTransforms(Matrix4* xform) const;
 			virtual unsigned short getNumWorldTransforms(void) const ;
+	        const Quaternion& getWorldOrientation(void) const;
+	        const Vector3& getWorldPosition(void) const;
 			Real getSquaredViewDepth(const Camera* cam) const;
 	        const LightList& getLights(void) const;
 			bool getCastsShadows(void) const;
@@ -237,11 +239,8 @@ namespace Ogre {
 			void dump(std::ofstream& of) const;
 			/// retun the BoundingBox information. Usefull when cloning the batch instance.
 			AxisAlignedBox & getAABB(void){return mAABB;};
-			/// @copydoc MovableObject::visitRenderables
-			void visitRenderables(Renderable::Visitor* visitor, bool debugRenderables);
-
 		};
-		class _OgreExport  InstancedObject : public BatchedGeometryAlloc
+		class _OgreExport  InstancedObject
 		{
 			friend class GeometryBucket;
 		public:
@@ -297,7 +296,7 @@ namespace Ogre {
 		};
 		/** A MaterialBucket is a collection of smaller buckets with the same 
 			Material (and implicitly the same LOD). */
-		class _OgreExport  MaterialBucket : public BatchedGeometryAlloc
+		class _OgreExport  MaterialBucket
 		{
 		public:
 			/// list of Geometry Buckets in this BatchInstance
@@ -352,7 +351,6 @@ namespace Ogre {
 			void setLastIndex(int index){mLastIndex=index;}
 			int getLastIndex(){return mLastIndex;}
 			void setMaterial(const String & name);
-			void visitRenderables(Renderable::Visitor* visitor, bool debugRenderables);
 		
 		};
 		/** A LODBucket is a collection of smaller buckets with the same LOD. 
@@ -360,7 +358,7 @@ namespace Ogre {
 			LOD refers to Mesh LOD here. Material LOD can change separately
 			at the next bucket down from this.
 		*/
-		class _OgreExport  LODBucket : public BatchedGeometryAlloc
+		class _OgreExport  LODBucket
 		{
 		public:
 			/// Lookup of Material Buckets in this BatchInstance
@@ -399,7 +397,6 @@ namespace Ogre {
 			void dump(std::ofstream& of) const;
 			/// fill the map
 			void updateContainers(MaterialBucket* bucket, String& name );
-			void visitRenderables(Renderable::Visitor* visitor, bool debugRenderables);
 			
 		};
 		/** The details of a topological BatchInstance which is the highest level of
@@ -468,10 +465,6 @@ namespace Ogre {
 			Real getBoundingRadius(void) const;
 			void _updateRenderQueue(RenderQueue* queue);
 			bool isVisible(void) const;
-			/// @copydoc MovableObject::visitRenderables
-			void visitRenderables(Renderable::Visitor* visitor, 
-				bool debugRenderables = false);
-
 		//	uint32 getTypeFlags(void) const;
 
 			typedef VectorIterator<LODBucketList> LODIterator;
@@ -688,7 +681,7 @@ namespace Ogre {
 		@remarks
 				This method add a new instance of the whole batch, by creating a new 
 				BatchInstance, containing new lod buckets, material buckets and geometry buckets.
-				The new geometry buckets will use the same buffers as the base bucket.
+				The new geometry bukets will use the same buffers as the base bucket.
 		@note
 			no note
 		*/
@@ -805,10 +798,6 @@ namespace Ogre {
 		BatchInstanceIterator getBatchInstanceIterator(void);
 		/// get the mRenderOps vector.
 		RenderOperationVector& getRenderOperationVector(){return mRenderOps;}
-		/// @copydoc MovableObject::visitRenderables
-		void visitRenderables(Renderable::Visitor* visitor, 
-			bool debugRenderables = false);
-
 		/** Dump the contents of this InstancedGeometry to a file for diagnostic
 		 	purposes.
 		*/

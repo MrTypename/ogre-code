@@ -75,7 +75,7 @@ namespace Ogre
 		const Vector3& camDir = cam.getDerivedDirection();
 
 		// get the shadow frustum's far distance
-		Real shadowDist = light.getShadowFarDistance();
+		Real shadowDist = sm.getShadowFarDistance();
 		if (!shadowDist)
 		{
 			// need a shadow distance, make one up
@@ -244,7 +244,7 @@ namespace Ogre
 			mBodyB.clip(sceneBB);
 
 			// Also clip based on shadow far distance if appropriate
-			Real farDist = light.getShadowFarDistance();
+			Real farDist = sm.getShadowFarDistance();
 			if (farDist)
 			{
 				Vector3 pointOnPlane = cam.getDerivedPosition() + 
@@ -414,7 +414,7 @@ namespace Ogre
 		// build scene bounding box
 		const VisibleObjectsBoundsInfo& visInfo = sm->getShadowCasterBoundsInfo(light);
 		AxisAlignedBox sceneBB = visInfo.aabb;
-		sceneBB.merge(sm->getVisibleObjectsBoundsInfo(cam).receiverAabb);
+		sceneBB.merge(sm->getVisibleObjectsBoundsInfo(cam).aabb);
 		sceneBB.merge(cam->getDerivedPosition());
 
 		// in case the sceneBB is empty (e.g. nothing visible to the cam) simply

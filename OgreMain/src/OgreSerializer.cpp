@@ -65,16 +65,9 @@ namespace Ogre {
 				
 		uint16 dest;
 		// read header id manually (no conversion)
-        size_t actually_read = stream->read(&dest, sizeof(uint16));
+        stream->read(&dest, sizeof(uint16));
 		// skip back
-        stream->skip(0 - actually_read);
-        if (actually_read != sizeof(uint16))
-        {
-            // end of file?
-            OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS,
-                        "Couldn't read 16 bit header value from input stream.",
-                        "Serializer::determineEndianness");
-        }
+		stream->skip(0 - sizeof(uint16));
 		if (dest == HEADER_STREAM_ID)
 		{
 			mFlipEndian = false;
@@ -86,7 +79,7 @@ namespace Ogre {
 		else
 		{
 			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS,
-				"Header chunk didn't match either endian: Corrupted stream?",
+				"Can't find a header chunk to determine endianness",
 				"Serializer::determineEndianness");
 		}
 	}

@@ -45,7 +45,7 @@ namespace Ogre {
 /* Find CPU type
 */
 #if (defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))) || \
-    (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))
+    (defined(__GNUC__) && (defined(__i386__) /*|| defined(__x86_64__)*/))
 #   define OGRE_CPU OGRE_CPU_X86
 
 #elif OGRE_PLATFORM == OGRE_PLATFORM_APPLE && defined(__BIG_ENDIAN__)
@@ -100,9 +100,9 @@ namespace Ogre {
 
     /** Class which provides the run-time platform information Ogre runs on.
         @remarks
-            Ogre is designed to be platform-independent, but some platform
+            Ogre is designed to be platform-independent, but there some platform
             and run-time environment specific optimised functions are built-in
-            to maximise performance, and those special optimised routines are
+            for maximise performance, and those special optimised routines are
             need to determine run-time environment for select variant executing
             path.
         @par

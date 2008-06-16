@@ -35,6 +35,11 @@ Torus Knot Software Ltd.
 #include "OgreSingleton.h"
 #include "OgreResource.h"
 
+#if OGRE_THREAD_SUPPORT
+#	include <boost/thread/thread.hpp>
+#	include <boost/thread/condition.hpp>
+#endif
+
 namespace Ogre {
 
 	/// Identifier of a background process
@@ -52,7 +57,7 @@ namespace Ogre {
 		process, your request is placed on a queue ready for the background
 		thread to be picked up, and you will get a 'ticket' back, identifying
 		the request. Your call will then return and your thread can
-		proceed, knowing that at some point in the background the operation will 
+		proceed, knowing that at some point in the background the operation wil 
 		be performed. In it's own thread, the resource operation will be 
 		performed, and once finished the ticket will be marked as complete. 
 		You can check the status of tickets by calling isProcessComplete() 
@@ -110,7 +115,7 @@ namespace Ogre {
 		/// Init notification mutex (must lock before waiting on initCondition)
 		OGRE_MUTEX(initMutex)
 		/// Synchroniser token to wait / notify on thread init (public incase external thread)
-		OGRE_THREAD_SYNCHRONISER(initSync)
+		OGRE_THREAD_SYNCHRONISER(initSync);
 
 	protected:
 		/** Enumerates the type of requests */
@@ -118,8 +123,6 @@ namespace Ogre {
 		{
 			RT_INITIALISE_GROUP,
 			RT_INITIALISE_ALL_GROUPS,
-			RT_PREPARE_GROUP,
-			RT_PREPARE_RESOURCE,
 			RT_LOAD_GROUP,
 			RT_LOAD_RESOURCE,
 			RT_UNLOAD_GROUP,
@@ -155,19 +158,19 @@ namespace Ogre {
 		/// Struct that holds details of queued notifications
 		struct QueuedNotification
 		{
-			QueuedNotification(Resource* r, bool load)
-				: load(load), resource(r)
+			QueuedNotification(Resource* r)
+				: resource(r), opListener(0), ticket(0)
 			{}
 
-			QueuedNotification(const Request &req)
-				: load(false), resource(0), req(req)  
+			QueuedNotification(Listener* l, BackgroundProcessTicket t)
+				: resource(0), opListener(l), ticket(t)  
 			{}
 
-            bool load;
 			// Type 1 - Resource::Listener kind
 			Resource* resource;
 			// Type 2 - ResourceBackgroundQueue::Listener kind
-            Request req;
+			Listener* opListener;
+			BackgroundProcessTicket ticket;
 		};
 		typedef std::list<QueuedNotification> NotificationQueue;
 		/// Queued notifications of background loading being finished
@@ -211,7 +214,8 @@ namespace Ogre {
 		@param listener The listener to be notified
 		@param ticket The ticket for the operation that has completed
 		*/
-		virtual void queueFireBackgroundOperationComplete(Request *req);
+		virtual void queueFireBackgroundOperationComplete(Listener* listener,
+			BackgroundProcessTicket ticket);
 
 	public:
 		ResourceBackgroundQueue();
@@ -271,17 +275,6 @@ namespace Ogre {
 		*/
 		virtual BackgroundProcessTicket initialiseAllResourceGroups( 
 			Listener* listener = 0);
-		/** Prepares a resource group in the background.
-		@see ResourceGroupManager::prepareResourceGroup
-		@param name The name of the resource group to prepare
-		@param listener Optional callback interface, take note of warnings in 
-			the header and only use if you understand them.
-		@returns Ticket identifying the request, use isProcessComplete() to 
-			determine if completed if not using listener
-		*/
-		virtual BackgroundProcessTicket prepareResourceGroup(const String& name, 
-			Listener* listener = 0);
-
 		/** Loads a resource group in the background.
 		@see ResourceGroupManager::loadResourceGroup
 		@param name The name of the resource group to load
@@ -324,28 +317,6 @@ namespace Ogre {
 			Listener* listener = 0);
 
 
-		/** Prepare a single resource in the background. 
-		@see ResourceManager::prepare
-		@param resType The type of the resource 
-			(from ResourceManager::getResourceType())
-		@param name The name of the Resource
-		@param group The resource group to which this resource will belong
-		@param isManual Is the resource to be manually loaded? If so, you should
-			provide a value for the loader parameter
-		@param loader The manual loader which is to perform the required actions
-			when this resource is loaded; only applicable when you specify true
-			for the previous parameter. NOTE: must be thread safe!!
-        @param loadParams Optional pointer to a list of name/value pairs 
-            containing loading parameters for this type of resource. Remember 
-			that this must have a lifespan longer than the return of this call!
-		*/
-		virtual BackgroundProcessTicket prepare(
-			const String& resType, const String& name, 
-            const String& group, bool isManual = false, 
-			ManualResourceLoader* loader = 0, 
-			const NameValuePairList* loadParams = 0, 
-			Listener* listener = 0);
-
 		/** Load a single resource in the background. 
 		@see ResourceManager::load
 		@param resType The type of the resource 
@@ -376,7 +347,7 @@ namespace Ogre {
 		@param ticket The ticket which was returned when the process was queued
 		@returns true if process has completed (or if the ticket is 
 			unrecognised), false otherwise
-		@note Tickets are not stored once complete so do not accumulate over 
+		@note Tickets are not stored onced complete so do not accumulate over 
 			time.
 		This is why a non-existent ticket will return 'true'.
 		*/
@@ -415,21 +386,6 @@ namespace Ogre {
 		*/
 		void _initThread();
 
-		/** Queue the firing of the 'background preparing complete' event to
-			a Resource::Listener event.
-		@remarks
-			The purpose of this is to allow the background thread to 
-			call this method to queue the notification to listeners waiting on
-			the background preparing of a resource. Rather than allow the resource
-			background thread to directly call these listeners, which 
-			would require all the listeners to be thread-safe, this method
-			implements a thread-safe queue which can be processed in the main
-			frame loop thread each frame to clear the events in a simpler 
-			manner.
-		@param res The resource listened on
-		*/
-		virtual void _queueFireBackgroundPreparingComplete(Resource* res);
-
 		/** Queue the firing of the 'background loading complete' event to
 			a Resource::Listener event.
 		@remarks
@@ -452,7 +408,7 @@ namespace Ogre {
 			If you use Ogre's built in frame loop you don't need to call this
 			yourself.
 		*/
-		virtual void _fireOnFrameCallbacks(void);
+		virtual void _fireBackgroundLoadingComplete(void);
 
 		/** Override standard Singleton retrieval.
         @remarks

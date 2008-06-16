@@ -23,8 +23,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	
 	Material shader: Phong material vertex shader
 */
-struct VS_OUTPUT 
-{
+struct VS_OUTPUT {
    float4 pos: POSITION;
    float4 normal: TEXCOORD0;
    float2 texCoord0: TEXCOORD1;
@@ -39,8 +38,7 @@ VS_OUTPUT main(
 	float4 Pos: POSITION, 
 	float3 Normal: NORMAL,
 	float2 texCoord0: TEXCOORD0
-)
-{
+){
    VS_OUTPUT Out;
    
    Out.normal = mul(worldView, Normal);

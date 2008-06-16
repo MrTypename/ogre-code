@@ -302,8 +302,7 @@ namespace Ogre {
 				if (visibleBounds)
 				{
 					visibleBounds->merge(iobj->second->getWorldBoundingBox(true), 
-						iobj->second->getWorldBoundingSphere(true), cam, 
-						queue->getQueueGroup(iobj->second->getRenderQueueGroup())->getShadowsEnabled());
+						iobj->second->getWorldBoundingSphere(true), cam);
 				}
             }
         }
@@ -649,26 +648,6 @@ namespace Ogre {
             }
         }
     }
-	//-----------------------------------------------------------------------
-	void SceneNode::setDebugDisplayEnabled(bool enabled, bool cascade)
-	{
-		ObjectMap::iterator oi, oiend;
-		oiend = mObjectsByName.end();
-		for (oi = mObjectsByName.begin(); oi != oiend; ++oi)
-		{
-			oi->second->setDebugDisplayEnabled(enabled);
-		}
-
-		if (cascade)
-		{
-			ChildNodeMap::iterator i, iend;
-			iend = mChildren.end();
-			for (i = mChildren.begin(); i != iend; ++i)
-			{
-				static_cast<SceneNode*>(i->second)->setDebugDisplayEnabled(enabled, cascade);
-			}
-		}
-	}
     //-----------------------------------------------------------------------
     void SceneNode::flipVisibility(bool cascade)
     {

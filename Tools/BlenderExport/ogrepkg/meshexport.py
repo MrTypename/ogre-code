@@ -38,41 +38,42 @@ import math
 #  Set to 0 for RGBA, 1 for BGRA.
 OGRE_OPENGL_VERTEXCOLOUR = 1
 
+matrixOne = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
+
 class Vertex:
 	"""
 	"""
 	THRESHOLD = 1e-6
-	def __init__(self, bMesh, bMFace, bIndex, index, fixUpAxis, armatureExporter=None):
+	def __init__(self, bMesh, bMFace, bIndex, index, parentTransform, armatureExporter=None):
 		"""Represents an Ogre vertex.
 		   
 		   @param bIndex Index in the vertex list of the NMFace.
 		   @param index Vertexbuffer position.
-		   @param fixUpAxis Additional transformation to apply to the vertex.
+		   @param parentTransform Additional transformation to apply to the vertex.
 		"""
 		self.bMesh = bMesh
 		# imples position
 		# vertex in basis shape
 		self.bMVert = bMFace.v[bIndex]
-		self.basisPos = self.bMVert.co
-		bKey = self.bMesh.key
+		bKey = self.bMesh.getKey()
 		if (bKey and len(bKey.blocks)):
 			# first shape key is rest position
-			self.basisPos = bKey.blocks[0].data[self.bMVert.index]
+			self.bMVert = bKey.blocks[0].data[self.bMVert.index]
 		## Face properties in Blender
 		self.normal = None
 		self.colourDiffuse = None
-		self.texcoords = []
+		self.texcoord = None
 		## bookkeeping
 		# vertexbuffer position in vertexbuffer
 		self.index = index
-		self.fixUpAxis = fixUpAxis
+		self.parentTransform = parentTransform
 		# implies influences
 		self.armatureExporter = armatureExporter
 		### populated attributes
 		## normal
 		if bMFace.smooth:
 			# key blocks don't have normals
-			self.normal = self._applyfixUpAxis(bMFace.v[bIndex].no)
+			self.normal = self._applyParentTransform(bMFace.v[bIndex].no)
 		else:
 			# create face normal
 			# 1 - 2
@@ -82,14 +83,14 @@ class Vertex:
 			if (bKey and len(bKey.blocks)):
 				# first shape key is rest position
 				blockData = bKey.blocks[0].data
-				v1 = self._applyfixUpAxis(blockData[bMFace.v[0].index])
-				v2 = self._applyfixUpAxis(blockData[bMFace.v[1].index])
-				v3 = self._applyfixUpAxis(blockData[bMFace.v[2].index])
+				v1 = self._applyParentTransform(blockData[bMFace.v[0].index].co)
+				v2 = self._applyParentTransform(blockData[bMFace.v[1].index].co)
+				v3 = self._applyParentTransform(blockData[bMFace.v[2].index].co)
 			else:
 				# self.normal = CrossVecs(bMFace.v[1].co - bMFace.v[0].co, bMFace.v[2].co - bMFace.v[0].co)
-				v1 = self._applyfixUpAxis(bMFace.v[0].co)
-				v2 = self._applyfixUpAxis(bMFace.v[1].co)
-				v3 = self._applyfixUpAxis(bMFace.v[2].co)
+				v1 = self._applyParentTransform(bMFace.v[0].co)
+				v2 = self._applyParentTransform(bMFace.v[1].co)
+				v3 = self._applyParentTransform(bMFace.v[2].co)
 			self.normal = CrossVecs(v2 - v1, v3 - v1)
 		# self.normal.normalize() does not throw ZeroDivisionError exception
 		normalLength = self.normal.length
@@ -99,7 +100,8 @@ class Vertex:
 			Log.getSingleton().logWarning("Error in normalize! Face of mesh \"%s\" too small." % bMesh.name)
 			self.normal = Vector([0,0,0])
 		## colourDiffuse
-		if bMesh.vertexColors:
+		#Mesh#if bMesh.vertexColors:
+		if bMesh.hasVertexColours():
 			bMCol = bMFace.col[bIndex]
 			if OGRE_OPENGL_VERTEXCOLOUR:
 				self.colourDiffuse = (bMCol.b/255.0, bMCol.g/255.0, bMCol.r/255.0, bMCol.a/255.0)
@@ -130,61 +132,52 @@ class Vertex:
 							self.colourDiffuse = (bMCol.r/255.0, bMCol.g/255.0, bMCol.b/255.0, bMCol.a/255.0)
 		## texcoord
 		# origin in OGRE is top-left
-		for uvlayer in bMesh.getUVLayerNames():
-			bMesh.activeUVLayer = uvlayer
-			if bMesh.faceUV:
-				self.texcoords.append((bMFace.uv[bIndex][0], 1 - bMFace.uv[bIndex][1]))
-			elif bMesh.vertexUV:
-				self.texcoords.append((self.bMVert.uvco[0], 1 - self.bMVert.uvco[1]))
-
+		#Mesh#if bMesh.faceUV:
+		if bMesh.hasFaceUV():
+			self.texcoord = (bMFace.uv[bIndex][0], 1 - bMFace.uv[bIndex][1])
+		#Mesh#elif bMesh.vertexUV:
+		elif bMesh.hasVertexUV():
+			self.texcoord = (self.bMVert.uvco[0], 1 - self.bMVert.uvco[1])
 		return
 	def __eq__(self, other):
 		"""Tests if this vertex is equal to another vertex in the Ogre sense.
 		
-		   Does no take fixUpAxis into account!
+		   Does no take parentTransform into account!
 		   Also, it does not compare the index.
 		"""
 		isEqual = 0
 		# compare index, normal, colourDiffuse and texcoord
-		if (self.bMVert.index != other.bMVert.index):
-			# different Blender vertex
+		if (self.bMVert.index == other.bMVert.index):
 			pass
 		elif ((self.normal - other.normal).length > Vertex.THRESHOLD):
-			# normals don't match
 			pass
-		elif (not(self.matchTexCoords(other))):
-			# texture coordinates do not match
+		elif ((self.texcoord and not(other.texcoord)) or 
+			(not(self.texcoord) and other.texcoord)):
+			pass
+		elif ((math.fabs(self.texcoord[0] - other.texcoord[0]) > Vertex.THRESHOLD)
+			or (math.fabs(self.texcoord[1] - other.texcoord[1]) > Vertex.THRESHOLD)):
 			pass
 		elif ((self.colourDiffuse and not(other.colourDiffuse)) or 
 			(not(self.colourDiffuse) and other.colourDiffuse)):
-			# mixed existence of vertex colours
 			pass
-		elif (self.colourDiffuse and
-			((math.fabs(self.colourDiffuse[0] - other.colourDiffuse[0]) > Vertex.THRESHOLD)
+		elif ((math.fabs(self.colourDiffuse[0] - other.colourDiffuse[0]) > Vertex.THRESHOLD)
 			or (math.fabs(self.colourDiffuse[1] - other.colourDiffuse[1]) > Vertex.THRESHOLD)
 			or (math.fabs(self.colourDiffuse[2] - other.colourDiffuse[2]) > Vertex.THRESHOLD)
-			or (math.fabs(self.colourDiffuse[3] - other.colourDiffuse[3]) > Vertex.THRESHOLD))):
-			# vertex colours exist but do not match
+			or (math.fabs(self.colourDiffuse[3] - other.colourDiffuse[3]) > Vertex.THRESHOLD)):
 			pass
 		else:
 			isEqual = 1
 		return isEqual
-	def matchTexCoords(self, other):
-		if (len(self.texcoords) != len(other.texcoords)):
-			return False
-		else:
-			for id in range(len(self.texcoords)):
-				if ((math.fabs(self.texcoords[id][0] - other.texcoords[id][0]) > Vertex.THRESHOLD)
-				or (math.fabs(self.texcoords[id][1] - other.texcoords[id][1]) > Vertex.THRESHOLD)):
-					return False
-		return True
 	def hasDiffuseColours(self):
 		available = False
 		if self.colourDiffuse is not None:
 			available = True
 		return available
 	def nTextureCoords(self):
-		return len(self.texcoords)
+		nCoords = 0
+		if self.texcoord is not None:
+			nCoords += 1
+		return nCoords
 	def writePosition(self, fileObject, indentation=0):
 		fileObject.write(indent(indentation) + "<position x=\"%.6f\" y=\"%.6f\" z=\"%.6f\"/>\n" \
 			% tuple(self.getPosition()))
@@ -199,9 +192,9 @@ class Vertex:
 				% self.colourDiffuse)
 		return
 	def writeTexcoord(self, fileObject, indentation=0):
-		for id in range(len(self.texcoords)):
+		if self.texcoord:
 			fileObject.write(indent(indentation) + "<texcoord u=\"%.6f\" v=\"%.6f\"/>\n"\
-				% self.texcoords[id])
+				% self.texcoord)
 		return
 	def writeVertex(self, fileObject, indentation=0):
 		fileObject.write(indent(indentation) + "<vertex>\n")
@@ -235,13 +228,12 @@ class Vertex:
 			Log.getSingleton().logWarning("Vertex without bone assignment!")
 		elif (nAssignments  > 4):
 			Log.getSingleton().logWarning("Vertex with more than 4 bone assignments!")
-		# TODO: weightSum normalization
-		# Ogre::Mesh::_rationaliseBoneAssignments always normalises the sum of
-		# weights per vertex to be 1.0. However, in Blender weightSum > 1.0 and
-		# weightSum < 1.0 seems to be often the case.
-		#
-		#if (abs(weightSum - 1.0) > THRESHOLD):
-		#	Log.getSingleton().logWarning("Vertex with non-convex bone assignment weights!")
+		# weightSum > 1.0 seems to be often the case.
+		# TODO: check whether OGRE requires that it is <= 1.0
+		# TODO: check whether Blender takes this as a scale factor, i.e., 
+		#   influence is sum_i bone_i*weight_i, or if weights are normalized to sum_i weight_i == 1
+		#if (weightSum > 1.0):
+		#	Log.getSingleton().logWarning("Vertex with sum of bone assignment weights > 1!")
 		return
 	def getIndex(self):
 		return self.index
@@ -250,30 +242,30 @@ class Vertex:
 	def getPosition(self):
 		"""Returns position vector of the rest position.
 		"""
-		return self._applyfixUpAxis(self.basisPos)
+		return self._applyParentTransform(self.bMVert.co)
 	def getCurrentFramePosition(self, bDeformedNMesh):
 		"""Returns position of this vertex in the current frame of the possibly deformed mesh.
 		"""
-		return self._applyfixUpAxis(bDeformedNMesh.verts[self.bMVert.index].co)
+		return self._applyParentTransform(bDeformedNMesh.verts[self.bMVert.index].co)
 	def getCurrentFrameRelativePosition(self, bDeformedNMesh):
 		"""Returns relative position of this vertex in the current frame of the possibly deformed mesh.
 		"""
 		return (self.getCurrentFramePosition(bDeformedNMesh) - self.getPosition())
-	def _applyfixUpAxis(self, vector):
+	def _applyParentTransform(self, vector):
 		"""Applies transformation to threedimensional vector.
 		"""
-		if (self.fixUpAxis):
-			vec = Vector(vector.x, vector.z, -vector.y)
-		else:
-			return vector
+		vec = Vector(vector)
+		vec.resize4D()
+		vec = vec * self.parentTransform
+		vec.resize3D()
 		return vec
 
 class VertexManager:
 	"""
 	"""
-	def __init__(self, bMesh, fixUpAxis, armatureExporter=None):
+	def __init__(self, bMesh, parentTransform, armatureExporter=None):
 		self.bMesh = bMesh
-		self.fixUpAxis = fixUpAxis
+		self.parentTransform = parentTransform
 		# needed for boneassignments
 		self.armatureExporter = armatureExporter
 		# key: index, value: list of vertices with same MVert
@@ -295,7 +287,7 @@ class VertexManager:
 		   @param bIndex Index in the vertex list of the MFace.
 		   @return Corresponding vertex.
 		"""
-		vertex = Vertex(self.bMesh, bMFace, bIndex, len(self.vertexList), self.fixUpAxis, self.armatureExporter)
+		vertex = Vertex(self.bMesh, bMFace, bIndex, len(self.vertexList), self.parentTransform, self.armatureExporter)
 		if self.vertexDict.has_key(bMFace.v[bIndex].index):
 			# check Ogre vertices for that Blender vertex
 			vertexList = self.vertexDict[bMFace.v[bIndex].index]
@@ -325,10 +317,8 @@ class VertexManager:
 			firstVertex = self.vertexList[0]
 			if firstVertex.hasDiffuseColours():
 				fileObject.write(" colours_diffuse=\"true\"")
-			# set texture coordinate count.
-			coords = firstVertex.nTextureCoords()
-			if (coords > 0):
-				fileObject.write(" texture_coords=\"%d\"" % coords)
+			if (firstVertex.nTextureCoords() > 0):
+				fileObject.write(" texture_coords=\"1\" texture_coord_dimensions_0=\"2\"")
 		fileObject.write(">\n")
 		for vertex in self.vertexList:
 			vertex.writeVertex(fileObject, indentation + 2)
@@ -358,7 +348,7 @@ class VertexManager:
 class Submesh:
 	"""Ogre submesh.
 	"""
-	def __init__(self, bMesh, material, index, fixUpAxis, armatureExporter = None):
+	def __init__(self, bMesh, material, index, parentTransform, armatureExporter = None):
 		"""Constructor.
 		
 		   @param index Index of submesh in submeshes list.
@@ -366,9 +356,9 @@ class Submesh:
 		self.bMesh = bMesh
 		self.materialName = material.getName()
 		self.index = index
-		self.fixUpAxis = fixUpAxis
+		self.parentTransform = parentTransform
 		self.armatureExporter = armatureExporter
-		self.vertexManager = VertexManager(self.bMesh, self.fixUpAxis, self.armatureExporter)
+		self.vertexManager = VertexManager(self.bMesh, self.parentTransform, self.armatureExporter)
 		# list of (tuple of vertice indices)
 		self.faces =[]
 		return
@@ -436,9 +426,9 @@ class Submesh:
 class SubmeshManager:
 	"""
 	"""
-	def __init__(self, bMesh, fixUpAxis, armatureExporter=None):
+	def __init__(self, bMesh, parentTransform, armatureExporter=None):
 		self.bMesh = bMesh
-		self.fixUpAxis = fixUpAxis
+		self.parentTransform = parentTransform
 		self.armatureExporter = armatureExporter
 		# key: material name, value: Submesh
 		self.submeshDict = {}
@@ -456,7 +446,7 @@ class SubmeshManager:
 		else:
 			# return new Submesh
 			index = len(self.submeshList)
-			submesh = Submesh(self.bMesh, material, index, self.fixUpAxis, self.armatureExporter)
+			submesh = Submesh(self.bMesh, material, index, self.parentTransform, self.armatureExporter)
 			self.submeshDict[material.getName()] = submesh
 			self.submeshList.append(submesh)
 		return submesh
@@ -484,7 +474,7 @@ class Pose:
 	"""
 	"""
 	THRESHOLD = 1e-7
-	def __init__(self, bKeyBlock, submesh, index, fixUpAxis):
+	def __init__(self, bKeyBlock, submesh, index, parentTransform):
 		"""Constructor.
 		
 		   @param index Index of pose in poses list.
@@ -492,13 +482,13 @@ class Pose:
 		self.bKeyBlock = bKeyBlock
 		self.submesh = submesh
 		self.index = index
-		self.fixUpAxis = fixUpAxis
+		self.parentTransform = parentTransform
 		# list of pose offset tuples (vertexIndex, deltaX, deltaY, deltaZ)
 		self.poseoffsetList	= []
 		# calculate poseoffsets
 		poseVertexList = self.bKeyBlock.data
 		for vertex in self.submesh.getVertexManager():
-			offset = self._applyfixUpAxis(poseVertexList[vertex.getMVert().index]) \
+			offset = self._applyParentTransform(poseVertexList[vertex.getMVert().index]) \
 				 - vertex.getPosition()
 			if (offset.length > Pose.THRESHOLD):
 				self.poseoffsetList.append((vertex.getIndex(), offset.x, offset.y, offset.z))
@@ -525,32 +515,33 @@ class Pose:
 					% poseoffset)
 			fileObject.write(indent(indentation) + "</pose>\n")		
 		return
-	def _applyfixUpAxis(self, vector):
+	def _applyParentTransform(self, vector):
 		"""Applies transformation to threedimensional vector.
 		"""
-		if (self.fixUpAxis):
-			vec = Vector(vector.x, vector.z, -vector.y)
-		else:
-			return vector
+		vec = Vector(vector)
+		vec.resize4D()
+		vec = vec * self.parentTransform
+		vec.resize3D()
 		return vec
 	
 class PoseManager:
 	"""
 	"""
-	def __init__(self, bMesh, submeshManager, fixUpAxis):
+	def __init__(self, bMesh, submeshManager, parentTransform):
 		self.bMesh = bMesh
 		self.submeshManager = submeshManager
+		self.parentTransform = parentTransform
 		# key: submesh, value: poseList
 		self.poseListDict = {}
 		self.poseList = []
 		# create poses
 		# each keyblock creates a pose for every submesh
-		bKey = self.bMesh.key
+		bKey = self.bMesh.getKey()
 		if bKey:
 			for bKeyBlock in bKey.blocks:
 				for submesh in self.submeshManager:
 					index = len(self.poseList)
-					pose = Pose(bKeyBlock, submesh, index, fixUpAxis)
+					pose = Pose(bKeyBlock, submesh, index, self.parentTransform)
 					if (pose.nPoseoffsets() > 0):
 						# add nonempty pose to list and dict
 						self.poseList.append(pose)
@@ -721,8 +712,7 @@ class MorphAnimation(VertexAnimation):
 		timeList.sort()
 		for time in timeList:
 			Blender.Set('curframe', frameNumberDict[time])
-			#~ bDeformedNMesh = Blender.NMesh.GetRawFromObject(bObject.getName())
-			bDeformedNMesh = bObject.getData(mesh=True)
+			bDeformedNMesh = Blender.NMesh.GetRawFromObject(bObject.getName())
 			for track in self.trackList:
 				track.addKeyframe(bDeformedNMesh, time)
 		return
@@ -776,9 +766,9 @@ class VertexAnimationExporter:
 		return
 	def hasAnimation(self):
 		return (len(self.morphAnimationList) or len(self.poseAnimationList))
-	def export(self, fixUpAxis):
+	def export(self, parentTransform):
 		# generate poses
-		self.poseManager = PoseManager(self.meshExporter.getObject().getData(mesh=True), self.meshExporter.getSubmeshManager(), fixUpAxis)
+		self.poseManager = PoseManager(self.meshExporter.getObject().getData(), self.meshExporter.getSubmeshManager(), parentTransform)
 		if self.hasAnimation():
 			# sample animations
 			animationNameList = []
@@ -856,7 +846,7 @@ class MeshExporter:
 		# populated on export
 		self.submeshManager = None
 		return
-	def export(self, dir, materialManager=MaterialManager(), fixUpAxis=True, colouredAmbient=False, gameEngineMaterials=False, convertXML=False):
+	def export(self, dir, materialManager=MaterialManager(), parentTransform=Matrix(*matrixOne), colouredAmbient=False, gameEngineMaterials=False, convertXML=False):
 		# leave editmode
 		editmode = Blender.Window.EditMode()
 		if editmode:
@@ -864,11 +854,11 @@ class MeshExporter:
 		Log.getSingleton().logInfo("Exporting mesh \"%s\"" % self.getName())
 		## export possible armature
 		if self.armatureExporter:
-			self.armatureExporter.export(dir, fixUpAxis, convertXML)
+			self.armatureExporter.export(dir, parentTransform, convertXML)
 		## export meshdata
-		self._generateSubmeshes(fixUpAxis, materialManager, colouredAmbient, gameEngineMaterials)
+		self._generateSubmeshes(parentTransform, materialManager, colouredAmbient, gameEngineMaterials)
 		## export vertex animations
-		self.vertexAnimationExporter.export(fixUpAxis)
+		self.vertexAnimationExporter.export(parentTransform)
 		## write files
 		self._write(dir, convertXML)
 		## cleanup
@@ -887,12 +877,12 @@ class MeshExporter:
 		return self.armatureExporter
 	def getSubmeshManager(self):
 		return self.submeshManager
-	def _generateSubmeshes(self, fixUpAxis, materialManager, colouredAmbient, gameEngineMaterials):
+	def _generateSubmeshes(self, parentTransform, materialManager, colouredAmbient, gameEngineMaterials):
 		"""Generates submeshes of the mesh.
 		"""
 		#NMesh# Blender.Mesh.Mesh does not provide access to mesh shape keys, use Blender.NMesh.NMesh
-		bMesh = self.bObject.getData(mesh=True)
-		self.submeshManager = SubmeshManager(bMesh, fixUpAxis, self.armatureExporter)
+		bMesh = self.bObject.getData()
+		self.submeshManager = SubmeshManager(bMesh, parentTransform, self.armatureExporter)
 		for bMFace in bMesh.faces:
 			faceMaterial = materialManager.getMaterial(bMesh, bMFace, colouredAmbient, gameEngineMaterials)
 			if faceMaterial:

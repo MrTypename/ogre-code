@@ -36,7 +36,7 @@ namespace Ogre {
 	/** Object representing one render to a RenderTarget or Viewport in the Ogre Composition
 		framework.
 	 */
-	class _OgreExport CompositionTargetPass : public CompositorInstAlloc
+    class _OgreExport CompositionTargetPass
     {
     public:
         CompositionTargetPass(CompositionTechnique *parent);
@@ -71,10 +71,10 @@ namespace Ogre {
         */
         bool getOnlyInitial();
         
-        /** Set the scene visibility mask used by this pass 
+        /** Set the scene visiblity mask used by this pass 
         */
         void setVisibilityMask(uint32 mask);
-        /** Get the scene visibility mask used by this pass 
+        /** Get the scene visiblity mask used by this pass 
         */
         uint32 getVisibilityMask();
 

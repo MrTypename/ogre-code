@@ -290,9 +290,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreAutoParamDataSource.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreAxisAlignedBox.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreBillboard.cpp">
 			</File>
 			<File
@@ -504,6 +501,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreMaterialManager.cpp">
 			</File>
 			<File
+				RelativePath="..\src\OgreMaterialScriptCompiler.cpp">
+			</File>
+			<File
 				RelativePath="..\src\OgreMaterialSerializer.cpp">
 			</File>
 			<File
@@ -517,12 +517,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreMemoryManager.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreMemoryNedAlloc.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreMemoryTracker.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreMesh.cpp">
@@ -681,12 +675,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\src\OgreRenderSystemCapabilities.cpp">
 			</File>
 			<File
-				RelativePath="..\src\OgreRenderSystemCapabilitiesManager.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreRenderSystemCapabilitiesSerializer.cpp">
-			</File>
-			<File
 				RelativePath="..\src\OgreRenderTarget.cpp">
 			</File>
 			<File
@@ -727,18 +715,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreSceneQuery.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreScriptCompiler.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreScriptLexer.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreScriptParser.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreScriptTranslator.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreSerializer.cpp">
@@ -805,9 +781,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\src\OgreTagPoint.cpp">
-			</File>
-			<File
-				RelativePath="..\src\OgreTangentSpaceCalc.cpp">
 			</File>
 			<File
 				RelativePath="..\src\OgreTechnique.cpp">
@@ -893,9 +866,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreArchiveManager.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreAtomicWrappers.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreAutoParamDataSource.h">
@@ -1123,6 +1093,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreMaterialManager.h">
 			</File>
 			<File
+				RelativePath="..\include\OgreMaterialScriptCompiler.h">
+			</File>
+			<File
 				RelativePath="..\include\OgreMaterialSerializer.h">
 			</File>
 			<File
@@ -1135,22 +1108,10 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreMatrix4.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreMemoryAllocatedObject.h">
+				RelativePath="..\include\OgreMemoryMacros.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreMemoryAllocatorConfig.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreMemoryNedAlloc.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreMemoryStdAlloc.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreMemorySTLAllocator.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreMemoryTracker.h">
+				RelativePath="..\include\OgreMemoryManager.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreMesh.h">
@@ -1175,6 +1136,9 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreNode.h">
+			</File>
+			<File
+				RelativePath="..\include\OgreNoMemoryMacros.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreNumerics.h">
@@ -1321,12 +1285,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreRenderSystemCapabilities.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreRenderSystemCapabilitiesManager.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreRenderSystemCapabilitiesSerializer.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreRenderTarget.h">
 			</File>
 			<File
@@ -1372,19 +1330,7 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 				RelativePath="..\include\OgreSceneQuery.h">
 			</File>
 			<File
-				RelativePath="..\include\OgreScriptCompiler.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreScriptLexer.h">
-			</File>
-			<File
 				RelativePath="..\include\OgreScriptLoader.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreScriptParser.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreScriptTranslator.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreSerializer.h">
@@ -1478,9 +1424,6 @@ copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)
 			</File>
 			<File
 				RelativePath="..\include\OgreTagPoint.h">
-			</File>
-			<File
-				RelativePath="..\include\OgreTangentSpaceCalc.h">
 			</File>
 			<File
 				RelativePath="..\include\OgreTechnique.h">

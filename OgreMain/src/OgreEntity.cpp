@@ -49,6 +49,7 @@ Torus Knot Software Ltd.
 #include "OgreEdgeListBuilder.h"
 #include "OgreStringConverter.h"
 #include "OgreAnimation.h"
+#include "OgreAlignedAllocator.h"
 #include "OgreOptimisedUtil.h"
 #include "OgreSceneNode.h"
 
@@ -82,8 +83,8 @@ namespace Ogre {
           mSkeletonInstance(0),
 		  mInitialised(false),
 		  mLastParentXform(Matrix4::ZERO),
-		  mMeshStateCount(0),
-          mFullBoundingBox()
+          mFullBoundingBox(),
+		  mNormaliseNormals(false)
     {
     }
     //-----------------------------------------------------------------------
@@ -116,8 +117,8 @@ namespace Ogre {
 		mSkeletonInstance(0),
 		mInitialised(false),
 		mLastParentXform(Matrix4::ZERO),
-		mMeshStateCount(0),
-        mFullBoundingBox()
+        mFullBoundingBox(),
+		mNormaliseNormals(false)
 	{
 		_initialise();
     }
@@ -186,7 +187,7 @@ namespace Ogre {
 		{
 			mFrameBonesLastUpdated = new unsigned long(std::numeric_limits<unsigned long>::max());
 			mNumBoneMatrices = mSkeletonInstance->getNumBones();
-			mBoneMatrices = static_cast<Matrix4*>(OGRE_MALLOC_SIMD(sizeof(Matrix4) * mNumBoneMatrices, MEMCATEGORY_ANIMATION));
+			mBoneMatrices = static_cast<Matrix4*>(AlignedMemory::allocate(sizeof(Matrix4) * mNumBoneMatrices));
 		}
 		if (hasSkeleton() || hasVertexAnimation())
 		{
@@ -205,7 +206,6 @@ namespace Ogre {
 		}
 
 		mInitialised = true;
-		mMeshStateCount = mMesh->getStateCount();
 
 	}
 	//-----------------------------------------------------------------------
@@ -248,7 +248,7 @@ namespace Ogre {
 		detachAllObjectsImpl();
 
 		if (mSkeletonInstance) {
-			OGRE_FREE_SIMD(mBoneWorldMatrices, MEMCATEGORY_ANIMATION);
+			AlignedMemory::deallocate(mBoneWorldMatrices);
 
             if (mSharedSkeletonEntities) {
                 mSharedSkeletonEntities->erase(this);
@@ -262,13 +262,13 @@ namespace Ogre {
                     delete mSharedSkeletonEntities;
                     delete mFrameBonesLastUpdated;
                     delete mSkeletonInstance;
-                    OGRE_FREE_SIMD(mBoneMatrices, MEMCATEGORY_ANIMATION);
+                    AlignedMemory::deallocate(mBoneMatrices);
                     delete mAnimationState;
                 }
             } else {
                 delete mFrameBonesLastUpdated;
                 delete mSkeletonInstance;
-                OGRE_FREE_SIMD(mBoneMatrices, MEMCATEGORY_ANIMATION);
+                AlignedMemory::deallocate(mBoneMatrices);
                 delete mAnimationState;
             }
         }
@@ -481,13 +481,6 @@ namespace Ogre {
 		// Do nothing if not initialised yet
 		if (!mInitialised)
 			return;
-
-		// Check mesh state count, will be incremented if reloaded
-		if (mMesh->getStateCount() != mMeshStateCount)
-		{
-			// force reinitialise
-			_initialise(true);
-		}
 
         // Check we're not using a manual LOD
         if (mMeshLodIndex > 0 && mMesh->isLodManual())
@@ -781,7 +774,7 @@ namespace Ogre {
                 if (!mBoneWorldMatrices)
                 {
                     mBoneWorldMatrices =
-                        static_cast<Matrix4*>(OGRE_MALLOC_SIMD(sizeof(Matrix4) * mNumBoneMatrices, MEMCATEGORY_ANIMATION));
+                        static_cast<Matrix4*>(AlignedMemory::allocate(sizeof(Matrix4) * mNumBoneMatrices));
                 }
 
                 OptimisedUtil::getImplementation()->concatenateAffineMatrices(
@@ -1059,7 +1052,7 @@ namespace Ogre {
     void Entity::cacheBoneMatrices(void)
     {
         Root& root = Root::getSingleton();
-        unsigned long currentFrameNumber = root.getNextFrameNumber();
+        unsigned long currentFrameNumber = root.getCurrentFrameNumber();
         if (*mFrameBonesLastUpdated  != currentFrameNumber) {
 
             mSkeletonInstance->setAnimationState(*mAnimationState);
@@ -1403,7 +1396,7 @@ namespace Ogre {
             const MaterialPtr& m = sub->getMaterial();
             // Make sure it's loaded
             m->load();
-            Technique* t = m->getBestTechnique(0, sub);
+            Technique* t = m->getBestTechnique();
             if (!t)
             {
                 // No supported techniques
@@ -1811,6 +1804,16 @@ namespace Ogre {
         *xform = mParent->_getParentNodeFullTransform();
     }
     //-----------------------------------------------------------------------
+    const Quaternion& Entity::EntityShadowRenderable::getWorldOrientation(void) const
+    {
+        return mParent->getParentNode()->_getDerivedOrientation();
+    }
+    //-----------------------------------------------------------------------
+    const Vector3& Entity::EntityShadowRenderable::getWorldPosition(void) const
+    {
+        return mParent->getParentNode()->_getDerivedPosition();
+    }
+    //-----------------------------------------------------------------------
     void Entity::EntityShadowRenderable::rebindPositionBuffer(const VertexData* vertexData, bool force)
     {
         if (force || mCurrentVertexData != vertexData)
@@ -1884,7 +1887,7 @@ namespace Ogre {
         else
         {
             delete mSkeletonInstance;
-            OGRE_FREE_SIMD(mBoneMatrices, MEMCATEGORY_ANIMATION);
+            AlignedMemory::deallocate(mBoneMatrices);
             delete mAnimationState;
             delete mFrameBonesLastUpdated;
             mSkeletonInstance = entity->mSkeletonInstance;
@@ -1925,7 +1928,7 @@ namespace Ogre {
             mMesh->_initAnimationState(mAnimationState);
             mFrameBonesLastUpdated = new unsigned long(std::numeric_limits<unsigned long>::max());
             mNumBoneMatrices = mSkeletonInstance->getNumBones();
-            mBoneMatrices = static_cast<Matrix4*>(OGRE_MALLOC_SIMD(sizeof(Matrix4) * mNumBoneMatrices, MEMCATEGORY_ANIMATION));
+            mBoneMatrices = static_cast<Matrix4*>(AlignedMemory::allocate(sizeof(Matrix4) * mNumBoneMatrices));
 
             mSharedSkeletonEntities->erase(this);
             if (mSharedSkeletonEntities->size() == 1)
@@ -2002,29 +2005,6 @@ namespace Ogre {
 		else
 		{
 			return BIND_ORIGINAL;
-		}
-
-	}
-	//---------------------------------------------------------------------
-	void Entity::visitRenderables(Renderable::Visitor* visitor, 
-		bool debugRenderables)
-	{
-		// Visit each SubEntity
-		for (SubEntityList::iterator i = mSubEntityList.begin(); i != mSubEntityList.end(); ++i)
-		{
-			visitor->visit(*i, 0, false);
-		}
-		// if manual LOD is in use, visit those too
-		ushort lodi = 1;
-		for (LODEntityList::iterator e = mLodEntityList.begin(); 
-			e != mLodEntityList.end(); ++e, ++lodi)
-		{
-			
-			uint nsub = (*e)->getNumSubEntities();
-			for (uint s = 0; s < nsub; ++s)
-			{
-				visitor->visit((*e)->getSubEntity(s), lodi, false);
-			}
 		}
 
 	}

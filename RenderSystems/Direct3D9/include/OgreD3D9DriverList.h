@@ -32,7 +32,9 @@ Torus Knot Software Ltd.
 #include "OgreD3D9Prerequisites.h"
 #include "OgreD3D9Driver.h"
 
+#include "OgreNoMemoryMacros.h"
 #include <d3d9.h>
+#include "OgreMemoryMacros.h"
 
 namespace Ogre 
 {

@@ -34,14 +34,13 @@ Torus Knot Software Ltd.
 #include "OgreFactoryObj.h"
 #include "OgreRenderQueue.h"
 #include "OgreCommon.h"
-#include "OgreRenderable.h"
 
 namespace Ogre {
 
     /** Abstract class defining the interface required to be implemented
         by classes which provide rendering capability to ParticleSystem instances.
     */
-    class _OgreExport ParticleSystemRenderer : public StringInterface, public FXAlloc
+    class _OgreExport ParticleSystemRenderer : public StringInterface
     {
     public:
         /// Constructor
@@ -111,17 +110,10 @@ namespace Ogre {
         /** Gets the desired particles sort mode of this renderer */
         virtual SortMode _getSortMode(void) const = 0;
 
-		/** Required method to allow the renderer to communicate the Renderables
-			it will be using to render the system to a visitor.
-		@see MovableObject::visitRenderables
-		*/
-		virtual void visitRenderables(Renderable::Visitor* visitor, 
-			bool debugRenderables = false) = 0;
-
     };
 
     /** Abstract class definition of a factory object for ParticleSystemRenderer. */
-    class _OgreExport ParticleSystemRendererFactory : public FactoryObj<ParticleSystemRenderer>, public FXAlloc
+    class _OgreExport ParticleSystemRendererFactory : public FactoryObj<ParticleSystemRenderer>
     {
     public:
         // No methods, must just override all methods inherited from FactoryObj

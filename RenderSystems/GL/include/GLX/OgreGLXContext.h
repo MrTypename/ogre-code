@@ -1,7 +1,7 @@
 /*
 -----------------------------------------------------------------------------
 This source file is part of OGRE
-	(Object-oriented Graphics Rendering Engine)
+    (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
 Copyright (c) 2000-2006 Torus Knot Software Ltd
@@ -30,33 +30,44 @@ Torus Knot Software Ltd.
 #define __OgreGLXContext_H__
 
 #include "OgreGLContext.h"
-#include "OgreGLXGLSupport.h"
+
+#include <X11/Xlib.h>
+#include <GL/glx.h>
+#include <GL/glxext.h>
 
 namespace Ogre {
 
-	class _OgrePrivate GLXContext: public GLContext
-	{
-	public:
-		GLXContext(GLXGLSupport* glsupport, ::GLXFBConfig fbconfig, ::GLXDrawable drawable);
-		
-		virtual ~GLXContext();
-		
-		/// @copydoc GLContext::setCurrent
-		virtual void setCurrent();
-		
-		/// @copydoc GLContext::endCurrent
+    class _OgrePrivate GLXContext: public GLContext
+    {
+    public:
+        GLXContext(::Display *dpy,
+                    ::GLXDrawable drawable,
+                    ::GLXContext ctx, 
+					::XVisualInfo* visualInfo);
+        GLXContext(::Display *dpy,
+                    ::GLXDrawable drawable,
+                    ::GLXContext ctx, 
+					::GLXFBConfig fbconfig);
+
+
+        virtual ~GLXContext();
+
+        /** See GLContext */
+        virtual void setCurrent();
+		/** See GLContext */
 		virtual void endCurrent();
-		
+
 		/// @copydoc GLContext::clone
 		GLContext* clone() const;
-		
-		::GLXDrawable  mDrawable;
-		::GLXContext   mContext;
-		
-	private:
-		::GLXFBConfig  mFBConfig;
-		GLXGLSupport*  mGLSupport;
-	};
+
+		::Display *mDpy;
+        ::GLXDrawable mDrawable;
+        ::GLXContext mCtx;
+		// only valid for window contexts
+		::XVisualInfo* mVisualInfo;
+		// only valid for PBuffer contexts
+		::GLXFBConfig mFBConfig;
+    };
 }
 
 #endif

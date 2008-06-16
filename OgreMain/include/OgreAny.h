@@ -48,7 +48,7 @@ namespace Ogre
 {
 	/** Variant type that can hold Any other type.
 	*/
-	class Any : public AnyAlloc
+    class Any
     {
     public: // constructors
 
@@ -70,7 +70,7 @@ namespace Ogre
 
         virtual ~Any()
         {
-            OGRE_DELETE mContent;
+            delete mContent;
         }
 
     public: // modifiers
@@ -117,7 +117,7 @@ namespace Ogre
 
     protected: // types
 
-		class placeholder : public AnyHolderAlloc
+        class placeholder
         {
         public: // structors
     
@@ -224,7 +224,7 @@ namespace Ogre
 		AnyNumeric(const ValueType & value)
 			
 		{
-			mContent = OGRE_NEW numholder<ValueType>(value);
+			mContent = new numholder<ValueType>(value);
 		}
 
 		AnyNumeric(const AnyNumeric & other)

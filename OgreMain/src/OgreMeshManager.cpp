@@ -58,7 +58,7 @@ namespace Ogre
     }
     //-----------------------------------------------------------------------
     MeshManager::MeshManager():
-    mBoundsPaddingFactor(0.01), mListener(0)
+    mBoundsPaddingFactor(0.01)
     {
         mPrepAllMeshesForShadowVolumes = false;
 
@@ -82,16 +82,12 @@ namespace Ogre
 		createPrefabSphere();
     }
     //-----------------------------------------------------------------------
-    MeshManager::ResourceCreateOrRetrieveResult MeshManager::createOrRetrieve(
-        const String& name, const String& group,
-        bool isManual, ManualResourceLoader* loader,
-        const NameValuePairList* params,
+    MeshPtr MeshManager::load( const String& filename, const String& groupName, 
 		HardwareBuffer::Usage vertexBufferUsage, 
 		HardwareBuffer::Usage indexBufferUsage, 
 		bool vertexBufferShadowed, bool indexBufferShadowed)
     {
-        ResourceCreateOrRetrieveResult res = 
-            ResourceManager::createOrRetrieve(name,group,isManual,loader,params);
+        ResourceCreateOrRetrieveResult res = createOrRetrieve(filename, groupName);
 		MeshPtr pMesh = res.first;
 		// Was it created?
         if (res.second)
@@ -99,32 +95,9 @@ namespace Ogre
 			pMesh->setVertexBufferPolicy(vertexBufferUsage, vertexBufferShadowed);
 			pMesh->setIndexBufferPolicy(indexBufferUsage, indexBufferShadowed);
         }
-        return res;
-
-    }
-    //-----------------------------------------------------------------------
-    MeshPtr MeshManager::prepare( const String& filename, const String& groupName, 
-		HardwareBuffer::Usage vertexBufferUsage, 
-		HardwareBuffer::Usage indexBufferUsage, 
-		bool vertexBufferShadowed, bool indexBufferShadowed)
-    {
-		MeshPtr pMesh = createOrRetrieve(filename,groupName,false,0,0,
-                                         vertexBufferUsage,indexBufferUsage,
-                                         vertexBufferShadowed,indexBufferShadowed).first;
-		pMesh->prepare();
-        return pMesh;
-    }
-    //-----------------------------------------------------------------------
-    MeshPtr MeshManager::load( const String& filename, const String& groupName, 
-		HardwareBuffer::Usage vertexBufferUsage, 
-		HardwareBuffer::Usage indexBufferUsage, 
-		bool vertexBufferShadowed, bool indexBufferShadowed)
-    {
-		MeshPtr pMesh = createOrRetrieve(filename,groupName,false,0,0,
-                                         vertexBufferUsage,indexBufferUsage,
-                                         vertexBufferShadowed,indexBufferShadowed).first;
 		pMesh->load();
         return pMesh;
+
     }
     //-----------------------------------------------------------------------
     MeshPtr MeshManager::createManual( const String& name, const String& groupName, 
@@ -362,7 +335,7 @@ namespace Ogre
 		// to preserve previous behaviour, load immediately
 		msh->load();
 	}
-	//-------------------------------------------------------------------------
+
 	void MeshManager::createPrefabSphere(void)
 	{
 		MeshPtr msh = create(
@@ -374,16 +347,7 @@ namespace Ogre
 		// to preserve previous behaviour, load immediately
 		msh->load();
 	}
-	//-------------------------------------------------------------------------
-	void MeshManager::setListener(Ogre::MeshSerializerListener *listener)
-	{
-		mListener = listener;
-	}
-	//-------------------------------------------------------------------------
-	MeshSerializerListener *MeshManager::getListener()
-	{
-		return mListener;
-	}
+
     //-----------------------------------------------------------------------
 	void MeshManager::loadResource(Resource* res)
 	{

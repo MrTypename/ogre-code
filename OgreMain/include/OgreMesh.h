@@ -41,7 +41,6 @@ Torus Knot Software Ltd.
 #include "OgreSkeleton.h"
 #include "OgreAnimationTrack.h"
 #include "OgrePose.h"
-#include "OgreDataStream.h"
 
 
 namespace Ogre {
@@ -70,7 +69,7 @@ namespace Ogre {
             have parts with different materials.
         @par
             As described above, because the mesh may have sections of differing
-            material properties, a mesh is inherently a compound construct,
+            material properties, a mesh is inherently a compound contruct,
             consisting of one or more SubMesh objects.
             However, it strongly 'owns' it's SubMeshes such that they
             are loaded / unloaded at the same time. This is contrary to
@@ -120,9 +119,6 @@ namespace Ogre {
 
 		
     protected:
-
-        DataStreamPtr mFreshFromDisk;
-
 		SubMeshNameMap mSubMeshNameMap ;
 
         /// Local bounding box volume
@@ -176,15 +172,6 @@ namespace Ogre {
 		PoseList mPoseList;
 
 
-        /** Loads the mesh from disk.  This call only performs IO, it
-            does not parse the bytestream or check for any errors therein.
-            It also does not set up submeshes, etc.  You have to call load()
-            to do that.
-         */
-        void prepareImpl(void);
-        /** Destroys data cached by prepareImpl.
-         */
-        void unprepareImpl(void);
         /// @copydoc Resource::loadImpl
         void loadImpl(void);
 		/// @copydoc Resource::postLoadImpl
@@ -388,10 +375,6 @@ namespace Ogre {
         */
         BoneAssignmentIterator getBoneAssignmentIterator(void);
 
-		/** Gets a const reference to the list of bone assignments
-		*/
-		const VertexBoneAssignmentList& getBoneAssignments() const { return mBoneAssignments; }
-
 
 		/** Automatically generates lower level of detail versions of this mesh for use
 			when a simpler version of the model is acceptable for rendering.
@@ -587,15 +570,9 @@ namespace Ogre {
         @param index The element index, ie the texture coordinate set which should be used to store the 3D
             coordinates representing a tangent vector per vertex, if targetSemantic is 
 			VES_TEXTURE_COORDINATES. If this already exists, it will be overwritten.
-		@param splitMirrored Sets whether or not to split vertices when a mirrored tangent space
-			transition is detected (matrix parity differs). @see TangentSpaceCalc::setSplitMirrored
-		@param splitRotated Sets whether or not to split vertices when a rotated tangent space
-			is detected. @see TangentSpaceCalc::setSplitRotated
-		@param storeParityInW If true, store tangents as a 4-vector and include parity in w
         */
         void buildTangentVectors(VertexElementSemantic targetSemantic = VES_TANGENT,
-			unsigned short sourceTexCoordSet = 0, unsigned short index = 0, 
-			bool splitMirrored = false, bool splitRotated = false, bool storeParityInW = false);
+			unsigned short sourceTexCoordSet = 0, unsigned short index = 0);
 
         /** Ask the mesh to suggest parameters to a future buildTangentVectors call, 
 			should you wish to use texture coordinates to store the tangents. 

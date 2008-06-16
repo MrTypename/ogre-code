@@ -59,71 +59,6 @@ namespace Ogre {
         TextureManager(void);
         virtual ~TextureManager();
 
-        /** Create a new texture, or retrieve an existing one with the same
-            name if it already exists.
-            @param
-                texType The type of texture to load/create, defaults to normal 2D textures
-            @param
-                numMipmaps The number of pre-filtered mipmaps to generate. If left to MIP_DEFAULT then
-                the TextureManager's default number of mipmaps will be used (see setDefaultNumMipmaps())
-                If set to MIP_UNLIMITED mipmaps will be generated until the lowest possible
-                level, 1x1x1.
-            @param
-                gamma The gamma adjustment factor to apply to this texture (brightening/darkening)
-            @param 
-                isAlpha Only applicable to greyscale images. If true, specifies that
-                the image should be loaded into an alpha texture rather than a
-                single channel colour texture - useful for fixed-function systems.
-            @param 
-                desiredFormat The format you would like to have used instead of
-                the format being based on the contents of the texture
-			@param hwGammaCorrection Pass 'true' to enable hardware gamma correction
-				(sRGB) on this texture. The hardware will convert from gamma space
-				to linear space when reading from this texture. Only applicable for 
-				8-bits per channel textures, will be ignored for other types. Has the advantage
-				over pre-applied gamma that the texture precision is maintained.
-            @see ResourceManager::createOrRetrieve
-        */
-        virtual ResourceCreateOrRetrieveResult createOrRetrieve(
-            const String &name, const String& group, bool isManual = false,
-            ManualResourceLoader* loader = 0, const NameValuePairList* createParams = 0,
-            TextureType texType = TEX_TYPE_2D, int numMipmaps = MIP_DEFAULT, 
-            Real gamma = 1.0f, bool isAlpha = false,
-            PixelFormat desiredFormat = PF_UNKNOWN, bool hwGammaCorrection = false);
-
-        /** Prepares to loads a texture from a file.
-            @param
-                name The file to load, or a String identifier in some cases
-            @param
-                group The name of the resource group to assign the texture to
-            @param
-                texType The type of texture to load/create, defaults to normal 2D textures
-            @param
-                numMipmaps The number of pre-filtered mipmaps to generate. If left to MIP_DEFAULT then
-                the TextureManager's default number of mipmaps will be used (see setDefaultNumMipmaps())
-                If set to MIP_UNLIMITED mipmaps will be generated until the lowest possible
-                level, 1x1x1.
-            @param
-                gamma The gamma adjustment factor to apply to this texture (brightening/darkening)
-            @param 
-                isAlpha Only applicable to greyscale images. If true, specifies that
-                the image should be loaded into an alpha texture rather than a
-                single channel colour texture - useful for fixed-function systems.
-            @param 
-                desiredFormat The format you would like to have used instead of
-                the format being based on the contents of the texture
-			@param hwGammaCorrection Pass 'true' to enable hardware gamma correction
-				(sRGB) on this texture. The hardware will convert from gamma space
-				to linear space when reading from this texture. Only applicable for 
-				8-bits per channel textures, will be ignored for other types. Has the advantage
-				over pre-applied gamma that the texture precision is maintained.
-        */
-        virtual TexturePtr prepare( 
-            const String& name, const String& group, 
-            TextureType texType = TEX_TYPE_2D, int numMipmaps = MIP_DEFAULT, 
-            Real gamma = 1.0f, bool isAlpha = false,
-            PixelFormat desiredFormat = PF_UNKNOWN, bool hwGammaCorrection = false);
-
         /** Loads a texture from a file.
             @param
                 name The file to load, or a String identifier in some cases
@@ -138,27 +73,19 @@ namespace Ogre {
 				level, 1x1x1.
             @param
                 gamma The gamma adjustment factor to apply to this texture (brightening/darkening)
-					during loading
 			@param 
 				isAlpha Only applicable to greyscale images. If true, specifies that
 				the image should be loaded into an alpha texture rather than a
 				single channel colour texture - useful for fixed-function systems.
 			@param 
 				desiredFormat The format you would like to have used instead of
-				the format being based on the contents of the texture. Pass PF_UNKNOWN
-				to default.
-			@param hwGammaCorrection Pass 'true' to enable hardware gamma correction
-				(sRGB) on this texture. The hardware will convert from gamma space
-				to linear space when reading from this texture. Only applicable for 
-				8-bits per channel textures, will be ignored for other types. Has the advantage
-				over pre-applied gamma that the texture precision is maintained.
+				the format being based on the contents of the texture
         */
         virtual TexturePtr load( 
             const String& name, const String& group, 
             TextureType texType = TEX_TYPE_2D, int numMipmaps = MIP_DEFAULT, 
             Real gamma = 1.0f, bool isAlpha = false,
-            PixelFormat desiredFormat = PF_UNKNOWN, 
-			bool hwGammaCorrection = false);
+            PixelFormat desiredFormat = PF_UNKNOWN);
 
         /** Loads a texture from an Image object.
             @note
@@ -185,17 +112,12 @@ namespace Ogre {
 			@param 
 				desiredFormat The format you would like to have used instead of
 				the format being based on the contents of the texture
-			@param hwGammaCorrection Pass 'true' to enable hardware gamma correction
-				(sRGB) on this texture. The hardware will convert from gamma space
-				to linear space when reading from this texture. Only applicable for 
-				8-bits per channel textures, will be ignored for other types. Has the advantage
-				over pre-applied gamma that the texture precision is maintained.
         */
         virtual TexturePtr loadImage( 
             const String &name, const String& group, const Image &img, 
             TextureType texType = TEX_TYPE_2D,
             int iNumMipmaps = MIP_DEFAULT, Real gamma = 1.0f, bool isAlpha = false,
-            PixelFormat desiredFormat = PF_UNKNOWN, bool hwGammaCorrection = false);
+            PixelFormat desiredFormat = PF_UNKNOWN);
 			
         /** Loads a texture from a raw data stream.
             @note
@@ -221,18 +143,11 @@ namespace Ogre {
 				level, 1x1x1.
             @param
                 gamma The gamma adjustment factor to apply to this texture (brightening/darkening)
-				 while loading
-			 @param hwGammaCorrection Pass 'true' to enable hardware gamma correction
-				 (sRGB) on this texture. The hardware will convert from gamma space
-				 to linear space when reading from this texture. Only applicable for 
-				 8-bits per channel textures, will be ignored for other types. Has the advantage
-				 over pre-applied gamma that the texture precision is maintained.
-
         */
         virtual TexturePtr loadRawData(const String &name, const String& group,
             DataStreamPtr& stream, ushort uWidth, ushort uHeight, 
             PixelFormat format, TextureType texType = TEX_TYPE_2D, 
-            int iNumMipmaps = MIP_DEFAULT, Real gamma = 1.0f, bool hwGammaCorrection = false);
+            int iNumMipmaps = MIP_DEFAULT, Real gamma = 1.0f);
 
 		/** Create a manual texture with specified width, height and depth (not loaded from a file).
             @param
@@ -267,19 +182,10 @@ namespace Ogre {
                 and pass a pointer to it in this parameter; this means that if the
                 manual texture ever needs to be reloaded, the ManualResourceLoader
                 will be called to do it.
-			@param hwGammaCorrection Pass 'true' to enable hardware gamma correction
-				(sRGB) on this texture. The hardware will convert from gamma space
-				to linear space when reading from this texture. Only applicable for 
-				8-bits per channel textures, will be ignored for other types. Has the advantage
-				over pre-applied gamma that the texture precision is maintained.
-			@param fsaa The level of multisampling to use if this is a render target. Ignored
-				if usage does not include TU_RENDERTARGET or if the device does
-				not support it.
         */
         virtual TexturePtr createManual(const String & name, const String& group,
             TextureType texType, uint width, uint height, uint depth, 
-			int num_mips, PixelFormat format, int usage = TU_DEFAULT, ManualResourceLoader* loader = 0,
-			bool hwGammaCorrection = false, uint fsaa = 0);
+			int num_mips, PixelFormat format, int usage = TU_DEFAULT, ManualResourceLoader* loader = 0 );
 			
         /** Create a manual texture with a depth of 1 (not loaded from a file).
             @param
@@ -314,22 +220,13 @@ namespace Ogre {
                 and pass a pointer to it in this parameter; this means that if the
                 manual texture ever needs to be reloaded, the ManualResourceLoader
                 will be called to do it.
-			 @param hwGammaCorrection Pass 'true' to enable hardware gamma correction
-				 (sRGB) on this texture. The hardware will convert from gamma space
-				 to linear space when reading from this texture. Only applicable for 
-				 8-bits per channel textures, will be ignored for other types. Has the advantage
-				 over pre-applied gamma that the texture precision is maintained.
-			@param fsaa The level of multisampling to use if this is a render target. Ignored
-				if usage does not include TU_RENDERTARGET or if the device does
-				not support it.
         */
         TexturePtr createManual(const String & name, const String& group,
             TextureType texType, uint width, uint height, int num_mips,
-            PixelFormat format, int usage = TU_DEFAULT, ManualResourceLoader* loader = 0,
-			bool hwGammaCorrection = false, uint fsaa = 0)
+            PixelFormat format, int usage = TU_DEFAULT, ManualResourceLoader* loader = 0 )
 		{
 			return createManual(name, group, texType, width, height, 1, 
-				num_mips, format, usage, loader, hwGammaCorrection, fsaa);
+				num_mips, format, usage, loader);
 		}
 
         /** Sets preferred bit depth for integer pixel format textures.
@@ -394,7 +291,7 @@ namespace Ogre {
 		virtual bool isEquivalentFormatSupported(TextureType ttype, PixelFormat format, int usage);
 
 		/** Gets the format which will be natively used for a requested format given the
-			constraints of the current device.
+			contraints of the current device.
 		*/
 		virtual PixelFormat getNativeFormat(TextureType ttype, PixelFormat format, int usage) = 0;
 

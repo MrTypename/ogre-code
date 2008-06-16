@@ -36,6 +36,14 @@ Torus Knot Software Ltd.
 #include "OgreCompositorSerializer.h"
 #include "OgreRenderSystem.h"
 
+#if OGRE_THREAD_SUPPORT
+// boost::thread_specific_ptr has 'new' in header but delete in lib
+// so if we use our memory manager it reports leaks incorrectly
+#	include "OgreNoMemoryMacros.h"
+#	include <boost/thread/tss.hpp>
+#	include "OgreMemoryMacros.h"
+#endif
+
 namespace Ogre {
     /** Class for managing Compositor settings for Ogre. Compositors provide the means
         to flexibly "composite" the final rendering result from multiple scene renders
@@ -50,7 +58,7 @@ namespace Ogre {
             Because this is a subclass of ResourceManager, any files loaded will be searched for in any path or
             archive added to the resource paths/archives. See ResourceManager for details.
     */
-    class _OgreExport CompositorManager : public ResourceManager, public Singleton<CompositorManager>, public CompositorInstAlloc
+    class _OgreExport CompositorManager : public ResourceManager, public Singleton<CompositorManager>
     {
     public:
         CompositorManager();
@@ -61,7 +69,7 @@ namespace Ogre {
             const String& group, bool isManual, ManualResourceLoader* loader,
             const NameValuePairList* params);
 
-        /** Initialises the Compositor manager, which also triggers it to
+        /** Intialises the Compositor manager, which also triggers it to
             parse all available .compositor scripts. */
         void initialise(void);
 

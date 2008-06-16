@@ -26,9 +26,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 sampler Tex0: register(s0);
 sampler Tex1: register(s1);
 
-float4x4 proj;
-
+// Ambient and depth pass
 float4 ambientColor;
+
+float4x4 proj;
 
 struct POUTPUT
 {
@@ -38,17 +39,17 @@ struct POUTPUT
 
 POUTPUT main(float2 texCoord: TEXCOORD0, float3 projCoord: TEXCOORD1)
 {
-	float4 a0 = tex2D(Tex0, texCoord); // Attribute 0: Diffuse color+shininess
-	float4 a1 = tex2D(Tex1, texCoord); // Attribute 1: Normal+depth
-
-	// Clip fragment if depth is too close, so the skybox can be rendered on the background
-	clip(a1.w-0.001);
-
-	POUTPUT o;
-	// Calculate ambient colour of fragment
-	o.colour = float4( ambientColor*a0.rgb ,0);
-
-	// Calculate depth of fragment;
-	o.depth = projCoord.z*proj[2][2] + proj[2][3]/a1.w;
-	return o;
+    float4 a0 = tex2D(Tex0, texCoord); // Attribute 0: Diffuse color+shininess
+    float4 a1 = tex2D(Tex1, texCoord); // Attribute 1: Normal+depth
+    
+    // Clip fragment if depth is too close, so the skybox can be rendered on the background
+    clip(a1.w-0.001);
+      
+    // Attributes
+    POUTPUT o;
+    float3 colour = a0.rgb;
+    o.colour = float4( ambientColor*colour ,0);
+    o.depth = projCoord.z*proj[2][2] + proj[2][3]/a1.w;
+    return o;
 }
+

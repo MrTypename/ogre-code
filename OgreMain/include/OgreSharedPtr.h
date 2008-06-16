@@ -41,8 +41,7 @@ namespace Ogre {
 	@par
 		If OGRE_THREAD_SUPPORT is defined to be 1, use of this class is thread-safe.
     */
-	template<class T> class SharedPtr
-	{
+    template<class T> class SharedPtr {
 	protected:
 		T* pRep;
 		unsigned int* pUseCount;
@@ -154,7 +153,7 @@ namespace Ogre {
         inline void setNull(void) { 
 			if (pRep)
 			{
-				// can't scope lock mutex before release in case deleted
+				// can't scope lock mutex before release incase deleted
 				release();
 				pRep = 0;
 				pUseCount = 0;
@@ -218,11 +217,6 @@ namespace Ogre {
 	template<class T, class U> inline bool operator!=(SharedPtr<T> const& a, SharedPtr<U> const& b)
 	{
 		return a.get() != b.get();
-	}
-
-	template<class T, class U> inline bool operator<(SharedPtr<T> const& a, SharedPtr<U> const& b)
-	{
-		return std::less<const void*>()(a.get(), b.get());
 	}
 }
 

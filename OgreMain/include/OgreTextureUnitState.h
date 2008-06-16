@@ -53,7 +53,7 @@ namespace Ogre {
         where you do not use vertex or fragment programs (shaders). Programmable 
         pipeline means that for this pass you are using vertex or fragment programs.
     */
-	class _OgreExport TextureUnitState : public TextureUnitStateAlloc
+    class _OgreExport TextureUnitState
     {
         friend class RenderSystem;
     public:
@@ -92,9 +92,9 @@ namespace Ogre {
             ENV_PLANAR,
             /// Envmap based on dot of vector from camera to vertex and vertex normal, good for curves
             ENV_CURVED,
-            /// Envmap intended to supply reflection vectors for cube mapping
+            /// Envmap entended to supply reflection vectors for cube mapping
             ENV_REFLECTION,
-            /// Envmap intended to supply normal vectors for cube mapping
+            /// Envmap entended to supply normal vectors for cube mapping
             ENV_NORMAL
         };
 
@@ -489,11 +489,6 @@ namespace Ogre {
 		*/
         bool getIsAlpha(void) const;
 
-		/// @copydoc Texture::setHardwareGammaEnabled
-		void setHardwareGammaEnabled(bool enabled);
-		/// @copydoc Texture::isHardwareGammaEnabled
-		bool isHardwareGammaEnabled() const;
-
         /** Gets the index of the set of texture co-ords this layer uses.
         @note
         Applies to both fixed-function and programmable pipeline.
@@ -606,6 +601,11 @@ namespace Ogre {
         angle The angle of rotation (anticlockwise).
         */
         void setTextureRotate(const Radian& angle);
+#ifndef OGRE_FORCE_ANGLE_TYPES
+        inline void setTextureRotate(Real angle) {
+            setTextureRotate ( Degree(angle) );
+        }
+#endif//OGRE_FORCE_ANGLE_TYPES
         // get texture rotation effects angle value
         const Radian& getTextureRotate(void) const;
 
@@ -1022,10 +1022,6 @@ namespace Ogre {
         /// Gets the parent Pass object
         Pass* getParent(void) const { return mParent; }
 
-		/** Internal method for preparing this object for load, as part of Material::prepare*/
-		void _prepare(void);
-		/** Internal method for undoing the preparation this object as part of Material::unprepare*/
-		void _unprepare(void);
 		/** Internal method for loading this object as part of Material::load */
 		void _load(void);
 		/** Internal method for unloading this object as part of Material::unload */
@@ -1112,7 +1108,6 @@ protected:
         LayerBlendModeEx mAlphaBlendMode;
         mutable bool mTextureLoadFailed;
         bool mIsAlpha;
-		bool mHwGamma;
 
         mutable bool mRecalcTexMatrix;
         Real mUMod, mVMod;
@@ -1170,8 +1165,6 @@ protected:
         */
         void createEffectController(TextureEffect& effect);
 
-		/** Internal method for ensuring the texture for a given frame is prepared. */
-		void ensurePrepared(size_t frame) const;
 		/** Internal method for ensuring the texture for a given frame is loaded. */
 		void ensureLoaded(size_t frame) const;
 

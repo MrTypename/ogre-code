@@ -131,12 +131,12 @@ public:
 		mLoadingDescriptionElement->setCaption("Parsing scripts...");
 		mWindow->update();
 	}
-	void scriptParseStarted(const String& scriptName, bool &skipThisScript)
+	void scriptParseStarted(const String& scriptName)
 	{
 		mLoadingCommentElement->setCaption(scriptName);
 		mWindow->update();
 	}
-	void scriptParseEnded(const String& scriptName, bool skipped)
+	void scriptParseEnded(const String& scriptName)
 	{
 		mLoadingBarElement->setWidth(
 			mLoadingBarElement->getWidth() + mProgressBarInc);
@@ -176,16 +176,6 @@ public:
 	}
 	void resourceGroupLoadEnded(const String& groupName)
 	{
-	}
-
-	Ogre::DataStreamPtr resourceLoading(const String &name, const String &group, Resource *resource)
-	{
-		return Ogre::DataStreamPtr();
-	}
-
-	bool resourceCollision(ResourcePtr &resource, ResourceManager *resourceManager)
-	{
-		return false;
 	}
 
 };

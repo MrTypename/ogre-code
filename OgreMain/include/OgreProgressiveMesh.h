@@ -56,7 +56,7 @@ namespace Ogre {
         NB the interface of this class will certainly change when compiled vertex buffers are
         supported.
     */
-	class _OgreExport ProgressiveMesh : public ProgMeshAlloc
+    class _OgreExport ProgressiveMesh
     {
     public:
 
@@ -145,7 +145,7 @@ namespace Ogre {
 	        void notifyRemoved(void);
 
 	        PMFaceVertex* vertex[3]; // the 3 points that make this tri
-	        Vector3   normal;    // unit vector orthogonal to this face
+	        Vector3   normal;    // unit vector othogonal to this face
             bool      removed;   // true if this tri is now removed
 			size_t index;
         };

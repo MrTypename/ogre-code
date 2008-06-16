@@ -187,7 +187,7 @@ namespace Ogre {
 
     public:
 
-        /** Virtual destructor, see Effective C++ */
+        /** Virtual desctructor, see Effective C++ */
         virtual ~StringInterface() {}
 
         /** Retrieves the parameter dictionary for this class. 

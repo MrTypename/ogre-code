@@ -23,8 +23,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef H_WJ_MLight
 #define H_WJ_MLight
 
-#include "OgreSimpleRenderable.h"
-#include "MaterialGenerator.h"
+#include "OgreCompositorInstance.h"
+#include "OgreSceneManager.h"
+#include "OgreSceneNode.h"
+#include "DeferredShading.h"
 
 /** Renderable minilight. Do not create this directly, but use 
 	DeferredShadingSystem::createMLight.
@@ -36,7 +38,7 @@ public:
 	MLight(MaterialGenerator *gen);
 	~MLight();
 
-	/** Permutation of light materials
+	/** Permutatation of light materials
 	 */
 	enum MaterialID
 	{
@@ -79,7 +81,7 @@ public:
 
 	/** Create a sphere geometry.
 	*/
-	void createSphere(const float radius, const int nRings, const int nSegments);
+	void createSphere(const float r, const int nRings = 16, const int nSegments = 16);
 
 	/** Create a rectangle.
 	*/
@@ -99,7 +101,7 @@ protected:
 	/// Deferred shading system this minilight is part of
 	MaterialGenerator *mGenerator;
 	/// Material permutation
-	Ogre::uint32 mPermutation;
+	size_t mPermutation;
 };
 
 #endif

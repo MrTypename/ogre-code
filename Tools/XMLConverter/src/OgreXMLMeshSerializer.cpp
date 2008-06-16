@@ -386,10 +386,6 @@ namespace Ogre {
                     break;
 				case VES_TANGENT:
 					vbNode->SetAttribute("tangents","true");
-					if (elem.getType() == VET_FLOAT4)
-					{
-						vbNode->SetAttribute("tangent_dimensions", "4");
-					}
 					break;
 				case VES_BINORMAL:
 					vbNode->SetAttribute("binormals","true");
@@ -451,10 +447,6 @@ namespace Ogre {
 						dataNode->SetAttribute("x", StringConverter::toString(pFloat[0]));
 						dataNode->SetAttribute("y", StringConverter::toString(pFloat[1]));
 						dataNode->SetAttribute("z", StringConverter::toString(pFloat[2]));
-						if (elem.getType() == VET_FLOAT4)
-						{
-							dataNode->SetAttribute("w", StringConverter::toString(pFloat[3]));
-						}
 						break;
 					case VES_BINORMAL:
 						elem.baseVertexPointerToElement(pVert, &pFloat);
@@ -625,9 +617,10 @@ namespace Ogre {
             const char *claimedCount_ = faces->Attribute("count");
             if (claimedCount_ && StringConverter::parseInt(claimedCount_)!=actualCount)
             {
-				LogManager::getSingleton().stream()
-					<< "WARNING: face count (" << actualCount << ") " <<
+				StringUtil::StrStreamType str;
+                str << "WARNING: face count (" << actualCount << ") " <<
 					"is not as claimed (" << claimedCount_ << ")";
+				LogManager::getSingleton().logMessage(str.str());
             }
 
 
@@ -768,18 +761,9 @@ namespace Ogre {
 			attrib = vbElem->Attribute("tangents");
 			if (attrib && StringConverter::parseBool(attrib))
 			{
-				VertexElementType tangentType = VET_FLOAT3;
-				attrib = vbElem->Attribute("tangent_dimensions");
-				if (attrib)
-				{
-					unsigned int dims = StringConverter::parseUnsignedInt(attrib);
-					if (dims == 4)
-						tangentType = VET_FLOAT4;
-				}
-
 				// Add element
-				decl->addElement(bufCount, offset, tangentType, VES_TANGENT);
-				offset += VertexElement::getTypeSize(tangentType);
+				decl->addElement(bufCount, offset, VET_FLOAT3, VES_TANGENT);
+				offset += VertexElement::getTypeSize(VET_FLOAT3);
 			}
 			attrib = vbElem->Attribute("binormals");
 			if (attrib && StringConverter::parseBool(attrib))
@@ -839,9 +823,10 @@ namespace Ogre {
             }
             if (claimedVertexCount_ && actualVertexCount!=claimedVertexCount)
             {
-				LogManager::getSingleton().stream()
-					<< "WARNING: vertex count (" << actualVertexCount 
+				StringUtil::StrStreamType str;
+				str << "WARNING: vertex count (" << actualVertexCount 
 					<< ") is not as claimed (" << claimedVertexCount_ << ")";
+				LogManager::getSingleton().logMessage(str.str());
             }
 
             vertexData->vertexCount = actualVertexCount;
@@ -939,11 +924,6 @@ namespace Ogre {
 							xmlElem->Attribute("y"));
 						*pFloat++ = StringConverter::parseReal(
 							xmlElem->Attribute("z"));
-						if (elem.getType() == VET_FLOAT4)
-						{
-							*pFloat++ = StringConverter::parseReal(
-								xmlElem->Attribute("w"));
-						}
 						break;
 					case VES_BINORMAL:
 						xmlElem = vertexElem->FirstChildElement("binormal");

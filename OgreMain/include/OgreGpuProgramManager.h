@@ -41,11 +41,11 @@ namespace Ogre {
 	class _OgreExport GpuProgramManager : public ResourceManager, public Singleton<GpuProgramManager>
 	{
 	public:
-
 		typedef std::set<String> SyntaxCodes;
 
-
 	protected:
+		/// Supported program syntax codes
+		SyntaxCodes mSyntaxCodes;
         /// Specialised create method with specific parameters
         virtual Resource* createImpl(const String& name, ResourceHandle handle, 
             const String& group, bool isManual, ManualResourceLoader* loader,
@@ -77,7 +77,7 @@ namespace Ogre {
 			retrieve this program later with getByName.
 		@param groupName The name of the resource group
 		@param code A string of assembly code which will form the program to run
-		@param gptype The type of program to create.
+		@param gptype The type of prgram to create.
         @param syntaxCode The name of the syntax to be used for this program e.g. arbvp1, vs_1_1
 		*/
 		virtual GpuProgramPtr loadFromString(const String& name, const String& groupName,
@@ -85,8 +85,7 @@ namespace Ogre {
             const String& syntaxCode);
 
 		/** Returns the syntaxes that this manager supports. */
-		virtual const SyntaxCodes& getSupportedSyntax(void) const;
-		 
+		virtual const SyntaxCodes& getSupportedSyntax(void) const { return mSyntaxCodes; };
 
         /** Returns whether a given syntax code (e.g. "ps_1_3", "fp20", "arbvp1") is supported. */
         virtual bool isSyntaxSupported(const String& syntaxCode) const;
@@ -127,7 +126,7 @@ namespace Ogre {
 			retrieve this program later with getByName.
 		@param groupName The name of the resource group
 		@param code A string of assembly code which will form the program to run
-		@param gptype The type of program to create.
+		@param gptype The type of prgram to create.
         @param syntaxCode The name of the syntax to be used for this program e.g. arbvp1, vs_1_1
 		*/
 		virtual GpuProgramPtr createProgramFromString(const String& name, 
@@ -141,6 +140,8 @@ namespace Ogre {
             GpuProgramType gptype, const String& syntaxCode, bool isManual = false, 
             ManualResourceLoader* loader = 0);
 
+        /** Internal method for populating the supported syntax codes, called by RenderSystem. */
+        virtual void _pushSyntaxCode(const String& syntaxCode) { mSyntaxCodes.insert(syntaxCode); }
         /** Overrides the standard ResourceManager getByName method.
         @param name The name of the program to retrieve
         @param preferHighLevelPrograms If set to true (the default), high level programs will be

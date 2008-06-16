@@ -30,6 +30,7 @@ Torus Knot Software Ltd.
 #include "OgreException.h"
 #include "OgreImage.h"
 #include "OgreLogManager.h"
+#include "OgreNoMemoryMacros.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -477,7 +478,6 @@ void GLXConfigurator::SetConfigOption(const std::string &optionName, const std::
 		// No renderer set -- how can this be called?
 		return;
 	mRenderer->setConfigOption(optionName, valueName);
-	SetRenderer(mRenderer);
 }
 
 //------------------------------------------------------------------------------------//

@@ -11,6 +11,5 @@ libGLSL_la_SOURCES = OgreGLSLExtSupport.cpp \
                     OgreGLSLGpuProgram.cpp \
                     OgreGLSLProgram.cpp \
                     OgreGLSLLinkProgram.cpp \
-                    OgreGLSLProgramFactory.cpp \
-                    OgreGLSLPreprocessor.cpp
+                    OgreGLSLProgramFactory.cpp
 libGLSL_la_LDFLAGS =

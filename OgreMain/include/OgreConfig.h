@@ -82,51 +82,25 @@ Torus Knot Software Ltd.
 //#define OGRE_STATIC_LIB
 
 
-// define the memory allocator configuration to use
-#define OGRE_MEMORY_ALLOCATOR_STD 1
-#define OGRE_MEMORY_ALLOCATOR_NED 2			 // you need to have nedmalloc on your path for this
-#define OGRE_MEMORY_ALLOCATOR_USER 3
-
-#define OGRE_MEMORY_ALLOCATOR OGRE_MEMORY_ALLOCATOR_STD
-
-// enable or disable the memory tracker, recording the memory allocations & tracking leaks
-// default is to enable only in debug builds
-
-#ifndef OGRE_MEMORY_TRACKER_DEBUG_MODE
-#  define OGRE_MEMORY_TRACKER_DEBUG_MODE 1
-#endif
-
-#ifndef OGRE_MEMORY_TRACKER_RELEASE_MODE
-#  define OGRE_MEMORY_TRACKER_RELEASE_MODE 0
+/** Set this to 0 if you want to use the standard memory manager in Debug builds
+    Release builds always use the standard memory manager
+*/
+#ifndef OGRE_DEBUG_MEMORY_MANAGER
+#define OGRE_DEBUG_MEMORY_MANAGER 0
 #endif
 /** Define max number of multiple render targets (MRTs) to render to at once.
 */
 #define OGRE_MAX_MULTIPLE_RENDER_TARGETS 8
 
-/** Support for multithreading, there are 3 options
-
-OGRE_THREAD_SUPPORT = 0
-	No support for threading.		
-OGRE_THREAD_SUPPORT = 1
-	Thread support for background loading, by both loading and constructing resources
-	in a background thread. Resource management and SharedPtr handling becomes
-	thread-safe, and resources may be completely loaded in the background. 
+/** Indicate general support for multithreading.
+	This will enable threading support in certain parts of the
+	engine, mainly resource loading and SharedPtr handling.
 	The places where threading is available are clearly
 	marked, you should assume state is NOT thread safe unless otherwise
 	stated in relation to this flag.
-OGRE_THREAD_SUPPORT = 2
-	Thread support for background resource preparation. This means that resource
-	data can streamed into memory in the background, but the final resource
-	construction (including RenderSystem dependencies) is still done in the primary
-	thread. Has a lower synchronisation primitive overhead than full threading
-	while still allowing the major blocking aspects of resource management (I/O)
-	to be done in the background.
 */
 #ifndef OGRE_THREAD_SUPPORT
 #define OGRE_THREAD_SUPPORT 0
-#endif
-#if OGRE_THREAD_SUPPORT != 0 && OGRE_THREAD_SUPPORT != 1 && OGRE_THREAD_SUPPORT != 2
-#define OGRE_THREAD_SUPPORT 1
 #endif
 
 /** Disables use of the FreeImage image library for loading images.
@@ -149,12 +123,6 @@ WARNING: Use only when you want to provide your own image loading code via codec
 */
 #ifndef OGRE_NO_DDS_CODEC
 #define OGRE_NO_DDS_CODEC 0
-#endif
-
-/** Enables the use of the new script compilers when Ogre compiles resource scripts.
-*/
-#ifndef OGRE_USE_NEW_COMPILERS
-#define OGRE_USE_NEW_COMPILERS 1
 #endif
 
 #endif

@@ -68,8 +68,6 @@ namespace Ogre {
     protected:
         /// Overridden from Resource
         void loadImpl(void);
-		/// Overridden from Resource - do nothing (no disk caching)
-		void prepareImpl(void) {}
 
     };
     /** Specialisation of SharedPtr to allow SharedPtr to be assigned to PatchMeshPtr 

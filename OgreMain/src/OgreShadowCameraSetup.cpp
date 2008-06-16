@@ -55,7 +55,7 @@ namespace Ogre
 		texCam->setCustomProjectionMatrix(false);
 
 		// get the shadow frustum's far distance
-		Real shadowDist = light->getShadowFarDistance();
+		Real shadowDist = sm->getShadowFarDistance();
 		if (!shadowDist)
 		{
 			// need a shadow distance, make one up

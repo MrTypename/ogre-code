@@ -35,7 +35,7 @@ Torus Knot Software Ltd.
 namespace Ogre
 {
 
-    /** 4-dimensional homogeneous vector.
+    /** 4-dimensional homogenous vector.
     */
     class _OgreExport Vector4
     {
@@ -83,6 +83,11 @@ namespace Ogre
 
         inline explicit Vector4(const Vector3& rhs)
             : x(rhs.x), y(rhs.y), z(rhs.z), w(1.0f)
+        {
+        }
+
+        inline Vector4( const Vector4& rkVector )
+            : x( rkVector.x ), y( rkVector.y ), z( rkVector.z ), w (rkVector.w)
         {
         }
 

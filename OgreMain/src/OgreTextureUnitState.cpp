@@ -50,7 +50,6 @@ namespace Ogre {
 		, mBorderColour(ColourValue::Black)
 		, mTextureLoadFailed(false)
 		, mIsAlpha(false)
-		, mHwGamma(false)
 		, mRecalcTexMatrix(false)
 		, mUMod(0)
 		, mVMod(0)
@@ -102,7 +101,6 @@ namespace Ogre {
 		, mBorderColour(ColourValue::Black)
 		, mTextureLoadFailed(false)
 		, mIsAlpha(false)
-		, mHwGamma(false)
 		, mRecalcTexMatrix(false)
 		, mUMod(0)
 		, mVMod(0)
@@ -521,16 +519,6 @@ namespace Ogre {
     {
         return mIsAlpha;
     }
-	//-----------------------------------------------------------------------
-	void TextureUnitState::setHardwareGammaEnabled(bool g)
-	{
-		mHwGamma = g;
-	}
-	//-----------------------------------------------------------------------
-	bool TextureUnitState::isHardwareGammaEnabled() const
-	{
-		return mHwGamma;
-	}
     //-----------------------------------------------------------------------
     unsigned int TextureUnitState::getTextureCoordSet(void) const
     {
@@ -879,13 +867,6 @@ namespace Ogre {
         removeEffect(ET_UVSCROLL);
         removeEffect(ET_USCROLL);
         removeEffect(ET_VSCROLL);
-
-        // don't create an effect if the speeds are both 0
-        if(uSpeed == 0.0f && vSpeed == 0.0f) 
-        {
-          return;
-        }
-
         // Create new effect
         TextureEffect eff;
 	if(uSpeed == vSpeed) 
@@ -915,11 +896,6 @@ namespace Ogre {
     {
         // Remove existing effect
         removeEffect(ET_ROTATE);
-        // don't create an effect if the speed is 0
-        if(speed == 0.0f) 
-        {
-          return;
-        }
         // Create new effect
         TextureEffect eff;
         eff.type = ET_ROTATE;
@@ -948,12 +924,6 @@ namespace Ogre {
 				break;
 			}
 		}
-
-    // don't create an effect if the given values are all 0
-    if(base == 0.0f && phase == 0.0f && frequency == 0.0f && amplitude == 0.0f) 
-    {
-      return;
-    }
         // Create new effect
         TextureEffect eff;
         eff.type = ET_TRANSFORM;
@@ -966,20 +936,10 @@ namespace Ogre {
         addEffect(eff);
     }
     //-----------------------------------------------------------------------
-    void TextureUnitState::_prepare(void)
-    {
-        // Unload first
-        //_unload();
-
-        // Load textures
-		for (unsigned int i = 0; i < mFrames.size(); ++i)
-		{
-			ensurePrepared(i);
-		}
-    }
-    //-----------------------------------------------------------------------
     void TextureUnitState::_load(void)
     {
+        // Unload first
+        _unload();
 
         // Load textures
 		for (unsigned int i = 0; i < mFrames.size(); ++i)
@@ -1041,38 +1001,6 @@ namespace Ogre {
 		mFramePtrs[frame] = texptr;
 	}
     //-----------------------------------------------------------------------
-	void TextureUnitState::ensurePrepared(size_t frame) const
-	{
-		if (!mFrames[frame].empty())
-		{
-			// Ensure texture is loaded, specified number of mipmaps and
-			// priority
-			if (mFramePtrs[frame].isNull())
-			{
-				try {
-					mFramePtrs[frame] = 
-						TextureManager::getSingleton().prepare(mFrames[frame], 
-							mParent->getResourceGroup(), mTextureType, 
-							mTextureSrcMipmaps, 1.0f, mIsAlpha, mDesiredFormat);
-				}
-				catch (Exception &e) {
-					String msg;
-					msg = msg + "Error loading texture " + mFrames[frame]  + 
-						". Texture layer will be blank. Loading the texture "
-						"failed with the following exception: " 
-						+ e.getFullDescription();
-					LogManager::getSingleton().logMessage(msg);
-					mTextureLoadFailed = true;
-				}	
-			}
-			else
-			{
-				// Just ensure existing pointer is prepared
-				mFramePtrs[frame]->prepare();
-			}
-		}
-	}
-    //-----------------------------------------------------------------------
 	void TextureUnitState::ensureLoaded(size_t frame) const
 	{
 		if (!mFrames[frame].empty())
@@ -1085,7 +1013,7 @@ namespace Ogre {
 					mFramePtrs[frame] = 
 						TextureManager::getSingleton().load(mFrames[frame], 
 							mParent->getResourceGroup(), mTextureType, 
-							mTextureSrcMipmaps, 1.0f, mIsAlpha, mDesiredFormat, mHwGamma);
+							mTextureSrcMipmaps, 1.0f, mIsAlpha, mDesiredFormat);
 				}
 				catch (Exception &e) {
 					String msg;
@@ -1260,17 +1188,6 @@ namespace Ogre {
         return mIsDefaultAniso? MaterialManager::getSingleton().getDefaultAnisotropy() : mMaxAniso;
 	}
 
-	//-----------------------------------------------------------------------
-    void TextureUnitState::_unprepare(void)
-    {
-        // Unreference textures
-        std::vector<TexturePtr>::iterator ti, tiend;
-        tiend = mFramePtrs.end();
-        for (ti = mFramePtrs.begin(); ti != tiend; ++ti)
-        {
-            ti->setNull();
-        }
-    }
 	//-----------------------------------------------------------------------
     void TextureUnitState::_unload(void)
     {

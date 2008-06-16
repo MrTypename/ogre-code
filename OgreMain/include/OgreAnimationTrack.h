@@ -94,7 +94,7 @@ namespace Ogre
         }
     };
 
-    /** A 'track' in an animation sequence, i.e. a sequence of keyframes which affect a
+    /** A 'track' in an animation sequence, ie a sequence of keyframes which affect a
         certain type of animable object.
     @remarks
         This class is intended as a base for more complete classes which will actually
@@ -113,22 +113,9 @@ namespace Ogre
 		It is possible to change this behaviour using
 		setUseShortestRotationPath() method.
     */
-	class _OgreExport AnimationTrack : public AnimationAlloc
+    class _OgreExport AnimationTrack
     {
     public:
-
-		/** Listener allowing you to override certain behaviour of a track, 
-			for example to drive animation procedurally.
-		*/
-		class _OgreExport Listener
-		{
-		public:
-			/** Get an interpolated keyframe for this track at the given time.
-			@returns true if the KeyFrame was populated, false if not.
-			*/
-			virtual bool getInterpolatedKeyFrame(const AnimationTrack* t, const TimeIndex& timeIndex, KeyFrame* kf) = 0;
-		};
-
         /// Constructor
         AnimationTrack(Animation* parent, unsigned short handle);
 
@@ -159,7 +146,7 @@ namespace Ogre
         @param keyFrame2 Pointer to a KeyFrame pointer which will receive the pointer to the 
             keyframe just after this time index. 
         @param firstKeyIndex Pointer to an unsigned short which, if supplied, will receive the 
-            index of the 'from' keyframe in case the caller needs it.
+            index of the 'from' keyframe incase the caller needs it.
         @returns Parametric value indicating how far along the gap between the 2 keyframes the timeIndex
             value is, e.g. 0.0 for exactly at 1, 0.25 for a quarter etc. By definition the range of this 
             value is:  0.0 <= returnValue < 1.0 .
@@ -172,6 +159,8 @@ namespace Ogre
             It is better to create KeyFrames in time order. Creating them out of order can result 
             in expensive reordering processing. Note that a KeyFrame at time index 0.0 is always created
             for you, so you don't need to create this one, just access it using getKeyFrame(0);
+		@note this method will always create a keyframe even if the track already has a keyframe
+			at the given time position.
         @param timePos The time from which this KeyFrame will apply.
         */
         virtual KeyFrame* createKeyFrame(Real timePos);
@@ -223,15 +212,11 @@ namespace Ogre
             bound index to local lower bound index. */
         virtual void _buildKeyFrameIndexMap(const std::vector<Real>& keyFrameTimes);
 
-		/** Set a listener for this track. */
-		virtual void setListener(Listener* l) { mListener = l; }
-
     protected:
         typedef std::vector<KeyFrame*> KeyFrameList;
         KeyFrameList mKeyFrames;
         Animation* mParent;
 		unsigned short mHandle;
-		Listener* mListener;
 
         /// Map used to translate global keyframe time lower bound index to local lower bound index
         typedef std::vector<ushort> KeyFrameIndexMap;
@@ -389,6 +374,8 @@ namespace Ogre
 		mutable bool mSplineBuildNeeded;
 		/// Defines if rotation is done using shortest path
 		mutable bool mUseShortestRotationPath ;
+
+
 	};
 
 	/** Type of vertex animation.
@@ -555,6 +542,7 @@ namespace Ogre
 
 
 	};
+
 
 }
 

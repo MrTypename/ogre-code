@@ -48,10 +48,10 @@ namespace Ogre {
             You are free to create your own subclasses in order to define any function you wish.
     */
 	template <typename T>
-	class ControllerFunction : public ControllerAlloc
+    class ControllerFunction
     {
     protected:
-        /// If true, function will add input values together and wrap at 1.0 before evaluating
+        /// If true, function will add imput values together and wrap at 1.0 before evaluating
         bool mDeltaInput;
         T mDeltaCount;
 
@@ -97,7 +97,7 @@ namespace Ogre {
     /** Can either be used as an input or output value.
     */
 	template <typename T>
-	class ControllerValue : public ControllerAlloc
+    class ControllerValue
     {
 
     public:
@@ -128,7 +128,7 @@ namespace Ogre {
 
     */
 	template <typename T>
-	class Controller : public ControllerAlloc
+    class Controller
     {
     protected:
         /// Source value

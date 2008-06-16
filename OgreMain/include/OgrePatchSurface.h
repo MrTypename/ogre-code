@@ -44,7 +44,7 @@ namespace Ogre {
             subdivide it into a patch mesh. Currently only Bezier curves are supported for defining
             the surface, but other techniques such as NURBS would follow the same basic approach.
     */
-	class _OgreExport PatchSurface : public PatchAlloc
+    class _OgreExport PatchSurface
     {
     public:
         PatchSurface();
@@ -83,7 +83,7 @@ namespace Ogre {
                 just position information, but potentially normals and texture coordinates too. The
                 format of the buffer is defined in the VertexDeclaration parameter
             @param
-                declaration VertexDeclaration describing the contents of the buffer. 
+                decaration VertexDeclaration describing the contents of the buffer. 
                 Note this declaration must _only_ draw on buffer source 0!
             @param
                 width Specifies the width of the patch in control points.

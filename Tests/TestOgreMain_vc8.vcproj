@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1250"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="TestOgreMain"
 	ProjectGUID="{0DC410D4-73C1-46F5-9A23-F4026B0B08F7}"
 	RootNamespace="TestOgreMain"
@@ -70,8 +70,7 @@
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\lib;&quot;..\Dependencies\lib\$(ConfigurationName)&quot;"
-				IgnoreAllDefaultLibraries="false"
+				AdditionalLibraryDirectories="&quot;..\lib&quot;;&quot;..\..\..\Dependencies\lib\$(ConfigurationName)&quot;"
 				ModuleDefinitionFile=""
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/TestOgreMain.pdb"
@@ -102,7 +101,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\$(TargetFileName) ..\Samples\Common\bin\$(ConfigurationName)&#x0D;&#x0A;xcopy  $(ProjectDir)\Media\*  ..\Samples\Media\ /Y /S&#x0D;&#x0A;"
+				CommandLine="copy $(OutDir)\$(TargetFileName) ..\Samples\Common\bin\$(ConfigurationName)"
 			/>
 		</Configuration>
 		<Configuration
@@ -166,7 +165,7 @@
 				Version=""
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\lib;&quot;..\Dependencies\lib\$(ConfigurationName)&quot;"
+				AdditionalLibraryDirectories="&quot;..\lib&quot;;&quot;..\..\..\Dependencies\lib\$(ConfigurationName)&quot;"
 				ModuleDefinitionFile=""
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -198,7 +197,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\$(TargetFileName) ..\Samples\Common\bin\$(ConfigurationName)&#x0D;&#x0A;xcopy /S $(ProjectDir)\Media\*  ..\Samples\Media\&#x0D;&#x0A;"
+				CommandLine="copy $(OutDir)\$(TargetFileName) ..\Samples\Common\bin\$(ConfigurationName)"
 			/>
 		</Configuration>
 	</Configurations>
@@ -209,14 +208,6 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm"
 			>
-			<File
-				RelativePath=".\OgreMain\src\BitwiseTests.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\OgreMain\src\CompositorScriptCompilerTests.cpp"
-				>
-			</File>
 			<File
 				RelativePath="OgreMain\src\EdgeBuilderTests.cpp"
 				>
@@ -230,10 +221,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\OgreMain\src\MaterialScriptCompilerTests.cpp"
-				>
-			</File>
-			<File
 				RelativePath="OgreMain\src\PixelFormatTests.cpp"
 				>
 			</File>
@@ -242,23 +229,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\OgreMain\src\RenderSystemCapabilitiesTests.cpp"
-				>
-			</File>
-			<File
 				RelativePath="OgreMain\src\StringTests.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\OgreMain\src\Suite.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\OgreMain\src\UseCustomCapabilitiesTests.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\OgreMain\src\VectorTests.cpp"
 				>
 			</File>
 			<File
@@ -271,23 +242,11 @@
 			Filter="h;hpp;hxx;hm;inl;inc"
 			>
 			<File
-				RelativePath=".\OgreMain\include\BitwiseTests.h"
-				>
-			</File>
-			<File
-				RelativePath=".\OgreMain\include\CompositorScriptCompilerTests.h"
-				>
-			</File>
-			<File
 				RelativePath="OgreMain\include\EdgeBuilderTests.h"
 				>
 			</File>
 			<File
 				RelativePath="OgreMain\include\FileSystemArchiveTests.h"
-				>
-			</File>
-			<File
-				RelativePath=".\OgreMain\include\MaterialScriptCompilerTests.h"
 				>
 			</File>
 			<File
@@ -299,23 +258,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\OgreMain\include\RenderSystemCapabilitiesTests.h"
-				>
-			</File>
-			<File
 				RelativePath="OgreMain\include\StringTests.h"
-				>
-			</File>
-			<File
-				RelativePath=".\OgreMain\include\Suite.h"
-				>
-			</File>
-			<File
-				RelativePath=".\OgreMain\include\UseCustomCapabilitiesTests.h"
-				>
-			</File>
-			<File
-				RelativePath=".\OgreMain\include\VectorTests.h"
 				>
 			</File>
 			<File

@@ -65,7 +65,7 @@ namespace Ogre {
         using the SceneManager interfaces for the type of query required, e.g.
         SceneManager::createSphereSceneQuery.
     */
-	class _OgreExport SceneQuery : public SceneMgtAlloc
+    class _OgreExport SceneQuery
     {
     public:
         /** This type can be used by collaborating applications & SceneManagers to 

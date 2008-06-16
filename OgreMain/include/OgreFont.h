@@ -113,8 +113,6 @@ namespace Ogre
         Real mTtfSize;
         /// Resolution (dpi) of truetype font
         uint mTtfResolution;
-		/// Max distance to baseline of this (truetype) font
-		int mTtfMaxBearingY;
 
 
 	public:
@@ -222,19 +220,9 @@ namespace Ogre
             Only applicable for FT_TRUETYPE Font objects.
         */
         uint getTrueTypeResolution(void) const;
-		/** Gets the maximum baseline distance of all glyphs used in the texture.
-		@remarks
-			Only applicable for FT_TRUETYPE Font objects.
-			The baseline is the vertical origin of horizontal based glyphs.  The bearingY
-			attribute is the distance from the baseline (origin) to the top of the glyph's 
-			bounding box.
-		@note
-			This value is only available after the font has been loaded.
-		*/
-		int getTrueTypeMaxBearingY() const;
 
 
-        /** Returns the texture coordinates of the associated glyph. 
+        /** Returns the teture coordinates of the associated glyph. 
             @remarks Parameter is a short to allow both ASCII and wide chars.
             @param id The code point (unicode)
             @returns A rectangle with the UV coordinates, or null UVs if the

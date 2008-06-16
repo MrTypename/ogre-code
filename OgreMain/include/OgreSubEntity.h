@@ -53,7 +53,7 @@ namespace Ogre {
             the same time as their parent Entity by the SceneManager method
             createEntity.
     */
-    class _OgreExport SubEntity: public Renderable, public SubEntityAlloc
+    class _OgreExport SubEntity: public Renderable
     {
         // Note no virtual functions for efficiency
         friend class Entity;
@@ -150,6 +150,13 @@ namespace Ogre {
         /** Overridden - see Renderable.
         */
         void getWorldTransforms(Matrix4* xform) const;
+        /** @copydoc Renderable::getWorldOrientation */
+        const Quaternion& getWorldOrientation(void) const;
+        /** @copydoc Renderable::getWorldPosition */
+        const Vector3& getWorldPosition(void) const;
+        /** Overridden - see Renderable.
+        */
+        bool getNormaliseNormals(void) const;      
         /** Overridden - see Renderable.
         */
         unsigned short getNumWorldTransforms(void) const;
@@ -207,7 +214,7 @@ namespace Ogre {
 		*/
 		void _restoreBuffersForUnusedAnimation(bool hardwareAnimation);
 
-		/** Overridden from Renderable to provide some custom behaviour. */
+		/** Overridden from Renderble to provide some custom behaviour. */
 		void _updateCustomGpuParameter(
 			const GpuProgramParameters::AutoConstantEntry& constantEntry,
 			GpuProgramParameters* params) const;

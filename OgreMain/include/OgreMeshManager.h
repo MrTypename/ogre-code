@@ -40,8 +40,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	class MeshSerializerListener;
-
     /** Handles the management of mesh resources.
         @remarks
             This class deals with the runtime management of
@@ -59,56 +57,9 @@ namespace Ogre {
         /** Initialises the manager, only to be called by OGRE internally. */
         void _initialise(void);
 
-        /** Create a new mesh, or retrieve an existing one with the same
-            name if it already exists.
-            @param vertexBufferUsage The usage flags with which the vertex buffer(s)
-                will be created
-            @param indexBufferUsage The usage flags with which the index buffer(s) created for 
-                this mesh will be created with.
-            @param vertexBufferShadowed If true, the vertex buffers will be shadowed by system memory 
-                copies for faster read access
-            @param indexBufferShadowed If true, the index buffers will be shadowed by system memory 
-                copies for faster read access
-        @see ResourceManager::createOrRetrieve
-        */
-        ResourceCreateOrRetrieveResult createOrRetrieve(
-            const String& name,
-            const String& group,
-            bool isManual=false, ManualResourceLoader* loader=0,
-            const NameValuePairList* params=0,
-			HardwareBuffer::Usage vertexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
-			HardwareBuffer::Usage indexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
-			bool vertexBufferShadowed = true, bool indexBufferShadowed = true);
-
-        /** Prepares a mesh for loading from a file.  This does the IO in advance of the call to load().
-            @note
-                If the model has already been created (prepared or loaded), the existing instance
-                will be returned.
-            @remarks
-                Ogre loads model files from it's own proprietary
-                format called .mesh. This is because having a single file
-                format is better for runtime performance, and we also have
-                control over pre-processed data (such as
-                collision boxes, LOD reductions etc).
-			@param filename The name of the .mesh file
-            @param groupName The name of the resource group to assign the mesh to 
-			@param vertexBufferUsage The usage flags with which the vertex buffer(s)
-				will be created
-			@param indexBufferUsage The usage flags with which the index buffer(s) created for 
-				this mesh will be created with.
-			@param vertexBufferShadowed If true, the vertex buffers will be shadowed by system memory 
-                copies for faster read access
-			@param indexBufferShadowed If true, the index buffers will be shadowed by system memory 
-                copies for faster read access
-        */
-        MeshPtr prepare( const String& filename, const String& groupName,
-			HardwareBuffer::Usage vertexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
-			HardwareBuffer::Usage indexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
-			bool vertexBufferShadowed = true, bool indexBufferShadowed = true);
-
         /** Loads a mesh from a file, making it immediately available for use.
             @note
-                If the model has already been created (prepared or loaded), the existing instance
+                If the model has already been loaded, the existing instance
                 will be returned.
             @remarks
                 Ogre loads model files from it's own proprietary
@@ -126,6 +77,7 @@ namespace Ogre {
                 copies for faster read access
 			@param indexBufferShadowed If true, the index buffers will be shadowed by system memory 
                 copies for faster read access
+			@param priority The priority of this mesh in the resource system
         */
         MeshPtr load( const String& filename, const String& groupName,
 			HardwareBuffer::Usage vertexBufferUsage = HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
@@ -161,9 +113,9 @@ namespace Ogre {
             @param
                 height The height of the plane in world coordinates
             @param
-                xsegments The number of segments to the plane in the x direction
+                xsegments The number of segements to the plane in the x direction
             @param
-                ysegments The number of segments to the plane in the y direction
+                ysegments The number of segements to the plane in the y direction
             @param
                 normals If true, normals are created perpendicular to the plane
             @param
@@ -217,9 +169,9 @@ namespace Ogre {
                 a smoother effect, lower values are less curved meaning
                 more distortion at the horizons but a better distance effect.
 			@param
-                xsegments The number of segments to the plane in the x direction
+                xsegments The number of segements to the plane in the x direction
             @param
-                ysegments The number of segments to the plane in the y direction
+                ysegments The number of segements to the plane in the y direction
             @param
                 normals If true, normals are created perpendicular to the plane
             @param
@@ -273,11 +225,11 @@ namespace Ogre {
             @param
                 height The height of the plane in world coordinates
 			@param
-				bow The amount of 'bow' in the curved plane.  (Could also be considered the depth.)
+				bow The amount of 'bow' in the curved plane.  (Could also be concidered the depth.)
             @param
-                xsegments The number of segments to the plane in the x direction
+                xsegments The number of segements to the plane in the x direction
             @param
-                ysegments The number of segments to the plane in the y direction
+                ysegments The number of segements to the plane in the y direction
             @param
                 normals If true, normals are created perpendicular to the plane
             @param
@@ -323,7 +275,7 @@ namespace Ogre {
                 just position information, but potentially normals and texture coordinates too. The
                 format of the buffer is defined in the VertexDeclaration parameter
             @param
-                declaration VertexDeclaration describing the contents of the buffer. 
+                decaration VertexDeclaration describing the contents of the buffer. 
                 Note this declaration must _only_ draw on buffer source 0!
             @param
                 width Specifies the width of the patch in control points.
@@ -407,14 +359,6 @@ namespace Ogre {
 	    */
         void setBoundsPaddingFactor(Real paddingFactor);
 
-		/** Sets the listener used to control mesh loading through the serializer.
-		*/
-		void setListener(MeshSerializerListener *listener);
-		
-		/** Gets the listener used to control mesh loading through the serializer.
-		*/
-		MeshSerializerListener *getListener();
-
         /** @see ManualResourceLoader::loadResource */
         void loadResource(Resource* res);
 
@@ -424,7 +368,7 @@ namespace Ogre {
             const String& group, bool isManual, ManualResourceLoader* loader, 
             const NameValuePairList* createParams);
         
-        /** Utility method for tessellating 2D meshes.
+        /** Utility method for tesselating 2D meshes.
         */
         void tesselate2DMesh(SubMesh* pSub, int meshWidth, int meshHeight, 
 			bool doubleSided = false, 
@@ -477,11 +421,8 @@ namespace Ogre {
 
         bool mPrepAllMeshesForShadowVolumes;
 	
-		//the factor by which the bounding box of an entity is padded	
-		Real mBoundsPaddingFactor;
-
-		// The listener to pass to serializers
-		MeshSerializerListener *mListener;
+	//the factor by which the bounding box of an entity is padded	
+	Real mBoundsPaddingFactor;
     };
 
 

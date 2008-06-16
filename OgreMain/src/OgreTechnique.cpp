@@ -33,6 +33,7 @@ Torus Knot Software Ltd.
 #include "OgrePass.h"
 #include "OgreRoot.h"
 #include "OgreRenderSystem.h"
+#include "OgreRenderSystemCapabilities.h"
 #include "OgreGpuProgramManager.h"
 #include "OgreMaterialManager.h"
 
@@ -65,44 +66,30 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     String Technique::_compile(bool autoManageTextureUnits)
     {
-		StringUtil::StrStreamType errors;
+		StringUtil::StrStreamType compileErrors;
 
-		mIsSupported = checkGPURules(errors);
-		if (mIsSupported)
-		{
-			mIsSupported = checkHardwareSupport(autoManageTextureUnits, errors);
-		}
-
-        // Compile for categorised illumination on demand
-        clearIlluminationPasses();
-        mIlluminationPassesCompilationPhase = IPS_NOT_COMPILED;
-
-		return errors.str();
-
-    }
-	//---------------------------------------------------------------------
-	bool Technique::checkHardwareSupport(bool autoManageTextureUnits, StringUtil::StrStreamType& compileErrors)
-	{
-		// Go through each pass, checking requirements
-		Passes::iterator i;
+		// assume not supported
+		mIsSupported = false;
+        // Go through each pass, checking requirements
+        Passes::iterator i;
 		unsigned short passNum = 0;
 		const RenderSystemCapabilities* caps =
 			Root::getSingleton().getRenderSystem()->getCapabilities();
 		unsigned short numTexUnits = caps->getNumTextureUnits();
-		for (i = mPasses.begin(); i != mPasses.end(); ++i, ++passNum)
-		{
-			Pass* currPass = *i;
+        for (i = mPasses.begin(); i != mPasses.end(); ++i, ++passNum)
+        {
+            Pass* currPass = *i;
 			// Adjust pass index
 			currPass->_notifyIndex(passNum);
-			// Check texture unit requirements
-			size_t numTexUnitsRequested = currPass->getNumTextureUnitStates();
+            // Check texture unit requirements
+            size_t numTexUnitsRequested = currPass->getNumTextureUnitStates();
 			// Don't trust getNumTextureUnits for programmable
 			if(!currPass->hasFragmentProgram())
 			{
-#if defined(OGRE_PRETEND_TEXTURE_UNITS) && OGRE_PRETEND_TEXTURE_UNITS > 0
+	#if defined(OGRE_PRETEND_TEXTURE_UNITS) && OGRE_PRETEND_TEXTURE_UNITS > 0
 				if (numTexUnits > OGRE_PRETEND_TEXTURE_UNITS)
 					numTexUnits = OGRE_PRETEND_TEXTURE_UNITS;
-#endif
+	#endif
 				if (numTexUnitsRequested > numTexUnits)
 				{
 					if (!autoManageTextureUnits)
@@ -111,7 +98,7 @@ namespace Ogre {
 						compileErrors << "Pass " << passNum << 
 							": Too many texture units for the current hardware and no splitting allowed."
 							<< std::endl;
-						return false;
+						return compileErrors.str();
 					}
 					else if (currPass->hasVertexProgram())
 					{
@@ -120,7 +107,7 @@ namespace Ogre {
 							": Too many texture units for the current hardware and "
 							"cannot split programmable passes."
 							<< std::endl;
-						return false;
+						return compileErrors.str();
 					}
 				}
 			}
@@ -140,15 +127,15 @@ namespace Ogre {
 						compileErrors << "not supported.";
 
 					compileErrors << std::endl;
-					return false;
+					return compileErrors.str();
 				}
 			}
-			if (currPass->hasFragmentProgram())
-			{
-				// Check fragment program version
-				if (!currPass->getFragmentProgram()->isSupported())
-				{
-					// Can't do this one
+            if (currPass->hasFragmentProgram())
+            {
+                // Check fragment program version
+                if (!currPass->getFragmentProgram()->isSupported())
+                {
+                    // Can't do this one
 					compileErrors << "Pass " << passNum << 
 						": Fragment program " << currPass->getFragmentProgram()->getName()
 						<< " cannot be used - ";
@@ -158,13 +145,13 @@ namespace Ogre {
 						compileErrors << "not supported.";
 
 					compileErrors << std::endl;
-					return false;
-				}
-			}
-			else
-			{
+					return compileErrors.str();
+                }
+            }
+            else
+            {
 				// Check a few fixed-function options in texture layers
-				Pass::TextureUnitStateIterator texi = currPass->getTextureUnitStateIterator();
+                Pass::TextureUnitStateIterator texi = currPass->getTextureUnitStateIterator();
 				size_t texUnit = 0;
 				while (texi.hasMoreElements())
 				{
@@ -179,7 +166,7 @@ namespace Ogre {
 							" Tex " << texUnit <<
 							": Cube maps not supported by current environment."
 							<< std::endl;
-						return false;
+						return compileErrors.str();
 					}
 					// Any 3D textures? NB we make the assumption that any
 					// card capable of running fragment programs can support
@@ -191,18 +178,18 @@ namespace Ogre {
 							" Tex " << texUnit <<
 							": Volume textures not supported by current environment."
 							<< std::endl;
-						return false;
+						return compileErrors.str();
 					}
 					// Any Dot3 blending?
 					if (tex->getColourBlendMode().operation == LBX_DOTPRODUCT &&
-						!caps->hasCapability(RSC_DOT3))
+							!caps->hasCapability(RSC_DOT3))
 					{
 						// Fail
 						compileErrors << "Pass " << passNum << 
 							" Tex " << texUnit <<
 							": DOT3 blending not supported by current environment."
 							<< std::endl;
-						return false;
+						return compileErrors.str();
 					}
 					++texUnit;
 				}
@@ -229,89 +216,19 @@ namespace Ogre {
 						currPass->_notifyIndex(passNum);
 					}
 				}
-			}
+            }
 
 		}
-		// If we got this far, we're ok
-		return true;
-	}
-	//---------------------------------------------------------------------
-	bool Technique::checkGPURules(StringUtil::StrStreamType& errors)
-	{
-		const RenderSystemCapabilities* caps =
-			Root::getSingleton().getRenderSystem()->getCapabilities();
+        // If we got this far, we're ok
+        mIsSupported = true;
 
-		StringUtil::StrStreamType includeRules;
-		bool includeRulesPresent = false;
-		bool includeRuleMatched = false;
+        // Compile for categorised illumination on demand
+        clearIlluminationPasses();
+        mIlluminationPassesCompilationPhase = IPS_NOT_COMPILED;
 
-		// Check vendors first
-		for (GPUVendorRuleList::const_iterator i = mGPUVendorRules.begin();
-			i != mGPUVendorRules.end(); ++i)
-		{
-			if (i->includeOrExclude == INCLUDE)
-			{
-				includeRulesPresent = true;
-				includeRules << caps->vendorToString(i->vendor) << " ";
-				if (i->vendor == caps->getVendor())
-					includeRuleMatched = true;
-			}
-			else // EXCLUDE
-			{
-				if (i->vendor == caps->getVendor())
-				{
-					errors << "Excluded GPU vendor: " << caps->vendorToString(i->vendor)
-						<< std::endl;
-					return false;
-				}
-					
-			}
-		}
+		return StringUtil::BLANK;
 
-		if (includeRulesPresent && !includeRuleMatched)
-		{
-			errors << "Failed to match GPU vendor: " << includeRules
-				<< std::endl;
-			return false;
-		}
-
-		// now check device names
-		includeRules.str(StringUtil::BLANK);
-		includeRulesPresent = false;
-		includeRuleMatched = false;
-
-		for (GPUDeviceNameRuleList::const_iterator i = mGPUDeviceNameRules.begin();
-			i != mGPUDeviceNameRules.end(); ++i)
-		{
-			if (i->includeOrExclude == INCLUDE)
-			{
-				includeRulesPresent = true;
-				includeRules << i->devicePattern << " ";
-				if (StringUtil::match(caps->getDeviceName(), i->devicePattern, i->caseSensitive))
-					includeRuleMatched = true;
-			}
-			else // EXCLUDE
-			{
-				if (StringUtil::match(caps->getDeviceName(), i->devicePattern, i->caseSensitive))
-				{
-					errors << "Excluded GPU device: " << i->devicePattern
-						<< std::endl;
-					return false;
-				}
-
-			}
-		}
-
-		if (includeRulesPresent && !includeRuleMatched)
-		{
-			errors << "Failed to match GPU device: " << includeRules
-				<< std::endl;
-			return false;
-		}
-
-		// passed
-		return true;
-	}
+    }
     //-----------------------------------------------------------------------------
     Pass* Technique::createPass(void)
     {
@@ -432,13 +349,6 @@ namespace Ogre {
 		this->mIsSupported = rhs.mIsSupported;
         this->mLodIndex = rhs.mLodIndex;
 		this->mSchemeIndex = rhs.mSchemeIndex;
-		this->mShadowCasterMaterial = rhs.mShadowCasterMaterial;
-		this->mShadowCasterMaterialName = rhs.mShadowCasterMaterialName;
-		this->mShadowReceiverMaterial = rhs.mShadowReceiverMaterial;
-		this->mShadowReceiverMaterialName = rhs.mShadowReceiverMaterialName;
-		this->mGPUVendorRules = rhs.mGPUVendorRules;
-		this->mGPUDeviceNameRules = rhs.mGPUDeviceNameRules;
-
 		// copy passes
 		removeAllPasses();
 		Passes::const_iterator i, iend;
@@ -464,19 +374,6 @@ namespace Ogre {
         {
             // Base decision on the transparency of the first pass
             return mPasses[0]->isTransparent();
-        }
-    }
-    //-----------------------------------------------------------------------------
-    bool Technique::isTransparentSortingEnabled(void) const
-    {
-        if (mPasses.empty())
-        {
-            return true;
-        }
-        else
-        {
-            // Base decision on the transparency of the first pass
-            return mPasses[0]->getTransparentSortingEnabled();
         }
     }
     //-----------------------------------------------------------------------------
@@ -519,37 +416,6 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------------
-    void Technique::_prepare(void)
-    {
-		assert (mIsSupported && "This technique is not supported");
-		// Load each pass
-		Passes::iterator i, iend;
-		iend = mPasses.end();
-		for (i = mPasses.begin(); i != iend; ++i)
-		{
-			(*i)->_prepare();
-		}
-
-		IlluminationPassList::iterator il, ilend;
-		ilend = mIlluminationPasses.end();
-		for (il = mIlluminationPasses.begin(); il != ilend; ++il)
-		{
-			if((*il)->pass != (*il)->originalPass)
-			    (*il)->pass->_prepare();
-		}
-    }
-    //-----------------------------------------------------------------------------
-    void Technique::_unprepare(void)
-    {
-		// Unload each pass
-		Passes::iterator i, iend;
-		iend = mPasses.end();
-		for (i = mPasses.begin(); i != iend; ++i)
-		{
-			(*i)->_unprepare();
-		}
-    }
-    //-----------------------------------------------------------------------------
     void Technique::_load(void)
     {
 		assert (mIsSupported && "This technique is not supported");
@@ -567,27 +433,6 @@ namespace Ogre {
 		{
 			if((*il)->pass != (*il)->originalPass)
 			    (*il)->pass->_load();
-		}
-
-		if (!mShadowCasterMaterial.isNull())
-		{
-			mShadowCasterMaterial->load();
-		}
-		else if (!mShadowCasterMaterialName.empty())
-		{
-			// in case we could not get material as it wasn't yet parsed/existent at that time.
-			mShadowCasterMaterial = MaterialManager::getSingleton().getByName(mShadowCasterMaterialName);
-			mShadowCasterMaterial->load();
-		}
-		if (!mShadowReceiverMaterial.isNull())
-		{
-			mShadowReceiverMaterial->load();
-		}
-		else if (!mShadowReceiverMaterialName.empty())
-		{
-			// in case we could not get material as it wasn't yet parsed/existent at that time.
-			mShadowReceiverMaterial = MaterialManager::getSingleton().getByName(mShadowReceiverMaterialName);
-			mShadowReceiverMaterial->load();
 		}
     }
     //-----------------------------------------------------------------------------
@@ -821,16 +666,6 @@ namespace Ogre {
         }
     }
     // --------------------------------------------------------------------
-    void Technique::setSeparateSceneBlending( const SceneBlendType sbt, const SceneBlendType sbta )
-	{
-        Passes::iterator i, iend;
-        iend = mPasses.end();
-        for (i = mPasses.begin(); i != iend; ++i)
-        {
-            (*i)->setSeparateSceneBlending(sbt, sbta);
-        }
-	}
-    // --------------------------------------------------------------------
     void Technique::setSceneBlending( const SceneBlendFactor sourceFactor,
         const SceneBlendFactor destFactor)
     {
@@ -841,16 +676,6 @@ namespace Ogre {
             (*i)->setSceneBlending(sourceFactor, destFactor);
         }
     }
-    // --------------------------------------------------------------------
-    void Technique::setSeparateSceneBlending( const SceneBlendFactor sourceFactor, const SceneBlendFactor destFactor, const SceneBlendFactor sourceFactorAlpha, const SceneBlendFactor destFactorAlpha)
-	{
-        Passes::iterator i, iend;
-        iend = mPasses.end();
-        for (i = mPasses.begin(); i != iend; ++i)
-        {
-            (*i)->setSeparateSceneBlending(sourceFactor, destFactor, sourceFactorAlpha, destFactorAlpha);
-        }
-	}
 
     // --------------------------------------------------------------------
     void Technique::setName(const String& name)
@@ -890,257 +715,226 @@ namespace Ogre {
 	{
 		return mSchemeIndex;
 	}
-	//---------------------------------------------------------------------
-	bool Technique::checkManuallyOrganisedIlluminationPasses()
-	{
-		// first check whether all passes have manually assigned illumination
-		Passes::iterator i, ibegin, iend;
-		ibegin = mPasses.begin();
-		iend = mPasses.end();
-
-		for (i = ibegin; i != iend; ++i)
-		{
-			if ((*i)->getIlluminationStage() == IS_UNKNOWN)
-				return false;
-		}
-
-		// ok, all manually controlled, so just use that
-		for (i = ibegin; i != iend; ++i)
-		{
-			IlluminationPass* iPass = new IlluminationPass();
-			iPass->destroyOnShutdown = false;
-			iPass->originalPass = iPass->pass = *i;
-			iPass->stage = (*i)->getIlluminationStage();
-			mIlluminationPasses.push_back(iPass);
-		}
-
-		return true;
-	}
     //-----------------------------------------------------------------------
     void Technique::_compileIlluminationPasses(void)
     {
         clearIlluminationPasses();
 
-		if (!checkManuallyOrganisedIlluminationPasses())
-		{
-			// Build based on our own heuristics
+        Passes::iterator i, iend;
+        iend = mPasses.end();
+        i = mPasses.begin();
 
-			Passes::iterator i, iend;
-			iend = mPasses.end();
-			i = mPasses.begin();
+        IlluminationStage iStage = IS_AMBIENT;
 
-			IlluminationStage iStage = IS_AMBIENT;
+        bool haveAmbient = false;
+        while (i != iend)
+        {
+            IlluminationPass* iPass;
+            Pass* p = *i;
+            switch(iStage)
+            {
+            case IS_AMBIENT:
+                // Keep looking for ambient only
+                if (p->isAmbientOnly())
+                {
+                    // Add this pass wholesale
+                    iPass = new IlluminationPass();
+                    iPass->destroyOnShutdown = false;
+                    iPass->originalPass = iPass->pass = p;
+                    iPass->stage = iStage;
+                    mIlluminationPasses.push_back(iPass);
+                    haveAmbient = true;
+                    // progress to next pass
+                    ++i;
+                }
+                else
+                {
+                    // Split off any ambient part
+                    if (p->getAmbient() != ColourValue::Black ||
+                        p->getSelfIllumination() != ColourValue::Black ||
+                        p->getAlphaRejectFunction() != CMPF_ALWAYS_PASS)
+                    {
+                        // Copy existing pass
+                        Pass* newPass = new Pass(this, p->getIndex(), *p);
+                        if (newPass->getAlphaRejectFunction() != CMPF_ALWAYS_PASS)
+                        {
+                            // Alpha rejection passes must retain their transparency, so
+                            // we allow the texture units, but override the colour functions
+                            Pass::TextureUnitStateIterator tusi = newPass->getTextureUnitStateIterator();
+                            while (tusi.hasMoreElements())
+                            {
+                                TextureUnitState* tus = tusi.getNext();
+                                tus->setColourOperationEx(LBX_SOURCE1, LBS_CURRENT);
+                            }
+                        }
+                        else
+                        {
+                            // Remove any texture units
+                            newPass->removeAllTextureUnitStates();
+                        }
+                        // Remove any fragment program
+                        if (newPass->hasFragmentProgram())
+                            newPass->setFragmentProgram("");
+                        // We have to leave vertex program alone (if any) and
+                        // just trust that the author is using light bindings, which
+                        // we will ensure there are none in the ambient pass
+                        newPass->setDiffuse(0, 0, 0, newPass->getDiffuse().a);  // Preserving alpha
+                        newPass->setSpecular(ColourValue::Black);
 
-			bool haveAmbient = false;
-			while (i != iend)
-			{
-				IlluminationPass* iPass;
-				Pass* p = *i;
-				switch(iStage)
-				{
-				case IS_AMBIENT:
-					// Keep looking for ambient only
-					if (p->isAmbientOnly())
-					{
-						// Add this pass wholesale
-						iPass = new IlluminationPass();
-						iPass->destroyOnShutdown = false;
-						iPass->originalPass = iPass->pass = p;
-						iPass->stage = iStage;
-						mIlluminationPasses.push_back(iPass);
-						haveAmbient = true;
-						// progress to next pass
-						++i;
-					}
-					else
-					{
-						// Split off any ambient part
-						if (p->getAmbient() != ColourValue::Black ||
-							p->getSelfIllumination() != ColourValue::Black ||
-							p->getAlphaRejectFunction() != CMPF_ALWAYS_PASS)
-						{
-							// Copy existing pass
-							Pass* newPass = new Pass(this, p->getIndex(), *p);
-							if (newPass->getAlphaRejectFunction() != CMPF_ALWAYS_PASS)
-							{
-								// Alpha rejection passes must retain their transparency, so
-								// we allow the texture units, but override the colour functions
-								Pass::TextureUnitStateIterator tusi = newPass->getTextureUnitStateIterator();
-								while (tusi.hasMoreElements())
-								{
-									TextureUnitState* tus = tusi.getNext();
-									tus->setColourOperationEx(LBX_SOURCE1, LBS_CURRENT);
-								}
-							}
-							else
-							{
-								// Remove any texture units
-								newPass->removeAllTextureUnitStates();
-							}
-							// Remove any fragment program
-							if (newPass->hasFragmentProgram())
-								newPass->setFragmentProgram("");
-							// We have to leave vertex program alone (if any) and
-							// just trust that the author is using light bindings, which
-							// we will ensure there are none in the ambient pass
-							newPass->setDiffuse(0, 0, 0, newPass->getDiffuse().a);  // Preserving alpha
-							newPass->setSpecular(ColourValue::Black);
+                        // Calculate hash value for new pass, because we are compiling
+                        // illumination passes on demand, which will loss hash calculate
+                        // before it add to render queue first time.
+                        newPass->_recalculateHash();
 
-							// Calculate hash value for new pass, because we are compiling
-							// illumination passes on demand, which will loss hash calculate
-							// before it add to render queue first time.
-							newPass->_recalculateHash();
+                        iPass = new IlluminationPass();
+                        iPass->destroyOnShutdown = true;
+                        iPass->originalPass = p;
+                        iPass->pass = newPass;
+                        iPass->stage = iStage;
 
-							iPass = new IlluminationPass();
-							iPass->destroyOnShutdown = true;
-							iPass->originalPass = p;
-							iPass->pass = newPass;
-							iPass->stage = iStage;
+                        mIlluminationPasses.push_back(iPass);
+                        haveAmbient = true;
 
-							mIlluminationPasses.push_back(iPass);
-							haveAmbient = true;
+                    }
 
-						}
+                    if (!haveAmbient)
+                    {
+                        // Make up a new basic pass
+                        Pass* newPass = new Pass(this, p->getIndex());
+                        newPass->setAmbient(ColourValue::Black);
+                        newPass->setDiffuse(ColourValue::Black);
 
-						if (!haveAmbient)
-						{
-							// Make up a new basic pass
-							Pass* newPass = new Pass(this, p->getIndex());
-							newPass->setAmbient(ColourValue::Black);
-							newPass->setDiffuse(ColourValue::Black);
+                        // Calculate hash value for new pass, because we are compiling
+                        // illumination passes on demand, which will loss hash calculate
+                        // before it add to render queue first time.
+                        newPass->_recalculateHash();
 
-							// Calculate hash value for new pass, because we are compiling
-							// illumination passes on demand, which will loss hash calculate
-							// before it add to render queue first time.
-							newPass->_recalculateHash();
+                        iPass = new IlluminationPass();
+                        iPass->destroyOnShutdown = true;
+                        iPass->originalPass = p;
+                        iPass->pass = newPass;
+                        iPass->stage = iStage;
+                        mIlluminationPasses.push_back(iPass);
+                        haveAmbient = true;
+                    }
+                    // This means we're done with ambients, progress to per-light
+                    iStage = IS_PER_LIGHT;
+                }
+                break;
+            case IS_PER_LIGHT:
+                if (p->getIteratePerLight())
+                {
+                    // If this is per-light already, use it directly
+                    iPass = new IlluminationPass();
+                    iPass->destroyOnShutdown = false;
+                    iPass->originalPass = iPass->pass = p;
+                    iPass->stage = iStage;
+                    mIlluminationPasses.push_back(iPass);
+                    // progress to next pass
+                    ++i;
+                }
+                else
+                {
+                    // Split off per-light details (can only be done for one)
+                    if (p->getLightingEnabled() &&
+                        (p->getDiffuse() != ColourValue::Black ||
+                        p->getSpecular() != ColourValue::Black))
+                    {
+                        // Copy existing pass
+                        Pass* newPass = new Pass(this, p->getIndex(), *p);
+                        if (newPass->getAlphaRejectFunction() != CMPF_ALWAYS_PASS)
+                        {
+                            // Alpha rejection passes must retain their transparency, so
+                            // we allow the texture units, but override the colour functions
+                            Pass::TextureUnitStateIterator tusi = newPass->getTextureUnitStateIterator();
+                            while (tusi.hasMoreElements())
+                            {
+                                TextureUnitState* tus = tusi.getNext();
+                                tus->setColourOperationEx(LBX_SOURCE1, LBS_CURRENT);
+                            }
+                        }
+                        else
+                        {
+                            // remove texture units
+                            newPass->removeAllTextureUnitStates();
+                        }
+                        // remove fragment programs
+                        if (newPass->hasFragmentProgram())
+                            newPass->setFragmentProgram("");
+                        // Cannot remove vertex program, have to assume that
+                        // it will process diffuse lights, ambient will be turned off
+                        newPass->setAmbient(ColourValue::Black);
+                        newPass->setSelfIllumination(ColourValue::Black);
+                        // must be additive
+                        newPass->setSceneBlending(SBF_ONE, SBF_ONE);
 
-							iPass = new IlluminationPass();
-							iPass->destroyOnShutdown = true;
-							iPass->originalPass = p;
-							iPass->pass = newPass;
-							iPass->stage = iStage;
-							mIlluminationPasses.push_back(iPass);
-							haveAmbient = true;
-						}
-						// This means we're done with ambients, progress to per-light
-						iStage = IS_PER_LIGHT;
-					}
-					break;
-				case IS_PER_LIGHT:
-					if (p->getIteratePerLight())
-					{
-						// If this is per-light already, use it directly
-						iPass = new IlluminationPass();
-						iPass->destroyOnShutdown = false;
-						iPass->originalPass = iPass->pass = p;
-						iPass->stage = iStage;
-						mIlluminationPasses.push_back(iPass);
-						// progress to next pass
-						++i;
-					}
-					else
-					{
-						// Split off per-light details (can only be done for one)
-						if (p->getLightingEnabled() &&
-							(p->getDiffuse() != ColourValue::Black ||
-							p->getSpecular() != ColourValue::Black))
-						{
-							// Copy existing pass
-							Pass* newPass = new Pass(this, p->getIndex(), *p);
-							if (newPass->getAlphaRejectFunction() != CMPF_ALWAYS_PASS)
-							{
-								// Alpha rejection passes must retain their transparency, so
-								// we allow the texture units, but override the colour functions
-								Pass::TextureUnitStateIterator tusi = newPass->getTextureUnitStateIterator();
-								while (tusi.hasMoreElements())
-								{
-									TextureUnitState* tus = tusi.getNext();
-									tus->setColourOperationEx(LBX_SOURCE1, LBS_CURRENT);
-								}
-							}
-							else
-							{
-								// remove texture units
-								newPass->removeAllTextureUnitStates();
-							}
-							// remove fragment programs
-							if (newPass->hasFragmentProgram())
-								newPass->setFragmentProgram("");
-							// Cannot remove vertex program, have to assume that
-							// it will process diffuse lights, ambient will be turned off
-							newPass->setAmbient(ColourValue::Black);
-							newPass->setSelfIllumination(ColourValue::Black);
-							// must be additive
-							newPass->setSceneBlending(SBF_ONE, SBF_ONE);
+                        // Calculate hash value for new pass, because we are compiling
+                        // illumination passes on demand, which will loss hash calculate
+                        // before it add to render queue first time.
+                        newPass->_recalculateHash();
 
-							// Calculate hash value for new pass, because we are compiling
-							// illumination passes on demand, which will loss hash calculate
-							// before it add to render queue first time.
-							newPass->_recalculateHash();
+                        iPass = new IlluminationPass();
+                        iPass->destroyOnShutdown = true;
+                        iPass->originalPass = p;
+                        iPass->pass = newPass;
+                        iPass->stage = iStage;
 
-							iPass = new IlluminationPass();
-							iPass->destroyOnShutdown = true;
-							iPass->originalPass = p;
-							iPass->pass = newPass;
-							iPass->stage = iStage;
+                        mIlluminationPasses.push_back(iPass);
 
-							mIlluminationPasses.push_back(iPass);
+                    }
+                    // This means the end of per-light passes
+                    iStage = IS_DECAL;
+                }
+                break;
+            case IS_DECAL:
+                // We just want a 'lighting off' pass to finish off
+                // and only if there are texture units
+                if (p->getNumTextureUnitStates() > 0)
+                {
+                    if (!p->getLightingEnabled())
+                    {
+                        // we assume this pass already combines as required with the scene
+                        iPass = new IlluminationPass();
+                        iPass->destroyOnShutdown = false;
+                        iPass->originalPass = iPass->pass = p;
+                        iPass->stage = iStage;
+                        mIlluminationPasses.push_back(iPass);
+                    }
+                    else
+                    {
+                        // Copy the pass and tweak away the lighting parts
+                        Pass* newPass = new Pass(this, p->getIndex(), *p);
+                        newPass->setAmbient(ColourValue::Black);
+                        newPass->setDiffuse(0, 0, 0, newPass->getDiffuse().a);  // Preserving alpha
+                        newPass->setSpecular(ColourValue::Black);
+                        newPass->setSelfIllumination(ColourValue::Black);
+                        newPass->setLightingEnabled(false);
+						newPass->setIteratePerLight(false, false);
+                        // modulate
+                        newPass->setSceneBlending(SBF_DEST_COLOUR, SBF_ZERO);
 
-						}
-						// This means the end of per-light passes
-						iStage = IS_DECAL;
-					}
-					break;
-				case IS_DECAL:
-					// We just want a 'lighting off' pass to finish off
-					// and only if there are texture units
-					if (p->getNumTextureUnitStates() > 0)
-					{
-						if (!p->getLightingEnabled())
-						{
-							// we assume this pass already combines as required with the scene
-							iPass = new IlluminationPass();
-							iPass->destroyOnShutdown = false;
-							iPass->originalPass = iPass->pass = p;
-							iPass->stage = iStage;
-							mIlluminationPasses.push_back(iPass);
-						}
-						else
-						{
-							// Copy the pass and tweak away the lighting parts
-							Pass* newPass = new Pass(this, p->getIndex(), *p);
-							newPass->setAmbient(ColourValue::Black);
-							newPass->setDiffuse(0, 0, 0, newPass->getDiffuse().a);  // Preserving alpha
-							newPass->setSpecular(ColourValue::Black);
-							newPass->setSelfIllumination(ColourValue::Black);
-							newPass->setLightingEnabled(false);
-							newPass->setIteratePerLight(false, false);
-							// modulate
-							newPass->setSceneBlending(SBF_DEST_COLOUR, SBF_ZERO);
+                        // Calculate hash value for new pass, because we are compiling
+                        // illumination passes on demand, which will loss hash calculate
+                        // before it add to render queue first time.
+                        newPass->_recalculateHash();
 
-							// Calculate hash value for new pass, because we are compiling
-							// illumination passes on demand, which will loss hash calculate
-							// before it add to render queue first time.
-							newPass->_recalculateHash();
+                        // NB there is nothing we can do about vertex & fragment
+                        // programs here, so people will just have to make their
+                        // programs friendly-like if they want to use this technique
+                        iPass = new IlluminationPass();
+                        iPass->destroyOnShutdown = true;
+                        iPass->originalPass = p;
+                        iPass->pass = newPass;
+                        iPass->stage = iStage;
+                        mIlluminationPasses.push_back(iPass);
 
-							// NB there is nothing we can do about vertex & fragment
-							// programs here, so people will just have to make their
-							// programs friendly-like if they want to use this technique
-							iPass = new IlluminationPass();
-							iPass->destroyOnShutdown = true;
-							iPass->originalPass = p;
-							iPass->pass = newPass;
-							iPass->stage = iStage;
-							mIlluminationPasses.push_back(iPass);
+                    }
+                }
+                ++i; // always increment on decal, since nothing more to do with this pass
 
-						}
-					}
-					++i; // always increment on decal, since nothing more to do with this pass
-
-					break;
-				}
-			}
-		}
+                break;
+            }
+        }
 
     }
     //-----------------------------------------------------------------------
@@ -1198,114 +992,5 @@ namespace Ogre {
 
         return testResult;
     }
-	//-----------------------------------------------------------------------
-	Ogre::MaterialPtr  Technique::getShadowCasterMaterial() const 
-	{ 
-		return mShadowCasterMaterial; 
-	}
-	//-----------------------------------------------------------------------
-	void  Technique::setShadowCasterMaterial(Ogre::MaterialPtr val) 
-	{ 
-		if (val.isNull())
-		{
-			mShadowCasterMaterial.setNull();
-			mShadowCasterMaterialName.clear();
-		}
-		else
-		{
-			mShadowCasterMaterial = val; 
-			mShadowCasterMaterialName = val->getName();
-		}
-	}
-	//-----------------------------------------------------------------------
-	void  Technique::setShadowCasterMaterial(const Ogre::String &name) 
-	{ 
-		mShadowCasterMaterialName = name;
-		mShadowCasterMaterial = MaterialManager::getSingleton().getByName(name); 
-	}
-	//-----------------------------------------------------------------------
-	Ogre::MaterialPtr  Technique::getShadowReceiverMaterial() const 
-	{ 
-		return mShadowReceiverMaterial; 
-	}
-	//-----------------------------------------------------------------------
-	void  Technique::setShadowReceiverMaterial(Ogre::MaterialPtr val) 
-	{ 
-		if (val.isNull())
-		{
-			mShadowReceiverMaterial.setNull();
-			mShadowReceiverMaterialName.clear();
-		}
-		else
-		{
-			mShadowReceiverMaterial = val; 
-			mShadowReceiverMaterialName = val->getName();
-		}
-	}
-	//-----------------------------------------------------------------------
-	void  Technique::setShadowReceiverMaterial(const Ogre::String &name)  
-	{ 
-		mShadowReceiverMaterialName = name;
-		mShadowReceiverMaterial = MaterialManager::getSingleton().getByName(name); 
-	}
-	//---------------------------------------------------------------------
-	void Technique::addGPUVendorRule(GPUVendor vendor, Technique::IncludeOrExclude includeOrExclude)
-	{
-		addGPUVendorRule(GPUVendorRule(vendor, includeOrExclude));
-	}
-	//---------------------------------------------------------------------
-	void Technique::addGPUVendorRule(const Technique::GPUVendorRule& rule)
-	{
-		// remove duplicates
-		removeGPUVendorRule(rule.vendor);
-		mGPUVendorRules.push_back(rule);
-	}
-	//---------------------------------------------------------------------
-	void Technique::removeGPUVendorRule(GPUVendor vendor)
-	{
-		for (GPUVendorRuleList::iterator i = mGPUVendorRules.begin(); i != mGPUVendorRules.end(); )
-		{
-			if (i->vendor == vendor)
-				i = mGPUVendorRules.erase(i);
-			else
-				++i;
-		}
-	}
-	//---------------------------------------------------------------------
-	Technique::GPUVendorRuleIterator Technique::getGPUVendorRuleIterator() const
-	{
-		return GPUVendorRuleIterator(mGPUVendorRules.begin(), mGPUVendorRules.end());
-	}
-	//---------------------------------------------------------------------
-	void Technique::addGPUDeviceNameRule(const String& devicePattern, 
-		Technique::IncludeOrExclude includeOrExclude, bool caseSensitive)
-	{
-		addGPUDeviceNameRule(GPUDeviceNameRule(devicePattern, includeOrExclude, caseSensitive));
-	}
-	//---------------------------------------------------------------------
-	void Technique::addGPUDeviceNameRule(const Technique::GPUDeviceNameRule& rule)
-	{
-		// remove duplicates
-		removeGPUDeviceNameRule(rule.devicePattern);
-		mGPUDeviceNameRules.push_back(rule);
-	}
-	//---------------------------------------------------------------------
-	void Technique::removeGPUDeviceNameRule(const String& devicePattern)
-	{
-		for (GPUDeviceNameRuleList::iterator i = mGPUDeviceNameRules.begin(); i != mGPUDeviceNameRules.end(); )
-		{
-			if (i->devicePattern == devicePattern)
-				i = mGPUDeviceNameRules.erase(i);
-			else
-				++i;
-		}
-	}
-	//---------------------------------------------------------------------
-	Technique::GPUDeviceNameRuleIterator Technique::getGPUDeviceNameRuleIterator() const
-	{
-		return GPUDeviceNameRuleIterator(mGPUDeviceNameRules.begin(), mGPUDeviceNameRules.end());
-	}
-	//---------------------------------------------------------------------
-
 
 }

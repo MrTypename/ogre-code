@@ -40,7 +40,7 @@ namespace Ogre {
 
     //-----------------------------------------------------------------------
     ResourceManager::ResourceManager()
-		: mNextHandle(1), mMemoryUsage(0), mLoadOrder(0), mVerbose(true)
+		: mNextHandle(1), mMemoryUsage(0), mLoadOrder(0)
     {
         // Init memory limit & usage
         mMemoryBudget = std::numeric_limits<unsigned long>::max();
@@ -87,24 +87,18 @@ namespace Ogre {
 		return ResourceCreateOrRetrieveResult(res, created);
 	}
     //-----------------------------------------------------------------------
-    ResourcePtr ResourceManager::prepare(const String& name, 
-        const String& group, bool isManual, ManualResourceLoader* loader, 
-        const NameValuePairList* loadParams)
-    {
-        ResourcePtr r = createOrRetrieve(name,group,isManual,loader,loadParams).first;
-		// ensure prepared
-        r->prepare();
-        return r;
-    }
-    //-----------------------------------------------------------------------
     ResourcePtr ResourceManager::load(const String& name, 
         const String& group, bool isManual, ManualResourceLoader* loader, 
         const NameValuePairList* loadParams)
     {
-        ResourcePtr r = createOrRetrieve(name,group,isManual,loader,loadParams).first;
+        ResourcePtr ret = getByName(name);
+        if (ret.isNull())
+        {
+            ret = create(name, group, isManual, loader, loadParams);
+        }
 		// ensure loaded
-        r->load();
-        return r;
+        ret->load();
+        return ret;
     }
     //-----------------------------------------------------------------------
     void ResourceManager::addImpl( ResourcePtr& res )
@@ -115,43 +109,18 @@ namespace Ogre {
             mResources.insert( ResourceMap::value_type( res->getName(), res ) );
         if (!result.second)
         {
-			// Attempt to resolve the collision
-			if(ResourceGroupManager::getSingleton().getLoadingListener())
-			{
-				if(ResourceGroupManager::getSingleton().getLoadingListener()->resourceCollision(res.get(), this))
-				{
-					// Try to do the addition again, no seconds attempts to resolve collisions are allowed
-					std::pair<ResourceMap::iterator, bool> result = 
-						mResources.insert( ResourceMap::value_type( res->getName(), res ) );
-					if (!result.second)
-					{
-						OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM, "Resource with the name " + res->getName() + 
-							" already exists.", "ResourceManager::add");
-					}
-
-					std::pair<ResourceHandleMap::iterator, bool> resultHandle = 
-						mResourcesByHandle.insert( ResourceHandleMap::value_type( res->getHandle(), res ) );
-					if (!resultHandle.second)
-					{
-						OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM, "Resource with the handle " + 
-							StringConverter::toString((long) (res->getHandle())) + 
-							" already exists.", "ResourceManager::add");
-					}
-				}
-			}
+            OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM, "Resource with the name " + res->getName() + 
+                " already exists.", "ResourceManager::add");
         }
-		else
-		{
-			// Insert the handle
-			std::pair<ResourceHandleMap::iterator, bool> resultHandle = 
-				mResourcesByHandle.insert( ResourceHandleMap::value_type( res->getHandle(), res ) );
-			if (!resultHandle.second)
-			{
-				OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM, "Resource with the handle " + 
-					StringConverter::toString((long) (res->getHandle())) + 
-					" already exists.", "ResourceManager::add");
-			}
-		}
+        std::pair<ResourceHandleMap::iterator, bool> resultHandle = 
+            mResourcesByHandle.insert( ResourceHandleMap::value_type( res->getHandle(), res ) );
+        if (!resultHandle.second)
+        {
+            OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM, "Resource with the handle " + 
+                StringConverter::toString((long) (res->getHandle())) + 
+                " already exists.", "ResourceManager::add");
+        }
+
     }
 	//-----------------------------------------------------------------------
 	void ResourceManager::removeImpl( ResourcePtr& res )

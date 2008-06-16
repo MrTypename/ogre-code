@@ -39,7 +39,7 @@ namespace Ogre
     /** Standard 2-dimensional vector.
         @remarks
             A direction in 2D space represented as distances along the 2
-            orthogonal axes (x, y). Note that positions, directions and
+            orthoganal axes (x, y). Note that positions, directions and
             scaling factors can be represented by a vector, depending on how
             you interpret the values.
     */
@@ -77,6 +77,11 @@ namespace Ogre
 
         inline explicit Vector2( Real* const r )
             : x( r[0] ), y( r[1] )
+        {
+        }
+
+        inline Vector2( const Vector2& rkVector )
+            : x( rkVector.x ), y( rkVector.y )
         {
         }
 

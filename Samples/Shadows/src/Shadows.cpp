@@ -38,12 +38,15 @@ LGPL like the rest of the engine.
 #include "ExampleApplication.h"
 
 /*
+#include "OgreNoMemoryMacros.h"
 #include <ode/odecpp.h>
 #include <ode/odecpp_collision.h>
+#include "OgreMemoryMacros.h"
 */
 
 /*
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
+#include "OgreNoMemoryMacros.h"
 #include <crtdbg.h>
 #endi*/
 
@@ -330,7 +333,7 @@ public:
     }
 
 
-	bool frameRenderingQueued(const FrameEvent& evt)
+	bool frameStarted(const FrameEvent& evt)
 	{
 		CEGUI::System::getSingleton().injectTimePulse(evt.timeSinceLastFrame);
 

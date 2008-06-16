@@ -33,6 +33,7 @@ Torus Knot Software Ltd.
 #include "OgreVector4.h"
 #include "OgreHardwareVertexBuffer.h"
 #include "OgreRenderOperation.h"
+#include "OgreAlignedAllocator.h"
 
 namespace Ogre {
 
@@ -43,7 +44,7 @@ namespace Ogre {
         This information is built using the EdgeListBuilder class. Note that for a given mesh,
         which can be made up of multiple submeshes, there are separate edge lists for when 
     */
-	class _OgreExport EdgeData : public EdgeDataAlloc
+    class _OgreExport EdgeData
     {
     public:
         /** Basic triangle structure. */
@@ -72,10 +73,10 @@ namespace Ogre {
             bool degenerate;
         };
 
-        // Array of 4D vector of triangle face normal, which is unit vector orthogonal
+        // Array of 4D vector of triangle face normal, which is unit vector othogonal
         // to the triangles, plus distance from origin.
-        // Use aligned policy here because we are intended to use in SIMD optimised routines .
-        typedef std::vector<Vector4, STLAllocator<Vector4, CategorisedAlignAllocPolicy<MEMCATEGORY_GEOMETRY> > > TriangleFaceNormalList;
+        // Use aligned allocator here because we are intented to use in SIMD optimised routines .
+        typedef std::vector<Vector4, AlignedAllocator<Vector4> > TriangleFaceNormalList;
 
         // Working vector used when calculating the silhouette.
         // Use std::vector<char> instead of std::vector<bool> which might implemented
@@ -122,7 +123,7 @@ namespace Ogre {
 
         /** Calculate the light facing state of the triangles in this edge list
         @remarks
-            This is normally the first stage of calculating a silhouette, i.e.
+            This is normally the first stage of calculating a silhouette, ie
             establishing which tris are facing the light and which are facing
             away. This state is stored in the 'triangleLightFacings'.
         @param lightPos 4D position of the light in object space, note that 
