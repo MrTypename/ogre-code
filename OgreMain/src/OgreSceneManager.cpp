@@ -4259,7 +4259,6 @@ void SceneManager::initShadowVolumeMaterials(void)
                 // Enable the (infinite) point light extruder for now, just to get some params
                 mShadowDebugPass->setVertexProgram(
                     ShadowVolumeExtrudeProgram::programNames[ShadowVolumeExtrudeProgram::POINT_LIGHT]);
-				mShadowDebugPass->setFragmentProgram(ShadowVolumeExtrudeProgram::frgProgramName);				
                 mInfiniteExtrusionParams = 
                     mShadowDebugPass->getVertexProgramParameters();
                 mInfiniteExtrusionParams->setAutoConstant(0, 
@@ -4301,7 +4300,6 @@ void SceneManager::initShadowVolumeMaterials(void)
                 // Enable the finite point light extruder for now, just to get some params
                 mShadowStencilPass->setVertexProgram(
                     ShadowVolumeExtrudeProgram::programNames[ShadowVolumeExtrudeProgram::POINT_LIGHT_FINITE]);
-				mShadowStencilPass->setFragmentProgram(ShadowVolumeExtrudeProgram::frgProgramName);				
                 mFiniteExtrusionParams = 
                     mShadowStencilPass->getVertexProgramParameters();
                 mFiniteExtrusionParams->setAutoConstant(0, 
@@ -5024,7 +5022,6 @@ void SceneManager::renderShadowVolumesToStencil(const Light* light,
         mShadowStencilPass->setVertexProgram(
             ShadowVolumeExtrudeProgram::getProgramName(light->getType(), finiteExtrude, false)
             , false);
-		mShadowStencilPass->setFragmentProgram(ShadowVolumeExtrudeProgram::frgProgramName);				
         // Set params
         if (finiteExtrude)
         {
@@ -5038,10 +5035,7 @@ void SceneManager::renderShadowVolumesToStencil(const Light* light,
         {
             mShadowDebugPass->setVertexProgram(
                 ShadowVolumeExtrudeProgram::getProgramName(light->getType(), finiteExtrude, true)
-				 , false);
-			mShadowDebugPass->setFragmentProgram(ShadowVolumeExtrudeProgram::frgProgramName);				
-
-               
+                , false);
             // Set params
             if (finiteExtrude)
             {
@@ -5054,10 +5048,6 @@ void SceneManager::renderShadowVolumesToStencil(const Light* light,
         }
 
         mDestRenderSystem->bindGpuProgram(mShadowStencilPass->getVertexProgram()->_getBindingDelegate());
-		if (!ShadowVolumeExtrudeProgram::frgProgramName.empty())
-		{
-			mDestRenderSystem->bindGpuProgram(mShadowStencilPass->getFragmentProgram()->_getBindingDelegate());
-		}
 
     }
     else

@@ -470,7 +470,7 @@ static size_t dummyCounter = 0;
 		{
 			String texName =  "c" + StringConverter::toString(dummyCounter++) + 
 				"/" + def->name + "/" + mChain->getViewport()->getTarget()->getName();
-			
+
 			// space in the name mixup the cegui in the compositor demo
 			// this is an auto generated name - so no spaces can't hart us.
 			std::replace( texName.begin(), texName.end(), ' ', '_' ); 

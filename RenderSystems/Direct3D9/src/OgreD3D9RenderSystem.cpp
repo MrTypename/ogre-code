@@ -566,7 +566,7 @@ namespace Ogre
 				OGRE_EXCEPT( Exception::ERR_INTERNAL_ERROR, "Can't find sRGB option!", "D3D9RenderSystem::initialise" );
 			hwGamma = opt->second.currentValue == "Yes";
 
-			
+
 
 			NameValuePairList miscParams;
 			miscParams["colourDepth"] = StringConverter::toString(videoMode->getColourDepth());
@@ -2570,7 +2570,7 @@ namespace Ogre
 	{
 		HRESULT hr;
 		DWORD oldVal;
-		
+
 		// can only set fixed-function texture stage state
 		if (stage < 8)
 		{

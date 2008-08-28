@@ -838,11 +838,4 @@ namespace Ogre
 
 		rebind(buffer);
 	}
-
-	//---------------------------------------------------------------------
-
-	D3D10RenderTexture::~D3D10RenderTexture()
-	{
-
-	}
 }

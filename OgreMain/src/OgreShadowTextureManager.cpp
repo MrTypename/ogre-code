@@ -142,7 +142,7 @@ namespace Ogre
 		TexturePtr shadowTex = TextureManager::getSingleton().createManual(
 			targName, 
 			ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME, 
-			TEX_TYPE_2D, 1, 1, 0, format, TU_DYNAMIC);
+			TEX_TYPE_2D, 1, 1, 0, format);
 		mNullTextureList.push_back(shadowTex);
 
 		// lock & populate the texture based on format
