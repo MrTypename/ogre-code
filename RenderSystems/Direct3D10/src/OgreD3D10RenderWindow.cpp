@@ -530,8 +530,6 @@ namespace Ogre
 
 			// create the render target view
 			D3D10_RENDER_TARGET_VIEW_DESC RTVDesc;
-			ZeroMemory( &RTVDesc, sizeof(RTVDesc) );
-
 			RTVDesc.Format = BBDesc.Format;
 			RTVDesc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2D;
 			RTVDesc.Texture2D.MipSlice = 0;

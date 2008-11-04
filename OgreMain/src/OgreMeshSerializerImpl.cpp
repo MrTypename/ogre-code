@@ -935,7 +935,7 @@ namespace Ogre {
         String materialName = readString(stream);
 		if(listener)
 			listener->processMaterialName(pMesh, &materialName);
-        sm->setMaterialName(materialName, pMesh->getGroup());
+        sm->setMaterialName(materialName);
 
         // bool useSharedVertices
         readBools(stream,&sm->useSharedVertices, 1);
@@ -2924,5 +2924,4 @@ namespace Ogre {
 
 
 }
-
 

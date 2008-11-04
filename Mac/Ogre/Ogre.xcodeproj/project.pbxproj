@@ -581,7 +581,6 @@
 		AA7510680DDE20FE009D23BA /* OgreMemoryAllocatorConfig.h in Headers */ = {isa = PBXBuildFile; fileRef = AA7510640DDE20FE009D23BA /* OgreMemoryAllocatorConfig.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AA7510690DDE20FE009D23BA /* OgreMemoryStdAlloc.h in Headers */ = {isa = PBXBuildFile; fileRef = AA7510650DDE20FE009D23BA /* OgreMemoryStdAlloc.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AA75106A0DDE20FE009D23BA /* OgreMemorySTLAllocator.h in Headers */ = {isa = PBXBuildFile; fileRef = AA7510660DDE20FE009D23BA /* OgreMemorySTLAllocator.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		AA879F810EBB02180048013E /* OgreCgFxScriptLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA879F800EBB02180048013E /* OgreCgFxScriptLoader.cpp */; };
 		AA89775B0E5F4B9400A70BC4 /* OgreRenderToVertexBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = AA89775A0E5F4B9400A70BC4 /* OgreRenderToVertexBuffer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AA89775E0E5F4BB900A70BC4 /* OgreRenderToVertexBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA89775D0E5F4BB900A70BC4 /* OgreRenderToVertexBuffer.cpp */; };
 		AA8977610E5F4C0100A70BC4 /* OgreGLRenderToVertexBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8977600E5F4C0100A70BC4 /* OgreGLRenderToVertexBuffer.cpp */; };
@@ -1391,8 +1390,6 @@
 		AA7510640DDE20FE009D23BA /* OgreMemoryAllocatorConfig.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreMemoryAllocatorConfig.h; path = ../../OgreMain/include/OgreMemoryAllocatorConfig.h; sourceTree = SOURCE_ROOT; };
 		AA7510650DDE20FE009D23BA /* OgreMemoryStdAlloc.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreMemoryStdAlloc.h; path = ../../OgreMain/include/OgreMemoryStdAlloc.h; sourceTree = SOURCE_ROOT; };
 		AA7510660DDE20FE009D23BA /* OgreMemorySTLAllocator.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = OgreMemorySTLAllocator.h; path = ../../OgreMain/include/OgreMemorySTLAllocator.h; sourceTree = SOURCE_ROOT; };
-		AA879F7E0EBB02030048013E /* OgreCgFxScriptLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OgreCgFxScriptLoader.h; path = ../../PlugIns/CgProgramManager/include/OgreCgFxScriptLoader.h; sourceTree = SOURCE_ROOT; };
-		AA879F800EBB02180048013E /* OgreCgFxScriptLoader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OgreCgFxScriptLoader.cpp; path = ../../PlugIns/CgProgramManager/src/OgreCgFxScriptLoader.cpp; sourceTree = SOURCE_ROOT; };
 		AA89775A0E5F4B9400A70BC4 /* OgreRenderToVertexBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OgreRenderToVertexBuffer.h; path = ../../OgreMain/include/OgreRenderToVertexBuffer.h; sourceTree = SOURCE_ROOT; };
 		AA89775D0E5F4BB900A70BC4 /* OgreRenderToVertexBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OgreRenderToVertexBuffer.cpp; path = ../../OgreMain/src/OgreRenderToVertexBuffer.cpp; sourceTree = SOURCE_ROOT; };
 		AA89775F0E5F4BE100A70BC4 /* OgreGLRenderToVertexBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OgreGLRenderToVertexBuffer.h; path = ../../RenderSystems/GL/include/OgreGLRenderToVertexBuffer.h; sourceTree = SOURCE_ROOT; };
@@ -1431,7 +1428,6 @@
 		AAC698150EA1117C00F18A41 /* OgrePCZSceneQuery.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OgrePCZSceneQuery.cpp; path = ../../PlugIns/PCZSceneManager/src/OgrePCZSceneQuery.cpp; sourceTree = SOURCE_ROOT; };
 		AAC698160EA1117C00F18A41 /* OgrePortal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OgrePortal.cpp; path = ../../PlugIns/PCZSceneManager/src/OgrePortal.cpp; sourceTree = SOURCE_ROOT; };
 		AAC698170EA1117C00F18A41 /* OgreSegment.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OgreSegment.cpp; path = ../../PlugIns/PCZSceneManager/src/OgreSegment.cpp; sourceTree = SOURCE_ROOT; };
-		AAC698330EA1131A00F18A41 /* PCZSceneManager Plugin-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "PCZSceneManager Plugin-Info.plist"; path = "plist/PCZSceneManager Plugin-Info.plist"; sourceTree = "<group>"; };
 		AAC698790EA114BB00F18A41 /* Plugin_OctreeZone.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Plugin_OctreeZone.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		AAC6989F0EA1161A00F18A41 /* OctreeZone Plugin-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "OctreeZone Plugin-Info.plist"; path = "plist/OctreeZone Plugin-Info.plist"; sourceTree = "<group>"; };
 		AAC698DF0EA1170000F18A41 /* OgreHeightmapTerrainZonePageSource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OgreHeightmapTerrainZonePageSource.cpp; path = ../../PlugIns/OctreeZone/src/OgreHeightmapTerrainZonePageSource.cpp; sourceTree = SOURCE_ROOT; };
@@ -1574,7 +1570,6 @@
 				000E235D0B38F852004EA2DF /* ParticleFX Plugin-Info.plist */,
 				000E23C90B38FD6F004EA2DF /* BSPSceneManager Plugin-Info.plist */,
 				000E23F70B39009B004EA2DF /* OctreeSceneManager Plugin-Info.plist */,
-				AAC698330EA1131A00F18A41 /* PCZSceneManager Plugin-Info.plist */,
 				AAC6989F0EA1161A00F18A41 /* OctreeZone Plugin-Info.plist */,
 				000E24360B3902ED004EA2DF /* CgProgramManager Plugin-Info.plist */,
 				000E24550B390583004EA2DF /* EXRCodec Plugin-Info.plist */,
@@ -2426,7 +2421,6 @@
 		000E243C0B39046A004EA2DF /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				AA879F800EBB02180048013E /* OgreCgFxScriptLoader.cpp */,
 				005E5EC00B7F3C9300658C32 /* OgreCgPlugin.cpp */,
 				000E24410B3904B0004EA2DF /* OgreCgProgram.cpp */,
 				000E24420B3904B0004EA2DF /* OgreCgProgramFactory.cpp */,
@@ -2438,7 +2432,6 @@
 		000E243D0B390472004EA2DF /* Headers */ = {
 			isa = PBXGroup;
 			children = (
-				AA879F7E0EBB02030048013E /* OgreCgFxScriptLoader.h */,
 				005E5EBF0B7F3C7E00658C32 /* OgreCgPlugin.h */,
 				000E243E0B390499004EA2DF /* OgreCgPrerequisites.h */,
 				000E243F0B390499004EA2DF /* OgreCgProgram.h */,
@@ -3327,7 +3320,6 @@
 				000E24450B3904B0004EA2DF /* OgreCgProgramFactory.cpp in Sources */,
 				000E24460B3904B0004EA2DF /* OgreCgProgramManagerDll.cpp in Sources */,
 				005E5EC10B7F3C9300658C32 /* OgreCgPlugin.cpp in Sources */,
-				AA879F810EBB02180048013E /* OgreCgFxScriptLoader.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

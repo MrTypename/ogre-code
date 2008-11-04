@@ -566,7 +566,7 @@ namespace Ogre
 				OGRE_EXCEPT( Exception::ERR_INTERNAL_ERROR, "Can't find sRGB option!", "D3D9RenderSystem::initialise" );
 			hwGamma = opt->second.currentValue == "Yes";
 
-			
+
 
 			NameValuePairList miscParams;
 			miscParams["colourDepth"] = StringConverter::toString(videoMode->getColourDepth());
@@ -982,8 +982,6 @@ namespace Ogre
 
 			// no other cards have Dx9 hacks for alpha to coverage, as far as I know
 		}
-
-		rsc->setCapability(RSC_ADVANCED_BLEND_OPERATIONS);
 
 
 		return rsc;
@@ -2165,7 +2163,7 @@ namespace Ogre
 		}
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendOperation op )
+	void D3D9RenderSystem::_setSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor )
 	{
 		HRESULT hr;
 		if( sourceFactor == SBF_ONE && destFactor == SBF_ZERO)
@@ -2184,15 +2182,9 @@ namespace Ogre
 			if( FAILED( hr = __SetRenderState( D3DRS_DESTBLEND, D3D9Mappings::get(destFactor) ) ) )
 				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set destination blend", "D3D9RenderSystem::_setSceneBlending" );
 		}
-
-		if (FAILED(hr = __SetRenderState(D3DRS_BLENDOP, D3D9Mappings::get(op))))
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set scene blending operation option", "D3D9RenderSystem::_setSceneBlendingOperation" );
-		if (FAILED(hr = __SetRenderState(D3DRS_BLENDOPALPHA, D3D9Mappings::get(op))))
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set scene blending operation option", "D3D9RenderSystem::_setSceneBlendingOperation" );
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setSeparateSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, 
-		SceneBlendFactor destFactorAlpha, SceneBlendOperation op, SceneBlendOperation alphaOp )
+	void D3D9RenderSystem::_setSeparateSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha )
 	{
 		HRESULT hr;
 		if( sourceFactor == SBF_ONE && destFactor == SBF_ZERO && 
@@ -2216,11 +2208,6 @@ namespace Ogre
 			if( FAILED( hr = __SetRenderState( D3DRS_DESTBLENDALPHA, D3D9Mappings::get(destFactorAlpha) ) ) )
 				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set alpha destination blend", "D3D9RenderSystem::_setSeperateSceneBlending" );
 		}
-
-		if (FAILED(hr = __SetRenderState(D3DRS_BLENDOP, D3D9Mappings::get(op))))
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set scene blending operation option", "D3D9RenderSystem::_setSceneBlendingOperation" );
-		if (FAILED(hr = __SetRenderState(D3DRS_BLENDOPALPHA, D3D9Mappings::get(alphaOp))))
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set alpha scene blending operation option", "D3D9RenderSystem::_setSceneBlendingOperation" );
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_setAlphaRejectSettings( CompareFunction func, unsigned char value, bool alphaToCoverage )
@@ -2587,7 +2574,7 @@ namespace Ogre
 	{
 		HRESULT hr;
 		DWORD oldVal;
-		
+
 		// can only set fixed-function texture stage state
 		if (stage < 8)
 		{

@@ -4,7 +4,7 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "OGRE SDK"
-!define PRODUCT_VERSION "1.7.0"
+!define PRODUCT_VERSION "1.6.0"
 !define PRODUCT_PUBLISHER "The OGRE Team"
 !define PRODUCT_WEB_SITE "http://www.ogre3d.org"
 !ifdef MINGW
@@ -230,6 +230,7 @@ Section -Docs
   File "..\..\Docs\ChangeLog.html"
   File "..\..\Docs\style.css"
   File "..\..\Docs\ogre-logo.gif"
+  File "..\..\Docs\ogre-logo-wetfloor.gif"
   SetOutPath "$INSTDIR\docs\licenses"
   File "..\..\Docs\licenses\*.*"
 

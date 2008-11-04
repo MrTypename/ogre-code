@@ -299,11 +299,11 @@ namespace Ogre {
         return mDefaultHeight;
     }
     //-----------------------------------------------------------------------
-    void BillboardSet::setMaterialName( const String& name , const String& groupName /* = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME */ )
+    void BillboardSet::setMaterialName( const String& name )
     {
         mMaterialName = name;
 
-        mpMaterial = MaterialManager::getSingleton().getByName(name, groupName);
+        mpMaterial = MaterialManager::getSingleton().getByName(name);
 
 		if (mpMaterial.isNull())
 			OGRE_EXCEPT( Exception::ERR_ITEM_NOT_FOUND, "Could not find material " + name,

@@ -58,7 +58,7 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    void SubMesh::setMaterialName( const String& name, const String& groupName /* = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME */)
+    void SubMesh::setMaterialName(const String& name)
     {
         mMaterialName = name;
         mMatInitialised = true;
@@ -455,5 +455,4 @@ namespace Ogre {
 		}
 	}
 }
-
 

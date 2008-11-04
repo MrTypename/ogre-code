@@ -79,7 +79,6 @@ namespace Ogre {
 			ID_PF_FLOAT16_R, ID_PF_FLOAT16_RGB, ID_PF_FLOAT16_RGBA,
 			ID_PF_FLOAT32_R, ID_PF_FLOAT32_RGB, ID_PF_FLOAT32_RGBA,
 			ID_PF_FLOAT16_GR, ID_PF_FLOAT32_GR,
-			ID_SHARED, ID_GAMMA, ID_NO_FSAA,
 			// Targets
 			ID_PREVIOUS, ID_NONE,
 			// Passes
@@ -156,7 +155,6 @@ namespace Ogre {
 		void parseCompositor(void);
 		void parseTechnique(void);
 		void parseTexture(void);
-		void parseScheme(void);
 		void parseTarget(void);
 		void parseInput(void);
 		void parseTargetOutput(void);

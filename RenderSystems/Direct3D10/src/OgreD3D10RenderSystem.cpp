@@ -79,13 +79,12 @@ namespace Ogre
 
 		mBoundVertexProgram = NULL;
 		mBoundFragmentProgram = NULL;
-		mBoundGeometryProgram = NULL;
 
 		ZeroMemory( &mBlendDesc, sizeof(mBlendDesc));
 
 		ZeroMemory( &mRasterizerDesc, sizeof(mRasterizerDesc));
 		mRasterizerDesc.FrontCounterClockwise = true;
-		mRasterizerDesc.DepthClipEnable = false;
+		mRasterizerDesc.DepthClipEnable = true;
 		mRasterizerDesc.MultisampleEnable = true;
 
 
@@ -141,8 +140,8 @@ namespace Ogre
 		mLastVertexSourceCount = 0;
 
 		// Enumerate events
-	//	mEventNames.push_back("DeviceLost");
-	//	mEventNames.push_back("DeviceRestored");
+		mEventNames.push_back("DeviceLost");
+		mEventNames.push_back("DeviceRestored");
 
 		mFixedFuncEmuShaderManager.registerGenerator(&mHlslFixedFuncEmuShaderGenerator);
 
@@ -283,7 +282,7 @@ namespace Ogre
 		optExceptionsErrorLevel.possibleValues.push_back("Error");
 		optExceptionsErrorLevel.possibleValues.push_back("Warning");
 		optExceptionsErrorLevel.possibleValues.push_back("Info (exception on any message)");
-#ifdef OGRE_DEBUG_MODE
+#ifdef _DEBUG
 		optExceptionsErrorLevel.currentValue = "Info (exception on any message)";
 #else
 		optExceptionsErrorLevel.currentValue = "No information queue exceptions";
@@ -605,13 +604,9 @@ namespace Ogre
 			{
 				deviceFlags |= D3D10_CREATE_DEVICE_SINGLETHREADED;
 			}
-			D3D10_DRIVER_TYPE driverType = D3D10_DRIVER_TYPE_HARDWARE;
-			if(mUseNVPerfHUD)
-			{
-				driverType = D3D10_DRIVER_TYPE_REFERENCE;
-			}
+			
 			ID3D10Device * device;
-			if(FAILED(D3D10CreateDevice(mActiveD3DDriver->getDeviceAdapter(),driverType ,0,deviceFlags,D3D10_SDK_VERSION, &device)))			
+			if(FAILED(D3D10CreateDevice(mActiveD3DDriver->getDeviceAdapter(),D3D10_DRIVER_TYPE_HARDWARE ,0,deviceFlags,D3D10_SDK_VERSION, &device)))			
 			{
 				OGRE_EXCEPT( Exception::ERR_INTERNAL_ERROR, 
 					"Failed to create Direct3D10 object", 
@@ -880,7 +875,6 @@ namespace Ogre
 
 		convertVertexShaderCaps(rsc);
 		convertPixelShaderCaps(rsc);
-		convertGeometryShaderCaps(rsc);
 
 		rsc->setCapability(RSC_USER_CLIP_PLANES);
 		rsc->setCapability(RSC_VERTEX_FORMAT_UBYTE4);
@@ -1024,59 +1018,6 @@ namespace Ogre
 		rsc->setFragmentProgramConstantFloatCount(512);
 
     }
-	//---------------------------------------------------------------------
-	void D3D10RenderSystem::convertGeometryShaderCaps(RenderSystemCapabilities* rsc) const
-	{
-
-		rsc->addShaderProfile("gs_4_0");
-		// Documentation\dx10help\d3d10.chm::/D3D10CompileShader.htm
-		// The Direct3D 10 currently supports only "vs_4_0", "ps_4_0", and "gs_4_0". 
-
-		rsc->setCapability(RSC_GEOMETRY_PROGRAM);
-		rsc->setCapability(RSC_HWRENDER_TO_VERTEX_BUFFER);
-
-		rsc->setGeometryProgramConstantFloatCount(0);
-		rsc->setGeometryProgramConstantIntCount(0);
-		rsc->setGeometryProgramConstantBoolCount(0);
-		rsc->setGeometryProgramNumOutputVertices(0);
-		/*
-		/// The number of floating-point constants geometry programs support
-		void setGeometryProgramConstantFloatCount(ushort c)
-		{
-			mGeometryProgramConstantFloatCount = c;           
-		}
-		/// The number of integer constants geometry programs support
-		void setGeometryProgramConstantIntCount(ushort c)
-		{
-			mGeometryProgramConstantIntCount = c;           
-		}
-		/// The number of boolean constants geometry programs support
-		void setGeometryProgramConstantBoolCount(ushort c)
-		{
-			mGeometryProgramConstantBoolCount = c;           
-		}
-		/// Set the number of vertices a single geometry program run can emit
-		void setGeometryProgramNumOutputVertices(int numOutputVertices)
-		{
-		mGeometryProgramNumOutputVertices = numOutputVertices;
-		}
-		/// Get the number of vertices a single geometry program run can emit
-		int getGeometryProgramNumOutputVertices(void) const
-		{
-		return mGeometryProgramNumOutputVertices;
-		}
-
-*/
-/*		// TODO: constant buffers have no limits but lower models do
-		// 16 boolean params allowed
-		rsc->setFragmentProgramConstantBoolCount(16);
-		// 16 integer params allowed, 4D
-		rsc->setFragmentProgramConstantIntCount(16);
-		// float params, always 4D
-		rsc->setFragmentProgramConstantFloatCount(512);
-*/
-	}
-
 	//-----------------------------------------------------------------------
 	bool D3D10RenderSystem::checkVertexTextureFormats(void)
 	{
@@ -1757,28 +1698,21 @@ namespace Ogre
 		}
 	}
 	//---------------------------------------------------------------------
-	void D3D10RenderSystem::_setSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendOperation op /*= SBO_ADD*/ )
+	void D3D10RenderSystem::_setSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor )
 	{
-		if( sourceFactor == SBF_ONE && destFactor == SBF_ZERO)
-		{
-			mBlendDesc.BlendEnable[0] = FALSE;
-		}
-		else
-		{
-			mBlendDesc.BlendEnable[0] = TRUE;
-			mBlendDesc.SrcBlend = D3D10Mappings::get(sourceFactor);
-			mBlendDesc.DestBlend = D3D10Mappings::get(destFactor);
-			mBlendDesc.BlendOp = D3D10_BLEND_OP_ADD ;
-			mBlendDesc.BlendOpAlpha = D3D10_BLEND_OP_ADD ;
-			mBlendDesc.SrcBlendAlpha = D3D10_BLEND_ZERO;
-			mBlendDesc.DestBlendAlpha = D3D10_BLEND_ZERO;
-			mBlendDesc.AlphaToCoverageEnable = mSceneAlphaToCoverage;
+		mBlendDesc.BlendEnable[0] = TRUE;
+		mBlendDesc.SrcBlend = D3D10Mappings::get(sourceFactor);
+		mBlendDesc.DestBlend = D3D10Mappings::get(destFactor);
+		mBlendDesc.BlendOp = D3D10_BLEND_OP_ADD ;
+		mBlendDesc.BlendOpAlpha = D3D10_BLEND_OP_ADD ;
+		mBlendDesc.SrcBlendAlpha = D3D10_BLEND_ZERO;
+		mBlendDesc.DestBlendAlpha = D3D10_BLEND_ZERO;
+		mBlendDesc.AlphaToCoverageEnable = mSceneAlphaToCoverage;
 
-			mBlendDesc.RenderTargetWriteMask[0] = 0x0F;
-		}
+		mBlendDesc.RenderTargetWriteMask[0] = 0x0F;
 	}
 	//---------------------------------------------------------------------
-	void D3D10RenderSystem::_setSeparateSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha, SceneBlendOperation op /*= SBO_ADD*/, SceneBlendOperation alphaOp /*= SBO_ADD*/ )
+	void D3D10RenderSystem::_setSeparateSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha )
 	{
 	/*	HRESULT hr;
 		if( sourceFactor == SBF_ONE && destFactor == SBF_ZERO && 
@@ -1828,7 +1762,7 @@ namespace Ogre
 	void D3D10RenderSystem::_setDepthBufferCheckEnabled( bool enabled )
 	{
 		mDepthStencilDesc.DepthEnable = enabled;
-		//mRasterizerDesc.DepthClipEnable = enabled;
+		mRasterizerDesc.DepthClipEnable = enabled;
 	}
 	//---------------------------------------------------------------------
 	void D3D10RenderSystem::_setDepthBufferWriteEnabled( bool enabled )
@@ -2292,12 +2226,12 @@ namespace Ogre
 
 		D3D10RenderOperationState * opState = NULL;
 		bool unstandardRenderOperation = false;
-		/*if (op.srcRenderable)
+		if (op.srcRenderable)
 		{
 			opState = (D3D10RenderOperationState *) op.srcRenderable->getRenderSystemData();
 		}
 		else
-		*/{
+		{
 			unstandardRenderOperation = true;
 		}
 
@@ -2380,11 +2314,21 @@ namespace Ogre
 					textureLayerState.setTextureType(curDesc.type);
 					textureLayerState.setTexCoordCalcMethod(curDesc.autoTexCoordType);
 					textureLayerState.setLayerBlendModeEx(curDesc.layerBlendMode);
-					textureLayerState.setCoordIndex((uint8)curDesc.coordIndex);
+					textureLayerState.setCoordIndex(curDesc.coordIndex);
 					opState->mTextureLayerStateList.push_back(textureLayerState);
 
 				}
 			}
+
+			mFixedFuncState.setTextureLayerStateList(opState->mTextureLayerStateList);
+
+			const VertexBufferDeclaration &  vertexBufferDeclaration = 
+				(static_cast<D3D10VertexDeclaration *>(op.vertexData->vertexDeclaration))->getVertexBufferDeclaration();
+
+			opState->mFixedFuncPrograms = mFixedFuncEmuShaderManager.getShaderPrograms("hlsl4", 
+				vertexBufferDeclaration,
+				mFixedFuncState
+				);
 
 
 			if (!unstandardRenderOperation)
@@ -2394,7 +2338,6 @@ namespace Ogre
 
 		}
 
-		mFixedFuncState.setTextureLayerStateList(opState->mTextureLayerStateList);
 
 		if (unstandardRenderOperation || opState->mBlendState != mBoundBlendState)
 		{
@@ -2469,52 +2412,33 @@ namespace Ogre
 
 
 
-		// well, in D3D10 we have to make sure that we have a vertex and fragment shader
+		// well, in D3D10 we have to make sure that we have a vertex and fagmant shader
 		// bound before we start rendering, so we do that first...
-		bool needToUnmapFS = false;
 		bool needToUnmapVS = false;
-	 	if (!mBoundVertexProgram || !mBoundFragmentProgram) // I know this is bad code - but I want to get things going
+		bool needToUnmapFS = false;
+	 	if (!mBoundVertexProgram) // I know this is bad code - but I want to get things going
 		{
-			
-
-	
-			{
-				const VertexBufferDeclaration &  vertexBufferDeclaration = 
-					(static_cast<D3D10VertexDeclaration *>(op.vertexData->vertexDeclaration))->getVertexBufferDeclaration();
-
-				opState->mFixedFuncPrograms = mFixedFuncEmuShaderManager.getShaderPrograms("hlsl4", 
-					vertexBufferDeclaration,
-					mFixedFuncState
-					);
-			}
-
-
+			assert (!mBoundFragmentProgram); // not allowed for now
 
 			FixedFuncPrograms * fixedFuncPrograms = opState->mFixedFuncPrograms;
-				
-			
-			fixedFuncPrograms->setFixedFuncProgramsParameters(mFixedFuncProgramsParameters);
 
-			if (!mBoundVertexProgram)
-			{
+
+
+
 				needToUnmapVS = true;
+				needToUnmapFS = true;
+				
+				fixedFuncPrograms->setFixedFuncProgramsParameters(mFixedFuncProgramsParameters);
+
 				// Bind Vertex Program
 				bindGpuProgram(fixedFuncPrograms->getVertexProgramUsage()->getProgram().get());
 				bindGpuProgramParameters(GPT_VERTEX_PROGRAM, 
 					fixedFuncPrograms->getVertexProgramUsage()->getParameters());
-
-			}
-
-			if (!mBoundFragmentProgram)
-			{
-				needToUnmapFS = true;
+				
 				// Bind Fragment Program 
 				bindGpuProgram(fixedFuncPrograms->getFragmentProgramUsage()->getProgram().get());
 				bindGpuProgramParameters(GPT_FRAGMENT_PROGRAM, 
 					fixedFuncPrograms->getFragmentProgramUsage()->getParameters());
-			}
-				
-
 		
 		}
 
@@ -2660,10 +2584,6 @@ namespace Ogre
 
 		if (unstandardRenderOperation)
 		{
-			mDevice->OMSetBlendState(0, 0, 0xffffffff); 
-			mDevice->RSSetState(0);
-			mDevice->OMSetDepthStencilState(0, 0); 
-//			mDevice->PSSetSamplers(static_cast<UINT>(0), static_cast<UINT>(0), 0);
 			delete opState;
 		}
 
@@ -2678,13 +2598,6 @@ namespace Ogre
 	//---------------------------------------------------------------------
     void D3D10RenderSystem::bindGpuProgram(GpuProgram* prg)
     {
-		if (!prg)
-		{
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-				"Null program bound.",
-				"D3D10RenderSystem::bindGpuProgram");
-		}
-
 		switch (prg->getType())
 		{
 		case GPT_VERTEX_PROGRAM:
@@ -2719,22 +2632,6 @@ namespace Ogre
 				}		
 			}
 			break;
-		case GPT_GEOMETRY_PROGRAM:
-			{
-				mBoundGeometryProgram = static_cast<D3D10HLSLProgram*>(prg);
-				ID3D10GeometryShader* psShaderToSet = mBoundFragmentProgram->getGeometryShader();
-
-				mDevice->GSSetShader(psShaderToSet);
-				if (mDevice.isError())
-				{
-					String errorDescription = mDevice.getErrorDescription();
-					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-						"D3D10 device cannot set geometry shader\nError Description:" + errorDescription,
-						"D3D10RenderSystem::bindGpuProgram");
-				}		
-
-			}
-			break;
 		};
 
 		RenderSystem::bindGpuProgram(prg);
@@ -2758,14 +2655,7 @@ namespace Ogre
 				mBoundFragmentProgram = NULL;
 				//mDevice->PSSetShader(NULL);
 			}
-
 			break;
-		case GPT_GEOMETRY_PROGRAM:
-			{
-				mActiveGeometryGpuProgramParameters.setNull();
-				mBoundGeometryProgram = NULL;
-
-			}
 		};
 		RenderSystem::unbindGpuProgram(gptype);
     }
@@ -2781,19 +2671,15 @@ namespace Ogre
 			{
 				//	if (params->getAutoConstantCount() > 0)
 				//{
-				if (mBoundVertexProgram)
+				pBuffers[0] = mBoundVertexProgram->getConstantBuffer(params);
+				mDevice->VSSetConstantBuffers( 0, 1, pBuffers );
+				if (mDevice.isError())
 				{
-					pBuffers[0] = mBoundVertexProgram->getConstantBuffer(params);
-					mDevice->VSSetConstantBuffers( 0, 1, pBuffers );
-					if (mDevice.isError())
-					{
-						String errorDescription = mDevice.getErrorDescription();
-						OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-							"D3D10 device cannot set vertex shader constant buffers\nError Description:" + errorDescription,
-							"D3D10RenderSystem::bindGpuProgramParameters");
-					}		
-
-				}
+					String errorDescription = mDevice.getErrorDescription();
+					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
+						"D3D10 device cannot set vertex shader constant buffers\nError Description:" + errorDescription,
+						"D3D10RenderSystem::bindGpuProgramParameters");
+				}		
 				//}
 				//else
 				//{
@@ -2805,19 +2691,15 @@ namespace Ogre
 			{
 				//if (params->getAutoConstantCount() > 0)
 				//{
-				if (mBoundFragmentProgram)
+				pBuffers[0] = mBoundFragmentProgram->getConstantBuffer(params);
+				mDevice->PSSetConstantBuffers( 0, 1, pBuffers );
+				if (mDevice.isError())
 				{
-					pBuffers[0] = mBoundFragmentProgram->getConstantBuffer(params);
-					mDevice->PSSetConstantBuffers( 0, 1, pBuffers );
-					if (mDevice.isError())
-					{
-						String errorDescription = mDevice.getErrorDescription();
-						OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-							"D3D10 device cannot set fragment shader constant buffers\nError Description:" + errorDescription,
-							"D3D10RenderSystem::bindGpuProgramParameters");
-					}		
-
-				}
+					String errorDescription = mDevice.getErrorDescription();
+					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
+						"D3D10 device cannot set fragment shader constant buffers\nError Description:" + errorDescription,
+						"D3D10RenderSystem::bindGpuProgramParameters");
+				}		
 				//}
 				//else
 				//{
@@ -2833,24 +2715,6 @@ namespace Ogre
 				//}
 			}
 			break;
-		case GPT_GEOMETRY_PROGRAM:
-			{
-				if (mBoundGeometryProgram)
-				{
-					pBuffers[0] = mBoundGeometryProgram->getConstantBuffer(params);
-					mDevice->GSSetConstantBuffers( 0, 1, pBuffers );
-					if (mDevice.isError())
-					{
-						String errorDescription = mDevice.getErrorDescription();
-						OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-							"D3D10 device cannot set Geometry shader constant buffers\nError Description:" + errorDescription,
-							"D3D10RenderSystem::bindGpuProgramParameters");
-					}		
-
-				}
-			}
-			break;
-
 		};
     }
 	//---------------------------------------------------------------------
@@ -2866,10 +2730,6 @@ namespace Ogre
 		case GPT_FRAGMENT_PROGRAM:
 			bindGpuProgramParameters(gptype, mActiveFragmentGpuProgramParameters);
 			break;
-		case GPT_GEOMETRY_PROGRAM:
-			bindGpuProgramParameters(gptype, mActiveGeometryGpuProgramParameters);
-			break;
-
 		}
     }
 	//---------------------------------------------------------------------

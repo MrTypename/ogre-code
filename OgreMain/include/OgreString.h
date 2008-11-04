@@ -101,7 +101,7 @@ namespace Ogre {
 
         /** Returns whether the string begins with the pattern passed in.
         @param pattern The pattern to compare with.
-        @param lowerCase If true, the start of the string will be lower cased before
+        @param lowerCase If true, the end of the string will be lower cased before
             comparison, pattern should also be in lower case.
         */
         static bool startsWith(const String& str, const String& pattern, bool lowerCase = true);
@@ -149,13 +149,8 @@ namespace Ogre {
         static bool match(const String& str, const String& pattern, bool caseSensitive = true);
 
 
-		/** replace all instances of a sub-string with a another sub-string.
-		@param source Source string
-		@param replaceWhat Sub-string to find and replace
-		@param replaceWithWhat Sub-string to replace with (the new sub-string)
-		@returns An updated string with the sub-string replaced
-		*/
-		static const String replaceAll(const String& source, const String& replaceWhat, const String& replaceWithWhat);
+
+
 
         /// Constant blank string, useful for returning by ref where local does not exist
         static const String BLANK;

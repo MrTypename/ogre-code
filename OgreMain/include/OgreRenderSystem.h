@@ -638,12 +638,10 @@ namespace Ogre
 		<p align="center">final = (texture * sourceFactor) + (pixel * destFactor)</p>
 		Each of the factors is specified as one of a number of options, as specified in the SceneBlendFactor
 		enumerated type.
-		By changing the operation you can change addition between the source and destination pixels to a different operator.
 		@param sourceFactor The source factor in the above calculation, i.e. multiplied by the texture colour components.
 		@param destFactor The destination factor in the above calculation, i.e. multiplied by the pixel colour components.
-		@param op The blend operation mode for combining pixels
 		*/
-		virtual void _setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendOperation op = SBO_ADD) = 0;
+		virtual void _setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor) = 0;
 
 		/** Sets the global blending factors for combining subsequent renders with the existing frame contents.
 		The result of the blending operation is:</p>
@@ -654,11 +652,8 @@ namespace Ogre
 		@param destFactor The destination factor in the above calculation, i.e. multiplied by the pixel colour components.
 		@param sourceFactorAlpha The source factor in the above calculation for the alpha channel, i.e. multiplied by the texture alpha components.
 		@param destFactorAlpha The destination factor in the above calculation for the alpha channel, i.e. multiplied by the pixel alpha components.
-		@param op The blend operation mode for combining pixels
-		@param alphaOp The blend operation mode for combining pixel alpha values
 		*/
-		virtual void _setSeparateSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, 
-			SceneBlendFactor destFactorAlpha, SceneBlendOperation op = SBO_ADD, SceneBlendOperation alphaOp = SBO_ADD) = 0;
+		virtual void _setSeparateSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha) = 0;
 
 		/** Sets the global alpha rejection approach for future renders.
 		By default images are rendered regardless of texture alpha. This method lets you change that.

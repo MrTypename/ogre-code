@@ -377,7 +377,7 @@ namespace Ogre
 		{
 			mSkyDomeEntity[i] = 0;
 		}
-
+				
 		// Clear render queue, empty completely
 		if (mRenderQueue)
 			mRenderQueue->clear(true);

@@ -108,7 +108,6 @@ namespace Ogre {
 
 		ID3D10VertexShader* mpVertexShader;
 		ID3D10PixelShader* mpPixelShader;
-		ID3D10GeometryShader* mpGeometryShader;
 
 		struct ShaderVarWithPosInBuf
 		{
@@ -156,14 +155,12 @@ namespace Ogre {
 		virtual void buildConstantDefinitions() const;
 		ID3D10VertexShader* getVertexShader(void) const;
 		ID3D10PixelShader* getPixelShader(void) const; 
-		ID3D10GeometryShader* getGeometryShader(void) const; 
 		ID3D10Blob * getMicroCode(void) const;  
 
 		ID3D10Buffer* getConstantBuffer(GpuProgramParametersSharedPtr params);
 
 		void CreateVertexShader();
 		void CreatePixelShader();
-		void CreateGeometryShader();
 
 		/** Internal load implementation, must be implemented by subclasses.
 		*/

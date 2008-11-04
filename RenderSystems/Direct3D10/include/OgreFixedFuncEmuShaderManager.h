@@ -40,11 +40,6 @@ namespace Ogre
 	
 	class FixedFuncPrograms
 	{
-	#ifdef OGRE_DEBUG_MODE
-	public:
-			String ShaderSource;
-	#endif
-
 	protected:
 		// Vertex program details
 		GpuProgramUsage * mVertexProgramUsage;
@@ -54,6 +49,7 @@ namespace Ogre
 		GpuProgramParametersSharedPtr mFragmentProgramParameters;
 
 		FixedFuncState mFixedFuncState;
+
 		void _setProgramParameter(const GpuProgramType type, const String paramName, const void * value, const size_t sizeInBytes);
 
 		void _updateParameter( GpuProgramParametersSharedPtr & programParameters, const String paramName, const void * value, const size_t sizeInBytes );

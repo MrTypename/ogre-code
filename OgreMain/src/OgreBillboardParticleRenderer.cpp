@@ -166,7 +166,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void BillboardParticleRenderer::_setMaterial(MaterialPtr& mat)
     {
-        mBillboardSet->setMaterialName(mat->getName(), mat->getGroup());
+        mBillboardSet->setMaterialName(mat->getName());
     }
     //-----------------------------------------------------------------------
     void BillboardParticleRenderer::setBillboardType(BillboardType bbt)
@@ -483,5 +483,4 @@ namespace Ogre {
 	}
 
 }
-
 

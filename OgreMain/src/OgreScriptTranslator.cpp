@@ -1127,121 +1127,6 @@ namespace Ogre{
 						}
 					}
 					break;
-				case ID_SCENE_BLEND_OP:
-					if(prop->values.empty())
-					{
-						compiler->addError(ScriptCompiler::CE_STRINGEXPECTED, prop->file, prop->line);
-					}
-					else if(prop->values.size() > 1)
-					{
-						compiler->addError(ScriptCompiler::CE_FEWERPARAMETERSEXPECTED, prop->file, prop->line,
-							"scene_blend_op must have 1 argument");
-					}
-					else
-					{
-						if(prop->values.front()->type == ANT_ATOM)
-						{
-							AtomAbstractNode *atom = reinterpret_cast<AtomAbstractNode*>(prop->values.front().get());
-							switch(atom->id)
-							{
-							case ID_ADD:
-								mPass->setSceneBlendingOperation(SBO_ADD);
-								break;
-							case ID_SUBTRACT:
-								mPass->setSceneBlendingOperation(SBO_SUBTRACT);
-								break;
-							case ID_REVERSE_SUBTRACT:
-								mPass->setSceneBlendingOperation(SBO_REVERSE_SUBTRACT);
-								break;
-							case ID_MIN:
-								mPass->setSceneBlendingOperation(SBO_MIN);
-								break;
-							case ID_MAX:
-								mPass->setSceneBlendingOperation(SBO_MAX);
-								break;
-							default:
-								compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
-									atom->value + ": unrecognized argument");
-							}
-						}
-						else
-						{
-							compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
-								prop->values.front()->getValue() + ": unrecognized argument");
-						}
-					}
-					break;
-				case ID_SEPARATE_SCENE_BLEND_OP:
-					if(prop->values.empty())
-					{
-						compiler->addError(ScriptCompiler::CE_STRINGEXPECTED, prop->file, prop->line);
-					}
-					else if(prop->values.size() != 2)
-					{
-						compiler->addError(ScriptCompiler::CE_FEWERPARAMETERSEXPECTED, prop->file, prop->line,
-							"separate_scene_blend_op must have 2 arguments");
-					}
-					else
-					{
-						AbstractNodeList::const_iterator i0 = getNodeAt(prop->values, 0), i1 = getNodeAt(prop->values, 1);
-						if((*i0)->type == ANT_ATOM && (*i1)->type == ANT_ATOM)
-						{
-							AtomAbstractNode *atom0 = reinterpret_cast<AtomAbstractNode*>((*i0).get()),
-								*atom1 = reinterpret_cast<AtomAbstractNode*>((*i1).get());
-							SceneBlendOperation op = SBO_ADD, alphaOp = SBO_ADD;
-							switch(atom0->id)
-							{
-							case ID_ADD:
-								op = SBO_ADD;
-								break;
-							case ID_SUBTRACT:
-								op = SBO_SUBTRACT;
-								break;
-							case ID_REVERSE_SUBTRACT:
-								op = SBO_REVERSE_SUBTRACT;
-								break;
-							case ID_MIN:
-								op = SBO_MIN;
-								break;
-							case ID_MAX:
-								op = SBO_MAX;
-								break;
-							default:
-								compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
-									atom0->value + ": unrecognized first argument");
-							}
-
-							switch(atom1->id)
-							{
-							case ID_ADD:
-								alphaOp = SBO_ADD;
-								break;
-							case ID_SUBTRACT:
-								alphaOp = SBO_SUBTRACT;
-								break;
-							case ID_REVERSE_SUBTRACT:
-								alphaOp = SBO_REVERSE_SUBTRACT;
-								break;
-							case ID_MIN:
-								alphaOp = SBO_MIN;
-								break;
-							case ID_MAX:
-								alphaOp = SBO_MAX;
-								break;
-							default:
-								compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
-									atom1->value + ": unrecognized second argument");
-							}
-
-							mPass->setSeparateSceneBlendingOperation(op, alphaOp);
-						}
-						else
-						{
-							compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
-								prop->values.front()->getValue() + ": unrecognized argument");
-						}
-					}
-					break;
 				case ID_DEPTH_CHECK:
 					if(prop->values.empty())
 					{
@@ -4863,9 +4748,6 @@ namespace Ogre{
 						size_t width = 0, height = 0;
 						float widthFactor = 1.0f, heightFactor = 1.0f;
 						bool widthSet = false, heightSet = false, formatSet = false;
-						bool shared = false;
-						bool hwGammaWrite = false;
-						bool fsaa = true;
 						Ogre::PixelFormatList formats;
 
 						while (atomIndex < prop->values.size())
@@ -4925,15 +4807,6 @@ namespace Ogre{
 									*pSetFlag = true;
 								}
 								break;
-							case ID_SHARED:
-								shared = true;
-								break;
-							case ID_GAMMA:
-								hwGammaWrite = true;
-								break;
-							case ID_NO_FSAA:
-								fsaa = false;
-								break;
 							default:
 								if (StringConverter::isNumber(atom->value))
 								{
@@ -4989,30 +4862,6 @@ namespace Ogre{
 						def->widthFactor = widthFactor;
 						def->heightFactor = heightFactor;
 						def->formatList = formats;
-						def->hwGammaWrite = hwGammaWrite;
-						def->fsaa = fsaa;
-						def->shared = shared;
-					}
-					break;
-				case ID_SCHEME:
-					if(prop->values.empty())
-					{
-						compiler->addError(ScriptCompiler::CE_STRINGEXPECTED, prop->file, prop->line);
-					}
-					else if(prop->values.size() > 1)
-					{
-						compiler->addError(ScriptCompiler::CE_FEWERPARAMETERSEXPECTED, prop->file, prop->line,
-							"scheme only supports 1 argument");
-					}
-					else
-					{
-						AbstractNodeList::const_iterator i0 = getNodeAt(prop->values, 0);
-						String scheme;
-						if(getString(*i0, &scheme))
-							mTechnique->setSchemeName(scheme);
-						else
-							compiler->addError(ScriptCompiler::CE_INVALIDPARAMETERS, prop->file, prop->line,
-							"scheme must have 1 string argument");
 					}
 					break;
 				default:

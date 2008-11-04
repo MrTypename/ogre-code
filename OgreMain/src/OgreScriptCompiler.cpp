@@ -1032,11 +1032,6 @@ namespace Ogre
 			mIds["one_minus_dest_alpha"] = ID_ONE_MINUS_DEST_ALPHA;
 			mIds["one_minus_src_alpha"] = ID_ONE_MINUS_SRC_ALPHA;
 		mIds["separate_scene_blend"] = ID_SEPARATE_SCENE_BLEND;
-		mIds["scene_blend_op"] = ID_SCENE_BLEND_OP;
-			mIds["reverse_subtract"] = ID_REVERSE_SUBTRACT;
-			mIds["min"] = ID_MIN;
-			mIds["max"] = ID_MAX;
-		mIds["separate_scene_blend_op"] = ID_SEPARATE_SCENE_BLEND_OP;
 		mIds["depth_check"] = ID_DEPTH_CHECK;
 		mIds["depth_write"] = ID_DEPTH_WRITE;
 		mIds["depth_func"] = ID_DEPTH_FUNC;
@@ -1196,9 +1191,6 @@ namespace Ogre
 			mIds["target_height"] = ID_TARGET_HEIGHT;
 			mIds["target_width_scaled"] = ID_TARGET_WIDTH_SCALED;
 			mIds["target_height_scaled"] = ID_TARGET_HEIGHT_SCALED;
-			mIds["shared"] = ID_SHARED;
-			//mIds["gamma"] = ID_GAMMA; - already registered
-			mIds["no_fsaa"] = ID_NO_FSAA;
 		mIds["only_initial"] = ID_ONLY_INITIAL;
 		mIds["visibility_mask"] = ID_VISIBILITY_MASK;
 		mIds["lod_bias"] = ID_LOD_BIAS;

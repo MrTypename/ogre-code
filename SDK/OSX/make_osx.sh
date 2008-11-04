@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OGRE_VERSION="v1.7.0"
+OGRE_VERSION="v1.6.0"
 # Only build for i386, halves the size
 ARCH="i386"
 REMOVE_ARCH="ppc"
@@ -45,6 +45,7 @@ cp -R ../../Docs/licenses sdk_contents/docs/
 cp ReadMe.html sdk_contents/docs/
 cp ../../Docs/style.css sdk_contents/docs/
 cp -R ../../Docs/ChangeLog.html sdk_contents/docs/
+cp -R ../../Docs/*.gif sdk_contents/docs/
 
 echo API generation done.
 

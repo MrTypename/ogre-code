@@ -356,10 +356,6 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm"
 			>
 			<File
-				RelativePath="..\src\OgreCgFxScriptLoader.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\src\OgreCgPlugin.cpp"
 				>
 			</File>
@@ -382,10 +378,6 @@
 			>
 			<File
 				RelativePath="..\..\..\Dependencies\include\Cg\cg.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreCgFxScriptLoader.h"
 				>
 			</File>
 			<File
