@@ -186,9 +186,6 @@ namespace Ogre {
         // Font manager
         mFontManager = OGRE_NEW FontManager();
 
-        // Lod strategy manager
-        mLodStrategyManager = OGRE_NEW LodStrategyManager();
-
 #if OGRE_PROFILING
         // Profiler
         mProfiler = OGRE_NEW Profiler();
@@ -275,7 +272,6 @@ namespace Ogre {
 #endif
         OGRE_DELETE mOverlayManager;
         OGRE_DELETE mFontManager;
-		OGRE_DELETE mLodStrategyManager;
         OGRE_DELETE mArchiveManager;
         OGRE_DELETE mZipArchiveFactory;
         OGRE_DELETE mFileSystemArchiveFactory;
@@ -650,7 +646,7 @@ namespace Ogre {
     void Root::addFrameListener(FrameListener* newListener)
     {
 		// Check if the specified listener is scheduled for removal
-		set<FrameListener *>::type::iterator i = mRemovedFrameListeners.find(newListener);
+		std::set<FrameListener *>::iterator i = mRemovedFrameListeners.find(newListener);
 
 		// If yes, cancel the removal. Otherwise add it to other listeners.
 		if (i != mRemovedFrameListeners.end())
@@ -668,10 +664,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     bool Root::_fireFrameStarted(FrameEvent& evt)
     {
-		OgreProfileBeginGroup("Frame", OGREPROF_GENERAL);
-
         // Remove all marked listeners
-        set<FrameListener*>::type::iterator i;
+        std::set<FrameListener*>::iterator i;
         for (i = mRemovedFrameListeners.begin();
             i != mRemovedFrameListeners.end(); i++)
         {
@@ -696,7 +690,7 @@ namespace Ogre {
 		++mNextFrame;
 
         // Remove all marked listeners
-        set<FrameListener*>::type::iterator i;
+        std::set<FrameListener*>::iterator i;
         for (i = mRemovedFrameListeners.begin();
             i != mRemovedFrameListeners.end(); i++)
         {
@@ -718,7 +712,7 @@ namespace Ogre {
     bool Root::_fireFrameEnded(FrameEvent& evt)
     {
         // Remove all marked listeners
-        set<FrameListener*>::type::iterator i;
+        std::set<FrameListener*>::iterator i;
         for (i = mRemovedFrameListeners.begin();
             i != mRemovedFrameListeners.end(); i++)
         {
@@ -743,8 +737,6 @@ namespace Ogre {
 
 		// Also tell the ResourceBackgroundQueue to propagate background load events
 		ResourceBackgroundQueue::getSingleton()._fireOnFrameCallbacks();
-
-		OgreProfileEndGroup("Frame", OGREPROF_GENERAL);
 
         return ret;
     }
@@ -784,7 +776,7 @@ namespace Ogre {
         // Calculate the average time passed between events of the given type
         // during the last mFrameSmoothingTime seconds.
 
-        EventTimesQueue& times = mEventTimes[type];
+        std::deque<unsigned long>& times = mEventTimes[type];
         times.push_back(now);
 
         if(times.size() == 1)
@@ -795,7 +787,7 @@ namespace Ogre {
 			static_cast<unsigned long>(mFrameSmoothingTime * 1000.0f);
 
         // Find the oldest time to keep
-        EventTimesQueue::iterator it = times.begin(),
+        std::deque<unsigned long>::iterator it = times.begin(),
             end = times.end()-2; // We need at least two times
         while(it != end)
         {
@@ -1001,28 +993,6 @@ namespace Ogre {
         return ret;
 
     }
-	//-----------------------------------------------------------------------
-	bool Root::createRenderWindows(const RenderWindowDescriptionList& renderWindowDescriptions, 
-		RenderWindowList& createdWindows)
-	{
-		if (!mActiveRenderer)
-		{
-			OGRE_EXCEPT(Exception::ERR_INVALID_STATE,
-				"Cannot create render windows - no render "
-				"system has been selected.", "Root::createRenderWindows");
-		}
-
-		bool success;
-		
-		success = mActiveRenderer->_createRenderWindows(renderWindowDescriptions, createdWindows);		
-		if(success && !mFirstTimePostWindowInit)
-		{
-			oneTimePostWindowInit();
-			createdWindows[0]->_setPrimary();
-		}
-
-		return success;
-	}	
     //-----------------------------------------------------------------------
     void Root::detachRenderTarget(RenderTarget* target)
     {
@@ -1164,13 +1134,7 @@ namespace Ogre {
 		bool ret = _fireFrameRenderingQueued();
 		// block for final swap
 		mActiveRenderer->_swapAllRenderTargetBuffers(mActiveRenderer->getWaitForVerticalBlank());
-
-        // This belongs here, as all render targets must be updated before events are
-        // triggered, otherwise targets could be mismatched.  This could produce artifacts,
-        // for instance, with shadows.
-        for (SceneManagerEnumerator::SceneManagerIterator it = getSceneManagerIterator(); it.hasMoreElements(); it.moveNext())
-            it.peekNextValue()->_handleLodEvents();
-
+		
 		return ret;
 	}
 	//-----------------------------------------------------------------------

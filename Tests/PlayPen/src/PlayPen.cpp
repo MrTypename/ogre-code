@@ -41,7 +41,6 @@ Description: Somewhere to play in the sand...
 #include "AnimationBlender.h"
 #include "OgreErrorDialog.h"
 #include "OgreFontManager.h"
-#include "OgreDistanceLodStrategy.h"
 // Static plugins declaration section
 // Note that every entry in here adds an extra header / library dependency
 #ifdef OGRE_STATIC_LIB
@@ -66,10 +65,6 @@ Description: Somewhere to play in the sand...
 #include <crtdbg.h>
 #endi*/
 
-
-// Uncomment this to create dual full screen render windows.
-//#define _DUAL_MONITOR_RENDER_MODE_
-
 #define NUM_TEST_NODES 5
 SceneNode* mTestNode[NUM_TEST_NODES] = {0,0,0,0,0};
 SceneNode* mLightNode = 0;
@@ -78,7 +73,7 @@ SceneNode* camNode;
 Entity* mEntity;
 Real animTime = 0;
 Animation* mAnim = 0;
-vector<AnimationState*>::type mAnimStateList;
+std::vector<AnimationState*> mAnimStateList;
 AnimationState* mAnimState = 0;
 Overlay* mpOverlay;
 Entity* pPlaneEnt;
@@ -109,9 +104,6 @@ AnimationBlender* animBlender = 0;
 String animBlendTarget[2];
 int animBlendTargetIndex;
 MovablePlane movablePlane("APlane");
-CompositorInstance* compositorToSwitch = 0;
-int compositorSchemeIndex = 0;
-StringVector compositorSchemeList;
 
 class RefractionTextureListener : public RenderTargetListener
 {
@@ -272,6 +264,7 @@ public:
     {
 
 
+
         // local just to stop toggles flipping too fast
         static Real timeUntilNextToggle = 0;
         static bool animate = true;
@@ -353,7 +346,7 @@ public:
 			}
 		}
 
-		vector<AnimationState*>::type::iterator animi;
+		std::vector<AnimationState*>::iterator animi;
 		for (animi = mAnimStateList.begin(); animi != mAnimStateList.end(); ++animi)
 		{
 			(*animi)->addTime(evt.timeSinceLastFrame);
@@ -373,11 +366,11 @@ public:
 
         if (rayQuery)
         {
-		    static set<Entity*>::type lastEnts;
+		    static std::set<Entity*> lastEnts;
 		    rayQuery->setRay(mCamera->getCameraToViewportRay(0.5, 0.5));
 
 		    // Reset last set
-		    for (set<Entity*>::type::iterator lasti = lastEnts.begin();
+		    for (std::set<Entity*>::iterator lasti = lastEnts.begin();
 				    lasti != lastEnts.end(); ++lasti)
 		    {
 			    (*lasti)->setMaterialName("Examples/OgreLogo");
@@ -404,10 +397,10 @@ public:
 
         if (intersectionQuery)
         {
-            static set<Entity*>::type lastEnts;
+            static std::set<Entity*> lastEnts;
 
             // Reset last set
-            for (set<Entity*>::type::iterator lasti = lastEnts.begin();
+            for (std::set<Entity*>::iterator lasti = lastEnts.begin();
                 lasti != lastEnts.end(); ++lasti)
             {
                 (*lasti)->setMaterialName("Examples/OgreLogo");
@@ -529,15 +522,7 @@ public:
 			mAnimStateList.push_back(anim);
 		}
         
-		if (compositorToSwitch && mKeyboard->isKeyDown(OIS::KC_C) && timeUntilNextToggle <= 0)
-		{
-			++compositorSchemeIndex;
-			compositorSchemeIndex = compositorSchemeIndex % compositorSchemeList.size();
-			compositorToSwitch->setScheme(compositorSchemeList[compositorSchemeIndex]);
-			timeUntilNextToggle = 0.5;		
-		}
-
-		/** Hack to test frustum vols
+        /** Hack to test frustum vols
         if (testCam)
         {
             // reposition the camera planes
@@ -585,7 +570,6 @@ public:
 			}
 		}
 
-
         // Print camera details
         //mWindow->setDebugText("P: " + StringConverter::toString(mCamera->getDerivedPosition()) + " " + 
         //    "O: " + StringConverter::toString(mCamera->getDerivedOrientation()));
@@ -596,14 +580,12 @@ public:
 
 };
 
-
 class PlayPenApplication : public ExampleApplication
 {
 protected:
-    RefractionTextureListener  mRefractionListener;
-    ReflectionTextureListener  mReflectionListener;
-	StaticPluginLoader		   mStaticPluginLoader;
-	RenderWindowList      mRenderWindows;	
+    RefractionTextureListener mRefractionListener;
+    ReflectionTextureListener mReflectionListener;
+	StaticPluginLoader mStaticPluginLoader;
 public:
     PlayPenApplication() {
     
@@ -630,88 +612,6 @@ public:
 #endif
     }
 protected:
-
-	bool configure(void)
-	{
-		bool result;
-
-		if(mRoot->showConfigDialog())
-		{
-#ifdef _DUAL_MONITOR_RENDER_MODE_
-			result = createDualFullscreenRenderWindows();
-#else
-			// If returned true, user clicked OK so initialise
-			// Here we choose to let the system create a default rendering window by passing 'true'
-			mWindow = mRoot->initialise(true);
-#endif			
-			result = true;
-		}
-		else
-		{
-			result = false;
-		}	
-
-		return result;
-	}
-
-	bool createDualFullscreenRenderWindows()
-	{
-	
-		mRoot->initialise(false, "Dual Monitor test");
-
-		RenderWindowDescriptionList renderWindowsDescriptions;			
-		unsigned int left = 0;
-		
-		renderWindowsDescriptions.resize(2);
-
-		// Generate windows creation parameters.		
-		for (unsigned int i = 0;  i < 2; ++i)
-		{											
-			renderWindowsDescriptions[i].miscParams["top"] = StringConverter::toString((int)0);
-			renderWindowsDescriptions[i].miscParams["left"] = StringConverter::toString((int)left);
-			renderWindowsDescriptions[i].width  = 1024;
-			renderWindowsDescriptions[i].height = 768;
-			renderWindowsDescriptions[i].useFullScreen = true;
-			renderWindowsDescriptions[i].name = "Monitor_" + StringConverter::toString(i);
-			
-			left += renderWindowsDescriptions[i].width;
-		}
-							
-		// Create the render windows.
-		if (false == mRoot->createRenderWindows(renderWindowsDescriptions, mRenderWindows))
-			return false;
-
-		mWindow = mRenderWindows[0];
-
-		return true;
-	}
-
-	virtual void createCamera(void)
-	{
-		// Create the camera
-		mCamera = mSceneMgr->createCamera("PlayerCam");
-
-		// Position it at 500 in Z direction
-		mCamera->setPosition(Vector3(0,0,500));
-		// Look back along -Z
-		mCamera->lookAt(Vector3(0,0,-300));
-		mCamera->setNearClipDistance(5);
-
-		// Attach the main camera to secondary render windows.
-		attachCameraToSecondaryWindows();
-	}
-
-
-	void attachCameraToSecondaryWindows()
-	{		
-		// Create camera for the secondary render windows.
-		for (unsigned int i=1; i < mRenderWindows.size(); ++i)
-		{
-			RenderWindow* pCurWindow = mRenderWindows[i];
-
-			pCurWindow->addViewport(mCamera);
-		}		
-	}
     
     void chooseSceneManager(void)
     {
@@ -2209,8 +2109,8 @@ protected:
 		MeshPtr msh1 = (MeshPtr)MeshManager::getSingleton().load("robot.mesh", 
 			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
-        msh1->createManualLodLevel(Math::Sqr(200), "razor.mesh");
-		msh1->createManualLodLevel(Math::Sqr(500), "sphere.mesh");
+		msh1->createManualLodLevel(200, "razor.mesh");
+		msh1->createManualLodLevel(500, "sphere.mesh");
 
 		Entity *ent;
 		for (int i = 0; i < 5; ++i)
@@ -2289,13 +2189,13 @@ protected:
 
 		msh1->removeLodLevels();
 
-		Mesh::LodValueList lodList;
-        lodList.push_back(Math::Sqr(50));
-		lodList.push_back(Math::Sqr(100));
-		lodList.push_back(Math::Sqr(150));
-		lodList.push_back(Math::Sqr(200));
-		lodList.push_back(Math::Sqr(250));
-		lodList.push_back(Math::Sqr(300));
+		Mesh::LodDistanceList lodList;
+		lodList.push_back(50);
+		lodList.push_back(100);
+		lodList.push_back(150);
+		lodList.push_back(200);
+		lodList.push_back(250);
+		lodList.push_back(300);
 
 		msh1->generateLodLevels(lodList, ProgressiveMesh::VRQ_PROPORTIONAL, 0.3);
 
@@ -3169,68 +3069,6 @@ protected:
 
 	}
 
-	void testCompositorTechniqueSwitch(bool sharedTextures)
-	{
-		CompositorManager& cmgr = CompositorManager::getSingleton();
-		CompositorPtr compositor = cmgr.create("testtechswitch", 
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		// technique 1 (Invert)
-		CompositionTechnique* ctech1 = compositor->createTechnique();
-		CompositionTechnique::TextureDefinition* tdef =	ctech1->createTextureDefinition("rt0");
-		tdef->formatList.push_back(PF_A8B8G8R8);
-		tdef->width = tdef->height = 0;
-		tdef->shared = sharedTextures;
-
-		CompositionTargetPass* tpass = ctech1->createTargetPass();
-		tpass->setOutputName("rt0");
-		tpass->setInputMode(CompositionTargetPass::IM_PREVIOUS);
-		CompositionTargetPass* tout = ctech1->getOutputTargetPass();
-		tout->setInputMode(CompositionTargetPass::IM_NONE);
-		CompositionPass* pass = tout->createPass();
-		pass->setType(CompositionPass::PT_RENDERQUAD);
-		pass->setMaterialName("Ogre/Compositor/Invert");
-		pass->setInput(0, "rt0");
-
-		// technique 2 (Tiling)
-		ctech1 = compositor->createTechnique();
-		ctech1->setSchemeName("Tiling");
-		tdef =	ctech1->createTextureDefinition("rt0");
-		tdef->formatList.push_back(PF_A8B8G8R8);
-		tdef->width = tdef->height = 0;
-		tdef->shared = sharedTextures;
-
-		tpass = ctech1->createTargetPass();
-		tpass->setOutputName("rt0");
-		tpass->setInputMode(CompositionTargetPass::IM_PREVIOUS);
-		tout = ctech1->getOutputTargetPass();
-		tout->setInputMode(CompositionTargetPass::IM_NONE);
-		pass = tout->createPass();
-		pass->setType(CompositionPass::PT_RENDERQUAD);
-		pass->setMaterialName("Ogre/Compositor/Tiling");
-		pass->setInput(0, "rt0");
-
-		compositor->load();
-
-		Entity* e = mSceneMgr->createEntity("1", "knot.mesh");
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(e);
-		mSceneMgr->setSkyBox(true, "Examples/CloudyNoonSkyBox", 1000);
-
-		// enable compositor (should pick first technique)
-		Viewport* vp = mWindow->getViewport(0);
-
-		compositorToSwitch = cmgr.addCompositor(vp, compositor->getName());
-		compositorSchemeList.push_back("");
-		compositorSchemeList.push_back("Tiling");
-
-		cmgr.setCompositorEnabled(vp, compositor->getName(), true);
-
-		mCamera->setPosition(0, 0, -300);
-		mCamera->lookAt(Vector3::ZERO);
-
-
-
-	}
-
     void testOverlayZOrder(void)
     {
         Overlay* o = OverlayManager::getSingleton().getByName("Test/Overlay3");
@@ -3318,7 +3156,7 @@ protected:
 		l->setDirection(-Vector3::UNIT_Y);
 
 		// Create a set of random balls
-		Entity* ent = mSceneMgr->createEntity("Ball", "cube.mesh");
+		Entity* ent = mSceneMgr->createEntity("Ball", "robot.mesh");
 		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
 		createRandomEntityClones(ent, 3000, Vector3(-1000,-1000,-1000), Vector3(1000,1000,1000));
 
@@ -3327,12 +3165,6 @@ protected:
 
 		mCamera->setPosition(0,0, -4000);
 		mCamera->lookAt(Vector3::ZERO);
-
-		// enable the profiler
-		Profiler* prof = Profiler::getSingletonPtr();
-		if (prof)
-			prof->setEnabled(true);
-		
 
 	}
 
@@ -3626,16 +3458,16 @@ protected:
 	};
 	void testRadixSort()
 	{
-		RadixSort<list<int>::type, int, int> rs;
+		RadixSort<std::list<int>, int, int> rs;
 		SortFunctor f;
 
-		list<int>::type particles;
+		std::list<int> particles;
 		for (int r = 0; r < 20; ++r)
 		{
 			particles.push_back((int)Math::RangeRandom(-1e3f, 1e3f));
 		}
 
-		list<int>::type::iterator i;
+		std::list<int>::iterator i;
 		LogManager::getSingleton().logMessage("BEFORE");
 		for (i = particles.begin(); i != particles.end(); ++i)
 			LogManager::getSingleton().stream() << *i;
@@ -4664,7 +4496,7 @@ protected:
 
 	}
 
-	map<SharedPtr<int>, int>::type testMap;
+	std::map<SharedPtr<int>, int> testMap;
 
 	void testFloat32DDS()
 	{
@@ -5389,8 +5221,8 @@ protected:
 		t->createPass()->createTextureUnitState("r2skin.jpg");
 		t->setSchemeName("newscheme");
 
-		Material::LodValueList ldl;
-		ldl.push_back(Math::Sqr(500.0f));
+		Material::LodDistanceList ldl;
+		ldl.push_back(500.0f);
 		mat->setLodLevels(ldl);
 
 
@@ -5438,9 +5270,9 @@ protected:
 
 		// No LOD 2 for newscheme! Should fallback on LOD 1
 
-		Material::LodValueList ldl;
-		ldl.push_back(Math::Sqr(250.0f));
-		ldl.push_back(Math::Sqr(500.0f));
+		Material::LodDistanceList ldl;
+		ldl.push_back(250.0f);
+		ldl.push_back(500.0f);
 		mat->setLodLevels(ldl);
 
 
@@ -6991,154 +6823,6 @@ protected:
 
 	}
 
-    class TestLodListener
-        : public LodListener
-    {
-        SceneManager *mSceneMgr;
-
-    public:
-        TestLodListener(SceneManager *sceneMgr)
-            : mSceneMgr(sceneMgr)
-        { }
-
-        virtual bool prequeueEntityMeshLodChanged(const EntityMeshLodChangedEvent& evt)
-        {
-            // Queue event
-            return true;
-        }
-
-        virtual void postqueueEntityMeshLodChanged(const EntityMeshLodChangedEvent& evt)
-        {
-            // Check for change
-            if (evt.newLodIndex != evt.previousLodIndex)
-            {
-                double value = 0.2 * (1 + evt.newLodIndex);
-                mSceneMgr->setAmbientLight(ColourValue(value, value, value));
-            }
-        }
-    };
-
-    class DebugLodStrategyListener
-        : public FrameListener
-    {
-        const Entity *mEntity;
-        const Camera *mCamera;
-
-    public:
-        DebugLodStrategyListener(const Entity *entity, const Camera *camera)
-            : mEntity(entity)
-            , mCamera(camera)
-        { }
-
-        virtual bool frameStarted(const FrameEvent& evt)
-        {
-            MaterialPtr mat = mEntity->getSubEntity(0)->getMaterial();
-            const LodStrategy *strategy = mat->getLodStrategy();
-            Real value = strategy->getValue(mEntity, mCamera);
-
-            TextAreaOverlayElement *debugTextArea = (TextAreaOverlayElement *)
-                OverlayManager::getSingleton().getOverlayElement("Ogre/DebugLodTextArea");
-            debugTextArea->setCaption(
-                "Strategy: " + strategy->getName() + "\n" +
-                "Value: " + Ogre::StringConverter::toString(value));
-
-            return FrameListener::frameStarted(evt);
-        }
-    };
-
-    void testLod()
-    {
-        // Setup lighting
-        mSceneMgr->setAmbientLight(ColourValue(0.2, 0.2, 0.2));
-        Light* l = mSceneMgr->createLight("LodTestLight");
-        l->setPosition(500, 500, 200);
-        l->setDiffuseColour(ColourValue::White);
-
-        // Generate mesh lods
-        MeshManager *meshManager = MeshManager::getSingletonPtr();
-        //MeshPtr mesh = meshManager->load("TestLod.mesh", "General");
-        MeshPtr mesh = meshManager->load("knot.mesh", "General");
-        Mesh::LodValueList distances;
-        distances.push_back(50);
-        distances.push_back(150);
-        distances.push_back(250);
-        mesh->generateLodLevels(distances, Ogre::ProgressiveMesh::VRQ_PROPORTIONAL, 0.5);
-
-        // Create entity
-        Entity *entity = mSceneMgr->createEntity("LodTestEntity", mesh->getName());
-        mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(entity);
-
-        // Create material
-        MaterialPtr material = MaterialManager::getSingleton().create("LodTestMaterial", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-        Technique *technique;
-        Pass *pass;
-        technique = material->getTechnique(0);
-        technique->setLodIndex(0);
-        pass = technique->getPass(0);
-        pass->setAmbient(Ogre::ColourValue::Red);
-        pass->setDiffuse(Ogre::ColourValue::Red);
-        technique = material->createTechnique();
-        technique->setLodIndex(1);
-        pass = technique->createPass();
-        pass->setAmbient(Ogre::ColourValue::Blue);
-        pass->setDiffuse(Ogre::ColourValue::Blue);
-        technique = material->createTechnique();
-        technique->setLodIndex(2);
-        pass = technique->createPass();
-        pass->setAmbient(Ogre::ColourValue::Green);
-        pass->setDiffuse(Ogre::ColourValue::Green);
-
-        // Material lods set based on strategy
-        Material::LodValueList lods;
-
-        // Toggle this to use pixel count strategy or default distance strategy
-        if (true)
-        {
-            // Set material lod strategy
-            LodStrategy *materialLodStrategy = LodStrategyManager::getSingleton().getStrategy("PixelCount");
-            material->setLodStrategy(materialLodStrategy);
-
-            // Create material lods
-            lods.push_back(400000);
-            lods.push_back(100000);
-        }
-        else
-        {
-            // Create material lods
-            lods.push_back(100);
-            lods.push_back(200);
-        }
-
-        material->setLodLevels(lods);
-        entity->setMaterialName(material->getName());
-
-        // Set distance lod strategy reference view
-        DistanceLodStrategy::getSingleton().setReferenceView(256, 256, Degree(60));
-
-        // Add lod listener
-        mSceneMgr->addLodListener(new TestLodListener(mSceneMgr));
-
-        // Get debug overlay
-        Overlay* debugOverlay = OverlayManager::getSingleton().getByName("Core/DebugOverlay");
-        // Create debug panel
-        OverlayContainer* debugPanel = (OverlayContainer*)
-            (OverlayManager::getSingleton().createOverlayElement("Panel", "Ogre/DebugLodPanel"));
-        debugPanel->setPosition(0.025, 0.025);
-        debugPanel->setDimensions(0.5, 0.25);
-        debugOverlay->add2D(debugPanel);
-        // Create debug text area
-        TextAreaOverlayElement *debugTextArea = (TextAreaOverlayElement *)
-            (OverlayManager::getSingleton().createOverlayElement("TextArea", "Ogre/DebugLodTextArea"));
-        debugTextArea->setMetricsMode(GMM_RELATIVE);
-        debugTextArea->setPosition(0, 0);
-        debugTextArea->setFontName("BlueHighway");
-        debugTextArea->setDimensions(0.2, 0.5);
-        debugTextArea->setCharHeight(0.025);
-        debugPanel->addChild(debugTextArea);
-        // Add listener to update text
-        mRoot->addFrameListener(new DebugLodStrategyListener(entity, mCamera));
-    }
-
 
 
 	void testBug()
@@ -7595,74 +7279,6 @@ protected:
 
 	}
 
-	void testDepthShadowMap()
-	{
-		mSceneMgr->setShadowTextureCount(1);
-		mSceneMgr->setShadowTextureConfig(0, 1024, 1024, PF_FLOAT32_R);
-		mSceneMgr->setShadowTextureSelfShadow(true);
-		mSceneMgr->setShadowTechnique(SHADOWTYPE_TEXTURE_ADDITIVE_INTEGRATED);
-		mSceneMgr->setShadowCasterRenderBackFaces(false);
-
-		mSceneMgr->setShadowTextureCasterMaterial("DepthShadowCaster");
-
-		// Single light
-		Light* l = mSceneMgr->createLight("l1");
-		l->setType(Light::LT_SPOTLIGHT);
-		//l->setPosition(500, 500, -100);
-		l->setPosition(0, 500, 0);
-		Vector3 dir = -l->getPosition();
-		dir.normalise();
-		l->setDirection(dir);
-		l->setSpotlightOuterAngle(Degree(40));
-		l->setSpotlightInnerAngle(Degree(35));
-
-
-		// ground plane
-		movablePlane.normal = Vector3::UNIT_Y;
-		movablePlane.d = 0;
-		MeshManager::getSingleton().createPlane("Myplane",
-			ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, movablePlane,
-			5500,5500,10,10,true,1,5,5,Vector3::UNIT_Z);
-		Entity* pPlaneEnt;
-		pPlaneEnt = mSceneMgr->createEntity( "plane", "Myplane" );
-		pPlaneEnt->setMaterialName("DepthShadowReceiver");
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(pPlaneEnt);
-
-		// box
-		ManualObject* man = mSceneMgr->createManualObject("box");
-		Real boxsize = 50;
-		Real boxsizehalf = boxsize / 2.0;
-		man->begin("DepthShadowReceiver");
-		man->position(-boxsizehalf, 0, boxsizehalf);
-		man->position(boxsizehalf, 0, boxsizehalf);
-		man->position(boxsizehalf, 0, -boxsizehalf);
-		man->position(-boxsizehalf, 0, -boxsizehalf);
-		man->position(-boxsizehalf, boxsize, boxsizehalf);
-		man->position(boxsizehalf, boxsize, boxsizehalf);
-		man->position(boxsizehalf, boxsize, -boxsizehalf);
-		man->position(-boxsizehalf, boxsize, -boxsizehalf);
-		man->quad(3, 2, 1, 0);
-		man->quad(4, 5, 6, 7);
-		man->quad(0, 1, 5, 4);
-		man->quad(1, 2, 6, 5);
-		man->quad(2, 3, 7, 6);
-		man->quad(3, 0, 4, 7);
-		man->end();
-		
-		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(man);
-
-		mCamera->setPosition(0, 200, 100);
-		mCamera->lookAt(Vector3::ZERO);
-
-
-		// Create RTT
-		//TexturePtr rtt = TextureManager::getSingleton().createManual("rtt1", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, 
-		//	TEX_TYPE_2D, 1024, 1024, 1, 0, PF_FLOAT32_R);
-
-
-
-	}
-
 	void createScene(void)
     {
 
@@ -7752,7 +7368,7 @@ protected:
 
 		//testManualLOD();
 		//testGeneratedLOD();
-		testLotsAndLotsOfEntities();
+		//testLotsAndLotsOfEntities();
 		//testSimpleMesh();
 		//test2Windows();
 		//testStaticGeometry();
@@ -7827,16 +7443,7 @@ protected:
 		//testFarFromOrigin();
 		//testGeometryShaders();
 		//testAlphaToCoverage();
-		//testCompositorTechniqueSwitch(true);
-		//testBlitSubTextures();
-
-		//testDepthShadowMap();
-
-        //testLod();
-
-
-
-
+		testBlitSubTextures();
 		
     }
     // Create new frame listener

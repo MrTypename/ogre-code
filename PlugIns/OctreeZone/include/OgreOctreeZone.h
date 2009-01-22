@@ -105,12 +105,13 @@ namespace Ogre
                                                PCZFrustum *,
                                                Portal*);
 
+		/** Update the spatial data for the portals in the zone
+		*/
+		virtual void updatePortalsSpatially(void);
+
 		/* Update the zone data for each portal 
 		*/
-		void updatePortalsZoneData(void);
-
-		/** Mark nodes dirty base on moving portals. */
-		void dirtyNodeByMovingPortals(void);
+		virtual void updatePortalsZoneData(void);
 
 		/* Update a node's home zone */
 		virtual PCZone * updateNodeHomeZone(PCZSceneNode * pczsn, bool allowBackTouces);
@@ -268,6 +269,5 @@ namespace Ogre
 }
 
 #endif
-
 
 

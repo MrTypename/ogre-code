@@ -57,7 +57,7 @@ namespace OgreRefApp {
 
 
         /// Collision proxies, must be set up if collision enabled
-        typedef list<dGeom*>::type CollisionProxyList;
+        typedef std::list<dGeom*> CollisionProxyList;
         CollisionProxyList mCollisionProxies;
 
 

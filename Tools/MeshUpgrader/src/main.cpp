@@ -639,7 +639,7 @@ void buildLod(Mesh* mesh)
 		unsigned short numLod;
 		ProgressiveMesh::VertexReductionQuota quota;
 		Real reduction;
-		Mesh::LodValueList distanceList;
+		Mesh::LodDistanceList distanceList;
 
 		if (askLodDtls)
 		{
@@ -695,8 +695,7 @@ void buildLod(Mesh* mesh)
 			for (unsigned short iLod = 0; iLod < numLod; ++iLod)
 			{
 				currDist += opts.lodDist;
-                Real currDistSq = Ogre::Math::Sqr(currDist);
-				distanceList.push_back(currDistSq);
+				distanceList.push_back(currDist);
 			}
 
 		}

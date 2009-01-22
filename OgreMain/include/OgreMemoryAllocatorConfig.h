@@ -30,7 +30,7 @@ Torus Knot Software Ltd
 #ifndef __MemoryAllocatorConfig_H__
 #define __MemoryAllocatorConfig_H__
 
-#include "OgreMemoryAllocatedObject.h" 
+#include "OgrePrerequisites.h"
 
 /** @file
 
@@ -283,12 +283,11 @@ namespace Ogre
 	typedef GeneralAllocatedObject		UtilityAlloc;
 	typedef GeometryAllocatedObject		VertexDataAlloc;
 	typedef RenderSysAllocatedObject	ViewportAlloc;
-	typedef SceneCtlAllocatedObject		LodAlloc;
 
 	// Containers (by-value only)
 	// Will  be of the form:
 	// typedef STLAllocator<T, DefaultAllocPolicy, Category> TAlloc;
-	// for use in vector<T, TAlloc>::type 
+	// for use in std::vector<T, TAlloc> 
 	
 
 

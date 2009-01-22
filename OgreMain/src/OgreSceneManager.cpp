@@ -68,7 +68,6 @@ Torus Knot Software Ltd.
 #include "OgreBillboardChain.h"
 #include "OgreRibbonTrail.h"
 #include "OgreParticleSystemManager.h"
-#include "OgreProfiler.h"
 // This class implements the most basic scene manager
 
 #include <cstdio>
@@ -145,11 +144,7 @@ mVisibilityMask(0xFFFFFFFF),
 mFindVisibleObjects(true),
 mSuppressRenderStateChanges(false),
 mSuppressShadows(false),
-mCameraRelativeRendering(false),
-mLastLightHash(0),
-mLastLightLimit(0),
-mLastLightHashGpuProgram(0),
-mGpuParamsDirty((uint16)GPV_ALL)
+mCameraRelativeRendering(false)
 {
 
     // init sky
@@ -408,7 +403,7 @@ bool SceneManager::lightLess::operator()(const Light* a, const Light* b) const
 }
 //-----------------------------------------------------------------------
 void SceneManager::_populateLightList(const Vector3& position, Real radius, 
-									  LightList& destList, uint32 lightMask)
+									  LightList& destList)
 {
     // Really basic trawl of the lights, then sort
     // Subclasses could do something smarter
@@ -425,10 +420,6 @@ void SceneManager::_populateLightList(const Vector3& position, Real radius,
     for (it = candidateLights.begin(); it != candidateLights.end(); ++it)
     {
         Light* lt = *it;
-		// check whether or not this light is suppose to be taken into consideration for the current light mask set for this operation
-		if(!(lt->getLightMask() & lightMask))
-			continue; //skip this light
-
 		// Calc squared distance
 		lt->_calcTempSquareDist(position);
 
@@ -478,11 +469,6 @@ void SceneManager::_populateLightList(const Vector3& position, Real radius,
 
 }
 //-----------------------------------------------------------------------
-void SceneManager::_populateLightList(const SceneNode* sn, Real radius, LightList& destList, uint32 lightMask) 
-{
-    _populateLightList(sn->_getDerivedPosition(), radius, destList, lightMask);
-}
-//-----------------------------------------------------------------------
 Entity* SceneManager::createEntity(const String& entityName, PrefabType ptype)
 {
     switch (ptype)
@@ -505,13 +491,11 @@ Entity* SceneManager::createEntity(const String& entityName, PrefabType ptype)
 //-----------------------------------------------------------------------
 Entity* SceneManager::createEntity(
                                    const String& entityName,
-                                   const String& meshName,
-								   const String& groupName /* = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME */)
+                                   const String& meshName )
 {
 	// delegate to factory implementation
 	NameValuePairList params;
 	params["mesh"] = meshName;
-	params["resourceGroup"] = groupName;
 	return static_cast<Entity*>(
 		createMovableObject(entityName, EntityFactory::FACTORY_TYPE_NAME, 
 			&params));
@@ -873,13 +857,17 @@ const Pass* SceneManager::_setPass(const Pass* pass, bool evenIfSuppressed,
         // Tell params about current pass
         mAutoParamDataSource->setCurrentPass(pass);
 
+		// TEST
+		/*
+		LogManager::getSingleton().logMessage("BEGIN PASS " + StringConverter::toString(pass->getIndex()) + 
+		" of " + pass->getParent()->getParent()->getName());
+		*/
 		bool passSurfaceAndLightParams = true;
-		bool passFogParams = true;
 
 		if (pass->hasVertexProgram())
 		{
-			bindGpuProgram(pass->getVertexProgram()->_getBindingDelegate());
-			// bind parameters later 
+			mDestRenderSystem->bindGpuProgram(pass->getVertexProgram()->_getBindingDelegate());
+			// bind parameters later since they can be per-object
 			// does the vertex program want surface and light params passed to rendersystem?
 			passSurfaceAndLightParams = pass->getVertexProgram()->getPassSurfaceAndLightStates();
 		}
@@ -895,8 +883,8 @@ const Pass* SceneManager::_setPass(const Pass* pass, bool evenIfSuppressed,
 
 		if (pass->hasGeometryProgram())
 		{
-			bindGpuProgram(pass->getGeometryProgram()->_getBindingDelegate());
-			// bind parameters later 
+			mDestRenderSystem->bindGpuProgram(pass->getGeometryProgram()->_getBindingDelegate());
+			// bind parameters later since they can be per-object
 		}
 		else
 		{
@@ -929,9 +917,9 @@ const Pass* SceneManager::_setPass(const Pass* pass, bool evenIfSuppressed,
 		// Using a fragment program?
 		if (pass->hasFragmentProgram())
 		{
-			bindGpuProgram(pass->getFragmentProgram()->_getBindingDelegate());
-			// bind parameters later 
-			passFogParams = pass->getFragmentProgram()->getPassFogStates();
+			mDestRenderSystem->bindGpuProgram(
+				pass->getFragmentProgram()->_getBindingDelegate());
+			// bind parameters later since they can be per-object
 		}
 		else
 		{
@@ -944,39 +932,35 @@ const Pass* SceneManager::_setPass(const Pass* pass, bool evenIfSuppressed,
 			// Set fixed-function fragment settings
 		}
 
-		if (passFogParams)
-		{
-			// New fog params can either be from scene or from material
-			FogMode newFogMode;
-			ColourValue newFogColour;
-			Real newFogStart, newFogEnd, newFogDensity;
-			if (pass->getFogOverride())
-			{
-				// New fog params from material
-				newFogMode = pass->getFogMode();
-				newFogColour = pass->getFogColour();
-				newFogStart = pass->getFogStart();
-				newFogEnd = pass->getFogEnd();
-				newFogDensity = pass->getFogDensity();
-			}
-			else
-			{
-				// New fog params from scene
-				newFogMode = mFogMode;
-				newFogColour = mFogColour;
-				newFogStart = mFogStart;
-				newFogEnd = mFogEnd;
-				newFogDensity = mFogDensity;
-			}
-
-			/* In D3D, it applies to shaders prior
-			to version vs_3_0 and ps_3_0. And in OGL, it applies to "ARB_fog_XXX" in
-			fragment program, and in other ways, them maybe access by gpu program via
-			"state.fog.XXX".
-			*/
-	        mDestRenderSystem->_setFog(
-		        newFogMode, newFogColour, newFogDensity, newFogStart, newFogEnd);
-		}
+        /* We need sets fog properties always. In D3D, it applies to shaders prior
+        to version vs_3_0 and ps_3_0. And in OGL, it applies to "ARB_fog_XXX" in
+        fragment program, and in other ways, them maybe access by gpu program via
+        "state.fog.XXX".
+        */
+        // New fog params can either be from scene or from material
+        FogMode newFogMode;
+        ColourValue newFogColour;
+        Real newFogStart, newFogEnd, newFogDensity;
+        if (pass->getFogOverride())
+        {
+            // New fog params from material
+            newFogMode = pass->getFogMode();
+            newFogColour = pass->getFogColour();
+            newFogStart = pass->getFogStart();
+            newFogEnd = pass->getFogEnd();
+            newFogDensity = pass->getFogDensity();
+        }
+        else
+        {
+            // New fog params from scene
+            newFogMode = mFogMode;
+            newFogColour = mFogColour;
+            newFogStart = mFogStart;
+            newFogEnd = mFogEnd;
+            newFogDensity = mFogDensity;
+        }
+        mDestRenderSystem->_setFog(
+            newFogMode, newFogColour, newFogDensity, newFogStart, newFogEnd);
         // Tell params about ORIGINAL fog
 		// Need to be able to override fixed function fog, but still have
 		// original fog parameters available to a shader than chooses to use
@@ -990,24 +974,12 @@ const Pass* SceneManager::_setPass(const Pass* pass, bool evenIfSuppressed,
 		{
 			mDestRenderSystem->_setSeparateSceneBlending(
 				pass->getSourceBlendFactor(), pass->getDestBlendFactor(),
-				pass->getSourceBlendFactorAlpha(), pass->getDestBlendFactorAlpha(),
-				pass->getSceneBlendingOperation(), 
-				pass->hasSeparateSceneBlendingOperations() ? pass->getSceneBlendingOperation() : pass->getSceneBlendingOperationAlpha() );
+				pass->getSourceBlendFactorAlpha(), pass->getDestBlendFactorAlpha());
 		}
 		else
 		{
-			if(pass->hasSeparateSceneBlendingOperations( ) )
-			{
-				mDestRenderSystem->_setSeparateSceneBlending(
-					pass->getSourceBlendFactor(), pass->getDestBlendFactor(),
-					pass->getSourceBlendFactor(), pass->getDestBlendFactor(),
-					pass->getSceneBlendingOperation(), pass->getSceneBlendingOperationAlpha() );
-			}
-			else
-			{
-				mDestRenderSystem->_setSceneBlending(
-					pass->getSourceBlendFactor(), pass->getDestBlendFactor(), pass->getSceneBlendingOperation() );
-			}
+			mDestRenderSystem->_setSceneBlending(
+				pass->getSourceBlendFactor(), pass->getDestBlendFactor());
 		}
 
 		// Set point parameters
@@ -1128,10 +1100,6 @@ const Pass* SceneManager::_setPass(const Pass* pass, bool evenIfSuppressed,
 
 		// set pass number
     	mAutoParamDataSource->setPassNumber( pass->getIndex() );
-
-		// mark global params as dirty
-		mGpuParamsDirty |= (uint16)GPV_GLOBAL;
-
 	}
 
     return pass;
@@ -1203,8 +1171,6 @@ void SceneManager::prepareRenderQueue(void)
 //-----------------------------------------------------------------------
 void SceneManager::_renderScene(Camera* camera, Viewport* vp, bool includeOverlays)
 {
-	OgreProfileGroup("_renderScene", OGREPROF_GENERAL);
-
     Root::getSingleton()._setCurrentSceneManager(this);
 	mActiveQueuedRenderableVisitor->targetSceneMgr = this;
 	mAutoParamDataSource->setCurrentSceneManager(this);
@@ -1212,10 +1178,6 @@ void SceneManager::_renderScene(Camera* camera, Viewport* vp, bool includeOverla
 	// Also set the internal viewport pointer at this point, for calls that need it
 	// However don't call setViewport just yet (see below)
 	mCurrentViewport = vp;
-
-	// reset light hash so even if light list is the same, we refresh the content every frame
-	LightList emptyLightList;
-	useLights(emptyLightList, 0);
 
     if (isShadowTechniqueInUse())
     {
@@ -1256,20 +1218,17 @@ void SceneManager::_renderScene(Camera* camera, Viewport* vp, bool includeOverla
 		OGRE_LOCK_MUTEX(sceneGraphMutex)
 
 		// Update scene graph for this camera (can happen multiple times per frame)
-		{
-			OgreProfileGroup("_updateSceneGraph", OGREPROF_GENERAL);
-			_updateSceneGraph(camera);
+		_updateSceneGraph(camera);
 
-			// Auto-track nodes
-			AutoTrackingSceneNodes::iterator atsni, atsniend;
-			atsniend = mAutoTrackingSceneNodes.end();
-			for (atsni = mAutoTrackingSceneNodes.begin(); atsni != atsniend; ++atsni)
-			{
-				(*atsni)->_autoTrack();
-			}
-			// Auto-track camera if required
-			camera->_autoTrack();
+		// Auto-track nodes
+		AutoTrackingSceneNodes::iterator atsni, atsniend;
+		atsniend = mAutoTrackingSceneNodes.end();
+		for (atsni = mAutoTrackingSceneNodes.begin(); atsni != atsniend; ++atsni)
+		{
+			(*atsni)->_autoTrack();
 		}
+		// Auto-track camera if required
+		camera->_autoTrack();
 
 
 		if (mIlluminationStage != IRS_RENDER_TO_TEXTURE && mFindVisibleObjects)
@@ -1284,8 +1243,6 @@ void SceneManager::_renderScene(Camera* camera, Viewport* vp, bool includeOverla
 				// technique in use
 				if (isShadowTechniqueTextureBased())
 				{
-					OgreProfileGroup("prepareShadowTextures", OGREPROF_GENERAL);
-
 					// *******
 					// WARNING
 					// *******
@@ -1341,15 +1298,10 @@ void SceneManager::_renderScene(Camera* camera, Viewport* vp, bool includeOverla
 		}
 
 		// Prepare render queue for receiving new objects
-		{
-			OgreProfileGroup("prepareRenderQueue", OGREPROF_GENERAL);
-			prepareRenderQueue();
-		}
+		prepareRenderQueue();
 
 		if (mFindVisibleObjects)
 		{
-			OgreProfileGroup("_findVisibleObjects", OGREPROF_CULLING);
-
 			// Assemble an AAB on the fly which contains the scene elements visible
 			// by the camera.
 			CamVisibleObjectsMap::iterator camVisObjIt = mCamVisibleObjectsMap.find( camera );
@@ -1410,10 +1362,7 @@ void SceneManager::_renderScene(Camera* camera, Viewport* vp, bool includeOverla
 	mDestRenderSystem->_setViewMatrix(mCachedViewMatrix);
 
     // Render scene content
-	{
-		OgreProfileGroup("_renderVisibleObjects", OGREPROF_RENDERING);
-		_renderVisibleObjects();
-	}
+    _renderVisibleObjects();
 
     // End frame
     mDestRenderSystem->_endFrame();
@@ -1511,7 +1460,7 @@ void SceneManager::_setSkyPlane(
         String meshName = mName + "SkyPlane";
         mSkyPlane = plane;
 
-        MaterialPtr m = MaterialManager::getSingleton().getByName(materialName, groupName);
+        MaterialPtr m = MaterialManager::getSingleton().getByName(materialName);
         if (m.isNull())
         {
             OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
@@ -1566,7 +1515,7 @@ void SceneManager::_setSkyPlane(
 		NameValuePairList params;
 		params["mesh"] = meshName;
         mSkyPlaneEntity = static_cast<Entity*>(factory->createInstance(meshName, this, &params));
-        mSkyPlaneEntity->setMaterialName(materialName, groupName);
+        mSkyPlaneEntity->setMaterialName(materialName);
         mSkyPlaneEntity->setCastShadows(false);
 
         // Create node and attach
@@ -1615,7 +1564,7 @@ void SceneManager::_setSkyBox(
 {
     if (enable)
     {
-        MaterialPtr m = MaterialManager::getSingleton().getByName(materialName, groupName);
+        MaterialPtr m = MaterialManager::getSingleton().getByName(materialName);
         if (m.isNull())
         {
             OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
@@ -1751,7 +1700,7 @@ void SceneManager::_setSkyBox(
 				// Used to use combined material but now we're using queue we can't split to change frame
 				// This doesn't use much memory because textures aren't duplicated
 				String matName = mName + "SkyBoxPlane" + StringConverter::toString(i);
-				MaterialPtr boxMat = matMgr.getByName(matName, groupName);
+				MaterialPtr boxMat = matMgr.getByName(matName);
 				if (boxMat.isNull())
 				{
 					// Create new by clone
@@ -1782,7 +1731,7 @@ void SceneManager::_setSkyBox(
 				}
 
 				// section per material
-				mSkyBoxObj->begin(matName, RenderOperation::OT_TRIANGLE_LIST, groupName);
+				mSkyBoxObj->begin(matName);
 				// top left
 				mSkyBoxObj->position(middle + up - right);
 				mSkyBoxObj->textureCoord(0,0);
@@ -1841,7 +1790,7 @@ void SceneManager::_setSkyDome(
 {
     if (enable)
     {
-        MaterialPtr m = MaterialManager::getSingleton().getByName(materialName, groupName);
+        MaterialPtr m = MaterialManager::getSingleton().getByName(materialName);
         if (m.isNull())
         {
             OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
@@ -1887,7 +1836,7 @@ void SceneManager::_setSkyDome(
 			NameValuePairList params;
 			params["mesh"] = planeMesh->getName();
 			mSkyDomeEntity[i] = static_cast<Entity*>(factory->createInstance(entName, this, &params));
-            mSkyDomeEntity[i]->setMaterialName(m->getName(), groupName);
+            mSkyDomeEntity[i]->setMaterialName(m->getName());
             mSkyDomeEntity[i]->setCastShadows(false);
 
             // Attach to node
@@ -1973,7 +1922,7 @@ MeshPtr SceneManager::createSkyboxPlane(
 
     // Check to see if existing plane
     MeshManager& mm = MeshManager::getSingleton();
-    MeshPtr planeMesh = mm.getByName(meshName, groupName);
+    MeshPtr planeMesh = mm.getByName(meshName);
     if(!planeMesh.isNull())
     {
         // destroy existing
@@ -2045,7 +1994,7 @@ MeshPtr SceneManager::createSkydomePlane(
 
     // Check to see if existing plane
     MeshManager& mm = MeshManager::getSingleton();
-    MeshPtr planeMesh = mm.getByName(meshName, groupName);
+    MeshPtr planeMesh = mm.getByName(meshName);
     if(!planeMesh.isNull())
     {
         // destroy existing
@@ -2385,6 +2334,7 @@ void SceneManager::renderTextureShadowCasterQueueGroupObjects(
 	RenderQueueGroup* pGroup, 
 	QueuedRenderableCollection::OrganisationMode om)
 {
+    static LightList nullLightList;
     // This is like the basic group render, except we skip all transparents
     // and we also render any non-shadowed objects
     // Note that non-shadow casters will have already been eliminated during
@@ -2415,15 +2365,15 @@ void SceneManager::renderTextureShadowCasterQueueGroupObjects(
         pPriorityGrp->sort(mCameraInProgress);
 
         // Do solids, override light list incase any vertex programs use them
-        renderObjects(pPriorityGrp->getSolidsBasic(), om, false, false, &mShadowTextureCurrentCasterLightList);
-        renderObjects(pPriorityGrp->getSolidsNoShadowReceive(), om, false, false, &mShadowTextureCurrentCasterLightList);
+        renderObjects(pPriorityGrp->getSolidsBasic(), om, false, false, &nullLightList);
+        renderObjects(pPriorityGrp->getSolidsNoShadowReceive(), om, false, false, &nullLightList);
 		// Do unsorted transparents that cast shadows
-		renderObjects(pPriorityGrp->getTransparentsUnsorted(), om, false, false, &mShadowTextureCurrentCasterLightList);
+		renderObjects(pPriorityGrp->getTransparentsUnsorted(), om, false, false, &nullLightList);
 		// Do transparents that cast shadows
 		renderTransparentShadowCasterObjects(
 				pPriorityGrp->getTransparents(), 
 				QueuedRenderableCollection::OM_SORT_DESCENDING, 
-				false, false, &mShadowTextureCurrentCasterLightList);
+				false, false, &nullLightList);
 
 
     }// for each priority
@@ -2945,21 +2895,11 @@ void SceneManager::renderSingleObject(Renderable* rend, const Pass* pass,
     unsigned short numMatrices;
     static RenderOperation ro;
 
-
     // Set up rendering operation
     // I know, I know, const_cast is nasty but otherwise it requires all internal
     // state of the Renderable assigned to the rop to be mutable
     const_cast<Renderable*>(rend)->getRenderOperation(ro);
     ro.srcRenderable = rend;
-
-	GpuProgram* vprog = pass->hasVertexProgram() ? pass->getVertexProgram().get() : 0;
-
-	bool passTransformState = true;
-
-	if (vprog)
-	{
-		passTransformState = vprog->getPassTransformStates();
-	}
 
     // Set world transformation
     numMatrices = rend->getNumWorldTransforms();
@@ -2975,24 +2915,18 @@ void SceneManager::renderSingleObject(Renderable* rend, const Pass* pass,
 				mTempXform[i].setTrans(mTempXform[i].getTrans() - mCameraRelativePosition);
 			}
 		}
-
-		if (passTransformState)
+		
+		if (numMatrices > 1)
 		{
-			if (numMatrices > 1)
-			{
-				mDestRenderSystem->_setWorldMatrices(mTempXform, numMatrices);
-			}
-			else
-			{
-				mDestRenderSystem->_setWorldMatrix(*mTempXform);
-			}
+			mDestRenderSystem->_setWorldMatrices(mTempXform, numMatrices);
+		}
+		else
+		{
+			mDestRenderSystem->_setWorldMatrix(*mTempXform);
 		}
 	}
     // Issue view / projection changes if any
-	useRenderableViewProjMode(rend, passTransformState);
-
-	// mark per-object params as dirty
-	mGpuParamsDirty |= (uint16)GPV_PER_OBJECT;
+    useRenderableViewProjMode(rend);
 
     if (!mSuppressRenderStateChanges)
     {
@@ -3004,10 +2938,11 @@ void SceneManager::renderSingleObject(Renderable* rend, const Pass* pass,
             mAutoParamDataSource->setCurrentRenderable(rend);
             // Tell auto params object about the world matrices, eliminated query from renderable again
             mAutoParamDataSource->setWorldMatrices(mTempXform, numMatrices);
-			if (vprog)
-			{
-				passSurfaceAndLightParams = vprog->getPassSurfaceAndLightStates();
-			}
+            pass->_updateAutoParamsNoLights(mAutoParamDataSource);
+            if (pass->hasVertexProgram())
+            {
+                passSurfaceAndLightParams = pass->getVertexProgram()->getPassSurfaceAndLightStates();
+            }
         }
 
         // Reissue any texture gen settings which are dependent on view matrix
@@ -3223,13 +3158,33 @@ void SceneManager::renderSingleObject(Renderable* rend, const Pass* pass,
 				// Do we need to update GPU program parameters?
 				if (pass->isProgrammable())
 				{
-					useLightsGpuProgram(pass, pLightListToUse);
+					// Update any automatic gpu params for lights
+					// Other bits of information will have to be looked up
+					mAutoParamDataSource->setCurrentLightList(pLightListToUse);
+					pass->_updateAutoParamsLightsOnly(mAutoParamDataSource);
+					// NOTE: We MUST bind parameters AFTER updating the autos
+
+					if (pass->hasVertexProgram())
+					{
+						mDestRenderSystem->bindGpuProgramParameters(GPT_VERTEX_PROGRAM, 
+							pass->getVertexProgramParameters());
+					}
+					if (pass->hasGeometryProgram())
+					{
+						mDestRenderSystem->bindGpuProgramParameters(GPT_GEOMETRY_PROGRAM,
+							pass->getGeometryProgramParameters());
+					}
+					if (pass->hasFragmentProgram())
+					{
+						mDestRenderSystem->bindGpuProgramParameters(GPT_FRAGMENT_PROGRAM, 
+							pass->getFragmentProgramParameters());
+					}
 				}
 				// Do we need to update light states? 
 				// Only do this if fixed-function vertex lighting applies
 				if (pass->getLightingEnabled() && passSurfaceAndLightParams)
 				{
-					useLights(*pLightListToUse, pass->getMaxSimultaneousLights());
+					mDestRenderSystem->_useLights(*pLightListToUse, pass->getMaxSimultaneousLights());
 				}
 				// optional light scissoring & clipping
 				ClipResult scissored = CLIPPED_NONE;
@@ -3282,9 +3237,6 @@ void SceneManager::renderSingleObject(Renderable* rend, const Pass* pass,
 				}
 				depthInc += pass->getPassIterationCount();
 
-				// Finalise GPU parameter bindings
-				updateGpuProgramParameters(pass);
-
 				if (rend->preRender(this, mDestRenderSystem))
 					mDestRenderSystem->_render(ro);
 				rend->postRender(this, mDestRenderSystem);
@@ -3317,16 +3269,33 @@ void SceneManager::renderSingleObject(Renderable* rend, const Pass* pass,
 					// Do we have a manual light list?
 					if (manualLightList)
 					{
-						useLightsGpuProgram(pass, manualLightList);
+						// Update any automatic gpu params for lights
+						mAutoParamDataSource->setCurrentLightList(manualLightList);
+						pass->_updateAutoParamsLightsOnly(mAutoParamDataSource);
 					}
 
+					if (pass->hasVertexProgram())
+					{
+						mDestRenderSystem->bindGpuProgramParameters(GPT_VERTEX_PROGRAM, 
+							pass->getVertexProgramParameters());
+					}
+					if (pass->hasGeometryProgram())
+					{
+						mDestRenderSystem->bindGpuProgramParameters(GPT_GEOMETRY_PROGRAM,
+							pass->getGeometryProgramParameters());
+					}
+					if (pass->hasFragmentProgram())
+					{
+						mDestRenderSystem->bindGpuProgramParameters(GPT_FRAGMENT_PROGRAM, 
+							pass->getFragmentProgramParameters());
+					}
 				}
 
 				// Use manual lights if present, and not using vertex programs that don't use fixed pipeline
 				if (manualLightList && 
 					pass->getLightingEnabled() && passSurfaceAndLightParams)
 				{
-					useLights(*manualLightList, pass->getMaxSimultaneousLights());
+					mDestRenderSystem->_useLights(*manualLightList, pass->getMaxSimultaneousLights());
 				}
 
 				// optional light scissoring
@@ -3347,9 +3316,6 @@ void SceneManager::renderSingleObject(Renderable* rend, const Pass* pass,
 					// issue the render op		
 					// nfz: set up multipass rendering
 					mDestRenderSystem->setCurrentPassIterationCount(pass->getPassIterationCount());
-					// Finalise GPU parameter bindings
-					updateGpuProgramParameters(pass);
-
 					if (rend->preRender(this, mDestRenderSystem))
 						mDestRenderSystem->_render(ro);
 					rend->postRender(this, mDestRenderSystem);
@@ -3373,7 +3339,7 @@ void SceneManager::renderSingleObject(Renderable* rend, const Pass* pass,
 	}
 	
     // Reset view / projection changes if any
-    resetViewProjMode(passTransformState);
+    resetViewProjMode();
 
 }
 //-----------------------------------------------------------------------
@@ -3633,7 +3599,23 @@ void SceneManager::manualRender(RenderOperation* rend,
 		dummyCam.setCustomViewMatrix(true, viewMatrix);
 		dummyCam.setCustomProjectionMatrix(true, projMatrix);
 		mAutoParamDataSource->setCurrentCamera(&dummyCam, false);
-		updateGpuProgramParameters(pass);
+		pass->_updateAutoParamsNoLights(mAutoParamDataSource);
+		// NOTE: We MUST bind parameters AFTER updating the autos
+		if (pass->hasVertexProgram())
+		{
+			mDestRenderSystem->bindGpuProgramParameters(GPT_VERTEX_PROGRAM, 
+				pass->getVertexProgramParameters());
+		}
+		if (pass->hasGeometryProgram())
+		{
+			mDestRenderSystem->bindGpuProgramParameters(GPT_GEOMETRY_PROGRAM,
+				pass->getGeometryProgramParameters());
+		}
+		if (pass->hasFragmentProgram())
+		{
+			mDestRenderSystem->bindGpuProgramParameters(GPT_FRAGMENT_PROGRAM, 
+				pass->getFragmentProgramParameters());
+		}
 	}
     mDestRenderSystem->_render(*rend);
 
@@ -3642,16 +3624,14 @@ void SceneManager::manualRender(RenderOperation* rend,
 
 }
 //---------------------------------------------------------------------
-void SceneManager::useRenderableViewProjMode(const Renderable* pRend, bool fixedFunction)
+void SceneManager::useRenderableViewProjMode(const Renderable* pRend)
 {
     // Check view matrix
     bool useIdentityView = pRend->getUseIdentityView();
     if (useIdentityView)
     {
         // Using identity view now, change it
-		if (fixedFunction)
-			mDestRenderSystem->_setViewMatrix(Matrix4::IDENTITY);
-		mGpuParamsDirty |= (uint16)GPV_GLOBAL;
+        mDestRenderSystem->_setViewMatrix(Matrix4::IDENTITY);
         mResetIdentityView = true;
     }
 
@@ -3659,13 +3639,9 @@ void SceneManager::useRenderableViewProjMode(const Renderable* pRend, bool fixed
     if (useIdentityProj)
     {
         // Use identity projection matrix, still need to take RS depth into account.
-		if (fixedFunction)
-		{
-			Matrix4 mat;
-			mDestRenderSystem->_convertProjectionMatrix(Matrix4::IDENTITY, mat);
-			mDestRenderSystem->_setProjectionMatrix(mat);
-		}
-		mGpuParamsDirty |= (uint16)GPV_GLOBAL;
+        Matrix4 mat;
+        mDestRenderSystem->_convertProjectionMatrix(Matrix4::IDENTITY, mat);
+        mDestRenderSystem->_setProjectionMatrix(mat);
 
         mResetIdentityProj = true;
     }
@@ -3673,26 +3649,20 @@ void SceneManager::useRenderableViewProjMode(const Renderable* pRend, bool fixed
     
 }
 //---------------------------------------------------------------------
-void SceneManager::resetViewProjMode(bool fixedFunction)
+void SceneManager::resetViewProjMode(void)
 {
     if (mResetIdentityView)
     {
         // Coming back to normal from identity view
-		if (fixedFunction)
-			mDestRenderSystem->_setViewMatrix(mCachedViewMatrix);
-		mGpuParamsDirty |= (uint16)GPV_GLOBAL;
-
+        mDestRenderSystem->_setViewMatrix(mCachedViewMatrix);
         mResetIdentityView = false;
     }
     
     if (mResetIdentityProj)
     {
         // Coming back from flat projection
-        if (fixedFunction)
-			mDestRenderSystem->_setProjectionMatrix(mCameraInProgress->getProjectionMatrixRS());
-		mGpuParamsDirty |= (uint16)GPV_GLOBAL;
-
-		mResetIdentityProj = false;
+        mDestRenderSystem->_setProjectionMatrix(mCameraInProgress->getProjectionMatrixRS());
+        mResetIdentityProj = false;
     }
     
 
@@ -4325,7 +4295,6 @@ void SceneManager::initShadowVolumeMaterials(void)
                 // Enable the (infinite) point light extruder for now, just to get some params
                 mShadowDebugPass->setVertexProgram(
                     ShadowVolumeExtrudeProgram::programNames[ShadowVolumeExtrudeProgram::POINT_LIGHT]);
-				mShadowDebugPass->setFragmentProgram(ShadowVolumeExtrudeProgram::frgProgramName);				
                 mInfiniteExtrusionParams = 
                     mShadowDebugPass->getVertexProgramParameters();
                 mInfiniteExtrusionParams->setAutoConstant(0, 
@@ -4367,7 +4336,6 @@ void SceneManager::initShadowVolumeMaterials(void)
                 // Enable the finite point light extruder for now, just to get some params
                 mShadowStencilPass->setVertexProgram(
                     ShadowVolumeExtrudeProgram::programNames[ShadowVolumeExtrudeProgram::POINT_LIGHT_FINITE]);
-				mShadowStencilPass->setFragmentProgram(ShadowVolumeExtrudeProgram::frgProgramName);				
                 mFiniteExtrusionParams = 
                     mShadowStencilPass->getVertexProgramParameters();
                 mFiniteExtrusionParams->setAutoConstant(0, 
@@ -5090,7 +5058,6 @@ void SceneManager::renderShadowVolumesToStencil(const Light* light,
         mShadowStencilPass->setVertexProgram(
             ShadowVolumeExtrudeProgram::getProgramName(light->getType(), finiteExtrude, false)
             , false);
-		mShadowStencilPass->setFragmentProgram(ShadowVolumeExtrudeProgram::frgProgramName);				
         // Set params
         if (finiteExtrude)
         {
@@ -5104,10 +5071,7 @@ void SceneManager::renderShadowVolumesToStencil(const Light* light,
         {
             mShadowDebugPass->setVertexProgram(
                 ShadowVolumeExtrudeProgram::getProgramName(light->getType(), finiteExtrude, true)
-				 , false);
-			mShadowDebugPass->setFragmentProgram(ShadowVolumeExtrudeProgram::frgProgramName);				
-
-               
+                , false);
             // Set params
             if (finiteExtrude)
             {
@@ -5119,11 +5083,7 @@ void SceneManager::renderShadowVolumesToStencil(const Light* light,
             }
         }
 
-        bindGpuProgram(mShadowStencilPass->getVertexProgram()->_getBindingDelegate());
-		if (!ShadowVolumeExtrudeProgram::frgProgramName.empty())
-		{
-			bindGpuProgram(mShadowStencilPass->getFragmentProgram()->_getBindingDelegate());
-		}
+        mDestRenderSystem->bindGpuProgram(mShadowStencilPass->getVertexProgram()->_getBindingDelegate());
 
     }
     else
@@ -5862,12 +5822,6 @@ void SceneManager::prepareShadowTextures(Camera* cam, Viewport* vp)
 			if (!light->getCastShadows())
 				continue;
 
-			if (mShadowTextureCurrentCasterLightList.empty())
-				mShadowTextureCurrentCasterLightList.push_back(light);
-			else
-				mShadowTextureCurrentCasterLightList[0] = light;
-
-
 			// texture iteration per light.
 			size_t textureCountPerLight = mShadowTextureCountPerType[light->getType()];
 			for (size_t j = 0; j < textureCountPerLight && si != siend; ++j)
@@ -6431,152 +6385,7 @@ SceneManager::SceneMgrQueuedRenderableVisitor* SceneManager::getQueuedRenderable
 {
 	return mActiveQueuedRenderableVisitor;
 }
-//---------------------------------------------------------------------
-void SceneManager::addLodListener(LodListener *listener)
-{
-    mLodListeners.insert(listener);
-}
-//---------------------------------------------------------------------
-void SceneManager::removeLodListener(LodListener *listener)
-{
-    LodListenerSet::iterator it = mLodListeners.find(listener);
-    if (it != mLodListeners.end())
-        mLodListeners.erase(it);
-}
-//---------------------------------------------------------------------
-void SceneManager::_notifyMovableObjectLodChanged(MovableObjectLodChangedEvent& evt)
-{
-    // Notify listeners and determine if event needs to be queued
-    bool queueEvent = false;
-    for (LodListenerSet::iterator it = mLodListeners.begin(); it != mLodListeners.end(); ++it)
-    {
-        if ((*it)->prequeueMovableObjectLodChanged(evt))
-            queueEvent = true;
-    }
 
-    // Push event onto queue if requested
-    if (queueEvent)
-        mMovableObjectLodChangedEvents.push_back(evt);
-}
-//---------------------------------------------------------------------
-void SceneManager::_notifyEntityMeshLodChanged(EntityMeshLodChangedEvent& evt)
-{
-    // Notify listeners and determine if event needs to be queued
-    bool queueEvent = false;
-    for (LodListenerSet::iterator it = mLodListeners.begin(); it != mLodListeners.end(); ++it)
-    {
-        if ((*it)->prequeueEntityMeshLodChanged(evt))
-            queueEvent = true;
-    }
-
-    // Push event onto queue if requested
-    if (queueEvent)
-        mEntityMeshLodChangedEvents.push_back(evt);
-}
-//---------------------------------------------------------------------
-void SceneManager::_notifyEntityMaterialLodChanged(EntityMaterialLodChangedEvent& evt)
-{
-    // Notify listeners and determine if event needs to be queued
-    bool queueEvent = false;
-    for (LodListenerSet::iterator it = mLodListeners.begin(); it != mLodListeners.end(); ++it)
-    {
-        if ((*it)->prequeueEntityMaterialLodChanged(evt))
-            queueEvent = true;
-    }
-
-    // Push event onto queue if requested
-    if (queueEvent)
-        mEntityMaterialLodChangedEvents.push_back(evt);
-}
-//---------------------------------------------------------------------
-void SceneManager::_handleLodEvents()
-{
-    // Handle events with each listener
-    for (LodListenerSet::iterator it = mLodListeners.begin(); it != mLodListeners.end(); ++it)
-    {
-        for (MovableObjectLodChangedEventList::const_iterator jt = mMovableObjectLodChangedEvents.begin(); jt != mMovableObjectLodChangedEvents.end(); ++jt)
-            (*it)->postqueueMovableObjectLodChanged(*jt);
-
-        for (EntityMeshLodChangedEventList::const_iterator jt = mEntityMeshLodChangedEvents.begin(); jt != mEntityMeshLodChangedEvents.end(); ++jt)
-            (*it)->postqueueEntityMeshLodChanged(*jt);
-
-        for (EntityMaterialLodChangedEventList::const_iterator jt = mEntityMaterialLodChangedEvents.begin(); jt != mEntityMaterialLodChangedEvents.end(); ++jt)
-            (*it)->postqueueEntityMaterialLodChanged(*jt);
-    }
-
-    // Clear event queues
-    mMovableObjectLodChangedEvents.clear();
-    mEntityMeshLodChangedEvents.clear();
-    mEntityMaterialLodChangedEvents.clear();
-}
-//---------------------------------------------------------------------
-void SceneManager::useLights(const LightList& lights, unsigned short limit)
-{
-	// only call the rendersystem if light list has changed
-	if (lights.getHash() != mLastLightHash || limit > mLastLightLimit)
-	{
-		mDestRenderSystem->_useLights(lights, limit);
-		mLastLightHash = lights.getHash();
-		mLastLightLimit = limit;
-	}
-}
-//---------------------------------------------------------------------
-void SceneManager::useLightsGpuProgram(const Pass* pass, const LightList* lights)
-{
-	// only call the rendersystem if light list has changed
-	if (lights->getHash() != mLastLightHashGpuProgram)
-	{
-		// Update any automatic gpu params for lights
-		// Other bits of information will have to be looked up
-		mAutoParamDataSource->setCurrentLightList(lights);
-		mGpuParamsDirty |= GPV_LIGHTS;
-
-		mLastLightHashGpuProgram = lights->getHash();
-
-	}
-}
-//---------------------------------------------------------------------
-void SceneManager::bindGpuProgram(GpuProgram* prog)
-{
-	// need to reset the light hash, and paarams that need resetting, since program params will have been invalidated
-	mLastLightHashGpuProgram = 0;
-	mGpuParamsDirty = (uint16)GPV_ALL;
-	mDestRenderSystem->bindGpuProgram(prog);
-}
-//---------------------------------------------------------------------
-void SceneManager::updateGpuProgramParameters(const Pass* pass)
-{
-	if (pass->isProgrammable())
-	{
-
-		if (!mGpuParamsDirty)
-			return;
-
-		if (mGpuParamsDirty)
-			pass->_updateAutoParams(mAutoParamDataSource, mGpuParamsDirty);
-
-		if (pass->hasVertexProgram())
-		{
-			mDestRenderSystem->bindGpuProgramParameters(GPT_VERTEX_PROGRAM, 
-				pass->getVertexProgramParameters(), mGpuParamsDirty);
-		}
-
-		if (pass->hasGeometryProgram())
-		{
-			mDestRenderSystem->bindGpuProgramParameters(GPT_GEOMETRY_PROGRAM,
-				pass->getGeometryProgramParameters(), mGpuParamsDirty);
-		}
-
-		if (pass->hasFragmentProgram())
-		{
-			mDestRenderSystem->bindGpuProgramParameters(GPT_FRAGMENT_PROGRAM, 
-				pass->getFragmentProgramParameters(), mGpuParamsDirty);
-		}
-
-		mGpuParamsDirty = 0;
-	}
-
-}
 
 
 }

@@ -124,7 +124,7 @@ namespace Ogre {
         GLContext *mMainContext;
         /* The current GL context  - main thread only*/
         GLContext *mCurrentContext;
-		typedef list<GLContext*>::type GLContextList;
+		typedef std::list<GLContext*> GLContextList;
 		/// List of background thread contexts
 		GLContextList mBackgroundContextList;
 
@@ -134,10 +134,6 @@ namespace Ogre {
 			unwieldy and slow. However, FBO support for stencil buffers is poor.
         */
         GLRTTManager *mRTTManager;
-
-		void setActiveTextureUnit(ushort unit);
-		ushort mActiveTextureUnit;
-
 	protected:
 		void setClipPlanesImpl(const PlaneList& clipPlanes);
     public:
@@ -202,11 +198,6 @@ namespace Ogre {
 		RenderWindow* _createRenderWindow(const String &name, unsigned int width, unsigned int height, 
 			bool fullScreen, const NameValuePairList *miscParams = 0);
 
-		/// @copydoc RenderSystem::_createRenderWindows
-		bool _createRenderWindows(const RenderWindowDescriptionList& renderWindowDescriptions, 
-			RenderWindowList& createdWindows);
-
-		
 		/// @copydoc RenderSystem::createMultiRenderTarget
 		virtual MultiRenderTarget * createMultiRenderTarget(const String & name); 
 		
@@ -299,20 +290,12 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendOperation op );
+        void _setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor);
         /** See
           RenderSystem
          */
-		void _setSeparateSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha, SceneBlendOperation op, SceneBlendOperation alphaOp );
+		void _setSeparateSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha);
         /** See
-          RenderSystem
-         */
-		void _setSceneBlendingOperation(SceneBlendOperation op);
-		/** See
-          RenderSystem
-         */
-		void _setSeparateSceneBlendingOperation(SceneBlendOperation op, SceneBlendOperation alphaOp);
-		/** See
           RenderSystem
          */
         void _setAlphaRejectSettings(CompareFunction func, unsigned char value, bool alphaToCoverage);
@@ -440,8 +423,7 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-		void bindGpuProgramParameters(GpuProgramType gptype, 
-			GpuProgramParametersSharedPtr params, uint16 variabilityMask);
+        void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params);
 		/** See
 		RenderSystem
 		*/

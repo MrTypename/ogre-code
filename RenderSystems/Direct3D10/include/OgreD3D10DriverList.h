@@ -38,7 +38,7 @@ namespace Ogre
 	class D3D10DriverList
 	{
 	private:
-		vector<D3D10Driver*>::type mDriverList;
+		std::vector<D3D10Driver*> mDriverList;
 		IDXGIFactory*	mpDXGIFactory;
 
 	public:

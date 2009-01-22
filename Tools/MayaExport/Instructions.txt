@@ -1,15 +1,4 @@
-/*******************************************************************************
- *                        Ogre exporter for Maya                               *
- *                                                                             *
- * Author: Francesco Giordana ( fra.giordana@tiscali.it )                      *
- *                                                                             *
- * Sponsored by: Anygma N.V. ( http://www.nazooka.com )                        *
- *                                                                             *
- *******************************************************************************
-
-
-Installation:
-
+This is the plugin for exporting from Maya to OGRE mesh and skeleton formats.
 
 1)Copy ogreExporter.mll to your maya plug-ins directory (I.E.: C:\Program Files\Alias\Maya7.0\bin\plug-ins)
 
@@ -28,11 +17,10 @@ the "scripts" directory of this zip.
 5)Launch vcredist_x86.exe to install the latest visual studio 8 dlls
 
 
-Usage:
+For any help or comments check the OGRE forum or e-mail fra.giordana@tiscali.it
 
-1) Via gui from the menu Ogre->Export
 
-2) Via script:
+The exporter can now be used safely via script, here's the syntax:
 
 ogreExport 	generalOptions 
 
@@ -75,16 +63,16 @@ generalOptions:
 
 	
 meshOptions:
-	["-shared"]				export using shared geometry
-	["-v"]					export vertex bone assignements
-	["-n"]					export vertex normals
-	["-c"]					export vertex colours
-	["-t"]					export texture coordinates
-	["-edges"]				generate mesh edge list
-	["-tangents" "TEXCOORD | TANGENT"]	generate tangents
-	["-tangentsplitmirrored"]	split tangents mirrored
-	["-tangentsplitrotated"]	split tangents rotated
-	["-tangentuseparity"]		use parity for tangents
+	["-shared"]		export using shared geometry
+	["-v"]			export vertex bone assignements
+	["-n"]			export vertex normals
+	["-c"]			export vertex colours
+	["-t"]			export texture coordinates
+	["-edges"]		generate mesh edge list
+	["-tangents <semantic>"]	generate tangents (semantic can be TANGENT or TEXCOORD)
+	["-tangentsplitmirrored"]	Split vertices where tangent space is mirrored
+	["-tangentsplitrotated"]	Split vertices where tangent space is rotated more than 90 degrees
+	["-tangentuseparity"]		Use 4-dimensional tangents where parity is stored in w (deals with mirrored tangent space)
 
 matOptions:
 	["-matPrefix" prefix]	add prefix to all exported materials names [optional]

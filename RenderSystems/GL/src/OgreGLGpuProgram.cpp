@@ -173,7 +173,7 @@ void GLArbGpuProgram::unbindProgram(void)
     glDisable(mProgramType);
 }
 
-void GLArbGpuProgram::bindProgramParameters(GpuProgramParametersSharedPtr params, uint16 mask)
+void GLArbGpuProgram::bindProgramParameters(GpuProgramParametersSharedPtr params)
 {
     GLenum type = getGLShaderType(mType);
     
@@ -183,17 +183,14 @@ void GLArbGpuProgram::bindProgramParameters(GpuProgramParametersSharedPtr params
 	for (GpuLogicalIndexUseMap::const_iterator i = floatStruct->map.begin();
 		i != floatStruct->map.end(); ++i)
 	{
-		if (i->second.variability & mask)
+		size_t logicalIndex = i->first;
+		const float* pFloat = params->getFloatPointer(i->second.physicalIndex);
+		// Iterate over the params, set in 4-float chunks (low-level)
+		for (size_t j = 0; j < i->second.currentSize; j+=4)
 		{
-			size_t logicalIndex = i->first;
-			const float* pFloat = params->getFloatPointer(i->second.physicalIndex);
-			// Iterate over the params, set in 4-float chunks (low-level)
-			for (size_t j = 0; j < i->second.currentSize; j+=4)
-			{
-				glProgramLocalParameter4fvARB(type, logicalIndex, pFloat);
-				pFloat += 4;
-				++logicalIndex;
-			}
+			glProgramLocalParameter4fvARB(type, logicalIndex, pFloat);
+			pFloat += 4;
+			++logicalIndex;
 		}
 	}
 }

@@ -73,21 +73,21 @@ namespace Ogre {
 		// Dynamic textures?
 		bool                            mDynamicTextures;
 		/// Vector of pointers to subsurfaces
-		typedef vector<HardwarePixelBufferSharedPtr>::type SurfaceList;
+		typedef std::vector<HardwarePixelBufferSharedPtr> SurfaceList;
 		SurfaceList						mSurfaceList;
 	
 		/// Is hardware gamma supported (read)?
 		bool mHwGammaReadSupported;
 		/// Is hardware gamma supported (write)?
 		bool mHwGammaWriteSupported;
-		D3DMULTISAMPLE_TYPE mFSAAType;
-		DWORD mFSAAQuality;
+		/// Is requested FSAA level supported?
+		bool mFSAALevelSupported;
 
         /// Initialise the device and get formats
         void _initDevice(void);
 
         // needed to store data between prepareImpl and loadImpl
-        typedef SharedPtr<vector<MemoryDataStreamPtr>::type > LoadedStreams;
+        typedef SharedPtr<std::vector<MemoryDataStreamPtr> > LoadedStreams;
 
 		/// internal method, load a cube texture
 		void _loadCubeTex(const LoadedStreams &loadedStreams);
@@ -129,6 +129,8 @@ namespace Ogre {
 		bool _canAutoGenMipmaps(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat);
 		/// internal method, return true if the device/texture combination can use hardware gamma
 		bool _canUseHardwareGammaCorrection(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat, bool forwriting);
+		/// internal method, return true if the device/texture combination can use FSAA
+		bool _canUseFSAALevel(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat, uint fsaa);
 		
 		/// internal method, the cube map face name for the spec. face index
 		String _getCubeFaceName(unsigned char face) const
@@ -286,13 +288,12 @@ namespace Ogre {
     class D3D9RenderTexture : public RenderTexture
     {
     public:
-		D3D9RenderTexture(const String &name, D3D9HardwarePixelBuffer *buffer, bool writeGamma, size_t fsaa, const String& fsaaHint):
+		D3D9RenderTexture(const String &name, D3D9HardwarePixelBuffer *buffer, bool writeGamma, uint fsaa):
 			RenderTexture(buffer, 0)
 		{ 
 			mName = name;
 			mHwGamma = writeGamma;
 			mFSAA = fsaa;
-			mFSAAHint = fsaaHint;
 		}
         ~D3D9RenderTexture() {}
 

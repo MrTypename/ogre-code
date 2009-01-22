@@ -49,7 +49,7 @@ namespace Ogre
 
 class OctreeNode;
 
-typedef list< OctreeNode * >::type NodeList;
+typedef std::list < OctreeNode * > NodeList;
 
 
 /** Octree datastructure for managing scene nodes.

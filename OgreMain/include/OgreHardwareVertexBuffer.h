@@ -292,7 +292,7 @@ namespace Ogre {
     {
     public:
 		/// Defines the list of vertex elements that makes up this declaration
-        typedef list<VertexElement>::type VertexElementList;
+        typedef std::list<VertexElement> VertexElementList;
         /// Sort routine for vertex elements
         static bool vertexElementLess(const VertexElement& e1, const VertexElement& e2);
     protected:
@@ -467,7 +467,7 @@ namespace Ogre {
 	{
 	public:
 		/// Defines the vertex buffer bindings used as source for vertex declarations
-		typedef map<unsigned short, HardwareVertexBufferSharedPtr>::type VertexBufferBindingMap;
+		typedef std::map<unsigned short, HardwareVertexBufferSharedPtr> VertexBufferBindingMap;
 	protected:
 		VertexBufferBindingMap mBindingMap;
 		mutable unsigned short mHighIndex;
@@ -511,7 +511,7 @@ namespace Ogre {
         */
         virtual unsigned short getLastBoundIndex(void) const;
 
-        typedef map<ushort, ushort>::type BindingIndexMap;
+        typedef std::map<ushort, ushort> BindingIndexMap;
 
         /** Check whether any gaps in the bindings.
         */

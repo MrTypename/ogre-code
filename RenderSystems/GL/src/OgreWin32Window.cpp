@@ -41,8 +41,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	#define _MAX_CLASS_NAME_ 128
-
 	Win32Window::Win32Window(Win32GLSupport &glsupport):
 		mGLSupport(glsupport),
 		mContext(0)
@@ -57,7 +55,6 @@ namespace Ogre {
 		mClosed = false;
 		mDisplayFrequency = 0;
 		mActive = false;
-		mDeviceName = NULL;
 	}
 
 	Win32Window::~Win32Window()
@@ -126,9 +123,6 @@ namespace Ogre {
 			if ((opt = miscParams->find("FSAA")) != end)
 				mFSAA = StringConverter::parseUnsignedInt(opt->second);
 
-			if ((opt = miscParams->find("FSAAHint")) != end)
-				mFSAAHint = opt->second;
-
 			if ((opt = miscParams->find("gamma")) != end)
 				hwGamma = StringConverter::parseBool(opt->second);
 
@@ -178,20 +172,6 @@ namespace Ogre {
 			// incompatible with fullscreen
 			if ((opt = miscParams->find("parentWindowHandle")) != end)
 				parent = (HWND)StringConverter::parseUnsignedInt(opt->second);
-
-
-			// Deal with multihead
-			NameValuePairList::const_iterator headDev = miscParams->find("headDeviceName");
-			if (headDev != miscParams->end())	
-			{
-				size_t devNameLen = strlen(headDev->second.c_str());
-				mDeviceName = new char[devNameLen + 1];
-
-				strcpy(mDeviceName, headDev->second.c_str());			
-			}
-			else
-				mDeviceName = NULL;
-
 		}
 
 		if (!mIsExternal)
@@ -206,15 +186,10 @@ namespace Ogre {
 				dwStyleEx |= WS_EX_TOPMOST;
 				outerw = mWidth;
 				outerh = mHeight;
-
-				if (mDeviceName == NULL)
-				{
-					mLeft = 0;
-					mTop = 0;
-				}								
+				mLeft = mTop = 0;
 			}
 			else
-			{				
+			{
 				if (parent)
 				{
 					dwStyle |= WS_CHILD;
@@ -263,31 +238,6 @@ namespace Ogre {
 				(HBRUSH)GetStockObject(BLACK_BRUSH), NULL, "OgreGLWindow" };
 			RegisterClass(&wc);
 
-			if (mIsFullScreen)
-			{
-				DEVMODE displayDeviceMode;
-
-				memset(&displayDeviceMode, 0, sizeof(displayDeviceMode));
-				displayDeviceMode.dmSize = sizeof(DEVMODE);
-				displayDeviceMode.dmBitsPerPel = mColourDepth;
-				displayDeviceMode.dmPelsWidth = mWidth;
-				displayDeviceMode.dmPelsHeight = mHeight;
-				displayDeviceMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-
-				if (mDisplayFrequency)
-				{
-					displayDeviceMode.dmDisplayFrequency = mDisplayFrequency;
-					displayDeviceMode.dmFields |= DM_DISPLAYFREQUENCY;
-					if (ChangeDisplaySettingsEx(mDeviceName, &displayDeviceMode, NULL, CDS_FULLSCREEN | CDS_TEST, NULL) != DISP_CHANGE_SUCCESSFUL)
-					{
-						LogManager::getSingleton().logMessage(LML_NORMAL, "ChangeDisplaySettings with user display frequency failed");
-						displayDeviceMode.dmFields ^= DM_DISPLAYFREQUENCY;
-					}
-				}
-				if (ChangeDisplaySettingsEx(mDeviceName, &displayDeviceMode, NULL, CDS_FULLSCREEN, NULL) != DISP_CHANGE_SUCCESSFUL)								
-					LogManager::getSingleton().logMessage(LML_CRITICAL, "ChangeDisplaySettings failed");
-			}
-
 			// Pass pointer to self as WM_CREATE parameter
 			mHWnd = CreateWindowEx(dwStyleEx, "OgreGLWindow", title.c_str(),
 				dwStyle, mLeft, mTop, outerw, outerh, parent, 0, hInst, this);
@@ -298,7 +248,28 @@ namespace Ogre {
 				<< "Created Win32Window '"
 				<< mName << "' : " << mWidth << "x" << mHeight
 				<< ", " << mColourDepth << "bpp";
-			
+
+			if (mIsFullScreen)
+			{
+				DEVMODE dm;
+				dm.dmSize = sizeof(DEVMODE);
+				dm.dmBitsPerPel = mColourDepth;
+				dm.dmPelsWidth = mWidth;
+				dm.dmPelsHeight = mHeight;
+				dm.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+				if (mDisplayFrequency)
+				{
+					dm.dmDisplayFrequency = mDisplayFrequency;
+					dm.dmFields |= DM_DISPLAYFREQUENCY;
+					if (ChangeDisplaySettings(&dm, CDS_FULLSCREEN | CDS_TEST) != DISP_CHANGE_SUCCESSFUL)
+					{
+						LogManager::getSingleton().logMessage(LML_NORMAL, "ChangeDisplaySettings with user display frequency failed");
+						dm.dmFields ^= DM_DISPLAYFREQUENCY;
+					}
+				}
+				if (ChangeDisplaySettings(&dm, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
+					LogManager::getSingleton().logMessage(LML_CRITICAL, "ChangeDisplaySettings failed");
+			}
 		}
 
 		HDC old_hdc = wglGetCurrentDC();
@@ -403,44 +374,38 @@ namespace Ogre {
 			{
 				dwStyle |= WS_POPUP;
 
-				DEVMODE displayDeviceMode;
-
-				memset(&displayDeviceMode, 0, sizeof(displayDeviceMode));
-				displayDeviceMode.dmSize = sizeof(DEVMODE);
-				displayDeviceMode.dmBitsPerPel = mColourDepth;
-				displayDeviceMode.dmPelsWidth = width;
-				displayDeviceMode.dmPelsHeight = height;
-				displayDeviceMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+				DEVMODE dm;
+				dm.dmSize = sizeof(DEVMODE);
+				dm.dmBitsPerPel = mColourDepth;
+				dm.dmPelsWidth = width;
+				dm.dmPelsHeight = height;
+				dm.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 				if (mDisplayFrequency)
 				{
-					displayDeviceMode.dmDisplayFrequency = mDisplayFrequency;
-					displayDeviceMode.dmFields |= DM_DISPLAYFREQUENCY;
-
-					if (ChangeDisplaySettingsEx(mDeviceName, &displayDeviceMode, NULL, 
-						CDS_FULLSCREEN | CDS_TEST, NULL) != DISP_CHANGE_SUCCESSFUL)					
+					dm.dmDisplayFrequency = mDisplayFrequency;
+					dm.dmFields |= DM_DISPLAYFREQUENCY;
+					if (ChangeDisplaySettings(&dm, CDS_FULLSCREEN | CDS_TEST) != DISP_CHANGE_SUCCESSFUL)
 					{
 						LogManager::getSingleton().logMessage(LML_NORMAL, "ChangeDisplaySettings with user display frequency failed");
-						displayDeviceMode.dmFields ^= DM_DISPLAYFREQUENCY;
+						dm.dmFields ^= DM_DISPLAYFREQUENCY;
 					}
 				}
 				else
 				{
 					// try a few
-					displayDeviceMode.dmDisplayFrequency = 100;
-					displayDeviceMode.dmFields |= DM_DISPLAYFREQUENCY;
-					if (ChangeDisplaySettingsEx(mDeviceName, &displayDeviceMode, NULL, 
-						CDS_FULLSCREEN | CDS_TEST, NULL) != DISP_CHANGE_SUCCESSFUL)		
+					dm.dmDisplayFrequency = 100;
+					dm.dmFields |= DM_DISPLAYFREQUENCY;
+					if (ChangeDisplaySettings(&dm, CDS_FULLSCREEN | CDS_TEST) != DISP_CHANGE_SUCCESSFUL)
 					{
-						displayDeviceMode.dmDisplayFrequency = 75;
-						if (ChangeDisplaySettingsEx(mDeviceName, &displayDeviceMode, NULL, 
-							CDS_FULLSCREEN | CDS_TEST, NULL) != DISP_CHANGE_SUCCESSFUL)		
+						dm.dmDisplayFrequency = 75;
+						if (ChangeDisplaySettings(&dm, CDS_FULLSCREEN | CDS_TEST) != DISP_CHANGE_SUCCESSFUL)
 						{
-							displayDeviceMode.dmFields ^= DM_DISPLAYFREQUENCY;
+							dm.dmFields ^= DM_DISPLAYFREQUENCY;
 						}
 					}
 
 				}
-				if (ChangeDisplaySettingsEx(mDeviceName, &displayDeviceMode, NULL, CDS_FULLSCREEN, NULL) != DISP_CHANGE_SUCCESSFUL)				
+				if (ChangeDisplaySettings(&dm, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
 					LogManager::getSingleton().logMessage(LML_CRITICAL, "ChangeDisplaySettings failed");
 
 				SetWindowLong(mHWnd, GWL_STYLE, dwStyle);
@@ -456,7 +421,7 @@ namespace Ogre {
 				dwStyle |= WS_OVERLAPPEDWINDOW;
 
 				// drop out of fullscreen
-				ChangeDisplaySettingsEx(mDeviceName, NULL, NULL, 0, NULL);
+				ChangeDisplaySettings(NULL, 0);
 
 				// calculate overall dimensions for requested client area
 				RECT rc = { 0, 0, width, height };
@@ -499,7 +464,7 @@ namespace Ogre {
 			WindowEventUtilities::_removeRenderWindow(this);
 
 			if (mIsFullScreen)
-				ChangeDisplaySettingsEx(mDeviceName, NULL, NULL, 0, NULL);
+				ChangeDisplaySettings(NULL, 0);
 			DestroyWindow(mHWnd);
 		}
 		else
@@ -512,22 +477,6 @@ namespace Ogre {
 		mClosed = true;
 		mHDC = 0; // no release thanks to CS_OWNDC wndclass style
 		mHWnd = 0;
-
-		if (mDeviceName != NULL)
-		{
-			delete[] mDeviceName;
-			mDeviceName = NULL;
-		}
-		
-	}
-
-
-	bool Win32Window::isActive(void) const
-	{
-		if (isFullScreen())
-			return isVisible();
-
-		return mActive && isVisible();
 	}
 
 	bool Win32Window::isVisible() const
@@ -670,49 +619,32 @@ namespace Ogre {
 	}
 
 	void Win32Window::setActive( bool state )
-	{	
-		if (mDeviceName != NULL && state == false)
-		{
-			HWND hActiveWindow = GetActiveWindow();
-			char classNameSrc[_MAX_CLASS_NAME_ + 1];
-			char classNameDst[_MAX_CLASS_NAME_ + 1];
-
-			GetClassName(mHWnd, classNameSrc, _MAX_CLASS_NAME_);
-			GetClassName(hActiveWindow, classNameDst, _MAX_CLASS_NAME_);
-
-			if (strcmp(classNameDst, classNameSrc) == 0)
-			{
-				state = true;
-			}						
-		}
-		
+	{
 		mActive = state;
 
 		if( mIsFullScreen )
 		{
 			if( state == false )
 			{	//Restore Desktop
-				ChangeDisplaySettingsEx(mDeviceName, NULL, NULL, 0, NULL);
+				ChangeDisplaySettings(NULL, 0);
 				ShowWindow(mHWnd, SW_SHOWMINNOACTIVE);
 			}
 			else
 			{	//Restore App
 				ShowWindow(mHWnd, SW_SHOWNORMAL);
 
-				DEVMODE displayDeviceMode;
-
-				memset(&displayDeviceMode, 0, sizeof(displayDeviceMode));
-				displayDeviceMode.dmSize = sizeof(DEVMODE);
-				displayDeviceMode.dmBitsPerPel = mColourDepth;
-				displayDeviceMode.dmPelsWidth = mWidth;
-				displayDeviceMode.dmPelsHeight = mHeight;
-				displayDeviceMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+				DEVMODE dm;
+				dm.dmSize = sizeof(DEVMODE);
+				dm.dmBitsPerPel = mColourDepth;
+				dm.dmPelsWidth = mWidth;
+				dm.dmPelsHeight = mHeight;
+				dm.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 				if (mDisplayFrequency)
 				{
-					displayDeviceMode.dmDisplayFrequency = mDisplayFrequency;
-					displayDeviceMode.dmFields |= DM_DISPLAYFREQUENCY;
+					dm.dmDisplayFrequency = mDisplayFrequency;
+					dm.dmFields |= DM_DISPLAYFREQUENCY;
 				}
-				ChangeDisplaySettingsEx(mDeviceName, &displayDeviceMode, NULL, CDS_FULLSCREEN, NULL);
+				ChangeDisplaySettings(&dm, CDS_FULLSCREEN);
 			}
 		}
 	}

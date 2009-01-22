@@ -69,7 +69,7 @@ namespace Ogre {
 			VRQ_PROPORTIONAL
 		};
 
-        typedef vector<IndexData*>::type LODFaceList;
+        typedef std::vector<IndexData*> LODFaceList;
 
         /** Constructor, takes the geometry data and index buffer. 
 		@remarks
@@ -167,10 +167,10 @@ namespace Ogre {
 
             Vector3  position;  // location of point in euclidean space
 	        size_t index;       // place of vertex in original list
-            typedef set<PMVertex *>::type NeighborList;
-            typedef set<PMVertex *>::type DuplicateList;
+            typedef std::set<PMVertex *> NeighborList;
+            typedef std::set<PMVertex *> DuplicateList;
             NeighborList neighbor; // adjacent vertices
-	        typedef set<PMTriangle *>::type FaceList;
+	        typedef std::set<PMTriangle *> FaceList;
             FaceList face;     // adjacent triangles
 
 	        Real collapseCost;  // cached cost of collapsing edge
@@ -182,10 +182,10 @@ namespace Ogre {
 
         };
 
-        typedef vector<PMTriangle>::type TriangleList;
-        typedef vector<PMFaceVertex>::type FaceVertexList;
-        typedef vector<PMVertex>::type CommonVertexList;
-        typedef vector<Real>::type WorstCostList;
+        typedef std::vector<PMTriangle> TriangleList;
+        typedef std::vector<PMFaceVertex> FaceVertexList;
+        typedef std::vector<PMVertex> CommonVertexList;
+        typedef std::vector<Real> WorstCostList;
 
         /// Data used to calculate the collapse costs
         struct PMWorkingData
@@ -195,7 +195,7 @@ namespace Ogre {
 			CommonVertexList mVertList; // The master list of common vertices
         };
 
-        typedef vector<PMWorkingData>::type WorkingDataList;
+        typedef std::vector<PMWorkingData> WorkingDataList;
         /// Multiple copies, 1 per vertex buffer
         WorkingDataList mWorkingData;
 

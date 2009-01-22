@@ -80,26 +80,6 @@ namespace Ogre {
 		GCT_UNKNOWN = 99
 	};
 
-	/** The variability of a GPU parameter, as derived from auto-params targetting it.
-		These values must be powers of two since they are used in masks.
-	*/
-	enum GpuParamVariability
-	{
-		/// No variation except by manual setting - the default
-		GPV_GLOBAL = 1, 
-		/// Varies per object (based on an auto param usually), but not per light setup
-		GPV_PER_OBJECT = 2, 
-		/// Varies with light setup
-		GPV_LIGHTS = 4, 
-		/// Varies with pass iteration number
-		GPV_PASS_ITERATION_NUMBER = 8,
-
-
-		/// Full mask (16-bit)
-		GPV_ALL = 0xFFFF
-
-	};
-
 	/** Information about predefined program constants. 
 	@note Only available for high-level programs but is referenced generically
 		by GpuProgramParameters.
@@ -117,8 +97,6 @@ namespace Ogre {
 		size_t elementSize;
 		/// Length of array
 		size_t arraySize;
-		/// How this parameter varies (bitwise combination of GpuProgramVariability)
-		mutable uint16 variability;
 
 		bool isFloat() const
 		{
@@ -162,10 +140,9 @@ namespace Ogre {
 			: constType(GCT_UNKNOWN)
 			, physicalIndex((std::numeric_limits<size_t>::max)())
 			, elementSize(0)
-			, arraySize(1)
-			, variability(GPV_GLOBAL) {}
+			, arraySize(1) {}
 	};
-	typedef map<String, GpuConstantDefinition>::type GpuConstantDefinitionMap;
+	typedef std::map<String, GpuConstantDefinition> GpuConstantDefinitionMap;
 	typedef ConstMapIterator<GpuConstantDefinitionMap> GpuConstantDefinitionIterator;
 
 	/// Struct collecting together the information for named constants.
@@ -242,15 +219,11 @@ namespace Ogre {
 		size_t physicalIndex;
 		/// Current physical size allocation
 		size_t currentSize;
-		/// How the contents of this slot vary
-		mutable uint16 variability;
 
-		GpuLogicalIndexUse() 
-			: physicalIndex(99999), currentSize(0), variability(GPV_GLOBAL) {}
-		GpuLogicalIndexUse(size_t bufIdx, size_t curSz, uint16 v) 
-			: physicalIndex(bufIdx), currentSize(curSz), variability(v) {}
+		GpuLogicalIndexUse(size_t bufIdx, size_t curSz) 
+			: physicalIndex(bufIdx), currentSize(curSz) {}
 	};
-	typedef map<size_t, GpuLogicalIndexUse>::type GpuLogicalIndexUseMap;
+	typedef std::map<size_t, GpuLogicalIndexUse> GpuLogicalIndexUseMap;
 	/// Container struct to allow params to safely & update shared list of logical buffer assignments
 	struct _OgreExport GpuLogicalBufferStruct
 	{
@@ -794,33 +767,29 @@ namespace Ogre {
 				size_t data;
 				Real fData;
 			};
-			/// The variability of this parameter (see GpuParamVariability)
-			uint16 variability;
 
             AutoConstantEntry(AutoConstantType theType, size_t theIndex, size_t theData, 
-				uint16 theVariability, size_t theElemCount = 4)
-                : paramType(theType), physicalIndex(theIndex), elementCount(theElemCount), 
-				data(theData), variability(theVariability) {}
+				size_t theElemCount = 4)
+                : paramType(theType), physicalIndex(theIndex), elementCount(theElemCount), data(theData) {}
 
 			AutoConstantEntry(AutoConstantType theType, size_t theIndex, Real theData, 
-				uint16 theVariability, size_t theElemCount = 4)
-				: paramType(theType), physicalIndex(theIndex), elementCount(theElemCount), 
-				fData(theData), variability(theVariability) {}
+				size_t theElemCount = 4)
+				: paramType(theType), physicalIndex(theIndex), elementCount(theElemCount), fData(theData) {}
 
         };
 		// Auto parameter storage
-		typedef vector<AutoConstantEntry>::type AutoConstantList;
+		typedef std::vector<AutoConstantEntry> AutoConstantList;
 
 		/** Definition of container that holds the current float constants.
 		@note Not necessarily in direct index order to constant indexes, logical
 			to physical index map is derived from GpuProgram
 		*/
-		typedef vector<float>::type FloatConstantList;
+		typedef std::vector<float> FloatConstantList;
 		/** Definition of container that holds the current float constants.
 		@note Not necessarily in direct index order to constant indexes, logical
 			to physical index map is derived from GpuProgram
 		*/
-		typedef vector<int>::type IntConstantList;
+		typedef std::vector<int> IntConstantList;
 
 	protected:
         static AutoConstantDefinition AutoConstantDictionary[];
@@ -838,24 +807,12 @@ namespace Ogre {
 		const GpuNamedConstants* mNamedConstants;
         /// List of automatically updated parameters
         AutoConstantList mAutoConstants;
-		/// The combined variability masks of all parameters
-		uint16 mCombinedVariability;
         /// Do we need to transpose matrices?
         bool mTransposeMatrices;
 		/// flag to indicate if names not found will be ignored
 		bool mIgnoreMissingParams;
         /// physical index for active pass iteration parameter real constant entry;
         size_t mActivePassIterationIndex;
-
-		/** Gets the low-level structure for a logical index. 
-		*/
-		GpuLogicalIndexUse* _getFloatConstantLogicalIndexUse(size_t logicalIndex, size_t requestedSize, uint16 variability);
-		/** Gets the physical buffer index associated with a logical int constant index. 
-		*/
-		GpuLogicalIndexUse* _getIntConstantLogicalIndexUse(size_t logicalIndex, size_t requestedSize, uint16 variability);
-
-		/// Return the variability for an auto constant
-		uint16 deriveVariability(AutoConstantType act);
 
     public:
 		GpuProgramParameters();
@@ -1138,12 +1095,12 @@ namespace Ogre {
 			physical buffer index.
 		*/
 		void _setRawAutoConstant(size_t physicalIndex, AutoConstantType acType, size_t extraInfo, 
-			uint16 variability, size_t elementSize = 4);
+			size_t elementSize = 4);
 		/** As setAutoConstantReal, but sets up the auto constant directly against a
 		physical buffer index.
 		*/
 		void _setRawAutoConstantReal(size_t physicalIndex, AutoConstantType acType, Real rData, 
-			uint16 variability, size_t elementSize = 4);
+			size_t elementSize = 4);
 
 
 		/** Unbind an auto constant so that the constant is manually controlled again. */
@@ -1192,11 +1149,10 @@ namespace Ogre {
 		*/
 		const AutoConstantEntry* _findRawAutoConstantEntryInt(size_t physicalIndex);
 
-		/** Update automatic parameters.
-		@param source The source of the parameters
-		@param variabilityMask A mask of GpuParamVariability which identifies which autos will need updating
-		*/
-		void _updateAutoParams(const AutoParamDataSource* source, uint16 variabilityMask);
+        /** Updates the automatic parameters (except lights) based on the details provided. */
+        void _updateAutoParamsNoLights(const AutoParamDataSource* source);
+        /** Updates the automatic parameters for lights based on the details provided. */
+        void _updateAutoParamsLightsOnly(const AutoParamDataSource* source);
 
 		/** Tells the program whether to ignore missing parameters or not.
 		*/
@@ -1380,14 +1336,15 @@ namespace Ogre {
 		@param requestedSize The requested size - pass 0 to ignore missing entries
 			and return std::numeric_limits<size_t>::max() 
 		*/
-		size_t _getFloatConstantPhysicalIndex(size_t logicalIndex, size_t requestedSize, uint16 variability);
+		size_t _getFloatConstantPhysicalIndex(size_t logicalIndex, size_t requestedSize);
 		/** Gets the physical buffer index associated with a logical int constant index. 
 		@note Only applicable to low-level programs.
 		@param logicalIndex The logical parameter index
 		@param requestedSize The requested size - pass 0 to ignore missing entries
 			and return std::numeric_limits<size_t>::max() 
 		*/
-		size_t _getIntConstantPhysicalIndex(size_t logicalIndex, size_t requestedSize, uint16 variability);
+		size_t _getIntConstantPhysicalIndex(size_t logicalIndex, size_t requestedSize);
+
 
         /** Sets whether or not we need to transpose the matrices passed in from the rest of OGRE.
         @remarks
@@ -1530,6 +1487,8 @@ namespace Ogre {
 		bool mNeedsAdjacencyInfo;
 		/// The default parameters for use with this object
 		GpuProgramParametersSharedPtr mDefaultParams;
+		/// Does this program want light states passed through fixed pipeline
+		bool mPassSurfaceAndLightStates;
 		/// Did we encounter a compilation error?
 		bool mCompileError;
 		/** Record of logical to physical buffer maps. Mandatory for low-level
@@ -1705,33 +1664,23 @@ namespace Ogre {
         */
         virtual bool hasDefaultParameters(void) const { return !mDefaultParams.isNull(); }
 
+		/** Sets whether a vertex program requires light and material states to be passed
+		to through fixed pipeline low level API rendering calls.
+		@remarks
+		If this is set to true, OGRE will pass all active light states to the fixed function
+		pipeline.  This is useful for high level shaders like GLSL that can read the OpenGL
+		light and material states.  This way the user does not have to use autoparameters to 
+		pass light position, color etc.
+		*/
+		virtual void setSurfaceAndPassLightStates(bool state)
+			{ mPassSurfaceAndLightStates = state; }
+
 		/** Returns whether a vertex program wants light and material states to be passed
-		through fixed pipeline low level API rendering calls (default false, subclasses can override)
-		@remarks
-			Most vertex programs do not need this material information, however GLSL
-			shaders can refer to this material and lighting state so enable this option
-		*/
-		virtual bool getPassSurfaceAndLightStates(void) const { return false; }
-
-		/** Returns whether a fragment program wants fog state to be passed
-		through fixed pipeline low level API rendering calls (default true, subclasses can override)
-		@remarks
-		On DirectX, shader model 2 and earlier continues to have fixed-function fog
-		applied to it, so fog state is still passed (you should disable fog on the
-		pass if you want to perform fog in the shader). In OpenGL it is also
-		common to be able to access the fixed-function fog state inside the shader. 
-		*/
-		virtual bool getPassFogStates(void) const { return true; }
-
-		/** Returns whether a vertex program wants transform state to be passed
 		through fixed pipeline low level API rendering calls
-		@remarks
-		Most vertex programs do not need fixed-function transform information, however GLSL
-		shaders can refer to this state so enable this option
 		*/
-		virtual bool getPassTransformStates(void) const { return false; }
+		virtual bool getPassSurfaceAndLightStates(void) const { return mPassSurfaceAndLightStates; }
 
-		/** Returns a string that specifies the language of the gpu programs as specified
+        /** Returns a string that specifies the language of the gpu programs as specified
         in a material script. ie: asm, cg, hlsl, glsl
         */
         virtual const String& getLanguage(void) const;

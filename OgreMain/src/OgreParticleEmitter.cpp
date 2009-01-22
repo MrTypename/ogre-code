@@ -608,7 +608,7 @@ namespace Ogre
     ParticleEmitterFactory::~ParticleEmitterFactory()
     {
         // Destroy all emitters
-        vector<ParticleEmitter*>::type::iterator i;
+        std::vector<ParticleEmitter*>::iterator i;
         for (i = mEmitters.begin(); i != mEmitters.end(); ++i)
         {
             OGRE_DELETE (*i);
@@ -620,7 +620,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     void ParticleEmitterFactory::destroyEmitter(ParticleEmitter* e)        
     {
-        vector<ParticleEmitter*>::type::iterator i;
+        std::vector<ParticleEmitter*>::iterator i;
         for (i = mEmitters.begin(); i != mEmitters.end(); ++i)
         {
             if ((*i) == e)

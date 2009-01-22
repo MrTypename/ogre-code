@@ -37,7 +37,6 @@ Torus Knot Software Ltd.
 #include "OgreAnimationTrack.h"
 #include "OgreBone.h"
 #include "OgreIteratorWrappers.h"
-#include "OgreMesh.h"
 
 namespace Ogre {
 
@@ -123,7 +122,7 @@ namespace Ogre {
 			VertexData *vertexData;
 			IndexData *indexData;
 		};
-		typedef list<OptimisedSubMeshGeometry*>::type OptimisedSubMeshGeometryList;
+		typedef std::list<OptimisedSubMeshGeometry*> OptimisedSubMeshGeometryList;
 		/// Saved link between SubMesh at a LOD and vertex/index data
 		/// May point to original or optimised geometry
 		struct SubMeshLodGeometryLink
@@ -131,8 +130,8 @@ namespace Ogre {
 			VertexData* vertexData;
 			IndexData* indexData;
 		};
-		typedef vector<SubMeshLodGeometryLink>::type SubMeshLodGeometryLinkList;
-		typedef map<SubMesh*, SubMeshLodGeometryLinkList*>::type SubMeshGeometryLookup;
+		typedef std::vector<SubMeshLodGeometryLink> SubMeshLodGeometryLinkList;
+		typedef std::map<SubMesh*, SubMeshLodGeometryLinkList*> SubMeshGeometryLookup;
 		/// Structure recording a queued submesh for the build
 		struct QueuedSubMesh : public BatchedGeometryAlloc
 		{
@@ -147,8 +146,8 @@ namespace Ogre {
 			AxisAlignedBox worldBounds;
 			unsigned int ID;
 		};
-		typedef vector<QueuedSubMesh*>::type QueuedSubMeshList;
-		typedef vector<String>::type QueuedSubMeshOriginList;
+		typedef std::vector<QueuedSubMesh*> QueuedSubMeshList;
+		typedef std::vector<String> QueuedSubMeshOriginList;
 		/// Structure recording a queued geometry for low level builds
 		struct QueuedGeometry : public BatchedGeometryAlloc
 		{
@@ -158,7 +157,7 @@ namespace Ogre {
 			Vector3 scale;
 			unsigned int ID;
 		};
-		typedef vector<QueuedGeometry*>::type QueuedGeometryList;
+		typedef std::vector<QueuedGeometry*> QueuedGeometryList;
 		
 		// forward declarations
 		class LODBucket;
@@ -259,7 +258,7 @@ namespace Ogre {
             TS_WORLD
         };
 			/// list of Geometry Buckets that contains the instanced object
-			typedef vector<GeometryBucket*>::type GeometryBucketList;
+			typedef std::vector<GeometryBucket*> GeometryBucketList;
 		protected:
 			GeometryBucketList mGeometryBucketList;
 			unsigned short mIndex;
@@ -308,7 +307,7 @@ namespace Ogre {
 		{
 		public:
 			/// list of Geometry Buckets in this BatchInstance
-			typedef vector<GeometryBucket*>::type GeometryBucketList;
+			typedef std::vector<GeometryBucket*> GeometryBucketList;
 		protected:
 			/// Pointer to parent LODBucket
 			LODBucket* mParent;
@@ -322,7 +321,7 @@ namespace Ogre {
 			/// list of Geometry Buckets in this BatchInstance
 			GeometryBucketList mGeometryBucketList;
 			// index to current Geometry Buckets for a given geometry format
-			typedef map<String, GeometryBucket*>::type CurrentGeometryMap;
+			typedef std::map<String, GeometryBucket*> CurrentGeometryMap;
 			CurrentGeometryMap mCurrentGeometryMap;
 			/// Get a packed string identifying the geometry format
 			String getGeometryFormatString(SubMeshLodGeometryLink* geom);
@@ -339,7 +338,7 @@ namespace Ogre {
 			void build();
 			/// Add children to the render queue
 			void addRenderables(RenderQueue* queue, uint8 group, 
-				Real lodValue);
+				Real camSquaredDist);
 			/// Get the material for this bucket
 			const MaterialPtr& getMaterial(void) const { return mMaterial; }
 			/// Iterator over geometry
@@ -371,33 +370,33 @@ namespace Ogre {
 		{
 		public:
 			/// Lookup of Material Buckets in this BatchInstance
-			typedef map<String, MaterialBucket*>::type MaterialBucketMap;
+			typedef std::map<String, MaterialBucket*> MaterialBucketMap;
 		protected:
 			/// Pointer to parent BatchInstance
 			BatchInstance* mParent;
 			/// LOD level (0 == full LOD)
 			unsigned short mLod;
-			/// lod value at which this LOD starts to apply (squared)
-			Real mLodValue;
+			/// distance at which this LOD starts to apply (squared)
+			Real mSquaredDistance;
 			/// Lookup of Material Buckets in this BatchInstance
 			MaterialBucketMap mMaterialBucketMap;
 			/// Geometry queued for a single LOD (deallocated here)
 			QueuedGeometryList mQueuedGeometryList;
 		public:
-			LODBucket(BatchInstance* parent, unsigned short lod, Real lodValue);
+			LODBucket(BatchInstance* parent, unsigned short lod, Real lodDist);
 			virtual ~LODBucket();
 			BatchInstance* getParent(void) { return mParent; }
 			/// Get the lod index
 			ushort getLod(void) const { return mLod; }
-			/// Get the lod value
-			Real getLodValue(void) const { return mLodValue; }
+			/// Get the lod squared distance
+			Real getSquaredDistance(void) const { return mSquaredDistance; }
 			/// Assign a queued submesh to this bucket, using specified mesh LOD
 			void assign(QueuedSubMesh* qsm, ushort atLod);
 			/// Build
 			void build();
 			/// Add children to the render queue
 			void addRenderables(RenderQueue* queue, uint8 group, 
-				Real lodValue);
+				Real camSquaredDistance);
 			/// Iterator over the materials in this LOD
 			typedef MapIterator<MaterialBucketMap> MaterialIterator;
 			/// Get an iterator over the materials in this LOD
@@ -419,13 +418,12 @@ namespace Ogre {
 		*/
 		class _OgreExport  BatchInstance : public MovableObject
 		{
-            friend class MaterialBucket;
 			public:
 		
 
 			/// list of LOD Buckets in this BatchInstance
-			typedef vector<LODBucket*>::type LODBucketList;
-			typedef map<int, InstancedObject*>::type ObjectsMap;
+			typedef std::vector<LODBucket*> LODBucketList;
+			typedef std::map<int, InstancedObject*> ObjectsMap;
 			typedef MapIterator<ObjectsMap> InstancedObjectIterator;
 		protected:
 			
@@ -442,25 +440,19 @@ namespace Ogre {
 
 			ObjectsMap mInstancesMap;
 		public:
-			/// Lod values as built up - use the max at each level
-			Mesh::LodValueList mLodValues;
+			/// LOD distances (squared) as built up - use the max at each level
+			std::vector<Real> mLodSquaredDistances;
 			/// Local AABB relative to BatchInstance centre
 			AxisAlignedBox mAABB;
 			/// Local bounding radius
 			Real mBoundingRadius;
 			/// The current lod level, as determined from the last camera
 			ushort mCurrentLod;
-			/// Current lod value, passed on to do material lod later
-			Real mLodValue;
-            /// Current camera, passed on to do material lod later
-            Camera *mCamera;
-            /// Cached squared view depth value to avoid recalculation by GeometryBucket
-            Real mSquaredViewDepth;
+			/// Current camera distance, passed on to do material lod later
+			Real mCamDistanceSquared;
 		protected:
 			/// List of LOD buckets			
 			LODBucketList mLodBucketList;
-            /// Lod strategy reference
-            const LodStrategy *mLodStrategy;
 
 		public:
 			BatchInstance(InstancedGeometry* parent, const String& name, SceneManager* mgr, 
@@ -515,13 +507,13 @@ namespace Ogre {
 		/** Indexed BatchInstance map based on packed x/y/z BatchInstance index, 10 bits for
 			each axis.
 		*/
-		typedef map<uint32, BatchInstance*>::type BatchInstanceMap;
+		typedef std::map<uint32, BatchInstance*> BatchInstanceMap;
 		/** Simple vectors where are stored all the renderoperations of the Batch.
 			This vector is used when we want to delete the batch, in order to delete only one time each
 			render operation.
 
 		*/
-		typedef vector<RenderOperation*>::type RenderOperationVector;
+		typedef std::vector<RenderOperation*> RenderOperationVector;
 	protected:
 		// General state & settings
 		SceneManager* mOwner;
@@ -607,7 +599,7 @@ namespace Ogre {
 		void splitGeometry(VertexData* vd, IndexData* id, 
 			SubMeshLodGeometryLink* targetGeomLink);
 
-		typedef map<size_t, size_t>::type IndexRemap;
+		typedef std::map<size_t, size_t> IndexRemap;
 		/** Method for figuring out which vertices are used by an index buffer
 			and calculating a remap lookup for a vertex buffer just containing
 			those vertices. 
@@ -658,7 +650,6 @@ namespace Ogre {
 			this InstancedGeometry if you like. The Entity passed in is simply 
 			used as a definition.
 		@note Must be called before 'build'.
-        @note All added entities must use the same lod strategy.
 		@param ent The Entity to use as a definition (the Mesh and Materials 
 			referenced will be recorded for the build call).
 		@param position The world position at which to add this Entity
@@ -684,7 +675,6 @@ namespace Ogre {
 			versions! We don't do this for you incase you are preparing this 
 			in advance and so don't want the originals detached yet. 
 		@note Must be called before 'build'.
-        @note All added entities must use the same lod strategy.
 		@param node Pointer to the node to use to provide a set of Entity 
 			templates
 		*/

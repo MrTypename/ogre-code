@@ -1,10 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 // ogreExporter.cpp
-// Author       : Francesco Giordana
-// Sponsored by : Anygma N.V. (http://www.nazooka.com)
-// Start Date   : January 13, 2005
-// Copyright    : (C) 2006 by Francesco Giordana
-// Email        : fra.giordana@tiscali.it
+// Author     : Francesco Giordana
+// Start Date : January 13, 2005
+// Copyright  : (C) 2006 by Francesco Giordana
+// Email      : fra.giordana@tiscali.it
 ////////////////////////////////////////////////////////////////////////////////
 
 /*********************************************************************************
@@ -90,9 +89,18 @@ namespace OgreMayaExporter
 			for ( ; !iter.isDone(); iter.next())
 			{								
 				MDagPath dagPath;
-				stat = iter.getDagPath(dagPath);
+				stat = iter.getDagPath(dagPath);	
 				stat = translateNode(dagPath); 
 			}							
+		}
+
+		// Load skeleton animation (do it now, so we have loaded all needed joints)
+		if (m_pMesh->getSkeleton() && m_params.exportSkelAnims)
+		{
+			// Restore skeleton to correct pose
+			m_pMesh->getSkeleton()->restorePose();
+			// Load skeleton animations
+			m_pMesh->getSkeleton()->loadAnims(m_params);
 		}
 
 		// Load vertex animations
@@ -102,17 +110,6 @@ namespace OgreMayaExporter
 		// Load blend shapes
 		if (m_params.exportBlendShapes)
 			m_pMesh->loadBlendShapes(m_params);
-
-		// Restore skeleton to correct pose
-		if (m_pMesh->getSkeleton())
-			m_pMesh->getSkeleton()->restorePose();
-
-		// Load skeleton animation (do it now, so we have loaded all needed joints)
-		if (m_pMesh->getSkeleton() && m_params.exportSkelAnims)
-		{
-			// Load skeleton animations
-			m_pMesh->getSkeleton()->loadAnims(m_params);
-		}
 
 		/**************************** WRITE DATA **********************************/
 		stat = writeOgreData();
@@ -235,7 +232,7 @@ namespace OgreMayaExporter
 			}
 		}
 		// look for meshes and cameras within the node's children
-		for (uint i=0; i<dagPath.childCount(); i++)
+		for (unsigned int i=0; i<dagPath.childCount(); i++)
 		{
 			MObject child = dagPath.child(i);
 			 MDagPath childPath = dagPath;
@@ -264,7 +261,7 @@ namespace OgreMayaExporter
 		m_params.outAnim <<"{\n";
 		m_params.outAnim << "\t//Time   /    Value\n";
 
-		for (uint i=0; i<anim.numKeys(); i++)
+		for (unsigned int i=0; i<anim.numKeys(); i++)
 			m_params.outAnim << "\t" << anim.time(i).as(MTime::kSeconds) << "\t" << anim.value(i) << "\n";
 
 		m_params.outAnim << "}\n\n";
@@ -278,6 +275,7 @@ namespace OgreMayaExporter
 	********************************************************************************************************/
 	MStatus OgreExporter::writeCamera(MFnCamera& camera)
 	{
+		int i;
 		MPlug plug;
 		MPlugArray srcplugarray;
 		double dist;
@@ -285,7 +283,7 @@ namespace OgreMayaExporter
 		MFnTransform* cameraTransform = NULL;
 		MFnAnimCurve* animCurve = NULL;
 		// get camera transform
-		for (int i=0; i<camera.parentCount(); i++)
+		for (i=0; i<camera.parentCount(); i++)
 		{
 			if (camera.parent(i).hasFn(MFn::kTransform))
 			{
@@ -313,7 +311,7 @@ namespace OgreMayaExporter
 		if (plug.isConnected() && m_params.exportCamerasAnim)
 		{
 			plug.connectedTo(srcplugarray,true,false,&stat);
-			for (int i=0; i < srcplugarray.length(); i++)
+			for (i=0; i < srcplugarray.length(); i++)
 			{
 				if (srcplugarray[i].node().hasFn(MFn::kAnimCurve))
 				{
@@ -341,7 +339,7 @@ namespace OgreMayaExporter
 		if (plug.isConnected() && m_params.exportCamerasAnim)
 		{
 			plug.connectedTo(srcplugarray,true,false,&stat);
-			for (int i=0; i< srcplugarray.length(); i++)
+			for (i=0; i< srcplugarray.length(); i++)
 			{
 				if (srcplugarray[i].node().hasFn(MFn::kAnimCurve))
 				{
@@ -369,7 +367,7 @@ namespace OgreMayaExporter
 		if (plug.isConnected() && m_params.exportCamerasAnim)
 		{
 			plug.connectedTo(srcplugarray,true,false,&stat);
-			for (int i=0; i< srcplugarray.length(); i++)
+			for (i=0; i< srcplugarray.length(); i++)
 			{
 				if (srcplugarray[i].node().hasFn(MFn::kAnimCurve))
 				{
@@ -402,7 +400,7 @@ namespace OgreMayaExporter
 		if (plug.isConnected() && m_params.exportCamerasAnim)
 		{
 			plug.connectedTo(srcplugarray,true,false,&stat);
-			for (int i=0; i< srcplugarray.length(); i++)
+			for (i=0; i< srcplugarray.length(); i++)
 			{
 				if (srcplugarray[i].node().hasFn(MFn::kAnimCurve))
 				{
@@ -430,7 +428,7 @@ namespace OgreMayaExporter
 		if (plug.isConnected() && m_params.exportCamerasAnim)
 		{
 			plug.connectedTo(srcplugarray,true,false,&stat);
-			for (int i=0; i< srcplugarray.length(); i++)
+			for (i=0; i< srcplugarray.length(); i++)
 			{
 				if (srcplugarray[i].node().hasFn(MFn::kAnimCurve))
 				{
@@ -458,7 +456,7 @@ namespace OgreMayaExporter
 		if (plug.isConnected() && m_params.exportCamerasAnim)
 		{
 			plug.connectedTo(srcplugarray,true,false,&stat);
-			for (int i=0; i< srcplugarray.length(); i++)
+			for (i=0; i< srcplugarray.length(); i++)
 			{
 				if (srcplugarray[i].node().hasFn(MFn::kAnimCurve))
 				{
@@ -496,6 +494,8 @@ namespace OgreMayaExporter
 	********************************************************************************************************/
 	MStatus OgreExporter::writeOgreData()
 	{
+		// Create Ogre Root
+//		Ogre::Root ogreRoot;
 		// Create singletons
 		Ogre::LogManager logMgr;
 		Ogre::ResourceGroupManager rgm;
@@ -503,9 +503,6 @@ namespace OgreMayaExporter
 		Ogre::SkeletonManager skelMgr;
 		Ogre::MaterialManager matMgr;
 		Ogre::DefaultHardwareBufferManager hardwareBufMgr;
-
-		// Create a log
-		logMgr.createLog("ogreMayaExporter.log", true);
 
 		// Write mesh binary
 		if (m_params.exportMesh)

@@ -49,7 +49,7 @@ namespace Ogre {
 	class _OgreExport ParticleAffectorFactory : public FXAlloc
     {
     protected:
-        vector<ParticleAffector*>::type mAffectors;
+        std::vector<ParticleAffector*> mAffectors;
     public:
         ParticleAffectorFactory() {};
         virtual ~ParticleAffectorFactory();

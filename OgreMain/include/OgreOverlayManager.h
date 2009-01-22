@@ -45,9 +45,9 @@ namespace Ogre {
     class _OgreExport OverlayManager : public Singleton<OverlayManager>, public ScriptLoader, public OverlayAlloc
     {
     public:
-        typedef map<String, Overlay*>::type OverlayMap;
-		typedef map<String, OverlayElement*>::type ElementMap;
-		typedef map<String, OverlayElementFactory*>::type FactoryMap;
+        typedef std::map<String, Overlay*> OverlayMap;
+		typedef std::map<String, OverlayElement*> ElementMap;
+		typedef std::map<String, OverlayElementFactory*> FactoryMap;
     protected:
         OverlayMap mOverlayMap;
         StringVector mScriptPatterns;
@@ -70,7 +70,7 @@ namespace Ogre {
 		ElementMap mInstances;
 		ElementMap mTemplates;
 
-		typedef set<String>::type LoadedScripts;
+		typedef std::set<String> LoadedScripts;
 		LoadedScripts mLoadedScripts;
 
 

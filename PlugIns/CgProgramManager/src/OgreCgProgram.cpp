@@ -28,7 +28,6 @@ Torus Knot Software Ltd.
 */
 #include "OgreCgProgram.h"
 #include "OgreGpuProgramManager.h"
-#include "OgreHighLevelGpuProgramManager.h"
 #include "OgreStringConverter.h"
 #include "OgreLogManager.h"
 
@@ -131,7 +130,7 @@ namespace Ogre {
 		}
         buildArgs();
 		// deal with includes
-		String sourceToUse = resolveCgIncludes(mSource, this, mFilename);
+		String sourceToUse = preprocess(mSource);
         mCgProgram = cgCreateProgram(mCgContext, CG_SOURCE, sourceToUse.c_str(), 
             mSelectedCgProfile, mEntryPoint.c_str(), const_cast<const char**>(mCgArguments));
 
@@ -150,46 +149,15 @@ namespace Ogre {
 		if (mSelectedCgProfile != CG_PROFILE_UNKNOWN && !mCompileError)
 		{
 
-			if ( false
-#ifdef CG_PROFILE_VS_4_0
-				|| mSelectedCgProfile == CG_PROFILE_VS_4_0
-#endif
-#ifdef CG_PROFILE_PS_4_0
-				 || mSelectedCgProfile == CG_PROFILE_PS_4_0
-#endif
-				 )
-			{
-				// Create a high-level program, give it the same name as us
-				HighLevelGpuProgramPtr vp = 
-					HighLevelGpuProgramManager::getSingleton().createProgram(
-					mName, mGroup, "hlsl", mType);
-				String hlslSourceFromCg = cgGetProgramString(mCgProgram, CG_COMPILED_PROGRAM);
-				// HACK START
-				// Assaf: This is a hack - in Cg ver 2.1 all the parameters had a strange prefix 
-				// that needed to be deleted
-				hlslSourceFromCg = StringUtil::replaceAll(hlslSourceFromCg, "_ZZ4S", ""); 
-				// HACK END
-				vp->setSource(hlslSourceFromCg);
-				vp->setParameter("target", mSelectedProfile);
-				vp->setParameter("entry_point", "main");
-
-				vp->load();
-
-				mAssemblerProgram = vp;
-			}
-			else
-			{
-
-				String shaderAssemblerCode = cgGetProgramString(mCgProgram, CG_COMPILED_PROGRAM);
-				// Create a low-level program, give it the same name as us
-				mAssemblerProgram = 
-					GpuProgramManager::getSingleton().createProgramFromString(
+			// Create a low-level program, give it the same name as us
+			mAssemblerProgram = 
+				GpuProgramManager::getSingleton().createProgramFromString(
 					mName, 
 					mGroup,
-					shaderAssemblerCode,
+					cgGetProgramString(mCgProgram, CG_COMPILED_PROGRAM),
 					mType, 
 					mSelectedProfile);
-			}
+
 			// Shader params need to be forwarded to low level implementation
 			mAssemblerProgram->setAdjacencyInfoRequired(isAdjacencyInfoRequired());
 		}
@@ -330,7 +298,7 @@ namespace Ogre {
 						OGRE_LOCK_MUTEX(mFloatLogicalToPhysical.mutex)
 						mFloatLogicalToPhysical.map.insert(
 							GpuLogicalIndexUseMap::value_type(logicalIndex, 
-								GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize, GPV_GLOBAL)));
+								GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize)));
 						mFloatLogicalToPhysical.bufferSize += def.arraySize * def.elementSize;
 						mConstantDefs.floatBufferSize = mFloatLogicalToPhysical.bufferSize;
 					}
@@ -339,7 +307,7 @@ namespace Ogre {
 						OGRE_LOCK_MUTEX(mIntLogicalToPhysical.mutex)
 						mIntLogicalToPhysical.map.insert(
 							GpuLogicalIndexUseMap::value_type(logicalIndex, 
-								GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize, GPV_GLOBAL)));
+								GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize)));
 						mIntLogicalToPhysical.bufferSize += def.arraySize * def.elementSize;
 						mConstantDefs.intBufferSize = mIntLogicalToPhysical.bufferSize;
 					}
@@ -534,7 +502,7 @@ namespace Ogre {
         }
     }
 	//-----------------------------------------------------------------------
-	String CgProgram::resolveCgIncludes(const String& inSource, Resource* resourceBeingLoaded, const String& fileName)
+	String CgProgram::preprocess(const String& inSource)
 	{
 		String outSource;
 		// output will be at least this big
@@ -586,7 +554,7 @@ namespace Ogre {
 				{
 					OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
 						"Badly formed #include directive (expected \" or <) in file "
-						+ fileName + ": " + inSource.substr(includePos, newLineAfter-includePos),
+						+ mFilename + ": " + inSource.substr(includePos, newLineAfter-includePos),
 						"CgProgram::preprocessor");
 				}
 				else
@@ -599,7 +567,7 @@ namespace Ogre {
 			{
 				OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
 					"Badly formed #include directive (expected " + endDelimeter + ") in file "
-					+ fileName + ": " + inSource.substr(includePos, newLineAfter-includePos),
+					+ mFilename + ": " + inSource.substr(includePos, newLineAfter-includePos),
 					"CgProgram::preprocessor");
 			}
 
@@ -608,7 +576,7 @@ namespace Ogre {
 
 			// open included file
 			DataStreamPtr resource = ResourceGroupManager::getSingleton().
-				openResource(filename, resourceBeingLoaded->getGroup(), true, resourceBeingLoaded);
+				openResource(filename, mGroup, true, this);
 
 			// replace entire include directive line
 			// copy up to just before include
@@ -633,7 +601,7 @@ namespace Ogre {
 
 			// Add #line to the end of the included file to correct the line count
 			outSource.append("\n#line " + Ogre::StringConverter::toString(lineCount) + 
-				"\"" + fileName + "\"\n");
+				"\"" + this->getSourceFile() + "\"\n");
 
 			startMarker = newLineAfter;
 

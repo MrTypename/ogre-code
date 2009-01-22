@@ -120,9 +120,6 @@ namespace Ogre
 		newPrograms->setVertexProgramUsage(vertexProgramUsage);
 		newPrograms->setFragmentProgramUsage(fragmentProgramUsage);
 		newPrograms->setFixedFuncState(fixedFuncState);
-#ifdef OGRE_DEBUG_MODE
-		newPrograms->ShaderSource=shaderSource;
-#endif
 
 		mProgramsToDeleteAtTheEnd.push_back(newPrograms);
 		return newPrograms;

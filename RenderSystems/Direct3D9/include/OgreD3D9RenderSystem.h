@@ -59,15 +59,12 @@ namespace Ogre
 		/// Direct3D rendering device
 		LPDIRECT3DDEVICE9	mpD3DDevice;
 		
-		// Present parameters with which the device was created. May be
-		// and array of presentation parameters if multihead is enabled
-		D3DPRESENT_PARAMETERS *md3dppa;
-		/// Present parameters count.
-		size_t mPresentationParamCount;
 		// Stored options
 		ConfigOptionMap mOptions;
-		size_t mFSAASamples;
-		String mFSAAHint;
+		/// full-screen multisampling antialiasing type
+		D3DMULTISAMPLE_TYPE mFSAAType;
+		/// full-screen multisampling antialiasing level
+		DWORD mFSAAQuality;
 
 		/// instance
 		HINSTANCE mhInstance;
@@ -107,7 +104,6 @@ namespace Ogre
 		D3D9DriverList* getDirect3DDrivers(void);
 		void refreshD3DSettings(void);
         void refreshFSAAOptions(void);
-		void postDeviceCreated(void);
 		void freeDevice(void);
 
 		inline bool compareDecls( D3DVERTEXELEMENT9* pDecl1, D3DVERTEXELEMENT9* pDecl2, size_t size );
@@ -136,6 +132,8 @@ namespace Ogre
 		DWORD _getCurrentAnisotropy(size_t unit);
 		/// check if a FSAA is supported
 		bool _checkMultiSampleQuality(D3DMULTISAMPLE_TYPE type, DWORD *outQuality, D3DFORMAT format, UINT adapterNum, D3DDEVTYPE deviceType, BOOL fullScreen);
+		/// set FSAA
+		void _setFSAA(D3DMULTISAMPLE_TYPE type, DWORD qualityLevel);
 		
 		D3D9HardwareBufferManager* mHardwareBufferManager;
 		D3D9GpuProgramManager* mGpuProgramManager;
@@ -169,7 +167,7 @@ namespace Ogre
 		/// Primary window, the one used to create the device
 		D3D9RenderWindow* mPrimaryWindow;
 
-		typedef vector<D3D9RenderWindow*>::type SecondaryWindowList;
+		typedef std::vector<D3D9RenderWindow*> SecondaryWindowList;
 		// List of additional windows after the first (swap chains)
 		SecondaryWindowList mSecondaryWindows;
 
@@ -186,45 +184,16 @@ namespace Ogre
 			enough to hold the largest rendering target.
 			This is used as cache by _getDepthStencilFor.
 		*/
-		struct ZBufferFormat
-		{
-			D3DFORMAT format;
-			D3DMULTISAMPLE_TYPE multisample_type;
-			DWORD multisample_quality;
-
-			ZBufferFormat(D3DFORMAT fmt, D3DMULTISAMPLE_TYPE aatype, DWORD aaQual)
-				: format(fmt), multisample_type(aatype), multisample_quality(aaQual) {}
-		};
+		typedef std::pair<D3DFORMAT, D3DMULTISAMPLE_TYPE> ZBufferFormat;
 		struct ZBufferRef
 		{
 			IDirect3DSurface9 *surface;
 			size_t width, height;
 		};
-		struct ZBufferFormatLess
-		{
-			bool operator()(const ZBufferFormat& x, const ZBufferFormat& y) const
-			{
-				if (x.format < y.format)
-					return true;
-				else if (x.format == y.format)
-				{
-					if (x.multisample_type < y.multisample_type)
-						return true;
-					else if (x.multisample_type == y.multisample_type)
-					{
-						if (x.multisample_quality < y.multisample_quality)
-							return true;
-					}
-				}
-				return false;
-			}
-		};
-
-		typedef map<ZBufferFormat, ZBufferRef, ZBufferFormatLess>::type ZBufferHash;
+		typedef std::map<ZBufferFormat, ZBufferRef> ZBufferHash;
 		ZBufferHash mZBufferHash;
 	protected:
 		void setClipPlanesImpl(const PlaneList& clipPlanes);
-
 	public:
 		// constructor
 		D3D9RenderSystem( HINSTANCE hInstance );
@@ -240,13 +209,7 @@ namespace Ogre
 		/// @copydoc RenderSystem::_createRenderWindow
 		RenderWindow* _createRenderWindow(const String &name, unsigned int width, unsigned int height, 
 			bool fullScreen, const NameValuePairList *miscParams = 0);
-		/// @copydoc RenderSystem::_createRenderWindows
-		bool _createRenderWindows(const RenderWindowDescriptionList& renderWindowDescriptions, 
-			RenderWindowList& createdWindows);
-	
-		/// Creates the Direct3D device used for rendering
-		LPDIRECT3DDEVICE9 createDevice(HWND focusWindow, D3DPRESENT_PARAMETERS *pd3dpp );
-		
+
 		/// @copydoc RenderSystem::createMultiRenderTarget
 		virtual MultiRenderTarget * createMultiRenderTarget(const String & name);
 
@@ -290,8 +253,8 @@ namespace Ogre
         void _setTextureBorderColour(size_t stage, const ColourValue& colour);
 		void _setTextureMipmapBias(size_t unit, float bias);
 		void _setTextureMatrix( size_t unit, const Matrix4 &xform );
-		void _setSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendOperation op );
-		void _setSeparateSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha, SceneBlendOperation op, SceneBlendOperation alphaOp );
+		void _setSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor );
+		void _setSeparateSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha );
 		void _setAlphaRejectSettings( CompareFunction func, unsigned char value, bool alphaToCoverage );
 		void _setViewport( Viewport *vp );
 		void _beginFrame(void);
@@ -331,8 +294,10 @@ namespace Ogre
         /** See
           RenderSystem
          */
-		void bindGpuProgramParameters(GpuProgramType gptype, 
-			GpuProgramParametersSharedPtr params, uint16 variabilityMask);
+        void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params);
+        /** See
+          RenderSystem
+         */
         void bindGpuProgramPassIterationParameters(GpuProgramType gptype);
 
         void setScissorTest(bool enabled, size_t left = 0, size_t top = 0, size_t right = 800, size_t bottom = 600);
@@ -369,7 +334,7 @@ namespace Ogre
 			multisample type.
 			@returns A directx surface, or 0 if there is no compatible depthstencil possible.
 		*/
-		IDirect3DSurface9* _getDepthStencilFor(D3DFORMAT fmt, D3DMULTISAMPLE_TYPE multisample, DWORD multisample_quality, size_t width, size_t height);
+		IDirect3DSurface9* _getDepthStencilFor(D3DFORMAT fmt, D3DMULTISAMPLE_TYPE multisample, size_t width, size_t height);
 
 		/** Clear all cached depth stencil surfaces
 		*/
@@ -379,10 +344,6 @@ namespace Ogre
         with the given usage options.
         */
         bool _checkTextureFilteringSupported(TextureType ttype, PixelFormat format, int usage);
-
-		/// Take in some requested FSAA settings and output supported D3D settings
-		void determineFSAASettings(size_t fsaa, const String& fsaaHint, D3DFORMAT d3dPixelFormat, 
-			bool fullScreen, D3DMULTISAMPLE_TYPE *outMultisampleType, DWORD *outMultisampleQuality);
 
 	};
 }

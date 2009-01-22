@@ -117,11 +117,7 @@ namespace Ogre {
 			profile = "ps_4_0";
 			break;
 		}*/
-		UINT compileFlags=0;
-		#ifdef OGRE_DEBUG_MODE
-			compileFlags|=D3D10_SHADER_DEBUG;
-			compileFlags|=D3D10_SHADER_SKIP_OPTIMIZATION;
-		#endif
+
 		HRESULT hr = D3DX10CompileFromMemory(
 			mSource.c_str(),	// [in] Pointer to the shader in memory. 
 			mSource.size(),		// [in] Size of the shader in memory.  
@@ -130,7 +126,7 @@ namespace Ogre {
 			&includeHandler,	// [in] Optional. Pointer to an ID3D10Include Interface interface for handling include files. Setting this to NULL will cause a compile error if a shader contains a #include. 
 			mEntryPoint.c_str(), // [in] Name of the shader-entrypoint function where shader execution begins. 
 			mTarget.c_str(),			// [in] A string that specifies the shader model; can be any profile in shader model 2, shader model 3, or shader model 4. 
-			compileFlags,				// [in] Effect compile flags - no D3D10_SHADER_ENABLE_BACKWARDS_COMPATIBILITY at the first try...
+			0,				// [in] Effect compile flags - no D3D10_SHADER_ENABLE_BACKWARDS_COMPATIBILITY at the first try...
 			NULL,				// [in] Effect compile flags
 			NULL,				// [in] A pointer to a thread pump interface (see ID3DX10ThreadPump Interface). Use NULL to specify that this function should not return until it is completed. 
 			&mpMicroCode,		// [out] A pointer to an ID3D10Blob Interface which contains the compiled shader, as well as any embedded debug and symbol-table information. 
@@ -140,7 +136,6 @@ namespace Ogre {
 
 		if (FAILED(hr)) // if fails - try with backwards compatibility flag
 		{
-			compileFlags|=D3D10_SHADER_ENABLE_BACKWARDS_COMPATIBILITY;
 			hr = D3DX10CompileFromMemory(
 				mSource.c_str(),	// [in] Pointer to the shader in memory. 
 				mSource.size(),		// [in] Size of the shader in memory.  
@@ -149,7 +144,7 @@ namespace Ogre {
 				&includeHandler,	// [in] Optional. Pointer to an ID3D10Include Interface interface for handling include files. Setting this to NULL will cause a compile error if a shader contains a #include. 
 				mEntryPoint.c_str(), // [in] Name of the shader-entrypoint function where shader execution begins. 
 				mTarget.c_str(),			// [in] A string that specifies the shader model; can be any profile in shader model 2, shader model 3, or shader model 4. 
-				compileFlags,				// [in] Effect compile flags - D3D10_SHADER_ENABLE_BACKWARDS_COMPATIBILITY enables older shaders to compile to 4_0 targets
+				D3D10_SHADER_ENABLE_BACKWARDS_COMPATIBILITY,				// [in] Effect compile flags - D3D10_SHADER_ENABLE_BACKWARDS_COMPATIBILITY enables older shaders to compile to 4_0 targets
 				NULL,				// [in] Effect compile flags
 				NULL,				// [in] A pointer to a thread pump interface (see ID3DX10ThreadPump Interface). Use NULL to specify that this function should not return until it is completed. 
 				&mpMicroCode,		// [out] A pointer to an ID3D10Blob Interface which contains the compiled shader, as well as any embedded debug and symbol-table information. 
@@ -236,10 +231,6 @@ namespace Ogre {
 		case GPT_FRAGMENT_PROGRAM:
 			CreatePixelShader();
 			break;
-		case GPT_GEOMETRY_PROGRAM:
-			CreateGeometryShader();
-			break;
-
 		}
 	}
 	//-----------------------------------------------------------------------
@@ -370,7 +361,7 @@ namespace Ogre {
 					OGRE_LOCK_MUTEX(mFloatLogicalToPhysical.mutex)
 						mFloatLogicalToPhysical.map.insert(
 						GpuLogicalIndexUseMap::value_type(paramIndex, 
-						GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize, GPV_GLOBAL)));
+						GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize)));
 					mFloatLogicalToPhysical.bufferSize += def.arraySize * def.elementSize;
 					mConstantDefs.floatBufferSize = mFloatLogicalToPhysical.bufferSize;
 				}
@@ -380,7 +371,7 @@ namespace Ogre {
 					OGRE_LOCK_MUTEX(mIntLogicalToPhysical.mutex)
 						mIntLogicalToPhysical.map.insert(
 						GpuLogicalIndexUseMap::value_type(paramIndex, 
-						GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize, GPV_GLOBAL)));
+						GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize)));
 					mIntLogicalToPhysical.bufferSize += def.arraySize * def.elementSize;
 					mConstantDefs.intBufferSize = mIntLogicalToPhysical.bufferSize;
 				}
@@ -512,7 +503,6 @@ namespace Ogre {
 		: HighLevelGpuProgram(creator, name, handle, group, isManual, loader)
 		, mpMicroCode(NULL), mErrorsInCompile(false), mConstantBuffer(NULL), mDevice(device), 
 		mpIShaderReflection(NULL), mShaderReflectionConstantBuffer(NULL), mpVertexShader(NULL)//, mpConstTable(NULL)
-		,mpPixelShader(NULL),mpGeometryShader(NULL)
 	{
 		if ("Hatch_ps_hlsl" == name)
 		{
@@ -688,36 +678,8 @@ namespace Ogre {
 		}
 	}
 
-	//-----------------------------------------------------------------------
-	void D3D10HLSLProgram::CreateGeometryShader()
-	{
-		if (isSupported())
-		{
-			// Create the shader
-			HRESULT hr = mDevice->CreateGeometryShader( 
-				static_cast<DWORD*>(mpMicroCode->GetBufferPointer()), 
-				mpMicroCode->GetBufferSize(),
-				&mpGeometryShader);
-
-			assert(mpGeometryShader);
-
-			if (FAILED(hr) || mDevice.isError())
-			{
-				String errorDescription = mDevice.getErrorDescription(hr);
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Cannot create D3D10 Pixel shader " + mName + " from microcode.\nError Description:" + errorDescription,
-					"D3D10GpuPixelProgram::loadFromMicrocode");
-
-			}
-		}
-		else
-		{
-			LogManager::getSingleton().logMessage(
-				"Unsupported D3D10 Pixel shader '" + mName + "' was not loaded.");
-		}
-	}
-
 	//-----------------------------------------------------------------------------
-	ID3D10Buffer* D3D10HLSLProgram::getConstantBuffer(GpuProgramParametersSharedPtr params, uint16 variabilityMask)
+	ID3D10Buffer* D3D10HLSLProgram::getConstantBuffer(GpuProgramParametersSharedPtr params)
 	{
 		// Update the Constant Buffer
 
@@ -729,10 +691,9 @@ namespace Ogre {
 			ShaderVarWithPosInBuf * iter = &mShaderVars[0];
 			for (size_t i = 0 ; i < mConstantBufferDesc.Variables ; i++, iter++)
 			{
-				const GpuConstantDefinition& def = params->getConstantDefinition(iter->var.Name);
-				if (def.variability & variabilityMask)
+				if (!iter->wasInit)
 				{
-
+					const GpuConstantDefinition& def = params->getConstantDefinition(iter->var.Name);
 					iter->isFloat = def.isFloat();
 					iter->physicalIndex = def.physicalIndex;
 					iter->wasInit = true;
@@ -746,10 +707,10 @@ namespace Ogre {
 						iter->src = (void *)&(*(params->getIntConstantList().begin()+iter->physicalIndex));
 					}
 
-				
-
-					memcpy( &pConstData[iter->var.StartOffset], iter->src , iter->var.Size);
 				}
+			
+
+				memcpy( &pConstData[iter->var.StartOffset], iter->src , iter->var.Size);
 			}
 
 			mConstantBuffer->Unmap();
@@ -771,14 +732,6 @@ namespace Ogre {
 		assert(mpPixelShader);
 		return mpPixelShader; 
 	}
-	//-----------------------------------------------------------------------------
-	ID3D10GeometryShader* D3D10HLSLProgram::getGeometryShader(void) const 
-	{ 
-		assert(mType == GPT_GEOMETRY_PROGRAM);
-		assert(mpGeometryShader);
-		return mpGeometryShader; 
-	}
-
 	//-----------------------------------------------------------------------------
 	ID3D10Blob* D3D10HLSLProgram::getMicroCode(void) const 
 	{ 

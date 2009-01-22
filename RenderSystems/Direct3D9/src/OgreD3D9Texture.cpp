@@ -58,8 +58,7 @@ namespace Ogre
 		mDynamicTextures(false),
 		mHwGammaReadSupported(false),
 		mHwGammaWriteSupported(false),
-		mFSAAType(D3DMULTISAMPLE_NONE),
-		mFSAAQuality(0)
+		mFSAALevelSupported(false)
 	{
         _initDevice();
 	}
@@ -251,7 +250,7 @@ namespace Ogre
 	{
 		assert(this->getTextureType() == TEX_TYPE_CUBE_MAP);
 
-        LoadedStreams loadedStreams = LoadedStreams(new vector<MemoryDataStreamPtr>::type());
+        LoadedStreams loadedStreams = LoadedStreams(new std::vector<MemoryDataStreamPtr>());
         // DDS load?
 		if (getSourceFileType() == "dds")
 		{
@@ -300,7 +299,7 @@ namespace Ogre
 			ResourceGroupManager::getSingleton().openResource(
 				mName, mGroup, true, this);
 
-        LoadedStreams loadedStreams = LoadedStreams(new vector<MemoryDataStreamPtr>::type());
+        LoadedStreams loadedStreams = LoadedStreams(new std::vector<MemoryDataStreamPtr>());
         loadedStreams->push_back(MemoryDataStreamPtr(new MemoryDataStream(dstream)));
         return loadedStreams;
     }
@@ -314,7 +313,7 @@ namespace Ogre
 			ResourceGroupManager::getSingleton().openResource(
 				mName, mGroup, true, this);
 
-        LoadedStreams loadedStreams = LoadedStreams(new vector<MemoryDataStreamPtr>::type());
+        LoadedStreams loadedStreams = LoadedStreams(new std::vector<MemoryDataStreamPtr>());
         loadedStreams->push_back(MemoryDataStreamPtr(new MemoryDataStream(dstream)));
         return loadedStreams;
 	}
@@ -420,7 +419,7 @@ namespace Ogre
 			if ( pos != String::npos )
 				ext = mName.substr(pos+1);
 
-			vector<Image>::type images(6);
+			std::vector<Image> images(6);
 			ConstImagePtrList imagePtrs;
 
 			for(size_t i = 0; i < 6; i++)
@@ -696,16 +695,9 @@ namespace Ogre
 				mHwGammaWriteSupported = _canUseHardwareGammaCorrection(usage, D3DRTYPE_TEXTURE, d3dPF, true);
 		}
 		// Check FSAA level
-		if (mUsage & TU_RENDERTARGET)
+		if (mFSAA > 0 && (mUsage & TU_RENDERTARGET))
 		{
-			D3D9RenderSystem* rsys = static_cast<D3D9RenderSystem*>(Root::getSingleton().getRenderSystem());
-			rsys->determineFSAASettings(mFSAA, mFSAAHint, d3dPF, false, 
-				&mFSAAType, &mFSAAQuality);
-		}
-		else
-		{
-			mFSAAType = D3DMULTISAMPLE_NONE;
-			mFSAAQuality = 0;
+			mFSAALevelSupported = _canUseFSAALevel(usage, D3DRTYPE_TEXTURE, d3dPF, mFSAA);
 		}
 		// check if mip maps are supported on hardware
 		mMipmapsHardwareGenerated = false;
@@ -767,12 +759,12 @@ namespace Ogre
 				"D3D9Texture::_createNormTex" );
 		}
 
-		if (mFSAAType)
+		if (mFSAA > 0 && mFSAALevelSupported)
 		{
 			// create AA surface
 			HRESULT hr = mpDev->CreateRenderTarget(desc.Width, desc.Height, d3dPF, 
-				mFSAAType, 
-				mFSAAQuality,
+				(D3DMULTISAMPLE_TYPE)mFSAA, 
+				0, // Only supporting regular sampling, not nonmaskable 
 				FALSE, // not lockable
 				&mFSAASurface, NULL);
 
@@ -836,16 +828,9 @@ namespace Ogre
 				mHwGammaWriteSupported = _canUseHardwareGammaCorrection(usage, D3DRTYPE_CUBETEXTURE, d3dPF, true);
 		}
 		// Check FSAA level
-		if (mUsage & TU_RENDERTARGET)
+		if (mFSAA > 0 && (mUsage & TU_RENDERTARGET))
 		{
-			D3D9RenderSystem* rsys = static_cast<D3D9RenderSystem*>(Root::getSingleton().getRenderSystem());
-			rsys->determineFSAASettings(mFSAA, mFSAAHint, d3dPF, false, 
-				&mFSAAType, &mFSAAQuality);
-		}
-		else
-		{
-			mFSAAType = D3DMULTISAMPLE_NONE;
-			mFSAAQuality = 0;
+			mFSAALevelSupported = _canUseFSAALevel(usage, D3DRTYPE_CUBETEXTURE, d3dPF, mFSAA);
 		}
 		// check if mip map cube textures are supported
 		mMipmapsHardwareGenerated = false;
@@ -906,12 +891,12 @@ namespace Ogre
 				"D3D9Texture::_createCubeTex" );
 		}
 
-		if (mFSAAType)
+		if (mFSAA > 0 && mFSAALevelSupported)
 		{
 			// create AA surface
 			HRESULT hr = mpDev->CreateRenderTarget(desc.Width, desc.Height, d3dPF, 
-				mFSAAType, 
-				mFSAAQuality,
+				(D3DMULTISAMPLE_TYPE)mFSAA, 
+				0, // Only supporting regular sampling, not nonmaskable 
 				FALSE, // not lockable
 				&mFSAASurface, NULL);
 
@@ -1250,6 +1235,28 @@ namespace Ogre
 
 	}
 	/****************************************************************************************/
+	bool D3D9Texture::_canUseFSAALevel(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat, uint fsaa)
+	{
+		// those MUST be initialized !!!
+		assert(mpDev);
+		assert(mpD3D);
+
+
+		HRESULT hr = mpD3D->CheckDeviceMultiSampleType(
+			mDevCreParams.AdapterOrdinal, 
+			mDevCreParams.DeviceType, 
+			srcFormat, 
+			false,
+			(D3DMULTISAMPLE_TYPE)fsaa,
+			0);
+		if (hr == D3D_OK)
+			return true;
+		else
+			return false;
+
+
+	}
+	/****************************************************************************************/
 	bool D3D9Texture::_canAutoGenMipmaps(DWORD srcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFormat)
 	{
 		// those MUST be initialized !!!
@@ -1348,13 +1355,12 @@ namespace Ogre
 				if(mpNormTex->GetSurfaceLevel(mip, &surface) != D3D_OK)
 					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Get surface level failed",
 		 				"D3D9Texture::_createSurfaceList");
-
-				GETLEVEL(0, mip)->bind(mpDev, surface, updateOldList, mHwGammaWriteSupported, 
-					mFSAA, mFSAAHint, mFSAASurface, mName);
-
 				// decrement reference count, the GetSurfaceLevel call increments this
 				// this is safe because the texture keeps a reference as well
 				surface->Release();
+
+				GETLEVEL(0, mip)->bind(mpDev, surface, updateOldList, mHwGammaWriteSupported, 
+					mFSAALevelSupported? mFSAA : 0, mFSAASurface, mName);
 			}
 			break;
 		case TEX_TYPE_CUBE_MAP:
@@ -1367,13 +1373,12 @@ namespace Ogre
 					if(mpCubeTex->GetCubeMapSurface((D3DCUBEMAP_FACES)face, mip, &surface) != D3D_OK)
 						OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Get cubemap surface failed",
 		 				"D3D9Texture::getBuffer");
-					
-					GETLEVEL(face, mip)->bind(mpDev, surface, updateOldList, mHwGammaWriteSupported, 
-						mFSAA, mFSAAHint, mFSAASurface, mName);
-
 					// decrement reference count, the GetSurfaceLevel call increments this
 					// this is safe because the texture keeps a reference as well
 					surface->Release();
+					
+					GETLEVEL(face, mip)->bind(mpDev, surface, updateOldList, mHwGammaWriteSupported, 
+						mFSAALevelSupported? mFSAA : 0, mFSAASurface, mName);
 				}
 			}
 			break;
@@ -1385,12 +1390,11 @@ namespace Ogre
 				if(mpVolumeTex->GetVolumeLevel(mip, &volume) != D3D_OK)
 					OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Get volume level failed",
 		 				"D3D9Texture::getBuffer");	
-						
-				GETLEVEL(0, mip)->bind(mpDev, volume, updateOldList, mHwGammaWriteSupported, mName);
-
 				// decrement reference count, the GetSurfaceLevel call increments this
 				// this is safe because the texture keeps a reference as well
 				volume->Release();
+						
+				GETLEVEL(0, mip)->bind(mpDev, volume, updateOldList, mHwGammaWriteSupported, mName);
 			}
 			break;
 		};

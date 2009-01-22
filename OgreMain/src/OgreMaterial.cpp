@@ -37,7 +37,6 @@ Torus Knot Software Ltd.
 #include "OgreLogManager.h"
 #include "OgreException.h"
 #include "OgreStringConverter.h"
-#include "OgreLodStrategy.h"
 
 namespace Ogre {
 
@@ -58,7 +57,7 @@ namespace Ogre {
 				"for materials; the flag has been reset to false");
 		}
 
-		mLodValues.push_back(0.0f);
+		mLodDistances.push_back(0.0f);
 
 		applyDefaults();
 
@@ -108,9 +107,7 @@ namespace Ogre {
         }
 
 		// Also copy LOD information
-        mUserLodValues = rhs.mUserLodValues;
-		mLodValues = rhs.mLodValues;
-        mLodStrategy = rhs.mLodStrategy;
+		mLodDistances = rhs.mLodDistances;
         mCompilationRequired = rhs.mCompilationRequired;
         // illumination passes are not compiled right away so
         // mIsLoaded state should still be the same as the original material
@@ -760,32 +757,46 @@ namespace Ogre {
 			unload();
     }
     // --------------------------------------------------------------------
-    void Material::setLodLevels(const LodValueList& lodValues)
+    void Material::setLodLevels(const LodDistanceList& lodDistances)
     {
         // Square the distances for the internal list
-		LodValueList::const_iterator i, iend;
-		iend = lodValues.end();
+		LodDistanceList::const_iterator i, iend;
+		iend = lodDistances.end();
 		// First, clear and add single zero entry
-		mLodValues.clear();
-        mUserLodValues.push_back(std::numeric_limits<Real>::quiet_NaN());
-		mLodValues.push_back(mLodStrategy->getBaseValue());
-		for (i = lodValues.begin(); i != iend; ++i)
+		mLodDistances.clear();
+		mLodDistances.push_back(0.0f);
+		for (i = lodDistances.begin(); i != iend; ++i)
 		{
-			mUserLodValues.push_back(*i);
-            if (mLodStrategy)
-                mLodValues.push_back(mLodStrategy->transformUserValue(*i));
+			mLodDistances.push_back((*i) * (*i));
 		}
 		
     }
     // --------------------------------------------------------------------
-    ushort Material::getLodIndex(Real value) const
+    unsigned short Material::getLodIndex(Real d) const
     {
-        return mLodStrategy->getIndex(value, mLodValues);
+        return getLodIndexSquaredDepth(d * d);
     }
     // --------------------------------------------------------------------
-    Material::LodValueIterator Material::getLodValueIterator(void) const
+    unsigned short Material::getLodIndexSquaredDepth(Real squaredDistance) const
     {
-        return LodValueIterator(mLodValues.begin(), mLodValues.end());
+		LodDistanceList::const_iterator i, iend;
+		iend = mLodDistances.end();
+		unsigned short index = 0;
+		for (i = mLodDistances.begin(); i != iend; ++i, ++index)
+		{
+			if (*i > squaredDistance)
+			{
+				return index - 1;
+			}
+		}
+
+		// If we fall all the way through, use the highest value
+		return static_cast<ushort>(mLodDistances.size() - 1);
+    }
+    // --------------------------------------------------------------------
+    Material::LodDistanceIterator Material::getLodDistanceIterator(void) const
+    {
+        return LodDistanceIterator(mLodDistances.begin(), mLodDistances.end());
     }
 
     //-----------------------------------------------------------------------
@@ -804,22 +815,4 @@ namespace Ogre {
 
         return testResult;
     }
-    //---------------------------------------------------------------------
-    const LodStrategy *Material::getLodStrategy() const
-    {
-        return mLodStrategy;
-    }
-    //---------------------------------------------------------------------
-    void Material::setLodStrategy(LodStrategy *lodStrategy)
-    {
-        mLodStrategy = lodStrategy;
-
-        assert(mLodValues.size());
-        mLodValues[0] = mLodStrategy->getBaseValue();
-
-        // Re-transform all user lod values (starting at index 1, no need to transform base value)
-        for (size_t i = 1; i < mUserLodValues.size(); ++i)
-            mLodValues[i] = mLodStrategy->transformUserValue(mUserLodValues[i]);
-    }
-    //---------------------------------------------------------------------
 }

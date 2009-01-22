@@ -37,11 +37,11 @@ Torus Knot Software Ltd.
 #include "OgreColourValue.h"
 #include "OgreBlendMode.h"
 
+
 namespace Ogre {
 
 	// Forward declaration
 	class MaterialPtr;
-    class LodStrategy;
 
 	/** Class encapsulates rendering properties of an object.
     @remarks
@@ -87,8 +87,8 @@ namespace Ogre {
 
     public:
         /// distance list used to specify LOD
-		typedef vector<Real>::type LodValueList;
-        typedef ConstVectorIterator<LodValueList> LodValueIterator;
+        typedef std::vector<Real> LodDistanceList;
+        typedef ConstVectorIterator<LodDistanceList> LodDistanceIterator;
     protected:
 
 
@@ -96,22 +96,20 @@ namespace Ogre {
         */
         void applyDefaults(void);
 
-        typedef vector<Technique*>::type Techniques;
+        typedef std::vector<Technique*> Techniques;
 		/// All techniques, supported and unsupported
         Techniques mTechniques;
 		/// Supported techniques of any sort
         Techniques mSupportedTechniques;
-		typedef map<unsigned short, Technique*>::type LodTechniques;
-        typedef map<unsigned short, LodTechniques*>::type BestTechniquesBySchemeList;
+		typedef std::map<unsigned short, Technique*> LodTechniques;
+        typedef std::map<unsigned short, LodTechniques*> BestTechniquesBySchemeList;
 		/** Map of scheme -> list of LOD techniques. 
 			Current scheme is set on MaterialManager,
 			and can be set per Viewport for auto activation.
 		*/
         BestTechniquesBySchemeList mBestTechniquesBySchemeList;
 
-        LodValueList mUserLodValues;
-        LodValueList mLodValues;
-        const LodStrategy *mLodStrategy;
+        LodDistanceList mLodDistances;
         bool mReceiveShadows;
 		bool mTransparencyCastsShadows;
         /// Does this material require compilation?
@@ -600,34 +598,25 @@ namespace Ogre {
             method to determine the distance at which the lowe levels of detail kick in.
             The decision about what distance is actually used is a combination of this
             and the LOD bias applied to both the current Camera and the current Entity.
-        @param lodValues A vector of Reals which indicate the lod value at which to 
+        @param lodDistances A vector of Reals which indicate the distance at which to 
             switch to lower details. They are listed in LOD index order, starting at index
             1 (ie the first level down from the highest level 0, which automatically applies
-            from a value of 0). These are 'user values', before being potentially 
-			transformed by the strategy, so for the distance strategy this is an
-			unsquared distance for example.
+            from a distance of 0).
         */
-        void setLodLevels(const LodValueList& lodValues);
-        /** Gets an iterator over the list of values at which each LOD comes into effect. 
+        void setLodLevels(const LodDistanceList& lodDistances);
+        /** Gets an iterator over the list of distances at which each LOD comes into effect. 
         @remarks
             Note that the iterator returned from this method is not totally analogous to 
             the one passed in by calling setLodLevels - the list includes a zero
-            entry at the start (since the highest LOD starts at value 0). Also, the
-			values returned are after being transformed by LodStrategy::transformUserValue.
+            entry at the start (since the highest LOD starts at distance 0), and
+            the other distances are held as their squared value for efficiency.
         */
-        LodValueIterator getLodValueIterator(void) const;
+        LodDistanceIterator getLodDistanceIterator(void) const;
 
-        /** Gets the LOD index to use at the given value. 
-		@note The value passed in is the 'transformed' value. If you are dealing with
-		an original source value (e.g. distance), use LodStrategy::transformUserValue
-		to turn this into a lookup value.
-		*/
-        ushort getLodIndex(Real value) const;
-
-        /** Get lod strategy used by this material. */
-        const LodStrategy *getLodStrategy() const;
-        /** Set the lod strategy used by this material. */
-        void setLodStrategy(LodStrategy *lodStrategy);
+        /** Gets the LOD index to use at the given distance. */
+        unsigned short getLodIndex(Real d) const;
+        /** Gets the LOD index to use at the given squared distance. */
+        unsigned short getLodIndexSquaredDepth(Real squaredDepth) const;
 
         /** @copydoc Resource::touch
         */

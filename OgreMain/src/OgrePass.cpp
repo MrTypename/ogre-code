@@ -128,9 +128,6 @@ namespace Ogre {
 		, mSourceBlendFactorAlpha(SBF_ONE)
 		, mDestBlendFactorAlpha(SBF_ZERO)
 		, mSeparateBlend(false)
-		, mBlendOperation(SBO_ADD)
-		, mAlphaBlendOperation(SBO_ADD)
-		, mSeparateBlendOperation(false)
 		, mDepthCheck(true)
 		, mDepthWrite(true)
 		, mDepthFunc(CMPF_LESS_EQUAL)
@@ -229,10 +226,6 @@ namespace Ogre {
 		mSourceBlendFactorAlpha = oth.mSourceBlendFactorAlpha;
 		mDestBlendFactorAlpha = oth.mDestBlendFactorAlpha;
 		mSeparateBlend = oth.mSeparateBlend;
-
-		mBlendOperation = oth.mBlendOperation;
-		mAlphaBlendOperation = oth.mAlphaBlendOperation;
-		mSeparateBlendOperation = oth.mSeparateBlendOperation;
 
 	    mDepthCheck = oth.mDepthCheck;
 	    mDepthWrite = oth.mDepthWrite;
@@ -802,34 +795,6 @@ namespace Ogre {
 	bool Pass::hasSeparateSceneBlending() const
 	{
 		return mSeparateBlend;
-	}
-	//-----------------------------------------------------------------------
-	void Pass::setSceneBlendingOperation(SceneBlendOperation op)
-	{
-		mBlendOperation = op;
-		mSeparateBlendOperation = false;
-	}
-	//-----------------------------------------------------------------------
-	void Pass::setSeparateSceneBlendingOperation(SceneBlendOperation op, SceneBlendOperation alphaOp)
-	{
-		mBlendOperation = op;
-		mAlphaBlendOperation = alphaOp;
-		mSeparateBlendOperation = true;
-	}
-	//-----------------------------------------------------------------------
-	SceneBlendOperation Pass::getSceneBlendingOperation() const
-	{
-		return mBlendOperation;
-	}
-	//-----------------------------------------------------------------------
-	SceneBlendOperation Pass::getSceneBlendingOperationAlpha() const
-	{
-		return mAlphaBlendOperation;
-	}
-	//-----------------------------------------------------------------------
-	bool Pass::hasSeparateSceneBlendingOperations() const
-	{
-		return mSeparateBlendOperation;
 	}
     //-----------------------------------------------------------------------
     bool Pass::isTransparent(void) const
@@ -1461,27 +1426,48 @@ namespace Ogre {
             (*i)->setTextureAnisotropy(maxAniso);
         }
     }
-	//-----------------------------------------------------------------------
-	void Pass::_updateAutoParams(const AutoParamDataSource* source, uint16 mask) const
-	{
-		if (hasVertexProgram())
-		{
-			// Update vertex program auto params
-			mVertexProgramUsage->getParameters()->_updateAutoParams(source, mask);
-		}
+    //-----------------------------------------------------------------------
+    void Pass::_updateAutoParamsNoLights(const AutoParamDataSource* source) const
+    {
+        if (hasVertexProgram())
+        {
+            // Update vertex program auto params
+            mVertexProgramUsage->getParameters()->_updateAutoParamsNoLights(source);
+        }
 
-		if (hasGeometryProgram())
-		{
-			// Update geometry program auto params
-			mGeometryProgramUsage->getParameters()->_updateAutoParams(source, mask);
-		}
+        if (hasGeometryProgram())
+        {
+            // Update geometry program auto params
+            mGeometryProgramUsage->getParameters()->_updateAutoParamsNoLights(source);
+        }
 
-		if (hasFragmentProgram())
-		{
-			// Update fragment program auto params
-			mFragmentProgramUsage->getParameters()->_updateAutoParams(source, mask);
-		}
-	}
+        if (hasFragmentProgram())
+        {
+            // Update fragment program auto params
+            mFragmentProgramUsage->getParameters()->_updateAutoParamsNoLights(source);
+        }
+    }
+    //-----------------------------------------------------------------------
+    void Pass::_updateAutoParamsLightsOnly(const AutoParamDataSource* source) const
+    {
+        if (hasVertexProgram())
+        {
+            // Update vertex program auto params
+            mVertexProgramUsage->getParameters()->_updateAutoParamsLightsOnly(source);
+        }
+
+        if (hasGeometryProgram())
+        {
+            // Update geometry program auto params
+            mGeometryProgramUsage->getParameters()->_updateAutoParamsLightsOnly(source);
+        }
+
+        if (hasFragmentProgram())
+        {
+            // Update fragment program auto params
+            mFragmentProgramUsage->getParameters()->_updateAutoParamsLightsOnly(source);
+        }
+    }
     //-----------------------------------------------------------------------
     void Pass::processPendingPassUpdates(void)
     {

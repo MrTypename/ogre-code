@@ -444,7 +444,7 @@ namespace Ogre {
 		return static_cast<SceneNode*>(this->createChild(name, translate, rotate));
 	}
     //-----------------------------------------------------------------------
-    void SceneNode::findLights(LightList& destList, Real radius, uint32 lightMask) const
+    void SceneNode::findLights(LightList& destList, Real radius) const
     {
         // No any optimisation here, hope inherits more smart for that.
         //
@@ -456,7 +456,7 @@ namespace Ogre {
         if (mCreator)
         {
             // Use SceneManager to calculate
-            mCreator->_populateLightList(this, radius, destList, lightMask);
+            mCreator->_populateLightList(this->_getDerivedPosition(), radius, destList);
         }
         else
         {

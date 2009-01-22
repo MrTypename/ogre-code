@@ -27,7 +27,7 @@ namespace Ogre
 		String validateConfig();
 
 		virtual RenderWindow* createWindow(bool autoCreateWindow, GLRenderSystem* renderSystem, const String& windowTitle = "OGRE Render Window");
-		
+
 		/// @copydoc RenderSystem::_createRenderWindow
 		virtual RenderWindow* newWindow(const String &name, unsigned int width, unsigned int height, 
 			bool fullScreen, const NameValuePairList *miscParams = 0);
@@ -59,19 +59,16 @@ namespace Ogre
 		virtual GLPBuffer *createPBuffer(PixelComponentType format, size_t width, size_t height);
 	private:
 		// Allowed video modes
-		vector<DEVMODE>::type mDevModes;
+		std::vector<DEVMODE> mDevModes;
 		Win32Window *mInitialWindow;
-		vector<int>::type mFSAALevels;
+		std::vector<int> mFSAALevels;
 		bool mHasPixelFormatARB;
         bool mHasMultisample;
 		bool mHasHardwareGamma;
-		vector<MONITORINFOEX>::type mMonitorInfoList;
 
 		void refreshConfig();
 		void initialiseWGL();
 		static LRESULT CALLBACK dummyWndProc(HWND hwnd, UINT umsg, WPARAM wp, LPARAM lp);
-		static BOOL CALLBACK sCreateMonitorsInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, 
-			LPRECT lprcMonitor, LPARAM dwData);
 	};
 
 }

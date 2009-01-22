@@ -57,7 +57,7 @@ D3D9HardwarePixelBuffer::~D3D9HardwarePixelBuffer()
 }
 //-----------------------------------------------------------------------------  
 void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DSurface9 *surface, 
-								   bool update, bool writeGamma, uint fsaa, const String& fsaaHint,  
+								   bool update, bool writeGamma, uint fsaa, 
 								   IDirect3DSurface9* fsaaSurface, const String& srcName)
 {
 	mpDev = dev;
@@ -78,7 +78,7 @@ void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DSurface9 *sur
 	mSizeInBytes = PixelUtil::getMemorySize(mWidth, mHeight, mDepth, mFormat);
 
 	if(mUsage & TU_RENDERTARGET)
-		createRenderTextures(update, writeGamma, fsaa, fsaaHint, srcName);
+		createRenderTextures(update, writeGamma, fsaa, srcName);
 }
 //-----------------------------------------------------------------------------
 void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DVolume9 *volume, 
@@ -101,7 +101,7 @@ void D3D9HardwarePixelBuffer::bind(IDirect3DDevice9 *dev, IDirect3DVolume9 *volu
 	mSizeInBytes = PixelUtil::getMemorySize(mWidth, mHeight, mDepth, mFormat);
 
 	if(mUsage & TU_RENDERTARGET)
-		createRenderTextures(update, writeGamma, 0, StringUtil::BLANK, srcName);
+		createRenderTextures(update, writeGamma, 0, srcName);
 }
 //-----------------------------------------------------------------------------  
 // Util functions to convert a D3D locked box to a pixel box
@@ -203,7 +203,9 @@ PixelBox D3D9HardwarePixelBuffer::lockImpl(const Image::Box lockBox,  LockOption
 		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "DirectX does not allow locking of or directly writing to RenderTargets. Use blitFromMemory if you need the contents.",
 		 	"D3D9HardwarePixelBuffer::lockImpl");	
 	// Set extents and format
-	PixelBox rval(lockBox, mFormat);
+	// Note that we do not carry over the left/top/front here, since the returned
+	// PixelBox will be re-based from the locking point onwards
+	PixelBox rval(lockBox.getWidth(), lockBox.getHeight(), lockBox.getDepth(), mFormat);
 	// Set locking flags according to options
 	DWORD flags = 0;
 	switch(options)
@@ -600,8 +602,7 @@ RenderTexture *D3D9HardwarePixelBuffer::getRenderTarget(size_t zoffset)
     return mSliceTRT[zoffset];
 }
 //-----------------------------------------------------------------------------    
-void D3D9HardwarePixelBuffer::createRenderTextures(bool update, bool writeGamma, 
-	uint fsaa, const String& fsaaHint, const String& srcName)
+void D3D9HardwarePixelBuffer::createRenderTextures(bool update, bool writeGamma, uint fsaa, const String& srcName)
 {
     if (update)
     {
@@ -629,7 +630,7 @@ void D3D9HardwarePixelBuffer::createRenderTextures(bool update, bool writeGamma,
         String name;
 		name = "rtt/"+Ogre::StringConverter::toString((size_t)mSurface) + "/" + srcName;
 		
-        RenderTexture *trt = new D3D9RenderTexture(name, this, writeGamma, fsaa, fsaaHint);
+        RenderTexture *trt = new D3D9RenderTexture(name, this, writeGamma, fsaa);
         mSliceTRT.push_back(trt);
         Root::getSingleton().getRenderSystem()->attachRenderTarget(*trt);
     }

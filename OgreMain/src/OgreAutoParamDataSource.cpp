@@ -65,7 +65,6 @@ namespace Ogre {
          mCurrentRenderable(0),
          mCurrentCamera(0), 
 		 mCameraRelativeRendering(false),
-		 mCurrentLightList(0),
          mCurrentRenderTarget(0),
          mCurrentViewport(0), 
 		 mCurrentSceneManager(0),

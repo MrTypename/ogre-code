@@ -203,7 +203,7 @@ namespace Ogre
 
 			PoseRef(ushort p, Real i) : poseIndex(p), influence(i) {}
 		};
-		typedef vector<PoseRef>::type PoseRefList;
+		typedef std::vector<PoseRef> PoseRefList;
 
 		/** Add a new pose reference. 
 		@see PoseRef

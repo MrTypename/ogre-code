@@ -51,9 +51,9 @@ email                : ericcATxenopiDOTcom
 namespace Ogre
 {
 
-    typedef map<unsigned int, IndexData* >::type IndexMap;
-    typedef vector< IndexData* >::type IndexArray;
-    typedef vector< IndexMap* >::type LevelArray;
+    typedef std::map <unsigned int, IndexData* > IndexMap;
+    typedef std::vector < IndexData* > IndexArray;
+    typedef std::vector < IndexMap* > LevelArray;
 
     /**
     * A cache of TerrainIndexBuffers.  Used to keep track of the buffers, and
@@ -374,7 +374,7 @@ namespace Ogre
         /// The buffer with all the renderable geometry in it
         HardwareVertexBufferSharedPtr mMainBuffer;
 		/// Optional set of delta buffers, used to morph from one LOD to the next
-		typedef vector<HardwareVertexBufferSharedPtr>::type VertexBufferList;
+		typedef std::vector<HardwareVertexBufferSharedPtr> VertexBufferList;
 		VertexBufferList mDeltaBuffers;
         /// System-memory buffer with just positions in it, for CPU operations
         float* mPositionBuffer;

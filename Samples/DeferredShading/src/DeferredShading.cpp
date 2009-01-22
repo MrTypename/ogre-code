@@ -77,7 +77,7 @@ DeferredShadingSystem::DeferredShadingSystem(
 DeferredShadingSystem::~DeferredShadingSystem()
 {
 	// Delete mini lights
-	for(set<MLight*>::type::iterator i=mLights.begin(); i!=mLights.end(); ++i)
+	for(std::set<MLight*>::iterator i=mLights.begin(); i!=mLights.end(); ++i)
 	{
 		delete (*i);
 	}

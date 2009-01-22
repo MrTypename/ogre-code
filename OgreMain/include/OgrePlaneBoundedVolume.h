@@ -43,7 +43,7 @@ namespace Ogre {
     class _OgreExport PlaneBoundedVolume
     {
     public:
-        typedef vector<Plane>::type PlaneList;
+        typedef std::vector<Plane> PlaneList;
         /// Publicly accessible plane list, you can modify this direct
         PlaneList planes;
         Plane::Side outside;
@@ -119,7 +119,7 @@ namespace Ogre {
 
     };
 
-    typedef vector<PlaneBoundedVolume>::type PlaneBoundedVolumeList;
+    typedef std::vector<PlaneBoundedVolume> PlaneBoundedVolumeList;
 
 
 }

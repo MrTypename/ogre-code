@@ -117,7 +117,7 @@ namespace Ogre {
 		GLint mLevel;
 		bool mSoftwareMipmap;		// Use GLU for mip mapping
         
-        typedef vector<RenderTexture*>::type SliceTRT;
+        typedef std::vector<RenderTexture*> SliceTRT;
         SliceTRT mSliceTRT;
     };
      /** Renderbuffer surface.  Needs FBO extension.

@@ -1,10 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 // skeleton.cpp
-// Author       : Francesco Giordana
-// Sponsored by : Anygma N.V. (http://www.nazooka.com)
-// Start Date   : January 13, 2005
-// Copyright    : (C) 2006 by Francesco Giordana
-// Email        : fra.giordana@tiscali.it
+// Author     : Francesco Giordana
+// Start Date : January 13, 2005
+// Copyright  : (C) 2006 by Francesco Giordana
+// Email      : fra.giordana@tiscali.it
 ////////////////////////////////////////////////////////////////////////////////
 
 /*********************************************************************************
@@ -19,7 +18,6 @@
 #include "skeleton.h"
 #include "submesh.h"
 #include <maya/MFnMatrixData.h>
-#include <maya/M3dView.h>
 
 namespace OgreMayaExporter
 {
@@ -140,6 +138,7 @@ namespace OgreMayaExporter
 	MStatus Skeleton::loadJoint(MDagPath& jointDag,joint* parent,ParamList& params,MFnSkinCluster* pSkinCluster)
 	{
 		MStatus stat;
+		int i;
 		joint newJoint;
 		joint* parentJoint = parent;
 		// if it is a joint node translate it and then proceed to child nodes, otherwise skip it
@@ -164,7 +163,7 @@ namespace OgreMayaExporter
 			int idx=-1;
 			if (parent)
 			{
-				for (int i=0; i<m_joints.size() && idx<0; i++)
+				for (i=0; i<m_joints.size() && idx<0; i++)
 				{
 					if (m_joints[i].name == parent->name)
 						idx=i;
@@ -238,7 +237,7 @@ namespace OgreMayaExporter
 			newJoint.scalez = scale[2];
 			newJoint.jointDag = jointDag;
 			m_joints.push_back(newJoint);
-			// If root is a root joint, save its index in the roots list
+			// If root is a root joint, save it's index in the roots list
 			if (idx < 0)
 			{
 				m_roots.push_back(m_joints.size() - 1);
@@ -247,7 +246,7 @@ namespace OgreMayaExporter
 			parentJoint = &newJoint;
 		}
 		// Load child joints
-		for (int i=0; i<jointDag.childCount();i++)
+		for (i=0; i<jointDag.childCount();i++)
 		{
 			MObject child;
 			child = jointDag.child(i);
@@ -262,7 +261,10 @@ namespace OgreMayaExporter
 	// Load animations
 	MStatus Skeleton::loadAnims(ParamList& params)
 	{
+		//enable constraints, IK, etc...
+		MGlobal::executeCommand("doEnableNodeItems true all",true);
 		MStatus stat;
+		int i;
 		// save current time for later restore
 		MTime curTime = MAnimControl::currentTime();
 		std::cout << "Loading joint animations...\n";
@@ -270,7 +272,7 @@ namespace OgreMayaExporter
 		// clear animations list
 		m_animations.clear();
 		// load skeleton animation clips for the whole skeleton
-		for (int i=0; i<params.skelClipList.size(); i++)
+		for (i=0; i<params.skelClipList.size(); i++)
 		{
 			stat = loadClip(params.skelClipList[i].name,params.skelClipList[i].start,
 				params.skelClipList[i].stop,params.skelClipList[i].rate,params);
@@ -294,6 +296,7 @@ namespace OgreMayaExporter
 	MStatus Skeleton::loadClip(MString clipName,float start,float stop,float rate,ParamList& params)
 	{
 		MStatus stat;
+		int i,j;
 		MString msg;
 		std::vector<float> times;
 		// if skeleton has no joints we can't load the clip
@@ -332,7 +335,7 @@ namespace OgreMayaExporter
 		int animIdx = m_animations.size() - 1;
 		// create a track for current clip for all joints
 		std::vector<Track> animTracks;
-		for (int i=0; i<m_joints.size(); i++)
+		for (i=0; i<m_joints.size(); i++)
 		{
 			Track t;
 			t.m_type = TT_SKELETON;
@@ -341,12 +344,12 @@ namespace OgreMayaExporter
 			animTracks.push_back(t);
 		}
 		// evaluate animation curves at selected times
-		for (int i=0; i<times.size(); i++)
+		for (i=0; i<times.size(); i++)
 		{
 			//set time to wanted sample time
 			MAnimControl::setCurrentTime(MTime(times[i],MTime::kSeconds));
 			//load a keyframe for every joint at current time
-			for (int j=0; j<m_joints.size(); j++)
+			for (j=0; j<m_joints.size(); j++)
 			{
 				skeletonKeyframe key = loadKeyframe(m_joints[j],times[i]-times[0],params);
 				//add keyframe to joint track
@@ -355,7 +358,7 @@ namespace OgreMayaExporter
 			if (params.skelBB)
 			{
 				// Update bounding boxes of loaded submeshes
-				for (int j=0; j<params.loadedSubmeshes.size(); j++)
+				for (j=0; j<params.loadedSubmeshes.size(); j++)
 				{
 					MFnMesh mesh(params.loadedSubmeshes[j]->m_dagPath);
 					MPoint min = mesh.boundingBox().min();
@@ -371,7 +374,7 @@ namespace OgreMayaExporter
 			}
 		}
 		// add created tracks to current clip
-		for (int i=0; i<animTracks.size(); i++)
+		for (i=0; i<animTracks.size(); i++)
 		{
 			m_animations[animIdx].addTrack(animTracks[i]);
 		}
@@ -476,13 +479,11 @@ namespace OgreMayaExporter
 	// Restore skeleton pose
 	void Skeleton::restorePose()
 	{
-		//enable constraints, IK, etc...
-		MGlobal::executeCommand("doEnableNodeItems true all",true);
 		// save current selection list
 		MSelectionList selectionList;
 		MGlobal::getActiveSelectionList(selectionList);
-		// restore the pose on all parts of the skeleton
-		for (int i=0; i<m_roots.size(); i++)
+		int i;
+		for (i=0; i<m_roots.size(); i++)
 		{
 			MDagPath rootDag = m_joints[m_roots[i]].jointDag;
 			// select the root joint dag
@@ -494,6 +495,8 @@ namespace OgreMayaExporter
 		}
 		//restore selection list
 		MGlobal::setActiveSelectionList(selectionList,MGlobal::kReplaceList);
+		//enable constraints, IK, etc...
+		MGlobal::executeCommand("doEnableNodeItems true all",true);
 	}
 
 
@@ -519,7 +522,7 @@ namespace OgreMayaExporter
 	{
 		MStatus stat;
 		// Construct skeleton
-		MString name = "exportSkeleton";
+		MString name = "mayaExport";
 		Ogre::SkeletonPtr pSkeleton = Ogre::SkeletonManager::getSingleton().create(name.asChar(), 
 			Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 		// Create skeleton bones
@@ -553,39 +556,32 @@ namespace OgreMayaExporter
 	// Write joints to an Ogre skeleton
 	MStatus Skeleton::createOgreBones(Ogre::SkeletonPtr pSkeleton,ParamList& params)
 	{
+		int i;
 		// Create the bones
-		for (int i=0; i<m_joints.size(); i++)
+		for (i=0; i<m_joints.size(); i++)
 		{
 			joint* j = &m_joints[i];
 			// Create a new bone
-			Ogre::String jointName = j->name.asChar();
-			int jointId = j->id;
-			Ogre::Bone* pBone = pSkeleton->createBone(jointName, jointId);
+			Ogre::Bone* pBone = pSkeleton->createBone(m_joints[i].name.asChar(), m_joints[i].id);
 			// Set bone position (relative to it's parent)
 			pBone->setPosition(j->posx,j->posy,j->posz);
 			// Set bone orientation (relative to it's parent)
 			Ogre::Quaternion orient;
 			orient.FromAngleAxis(Ogre::Radian(j->angle),Ogre::Vector3(j->axisx,j->axisy,j->axisz));
 			pBone->setOrientation(orient);
-			// Set bone scale (relative to it's parent)
+			// Set bone scale (relative to it's parent
 			pBone->setScale(j->scalex,j->scaley,j->scalez);
 		}
 		// Create the hierarchy
-		for (int i=0; i<m_joints.size(); i++)
+		for (i=0; i<m_joints.size(); i++)
 		{
-			joint* j = &m_joints[i];
-			int parentIdx = j->parentIndex;
+			int parentIdx = m_joints[i].parentIndex;
 			if (parentIdx >= 0)
 			{
 				// Get the parent joint
-				joint* parentJoint = &m_joints[parentIdx];
-				unsigned short parentId = m_joints[parentIdx].id;
-				Ogre::String parentName = parentJoint->name.asChar();
-				Ogre::Bone* pParent = pSkeleton->getBone(parentName);
+				Ogre::Bone* pParent = pSkeleton->getBone(m_joints[parentIdx].id);
 				// Get current joint from skeleton
-				unsigned short jointId = j->id;
-				Ogre::String jointName = j->name.asChar();
-				Ogre::Bone* pBone = pSkeleton->getBone(jointName);
+				Ogre::Bone* pBone = pSkeleton->getBone(m_joints[i].id);
 				// Place current bone in the parent's child list
 				pParent->addChild(pBone);
 			}
@@ -597,21 +593,22 @@ namespace OgreMayaExporter
 	// Write skeleton animations to an Ogre skeleton
 	MStatus Skeleton::createOgreSkeletonAnimations(Ogre::SkeletonPtr pSkeleton,ParamList& params)
 	{
+		int i,j,k;
 		// Read loaded skeleton animations
-		for (int i=0; i<m_animations.size(); i++)
+		for (i=0; i<m_animations.size(); i++)
 		{
 			// Create a new animation
 			Ogre::Animation* pAnimation = pSkeleton->createAnimation(m_animations[i].m_name.asChar(),
 				m_animations[i].m_length);
 			// Create tracks for current animation
-			for (int j=0; j<m_animations[i].m_tracks.size(); j++)
+			for (j=0; j<m_animations[i].m_tracks.size(); j++)
 			{
 				Track* t = &m_animations[i].m_tracks[j];
 				// Create a new track
 				Ogre::NodeAnimationTrack* pTrack = pAnimation->createNodeTrack(j,
 					pSkeleton->getBone(t->m_bone.asChar()));
 				// Create keyframes for current track
-				for (int k=0; k<t->m_skeletonKeyframes.size(); k++)
+				for (k=0; k<t->m_skeletonKeyframes.size(); k++)
 				{
 					skeletonKeyframe* keyframe = &t->m_skeletonKeyframes[k];
 					// Create a new keyframe

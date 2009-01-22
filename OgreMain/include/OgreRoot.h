@@ -36,13 +36,12 @@ Torus Knot Software Ltd.
 #include "OgreString.h"
 #include "OgreSceneManagerEnumerator.h"
 #include "OgreResourceGroupManager.h"
-#include "OgreLodStrategyManager.h"
 
 #include <exception>
 
 namespace Ogre
 {
-    typedef vector<RenderSystem*>::type RenderSystemList;
+    typedef std::vector<RenderSystem*> RenderSystemList;
 	
     /** The root class of the Ogre system.
         @remarks
@@ -94,7 +93,6 @@ namespace Ogre
 		ShadowTextureManager* mShadowTextureManager;
 		RenderSystemCapabilitiesManager* mRenderSystemCapabilitiesManager;
 		ScriptCompilerManager *mCompilerManager;
-        LodStrategyManager *mLodStrategyManager;
 
         Timer* mTimer;
         RenderWindow* mAutoWindow;
@@ -106,15 +104,15 @@ namespace Ogre
 		Real mFrameSmoothingTime;
 
 	public:
-		typedef vector<DynLib*>::type PluginLibList;
-		typedef vector<Plugin*>::type PluginInstanceList;
+		typedef std::vector<DynLib*> PluginLibList;
+		typedef std::vector<Plugin*> PluginInstanceList;
 	protected:
 		/// List of plugin DLLs loaded
         PluginLibList mPluginLibs;
 		/// List of Plugin instances registered
 		PluginInstanceList mPlugins;
 
-		typedef map<String, MovableObjectFactory*>::type MovableObjectFactoryMap;
+		typedef std::map<String, MovableObjectFactory*> MovableObjectFactoryMap;
 		MovableObjectFactoryMap mMovableObjectFactoryMap;
 		uint32 mNextMovableObjectTypeFlag;
 		// stock movable factories
@@ -125,7 +123,7 @@ namespace Ogre
 		MovableObjectFactory* mBillboardChainFactory;
 		MovableObjectFactory* mRibbonTrailFactory;
 
-		typedef map<String, RenderQueueInvocationSequence*>::type RenderQueueInvocationSequenceMap;
+		typedef std::map<String, RenderQueueInvocationSequence*> RenderQueueInvocationSequenceMap;
 		RenderQueueInvocationSequenceMap mRQSequenceMap;
 
 		/// Are we initialised yet?
@@ -155,10 +153,10 @@ namespace Ogre
         void oneTimePostWindowInit(void);
 
         /** Set of registered frame listeners */
-        set<FrameListener*>::type mFrameListeners;
+        std::set<FrameListener*> mFrameListeners;
 
         /** Set of frame listeners marked for removal*/
-        set<FrameListener*>::type mRemovedFrameListeners;
+        std::set<FrameListener*> mRemovedFrameListeners;
 
         /** Indicates the type of event to be considered by calculateEventTime(). */
         enum FrameEventTimeType {
@@ -170,8 +168,7 @@ namespace Ogre
         };
 
         /// Contains the times of recently fired events
-		typedef deque<unsigned long>::type EventTimesQueue;
-        EventTimesQueue mEventTimes[FETT_COUNT];
+        std::deque<unsigned long> mEventTimes[FETT_COUNT];
 
         /** Internal method for calculating the average time between recently fired events.
         @param now The current time in ms.
@@ -571,11 +568,6 @@ namespace Ogre
 		RenderWindow* createRenderWindow(const String &name, unsigned int width, unsigned int height, 
 			bool fullScreen, const NameValuePairList *miscParams = 0) ;
 
-		/** @copydoc RenderSystem::_createRenderWindows
-		*/
-		bool createRenderWindows(const RenderWindowDescriptionList& renderWindowDescriptions,
-			RenderWindowList& createdWindows);
-	
         /** Destroys a rendering window.
         */
         void detachRenderTarget( RenderTarget* pWin );

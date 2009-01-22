@@ -350,9 +350,6 @@ namespace Ogre {
 		*/
 		virtual uint getFSAA() const { return mFSAA; }
 
-		/** Gets the FSAA hint (@see Root::createRenderWindow)
-		*/
-		virtual const String& getFSAAHint() const { return mFSAAHint; }
 
         /** RenderSystem specific interface for a RenderTarget;
             this should be subclassed by RenderSystems.
@@ -398,15 +395,14 @@ namespace Ogre {
 		bool mHwGamma;
 		// FSAA performed?
 		uint mFSAA;
-		String mFSAAHint;
 
         void updateStats(void);
 
-		typedef map<int, Viewport*>::type ViewportList;
+        typedef std::map<int, Viewport*, std::less<int> > ViewportList;
         /// List of viewports, map on Z-order
         ViewportList mViewportList;
 
-        typedef vector<RenderTargetListener*>::type RenderTargetListenerList;
+        typedef std::vector<RenderTargetListener*> RenderTargetListenerList;
         RenderTargetListenerList mListeners;
 	
 

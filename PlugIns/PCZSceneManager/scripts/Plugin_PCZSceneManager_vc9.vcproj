@@ -470,10 +470,6 @@
 			>
 		</Filter>
 		<File
-			RelativePath="..\docs\changelog.txt"
-			>
-		</File>
-		<File
 			RelativePath="..\docs\readme.txt"
 			>
 		</File>

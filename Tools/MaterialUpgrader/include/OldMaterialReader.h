@@ -47,10 +47,10 @@ protected:
     void parseLayerAttrib( const String& line, MaterialPtr& pMat, TextureUnitState* pLayer );
 
     /// Keyword-mapped attribute parsers.
-    typedef map<String, MATERIAL_ATTRIB_PARSER>::type MatAttribParserList;
+    typedef std::map<String, MATERIAL_ATTRIB_PARSER> MatAttribParserList;
     MatAttribParserList mMatAttribParsers;
     /// Keyword-mapped attribute parsers.
-    typedef map<String, TEXLAYER_ATTRIB_PARSER>::type LayerAttribParserList;
+    typedef std::map<String, TEXLAYER_ATTRIB_PARSER> LayerAttribParserList;
     LayerAttribParserList mLayerAttribParsers;
 
 

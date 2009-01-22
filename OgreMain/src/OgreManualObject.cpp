@@ -176,7 +176,7 @@ namespace Ogre {
 	}
 	//-----------------------------------------------------------------------------
 	void ManualObject::begin(const String& materialName,
-		RenderOperation::OperationType opType, const String & groupName)
+		RenderOperation::OperationType opType)
 	{
 		if (mCurrentSection)
 		{
@@ -184,7 +184,7 @@ namespace Ogre {
 				"You cannot call begin() again until after you call end()",
 				"ManualObject::begin");
 		}
-		mCurrentSection = OGRE_NEW ManualObjectSection(this, materialName, opType, groupName);
+		mCurrentSection = OGRE_NEW ManualObjectSection(this, materialName, opType);
 		mCurrentUpdating = false;
 		mCurrentSection->setUseIdentityProjection(mUseIdentityProjection);
 		mCurrentSection->setUseIdentityView(mUseIdentityView);
@@ -504,7 +504,6 @@ namespace Ogre {
 			case VET_FLOAT1:
 			case VET_FLOAT2:
 			case VET_FLOAT3:
-			case VET_FLOAT4:
 				elem.baseVertexPointerToElement(pBase, &pFloat);
 				break;
 			case VET_COLOUR:
@@ -694,7 +693,7 @@ namespace Ogre {
 		return result;
 	}
 	//-----------------------------------------------------------------------------
-	void ManualObject::setMaterialName(size_t idx, const String& name, const String& group)
+	void ManualObject::setMaterialName(size_t idx, const String& name)
 	{
 		if (idx >= mSectionList.size())
 		{
@@ -703,7 +702,7 @@ namespace Ogre {
 				"ManualObject::setMaterialName");
 		}
 
-		mSectionList[idx]->setMaterialName(name, group);
+		mSectionList[idx]->setMaterialName(name);
 
 	}
 	//-----------------------------------------------------------------------------
@@ -731,7 +730,7 @@ namespace Ogre {
 			SubMesh* sm = m->createSubMesh();
 			sm->useSharedVertices = false;
 			sm->operationType = rop->operationType;
-			sm->setMaterialName(sec->getMaterialName(), groupName);
+			sm->setMaterialName(sec->getMaterialName());
 			// Copy vertex data; replicate buffers too
 			sm->vertexData = rop->vertexData->clone(true);
 			// Copy index data; replicate buffers too; delete the default, old one to avoid memory leaks
@@ -969,8 +968,8 @@ namespace Ogre {
 	//-----------------------------------------------------------------------------
 	//-----------------------------------------------------------------------------
 	ManualObject::ManualObjectSection::ManualObjectSection(ManualObject* parent,
-		const String& materialName, RenderOperation::OperationType opType, const String & groupName)
-		: mParent(parent), mMaterialName(materialName), mGroupName(groupName), m32BitIndices(false)
+		const String& materialName,	RenderOperation::OperationType opType)
+		: mParent(parent), mMaterialName(materialName), m32BitIndices(false)
 	{
 		mRenderOperation.operationType = opType;
 		// default to no indexes unless we're told
@@ -997,17 +996,17 @@ namespace Ogre {
 		{
 			// Load from default group. If user wants to use alternate groups,
 			// they can define it and preload
-			mMaterial = MaterialManager::getSingleton().load(mMaterialName, mGroupName);
+			mMaterial = MaterialManager::getSingleton().load(mMaterialName,
+				ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 		}
 		return mMaterial;
 	}
 	//-----------------------------------------------------------------------------
-	void ManualObject::ManualObjectSection::setMaterialName( const String& name, const String& groupName /* = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME */)
+	void ManualObject::ManualObjectSection::setMaterialName(const String& name)
 	{
-		if (mMaterialName != name || mGroupName != groupName)
+		if (mMaterialName != name)
 		{
 			mMaterialName = name;
-			mGroupName = groupName;
 			mMaterial.setNull();
 		}
 	}

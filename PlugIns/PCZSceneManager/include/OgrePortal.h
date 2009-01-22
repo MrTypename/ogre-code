@@ -46,9 +46,7 @@ Code Style Update	 : Apr 5, 2007
 
 #include "OgrePCZPrerequisites.h"
 #include "OgrePCZSceneNode.h"
-#include "OgreMovableObject.h"
 #include "OgreAxisAlignedBox.h"
-#include "OgreCapsule.h"
 #include "OgreSphere.h"
 
 namespace Ogre
@@ -60,7 +58,7 @@ namespace Ogre
     @remarks
     */
 
-	class _OgrePCZPluginExport Portal : public MovableObject
+	class _OgrePCZPluginExport Portal : public SceneCtlAllocatedObject
     {
     public:
 		enum PORTAL_TYPE
@@ -71,17 +69,6 @@ namespace Ogre
 		};
         Portal(const String &, const PORTAL_TYPE type = PORTAL_TYPE_QUAD);
         virtual ~Portal();
-
-        /** Retrieves the axis-aligned bounding box for this object in world coordinates. */
-        virtual const AxisAlignedBox& getWorldBoundingBox(bool derive = false) const;
-		/** Retrieves the worldspace bounding sphere for this object. */
-        virtual const Sphere& getWorldBoundingSphere(bool derive = false) const;
-   
-		/** returns true if this portal is an antiportal */
-		bool isAntiPortal(void) { return mIsAntiPortal; }
-
-		/** change this portal to an antiportal or change an antiportal to a regular portal */
-		void setAntiPortal(bool trueOrfalse);
 
         /** Set the SceneNode the Portal is associated with
         */
@@ -134,13 +121,19 @@ namespace Ogre
 		}
 		/* Calculate the local direction and radius of the portal
 		*/
-		void calcDirectionAndRadius() const;
+		void calcDirectionAndRadius( void );
 		/* get the type of portal 
 		*/
 		const PORTAL_TYPE getType(void) const {return mType;}
+		/* Returns the name of the portal
+		*/
+		const String & getName(void) const { return mName; }
+		/* Get the scene node (if any) this portal is associated with 
+		*/
+		SceneNode * getNode() {return mNode;}
         /** Retrieve the radius of the portal (calculates if necessary for quad portals)
         */
-		Real getRadius( void ) const;
+		Real getRadius( void );
         /** Get the Zone the Portal connects to
         */
         PCZone * getTargetZone() {return mTargetZone;}
@@ -228,45 +221,13 @@ namespace Ogre
 		*/
 		bool closeTo(Portal *);
 
-		/** @copydoc MovableObject::getMovableType. */
-		const String& getMovableType() const;
-
-		/** @copydoc MovableObject::getBoundingBox. */
-		const AxisAlignedBox& getBoundingBox() const;
-
-		/** @copydoc MovableObject::getBoundingRadius. */
-		Real getBoundingRadius() const
-		{ return getRadius(); }
-
-		/** @copydoc MovableObject::_updateRenderQueue. */
-		void _updateRenderQueue(RenderQueue* queue)
-		{ /* Draw debug info if needed? */ }
-
-		/** @copydoc MovableObject::visitRenderables. */
-		void visitRenderables(Renderable::Visitor* visitor, bool debugRenderables = false)
-		{ }
-
-		/** Called when scene node moved. */
-		void _notifyMoved()
-		{
-			updateDerivedValues();
-			mWasMoved = true;
-		}
-
-		/** Returns true if portal needs update. */
-		bool needUpdate();
-
-		/** Returns an updated capsule of the portal for intersection test. */
-		const Capsule& getCapsule();
-
-		/** Returns an updated AAB of the portal for intersection test. */
-		const AxisAlignedBox& getAAB();
-
     protected:
 		// Type of portal (quad, aabb, or sphere)
 		PORTAL_TYPE mType;
-		// antiportal flag (true=antiportal, false=regular portal)
-		bool mIsAntiPortal;
+		// Name (identifier) for the Portal - must be unique
+		String mName;
+		/// SceneNode (if any) this portal is attached to
+		SceneNode * mNode;
         ///connected Zone
         PCZone * mTargetZone;
 		/// Zone this portal is currently owned by (in)
@@ -286,12 +247,12 @@ namespace Ogre
 		// NOTE: For AABB & SPHERE portals, we only have "inward" or "outward" cases.
 		//       To indicate "outward", the Direction is UNIT_Z
 		//		 to indicate "inward", the Direction is NEGATIVE_UNIT_Z
-		mutable Vector3 mDirection;
+		Vector3 mDirection;
 		/// Radius of the sphere enclosing the portal 
 		// NOTE: For aabb portals, this value is the distance from the center of the aab to a corner
-		mutable Real mRadius;
+		Real mRadius;
 		// Local Centerpoint of the portal
-		mutable Vector3 mLocalCP;
+		Vector3 mLocalCP;
         /// Derived (world coordinates) Corners of the portal
 		// NOTE: there are 4 corners if the portal is a quad type
 		//       there are 2 corners if the portal is an AABB type (min corner & max corner)
@@ -303,7 +264,7 @@ namespace Ogre
 		/// Derived (world coordinates) of portal (center point)
 		Vector3 mDerivedCP;
 		/// Sphere of the portal centered on the derived CP
-		mutable Sphere mDerivedSphere;
+		Sphere mDerivedSphere;
 		/// Derived (world coordinates) Plane of the portal
 		// NOTE: Only applicable for a Quad portal
 		Plane mDerivedPlane;
@@ -313,28 +274,15 @@ namespace Ogre
 		// NOTE: Only applicable for a Quad portal
 		Plane mPrevDerivedPlane;
 		/// flag indicating whether or not local values are up-to-date
-		mutable bool mLocalsUpToDate;
-		/// flag indicating whether or not derived values are up-to-date
-		bool mDerivedUpToDate;
+		bool mLocalsUpToDate;
 		// previous world transform
 		Matrix4 prevWorldTransform;
 		// flag open or closed
 		bool mOpen;
-		// cache of portal's capsule.
-		Capsule mPortalCapsule;
-		// cache of portal's AAB that contains the bound of portal movement.
-		AxisAlignedBox mPortalAAB;
-		// cache of portal's previous AAB.
-		AxisAlignedBox mPrevPortalAAB;
-		// cache of portal's local AAB.
-		mutable AxisAlignedBox mLocalPortalAAB;
-		// defined if portal was moved previously.
-		bool mWasMoved;
-	};
+    };
 
 }
 
 #endif
-
 
 

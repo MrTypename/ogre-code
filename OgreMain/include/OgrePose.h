@@ -61,7 +61,7 @@ namespace Ogre {
 		/// Return the target geometry index of the pose
 		ushort getTarget(void) const { return mTarget; }
 		/// A collection of vertex offsets based on the vertex index
-		typedef map<size_t, Vector3>::type VertexOffsetMap;
+		typedef std::map<size_t, Vector3> VertexOffsetMap;
 		/// An iterator over the vertex offsets
 		typedef MapIterator<VertexOffsetMap> VertexOffsetIterator;
 		/// An iterator over the vertex offsets
@@ -103,7 +103,7 @@ namespace Ogre {
 		/// Derived hardware buffer, covers all vertices
 		mutable HardwareVertexBufferSharedPtr mBuffer;
 	};
-	typedef vector<Pose*>::type PoseList;
+	typedef std::vector<Pose*> PoseList;
 
 
 }

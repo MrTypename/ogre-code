@@ -77,8 +77,6 @@ namespace Ogre
 		mBasicStatesInitialised = false;
 		mUseNVPerfHUD = false;
 		mHLSLProgramFactory = NULL;
-		mPresentationParamCount = 0;
-		md3dppa = NULL;
 
 		// init lights
 		for(int i = 0; i < MAX_LIGHTS; i++ )
@@ -92,9 +90,9 @@ namespace Ogre
 		initConfigOptions();
 
 		// fsaa options
-		mFSAAHint = "";
-		mFSAASamples = 0;
-		
+		mFSAAType = D3DMULTISAMPLE_NONE;
+		mFSAAQuality = 0;
+
 		// set stages desc. to defaults
 		for (size_t n = 0; n < OGRE_MAX_TEXTURE_LAYERS; n++)
 		{
@@ -212,7 +210,7 @@ namespace Ogre
 		optVSync.possibleValues.push_back( "No" );
 		optVSync.currentValue = "No";
 
-		optAA.name = "FSAA";
+		optAA.name = "Anti aliasing";
 		optAA.immutable = false;
 		optAA.possibleValues.push_back( "None" );
 		optAA.currentValue = "None";
@@ -336,13 +334,32 @@ namespace Ogre
 			}
 		}
 
-		if( name == "FSAA" )
+		if( name == "Anti aliasing" )
 		{
-			StringVector values = StringUtil::split(value, " ", 1);
-			mFSAASamples = StringConverter::parseUnsignedInt(values[0]);
-			if (values.size() > 1)
-				mFSAAHint = values[1];
+			if (value == "None")
+				_setFSAA(D3DMULTISAMPLE_NONE, 0);
+			else 
+			{
+				D3DMULTISAMPLE_TYPE fsaa = D3DMULTISAMPLE_NONE;
+				DWORD level = 0;
 
+				if (StringUtil::startsWith(value, "NonMaskable", false))
+				{
+					fsaa = D3DMULTISAMPLE_NONMASKABLE;
+					size_t pos = value.find_last_of(" ");
+					String sNum = value.substr(pos + 1);
+					level = StringConverter::parseInt(sNum);
+					level -= 1;
+				}
+				else if (StringUtil::startsWith(value, "Level", false))
+				{
+					size_t pos = value.find_last_of(" ");
+					String sNum = value.substr(pos + 1);
+					fsaa = (D3DMULTISAMPLE_TYPE)StringConverter::parseInt(sNum);
+				}
+
+				_setFSAA(fsaa, level);
+			}
 		}
 
 		if( name == "VSync" )
@@ -371,10 +388,10 @@ namespace Ogre
 	void D3D9RenderSystem::refreshFSAAOptions(void)
 	{
 
-		ConfigOptionMap::iterator it = mOptions.find( "FSAA" );
+		ConfigOptionMap::iterator it = mOptions.find( "Anti aliasing" );
 		ConfigOption* optFSAA = &it->second;
 		optFSAA->possibleValues.clear();
-		optFSAA->possibleValues.push_back("0");
+		optFSAA->possibleValues.push_back("None");
 
 		it = mOptions.find("Rendering Device");
 		D3D9Driver *driver = getDirect3DDrivers()->item(it->second.currentValue);
@@ -384,10 +401,23 @@ namespace Ogre
 			D3D9VideoMode *videoMode = driver->getVideoModeList()->item(it->second.currentValue);
 			if (videoMode)
 			{
+				// get non maskable FSAA for this VMODE
 				DWORD numLevels = 0;
-				bool bOK;
+				bool bOK = this->_checkMultiSampleQuality(
+					D3DMULTISAMPLE_NONMASKABLE, 
+					&numLevels, 
+					videoMode->getFormat(), 
+					driver->getAdapterNumber(),
+					D3DDEVTYPE_HAL,
+					TRUE);
+				if (bOK && numLevels > 0)
+				{
+					for (DWORD n = 0; n < numLevels; n++)
+						optFSAA->possibleValues.push_back("NonMaskable " + StringConverter::toString(n + 1));
+				}
 
-				for (unsigned int n = 2; n < 25; n++)
+				// set maskable levels supported
+				for (unsigned int n = 2; n < 17; n++)
 				{
 					bOK = this->_checkMultiSampleQuality(
 						(D3DMULTISAMPLE_TYPE)n, 
@@ -397,13 +427,8 @@ namespace Ogre
 						D3DDEVTYPE_HAL,
 						TRUE);
 					if (bOK)
-					{
-						optFSAA->possibleValues.push_back(StringConverter::toString(n));
-						if (n >= 8)
-							optFSAA->possibleValues.push_back(StringConverter::toString(n) + " [Quality]");
-					}
+						optFSAA->possibleValues.push_back("Level " + StringConverter::toString(n));
 				}
-
 			}
 		}
 
@@ -414,7 +439,7 @@ namespace Ogre
 			optFSAA->currentValue);
 		if (itValue == optFSAA->possibleValues.end())
 		{
-			optFSAA->currentValue = "0";
+			optFSAA->currentValue = "None";
 		}
 
 	}
@@ -541,12 +566,12 @@ namespace Ogre
 				OGRE_EXCEPT( Exception::ERR_INTERNAL_ERROR, "Can't find sRGB option!", "D3D9RenderSystem::initialise" );
 			hwGamma = opt->second.currentValue == "Yes";
 
-			
+
 
 			NameValuePairList miscParams;
 			miscParams["colourDepth"] = StringConverter::toString(videoMode->getColourDepth());
-			miscParams["FSAA"] = StringConverter::toString(mFSAASamples);
-			miscParams["FSAAHint"] = mFSAAHint;
+			miscParams["FSAA"] = StringConverter::toString(mFSAAType);
+			miscParams["FSAAQuality"] = StringConverter::toString(mFSAAQuality);
 			miscParams["vsync"] = StringConverter::toString(mVSync);
 			miscParams["useNVPerfHUD"] = StringConverter::toString(mUseNVPerfHUD);
 			miscParams["gamma"] = StringConverter::toString(hwGamma);
@@ -577,6 +602,15 @@ namespace Ogre
 		return autoWindow;
 	}
 	//---------------------------------------------------------------------
+	void D3D9RenderSystem::_setFSAA(D3DMULTISAMPLE_TYPE type, DWORD qualityLevel)
+	{
+		if (!mpD3DDevice)
+		{
+			mFSAAType = type;
+			mFSAAQuality = qualityLevel;
+		}
+	}
+	//---------------------------------------------------------------------
 	void D3D9RenderSystem::reinitialise()
 	{
 		LogManager::getSingleton().logMessage( "D3D9 : Reinitialising" );
@@ -597,20 +631,12 @@ namespace Ogre
 		SAFE_DELETE( mTextureManager );
 		SAFE_DELETE( mHardwareBufferManager );
 		SAFE_DELETE( mGpuProgramManager );
-		SAFE_DELETE_ARRAY( md3dppa );	
 	}
 	//---------------------------------------------------------------------
 	RenderWindow* D3D9RenderSystem::_createRenderWindow(const String &name, 
 		unsigned int width, unsigned int height, bool fullScreen,
 		const NameValuePairList *miscParams)
 	{
-
-		if (mActiveD3DDriver->isMultihead())
-		{
-			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
-				"Cannot create other windows when multihead is active",
-				"D3D9RenderSystem::createRenderWindow");
-		}
 
 		// Check we're not creating a secondary window when the primary
 		// was fullscreen
@@ -628,7 +654,7 @@ namespace Ogre
 		}
 
 		// Log a message
-		StringStream ss;
+		std::stringstream ss;
 		ss << "D3D9RenderSystem::_createRenderWindow \"" << name << "\", " <<
 			width << "x" << height << " ";
 		if(fullScreen)
@@ -658,7 +684,7 @@ namespace Ogre
 		}
 
 		RenderWindow* win = new D3D9RenderWindow(mhInstance, mActiveD3DDriver, 
-			mPrimaryWindow != NULL);
+			mPrimaryWindow ? mpD3DDevice : 0);
 
 		win->create( name, width, height, fullScreen, miscParams);
 
@@ -670,7 +696,32 @@ namespace Ogre
 			mPrimaryWindow = (D3D9RenderWindow *)win;
 			win->getCustomAttribute( "D3DDEVICE", &mpD3DDevice );
 
-			postDeviceCreated();			
+			// Create the texture manager for use by others
+			mTextureManager = new D3D9TextureManager( mpD3DDevice );
+			// Also create hardware buffer manager
+			mHardwareBufferManager = new D3D9HardwareBufferManager(mpD3DDevice);
+
+			// Create the GPU program manager
+			mGpuProgramManager = new D3D9GpuProgramManager(mpD3DDevice);
+			// create & register HLSL factory
+			if (mHLSLProgramFactory == NULL)
+				mHLSLProgramFactory = new D3D9HLSLProgramFactory();
+
+
+			// Initialise the capabilities structures
+			// get caps
+			mpD3DDevice->GetDeviceCaps(&mCaps);
+
+			mRealCapabilities = createRenderSystemCapabilities();							
+			mRealCapabilities->addShaderProfile("hlsl");
+
+			// if we are using custom capabilities, then 
+			// mCurrentCapabilities has already been loaded
+			if(!mUseCustomCapabilities)
+				mCurrentCapabilities = mRealCapabilities;
+
+			initialiseFromRenderSystemCapabilities(mCurrentCapabilities, mPrimaryWindow);
+
 		}
 		else
 		{
@@ -680,287 +731,6 @@ namespace Ogre
 		return win;
 
 	}
-
-	//---------------------------------------------------------------------
-	void D3D9RenderSystem::postDeviceCreated()
-	{
-		// Create the texture manager for use by others
-		mTextureManager = new D3D9TextureManager( mpD3DDevice );
-		// Also create hardware buffer manager
-		mHardwareBufferManager = new D3D9HardwareBufferManager(mpD3DDevice);
-
-		// Create the GPU program manager
-		mGpuProgramManager = new D3D9GpuProgramManager(mpD3DDevice);
-		// create & register HLSL factory
-		if (mHLSLProgramFactory == NULL)
-			mHLSLProgramFactory = new D3D9HLSLProgramFactory();
-
-
-		// Initialise the capabilities structures
-		// get caps
-		mpD3DDevice->GetDeviceCaps(&mCaps);
-
-		mRealCapabilities = createRenderSystemCapabilities();							
-		mRealCapabilities->addShaderProfile("hlsl");
-
-		// if we are using custom capabilities, then 
-		// mCurrentCapabilities has already been loaded
-		if(!mUseCustomCapabilities)
-			mCurrentCapabilities = mRealCapabilities;
-
-		initialiseFromRenderSystemCapabilities(mCurrentCapabilities, mPrimaryWindow);
-	}
-
-	//---------------------------------------------------------------------
-	bool D3D9RenderSystem::_createRenderWindows(const RenderWindowDescriptionList& renderWindowDescriptions, 
-		RenderWindowList& createdWindows)
-	{
-		// Call base render system method.
-		if (false == RenderSystem::_createRenderWindows(renderWindowDescriptions, createdWindows))
-			return false;
-
-		unsigned int fullscreenWindowsCount = 0;
-
-		// Count full screen windows.
-		for (unsigned int nWindow = 0; nWindow < renderWindowDescriptions.size(); ++nWindow)
-		{
-			const RenderWindowDescription* pCurDesc = &renderWindowDescriptions[nWindow];
-
-			if (pCurDesc->useFullScreen)			
-				fullscreenWindowsCount++;			
-		}		
-		
-
-		// Case we have to create multiple windowed rendering windows or just
-		// single window.
-		if (renderWindowDescriptions.size() == 1 || fullscreenWindowsCount == 0)
-		{
-			for(size_t i = 0; i < renderWindowDescriptions.size(); ++i)
-			{
-				const RenderWindowDescription& curRenderWindowDescription = renderWindowDescriptions[i];			
-				RenderWindow*			  curWindow = NULL;
-
-				curWindow = _createRenderWindow(curRenderWindowDescription.name, 
-					curRenderWindowDescription.width, 
-					curRenderWindowDescription.height, 
-					curRenderWindowDescription.useFullScreen, 
-					&curRenderWindowDescription.miscParams);
-								
-				createdWindows.push_back(curWindow);											
-			}
-		}
-
-		// Case we have to create multiple full screen rendering windows on the same adapter.
-		else
-		{	
-			D3DCAPS9 caps9;
-
-			mpD3D->GetDeviceCaps(mActiveD3DDriver->getAdapterNumber(), D3DDEVTYPE_HAL, &caps9);
-
-			if (caps9.NumberOfAdaptersInGroup != renderWindowDescriptions.size())
-			{
-				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-					"Adapter output head(s) count and requsted rendering windows count are mismatched - multiple render windows creation failed.",
-					"D3D9RenderSystem::createRenderWindows");
-			}
-			
-
-			// Mark the active driver as multi head.
-			mActiveD3DDriver->setMultihead(true);
-
-			// first create the primary window
-			createdWindows.push_back(new D3D9RenderWindow(mhInstance, mActiveD3DDriver, false));
-
-			NameValuePairList extraMiscParams;
-
-			extraMiscParams = renderWindowDescriptions[0].miscParams;
-
-			// do not create the device now because the device must be supplied the 
-			// HWND of all the windows
-			extraMiscParams["createD3DResources"] = "false";
-			extraMiscParams["head"] = "0";
-			createdWindows[0]->create( renderWindowDescriptions[0].name, renderWindowDescriptions[0].width,
-				renderWindowDescriptions[0].height, true,
-				&extraMiscParams);							
-			
-			mPrimaryWindow = static_cast<D3D9RenderWindow*>(createdWindows[0]);
-
-
-			mPresentationParamCount = caps9.NumberOfAdaptersInGroup;
-
-			// then create the secondary windows
-			for( int i = 1; i < mPresentationParamCount; ++i)
-			{
-				D3D9RenderWindow* curWindow = new D3D9RenderWindow(mhInstance, mActiveD3DDriver, true);					
-							
-				extraMiscParams = renderWindowDescriptions[i].miscParams;
-
-
-				// still no D3D resources creation
-				extraMiscParams["createD3DResources"] = "false";				
-				// secondary windows are children of the primary windows
-				extraMiscParams["parentWindowHandle"] = 
-					StringConverter::toString(reinterpret_cast<int>(mPrimaryWindow->getWindowHandle()));
-				extraMiscParams["head"] = StringConverter::toString(i);
-				curWindow->create(renderWindowDescriptions[i].name, renderWindowDescriptions[i].width,
-					renderWindowDescriptions[i].height, true,
-					&extraMiscParams);
-				mSecondaryWindows.push_back(curWindow);
-
-				// All the window's present parameters must be supplied when creating the device so
-				// build them before
-				curWindow->buildPresentParameters();
-
-				createdWindows.push_back(curWindow);				
-			}
-
-			for( int i = 0; i < createdWindows.size(); ++i)
-			{
-				// when all the windows are created, the device can be created
-				static_cast<D3D9RenderWindow*>(createdWindows[i])->createD3DResources();
-				attachRenderTarget( *createdWindows[i] );
-			}
-
-			postDeviceCreated();
-		}
-		
-		return true;
-	}
-
-	//---------------------------------------------------------------------
-	LPDIRECT3DDEVICE9 D3D9RenderSystem::createDevice(HWND focusWindow, D3DPRESENT_PARAMETERS *pd3dpp)
-	{
-		D3DDEVTYPE devType = D3DDEVTYPE_HAL;
-		HRESULT hr;
-		LPDIRECT3D9 pD3D = mActiveD3DDriver->getD3D();
-		DWORD extraFlags = 0;
-
-		// Do we want to preserve the FPU mode? Might be useful for scientific apps
-
-		ConfigOptionMap& options = getConfigOptions();
-		ConfigOptionMap::iterator opti = options.find("Floating-point mode");
-		if (opti != options.end() && opti->second.currentValue == "Consistent")
-			extraFlags |= D3DCREATE_FPU_PRESERVE;
-
-#if OGRE_THREAD_SUPPORT
-		extraFlags |= D3DCREATE_MULTITHREADED;
-#endif
-		// Set default settings (use the one Ogre discovered as a default)
-		UINT adapterToUse = mActiveD3DDriver->getAdapterNumber();
-
-		if (mUseNVPerfHUD)
-		{
-			// Look for 'NVIDIA NVPerfHUD' adapter (<= v4)
-			// or 'NVIDIA PerfHUD' (v5)
-			// If it is present, override default settings
-			for (UINT adapter=0; adapter < mActiveD3DDriver->getD3D()->GetAdapterCount(); ++adapter)
-			{
-				D3DADAPTER_IDENTIFIER9 identifier;
-				HRESULT res;
-				res = pD3D->GetAdapterIdentifier(adapter,0,&identifier);
-				if (strstr(identifier.Description,"PerfHUD") != 0)
-				{
-					adapterToUse = adapter;
-					devType = D3DDEVTYPE_REF;
-					break;
-				}
-			}
-		}
-
-
-
-		// Create present parameters for multihead
-		if(mActiveD3DDriver->isMultihead())
-		{
-			// Make sure we use the master adapter only.
-			LPDIRECT3D9 pD3D = mActiveD3DDriver->getD3D();
-			for (UINT adapter=0; adapter < pD3D->GetAdapterCount(); ++adapter)
-			{
-				D3DCAPS9 AdapterCaps;
-				HRESULT hr;
-
-				hr = pD3D->GetDeviceCaps(adapter, D3DDEVTYPE_REF, &AdapterCaps);
-				if (SUCCEEDED(hr))
-				{
-					if (AdapterCaps.AdapterOrdinal == AdapterCaps.MasterAdapterOrdinal)
-					{
-						adapterToUse = AdapterCaps.AdapterOrdinal;
-						break;
-					}
-				}
-			}
-
-			bool autoDepthStencil = true;
-			// copy in the render system the array of present parameters used to create the device
-			SAFE_DELETE_ARRAY(md3dppa);	
-			md3dppa = new D3DPRESENT_PARAMETERS[mPresentationParamCount];
-			md3dppa[0] = D3DPRESENT_PARAMETERS(*pd3dpp);
-
-			for (int i = 1; i < mPresentationParamCount; i++)
-			{
-				md3dppa[i] = *mSecondaryWindows[i-1]->getPresentationParameters();
-
-				// disable AutoDepthStencil if these parameters vary between render windows
-				if (md3dppa[0].BackBufferHeight != md3dppa[i].BackBufferHeight || 
-					md3dppa[0].BackBufferWidth != md3dppa[i].BackBufferWidth || 
-					md3dppa[0].BackBufferFormat != md3dppa[i].BackBufferFormat || 
-					md3dppa[0].AutoDepthStencilFormat != md3dppa[i].AutoDepthStencilFormat)
-				{
-					autoDepthStencil = false;
-					mActiveD3DDriver->setAutoDepthStencil(false);
-				}
-			}
-			if(!autoDepthStencil)
-			{
-				for(int i = 0; i < mPresentationParamCount; i++)
-				{
-					md3dppa[i].EnableAutoDepthStencil = false;
-				}
-			}
-			extraFlags |= D3DCREATE_ADAPTERGROUP_DEVICE;
-		}
-		else
-		{
-			// copy in the render system the present parameters used to create the device
-			md3dppa = new D3DPRESENT_PARAMETERS[1];
-			md3dppa[0] = D3DPRESENT_PARAMETERS(*pd3dpp);
-		}
-
-		hr = pD3D->CreateDevice(adapterToUse, devType, focusWindow,
-			D3DCREATE_HARDWARE_VERTEXPROCESSING | extraFlags, md3dppa, &mpD3DDevice );
-
-		if (FAILED(hr))
-		{
-			// Try a second time, may fail the first time due to back buffer count,
-			// which will be corrected down to 1 by the runtime
-			hr = pD3D->CreateDevice( adapterToUse, devType, focusWindow,
-				D3DCREATE_HARDWARE_VERTEXPROCESSING | extraFlags, md3dppa, &mpD3DDevice );
-		}
-		if( FAILED( hr ) )
-		{
-			hr = pD3D->CreateDevice( adapterToUse, devType, focusWindow,
-				D3DCREATE_MIXED_VERTEXPROCESSING | extraFlags, md3dppa, &mpD3DDevice );
-			if( FAILED( hr ) )
-			{
-				hr = pD3D->CreateDevice( adapterToUse, devType, focusWindow,
-					D3DCREATE_SOFTWARE_VERTEXPROCESSING | extraFlags, md3dppa, &mpD3DDevice );
-			}
-		}
-		// TODO: make this a bit better e.g. go from pure vertex processing to software
-
-		if( FAILED( hr ))
-		{
-			//destroy();
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-				"Failed to create Direct3D9 Device: " + 
-				getErrorDescription(hr), 
-				"D3D9RenderWindow::createD3DResources" );
-		}
-
-		mActiveD3DDriver->setD3DDevice( mpD3DDevice );
-		return mpD3DDevice;
-	}
-	
 	//---------------------------------------------------------------------
 	RenderSystemCapabilities* D3D9RenderSystem::createRenderSystemCapabilities(void) const
 	{
@@ -1212,8 +982,6 @@ namespace Ogre
 
 			// no other cards have Dx9 hacks for alpha to coverage, as far as I know
 		}
-
-		rsc->setCapability(RSC_ADVANCED_BLEND_OPERATIONS);
 
 
 		return rsc;
@@ -1503,14 +1271,11 @@ namespace Ogre
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::destroyRenderTarget(const String& name)
 	{
-		bool bFreeDevice = false;
-
 		// Check in specialised lists
-		if (mPrimaryWindow != NULL && mPrimaryWindow->getName() == name)
+		if (mPrimaryWindow->getName() == name)
 		{
 			// We're destroying the primary window, so reset device and window
 			mPrimaryWindow = 0;
-			bFreeDevice = true;
 		}
 		else
 		{
@@ -1528,9 +1293,10 @@ namespace Ogre
 		// Do the real removal
 		RenderSystem::destroyRenderTarget(name);
 
-		// We should free device.
-		if (bFreeDevice)
-		{			
+		// Did we destroy the primary?
+		if (!mPrimaryWindow)
+		{
+			// device is no longer valid, so free it all up
 			freeDevice();
 		}
 
@@ -2397,7 +2163,7 @@ namespace Ogre
 		}
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendOperation op )
+	void D3D9RenderSystem::_setSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor )
 	{
 		HRESULT hr;
 		if( sourceFactor == SBF_ONE && destFactor == SBF_ZERO)
@@ -2416,15 +2182,9 @@ namespace Ogre
 			if( FAILED( hr = __SetRenderState( D3DRS_DESTBLEND, D3D9Mappings::get(destFactor) ) ) )
 				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set destination blend", "D3D9RenderSystem::_setSceneBlending" );
 		}
-
-		if (FAILED(hr = __SetRenderState(D3DRS_BLENDOP, D3D9Mappings::get(op))))
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set scene blending operation option", "D3D9RenderSystem::_setSceneBlendingOperation" );
-		if (FAILED(hr = __SetRenderState(D3DRS_BLENDOPALPHA, D3D9Mappings::get(op))))
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set scene blending operation option", "D3D9RenderSystem::_setSceneBlendingOperation" );
 	}
 	//---------------------------------------------------------------------
-	void D3D9RenderSystem::_setSeparateSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, 
-		SceneBlendFactor destFactorAlpha, SceneBlendOperation op, SceneBlendOperation alphaOp )
+	void D3D9RenderSystem::_setSeparateSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha )
 	{
 		HRESULT hr;
 		if( sourceFactor == SBF_ONE && destFactor == SBF_ZERO && 
@@ -2448,11 +2208,6 @@ namespace Ogre
 			if( FAILED( hr = __SetRenderState( D3DRS_DESTBLENDALPHA, D3D9Mappings::get(destFactorAlpha) ) ) )
 				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set alpha destination blend", "D3D9RenderSystem::_setSeperateSceneBlending" );
 		}
-
-		if (FAILED(hr = __SetRenderState(D3DRS_BLENDOP, D3D9Mappings::get(op))))
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set scene blending operation option", "D3D9RenderSystem::_setSceneBlendingOperation" );
-		if (FAILED(hr = __SetRenderState(D3DRS_BLENDOPALPHA, D3D9Mappings::get(alphaOp))))
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Failed to set alpha scene blending operation option", "D3D9RenderSystem::_setSceneBlendingOperation" );
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::_setAlphaRejectSettings( CompareFunction func, unsigned char value, bool alphaToCoverage )
@@ -2819,7 +2574,7 @@ namespace Ogre
 	{
 		HRESULT hr;
 		DWORD oldVal;
-		
+
 		// can only set fixed-function texture stage state
 		if (stage < 8)
 		{
@@ -2868,7 +2623,7 @@ namespace Ogre
 				D3DSURFACE_DESC srfDesc;
 				if(FAILED(pBack[0]->GetDesc(&srfDesc)))
 					return; // ?
-				pDepth = _getDepthStencilFor(srfDesc.Format, srfDesc.MultiSampleType, srfDesc.MultiSampleQuality, srfDesc.Width, srfDesc.Height);
+				pDepth = _getDepthStencilFor(srfDesc.Format, srfDesc.MultiSampleType, srfDesc.Width, srfDesc.Height);
 			}
 			// Bind render targets
 			uint count = mCurrentCapabilities->getNumMultiRenderTargets();
@@ -3188,13 +2943,6 @@ namespace Ogre
 			break;
 		};
 
-		// Make sure texcoord index is equal to stage value, As SDK Doc suggests:
-		// "When rendering using vertex shaders, each stage's texture coordinate index must be set to its default value."
-		// This solves such an errors when working with the Debug runtime -
-		// "Direct3D9: (ERROR) :Stage 1 - Texture coordinate index in the stage must be equal to the stage index when programmable vertex pipeline is used".
-		for (unsigned int nStage=0; nStage < 8; ++nStage)
-			__SetTextureStageState(nStage, D3DTSS_TEXCOORDINDEX, nStage);
-
 		RenderSystem::bindGpuProgram(prg);
 
 	}
@@ -3227,15 +2975,8 @@ namespace Ogre
 	}
 	//---------------------------------------------------------------------
 	void D3D9RenderSystem::bindGpuProgramParameters(GpuProgramType gptype, 
-		GpuProgramParametersSharedPtr params, uint16 variability)
+		GpuProgramParametersSharedPtr params)
 	{
-		// special case pass iteration
-		if (variability == (uint16)GPV_PASS_ITERATION_NUMBER)
-		{
-			bindGpuProgramPassIterationParameters(gptype);
-			return;
-		}
-
 		HRESULT hr;
 		const GpuLogicalBufferStruct* floatLogical = params->getFloatLogicalBufferStruct();
 		const GpuLogicalBufferStruct* intLogical = params->getIntLogicalBufferStruct();
@@ -3250,21 +2991,18 @@ namespace Ogre
 					for (GpuLogicalIndexUseMap::const_iterator i = floatLogical->map.begin();
 						i != floatLogical->map.end(); ++i)
 					{
-						if (i->second.variability & variability)
-						{
-							size_t logicalIndex = i->first;
-							const float* pFloat = params->getFloatPointer(i->second.physicalIndex);
-							size_t slotCount = i->second.currentSize / 4;
-							assert (i->second.currentSize % 4 == 0 && "Should not have any "
-								"elements less than 4 wide for D3D9");
+						size_t logicalIndex = i->first;
+						const float* pFloat = params->getFloatPointer(i->second.physicalIndex);
+						size_t slotCount = i->second.currentSize / 4;
+						assert (i->second.currentSize % 4 == 0 && "Should not have any "
+							"elements less than 4 wide for D3D9");
 
-							if (FAILED(hr = mpD3DDevice->SetVertexShaderConstantF(
-								logicalIndex, pFloat, slotCount)))
-							{
-								OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-									"Unable to upload vertex shader float parameters", 
-									"D3D9RenderSystem::bindGpuProgramParameters");
-							}
+						if (FAILED(hr = mpD3DDevice->SetVertexShaderConstantF(
+							logicalIndex, pFloat, slotCount)))
+						{
+							OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
+								"Unable to upload vertex shader float parameters", 
+								"D3D9RenderSystem::bindGpuProgramParameters");
 						}
 
 					}
@@ -3277,22 +3015,20 @@ namespace Ogre
 					for (GpuLogicalIndexUseMap::const_iterator i = intLogical->map.begin();
 						i != intLogical->map.end(); ++i)
 					{
-						if (i->second.variability & variability)
-						{
-							size_t logicalIndex = i->first;
-							const int* pInt = params->getIntPointer(i->second.physicalIndex);
-							size_t slotCount = i->second.currentSize / 4;
-							assert (i->second.currentSize % 4 == 0 && "Should not have any "
-								"elements less than 4 wide for D3D9");
+						size_t logicalIndex = i->first;
+						const int* pInt = params->getIntPointer(i->second.physicalIndex);
+						size_t slotCount = i->second.currentSize / 4;
+						assert (i->second.currentSize % 4 == 0 && "Should not have any "
+							"elements less than 4 wide for D3D9");
 
-							if (FAILED(hr = mpD3DDevice->SetVertexShaderConstantI(
-								logicalIndex, pInt, slotCount)))
-							{
-								OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-									"Unable to upload vertex shader int parameters", 
-									"D3D9RenderSystem::bindGpuProgramParameters");
-							}
+						if (FAILED(hr = mpD3DDevice->SetVertexShaderConstantI(
+							logicalIndex, pInt, slotCount)))
+						{
+							OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
+								"Unable to upload vertex shader int parameters", 
+								"D3D9RenderSystem::bindGpuProgramParameters");
 						}
+
 					}
 
 			}
@@ -3306,22 +3042,20 @@ namespace Ogre
 					for (GpuLogicalIndexUseMap::const_iterator i = floatLogical->map.begin();
 						i != floatLogical->map.end(); ++i)
 					{
-						if (i->second.variability & variability)
-						{
-							size_t logicalIndex = i->first;
-							const float* pFloat = params->getFloatPointer(i->second.physicalIndex);
-							size_t slotCount = i->second.currentSize / 4;
-							assert (i->second.currentSize % 4 == 0 && "Should not have any "
-								"elements less than 4 wide for D3D9");
+						size_t logicalIndex = i->first;
+						const float* pFloat = params->getFloatPointer(i->second.physicalIndex);
+						size_t slotCount = i->second.currentSize / 4;
+						assert (i->second.currentSize % 4 == 0 && "Should not have any "
+							"elements less than 4 wide for D3D9");
 
-							if (FAILED(hr = mpD3DDevice->SetPixelShaderConstantF(
-								logicalIndex, pFloat, slotCount)))
-							{
-								OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-									"Unable to upload pixel shader float parameters", 
-									"D3D9RenderSystem::bindGpuProgramParameters");
-							}
+						if (FAILED(hr = mpD3DDevice->SetPixelShaderConstantF(
+							logicalIndex, pFloat, slotCount)))
+						{
+							OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
+								"Unable to upload pixel shader float parameters", 
+								"D3D9RenderSystem::bindGpuProgramParameters");
 						}
+
 					}
 
 			}
@@ -3332,21 +3066,18 @@ namespace Ogre
 					for (GpuLogicalIndexUseMap::const_iterator i = intLogical->map.begin();
 						i != intLogical->map.end(); ++i)
 					{
-						if (i->second.variability & variability)
-						{
-							size_t logicalIndex = i->first;
-							const int* pInt = params->getIntPointer(i->second.physicalIndex);
-							size_t slotCount = i->second.currentSize / 4;
-							assert (i->second.currentSize % 4 == 0 && "Should not have any "
-								"elements less than 4 wide for D3D9");
+						size_t logicalIndex = i->first;
+						const int* pInt = params->getIntPointer(i->second.physicalIndex);
+						size_t slotCount = i->second.currentSize / 4;
+						assert (i->second.currentSize % 4 == 0 && "Should not have any "
+							"elements less than 4 wide for D3D9");
 
-							if (FAILED(hr = mpD3DDevice->SetPixelShaderConstantI(
-								logicalIndex, pInt, slotCount)))
-							{
-								OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-									"Unable to upload pixel shader int parameters", 
-									"D3D9RenderSystem::bindGpuProgramParameters");
-							}
+						if (FAILED(hr = mpD3DDevice->SetPixelShaderConstantI(
+							logicalIndex, pInt, slotCount)))
+						{
+							OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
+								"Unable to upload pixel shader int parameters", 
+								"D3D9RenderSystem::bindGpuProgramParameters");
 						}
 
 					}
@@ -3700,18 +3431,10 @@ namespace Ogre
 			(*sw)->destroyD3DResources();
 		}
 
-		D3DPRESENT_PARAMETERS* pCurPresParams = NULL;
-		HRESULT hr;
-
-		if (mActiveD3DDriver->isMultihead())
-			pCurPresParams = md3dppa;
-		else
-			pCurPresParams = mPrimaryWindow->getPresentationParameters();
-				
-						
-		// Reset the device using the relevant presentation params.
-		hr = mpD3DDevice->Reset(pCurPresParams);
-			
+		D3DPRESENT_PARAMETERS* presParams = mPrimaryWindow->getPresentationParameters();
+		// Reset the device, using the primary window presentation params
+		HRESULT hr = mpD3DDevice->Reset(presParams);
+	
 		if (hr == D3DERR_DEVICELOST)
 		{
 			// Don't continue
@@ -3724,16 +3447,9 @@ namespace Ogre
 				"D3D9RenderWindow::restoreLostDevice" );
 		}
 
-
-		StringUtil::StrStreamType str;
-	
-		str << "Reset device ok w:" << pCurPresParams[0].BackBufferWidth
-			<< " h:" << pCurPresParams[0].BackBufferHeight;
-		
-		
-		LogManager::getSingleton().logMessage(str.str());
-					
-
+		LogManager::getSingleton().stream()
+			<< "Reset device ok w:" << presParams->BackBufferWidth
+			<< " h:" << presParams->BackBufferHeight;
 		// If windowed, we have to reset the size here
 		// since a fullscreen switch may have occurred
 		if (mPrimaryWindow->_getSwitchingFullscreen())
@@ -3746,6 +3462,7 @@ namespace Ogre
 		mBasicStatesInitialised = false;
 		mVertexProgramBound = false;
 		mFragmentProgramBound = false;
+
 
 
 		// recreate additional swap chains
@@ -3853,8 +3570,7 @@ namespace Ogre
 		mDepthStencilHash[(unsigned int)fmt] = dsfmt;
 		return dsfmt;
 	}
-	IDirect3DSurface9* D3D9RenderSystem::_getDepthStencilFor(D3DFORMAT fmt, 
-		D3DMULTISAMPLE_TYPE multisample, DWORD multisample_quality, size_t width, size_t height)
+	IDirect3DSurface9* D3D9RenderSystem::_getDepthStencilFor(D3DFORMAT fmt, D3DMULTISAMPLE_TYPE multisample, size_t width, size_t height)
 	{
 		D3DFORMAT dsfmt = _getDepthStencilFormatFor(fmt);
 		if(dsfmt == D3DFMT_UNKNOWN)
@@ -3862,7 +3578,7 @@ namespace Ogre
 		IDirect3DSurface9 *surface = 0;
 
 		/// Check if result is cached
-		ZBufferFormat zbfmt(dsfmt, multisample, multisample_quality);
+		ZBufferFormat zbfmt(dsfmt, multisample);
 		ZBufferHash::iterator i = mZBufferHash.find(zbfmt);
 		if(i != mZBufferHash.end())
 		{
@@ -3886,7 +3602,7 @@ namespace Ogre
 				height, 
 				dsfmt, 
 				multisample, 
-				multisample_quality, 
+				NULL, 
 				TRUE,  // discard true or false?
 				&surface, 
 				NULL);
@@ -3929,117 +3645,5 @@ namespace Ogre
 	{
 		// nothing to do - D3D9 shares rendering context already
 	}
-	//---------------------------------------------------------------------
-	void D3D9RenderSystem::determineFSAASettings(size_t fsaa, const String& fsaaHint, D3DFORMAT d3dPixelFormat, 
-		bool fullScreen, D3DMULTISAMPLE_TYPE *outMultisampleType, DWORD *outMultisampleQuality)
-	{
-		bool ok = false;
-		bool qualityHint = fsaaHint.find("Quality") != String::npos;
-		size_t origFSAA = fsaa;
-
-		bool tryCSAA = false;
-		// NVIDIA, prefer CSAA if available for 8+
-		// it would be tempting to use getCapabilities()->getVendor() == GPU_NVIDIA but
-		// if this is the first window, caps will not be initialised yet
-		if (mActiveD3DDriver->getAdapterIdentifier().VendorId == 0x10DE && 
-			fsaa >= 8)
-		{
-			tryCSAA	 = true;
-		}
-
-		while (!ok)
-		{
-			// Deal with special cases
-			if (tryCSAA)
-			{
-				// see http://developer.nvidia.com/object/coverage-sampled-aa.html
-				switch(fsaa)
-				{
-				case 8:
-					if (qualityHint)
-					{
-						*outMultisampleType = D3DMULTISAMPLE_8_SAMPLES;
-						*outMultisampleQuality = 0;
-					}
-					else
-					{
-						*outMultisampleType = D3DMULTISAMPLE_4_SAMPLES;
-						*outMultisampleQuality = 2;
-					}
-					break;
-				case 16:
-					if (qualityHint)
-					{
-						*outMultisampleType = D3DMULTISAMPLE_8_SAMPLES;
-						*outMultisampleQuality = 2;
-					}
-					else
-					{
-						*outMultisampleType = D3DMULTISAMPLE_4_SAMPLES;
-						*outMultisampleQuality = 4;
-					}
-					break;
-				}
-			}
-			else // !CSAA
-			{
-				*outMultisampleType = (D3DMULTISAMPLE_TYPE)fsaa;
-				*outMultisampleQuality = 0;
-			}
-
-
-			HRESULT hr;
-			DWORD outQuality;
-			hr = mActiveD3DDriver->getD3D()->CheckDeviceMultiSampleType( 
-				mActiveD3DDriver->getAdapterNumber(), 
-				D3DDEVTYPE_HAL, 
-				d3dPixelFormat, 
-				fullScreen, 
-				*outMultisampleType, 
-				&outQuality);
-
-			if (SUCCEEDED(hr) && 
-				(!tryCSAA || outQuality > *outMultisampleQuality))
-			{
-				ok = true;
-			}
-			else
-			{
-				// downgrade
-				if (tryCSAA && fsaa == 8)
-				{
-					// for CSAA, we'll try downgrading with quality mode at all samples.
-					// then try without quality, then drop CSAA
-					if (qualityHint)
-					{
-						// drop quality first
-						qualityHint = false;
-					}
-					else
-					{
-						// drop CSAA entirely 
-						tryCSAA = false;
-					}
-					// return to original requested samples
-					fsaa = origFSAA;
-				}
-				else
-				{
-					// drop samples
-					--fsaa;
-
-					if (fsaa == 1)
-					{
-						// ran out of options, no FSAA
-						fsaa = 0;
-						ok = true;
-					}
-				}
-			}
-
-		} // while !ok
-
-	}
-
 
 }

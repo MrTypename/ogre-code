@@ -57,6 +57,10 @@ namespace Ogre
 		
 		// Stored options
 		ConfigOptionMap mOptions;
+		/// full-screen multisampling antialiasing type
+		DXGI_SAMPLE_DESC mFSAAType;
+		/// full-screen multisampling antialiasing level
+		//DWORD mFSAAQuality;
 
 		/// instance
 		HINSTANCE mhInstance;
@@ -89,6 +93,8 @@ namespace Ogre
 		DWORD _getCurrentAnisotropy(size_t unit);
 		/// check if a FSAA is supported
 		bool _checkMultiSampleQuality(UINT SampleCount, UINT *outQuality, DXGI_FORMAT format);
+		/// set FSAA
+		void _setFSAA(DXGI_SAMPLE_DESC type, DWORD qualityLevel);
 		
 		D3D10HardwareBufferManager* mHardwareBufferManager;
 		D3D10GpuProgramManager* mGpuProgramManager;
@@ -108,8 +114,7 @@ namespace Ogre
 		void initialiseFromRenderSystemCapabilities(RenderSystemCapabilities* caps, RenderTarget* primary);
 
         void convertVertexShaderCaps(RenderSystemCapabilities* rsc) const;
-		void convertPixelShaderCaps(RenderSystemCapabilities* rsc) const;
-		void convertGeometryShaderCaps(RenderSystemCapabilities* rsc) const;
+        void convertPixelShaderCaps(RenderSystemCapabilities* rsc) const;
 		bool checkVertexTextureFormats(void);
 
 
@@ -135,7 +140,6 @@ namespace Ogre
 
 		D3D10HLSLProgram* mBoundVertexProgram;
 		D3D10HLSLProgram* mBoundFragmentProgram;
-		D3D10HLSLProgram* mBoundGeometryProgram;
 
 
 		ID3D10BlendState * mBoundBlendState;
@@ -178,7 +182,7 @@ namespace Ogre
 		/// Primary window, the one used to create the device
 		D3D10RenderWindow* mPrimaryWindow;
 
-		typedef vector<D3D10RenderWindow*>::type SecondaryWindowList;
+		typedef std::vector<D3D10RenderWindow*> SecondaryWindowList;
 		// List of additional windows after the first (swap chains)
 		SecondaryWindowList mSecondaryWindows;
 
@@ -201,7 +205,7 @@ namespace Ogre
 			IDXGISurface *surface;
 			size_t width, height;
 		};
-		typedef map<ZBufferFormat, ZBufferRef>::type ZBufferHash;
+		typedef std::map<ZBufferFormat, ZBufferRef> ZBufferHash;
 		ZBufferHash mZBufferHash;
 	protected:
 		void setClipPlanesImpl(const PlaneList& clipPlanes);
@@ -270,9 +274,8 @@ namespace Ogre
         void _setTextureBorderColour(size_t stage, const ColourValue& colour);
 		void _setTextureMipmapBias(size_t unit, float bias);
 		void _setTextureMatrix( size_t unit, const Matrix4 &xform );
-		void _setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendOperation op = SBO_ADD);
-		void _setSeparateSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, 
-			SceneBlendFactor destFactorAlpha, SceneBlendOperation op = SBO_ADD, SceneBlendOperation alphaOp = SBO_ADD);
+		void _setSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor );
+		void _setSeparateSceneBlending( SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha );
 		void _setAlphaRejectSettings( CompareFunction func, unsigned char value, bool alphaToCoverage );
 		void _setViewport( Viewport *vp );
 		void _beginFrame(void);
@@ -312,7 +315,7 @@ namespace Ogre
         /** See
           RenderSystem
          */
-        void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params, uint16 mask);
+        void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params);
         /** See
           RenderSystem
          */
@@ -360,8 +363,6 @@ namespace Ogre
         with the given usage options.
         */
         bool _checkTextureFilteringSupported(TextureType ttype, PixelFormat format, int usage);
-
-		void determineFSAASettings(uint fsaa, const String& fsaaHint, DXGI_FORMAT format, DXGI_SAMPLE_DESC* outFSAASettings);
 	};
 }
 #endif

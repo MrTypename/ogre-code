@@ -31,7 +31,6 @@ libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
                          OgreDDSCodec.cpp \
                          OgreDefaultHardwareBufferManager.cpp \
 			 OgreDefaultSceneQueries.cpp \
-			 OgreDistanceLodStrategy.cpp \
                          OgreDynLib.cpp \
                          OgreDynLibManager.cpp \
                          OgreEdgeListBuilder.cpp \
@@ -57,8 +56,6 @@ libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
 						 OgreInstancedGeometry.cpp \
                          OgreKeyFrame.cpp \
                          OgreLight.cpp \
-                         OgreLodStrategy.cpp \
-                         OgreLodStrategyManager.cpp \
                          OgreLog.cpp \
                          OgreLogManager.cpp \
 			 OgreManualObject.cpp \
@@ -97,7 +94,6 @@ libOgreMain_la_SOURCES = OgreAlignedAllocator.cpp \
                          OgrePass.cpp \
 			 OgrePatchMesh.cpp \
                          OgrePatchSurface.cpp \
-                         OgrePixelCountLodStrategy.cpp \
                          OgrePlane.cpp \
                          OgrePlatformInformation.cpp \
 						 OgrePolygon.cpp \

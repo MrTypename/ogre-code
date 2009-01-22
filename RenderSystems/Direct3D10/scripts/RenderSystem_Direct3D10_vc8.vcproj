@@ -432,10 +432,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\OgreD3D10RenderToVertexBuffer.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\src\OgreD3D10RenderWindow.cpp"
 				>
 			</File>
@@ -550,10 +546,6 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreD3D10RenderSystem.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OgreD3D10RenderToVertexBuffer.h"
 				>
 			</File>
 			<File

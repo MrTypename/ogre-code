@@ -63,7 +63,7 @@ namespace Ogre {
 		bool supportsMorphAnimation;
 		ushort supportsPoseAnimation; // number of simultaneous poses supported
 		bool usesVertexTextureFetch;
-		vector<std::pair<String, String> >::type customParameters;
+		std::vector<std::pair<String, String> > customParameters;
 	};
     /** Struct for holding the script context while parsing. */
     struct MaterialScriptContext 
@@ -100,7 +100,7 @@ namespace Ogre {
     {
     protected:
         /// Keyword-mapped attribute parsers.
-        typedef map<String, ATTRIBUTE_PARSER>::type AttribParserList;
+        typedef std::map<String, ATTRIBUTE_PARSER> AttribParserList;
 
         MaterialScriptContext mScriptContext;
 
@@ -164,7 +164,7 @@ namespace Ogre {
 		void writeLayerBlendOperationEx(const LayerBlendOperationEx op);
 		void writeLayerBlendSource(const LayerBlendSource lbs);
 		
-		typedef multimap<TextureUnitState::TextureEffectType, TextureUnitState::TextureEffect>::type EffectMap;
+		typedef std::multimap<TextureUnitState::TextureEffectType, TextureUnitState::TextureEffect> EffectMap;
 
 		void writeRotationEffect(const TextureUnitState::TextureEffect& effect, const TextureUnitState *pTex);
 		void writeTransformEffect(const TextureUnitState::TextureEffect& effect, const TextureUnitState *pTex);
@@ -221,7 +221,7 @@ namespace Ogre {
 	private:
 		String mBuffer;
         String mGpuProgramBuffer;
-        typedef set<String>::type GpuProgramDefinitionContainer;
+        typedef std::set<String> GpuProgramDefinitionContainer;
         typedef GpuProgramDefinitionContainer::iterator GpuProgramDefIterator;
         GpuProgramDefinitionContainer mGpuProgramDefinitionContainer;
 		bool mDefaults;

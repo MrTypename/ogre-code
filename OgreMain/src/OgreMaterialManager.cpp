@@ -42,9 +42,6 @@ Torus Knot Software Ltd.
 #if OGRE_USE_NEW_COMPILERS == 1
 #  include "OgreScriptCompiler.h"
 #endif
-#include "OgreLodStrategyManager.h"
-#include "OgreLodStrategyManager.h"
-
 
 namespace Ogre {
 
@@ -120,9 +117,6 @@ namespace Ogre {
 		mDefaultSettings = create("DefaultSettings", ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME);
         // Add a single technique and pass, non-programmable
         mDefaultSettings->createTechnique()->createPass();
-
-        // Set the default lod strategy
-        mDefaultSettings->setLodStrategy(LodStrategyManager::getSingleton().getDefaultStrategy());
 
 	    // Set up a lit base white material
 	    create("BaseWhite", ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME);

@@ -39,7 +39,6 @@ Torus Knot Software Ltd.
 #include "OgreHardwareBufferManager.h"
 #include "OgreMesh.h"
 #include "OgreRenderable.h"
-#include "OgreResourceGroupManager.h"
 
 namespace Ogre {
 	/** Defines an instance of a discrete, movable object based on a Mesh.
@@ -79,7 +78,7 @@ namespace Ogre {
 		friend class EntityFactory;
 		friend class SubEntity;
 	public:
-		typedef set<Entity*>::type EntitySet;
+		typedef std::set<Entity*> EntitySet;
 
 	protected:
 
@@ -96,7 +95,7 @@ namespace Ogre {
 
 		/** List of SubEntities (point to SubMeshes).
 		*/
-		typedef vector<SubEntity*>::type SubEntityList;
+		typedef std::vector<SubEntity*> SubEntityList;
 		SubEntityList mSubEntityList;
 
 
@@ -194,17 +193,15 @@ namespace Ogre {
 		/// The LOD number of the mesh to use, calculated by _notifyCurrentCamera
 		ushort mMeshLodIndex;
 
-		/// LOD bias factor, transformed for optimisation when calculating adjusted lod value
-		Real mMeshLodFactorTransformed;
+		/// LOD bias factor, inverted for optimisation when calculating adjusted depth
+		Real mMeshLodFactorInv;
 		/// Index of minimum detail LOD (NB higher index is lower detail)
 		ushort mMinMeshLodIndex;
 		/// Index of maximum detail LOD (NB lower index is higher detail)
 		ushort mMaxMeshLodIndex;
 
-        /// LOD bias factor, not transformed
-        Real mMaterialLodFactor;
-		/// LOD bias factor, transformed for optimisation when calculating adjusted lod value
-		Real mMaterialLodFactorTransformed;
+		/// LOD bias factor, inverted for optimisation when calculating adjusted depth
+		Real mMaterialLodFactorInv;
 		/// Index of minimum detail LOD (NB higher index is lower detail)
 		ushort mMinMaterialLodIndex;
 		/// Index of maximum detail LOD (NB lower index is higher detail)
@@ -215,7 +212,7 @@ namespace Ogre {
 		same number of SubMeshes, therefore we have to allow a separate Entity list
 		with each alternate one.
 		*/
-		typedef vector<Entity*>::type LODEntityList;
+		typedef std::vector<Entity*> LODEntityList;
 		LODEntityList mLodEntityList;
 
 		/** This Entity's personal copy of the skeleton, if skeletally animated
@@ -258,7 +255,7 @@ namespace Ogre {
 
 	public:
 		/// Contains the child objects (attached to bones) indexed by name
-		typedef map<String, MovableObject*>::type ChildObjectList;
+		typedef std::map<String, MovableObject*> ChildObjectList;
 	protected:
 		ChildObjectList mChildObjectList;
 
@@ -341,7 +338,18 @@ namespace Ogre {
 		is only one. Otherwise call getSubEntity() and call the same
 		method on the individual SubEntity.
 		*/
-		void setMaterialName( const String& name, const String& groupName = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME );
+		void setMaterialName(const String& name);
+
+		
+		/** Sets the material to use for the whole of this entity.
+			@remarks
+				This is a shortcut method to set all the materials for all
+				subentities of this entity. Only use this method is you want to
+				set the same material for all subentities or if you know there
+				is only one. Otherwise call getSubEntity() and call the same
+				method on the individual SubEntity.
+		*/
+		void setMaterial(const MaterialPtr& material);
 
 		/** Overridden - see MovableObject.
 		*/
@@ -741,8 +749,7 @@ namespace Ogre {
 		void visitRenderables(Renderable::Visitor* visitor, 
 			bool debugRenderables = false);
 
-        /** Get the lod strategy transformation of the mesh lod factor. */
-        Real _getMeshLodFactorTransformed() const;
+
 
 
 	};

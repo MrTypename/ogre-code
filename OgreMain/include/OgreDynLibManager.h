@@ -42,7 +42,7 @@ namespace Ogre {
     class _OgreExport DynLibManager: public Singleton<DynLibManager>, public DynLibAlloc
     {
 	protected:
-		typedef map<String, DynLib*>::type DynLibList;
+		typedef std::map<String, DynLib*> DynLibList;
 		DynLibList mLibList;
     public:
         /** Default constructor.

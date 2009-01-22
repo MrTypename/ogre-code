@@ -160,10 +160,10 @@ namespace Ogre
 #endif
 
 		//These are public only so GLXProc can access them without adding Xlib headers header
-		typedef multimap<RenderWindow*, WindowEventListener*>::type WindowEventListeners;
+		typedef std::multimap<RenderWindow*, WindowEventListener*> WindowEventListeners;
 		static WindowEventListeners _msListeners;
 
-		typedef vector<RenderWindow*>::type Windows;
+		typedef std::vector<RenderWindow*> Windows;
 		static Windows _msWindows;
 	};
 }

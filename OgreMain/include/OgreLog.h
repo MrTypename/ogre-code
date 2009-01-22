@@ -93,7 +93,7 @@ namespace Ogre {
         bool			mSuppressFile;
         String			mLogName;
 
-        typedef vector<LogListener*>::type mtLogListener;
+        typedef std::vector<LogListener*> mtLogListener;
         mtLogListener mListeners;
 
     public:

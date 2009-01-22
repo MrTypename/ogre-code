@@ -145,8 +145,8 @@ namespace Ogre
 				// set FOV to 120 degrees
 				mTempFrustum->setFOVy(Degree(120));
 
-				mTempFrustum->setNearClipDistance(light._deriveShadowNearClipDistance(&cam));
-				mTempFrustum->setFarClipDistance(light._deriveShadowFarClipDistance(&cam));
+				// set near clip distance like the camera
+				mTempFrustum->setNearClipDistance(cam.getNearClipDistance());
 
 				*out_proj = mTempFrustum->getProjectionMatrix();
 			}
@@ -158,8 +158,7 @@ namespace Ogre
 				out_cam->setDirection(lightDir);
 				out_cam->setPosition(light.getDerivedPosition());
 				out_cam->setFOVy(Degree(120));
-				out_cam->setNearClipDistance(light._deriveShadowNearClipDistance(&cam));
-				out_cam->setFarClipDistance(light._deriveShadowFarClipDistance(&cam));
+				out_cam->setNearClipDistance(cam.getNearClipDistance());
 			}
 		}
 		else if (light.getType() == Light::LT_SPOTLIGHT)
@@ -178,8 +177,8 @@ namespace Ogre
 				// set FOV slightly larger than spotlight range
 				mTempFrustum->setFOVy(light.getSpotlightOuterAngle() * 1.2);
 
-				mTempFrustum->setNearClipDistance(light._deriveShadowNearClipDistance(&cam));
-				mTempFrustum->setFarClipDistance(light._deriveShadowFarClipDistance(&cam));
+				// set near clip distance like the camera
+				mTempFrustum->setNearClipDistance(cam.getNearClipDistance());
 
 				*out_proj = mTempFrustum->getProjectionMatrix();
 			}
@@ -191,8 +190,7 @@ namespace Ogre
 				out_cam->setDirection(light.getDerivedDirection());
 				out_cam->setPosition(light.getDerivedPosition());
 				out_cam->setFOVy(light.getSpotlightOuterAngle() * 1.2);
-				out_cam->setNearClipDistance(light._deriveShadowNearClipDistance(&cam));
-				out_cam->setFarClipDistance(light._deriveShadowFarClipDistance(&cam));
+				out_cam->setNearClipDistance(cam.getNearClipDistance());
 			}
 		}
 	}
@@ -418,9 +416,6 @@ namespace Ogre
 		OgreAssert(light != NULL, "Light is NULL");
 		OgreAssert(texCam != NULL, "Camera (texture) is NULL");
 		mLightFrustumCameraCalculated = false;
-
-		texCam->setNearClipDistance(light->_deriveShadowNearClipDistance(cam));
-		texCam->setFarClipDistance(light->_deriveShadowFarClipDistance(cam));
 
 		// calculate standard shadow mapping matrix
 		Matrix4 LView, LProj;

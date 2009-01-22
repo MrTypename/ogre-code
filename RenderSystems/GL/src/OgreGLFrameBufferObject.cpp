@@ -138,7 +138,7 @@ namespace Ogre {
             {
                 if(mColour[x].buffer->getWidth() != width || mColour[x].buffer->getHeight() != height)
                 {
-                    StringStream ss;
+                    std::stringstream ss;
                     ss << "Attachment " << x << " has incompatible size ";
                     ss << mColour[x].buffer->getWidth() << "x" << mColour[x].buffer->getHeight();
                     ss << ". It must be of the same as the size of surface 0, ";
@@ -148,7 +148,7 @@ namespace Ogre {
                 }
                 if(mColour[x].buffer->getGLFormat() != format)
                 {
-                    StringStream ss;
+                    std::stringstream ss;
                     ss << "Attachment " << x << " has incompatible format.";
                     OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, ss.str(), "GLFrameBufferObject::initialise");
                 }

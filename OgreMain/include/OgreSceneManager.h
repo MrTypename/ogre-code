@@ -51,7 +51,6 @@ Torus Knot Software Ltd.
 #include "OgreShadowTextureManager.h"
 #include "OgreCamera.h"
 #include "OgreInstancedGeometry.h"
-#include "OgreLodListener.h"
 
 namespace Ogre {
 
@@ -343,18 +342,18 @@ namespace Ogre {
         /// The rendering system to send the scene to
         RenderSystem *mDestRenderSystem;
 
-        typedef map<String, Camera* >::type CameraList;
+        typedef std::map<String, Camera* > CameraList;
 
         /** Central list of cameras - for easy memory management and lookup.
         */
         CameraList mCameras;
 
-		typedef map<String, StaticGeometry* >::type StaticGeometryList;
+		typedef std::map<String, StaticGeometry* > StaticGeometryList;
 		StaticGeometryList mStaticGeometryList;
-		typedef map<String, InstancedGeometry* >::type InstancedGeometryList;
+		typedef std::map<String, InstancedGeometry* > InstancedGeometryList;
 		InstancedGeometryList mInstancedGeometryList;
 
-        typedef map<String, SceneNode*>::type SceneNodeList;
+        typedef std::map<String, SceneNode*> SceneNodeList;
 
         /** Central list of SceneNodes - for easy memory management.
             @note
@@ -373,7 +372,7 @@ namespace Ogre {
         SceneNode* mSceneRoot;
 
         /// Autotracking scene nodes
-        typedef set<SceneNode*>::type AutoTrackingSceneNodes;
+        typedef std::set<SceneNode*> AutoTrackingSceneNodes;
         AutoTrackingSceneNodes mAutoTrackingSceneNodes;
 
         // Sky params
@@ -409,7 +408,7 @@ namespace Ogre {
         Real mFogEnd;
         Real mFogDensity;
 
-		typedef set<uint8>::type SpecialCaseRenderQueueList;
+		typedef std::set<uint8> SpecialCaseRenderQueueList;
 		SpecialCaseRenderQueueList mSpecialCaseQueueList;
 		SpecialCaseRenderQueueMode mSpecialCaseQueueMode;
 		uint8 mWorldGeometryRenderQueue;
@@ -432,18 +431,18 @@ namespace Ogre {
 				have a focus step to limit the shadow sample distribution to only valid visible
 				scene elements.
 		*/
-		typedef map< const Camera*, VisibleObjectsBoundsInfo>::type CamVisibleObjectsMap;
+		typedef std::map< const Camera*, VisibleObjectsBoundsInfo> CamVisibleObjectsMap;
 		CamVisibleObjectsMap mCamVisibleObjectsMap; 
 
 		/** ShadowCamera to light mapping */
-		typedef map< const Camera*, const Light* >::type ShadowCamLightMapping;
+		typedef std::map< const Camera*, const Light* > ShadowCamLightMapping;
 		ShadowCamLightMapping mShadowCamLightMapping;
 
 		/// Array defining shadow count per light type.
 		size_t mShadowTextureCountPerType[3];
 
 		/// Array defining shadow texture index in light list.
-		vector<size_t>::type mShadowTextureIndexLightList;
+		std::vector<size_t> mShadowTextureIndexLightList;
 
         /// Cached light information, used to tracking light's changes
         struct _OgreExport LightInfo
@@ -465,22 +464,21 @@ namespace Ogre {
             }
         };
 
-        typedef vector<LightInfo>::type LightInfoList;
+        typedef std::vector<LightInfo> LightInfoList;
 
         LightList mLightsAffectingFrustum;
         LightInfoList mCachedLightInfos;
 		LightInfoList mTestLightInfos; // potentially new list
         ulong mLightsDirtyCounter;
-		LightList mShadowTextureCurrentCasterLightList;
 
-		typedef map<String, MovableObject*>::type MovableObjectMap;
+		typedef std::map<String, MovableObject*> MovableObjectMap;
 		/// Simple structure to hold MovableObject map and a mutex to go with it.
 		struct MovableObjectCollection
 		{
 			MovableObjectMap map;
 			OGRE_MUTEX(mutex)
 		};
-		typedef map<String, MovableObjectCollection*>::type MovableObjectCollectionMap;
+		typedef std::map<String, MovableObjectCollection*> MovableObjectCollectionMap;
 		MovableObjectCollectionMap mMovableObjectCollectionMap;
 		/** Gets the movable object collection for the given type name.
 		@remarks
@@ -571,7 +569,7 @@ namespace Ogre {
         bool mDisplayNodes;
 
         /// Storage of animations, lookup by name
-        typedef map<String, Animation*>::type AnimationList;
+        typedef std::map<String, Animation*> AnimationList;
         AnimationList mAnimationsList;
 		OGRE_MUTEX(mAnimationsListMutex)
         AnimationStateSet mAnimationStates;
@@ -579,16 +577,16 @@ namespace Ogre {
 
         /** Internal method used by _renderSingleObject to deal with renderables
             which override the camera's own view / projection materices. */
-        virtual void useRenderableViewProjMode(const Renderable* pRend, bool fixedFunction);
+        virtual void useRenderableViewProjMode(const Renderable* pRend);
         
         /** Internal method used by _renderSingleObject to deal with renderables
             which override the camera's own view / projection matrices. */
-        virtual void resetViewProjMode(bool fixedFunction);
+        virtual void resetViewProjMode(void);
 
-        typedef vector<RenderQueueListener*>::type RenderQueueListenerList;
+        typedef std::vector<RenderQueueListener*> RenderQueueListenerList;
         RenderQueueListenerList mRenderQueueListeners;
 
-        typedef vector<Listener*>::type ListenerList;
+        typedef std::vector<Listener*> ListenerList;
         ListenerList mListeners;
         /// Internal method for firing the queue start event, returns true if queue is to be skipped
         virtual bool fireRenderQueueStarted(uint8 id, const String& invocation);
@@ -662,7 +660,7 @@ namespace Ogre {
 		bool mShadowTextureConfigDirty;
         ShadowTextureList mShadowTextures;
 		TexturePtr mNullShadowTexture;
-		typedef vector<Camera*>::type ShadowTextureCameraList;
+		typedef std::vector<Camera*> ShadowTextureCameraList;
 		ShadowTextureCameraList mShadowTextureCameras;
         Texture* mCurrentShadowTexture;
 		bool mShadowUseInfiniteFarPlane;
@@ -678,7 +676,7 @@ namespace Ogre {
 			LightClippingInfo() : scissorValid(false), clipPlanesValid(false) {}
 
 		};
-		typedef map<Light*, LightClippingInfo>::type LightClippingInfoMap;
+		typedef std::map<Light*, LightClippingInfo> LightClippingInfoMap;
 		LightClippingInfoMap mLightClippingInfoMap;
 		unsigned long mLightClippingInfoMapFrameNumber;
 
@@ -734,7 +732,7 @@ namespace Ogre {
         void renderShadowVolumeObjects(ShadowCaster::ShadowRenderableListIterator iShadowRenderables,
             Pass* pass, const LightList *manualLightList, unsigned long flags,
             bool secondpass, bool zfail, bool twosided);
-        typedef vector<ShadowCaster*>::type ShadowCasterList;
+        typedef std::vector<ShadowCaster*> ShadowCasterList;
         ShadowCasterList mShadowCasterList;
         SphereSceneQuery* mShadowCasterSphereQuery;
         AxisAlignedBoxSceneQuery* mShadowCasterAABBQuery;
@@ -901,41 +899,6 @@ namespace Ogre {
 		bool mCameraRelativeRendering;
 		Matrix4 mCachedViewMatrix;
 		Vector3 mCameraRelativePosition;
-
-		/// Last light sets
-		uint32 mLastLightHash;
-		unsigned short mLastLightLimit;
-		uint32 mLastLightHashGpuProgram;
-		/// Gpu params that need rebinding (mask of GpuParamVariability)
-		uint16 mGpuParamsDirty;
-
-		virtual void useLights(const LightList& lights, unsigned short limit);
-		virtual void useLightsGpuProgram(const Pass* pass, const LightList* lights);
-		virtual void bindGpuProgram(GpuProgram* prog);
-		virtual void updateGpuProgramParameters(const Pass* p);
-
-
-
-
-
-
-
-
-        /// Set of registered lod listeners
-        typedef set<LodListener*>::type LodListenerSet;
-        LodListenerSet mLodListeners;
-
-        /// List of movable object lod changed events
-		typedef vector<MovableObjectLodChangedEvent>::type MovableObjectLodChangedEventList;
-        MovableObjectLodChangedEventList mMovableObjectLodChangedEvents;
-
-        /// List of entity mesh lod changed events
-        typedef vector<EntityMeshLodChangedEvent>::type EntityMeshLodChangedEventList;
-        EntityMeshLodChangedEventList mEntityMeshLodChangedEvents;
-
-        /// List of entity material lod changed events
-        typedef vector<EntityMaterialLodChangedEvent>::type EntityMaterialLodChangedEventList;
-        EntityMaterialLodChangedEventList mEntityMaterialLodChangedEvents;
 
     public:
         /** Constructor.
@@ -1128,39 +1091,9 @@ namespace Ogre {
         @param radius The bounding radius to test
         @param destList List to be populated with ordered set of lights; will be cleared by 
             this method before population.
-		@param lightMask The mask with which to include / exclude lights
         */
-        virtual void _populateLightList(const Vector3& position, Real radius, LightList& destList, uint32 lightMask = 0xFFFFFFFF);
+        virtual void _populateLightList(const Vector3& position, Real radius, LightList& destList);
 
-		/** Populates a light list with an ordered set of the lights which are closest
-        to the position of the SceneNode given.
-        @remarks
-            Note that since directional lights have no position, they are always considered
-            closer than any point lights and as such will always take precedence. 
-			This overloaded version will take the SceneNode's position and use the second method
-			to populate the list.
-        @par
-            Subclasses of the default SceneManager may wish to take into account other issues
-            such as possible visibility of the light if that information is included in their
-            data structures. This basic scenemanager simply orders by distance, eliminating 
-            those lights which are out of range or could not be affecting the frustum (i.e.
-            only the lights returned by SceneManager::_getLightsAffectingFrustum are take into
-            account). 
-		@par   
-			Also note that subclasses of the SceneNode might be used here to provide cached
-			scene related data, accelerating the list population (for example light lists for
-			SceneNodes could be cached inside subclassed SceneNode objects).
-        @par
-            The number of items in the list may exceed the maximum number of lights supported
-            by the renderer, but the extraneous ones will never be used. In fact the limit will
-            be imposed by Pass::getMaxSimultaneousLights.
-        @param sn The SceneNode for which to evaluate the list of lights
-        @param radius The bounding radius to test
-        @param destList List to be populated with ordered set of lights; will be cleared by 
-            this method before population.
-		@param lightMask The mask with which to include / exclude lights
-        */
-        virtual void _populateLightList(const SceneNode* sn, Real radius, LightList& destList, uint32 lightMask = 0xFFFFFFFF);
 
         /** Creates an instance of a SceneNode.
             @remarks
@@ -1249,7 +1182,7 @@ namespace Ogre {
                 meshName The name of the Mesh it is to be based on (e.g. 'knot.oof'). The
                 mesh will be loaded if it is not already.
         */
-        virtual Entity* createEntity(const String& entityName, const String& meshName, const String& groupName = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME );
+        virtual Entity* createEntity(const String& entityName, const String& meshName);
 
         /** Prefab shapes available without loading a model.
             @note
@@ -3179,29 +3112,6 @@ namespace Ogre {
 			to always place the camera at the origin and move the world around it.
 		*/
 		virtual bool getCameraRelativeRendering() const { return mCameraRelativeRendering; }
-
-
-        /** Add a level of detail listener. */
-        void addLodListener(LodListener *listener);
-
-        /**
-        Remove a level of detail listener.
-        @remarks
-            Do not call from inside an LodListener callback method.
-        */
-        void removeLodListener(LodListener *listener);
-
-        /** Notify that a movable object lod change event has occurred. */
-        void _notifyMovableObjectLodChanged(MovableObjectLodChangedEvent& evt);
-
-        /** Notify that an entity mesh lod change event has occurred. */
-        void _notifyEntityMeshLodChanged(EntityMeshLodChangedEvent& evt);
-
-        /** Notify that an entity material lod change event has occurred. */
-        void _notifyEntityMaterialLodChanged(EntityMaterialLodChangedEvent& evt);
-
-        /** Handle lod events. */
-        void _handleLodEvents();
     };
 
     /** Default implementation of IntersectionSceneQuery. */
