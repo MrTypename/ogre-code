@@ -50,12 +50,6 @@ email                : pjcast@yahoo.com
 
 namespace Ogre
 {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Materials
-	*  @{
-	*/
 	/** Enum for type of texture play mode */
 	enum eTexturePlayMode
 	{
@@ -185,8 +179,6 @@ namespace Ogre
 		must override default name */
 		String mDictionaryName;
 	};
-	/** @} */
-	/** @} */
 }
 
 #endif

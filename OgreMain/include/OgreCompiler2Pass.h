@@ -34,12 +34,6 @@ Torus Knot Software Ltd.
 #include "OgrePrerequisites.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
 
     /** Compiler2Pass is a generic 2 pass compiler/assembler
     @remarks
@@ -176,7 +170,7 @@ class _OgreExport Compiler2Pass : public ScriptTranslatorAlloc
                 : operation(ot), tokenID(token) {}
 	    };
 
-	    typedef vector<TokenRule>::type TokenRuleContainer;
+	    typedef std::vector<TokenRule> TokenRuleContainer;
 	    typedef TokenRuleContainer::iterator TokenRuleIterator;
 
         static const size_t SystemTokenBase = 1000;
@@ -230,10 +224,10 @@ class _OgreExport Compiler2Pass : public ScriptTranslatorAlloc
 
 	    };
 
-        typedef vector<LexemeTokenDef>::type LexemeTokenDefContainer;
+        typedef std::vector<LexemeTokenDef> LexemeTokenDefContainer;
         typedef LexemeTokenDefContainer::iterator LexemeTokenDefIterator;
 
-        typedef map<String, size_t>::type LexemeTokenMap;
+        typedef std::map<String, size_t> LexemeTokenMap;
         typedef LexemeTokenMap::iterator TokenKeyIterator;
         /// map used to lookup client token based on previously defined lexeme
 
@@ -248,7 +242,7 @@ class _OgreExport Compiler2Pass : public ScriptTranslatorAlloc
         bool found;                /// is true if expected token was found
 	    };
 
-	    typedef vector<TokenInst>::type TokenInstContainer;
+	    typedef std::vector<TokenInst> TokenInstContainer;
 	    typedef TokenInstContainer::iterator TokenInstIterator;
 
         // token que, definitions, rules
@@ -286,10 +280,10 @@ class _OgreExport Compiler2Pass : public ScriptTranslatorAlloc
 
 	    /// storage container for constants defined in source
         /// container uses Token index as a key associated with a float constant
-	    map<size_t, float>::type mConstants;
+	    std::map<size_t, float> mConstants;
 	    /// storage container for string labels defined in source
         /// container uses Token index as a key associated with a label
-        typedef map<size_t, String>::type LabelContainer;
+        typedef std::map<size_t, String> LabelContainer;
         LabelContainer mLabels;
         /// flag indicates when a label is being parsed.
         /// It gets set false when a terminal token not of _character_ is encountered
@@ -609,7 +603,7 @@ class _OgreExport Compiler2Pass : public ScriptTranslatorAlloc
         // no matter how many times this class is instantiated.
         static TokenState mBNFTokenState;
         // maintain a map of BNF grammar
-        typedef map<String, TokenState>::type TokenStateContainer;
+        typedef std::map<String, TokenState> TokenStateContainer;
         static TokenStateContainer mClientTokenStates;
         /// if a previous token action was setup then activate it now
         void activatePreviousTokenAction(void);
@@ -665,8 +659,6 @@ class _OgreExport Compiler2Pass : public ScriptTranslatorAlloc
         virtual const String& getClientGrammerName(void) const = 0;
 
     };
-	/** @} */
-	/** @} */
 
 }
 

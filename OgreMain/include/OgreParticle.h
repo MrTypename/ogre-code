@@ -34,12 +34,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Effects
-	*  @{
-	*/
 	/** Abstract class containing any additional data required to be associated
 		with a particle to perform the required rendering. 
 	@remarks
@@ -147,8 +141,6 @@ namespace Ogre {
         /// Utility method to reset this particle
         void resetDimensions(void);
     };
-	/** @} */
-	/** @} */
 }
 
 #endif

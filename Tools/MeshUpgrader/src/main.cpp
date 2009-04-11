@@ -102,7 +102,6 @@ struct UpgradeOptions
 //   instantiate the singletons used in the dlls
 LogManager* logMgr = 0;
 Math* mth = 0;
-LodStrategyManager* lodMgr = 0;
 MaterialManager* matMgr = 0;
 SkeletonManager* skelMgr = 0;
 MeshSerializer* meshSerializer = 0;
@@ -640,7 +639,7 @@ void buildLod(Mesh* mesh)
 		unsigned short numLod;
 		ProgressiveMesh::VertexReductionQuota quota;
 		Real reduction;
-		Mesh::LodValueList distanceList;
+		Mesh::LodDistanceList distanceList;
 
 		if (askLodDtls)
 		{
@@ -696,8 +695,7 @@ void buildLod(Mesh* mesh)
 			for (unsigned short iLod = 0; iLod < numLod; ++iLod)
 			{
 				currDist += opts.lodDist;
-                Real currDistSq = Ogre::Math::Sqr(currDist);
-				distanceList.push_back(currDistSq);
+				distanceList.push_back(currDist);
 			}
 
 		}
@@ -902,7 +900,6 @@ int main(int numargs, char** args)
 		logMgr->createLog("OgreMeshUpgrade.log", true);
 		rgm = new ResourceGroupManager();
 		mth = new Math();
-		lodMgr = new LodStrategyManager();
 		matMgr = new MaterialManager();
 		matMgr->initialise();
 		skelMgr = new SkeletonManager();
@@ -1057,7 +1054,6 @@ int main(int numargs, char** args)
     delete meshSerializer;
     delete skelMgr;
     delete matMgr;
-	delete lodMgr;
     delete mth;
     delete rgm;
     delete logMgr;

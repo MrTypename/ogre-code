@@ -19,17 +19,6 @@ LGPL like the rest of the engine.
 #include "CompositorDemo_FrameListener.h"
 #include "Compositor.h"
 
-
-inline Ogre::String operator +(const Ogre::String& l,const CEGUI::String& o)
-{
-	return l+o.c_str();
-}
-/*
-inline CEGUI::String operator +(const CEGUI::String& l,const Ogre::String& o)
-{
-	return l+o.c_str();
-}
-*/
 /*************************************************************************
 	                    HeatVisionListener Methods
 *************************************************************************/
@@ -479,7 +468,7 @@ inline CEGUI::String operator +(const CEGUI::String& l,const Ogre::String& o)
 
         if (e.key == OIS::KC_SYSRQ )
         {
-			Ogre::StringStream ss;
+			std::ostringstream ss;
             ss << "screenshot_" << ++mNumScreenShots << ".png";
             mMain->getRenderWindow()->writeContentsToFile(ss.str());
             mDebugText = "Saved: " + ss.str();
@@ -547,7 +536,7 @@ inline CEGUI::String operator +(const CEGUI::String& l,const Ogre::String& o)
             + " " + Ogre::StringConverter::toString(stats.worstFrameTime)+" ms");
 
         mGuiTris->setText(tris + Ogre::StringConverter::toString(stats.triangleCount));
-        mGuiDbg->setText(mDebugText.c_str());
+        mGuiDbg->setText(mDebugText);
         mAvgFrameTime = 1.0f/(stats.avgFPS + 1.0f);
         if (mAvgFrameTime > 0.1f) mAvgFrameTime = 0.1f;
 
@@ -812,7 +801,6 @@ inline CEGUI::String operator +(const CEGUI::String& l,const Ogre::String& o)
 			CEGUI::ImagesetManager::getSingleton().destroyImageset(*isIt);
 		}
 		mDebugRTTImageSets.clear();
-		Ogre::set<Ogre::String>::type uniqueTextureNames;
 		// Add an entry for each render texture for all active compositors
 		Ogre::Viewport* vp = mMain->getRenderWindow()->getViewport(0);
 		Ogre::CompositorChain* chain = Ogre::CompositorManager::getSingleton().getCompositorChain(vp);
@@ -831,29 +819,22 @@ inline CEGUI::String operator +(const CEGUI::String& l,const Ogre::String& o)
 					// Get instance name of texture (NB only index 0 if MRTs for now)
 					const Ogre::String& instName = inst->getTextureInstanceName(texDef->name, 0);
 					// Create CEGUI texture from name of OGRE texture
-					CEGUI::Texture* tex = mMain->getGuiRenderer()->createTexture(instName.c_str());
+					CEGUI::Texture* tex = mMain->getGuiRenderer()->createTexture(instName);
 					// Create imageset
-					// Note that if we use shared textures in compositor, the same texture name
-					// will occur more than once, so we have to cater for this
-					if (uniqueTextureNames.find(instName) == uniqueTextureNames.end())
-					{
-						CEGUI::Imageset* imgSet =
-							CEGUI::ImagesetManager::getSingleton().createImageset(
-								instName.c_str(), tex);
-						mDebugRTTImageSets.push_back(imgSet);
-						imgSet->defineImage((CEGUI::utf8*)"RttImage",
-							CEGUI::Point(0.0f, 0.0f),
-							CEGUI::Size(tex->getWidth(), tex->getHeight()),
-							CEGUI::Point(0.0f,0.0f));
+					CEGUI::Imageset* imgSet =
+						CEGUI::ImagesetManager::getSingleton().createImageset(
+							instName, tex);
+					mDebugRTTImageSets.push_back(imgSet);
+					imgSet->defineImage((CEGUI::utf8*)"RttImage",
+						CEGUI::Point(0.0f, 0.0f),
+						CEGUI::Size(tex->getWidth(), tex->getHeight()),
+						CEGUI::Point(0.0f,0.0f));
 
 
-						CEGUI::ListboxTextItem *item = new CEGUI::ListboxTextItem(texDef->name.c_str(), 0, imgSet);
-						item->setSelectionBrushImage("TaharezLook", "ListboxSelectionBrush");
-						item->setSelectionColours(CEGUI::colour(0,0,1));
-						mDebugRTTListbox->addItem(item);
-
-						uniqueTextureNames.insert(instName);
-					}
+					CEGUI::ListboxTextItem *item = new CEGUI::ListboxTextItem(texDef->name, 0, imgSet);
+					item->setSelectionBrushImage("TaharezLook", "ListboxSelectionBrush");
+					item->setSelectionColours(CEGUI::colour(0,0,1));
+					mDebugRTTListbox->addItem(item);
 
 				}
 

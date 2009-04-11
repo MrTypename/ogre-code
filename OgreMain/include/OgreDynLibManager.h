@@ -33,13 +33,7 @@ Torus Knot Software Ltd.
 #include "OgreSingleton.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
-	/** Manager for Dynamic-loading Libraries.
+    /** Manager for Dynamic-loading Libraries.
         @remarks
             This manager keeps a track of all the open dynamic-loading
             libraries, opens them and returns references to already-open
@@ -48,7 +42,7 @@ namespace Ogre {
     class _OgreExport DynLibManager: public Singleton<DynLibManager>, public DynLibAlloc
     {
 	protected:
-		typedef map<String, DynLib*>::type DynLibList;
+		typedef std::map<String, DynLib*> DynLibList;
 		DynLibList mLibList;
     public:
         /** Default constructor.
@@ -111,8 +105,6 @@ namespace Ogre {
         */
         static DynLibManager* getSingletonPtr(void);
     };
-	/** @} */
-	/** @} */
 }
 
 #endif

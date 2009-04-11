@@ -268,7 +268,7 @@ protected:
 #define RAIN_HEIGHT_CONSTANT 5
 
 
-	typedef vector<WaterCircle*>::type WaterCircles ;
+	typedef std::vector<WaterCircle*> WaterCircles ;
 	WaterCircles circles ;
 
 	void processCircles(Real timeSinceLastFrame)

@@ -33,12 +33,6 @@ using namespace Ogre;
 #if OGRE_COMPILER != OGRE_COMPILER_MSVC || OGRE_COMP_VER >= 1300
 
 #define FMTCONVERTERID(from,to) (((from)<<8)|(to))
-/** \addtogroup Core
-*  @{
-*/
-/** \addtogroup Image
-*  @{
-*/
 
 /**
  * Convert a box of pixel from one type to another. Who needs automatic code 
@@ -432,7 +426,5 @@ inline int doOptimizedConversion(const PixelBox &src, const PixelBox &dst)
     }
 }
 #undef CASECONVERTER
-/** @} */
-/** @} */
 
 #endif // VC6 protection

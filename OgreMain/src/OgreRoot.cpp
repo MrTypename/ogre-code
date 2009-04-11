@@ -186,9 +186,6 @@ namespace Ogre {
         // Font manager
         mFontManager = OGRE_NEW FontManager();
 
-        // Lod strategy manager
-        mLodStrategyManager = OGRE_NEW LodStrategyManager();
-
 #if OGRE_PROFILING
         // Profiler
         mProfiler = OGRE_NEW Profiler();
@@ -275,7 +272,6 @@ namespace Ogre {
 #endif
         OGRE_DELETE mOverlayManager;
         OGRE_DELETE mFontManager;
-		OGRE_DELETE mLodStrategyManager;
         OGRE_DELETE mArchiveManager;
         OGRE_DELETE mZipArchiveFactory;
         OGRE_DELETE mFileSystemArchiveFactory;
@@ -341,7 +337,7 @@ namespace Ogre {
             of << "Render System=" << std::endl;
         }
 
-        for (RenderSystemList::const_iterator pRend = getAvailableRenderers().begin(); pRend != getAvailableRenderers().end(); ++pRend)
+        for (RenderSystemList::const_iterator pRend = getAvailableRenderers()->begin(); pRend != getAvailableRenderers()->end(); ++pRend)
         {
             RenderSystem* rs = *pRend;
             of << std::endl;
@@ -367,6 +363,7 @@ namespace Ogre {
         //   available, and false if no saved config is
         //   stored, or if there has been a problem
         ConfigFile cfg;
+        //RenderSystemList::iterator pRend;
 
         try {
             // Don't trim whitespace
@@ -438,11 +435,11 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    const RenderSystemList& Root::getAvailableRenderers(void)
+    RenderSystemList* Root::getAvailableRenderers(void)
     {
         // Returns a vector of renders
 
-        return mRenderers;
+        return &mRenderers;
 
     }
 
@@ -456,7 +453,7 @@ namespace Ogre {
         }
 
         RenderSystemList::const_iterator pRend;
-        for (pRend = getAvailableRenderers().begin(); pRend != getAvailableRenderers().end(); ++pRend)
+        for (pRend = getAvailableRenderers()->begin(); pRend != getAvailableRenderers()->end(); ++pRend)
         {
             RenderSystem* rs = *pRend;
             if (rs->getName() == name)
@@ -649,7 +646,7 @@ namespace Ogre {
     void Root::addFrameListener(FrameListener* newListener)
     {
 		// Check if the specified listener is scheduled for removal
-		set<FrameListener *>::type::iterator i = mRemovedFrameListeners.find(newListener);
+		std::set<FrameListener *>::iterator i = mRemovedFrameListeners.find(newListener);
 
 		// If yes, cancel the removal. Otherwise add it to other listeners.
 		if (i != mRemovedFrameListeners.end())
@@ -667,10 +664,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     bool Root::_fireFrameStarted(FrameEvent& evt)
     {
-		OgreProfileBeginGroup("Frame", OGREPROF_GENERAL);
-
         // Remove all marked listeners
-        set<FrameListener*>::type::iterator i;
+        std::set<FrameListener*>::iterator i;
         for (i = mRemovedFrameListeners.begin();
             i != mRemovedFrameListeners.end(); i++)
         {
@@ -695,7 +690,7 @@ namespace Ogre {
 		++mNextFrame;
 
         // Remove all marked listeners
-        set<FrameListener*>::type::iterator i;
+        std::set<FrameListener*>::iterator i;
         for (i = mRemovedFrameListeners.begin();
             i != mRemovedFrameListeners.end(); i++)
         {
@@ -717,7 +712,7 @@ namespace Ogre {
     bool Root::_fireFrameEnded(FrameEvent& evt)
     {
         // Remove all marked listeners
-        set<FrameListener*>::type::iterator i;
+        std::set<FrameListener*>::iterator i;
         for (i = mRemovedFrameListeners.begin();
             i != mRemovedFrameListeners.end(); i++)
         {
@@ -743,47 +738,45 @@ namespace Ogre {
 		// Also tell the ResourceBackgroundQueue to propagate background load events
 		ResourceBackgroundQueue::getSingleton()._fireOnFrameCallbacks();
 
-		OgreProfileEndGroup("Frame", OGREPROF_GENERAL);
-
         return ret;
     }
     //-----------------------------------------------------------------------
     bool Root::_fireFrameStarted()
     {
+        unsigned long now = mTimer->getMilliseconds();
         FrameEvent evt;
-		populateFrameEvent(FETT_STARTED, evt);
+        evt.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
+        evt.timeSinceLastFrame = calculateEventTime(now, FETT_STARTED);
 
         return _fireFrameStarted(evt);
     }
     //-----------------------------------------------------------------------
     bool Root::_fireFrameRenderingQueued()
     {
-		FrameEvent evt;
-		populateFrameEvent(FETT_QUEUED, evt);
+        unsigned long now = mTimer->getMilliseconds();
+        FrameEvent evt;
+        evt.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
+        evt.timeSinceLastFrame = calculateEventTime(now, FETT_QUEUED);
 
         return _fireFrameRenderingQueued(evt);
     }
     //-----------------------------------------------------------------------
     bool Root::_fireFrameEnded()
     {
+        unsigned long now = mTimer->getMilliseconds();
         FrameEvent evt;
-		populateFrameEvent(FETT_ENDED, evt);
+        evt.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
+        evt.timeSinceLastFrame = calculateEventTime(now, FETT_ENDED);
+
         return _fireFrameEnded(evt);
     }
-	//---------------------------------------------------------------------
-	void Root::populateFrameEvent(FrameEventTimeType type, FrameEvent& evtToUpdate)
-	{
-		unsigned long now = mTimer->getMilliseconds();
-		evtToUpdate.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
-		evtToUpdate.timeSinceLastFrame = calculateEventTime(now, type);
-	}
     //-----------------------------------------------------------------------
     Real Root::calculateEventTime(unsigned long now, FrameEventTimeType type)
     {
         // Calculate the average time passed between events of the given type
         // during the last mFrameSmoothingTime seconds.
 
-        EventTimesQueue& times = mEventTimes[type];
+        std::deque<unsigned long>& times = mEventTimes[type];
         times.push_back(now);
 
         if(times.size() == 1)
@@ -794,7 +787,7 @@ namespace Ogre {
 			static_cast<unsigned long>(mFrameSmoothingTime * 1000.0f);
 
         // Find the oldest time to keep
-        EventTimesQueue::iterator it = times.begin(),
+        std::deque<unsigned long>::iterator it = times.begin(),
             end = times.end()-2; // We need at least two times
         while(it != end)
         {
@@ -848,26 +841,7 @@ namespace Ogre {
 
         return _fireFrameEnded();
     }
-	//---------------------------------------------------------------------
-	bool Root::renderOneFrame(Real timeSinceLastFrame)
-	{
-		FrameEvent evt;
-		evt.timeSinceLastFrame = timeSinceLastFrame;
 
-		unsigned long now = mTimer->getMilliseconds();
-		evt.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
-
-		if(!_fireFrameStarted(evt))
-			return false;
-
-		if (!_updateAllRenderTargets(evt))
-			return false;
-
-		now = mTimer->getMilliseconds();
-		evt.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
-
-		return _fireFrameEnded(evt);
-	}
     //-----------------------------------------------------------------------
     void Root::shutdown(void)
     {
@@ -1019,28 +993,6 @@ namespace Ogre {
         return ret;
 
     }
-	//-----------------------------------------------------------------------
-	bool Root::createRenderWindows(const RenderWindowDescriptionList& renderWindowDescriptions, 
-		RenderWindowList& createdWindows)
-	{
-		if (!mActiveRenderer)
-		{
-			OGRE_EXCEPT(Exception::ERR_INVALID_STATE,
-				"Cannot create render windows - no render "
-				"system has been selected.", "Root::createRenderWindows");
-		}
-
-		bool success;
-		
-		success = mActiveRenderer->_createRenderWindows(renderWindowDescriptions, createdWindows);		
-		if(success && !mFirstTimePostWindowInit)
-		{
-			oneTimePostWindowInit();
-			createdWindows[0]->_setPrimary();
-		}
-
-		return success;
-	}	
     //-----------------------------------------------------------------------
     void Root::detachRenderTarget(RenderTarget* target)
     {
@@ -1182,31 +1134,7 @@ namespace Ogre {
 		bool ret = _fireFrameRenderingQueued();
 		// block for final swap
 		mActiveRenderer->_swapAllRenderTargetBuffers(mActiveRenderer->getWaitForVerticalBlank());
-
-        // This belongs here, as all render targets must be updated before events are
-        // triggered, otherwise targets could be mismatched.  This could produce artifacts,
-        // for instance, with shadows.
-        for (SceneManagerEnumerator::SceneManagerIterator it = getSceneManagerIterator(); it.hasMoreElements(); it.moveNext())
-            it.peekNextValue()->_handleLodEvents();
-
-		return ret;
-	}
-	//---------------------------------------------------------------------
-	bool Root::_updateAllRenderTargets(FrameEvent& evt)
-	{
-		// update all targets but don't swap buffers
-		mActiveRenderer->_updateAllRenderTargets(false);
-		// give client app opportunity to use queued GPU time
-		bool ret = _fireFrameRenderingQueued(evt);
-		// block for final swap
-		mActiveRenderer->_swapAllRenderTargetBuffers(mActiveRenderer->getWaitForVerticalBlank());
-
-		// This belongs here, as all render targets must be updated before events are
-		// triggered, otherwise targets could be mismatched.  This could produce artifacts,
-		// for instance, with shadows.
-		for (SceneManagerEnumerator::SceneManagerIterator it = getSceneManagerIterator(); it.hasMoreElements(); it.moveNext())
-			it.peekNextValue()->_handleLodEvents();
-
+		
 		return ret;
 	}
 	//-----------------------------------------------------------------------
@@ -1356,20 +1284,6 @@ namespace Ogre {
 			OGRE_DELETE i->second;
 		}
 		mRQSequenceMap.clear();
-	}
-
-	//---------------------------------------------------------------------
-	unsigned int Root::getDisplayMonitorCount() const
-	{
-		if (!mActiveRenderer)
-		{
-			OGRE_EXCEPT(Exception::ERR_INVALID_STATE,
-				"Cannot get display monitor count "
-				"No render system has been selected.", "Root::getDisplayMonitorCount");
-		}
-
-		return mActiveRenderer->getDisplayMonitorCount();
-
 	}
 	//---------------------------------------------------------------------
 

@@ -30,20 +30,11 @@ Torus Knot Software Ltd.
 #define __Win32Timer_H__
 
 #define WIN32_LEAN_AND_MEAN
-#ifndef NOMINMAX
-#  define NOMINMAX // required to stop windows.h messing up std::min
-#endif
+#define NOMINMAX // required to stop windows.h messing up std::min
 #include "windows.h"
 
 namespace Ogre
 {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
-
 	class _OgreExport Timer : public TimerAlloc
     {
     private:
@@ -91,13 +82,11 @@ namespace Ogre
 		/** Returns microseconds since initialisation or last reset */
 		unsigned long getMicroseconds();
 
-		/** Returns milliseconds since initialisation or last reset, only CPU time measured */
+		/** Returns milliseconds since initialisation or last reset, only CPU time measured */	
 		unsigned long getMillisecondsCPU();
 
-		/** Returns microseconds since initialisation or last reset, only CPU time measured */
+		/** Returns microseconds since initialisation or last reset, only CPU time measured */	
 		unsigned long getMicrosecondsCPU();
     };
-	/** @} */
-	/** @} */
-}
+} 
 #endif

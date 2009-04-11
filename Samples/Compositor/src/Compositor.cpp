@@ -74,10 +74,6 @@ Ogre::String bundlePath()
         delete mFrameListener;
 
         delete mRoot;
-#ifdef OGRE_STATIC_LIB
-		mStaticPluginLoader.unload();
-#endif
-
     }
 
 //--------------------------------------------------------------------------
@@ -92,22 +88,16 @@ Ogre::String bundlePath()
 //--------------------------------------------------------------------------
     bool CompositorDemo::setup(void)
     {
-		Ogre::String mResourcePath;
-		Ogre::String pluginsPath;
-		// only use plugins.cfg if not static
-#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-		mResourcePath = bundlePath() + "/Contents/Resources/";
-#endif
-#ifndef OGRE_STATIC_LIB
-		pluginsPath = mResourcePath + "plugins.cfg";
-#endif
-
-		mRoot = new Ogre::Root(pluginsPath,
-			mResourcePath + "ogre.cfg", mResourcePath + "Ogre.log");
-
-#ifdef OGRE_STATIC_LIB
-		mStaticPluginLoader.load();
-#endif
+		#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+            Ogre::String mResourcePath;
+            mResourcePath = bundlePath() + "/Contents/Resources/";
+            mRoot = new Ogre::Root(mResourcePath + "plugins.cfg", 
+                               mResourcePath + "ogre.cfg", mResourcePath + "Ogre.log");
+        #else
+		
+			mRoot = new Ogre::Root();
+		
+		#endif
 
         setupResources();
         bool carryOn = configure();
@@ -542,7 +532,7 @@ void CompositorDemo::createViewports(void)
 		HardwarePixelBufferSharedPtr ptr = tex->getBuffer(0,0);
 		ptr->lock(HardwareBuffer::HBL_DISCARD);
 		const PixelBox &pb = ptr->getCurrentLock();
-		Ogre::uint8 *data = static_cast<Ogre::uint8*>(pb.data);
+		uint8 *data = static_cast<uint8*>(pb.data);
 
 		size_t height = pb.getHeight();
 		size_t width = pb.getWidth();
@@ -582,7 +572,7 @@ void CompositorDemo::createViewports(void)
 		HardwarePixelBufferSharedPtr ptr2 = tex2->getBuffer(0,0);
 		ptr2->lock(HardwareBuffer::HBL_DISCARD);
 		const PixelBox &pb2 = ptr2->getCurrentLock();
-		Ogre::uint8 *data2 = static_cast<Ogre::uint8*>(pb2.data);
+		uint8 *data2 = static_cast<uint8*>(pb2.data);
 		
 		size_t height2 = pb2.getHeight();
 		size_t width2 = pb2.getWidth();

@@ -38,13 +38,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Animation
-	*  @{
-	*/
-
     /** Represents the state of an animation and the weight of it's influence. 
     @remarks
         Other classes can hold instances of this class to store the state of any animations
@@ -55,7 +48,7 @@ namespace Ogre {
     public:
 
       /// typedef for an array of float values used as a bone blend mask
-      typedef vector<float>::type BoneBlendMask;
+      typedef std::vector<float> BoneBlendMask;
 
         /// Normal constructor with all params supplied
         AnimationState(const String& animName, AnimationStateSet *parent, 
@@ -172,11 +165,11 @@ namespace Ogre {
     };
 
 	// A map of animation states
-	typedef map<String, AnimationState*>::type AnimationStateMap;
+	typedef std::map<String, AnimationState*> AnimationStateMap;
 	typedef MapIterator<AnimationStateMap> AnimationStateIterator;
 	typedef ConstMapIterator<AnimationStateMap> ConstAnimationStateIterator;
     // A list of enabled animation states
-    typedef list<AnimationState*>::type EnabledAnimationStateList;
+    typedef std::list<AnimationState*> EnabledAnimationStateList;
     typedef ConstVectorIterator<EnabledAnimationStateList> ConstEnabledAnimationStateIterator;
 
 	/** Class encapsulating a set of AnimationState objects.
@@ -277,8 +270,7 @@ namespace Ogre {
 
 	};
 
-	/** @} */	
-	/** @} */
+
 }
 
 #endif

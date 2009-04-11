@@ -33,13 +33,7 @@ Torus Knot Software Ltd.
 #include "OgreCommon.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Image
-	*  @{
-	*/
-	/** The pixel format used for images, textures, and render surfaces */
+    /** The pixel format used for images, textures, and render surfaces */
     enum PixelFormat
     {
         /// Unknown pixel format.
@@ -145,7 +139,7 @@ namespace Ogre {
 		// Number of pixel formats currently defined
         PF_COUNT = 38
     };
-	typedef vector<PixelFormat>::type PixelFormatList;
+	typedef std::vector<PixelFormat> PixelFormatList;
 
     /**
      * Flags defining some on/off properties of pixel formats
@@ -474,8 +468,6 @@ namespace Ogre {
         */
         static void bulkPixelConversion(const PixelBox &src, const PixelBox &dst);
     };
-	/** @} */
-	/** @} */
 
 }
 

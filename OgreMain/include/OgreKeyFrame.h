@@ -40,13 +40,7 @@ Torus Knot Software Ltd.
 namespace Ogre 
 {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Animation
-	*  @{
-	*/
-	/** A key frame in an animation sequence defined by an AnimationTrack.
+    /** A key frame in an animation sequence defined by an AnimationTrack.
     @remarks
         This class can be used as a basis for all kinds of key frames. 
         The unifying principle is that multiple KeyFrames define an 
@@ -209,7 +203,7 @@ namespace Ogre
 
 			PoseRef(ushort p, Real i) : poseIndex(p), influence(i) {}
 		};
-		typedef vector<PoseRef>::type PoseRefList;
+		typedef std::vector<PoseRef> PoseRefList;
 
 		/** Add a new pose reference. 
 		@see PoseRef
@@ -246,8 +240,6 @@ namespace Ogre
 		PoseRefList mPoseRefs;
 
 	};
-	/** @} */
-	/** @} */
 
 }
 

@@ -10,6 +10,8 @@
 #include <GL/glu.h>
 #endif
 
+#include <OgreGLPrerequisites.h>
+
 using namespace std;
 
 namespace

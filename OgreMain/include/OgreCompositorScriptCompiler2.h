@@ -37,12 +37,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre
 {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
 	class CompositorScriptCompiler2;
 	
 	/** This is the listener specific to the compositor compiler. It allows for
@@ -158,8 +152,6 @@ namespace Ogre
 		// This is the compositor being compiled
 		Compositor *mCompositor;
 	};
-	/** @} */
-	/** @} */
 
 }
 

@@ -52,13 +52,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre 
 {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup RenderSystem
-	*  @{
-	*/
-
 	/// Enumerates the categories of capabilities
 	enum CapabilitiesCategory
 	{
@@ -140,8 +133,6 @@ namespace Ogre
 		RSC_MRT_DIFFERENT_BIT_DEPTHS = OGRE_CAPS_VALUE(CAPS_CATEGORY_COMMON_2, 4),
 		/// Supports Alpha to Coverage (A2C)
 		RSC_ALPHA_TO_COVERAGE = OGRE_CAPS_VALUE(CAPS_CATEGORY_COMMON_2, 5),
-		/// Supports Blending operations other than +
-		RSC_ADVANCED_BLEND_OPERATIONS = OGRE_CAPS_VALUE(CAPS_CATEGORY_COMMON_2, 6),
 
 		// ***** DirectX specific caps *****
 		/// Is DirectX feature "per stage constants" supported
@@ -230,7 +221,7 @@ namespace Ogre
 
 	public:
 
-		typedef set<String>::type ShaderProfiles;
+		typedef std::set<String> ShaderProfiles;
 	private:
 		/// This is used to build a database of RSC's
 		/// if a RSC with same name, but newer version is introduced, the older one 
@@ -699,8 +690,6 @@ namespace Ogre
 
 	};
 
-	/** @} */
-	/** @} */
 } // namespace
 
 #endif // __RenderSystemCapabilities__

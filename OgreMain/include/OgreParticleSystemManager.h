@@ -43,13 +43,7 @@ namespace Ogre {
 	// Forward decl
 	class ParticleSystemFactory;
 	
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Effects
-	*  @{
-	*/
-	/** Manages particle systems, particle system scripts (templates) and the 
+    /** Manages particle systems, particle system scripts (templates) and the 
 		available emitter & affector factories.
     @remarks
         This singleton class is responsible for creating and managing particle 
@@ -79,10 +73,10 @@ namespace Ogre {
     {
 		friend class ParticleSystemFactory;
 	public:
-        typedef map<String, ParticleSystem*>::type ParticleTemplateMap;
-		typedef map<String, ParticleAffectorFactory*>::type ParticleAffectorFactoryMap;
-		typedef map<String, ParticleEmitterFactory*>::type ParticleEmitterFactoryMap;
-		typedef map<String, ParticleSystemRendererFactory*>::type ParticleSystemRendererFactoryMap;
+        typedef std::map<String, ParticleSystem*> ParticleTemplateMap;
+		typedef std::map<String, ParticleAffectorFactory*> ParticleAffectorFactoryMap;
+		typedef std::map<String, ParticleEmitterFactory*> ParticleEmitterFactoryMap;
+		typedef std::map<String, ParticleSystemRendererFactory*> ParticleSystemRendererFactoryMap;
     protected:
 		OGRE_AUTO_MUTEX
 			
@@ -389,9 +383,7 @@ namespace Ogre {
 		void destroyInstance( MovableObject* obj);  
 
 	};
-	/** @} */
-	/** @} */
-
+	
 }
 
 #endif

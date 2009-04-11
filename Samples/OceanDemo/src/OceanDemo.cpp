@@ -17,16 +17,6 @@ LGPL like the rest of the engine.
 
 #include <cstdlib>
 
-inline Ogre::String operator +(const Ogre::String& l,const CEGUI::String& o)
-{
-	return l+o.c_str();
-}
-/*
-inline CEGUI::String operator +(const CEGUI::String& l,const Ogre::String& o)
-{
-	return l+o.c_str();
-}
-*/
 
 /**********************************************************************
 OS X Specific Resource Location Finding
@@ -184,11 +174,6 @@ OceanDemo::~OceanDemo()
     mActiveMaterial.setNull();
 
     delete mRoot;
-
-#ifdef OGRE_STATIC_LIB
-	mStaticPluginLoader.unload();
-#endif
-
 }
 
 //--------------------------------------------------------------------------
@@ -205,23 +190,16 @@ bool OceanDemo::setup(void)
 {
 	bool setupCompleted = false;
 
-	Ogre::String mResourcePath;
-	Ogre::String pluginsPath;
-	// only use plugins.cfg if not static
-#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-	mResourcePath = bundlePath() + "/Contents/Resources/";
-#endif
-#ifndef OGRE_STATIC_LIB
-	pluginsPath = mResourcePath + "plugins.cfg";
-#endif
+	#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+        Ogre::String mResourcePath;
+        mResourcePath = bundlePath() + "/Contents/Resources/";
+        mRoot = new Ogre::Root(mResourcePath + "plugins.cfg",
+                         mResourcePath + "ogre.cfg", mResourcePath + "Ogre.log");
+    #else
 
-	mRoot = new Ogre::Root(pluginsPath,
-		mResourcePath + "ogre.cfg", mResourcePath + "Ogre.log");
+        mRoot = new Ogre::Root();
 
-#ifdef OGRE_STATIC_LIB
-	mStaticPluginLoader.load();
-#endif
-
+    #endif
 
     setupResources();
 
@@ -458,7 +436,7 @@ void OceanDemo::initComboBoxes(void)
 
 	cbobox = (Combobox*)WindowManager::getSingleton().getWindow("ModelCombos");
     Ogre::StringVectorPtr meshStringVector = Ogre::ResourceGroupManager::getSingleton().findResourceNames( Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, "*.mesh" );
-    Ogre::StringVector::iterator meshFileNameIterator = meshStringVector->begin();
+    std::vector<Ogre::String>::iterator meshFileNameIterator = meshStringVector->begin();
 
     while ( meshFileNameIterator != meshStringVector->end() )
 	{
@@ -803,7 +781,7 @@ void OceanDemo::configureShaderControls(void)
 							case GPU_FRAGMENT:
 								{
 									Ogre::GpuProgramParametersSharedPtr activeParameters =
-										(ActiveShaderDef.ValType == GPU_VERTEX) ?
+										(ActiveShaderDef.ValType == Ogre::GPT_VERTEX_PROGRAM) ?
 											mActiveVertexParameters : mActiveFragmentParameters;
 									if(!activeParameters.isNull())
 									{
@@ -1197,7 +1175,7 @@ bool OceanDemo_FrameListener::keyPressed (const OIS::KeyEvent &e)
 
     if (e.key == OIS::KC_SYSRQ )
     {
-		Ogre::StringStream ss;
+		std::ostringstream ss;
         ss << "screenshot_" << ++mNumScreenShots << ".png";
         mMain->getRenderWindow()->writeContentsToFile(ss.str());
         //mTimeUntilNextToggle = 0.5;
@@ -1264,7 +1242,7 @@ void OceanDemo_FrameListener::updateStats(void)
 		+ " " + Ogre::StringConverter::toString(stats.worstFrameTime)+" ms");
 
 	mGuiTris->setText(tris + Ogre::StringConverter::toString(stats.triangleCount));
-	mGuiDbg->setText(mDebugText.c_str());
+	mGuiDbg->setText(mDebugText);
 	mAvgFrameTime = 1.0f/(stats.avgFPS + 1.0f);
 	if (mAvgFrameTime > 0.1f) mAvgFrameTime = 0.1f;
 

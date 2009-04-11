@@ -118,7 +118,7 @@ namespace Ogre {
         mRequiredIndexCount = (mMeshWidth-1) * (mMeshHeight-1) * 2 * iterations * 3;
 
         // Calculate bounds based on control points
-        vector<Vector3>::type::const_iterator ctli;
+        std::vector<Vector3>::const_iterator ctli;
         Vector3 min, max;
         Real maxSqRadius;
         bool first = true;
@@ -363,7 +363,7 @@ namespace Ogre {
         Vector3 min, max;
         Real maxSquaredRadius;
         bool first = true;
-        vector<Vector3>::type::iterator i, iend;
+        std::vector<Vector3>::iterator i, iend;
         iend = mVecCtlPoints.end();
         for (i = mVecCtlPoints.begin(); i != iend; ++i)
         {

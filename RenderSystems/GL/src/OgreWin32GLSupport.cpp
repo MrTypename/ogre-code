@@ -13,9 +13,7 @@
 
 using namespace Ogre;
 
-#if OGRE_THREAD_SUPPORT != 1
 GLenum wglewContextInit (Ogre::GLSupport *glSupport);
-#endif
 
 namespace Ogre {
 	Win32GLSupport::Win32GLSupport()
@@ -97,16 +95,8 @@ namespace Ogre {
 		optFSAA.name = "FSAA";
 		optFSAA.immutable = false;
 		optFSAA.possibleValues.push_back("0");
-		for (vector<int>::type::iterator it = mFSAALevels.begin(); it != mFSAALevels.end(); ++it)
-		{
-			String val = StringConverter::toString(*it);
-			optFSAA.possibleValues.push_back(val);
-			/* not implementing CSAA in GL for now
-			if (*it >= 8)
-				optFSAA.possibleValues.push_back(val + " [Quality]");
-			*/
-
-		}
+		for (std::vector<int>::iterator it = mFSAALevels.begin(); it != mFSAALevels.end(); ++it)
+			optFSAA.possibleValues.push_back(StringConverter::toString(*it));
 		optFSAA.currentValue = "0";
 
 		optRTTMode.name = "RTT Preferred Mode";
@@ -154,7 +144,7 @@ namespace Ogre {
 		DWORD width = StringConverter::parseUnsignedInt(val.substr(0, pos));
 		DWORD height = StringConverter::parseUnsignedInt(val.substr(pos+1, String::npos));
 
-		for(vector<DEVMODE>::type::const_iterator i = mDevModes.begin(); i != mDevModes.end(); ++i)
+		for(std::vector<DEVMODE>::const_iterator i = mDevModes.begin(); i != mDevModes.end(); ++i)
 		{
 			if (i->dmPelsWidth != width || i->dmPelsHeight != height)
 				continue;
@@ -259,14 +249,9 @@ namespace Ogre {
 			opt = mOptions.find("FSAA");
 			if (opt == mOptions.end())
 				OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Can't find FSAA options!", "Win32GLSupport::createWindow");
-			StringVector aavalues = StringUtil::split(opt->second.currentValue, " ", 1);
-			unsigned int multisample = StringConverter::parseUnsignedInt(aavalues[0]);
-			String multisample_hint;
-			if (aavalues.size() > 1)
-				multisample_hint = aavalues[1];
-
+			unsigned int multisample =
+				StringConverter::parseUnsignedInt(opt->second.currentValue);
 			winOptions["FSAA"] = StringConverter::toString(multisample);
-			winOptions["FSAAHint"] = multisample_hint;
 
 			opt = mOptions.find("sRGB Gamma Conversion");
 			if (opt == mOptions.end())
@@ -283,84 +268,15 @@ namespace Ogre {
         }
 	}
 
-	BOOL CALLBACK Win32GLSupport::sCreateMonitorsInfoEnumProc(
-		HMONITOR hMonitor,  // handle to display monitor
-		HDC hdcMonitor,     // handle to monitor DC
-		LPRECT lprcMonitor, // monitor intersection rectangle
-		LPARAM dwData       // data
-		)
-	{
-		DisplayMonitorInfoList* pArrMonitorsInfo = (DisplayMonitorInfoList*)dwData;
-
-		// Get monitor info
-		DisplayMonitorInfo displayMonitorInfo;
-
-		displayMonitorInfo.hMonitor = hMonitor;
-
-		memset(&displayMonitorInfo.monitorInfoEx, 0, sizeof(MONITORINFOEX));
-		displayMonitorInfo.monitorInfoEx.cbSize = sizeof(MONITORINFOEX);
-		GetMonitorInfo(hMonitor, &displayMonitorInfo.monitorInfoEx);
-
-		pArrMonitorsInfo->push_back(displayMonitorInfo);
-
-		return TRUE;
-	}
-
-
 	RenderWindow* Win32GLSupport::newWindow(const String &name, unsigned int width, 
 		unsigned int height, bool fullScreen, const NameValuePairList *miscParams)
-	{		
+	{
+		ConfigOptionMap::iterator opt = mOptions.find("Display Frequency");
+		if (opt == mOptions.end())
+			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Can't find Display Frequency options!", "Win32GLSupport::newWindow");
+		unsigned int displayFrequency = StringConverter::parseUnsignedInt(opt->second.currentValue);
+
 		Win32Window* window = new Win32Window(*this);
-		NameValuePairList newParams;
-	
-		if (miscParams != NULL)
-		{	
-			newParams = *miscParams;
-			miscParams = &newParams;
-
-			NameValuePairList::const_iterator monitorIndexIt = miscParams->find("monitorIndex");			
-			HMONITOR hMonitor = NULL;
-			int monitorIndex = -1;
-		
-			// If monitor index found, try to assign the monitor handle based on it.
-			if (monitorIndexIt != miscParams->end())
-			{				
-				if (mMonitorInfoList.empty())		
-					EnumDisplayMonitors(NULL, NULL, sCreateMonitorsInfoEnumProc, (LPARAM)&mMonitorInfoList);			
-
-				monitorIndex = StringConverter::parseInt(monitorIndexIt->second);
-				if (monitorIndex < (int)mMonitorInfoList.size())
-				{						
-					hMonitor = mMonitorInfoList[monitorIndex].hMonitor;					
-				}
-			}
-			// If we didn't specified the monitor index, or if it didn't find it
-			if (hMonitor == NULL)
-			{
-				POINT windowAnchorPoint;
-		
-				NameValuePairList::const_iterator opt;
-				int left = -1;
-				int top  = -1;
-
-				if ((opt = newParams.find("left")) != newParams.end())
-					left = StringConverter::parseInt(opt->second);
-
-				if ((opt = newParams.find("top")) != newParams.end())
-					top = StringConverter::parseInt(opt->second);
-
-				// Fill in anchor point.
-				windowAnchorPoint.x = left;
-				windowAnchorPoint.y = top;
-
-
-				// Get the nearest monitor to this window.
-				hMonitor = MonitorFromPoint(windowAnchorPoint, MONITOR_DEFAULTTONEAREST);				
-			}
-
-			newParams["monitorHandle"] = StringConverter::toString((int)hMonitor);																
-		}
-
 		window->create(name, width, height, fullScreen, miscParams);
 
 		if(!mInitialWindow)
@@ -385,9 +301,7 @@ namespace Ogre {
 		// First, initialise the normal extensions
 		GLSupport::initialiseExtensions();
 		// wglew init
-#if OGRE_THREAD_SUPPORT != 1
 		wglewContextInit(this);
-#endif
 
 		// Check for W32 specific extensions probe function
 		PFNWGLGETEXTENSIONSSTRINGARBPROC _wglGetExtensionsStringARB = 
@@ -398,7 +312,7 @@ namespace Ogre {
         LogManager::getSingleton().stream()
 			<< "Supported WGL extensions: " << wgl_extensions;
 		// Parse them, and add them to the main list
-		StringStream ext;
+		std::stringstream ext;
         String instr;
 		ext << wgl_extensions;
         while(ext >> instr)
@@ -522,9 +436,9 @@ namespace Ogre {
 				unsigned int count;
                 // cheating here.  wglChoosePixelFormatARB procc address needed later on
                 // when a valid GL context does not exist and glew is not initialized yet.
-                WGLEW_GET_FUN(__wglewChoosePixelFormatARB) =
+                __wglewChoosePixelFormatARB =
                     (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-                if (WGLEW_GET_FUN(__wglewChoosePixelFormatARB)(hdc, iattr, 0, 256, formats, &count))
+                if (__wglewChoosePixelFormatARB(hdc, iattr, 0, 256, formats, &count))
                 {
                     // determine what multisampling levels are offered
                     int query = WGL_SAMPLES_ARB, samples;
@@ -579,11 +493,11 @@ namespace Ogre {
 		if (hwGamma && !mHasHardwareGamma)
 			return false;
 		
-		if ((multisample || hwGamma) && WGLEW_GET_FUN(__wglewChoosePixelFormatARB))
+		if ((multisample || hwGamma) && __wglewChoosePixelFormatARB)
 		{
 
 			// Use WGL to test extended caps (multisample, sRGB)
-			vector<int>::type attribList;
+			std::vector<int> attribList;
 			attribList.push_back(WGL_DRAW_TO_WINDOW_ARB); attribList.push_back(GL_TRUE);
 			attribList.push_back(WGL_SUPPORT_OPENGL_ARB); attribList.push_back(GL_TRUE);
 			attribList.push_back(WGL_DOUBLE_BUFFER_ARB); attribList.push_back(GL_TRUE);
@@ -605,7 +519,7 @@ namespace Ogre {
 			UINT nformats;
 			// ChoosePixelFormatARB proc address was obtained when setting up a dummy GL context in initialiseWGL()
 			// since glew hasn't been initialized yet, we have to cheat and use the previously obtained address
-			if (!WGLEW_GET_FUN(__wglewChoosePixelFormatARB)(hdc, &(attribList[0]), NULL, 1, &format, &nformats) || nformats <= 0)
+			if (!__wglewChoosePixelFormatARB(hdc, &(attribList[0]), NULL, 1, &format, &nformats) || nformats <= 0)
 				return false;
 		}
 		else
@@ -619,23 +533,17 @@ namespace Ogre {
 
 	bool Win32GLSupport::supportsPBuffers()
 	{
-		return WGLEW_GET_FUN(__WGLEW_ARB_pbuffer) != GL_FALSE;
+		return __WGLEW_ARB_pbuffer != GL_FALSE;
 	}
     GLPBuffer *Win32GLSupport::createPBuffer(PixelComponentType format, size_t width, size_t height)
 	{
 		return new Win32PBuffer(format, width, height);
 	}
 
-	unsigned int Win32GLSupport::getDisplayMonitorCount() const
-	{
-		if (mMonitorInfoList.empty())		
-			EnumDisplayMonitors(NULL, NULL, sCreateMonitorsInfoEnumProc, (LPARAM)&mMonitorInfoList);
-
-		return (unsigned int)mMonitorInfoList.size();
-	}
 
 	String translateWGLError()
 	{
+
 		int winError = GetLastError();
 		char* errDesc;
 		int i;

@@ -40,15 +40,8 @@ Torus Knot Software Ltd.
 namespace Ogre {
 	
 	class MeshSerializerListener;
-    class LodStrategy;
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Resources
-	*  @{
-	*/
-	/** Internal implementation of Mesh reading / writing for the latest version of the
+    /** Internal implementation of Mesh reading / writing for the latest version of the
     .mesh format.
     @remarks
     In order to maintain compatibility with older versions of the .mesh format, there
@@ -93,7 +86,7 @@ namespace Ogre {
         virtual void writeMeshBoneAssignment(const VertexBoneAssignment& assign);
         virtual void writeSubMeshBoneAssignment(const VertexBoneAssignment& assign);
         virtual void writeLodInfo(const Mesh* pMesh);
-        virtual void writeLodSummary(unsigned short numLevels, bool manual, const LodStrategy *strategy);
+        virtual void writeLodSummary(unsigned short numLevels, bool manual);
         virtual void writeLodUsageManual(const MeshLodUsage& usage);
         virtual void writeLodUsageGenerated(const Mesh* pMesh, const MeshLodUsage& usage, unsigned short lodNum);
         virtual void writeBoundsInfo(const Mesh* pMesh);
@@ -178,17 +171,6 @@ namespace Ogre {
     };
 
     /** Class for providing backwards-compatibility for loading version 1.3 of the .mesh format. */
-    class _OgrePrivate MeshSerializerImpl_v1_4 : public MeshSerializerImpl
-    {
-    public:
-        MeshSerializerImpl_v1_4();
-        ~MeshSerializerImpl_v1_4();
-    protected:
-        virtual void writeLodSummary(unsigned short numLevels, bool manual, const LodStrategy *strategy);
-        virtual void readMeshLodInfo(DataStreamPtr& stream, Mesh* pMesh);
-    };
-
-    /** Class for providing backwards-compatibility for loading version 1.3 of the .mesh format. */
     class _OgrePrivate MeshSerializerImpl_v1_3 : public MeshSerializerImpl
     {
     public:
@@ -231,8 +213,6 @@ namespace Ogre {
             Mesh* pMesh, VertexData* dest, unsigned short set);
     };
 
-	/** @} */
-	/** @} */
 
 }
 

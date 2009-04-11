@@ -56,31 +56,22 @@ namespace Ogre
 		// Create objects
 		mPCZSMFactory = OGRE_NEW PCZSceneManagerFactory();
 		mPCZoneFactoryManager = OGRE_NEW PCZoneFactoryManager();
-		mPCZLightFactory = OGRE_NEW PCZLightFactory();
-		mPortalFactory = OGRE_NEW PortalFactory();
-		mAntiPortalFactory = OGRE_NEW AntiPortalFactory();
+        mPCZLightFactory = OGRE_NEW PCZLightFactory();
 	}
 	//---------------------------------------------------------------------
 	void PCZPlugin::initialise()
 	{
 		// Register
 		Root::getSingleton().addSceneManagerFactory(mPCZSMFactory);
-		Root::getSingleton().addMovableObjectFactory(mPCZLightFactory);
-		Root::getSingleton().addMovableObjectFactory(mPortalFactory);
-		Root::getSingleton().addMovableObjectFactory(mAntiPortalFactory);
+        Root::getSingleton().addMovableObjectFactory(mPCZLightFactory);
 
-		// set type flags to static member variable for fast access.
-		PortalFactory::FACTORY_TYPE_FLAG = mPortalFactory->getTypeFlags();
-		AntiPortalFactory::FACTORY_TYPE_FLAG = mAntiPortalFactory->getTypeFlags();
 	}
 	//---------------------------------------------------------------------
 	void PCZPlugin::shutdown()
 	{
 		// Unregister
 		Root::getSingleton().removeSceneManagerFactory(mPCZSMFactory);
-		Root::getSingleton().removeMovableObjectFactory(mPCZLightFactory);
-		Root::getSingleton().removeMovableObjectFactory(mPortalFactory);
-		Root::getSingleton().removeMovableObjectFactory(mAntiPortalFactory);
+        Root::getSingleton().removeMovableObjectFactory(mPCZLightFactory);
 	}
 	//---------------------------------------------------------------------
 	void PCZPlugin::uninstall()
@@ -90,12 +81,8 @@ namespace Ogre
 		mPCZSMFactory = 0;
 		OGRE_DELETE mPCZoneFactoryManager;
 		mPCZoneFactoryManager = 0;
-		OGRE_DELETE mPCZLightFactory;
-		mPCZLightFactory = 0;
-		OGRE_DELETE mPortalFactory;
-		mPortalFactory = 0;
-		OGRE_DELETE mAntiPortalFactory;
-		mAntiPortalFactory = 0;
+        OGRE_DELETE mPCZLightFactory;
+        mPCZLightFactory = 0;
 	}
 
 

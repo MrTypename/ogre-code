@@ -18,8 +18,8 @@ namespace Ogre {
 	
 	void ConfigDialog::initialise()
 	{
-		const RenderSystemList& renderers = Root::getSingleton().getAvailableRenderers();
-		RenderSystem* renderer = renderers.front();
+		RenderSystemList* renderers = Root::getSingleton().getAvailableRenderers();
+		RenderSystem* renderer = renderers->front();
 		ConfigOptionMap config = renderer->getConfigOptions();
 
 		ConfigOptionMap::iterator cfi;
@@ -91,8 +91,8 @@ namespace Ogre {
 	
 	void ConfigDialog::run()
 	{
-		const RenderSystemList& renderers = Root::getSingleton().getAvailableRenderers();
-		RenderSystem* renderer = renderers.front();
+		RenderSystemList* renderers = Root::getSingleton().getAvailableRenderers();
+		RenderSystem* renderer = renderers->front();
 
 		SInt16 value = 0;
 
@@ -211,8 +211,8 @@ namespace Ogre {
 	bool ConfigDialog::display()
 	{
 		// TODO: Fix OS X Config dialog
-		const RenderSystemList& renderers = Root::getSingleton().getAvailableRenderers();
-		RenderSystem* renderer = renderers.front();
+		RenderSystemList* renderers = Root::getSingleton().getAvailableRenderers();
+		RenderSystem* renderer = renderers->front();
 
 		// WARNING: restoreConfig() should not be invoked here as Root calls
 		// it before this method anyway, and invoking restoreConfig() here

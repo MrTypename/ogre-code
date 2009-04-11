@@ -36,12 +36,6 @@ Torus Knot Software Ltd.
 #include "OgreResource.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Resources
-	*  @{
-	*/
 
 	/// Identifier of a background process
 	typedef unsigned long BackgroundProcessTicket;
@@ -159,8 +153,8 @@ namespace Ogre {
 			Listener* listener;
 			BackgroundProcessResult result;
 		};
-		typedef list<Request>::type RequestQueue;
-		typedef map<BackgroundProcessTicket, Request*>::type RequestTicketMap;
+		typedef std::list<Request> RequestQueue;
+		typedef std::map<BackgroundProcessTicket, Request*> RequestTicketMap;
 		
 		/// Queue of requests, used to store and order requests
 		RequestQueue mRequestQueue;
@@ -188,7 +182,7 @@ namespace Ogre {
 			// Type 2 - ResourceBackgroundQueue::Listener kind
             Request req;
 		};
-		typedef list<QueuedNotification>::type NotificationQueue;
+		typedef std::list<QueuedNotification> NotificationQueue;
 		/// Queued notifications of background loading being finished
 		NotificationQueue mNotificationQueue;
 		/// Mutex to protect the background event queue]
@@ -509,8 +503,6 @@ namespace Ogre {
 
 	};
 
-	/** @} */
-	/** @} */
 
 }
 

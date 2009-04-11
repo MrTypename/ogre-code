@@ -80,7 +80,7 @@ namespace Ogre {
 		void _createSurfaceList();
 
         /// Used to hold images between calls to prepare and load.
-        typedef SharedPtr<vector<Image>::type > LoadedImages;
+        typedef SharedPtr<std::vector<Image> > LoadedImages;
 
         /** Vector of images that were pulled from disk by
             prepareLoad but have yet to be pushed into texture memory
@@ -94,7 +94,7 @@ namespace Ogre {
         GLSupport& mGLSupport;
 		
 		/// Vector of pointers to subsurfaces
-		typedef vector<HardwarePixelBufferSharedPtr>::type SurfaceList;
+		typedef std::vector<HardwarePixelBufferSharedPtr> SurfaceList;
 		SurfaceList	mSurfaceList;
     };
 

@@ -792,7 +792,7 @@ namespace Ogre {
     {
         // Collect format names sorted by length, it's required by BNF compiler
         // that similar tokens need longer ones comes first.
-        typedef multimap<String::size_type, String>::type FormatNameMap;
+        typedef std::multimap<String::size_type, String> FormatNameMap;
         FormatNameMap formatNames;
         for (size_t i = 0; i < PF_COUNT; ++i)
         {
@@ -1274,9 +1274,6 @@ namespace Ogre {
             + (src.left + src.top * src.rowPitch + src.front * src.slicePitch) * srcPixelSize;
         uint8 *dstptr = static_cast<uint8*>(dst.data)
             + (dst.left + dst.top * dst.rowPitch + dst.front * dst.slicePitch) * dstPixelSize;
-		
-		// Old way, not taking into account box dimensions
-		//uint8 *srcptr = static_cast<uint8*>(src.data), *dstptr = static_cast<uint8*>(dst.data);
 
         // Calculate pitches+skips in bytes
         const size_t srcRowSkipBytes = src.getRowSkip()*srcPixelSize;

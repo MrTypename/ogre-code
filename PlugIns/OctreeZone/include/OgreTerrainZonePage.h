@@ -60,8 +60,8 @@ namespace Ogre {
     class _OgreOctreeZonePluginExport TerrainZonePage : public GeometryAllocatedObject
     {
     public:
-        typedef vector< TerrainZoneRenderable * >::type TerrainZoneRow;
-        typedef vector< TerrainZoneRow >::type TerrainZone2D;
+        typedef std::vector < TerrainZoneRenderable * > TerrainZoneRow;
+        typedef std::vector < TerrainZoneRow > TerrainZone2D;
         
         /// 2-dimensional vector of tiles, pre-allocated to the correct size
         TerrainZone2D tiles;

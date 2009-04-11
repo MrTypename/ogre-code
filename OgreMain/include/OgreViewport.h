@@ -34,13 +34,7 @@ Torus Knot Software Ltd.
 #include "OgreColourValue.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup RenderSystem
-	*  @{
-	*/
-	/** An abstraction of a viewport, i.e. a rendering region on a render
+    /** An abstraction of a viewport, i.e. a rendering region on a render
         target.
         @remarks
             A viewport is the meeting of a camera and a rendering surface -
@@ -331,8 +325,6 @@ namespace Ogre {
 		/// Material scheme
 		String mMaterialSchemeName;
     };
-	/** @} */
-	/** @} */
 
 }
 

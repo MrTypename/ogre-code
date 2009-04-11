@@ -38,13 +38,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup RenderSystem
-	*  @{
-	*/
-	/** Specialisation of HardwareBuffer for a pixel buffer. The
+    /** Specialisation of HardwareBuffer for a pixel buffer. The
     	HardwarePixelbuffer abstracts an 1D, 2D or 3D quantity of pixels
     	stored by the rendering API. The buffer can be located on the card
     	or in main memory depending on its usage. One mipmap level of a
@@ -199,8 +193,6 @@ namespace Ogre {
 
     };
 
-	/** @} */
-	/** @} */
 }
 #endif
 

@@ -38,7 +38,6 @@ Torus Knot Software Ltd.
 #include "OgreAnimation.h"
 #include "OgreAnimationTrack.h"
 #include "OgreKeyFrame.h"
-#include "OgreLodStrategyManager.h"
 
 namespace Ogre {
 
@@ -1176,10 +1175,8 @@ namespace Ogre {
         TiXmlElement* lodNode = 
             mMeshNode->InsertEndChild(TiXmlElement("levelofdetail"))->ToElement();
 
-        const LodStrategy *strategy = pMesh->getLodStrategy();
 		unsigned short numLvls = pMesh->getNumLodLevels();
 		bool manual = pMesh->isLodManual();
-        lodNode->SetAttribute("strategy", strategy->getName());
 		lodNode->SetAttribute("numlevels", StringConverter::toString(numLvls));
 		lodNode->SetAttribute("manual", StringConverter::toString(manual));
 
@@ -1227,8 +1224,8 @@ namespace Ogre {
 		TiXmlElement* manualNode = 
 			usageNode->InsertEndChild(TiXmlElement("lodmanual"))->ToElement();
 
-		manualNode->SetAttribute("value", 
-            StringConverter::toString(usage.userValue));
+		manualNode->SetAttribute("fromdepthsquared", 
+			StringConverter::toString(usage.fromDepthSquared));
 		manualNode->SetAttribute("meshname", usage.manualName);
 
 	}
@@ -1239,8 +1236,8 @@ namespace Ogre {
 	{
 		TiXmlElement* generatedNode = 
 			usageNode->InsertEndChild(TiXmlElement("lodgenerated"))->ToElement();
-		generatedNode->SetAttribute("value", 
-			StringConverter::toString(usage.userValue));
+		generatedNode->SetAttribute("fromdepthsquared", 
+			StringConverter::toString(usage.fromDepthSquared));
 
 		// Iterate over submeshes at this level
 		unsigned short numsubs = pMesh->getNumSubMeshes();
@@ -1318,7 +1315,7 @@ namespace Ogre {
 
 			submeshNode->SetAttribute("index",  StringConverter::toString(idx));
 
-			for (vector<Vector3>::type::const_iterator v = sm->extremityPoints.begin ();
+			for (std::vector<Vector3>::const_iterator v = sm->extremityPoints.begin ();
 				 v != sm->extremityPoints.end (); ++v)
 			{
 				TiXmlElement* vert = submeshNode->InsertEndChild(
@@ -1335,16 +1332,7 @@ namespace Ogre {
 		
         LogManager::getSingleton().logMessage("Parsing LOD information...");
 
-        const char* val = lodNode->Attribute("strategy");
-        // This attribute is optional to maintain backwards compatibility
-        if (val)
-        {
-            String strategyName = val;
-            LodStrategy *strategy = LodStrategyManager::getSingleton().getStrategy(strategyName);
-            mpMesh->setLodStrategy(strategy);
-        }
-
-		val = lodNode->Attribute("numlevels");
+		const char* val = lodNode->Attribute("numlevels");
 		unsigned short numLevels = static_cast<unsigned short>(
 			StringConverter::parseUnsignedInt(val));
 
@@ -1387,22 +1375,8 @@ namespace Ogre {
 	void XMLMeshSerializer::readLodUsageManual(TiXmlElement* manualNode, unsigned short index)
 	{
 		MeshLodUsage usage;
-		const char* val = manualNode->Attribute("value");
-		Real userValue;
-        // If value attribute not found check for old name
-        if (!val)
-        {
-            val = manualNode->Attribute("fromdepthsquared");
-            if (val)
-                LogManager::getSingleton().logMessage("WARNING: 'fromdepthsquared' attribute has been renamed to 'value'.");
-			// user values are non-squared
-			usage.userValue = Math::Sqrt(StringConverter::parseReal(val));
-        }
-		else
-		{
-			usage.userValue = StringConverter::parseReal(val);
-		}
-		usage.value = mpMesh->getLodStrategy()->transformUserValue(usage.userValue);
+		const char* val = manualNode->Attribute("fromdepthsquared");
+		usage.fromDepthSquared = StringConverter::parseReal(val);
 		usage.manualName = manualNode->Attribute("meshname");
         usage.edgeData = NULL;
 
@@ -1412,22 +1386,8 @@ namespace Ogre {
 	void XMLMeshSerializer::readLodUsageGenerated(TiXmlElement* genNode, unsigned short index)
 	{
 		MeshLodUsage usage;
-		const char* val = genNode->Attribute("value");
-		Real userValue;
-        // If value attribute not found check for old name
-        if (!val)
-        {
-            val = genNode->Attribute("fromdepthsquared");
-            if (val)
-                LogManager::getSingleton().logMessage("WARNING: 'fromdepthsquared' attribute has been renamed to 'value'.");
-			// user values are non-squared
-			usage.userValue = Math::Sqrt(StringConverter::parseReal(val));
-		}
-		else
-		{
-			usage.userValue = StringConverter::parseReal(val);
-		}
-		usage.value = mpMesh->getLodStrategy()->transformUserValue(usage.userValue);
+		const char* val = genNode->Attribute("fromdepthsquared");
+		usage.fromDepthSquared = StringConverter::parseReal(val);
 		usage.manualMesh.setNull();
 		usage.manualName = "";
         usage.edgeData = NULL;

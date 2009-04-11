@@ -38,13 +38,7 @@ Torus Knot Software Ltd.
 #include "OgrePlane.h"
 namespace Ogre
 {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Math
-	*  @{
-	*/
-	/** Class encapsulating a standard 4x4 homogeneous matrix.
+    /** Class encapsulating a standard 4x4 homogeneous matrix.
         @remarks
             OGRE uses column vectors when applying matrix multiplications,
             This means a vector is represented as a single column, 4-row
@@ -138,29 +132,7 @@ namespace Ogre
         }
         
 
-		/** Exchange the contents of this matrix with another. 
-		*/
-		inline void swap(Matrix4& other)
-		{
-			std::swap(m[0][0], other.m[0][0]);
-			std::swap(m[0][1], other.m[0][1]);
-			std::swap(m[0][2], other.m[0][2]);
-			std::swap(m[0][3], other.m[0][3]);
-			std::swap(m[1][0], other.m[1][0]);
-			std::swap(m[1][1], other.m[1][1]);
-			std::swap(m[1][2], other.m[1][2]);
-			std::swap(m[1][3], other.m[1][3]);
-			std::swap(m[2][0], other.m[2][0]);
-			std::swap(m[2][1], other.m[2][1]);
-			std::swap(m[2][2], other.m[2][2]);
-			std::swap(m[2][3], other.m[2][3]);
-			std::swap(m[3][0], other.m[3][0]);
-			std::swap(m[3][1], other.m[3][1]);
-			std::swap(m[3][2], other.m[3][2]);
-			std::swap(m[3][3], other.m[3][3]);
-		}
-
-		inline Real* operator [] ( size_t iRow )
+        inline Real* operator [] ( size_t iRow )
         {
             assert( iRow < 4 );
             return m[iRow];
@@ -649,8 +621,6 @@ namespace Ogre
             v.x*mat[0][3] + v.y*mat[1][3] + v.z*mat[2][3] + v.w*mat[3][3]
             );
     }
-	/** @} */
-	/** @} */
 
 }
 #endif

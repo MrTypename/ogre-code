@@ -33,13 +33,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
-	/** Abstract factory class. Does nothing by itself, but derived classes can add
+    /** Abstract factory class. Does nothing by itself, but derived classes can add
         functionality.
     */
     template< typename T > class FactoryObj
@@ -66,8 +60,6 @@ namespace Ogre {
         virtual void destroyInstance( T* ) = 0;    
     };
 
-	/** @} */
-	/** @} */
 } // namespace
 
 #endif

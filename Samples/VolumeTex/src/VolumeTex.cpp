@@ -64,7 +64,7 @@ public:
 		const float vscale = 1.0f/vcut;
 		
 		HardwarePixelBufferSharedPtr buffer = ptex->getBuffer(0, 0);
-		Ogre::StringStream d;
+		std::stringstream d;
 		d << "HardwarePixelBuffer " << buffer->getWidth() << " " << buffer->getHeight() << " " << buffer->getDepth();
 		LogManager::getSingleton().logMessage(d.str());
 		
@@ -74,7 +74,7 @@ public:
 		d << "PixelBox " << pb.getWidth() << " " << pb.getHeight() << " " << pb.getDepth() << " " << pb.rowPitch << " " << pb.slicePitch << " " << pb.data << " " << PixelUtil::getFormatName(pb.format);
 		LogManager::getSingleton().logMessage(d.str());
 		
-		Ogre::uint32 *pbptr = static_cast<Ogre::uint32*>(pb.data);
+		uint32 *pbptr = static_cast<uint32*>(pb.data);
 		for(size_t z=pb.front; z<pb.back; z++) 
         {
             for(size_t y=pb.top; y<pb.bottom; y++)

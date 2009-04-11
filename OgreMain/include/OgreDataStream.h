@@ -35,14 +35,8 @@ Torus Knot Software Ltd.
 #include <istream>
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Resources
-	*  @{
-	*/
 
-	/** General purpose class used for encapsulating the reading and writing of data.
+	/** General purpose class used for encapsulating the reading of data.
 	@remarks
 		This class performs basically the same tasks as std::basic_istream, 
 		except that it does not have any formatting capabilities, and is
@@ -63,35 +57,19 @@ namespace Ogre {
 	*/
 	class _OgreExport DataStream : public StreamAlloc
 	{
-	public:
-		enum AccessMode
-		{
-			READ = 1, 
-			WRITE = 2
-		};
 	protected:
 		/// The name (e.g. resource name) that can be used to identify the source fot his data (optional)
 		String mName;		
         /// Size of the data in the stream (may be 0 if size cannot be determined)
         size_t mSize;
-		/// What type of access is allowed (AccessMode)
-		uint16 mAccess;
-
         #define OGRE_STREAM_TEMP_SIZE 128
 	public:
 		/// Constructor for creating unnamed streams
-        DataStream(uint16 accessMode = READ) : mSize(0), mAccess(accessMode) {}
+        DataStream() : mSize(0) {}
 		/// Constructor for creating named streams
-		DataStream(const String& name, uint16 accessMode = READ) 
-			: mName(name), mSize(0), mAccess(accessMode) {}
+		DataStream(const String& name) : mName(name), mSize(0) {}
 		/// Returns the name of the stream, if it has one.
 		const String& getName(void) { return mName; }
-		/// Gets the access mode of the stream
-		uint16 getAccessMode() const { return mAccess; }
-		/** Reports whether this stream is readable. */
-		virtual bool isReadable() const { return (mAccess & READ) != 0; }
-		/** Reports whether this stream is writeable. */
-		virtual bool isWriteable() const { return (mAccess & WRITE) != 0; }
         virtual ~DataStream() {}
 		// Streaming operators
         template<typename T> DataStream& operator>>(T& val);
@@ -102,18 +80,6 @@ namespace Ogre {
 		@returns The number of bytes read
 		*/
 		virtual size_t read(void* buf, size_t count) = 0;
-		/** Write the requisite number of bytes from the stream (only applicable to 
-			streams that are not read-only)
-		@param buf Pointer to a buffer containing the bytes to write
-		@param count Number of bytes to write
-		@returns The number of bytes written
-		*/
-		virtual size_t write(const void* buf, size_t count)
-		{
-			// default to not supported
-			return 0;
-		}
-
 		/** Get a single line from the stream.
 		@remarks
 			The delimiter character is not included in the data
@@ -194,7 +160,7 @@ namespace Ogre {
 	typedef SharedPtr<DataStream> DataStreamPtr;
 
 	/// List of DataStream items
-	typedef list<DataStreamPtr>::type DataStreamList;
+	typedef std::list<DataStreamPtr> DataStreamList;
 	/// Shared pointer to list of DataStream items
 	typedef SharedPtr<DataStreamList> DataStreamListPtr;
 
@@ -221,9 +187,8 @@ namespace Ogre {
 			this option to true, that you allocated the memory using OGRE_ALLOC_T
 			with a category of MEMCATEGORY_GENERAL ensure the freeing of memory 
 			matches up.
-		@param readOnly Whether to make the stream on this memory read-only once created
 		*/
-		MemoryDataStream(void* pMem, size_t size, bool freeOnClose = false, bool readOnly = false);
+		MemoryDataStream(void* pMem, size_t size, bool freeOnClose = false);
 		
 		/** Wrap an existing memory chunk in a named stream.
 		@param name The name to give the stream
@@ -234,10 +199,9 @@ namespace Ogre {
 			this option to true, that you allocated the memory using OGRE_ALLOC_T
 			with a category of MEMCATEGORY_GENERAL ensure the freeing of memory 
 			matches up.
-		@param readOnly Whether to make the stream on this memory read-only once created
 		*/
 		MemoryDataStream(const String& name, void* pMem, size_t size, 
-				bool freeOnClose = false, bool readOnly = false);
+				bool freeOnClose = false);
 
 		/** Create a stream which pre-buffers the contents of another stream.
 		@remarks
@@ -248,10 +212,9 @@ namespace Ogre {
 			of data
 		@param freeOnClose If true, the memory associated will be destroyed
 			when the stream is destroyed.
-		@param readOnly Whether to make the stream on this memory read-only once created
 		*/
 		MemoryDataStream(DataStream& sourceStream, 
-				bool freeOnClose = true, bool readOnly = false);
+				bool freeOnClose = true);
 		
 		/** Create a stream which pre-buffers the contents of another stream.
 		@remarks
@@ -262,10 +225,9 @@ namespace Ogre {
 			of data
 		@param freeOnClose If true, the memory associated will be destroyed
 			when the stream is destroyed.
-		@param readOnly Whether to make the stream on this memory read-only once created
 		*/
 		MemoryDataStream(DataStreamPtr& sourceStream, 
-				bool freeOnClose = true, bool readOnly = false);
+				bool freeOnClose = true);
 
 		/** Create a named stream which pre-buffers the contents of 
 			another stream.
@@ -278,10 +240,9 @@ namespace Ogre {
 			of data
 		@param freeOnClose If true, the memory associated will be destroyed
 			when the stream is destroyed.
-		@param readOnly Whether to make the stream on this memory read-only once created
 		*/
 		MemoryDataStream(const String& name, DataStream& sourceStream, 
-				bool freeOnClose = true, bool readOnly = false);
+				bool freeOnClose = true);
 
         /** Create a named stream which pre-buffers the contents of 
         another stream.
@@ -294,27 +255,24 @@ namespace Ogre {
         of data
         @param freeOnClose If true, the memory associated will be destroyed
         when the stream is destroyed.
-		@param readOnly Whether to make the stream on this memory read-only once created
         */
         MemoryDataStream(const String& name, const DataStreamPtr& sourceStream, 
-            bool freeOnClose = true, bool readOnly = false);
+            bool freeOnClose = true);
 
         /** Create a stream with a brand new empty memory chunk.
 		@param size The size of the memory chunk to create in bytes
 		@param freeOnClose If true, the memory associated will be destroyed
 			when the stream is destroyed.
-		@param readOnly Whether to make the stream on this memory read-only once created
 		*/
-		MemoryDataStream(size_t size, bool freeOnClose = true, bool readOnly = false);
+		MemoryDataStream(size_t size, bool freeOnClose = true);
 		/** Create a named stream with a brand new empty memory chunk.
 		@param name The name to give the stream
 		@param size The size of the memory chunk to create in bytes
 		@param freeOnClose If true, the memory associated will be destroyed
 			when the stream is destroyed.
-		@param readOnly Whether to make the stream on this memory read-only once created
 		*/
 		MemoryDataStream(const String& name, size_t size, 
-				bool freeOnClose = true, bool readOnly = false);
+				bool freeOnClose = true);
 
 		~MemoryDataStream();
 
@@ -327,11 +285,6 @@ namespace Ogre {
 		/** @copydoc DataStream::read
 		*/
 		size_t read(void* buf, size_t count);
-
-		/** @copydoc DataStream::write
-		*/
-		size_t write(const void* buf, size_t count);
-
 		/** @copydoc DataStream::readLine
 		*/
 		size_t readLine(char* buf, size_t maxCount, const String& delim = "\n");
@@ -375,32 +328,18 @@ namespace Ogre {
 	class _OgreExport FileStreamDataStream : public DataStream
 	{
 	protected:
-		/// Reference to source stream (read)
-		std::istream* mpInStream;
-		/// Reference to source file stream (read-only)
-		std::ifstream* mpFStreamRO;
-		/// Reference to source file stream (read-write)
-		std::fstream* mpFStream;
-        bool mFreeOnClose;	
-
-		void determineAccess();
+		/// Reference to source stream
+		std::ifstream* mpStream;
+        bool mFreeOnClose;			
 	public:
-		/** Construct a read-only stream from an STL stream
+		/** Construct stream from an STL stream
         @param s Pointer to source stream
         @param freeOnClose Whether to delete the underlying stream on 
             destruction of this class
         */
 		FileStreamDataStream(std::ifstream* s, 
             bool freeOnClose = true);
-		/** Construct a read-write stream from an STL stream
-		@param s Pointer to source stream
-		@param freeOnClose Whether to delete the underlying stream on 
-		destruction of this class
-		*/
-		FileStreamDataStream(std::fstream* s, 
-			bool freeOnClose = true);
-
-		/** Construct named read-only stream from an STL stream
+		/** Construct named stream from an STL stream
         @param name The name to give this stream
         @param s Pointer to source stream
         @param freeOnClose Whether to delete the underlying stream on 
@@ -410,17 +349,7 @@ namespace Ogre {
             std::ifstream* s, 
             bool freeOnClose = true);
 
-		/** Construct named read-write stream from an STL stream
-		@param name The name to give this stream
-		@param s Pointer to source stream
-		@param freeOnClose Whether to delete the underlying stream on 
-		destruction of this class
-		*/
-		FileStreamDataStream(const String& name, 
-			std::fstream* s, 
-			bool freeOnClose = true);
-
-		/** Construct named read-only stream from an STL stream, and tell it the size
+		/** Construct named stream from an STL stream, and tell it the size
         @remarks
             This variant tells the class the size of the stream too, which 
             means this class does not need to seek to the end of the stream 
@@ -439,35 +368,11 @@ namespace Ogre {
             size_t size, 
             bool freeOnClose = true);
 
-		/** Construct named read-write stream from an STL stream, and tell it the size
-		@remarks
-		This variant tells the class the size of the stream too, which 
-		means this class does not need to seek to the end of the stream 
-		to determine the size up-front. This can be beneficial if you have
-		metadata about the contents of the stream already.
-		@param name The name to give this stream
-		@param s Pointer to source stream
-		@param size Size of the stream contents in bytes
-		@param freeOnClose Whether to delete the underlying stream on 
-		destruction of this class. If you specify 'true' for this you
-		must ensure that the stream was allocated using OGRE_NEW_T with 
-		MEMCATEGRORY_GENERAL.
-		*/
-		FileStreamDataStream(const String& name, 
-			std::fstream* s, 
-			size_t size, 
-			bool freeOnClose = true);
-
-		~FileStreamDataStream();
+        ~FileStreamDataStream();
 
 		/** @copydoc DataStream::read
 		*/
 		size_t read(void* buf, size_t count);
-
-		/** @copydoc DataStream::write
-		*/
-		size_t write(const void* buf, size_t count);
-
 		/** @copydoc DataStream::readLine
 		*/
         size_t readLine(char* buf, size_t maxCount, const String& delim = "\n");
@@ -510,18 +415,14 @@ namespace Ogre {
 		FILE* mFileHandle;
 	public:
 		/// Create stream from a C file handle
-		FileHandleDataStream(FILE* handle, uint16 accessMode = READ);
+		FileHandleDataStream(FILE* handle);
 		/// Create named stream from a C file handle
-		FileHandleDataStream(const String& name, FILE* handle, uint16 accessMode = READ);
+		FileHandleDataStream(const String& name, FILE* handle);
         ~FileHandleDataStream();
 
 		/** @copydoc DataStream::read
 		*/
 		size_t read(void* buf, size_t count);
-
-		/** @copydoc DataStream::write
-		*/
-		size_t write(const void* buf, size_t count);
 
 		/** @copydoc DataStream::skip
 		*/
@@ -544,8 +445,6 @@ namespace Ogre {
         void close(void);
 
 	};
-	/** @} */
-	/** @} */
 }
 #endif
 

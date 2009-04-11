@@ -40,13 +40,7 @@ Torus Knot Software Ltd.
 namespace Ogre {
 
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Materials
-	*  @{
-	*/
-	/** Class for managing Material settings for Ogre.
+    /** Class for managing Material settings for Ogre.
         @remarks
             Materials control the eventual surface rendering properties of geometry. This class
             manages the library of materials, dealing with programmatic registrations and lookups,
@@ -127,7 +121,7 @@ namespace Ogre {
             const NameValuePairList* params);
 
 		/// Scheme name -> index. Never shrinks! Should be pretty static anyway
-		typedef map<String, unsigned short>::type SchemeMap;
+		typedef std::map<String, unsigned short> SchemeMap;
 		/// List of material schemes
 		SchemeMap mSchemes;
 		/// Current material scheme
@@ -135,7 +129,7 @@ namespace Ogre {
 		/// Current material scheme
 		unsigned short mActiveSchemeIndex;
 
-		typedef list<Listener*>::type ListenerList;
+		typedef std::list<Listener*> ListenerList;
 		ListenerList mListenerList;
 
     public:
@@ -288,8 +282,6 @@ namespace Ogre {
         static MaterialManager* getSingletonPtr(void);
 
     };
-	/** @} */
-	/** @} */
 
 }
 

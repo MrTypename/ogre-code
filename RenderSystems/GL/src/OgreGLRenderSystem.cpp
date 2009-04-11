@@ -54,10 +54,7 @@ Torus Knot Software Ltd.s
 
 // Convenience macro from ARB_vertex_buffer_object spec
 #define VBO_BUFFER_OFFSET(i) ((char *)NULL + (i))
-
-#if OGRE_THREAD_SUPPORT != 1
 GLenum glewContextInit (Ogre::GLSupport *glSupport);
-#endif
 
 namespace Ogre {
 
@@ -103,8 +100,7 @@ namespace Ogre {
 		: mDepthWrite(true), mStencilMask(0xFFFFFFFF), mHardwareBufferManager(0),
 		mGpuProgramManager(0),
 		mGLSLProgramFactory(0),
-		mRTTManager(0),
-		mActiveTextureUnit(0)
+		mRTTManager(0)
 	{
 		size_t i;
 
@@ -575,9 +571,9 @@ namespace Ogre {
 		// Point size
 		if (GLEW_VERSION_1_4)
 		{
-		float ps;
-		glGetFloatv(GL_POINT_SIZE_MAX, &ps);
-		rsc->setMaxPointSize(ps);
+			float ps;
+			glGetFloatv(GL_POINT_SIZE_MAX, &ps);
+			rsc->setMaxPointSize(ps);
 		}
 		else
 		{
@@ -589,15 +585,15 @@ namespace Ogre {
 		// Vertex texture fetching
 		if (mGLSupport->checkExtension("GL_ARB_vertex_shader"))
 		{
-		GLint vUnits;
-		glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &vUnits);
-		rsc->setNumVertexTextureUnits(static_cast<ushort>(vUnits));
-		if (vUnits > 0)
-		{
-			rsc->setCapability(RSC_VERTEX_TEXTURE_FETCH);
-		}
-		// GL always shares vertex and fragment texture units (for now?)
-		rsc->setVertexTextureUnitsShared(true);
+			GLint vUnits;
+			glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &vUnits);
+			rsc->setNumVertexTextureUnits(static_cast<ushort>(vUnits));
+			if (vUnits > 0)
+			{
+				rsc->setCapability(RSC_VERTEX_TEXTURE_FETCH);
+			}
+			// GL always shares vertex and fragment texture units (for now?)
+			rsc->setVertexTextureUnitsShared(true);
 		}
 
 		// Mipmap LOD biasing?
@@ -612,12 +608,6 @@ namespace Ogre {
 			// Alpha to coverage always 'supported' when MSAA is available
 			// although card may ignore it if it doesn't specifically support A2C
 			rsc->setCapability(RSC_ALPHA_TO_COVERAGE);
-		}
-
-		// Advanced blending operations
-		if(GLEW_VERSION_2_0)
-		{
-			rsc->setCapability(RSC_ADVANCED_BLEND_OPERATIONS);
 		}
 
 		return rsc;
@@ -820,9 +810,9 @@ namespace Ogre {
 		{
 			// Before GL version 2.0, we need to get one of the extensions
 			if(caps->hasCapability(RSC_FBO_ARB))
-				GLEW_GET_FUN(__glewDrawBuffers) = glDrawBuffersARB;
+				__glewDrawBuffers = glDrawBuffersARB;
 			else if(caps->hasCapability(RSC_FBO_ATI))
-				GLEW_GET_FUN(__glewDrawBuffers) = glDrawBuffersATI;
+				__glewDrawBuffers = glDrawBuffersATI;
 
 			if(caps->hasCapability(RSC_HWRENDER_TO_TEXTURE))
 			{
@@ -903,11 +893,7 @@ namespace Ogre {
 		for (GLContextList::iterator i = mBackgroundContextList.begin(); 
 			i != mBackgroundContextList.end(); ++i)
 		{
-			GLContext* pCurContext = *i;
-
-			pCurContext->releaseContext();
-
-			delete pCurContext;
+			delete *i;
 		}
 		mBackgroundContextList.clear();
 
@@ -942,32 +928,6 @@ namespace Ogre {
 		}
 	}
 
-	//---------------------------------------------------------------------
-	bool GLRenderSystem::_createRenderWindows(const RenderWindowDescriptionList& renderWindowDescriptions, 
-		RenderWindowList& createdWindows)
-	{		
-		// Call base render system method.
-		if (false == RenderSystem::_createRenderWindows(renderWindowDescriptions, createdWindows))
-			return false;
-
-		// Simply call _createRenderWindow in a loop.
-		for (size_t i = 0; i < renderWindowDescriptions.size(); ++i)
-		{
-			const RenderWindowDescription& curRenderWindowDescription = renderWindowDescriptions[i];			
-			RenderWindow* curWindow = NULL;
-
-			curWindow = _createRenderWindow(curRenderWindowDescription.name, 
-				curRenderWindowDescription.width, 
-				curRenderWindowDescription.height, 
-				curRenderWindowDescription.useFullScreen, 
-				&curRenderWindowDescription.miscParams);
-
-			createdWindows.push_back(curWindow);											
-		}
-								
-		return true;
-	}
-	//---------------------------------------------------------------------
 	RenderWindow* GLRenderSystem::_createRenderWindow(const String &name, 
 		unsigned int width, unsigned int height, bool fullScreen,
 		const NameValuePairList *miscParams)
@@ -980,7 +940,7 @@ namespace Ogre {
 				"GLRenderSystem::_createRenderWindow" );
 		}
 		// Log a message
-		StringStream ss;
+		std::stringstream ss;
 		ss << "GLRenderSystem::_createRenderWindow \"" << name << "\", " <<
 			width << "x" << height << " ";
 		if(fullScreen)
@@ -1059,9 +1019,7 @@ namespace Ogre {
 		LogManager::getSingleton().logMessage("***************************");
 
 		// Get extension function pointers
-#if OGRE_THREAD_SUPPORT != 1
 		glewContextInit(mGLSupport);
-#endif
 	}
 
 
@@ -1451,7 +1409,7 @@ namespace Ogre {
 				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 			}
 			// bind zero texture
-			glBindTexture(GL_TEXTURE_2D, 0); 
+			glBindTexture (GL_TEXTURE_2D, 0); 
 		}
 
 		activateGLTextureUnit(0);
@@ -1647,9 +1605,9 @@ namespace Ogre {
 		GLfloat border[4] = { colour.r, colour.g, colour.b, colour.a };
 		if (activateGLTextureUnit(stage))
 		{
-		glTexParameterfv( mTextureTypes[stage], GL_TEXTURE_BORDER_COLOR, border);
+			glTexParameterfv( mTextureTypes[stage], GL_TEXTURE_BORDER_COLOR, border);
 			activateGLTextureUnit(0);
-	}
+		}
 	}
 	//-----------------------------------------------------------------------------
 	void GLRenderSystem::_setTextureMipmapBias(size_t stage, float bias)
@@ -1658,9 +1616,9 @@ namespace Ogre {
 		{
 			if (activateGLTextureUnit(stage))
 			{
-			glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, bias);
+				glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, bias);
 				activateGLTextureUnit(0);
-		}
+			}
 		}
 
 	}
@@ -1722,7 +1680,7 @@ namespace Ogre {
 		return GL_ONE;
 	}
 
-	void GLRenderSystem::_setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendOperation op )
+	void GLRenderSystem::_setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor)
 	{
 		GLint sourceBlend = getBlendMode(sourceFactor);
 		GLint destBlend = getBlendMode(destFactor);
@@ -1735,34 +1693,11 @@ namespace Ogre {
 			glEnable(GL_BLEND);
 			glBlendFunc(sourceBlend, destBlend);
 		}
-
-		GLint func = GL_FUNC_ADD;
-		switch(op)
-		{
-		case SBO_ADD:
-			func = GL_FUNC_ADD;
-			break;
-		case SBO_SUBTRACT:
-			func = GL_FUNC_SUBTRACT;
-			break;
-		case SBO_REVERSE_SUBTRACT:
-			func = GL_FUNC_REVERSE_SUBTRACT;
-			break;
-		case SBO_MIN:
-			func = GL_MIN;
-			break;
-		case SBO_MAX:
-			func = GL_MAX;
-			break;
-		}
-
-		glBlendEquation(func);
 	}
 	//-----------------------------------------------------------------------------
 	void GLRenderSystem::_setSeparateSceneBlending(
 		SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, 
-		SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha,
-		SceneBlendOperation op, SceneBlendOperation alphaOp )
+		SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha)
 	{
 		GLint sourceBlend = getBlendMode(sourceFactor);
 		GLint destBlend = getBlendMode(destFactor);
@@ -1779,48 +1714,6 @@ namespace Ogre {
 			glEnable(GL_BLEND);
 			glBlendFuncSeparate(sourceBlend, destBlend, sourceBlendAlpha, destBlendAlpha);
 		}
-
-		GLint func = GL_FUNC_ADD, alphaFunc = GL_FUNC_ADD;
-
-		switch(op)
-		{
-		case SBO_ADD:
-			func = GL_FUNC_ADD;
-			break;
-		case SBO_SUBTRACT:
-			func = GL_FUNC_SUBTRACT;
-			break;
-		case SBO_REVERSE_SUBTRACT:
-			func = GL_FUNC_REVERSE_SUBTRACT;
-			break;
-		case SBO_MIN:
-			func = GL_MIN;
-			break;
-		case SBO_MAX:
-			func = GL_MAX;
-			break;
-		}
-
-		switch(alphaOp)
-		{
-		case SBO_ADD:
-			alphaFunc = GL_FUNC_ADD;
-			break;
-		case SBO_SUBTRACT:
-			alphaFunc = GL_FUNC_SUBTRACT;
-			break;
-		case SBO_REVERSE_SUBTRACT:
-			alphaFunc = GL_FUNC_REVERSE_SUBTRACT;
-			break;
-		case SBO_MIN:
-			alphaFunc = GL_MIN;
-			break;
-		case SBO_MAX:
-			alphaFunc = GL_MAX;
-			break;
-		}
-
-		glBlendEquationSeparate(func, alphaFunc);
 	}
 	//-----------------------------------------------------------------------------
 	void GLRenderSystem::_setAlphaRejectSettings(CompareFunction func, unsigned char value, bool alphaToCoverage)
@@ -2690,7 +2583,7 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
             op.vertexData->vertexDeclaration->getElements();
         VertexDeclaration::VertexElementList::const_iterator elem, elemEnd;
         elemEnd = decl.end();
-		vector<GLuint>::type attribsBound;
+		std::vector<GLuint> attribsBound;
 
 		for (elem = decl.begin(); elem != elemEnd; ++elem)
 		{
@@ -2780,7 +2673,7 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
  					if (mCurrentVertexProgram)
  					{
  						// Programmable pipeline - direct UV assignment
- 						glClientActiveTextureARB(GL_TEXTURE0 + elem->getIndex());
+						glClientActiveTextureARB(GL_TEXTURE0 + elem->getIndex());
  						glTexCoordPointer(
  							VertexElement::getTypeCount(elem->getType()), 
  							GLHardwareBufferManager::getGLType(elem->getType()),
@@ -2798,7 +2691,7 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
  							if (mTextureCoordIndex[i] == elem->getIndex() && i < mFixedFunctionTextureUnits)
  							{
 								if (multitexturing)
- 								glClientActiveTextureARB(GL_TEXTURE0 + i);
+ 									glClientActiveTextureARB(GL_TEXTURE0 + i);
  								glTexCoordPointer(
  									VertexElement::getTypeCount(elem->getType()), 
  									GLHardwareBufferManager::getGLType(elem->getType()),
@@ -2817,7 +2710,7 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
         }
 
 		if (multitexturing)
-		glClientActiveTextureARB(GL_TEXTURE0);
+			glClientActiveTextureARB(GL_TEXTURE0);
 
 		// Find the correct type to render
 		GLint primType;
@@ -2897,17 +2790,17 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
         glDisableClientState( GL_VERTEX_ARRAY );
 		// only valid up to GL_MAX_TEXTURE_COORDS, which is recorded in mFixedFunctionTextureUnits
 		if (multitexturing)
-        {
+		{
 			for (int i = 0; i < mFixedFunctionTextureUnits; i++)
 			{
-            glClientActiveTextureARB(GL_TEXTURE0 + i);
+				glClientActiveTextureARB(GL_TEXTURE0 + i);
 			}
 			glClientActiveTextureARB(GL_TEXTURE0);
 		}
 		else
 		{
-            glDisableClientState( GL_TEXTURE_COORD_ARRAY );
-        }
+			glDisableClientState( GL_TEXTURE_COORD_ARRAY );
+		}
         glDisableClientState( GL_NORMAL_ARRAY );
         glDisableClientState( GL_COLOR_ARRAY );
 		if (GLEW_EXT_secondary_color)
@@ -2915,7 +2808,7 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 			glDisableClientState( GL_SECONDARY_COLOR_ARRAY );
 		}
  		// unbind any custom attributes
-		for (vector<GLuint>::type::iterator ai = attribsBound.begin(); ai != attribsBound.end(); ++ai)
+		for (std::vector<GLuint>::iterator ai = attribsBound.begin(); ai != attribsBound.end(); ++ai)
  		{
  			glDisableVertexAttribArrayARB(*ai); 
  
@@ -3019,29 +2912,21 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 
 	}
 	//---------------------------------------------------------------------
-	void GLRenderSystem::bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params, uint16 mask)
+	void GLRenderSystem::bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params)
 	{
-		if (mask & (uint16)GPV_GLOBAL)
-		{
-			// We could maybe use GL_EXT_bindable_uniform here to produce Dx10-style
-			// shared constant buffers, but GPU support seems fairly weak?
-			// for now, just copy
-			params->_copySharedParams();
-		}
-
 		switch (gptype)
 		{
 		case GPT_VERTEX_PROGRAM:
 			mActiveVertexGpuProgramParameters = params;
-			mCurrentVertexProgram->bindProgramParameters(params, mask);
+			mCurrentVertexProgram->bindProgramParameters(params);
 			break;
 		case GPT_GEOMETRY_PROGRAM:
 			mActiveGeometryGpuProgramParameters = params;
-			mCurrentGeometryProgram->bindProgramParameters(params, mask);
+			mCurrentGeometryProgram->bindProgramParameters(params);
 			break;
 		case GPT_FRAGMENT_PROGRAM:
 			mActiveFragmentGpuProgramParameters = params;
-			mCurrentFragmentProgram->bindProgramParameters(params, mask);
+			mCurrentFragmentProgram->bindProgramParameters(params);
 			break;
 		}
 	}
@@ -3318,14 +3203,14 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 	{
 		if (GLEW_VERSION_1_2)
 		{
-		// Set nicer lighting model -- d3d9 has this by default
-		glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
-		glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 1);        
+			// Set nicer lighting model -- d3d9 has this by default
+			glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
+			glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 1);        
 		}
 		if (GLEW_VERSION_1_4)
 		{
-		glEnable(GL_COLOR_SUM);
-		glDisable(GL_DITHER);
+			glEnable(GL_COLOR_SUM);
+			glDisable(GL_DITHER);
 		}
 
 		// Check for FSAA
@@ -3405,20 +3290,20 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 
 		if (GLEW_VERSION_1_2)
 		{
-		// Enable / disable sRGB states
-		if (target->isHardwareGammaEnabled())
-		{
-			glEnable(GL_FRAMEBUFFER_SRGB_EXT);
-			
-			// Note: could test GL_FRAMEBUFFER_SRGB_CAPABLE_EXT here before
-			// enabling, but GL spec says incapable surfaces ignore the setting
-			// anyway. We test the capability to enable isHardwareGammaEnabled.
+			// Enable / disable sRGB states
+			if (target->isHardwareGammaEnabled())
+			{
+				glEnable(GL_FRAMEBUFFER_SRGB_EXT);
+				
+				// Note: could test GL_FRAMEBUFFER_SRGB_CAPABLE_EXT here before
+				// enabling, but GL spec says incapable surfaces ignore the setting
+				// anyway. We test the capability to enable isHardwareGammaEnabled.
+			}
+			else
+			{
+				glDisable(GL_FRAMEBUFFER_SRGB_EXT);
+			}
 		}
-		else
-		{
-			glDisable(GL_FRAMEBUFFER_SRGB_EXT);
-		}
-	}
 	}
 	//---------------------------------------------------------------------
 	void GLRenderSystem::_unregisterContext(GLContext *context)
@@ -3499,34 +3384,20 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 	//---------------------------------------------------------------------
 	bool GLRenderSystem::activateGLTextureUnit(size_t unit)
 	{
-		if (mActiveTextureUnit != unit)
+		if (GLEW_VERSION_1_2 && unit < getCapabilities()->getNumTextureUnits())
 		{
-			if (GLEW_VERSION_1_2 && unit < getCapabilities()->getNumTextureUnits())
-			{
-				glActiveTextureARB(GL_TEXTURE0 + unit);
-				mActiveTextureUnit = unit;
-				return true;
-			}
-			else if (!unit)
-			{
-				// always ok to use the first unit
-				return true;
-			}
-			else
-			{
-				return false;
-			}
+			glActiveTextureARB(GL_TEXTURE0 + unit);
+			return true;
+		}
+		else if (!unit)
+		{
+			// always ok to use the first unit
+			return true;
 		}
 		else
 		{
-			return true;
+			return false;
 		}
-	}
-
-	//---------------------------------------------------------------------
-	unsigned int GLRenderSystem::getDisplayMonitorCount() const
-	{
-		return mGLSupport->getDisplayMonitorCount();
 	}
 
 

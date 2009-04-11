@@ -39,12 +39,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Materials
-	*  @{
-	*/
 	/// Categorisation of passes for the purpose of additive lighting
 	enum IlluminationStage
 	{
@@ -121,15 +115,6 @@ namespace Ogre {
 
 		// Used to determine if separate alpha blending should be used for color and alpha channels
 		bool mSeparateBlend;
-
-		//-------------------------------------------------------------------------
-		// Blending operations
-		SceneBlendOperation mBlendOperation;
-		SceneBlendOperation mAlphaBlendOperation;
-
-		// Determines if we should use separate blending operations for color and alpha channels
-		bool mSeparateBlendOperation;
-
         //-------------------------------------------------------------------------
 
         //-------------------------------------------------------------------------
@@ -191,7 +176,7 @@ namespace Ogre {
         //-------------------------------------------------------------------------
 
         /// Storage of texture unit states
-        typedef vector<TextureUnitState*>::type TextureUnitStates;
+        typedef std::vector<TextureUnitState*> TextureUnitStates;
         TextureUnitStates mTextureUnitStates;
 
 		// Vertex program details
@@ -219,7 +204,7 @@ namespace Ogre {
 		// constant, linear, quadratic coeffs
 		Real mPointAttenuationCoeffs[3];
 		// TU Content type lookups
-		typedef vector<unsigned short>::type ContentTypeLookup;
+		typedef std::vector<unsigned short> ContentTypeLookup;
 		mutable ContentTypeLookup mShadowContentTypeLookup;
 		mutable bool mContentTypeLookupBuilt;
 		/// Scissoring for the light?
@@ -233,7 +218,7 @@ namespace Ogre {
 		void _getBlendFlags(SceneBlendType type, SceneBlendFactor& source, SceneBlendFactor& dest);
 
 	public:
-		typedef set<Pass*>::type PassSet;
+		typedef std::set<Pass*> PassSet;
     protected:
 		/// List of Passes whose hashes need recalculating
 		static PassSet msDirtyHashList;
@@ -673,42 +658,6 @@ namespace Ogre {
 	    /** Retrieves the alpha destination blending factor for the material (as set using Materiall::setSeparateSceneBlending).
         */
 		SceneBlendFactor getDestBlendFactorAlpha() const;
-
-		/** Sets the specific operation used to blend source and destination pixels together.
-			@remarks 
-			By default this operation is +, which creates this equation
-			<span align="center">
-			final = (texture * sourceFactor) + (pixel * destFactor)
-			</span>
-			By setting this to something other than SBO_ADD you can change the operation to achieve
-			a different effect.
-			@param op The blending operation mode to use for this pass
-		*/
-		void setSceneBlendingOperation(SceneBlendOperation op);
-
-		/** Sets the specific operation used to blend source and destination pixels together.
-			@remarks 
-			By default this operation is +, which creates this equation
-			<span align="center">
-			final = (texture * sourceFactor) + (pixel * destFactor)
-			</span>
-			By setting this to something other than SBO_ADD you can change the operation to achieve
-			a different effect.
-			This function allows more control over blending since it allows you to select different blending
-			modes for the color and alpha channels
-			@param op The blending operation mode to use for color channels in this pass
-			@param op The blending operation mode to use for alpha channels in this pass
-		*/
-		void setSeparateSceneBlendingOperation(SceneBlendOperation op, SceneBlendOperation alphaOp);
-
-		/** Returns true if this pass uses separate scene blending operations. */
-		bool hasSeparateSceneBlendingOperations() const;
-
-		/** Returns the current blending operation */
-		SceneBlendOperation getSceneBlendingOperation() const;
-
-		/** Returns the current alpha blending operation */
-		SceneBlendOperation getSceneBlendingOperationAlpha() const;
 
 		/** Returns true if this pass has some element of transparency. */
 		bool isTransparent(void) const;
@@ -1391,11 +1340,10 @@ namespace Ogre {
         /** Tells the pass that it needs recompilation. */
         void _notifyNeedsRecompile(void);
 
-		/** Update automatic parameters.
-		@param source The source of the parameters
-		@param variabilityMask A mask of GpuParamVariability which identifies which autos will need updating
-		*/
-		void _updateAutoParams(const AutoParamDataSource* source, uint16 variabilityMask) const;
+        /** Update any automatic parameters (except lights) on this pass */
+        void _updateAutoParamsNoLights(const AutoParamDataSource* source) const;
+        /** Update any automatic light parameters on this pass */
+        void _updateAutoParamsLightsOnly(const AutoParamDataSource* source) const;
 
 		/** Gets the 'nth' texture which references the given content type.
 		@remarks
@@ -1647,10 +1595,8 @@ namespace Ogre {
 		IlluminationPass() {}
     };
 
-    typedef vector<IlluminationPass*>::type IlluminationPassList;
+    typedef std::vector<IlluminationPass*> IlluminationPassList;
 
-	/** @} */
-	/** @} */
 
 }
 

@@ -36,13 +36,7 @@ Torus Knot Software Ltd.
 namespace Ogre {
 
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Scene
-	*  @{
-	*/
-	/** Class which represents the renderable aspects of a set of shadow volume faces. 
+    /** Class which represents the renderable aspects of a set of shadow volume faces. 
     @remarks
         Note that for casters comprised of more than one set of vertex buffers (e.g. SubMeshes each
         using their own geometry), it will take more than one ShadowRenderable to render the 
@@ -126,7 +120,7 @@ namespace Ogre {
         /** Gets the world space bounding box of the dark cap, as extruded using the light provided */
         virtual const AxisAlignedBox& getDarkCapBounds(const Light& light, Real dirLightExtrusionDist) const = 0;
 
-        typedef vector<ShadowRenderable*>::type ShadowRenderableList;
+        typedef std::vector<ShadowRenderable*> ShadowRenderableList;
         typedef VectorIterator<ShadowRenderableList> ShadowRenderableListIterator;
 
         /** Gets an iterator over the renderables required to render the shadow volume. 
@@ -212,8 +206,6 @@ namespace Ogre {
 
 
     };
-	/** @} */
-	/** @} */
 }
 
 #endif

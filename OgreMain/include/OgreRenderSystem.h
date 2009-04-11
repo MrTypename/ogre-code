@@ -49,15 +49,8 @@ Torus Knot Software Ltd.
 
 namespace Ogre
 {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup RenderSystem
-	*  @{
-	*/
-
-	typedef map< String, RenderTarget * >::type RenderTargetMap;
-	typedef multimap<uchar, RenderTarget * >::type RenderTargetPriorityMap;
+	typedef std::map< String, RenderTarget * > RenderTargetMap;
+	typedef std::multimap<uchar, RenderTarget * > RenderTargetPriorityMap;
 
 	class TextureManager;
 	/// Enum describing the ways to generate texture coordinates
@@ -347,14 +340,8 @@ namespace Ogre
 		**
 		Key: "FSAA"
 		Description: Full screen antialiasing factor
-		Values: 0,2,4,8,16
+		Values: 0,2,4,6,...
 		Default: 0 
-		**
-		Key: "FSAAHint"
-		Description: Full screen antialiasing hint
-		Values: Depends on rendersystem and hardware. Currently supports "Quality"
-			option.
-		Default: "" 
 		**
 		Key: "displayFrequency"
 		Description: Display frequency rate, for fullscreen mode
@@ -391,25 +378,6 @@ namespace Ogre
 		virtual RenderWindow* _createRenderWindow(const String &name, unsigned int width, unsigned int height, 
 			bool fullScreen, const NameValuePairList *miscParams = 0) = 0;
 
-		/** Creates multiple rendering windows.		
-		@param
-		renderWindowDescriptions Array of structures containing the descriptions of each render window.
-		The structure's members are the same as the parameters of _createRenderWindow:
-		* name
-		* width
-		* height
-		* fullScreen
-		* miscParams
-		See _createRenderWindow for details about each member.		
-		@param
-		createdWindows This array will hold the created render windows.
-		@returns
-		true on success.		
-		*/
-		virtual bool _createRenderWindows(const RenderWindowDescriptionList& renderWindowDescriptions, 
-			RenderWindowList& createdWindows);
-
-		
 		/**	Create a MultiRenderTarget, which is a render target that renders to multiple RenderTextures
 		at once. Surfaces can be bound and unbound at will.
 		This fails if mCapabilities->getNumMultiRenderTargets() is smaller than 2.
@@ -478,9 +446,6 @@ namespace Ogre
 		up to the number specified (this allows the same list to be used with different
 		count limits) */
 		virtual void _useLights(const LightList& lights, unsigned short limit) = 0;
-		/** Are fixed-function lights provided in view space? Affects optimisation. 
-		*/
-		virtual bool areFixedFunctionLightsInViewSpace() const { return false; }
 		/** Sets the world transform matrix. */
 		virtual void _setWorldMatrix(const Matrix4 &m) = 0;
 		/** Sets multiple world matrices (vertex blending). */
@@ -673,12 +638,10 @@ namespace Ogre
 		<p align="center">final = (texture * sourceFactor) + (pixel * destFactor)</p>
 		Each of the factors is specified as one of a number of options, as specified in the SceneBlendFactor
 		enumerated type.
-		By changing the operation you can change addition between the source and destination pixels to a different operator.
 		@param sourceFactor The source factor in the above calculation, i.e. multiplied by the texture colour components.
 		@param destFactor The destination factor in the above calculation, i.e. multiplied by the pixel colour components.
-		@param op The blend operation mode for combining pixels
 		*/
-		virtual void _setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendOperation op = SBO_ADD) = 0;
+		virtual void _setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor) = 0;
 
 		/** Sets the global blending factors for combining subsequent renders with the existing frame contents.
 		The result of the blending operation is:</p>
@@ -689,11 +652,8 @@ namespace Ogre
 		@param destFactor The destination factor in the above calculation, i.e. multiplied by the pixel colour components.
 		@param sourceFactorAlpha The source factor in the above calculation for the alpha channel, i.e. multiplied by the texture alpha components.
 		@param destFactorAlpha The destination factor in the above calculation for the alpha channel, i.e. multiplied by the pixel alpha components.
-		@param op The blend operation mode for combining pixels
-		@param alphaOp The blend operation mode for combining pixel alpha values
 		*/
-		virtual void _setSeparateSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, 
-			SceneBlendFactor destFactorAlpha, SceneBlendOperation op = SBO_ADD, SceneBlendOperation alphaOp = SBO_ADD) = 0;
+		virtual void _setSeparateSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha) = 0;
 
 		/** Sets the global alpha rejection approach for future renders.
 		By default images are rendered regardless of texture alpha. This method lets you change that.
@@ -1016,13 +976,8 @@ namespace Ogre
 		virtual void bindGpuProgram(GpuProgram* prg);
 
 		/** Bind Gpu program parameters.
-		@param gptype The type of program to bind the parameters to
-		@param params The parameters to bind
-		@param variabilityMask A mask of GpuParamVariability identifying which params need binding
 		*/
-		virtual void bindGpuProgramParameters(GpuProgramType gptype, 
-			GpuProgramParametersSharedPtr params, uint16 variabilityMask) = 0;
-
+		virtual void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params) = 0;
 		/** Only binds Gpu program parameters used for passes that have more than one iteration rendering
 		*/
 		virtual void bindGpuProgramPassIterationParameters(GpuProgramType gptype) = 0;
@@ -1153,11 +1108,6 @@ namespace Ogre
 			mDerivedDepthBiasSlopeScale = slopeScale;
 		}
 
-		/**
-         * Set current render target to target, enabling its device context if needed
-         */
-        virtual void _setRenderTarget(RenderTarget *target) = 0;
-
 		/** Defines a listener on the custom events that this render system 
 		can raise.
 		@see RenderSystem::addListener
@@ -1242,12 +1192,6 @@ namespace Ogre
 		@see RenderSystem::registerThread
 		*/
 		virtual void unregisterThread() = 0;
-
-		/**
-		* Gets the number of display monitors.
-		@see Root::getDisplayMonitorCount
-		*/
-		virtual unsigned int getDisplayMonitorCount() const = 0;
 	protected:
 
 
@@ -1309,10 +1253,10 @@ namespace Ogre
 		/// Internal method for firing a rendersystem event
 		virtual void fireEvent(const String& name, const NameValuePairList* params = 0);
 
-		typedef list<Listener*>::type ListenerList;
+		typedef std::list<Listener*> ListenerList;
 		ListenerList mEventListeners;
 
-		typedef list<HardwareOcclusionQuery*>::type HardwareOcclusionQueryList;
+		typedef std::list<HardwareOcclusionQuery*> HardwareOcclusionQueryList;
 		HardwareOcclusionQueryList mHwOcclusionQueries;
 
 		bool mVertexProgramBound;
@@ -1344,8 +1288,6 @@ namespace Ogre
 
 
 	};
-	/** @} */
-	/** @} */
 }
 
 #endif

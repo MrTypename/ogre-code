@@ -31,12 +31,6 @@ Torus Knot Software Ltd.
 
 #include "OgreImageCodec.h"
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Image
-	*  @{
-	*/
 
 	// Forward declarations
 	struct DXTColourBlock;
@@ -90,8 +84,6 @@ namespace Ogre {
 		static void shutdown(void);
 
     };
-	/** @} */
-	/** @} */
 
 } // namespace
 

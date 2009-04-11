@@ -87,18 +87,12 @@ public:
     */
     virtual void initialiseExtensions();
 
-	/// @copydoc RenderSystem::getDisplayMonitorCount
-	virtual unsigned int getDisplayMonitorCount() const
-	{
-		return 1;
-	}
-
 protected:
 	// Stored options
     ConfigOptionMap mOptions;
 
 	// This contains the complete list of supported extensions
-    set<String>::type extensionList;
+    std::set<String> extensionList;
 private:
     String mVersion;
     String mVendor;

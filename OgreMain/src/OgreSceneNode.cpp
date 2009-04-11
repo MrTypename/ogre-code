@@ -44,7 +44,6 @@ namespace Ogre {
         : Node()
         , mWireBoundingBox(0)
         , mShowBoundingBox(false)
-        , mHideBoundingBox(false)
         , mCreator(creator)
         , mYawFixed(false)
         , mAutoTrackTarget(0)
@@ -57,7 +56,6 @@ namespace Ogre {
         : Node(name)
         , mWireBoundingBox(0)
         , mShowBoundingBox(false)
-        , mHideBoundingBox(false)
         , mCreator(creator)
         , mYawFixed(false)
         , mAutoTrackTarget(0)
@@ -325,28 +323,18 @@ namespace Ogre {
         if (displayNodes)
         {
             // Include self in the render queue
-            queue->addRenderable(getDebugRenderable());
+            queue->addRenderable(this);
         }
 
 		// Check if the bounding box should be shown.
 		// See if our flag is set or if the scene manager flag is set.
-		if ( !mHideBoundingBox &&
-             (mShowBoundingBox || (mCreator && mCreator->getShowBoundingBoxes())) )
+		if (mShowBoundingBox || (mCreator && mCreator->getShowBoundingBoxes())) 
 		{ 
 			_addBoundingBoxToQueue(queue);
 		}
 
 
     }
-
-	Node::DebugRenderable* SceneNode::getDebugRenderable()
-	{
-		Vector3 hs = mWorldAABB.getHalfSize();
-		Real sz = std::min(hs.x, hs.y);
-		sz = std::min(sz, hs.z);
-		sz = std::max(sz, (Real)1.0);
-		return Node::getDebugRenderable(sz);
-	}
 
 
 	void SceneNode::_addBoundingBoxToQueue(RenderQueue* queue) {
@@ -366,9 +354,6 @@ namespace Ogre {
 		return mShowBoundingBox;
 	}
 
-	void SceneNode::hideBoundingBox(bool bHide) {
-		mHideBoundingBox = bHide;
-	}
 
     //-----------------------------------------------------------------------
     void SceneNode::updateFromParentImpl(void) const
@@ -459,7 +444,7 @@ namespace Ogre {
 		return static_cast<SceneNode*>(this->createChild(name, translate, rotate));
 	}
     //-----------------------------------------------------------------------
-    void SceneNode::findLights(LightList& destList, Real radius, uint32 lightMask) const
+    void SceneNode::findLights(LightList& destList, Real radius) const
     {
         // No any optimisation here, hope inherits more smart for that.
         //
@@ -471,7 +456,7 @@ namespace Ogre {
         if (mCreator)
         {
             // Use SceneManager to calculate
-            mCreator->_populateLightList(this, radius, destList, lightMask);
+            mCreator->_populateLightList(this->_getDerivedPosition(), radius, destList);
         }
         else
         {

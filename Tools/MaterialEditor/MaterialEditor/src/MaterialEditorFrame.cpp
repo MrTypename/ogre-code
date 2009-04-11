@@ -273,13 +273,13 @@ void MaterialEditorFrame::createOgrePane()
 	// which rendering system they want used
 	mDirectXRenderSystem = NULL;
 	mOpenGLRenderSystem = NULL;
-	const RenderSystemList &rl = mRoot.getAvailableRenderers();
+	RenderSystemList *rl = mRoot->getAvailableRenderers();
 	if (rl->empty()) 
 	{
 		wxMessageBox("No render systems found", "Error");
 		return;
 	}
-	for(RenderSystemList::const_iterator it = rl.begin(); it != rl.end(); ++it)
+	for(RenderSystemList::iterator it = rl->begin(); it != rl->end(); ++it)
 	{
 		Ogre::RenderSystem *rs = (*it);
 		rs->setConfigOption("Full Screen", "No");

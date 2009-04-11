@@ -35,12 +35,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Resources
-	*  @{
-	*/
     /** Abstract factory class, archive codec plugins can register concrete
         subclasses of this.
         @remarks
@@ -63,8 +57,6 @@ namespace Ogre {
         virtual ~ArchiveFactory() {}
         // No methods, must just override all methods inherited from FactoryObj
     };
-	/** @} */
-	/** @} */
 
 } // namespace
 

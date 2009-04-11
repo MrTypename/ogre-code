@@ -38,7 +38,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     Log::Log( const String& name, bool debuggerOuput, bool suppressFile ) : 
         mLogLevel(LL_NORMAL), mDebugOut(debuggerOuput),
-        mSuppressFile(suppressFile), mLogName(name), mTimeStamp(true)
+        mSuppressFile(suppressFile), mLogName(name)
     {
 		if (!mSuppressFile)
 		{
@@ -69,29 +69,18 @@ namespace Ogre
             // Write time into log
 			if (!mSuppressFile)
 			{
-				if (mTimeStamp)
-			    {
-                    struct tm *pTime;
-                    time_t ctTime; time(&ctTime);
-                    pTime = localtime( &ctTime );
-                    mfpLog << std::setw(2) << std::setfill('0') << pTime->tm_hour
-                        << ":" << std::setw(2) << std::setfill('0') << pTime->tm_min
-                        << ":" << std::setw(2) << std::setfill('0') << pTime->tm_sec
-                        << ": ";
-                }
-                mfpLog << message << std::endl;
+				struct tm *pTime;
+				time_t ctTime; time(&ctTime);
+				pTime = localtime( &ctTime );
+				mfpLog << std::setw(2) << std::setfill('0') << pTime->tm_hour
+					<< ":" << std::setw(2) << std::setfill('0') << pTime->tm_min
+					<< ":" << std::setw(2) << std::setfill('0') << pTime->tm_sec 
+					<< ": " << message << std::endl;
 
 				// Flush stcmdream to ensure it is written (incase of a crash, we need log to be up to date)
 				mfpLog.flush();
 			}
         }
-    }
-    
-    //-----------------------------------------------------------------------
-    void Log::setTimeStampEnabled(bool timeStamp)
-    {
-		OGRE_LOCK_AUTO_MUTEX
-        mTimeStamp = timeStamp;
     }
 
     //-----------------------------------------------------------------------

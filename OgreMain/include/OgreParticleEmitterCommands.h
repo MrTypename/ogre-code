@@ -34,12 +34,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre  {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Effects
-	*  @{
-	*/
 
     namespace EmitterCommands {
         /// Command object for ParticleEmitter  - see ParamCommand 
@@ -195,8 +189,6 @@ namespace Ogre  {
         };
 
     }
-	/** @} */
-	/** @} */
 
 }
 

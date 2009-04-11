@@ -37,17 +37,10 @@ Torus Knot Software Ltd.
 #include "OgreVertexBoneAssignment.h"
 #include "OgreProgressiveMesh.h"
 #include "OgreAnimationTrack.h"
-#include "OgreResourceGroupManager.h"
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Resources
-	*  @{
-	*/
-	/** Defines a part of a complete mesh.
+    /** Defines a part of a complete mesh.
         @remarks
             Meshes which make up the definition of a discrete 3D object
             are made up of potentially multiple parts. This is because
@@ -108,7 +101,7 @@ namespace Ogre {
                 The use of shared or non-shared index map is determined when
                 model data is converted to the OGRE .mesh format.
         */
-        typedef vector<unsigned short>::type IndexMap;
+        typedef std::vector<unsigned short> IndexMap;
         IndexMap blendIndexToBoneIndexMap;
 
         ProgressiveMesh::LODFaceList mLodFaceList;
@@ -132,13 +125,13 @@ namespace Ogre {
                 If this array is empty, submesh sorting is done like in older versions -
                 by comparing the positions of the owning entity.
          */
-        vector<Vector3>::type extremityPoints;
+        std::vector<Vector3> extremityPoints;
 
         /// Reference to parent Mesh (not a smart pointer so child does not keep parent alive).
         Mesh* parent;
 
         /// Sets the name of the Material which this SubMesh will use
-        void setMaterialName(const String& matName, const String& groupName = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME );
+        void setMaterialName(const String& matName);
         const String& getMaterialName(void) const;
 
         /** Returns true if a material has been assigned to the submesh, otherwise returns false.
@@ -175,7 +168,7 @@ namespace Ogre {
         void clearBoneAssignments(void);
 
         /// Multimap of verex bone assignments (orders by vertex index)
-        typedef multimap<size_t, VertexBoneAssignment>::type VertexBoneAssignmentList;
+        typedef std::multimap<size_t, VertexBoneAssignment> VertexBoneAssignmentList;
         typedef MapIterator<VertexBoneAssignmentList> BoneAssignmentIterator;
 
         /** Gets an iterator for access all bone assignments. 
@@ -278,11 +271,8 @@ namespace Ogre {
 
 
     };
-	/** @} */
-	/** @} */
 
 } // namespace
 
 #endif
-
 

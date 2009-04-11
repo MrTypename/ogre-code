@@ -52,30 +52,24 @@ TODO				 : None known
 
 namespace Ogre
 {
-	PCZSceneNode::PCZSceneNode( SceneManager* creator )
-		: SceneNode( creator ),
-		mHomeZone(0),
-		mAnchored(false),
-		mAllowedToVisit(true),
-		mLastVisibleFrame(0),
-		mLastVisibleFromCamera(0),
-		mEnabled(true),
-		mMoved(false)
+	PCZSceneNode::PCZSceneNode( SceneManager* creator ) : SceneNode( creator )
 	{
+		mHomeZone = 0;
+		mAnchored = false;
+		mAllowedToVisit = true;
+		mLastVisibleFrame = 0;
+		mLastVisibleFromCamera = 0;
+		mEnabled = true;
 	}
-
-	PCZSceneNode::PCZSceneNode( SceneManager* creator, const String& name )
-		: SceneNode( creator, name ),
-		mHomeZone(0),
-		mAnchored(false),
-		mAllowedToVisit(true),
-		mLastVisibleFrame(0),
-		mLastVisibleFromCamera(0),
-		mEnabled(true),
-		mMoved(false)
+	PCZSceneNode::PCZSceneNode( SceneManager* creator, const String& name ) : SceneNode( creator, name )
 	{
+		mHomeZone = 0;
+		mAnchored = false;
+		mAllowedToVisit = true;
+		mLastVisibleFrame = 0;
+		mLastVisibleFromCamera = 0;
+		mEnabled = true;
 	}
-
 	PCZSceneNode::~PCZSceneNode()
 	{
 		// clear visiting zones list
@@ -95,25 +89,19 @@ namespace Ogre
 	}
 	void PCZSceneNode::_update(bool updateChildren, bool parentHasChanged)
 	{
-		Node::_update(updateChildren, parentHasChanged);
-		if (mParent) _updateBounds(); // skip bound update if it's root scene node. Saves a lot of CPU.
+		SceneNode::_update(updateChildren, parentHasChanged);
 
 		mPrevPosition = mNewPosition;
-		mNewPosition = mDerivedPosition;
-	}
-	void PCZSceneNode::updateFromParentImpl() const
-	{
-		SceneNode::updateFromParentImpl();
-		mMoved = true;
+		mNewPosition = _getDerivedPosition();   // do this way since _update is called through SceneManager::_updateSceneGraph which comes before PCZSceneManager::_updatePCZSceneNodes
 	}
     //-----------------------------------------------------------------------
 	SceneNode* PCZSceneNode::createChildSceneNode(const Vector3& translate, 
         const Quaternion& rotate)
 	{
 		PCZSceneNode * childSceneNode = (PCZSceneNode*)(this->createChild(translate, rotate));
-		if (mHomeZone)
+		if (mAnchored)
 		{
-			childSceneNode->setHomeZone(mHomeZone);
+			childSceneNode->anchorToHomeZone(mHomeZone);
 			mHomeZone->_addNode(childSceneNode);
 		}
 		return static_cast<SceneNode*>(childSceneNode);
@@ -123,9 +111,9 @@ namespace Ogre
 		const Quaternion& rotate)
 	{
 		PCZSceneNode * childSceneNode = (PCZSceneNode*)(this->createChild(name, translate, rotate));
-		if (mHomeZone)
+		if (mAnchored)
 		{
-			childSceneNode->setHomeZone(mHomeZone);
+			childSceneNode->anchorToHomeZone(mHomeZone);
 			mHomeZone->_addNode(childSceneNode);
 		}
 		return static_cast<SceneNode*>(childSceneNode);
@@ -148,14 +136,7 @@ namespace Ogre
 	void PCZSceneNode::anchorToHomeZone(PCZone * zone)
 	{
 		mHomeZone = zone;
-		if (zone)
-		{
-			mAnchored = true;
-		}
-		else
-		{
-			mAnchored = false;
-		}
+		mAnchored = true;
 	}
 	void PCZSceneNode::addZoneToVisitingZonesMap(PCZone * zone)
 	{

@@ -34,13 +34,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup RenderSystem
-	*  @{
-	*/
-	/** Abstract class defining common features of hardware buffers.
+    /** Abstract class defining common features of hardware buffers.
     @remarks
  	    A 'hardware buffer' is any area of memory held outside of core system ram,
 	    and in our case refers mostly to video ram, although in theory this class
@@ -330,8 +324,6 @@ namespace Ogre {
 
     		
     };
-	/** @} */
-	/** @} */
 }
 #endif
 

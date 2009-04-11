@@ -69,6 +69,14 @@ namespace Ogre
 		 */
 		bool requiresZoneSpecificNodeData(void);
 
+		/* Add a portal to the zone
+		*/
+		void _addPortal( Portal * );
+
+		/* Remove a portal from the zone
+		*/
+		void _removePortal( Portal * );
+
 		/** (recursive) check the given node against all portals in the zone
 		*/
 		void _checkNodeAgainstPortals(PCZSceneNode *, Portal * );
@@ -80,12 +88,13 @@ namespace Ogre
                                        PCZFrustum *,
                                        Portal *);
 
+		/** Update the spatial data for the portals in the zone
+		*/
+		void updatePortalsSpatially(void);
+
 		/* Update the zone data for each portal 
 		*/
 		void updatePortalsZoneData(void);
-
-		/** Mark nodes dirty base on moving portals. */
-		void dirtyNodeByMovingPortals(void);
 
 		/* Update a node's home zone */
 		PCZone * updateNodeHomeZone(PCZSceneNode * pczsn, bool allowBackTouces);
@@ -150,6 +159,5 @@ namespace Ogre
 }
 
 #endif
-
 
 

@@ -35,12 +35,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
     template <class T> class AtomicObject {
 
         public:
@@ -106,8 +100,6 @@ namespace Ogre {
         volatile T mField;
 
     };
-	/** @} */
-	/** @} */
 
 }
 
@@ -115,12 +107,6 @@ namespace Ogre {
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
     template<class T> class AtomicScalar
     {
 
@@ -181,8 +167,6 @@ namespace Ogre {
         volatile T mField;
 
     };
-	/** @} */
-	/** @} */
 
 }
 
@@ -195,12 +179,6 @@ namespace Ogre {
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
     template<class T> class AtomicScalar
     {
 
@@ -304,8 +282,6 @@ namespace Ogre {
         volatile T mField;
 
     };
-	/** @} */
-	/** @} */
 
 }
 
@@ -313,12 +289,6 @@ namespace Ogre {
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
     template <class T> class AtomicScalar {
 
         public:
@@ -393,8 +363,6 @@ namespace Ogre {
         volatile T mField;
 
     };
-	/** @} */
-	/** @} */
 
 }
 

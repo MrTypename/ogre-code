@@ -36,18 +36,9 @@ Torus Knot Software Ltd.
 
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
 
-    typedef vector<String>::type StringVector;
+    typedef std::vector<String> StringVector;
     typedef SharedPtr<StringVector> StringVectorPtr;
-
-	/** @} */
-	/** @} */
 
 }
 

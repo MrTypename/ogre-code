@@ -74,9 +74,9 @@ namespace Ogre
 			);
 
 		// Vertex program details
-		GpuProgramUsage * vertexProgramUsage = new GpuProgramUsage(GPT_VERTEX_PROGRAM, NULL);
+		GpuProgramUsage * vertexProgramUsage = new GpuProgramUsage(GPT_VERTEX_PROGRAM);
 		// Fragment program details
-		GpuProgramUsage * fragmentProgramUsage = new GpuProgramUsage(GPT_FRAGMENT_PROGRAM, NULL);
+		GpuProgramUsage * fragmentProgramUsage = new GpuProgramUsage(GPT_FRAGMENT_PROGRAM);
 
 
 		HighLevelGpuProgramPtr vs;
@@ -120,9 +120,6 @@ namespace Ogre
 		newPrograms->setVertexProgramUsage(vertexProgramUsage);
 		newPrograms->setFragmentProgramUsage(fragmentProgramUsage);
 		newPrograms->setFixedFuncState(fixedFuncState);
-#ifdef OGRE_DEBUG_MODE
-		newPrograms->ShaderSource=shaderSource;
-#endif
 
 		mProgramsToDeleteAtTheEnd.push_back(newPrograms);
 		return newPrograms;

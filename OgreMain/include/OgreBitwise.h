@@ -32,12 +32,6 @@ Torus Knot Software Ltd.
 #include "OgrePrerequisites.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Math
-	*  @{
-	*/
 
     /** Class for manipulating bit patterns.
     */
@@ -324,9 +318,6 @@ namespace Ogre {
          
 
     };
-	/** @} */
-	/** @} */
-
 }
 
 #endif

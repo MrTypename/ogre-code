@@ -38,13 +38,7 @@ namespace Ogre {
 	
 	class MeshSerializerListener;
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Resources
-	*  @{
-	*/
-	/** Class for serialising mesh data to/from an OGRE .mesh file.
+    /** Class for serialising mesh data to/from an OGRE .mesh file.
     @remarks
         This class allows exporters to write OGRE .mesh files easily, and allows the
         OGRE engine to import .mesh files into instantiated OGRE Meshes.
@@ -101,7 +95,7 @@ namespace Ogre {
     protected:
         static String msCurrentVersion;
 
-        typedef map<String, MeshSerializerImpl* >::type MeshSerializerImplMap;
+        typedef std::map<String, MeshSerializerImpl* > MeshSerializerImplMap;
         MeshSerializerImplMap mImplementations;
 
 		MeshSerializerListener *mListener;
@@ -124,8 +118,6 @@ namespace Ogre {
 		/// Called to override the reference to a skeleton
 		virtual void processSkeletonName(Mesh *mesh, String *name) = 0;
 	};
-	/** @} */
-	/** @} */
 }
 
 

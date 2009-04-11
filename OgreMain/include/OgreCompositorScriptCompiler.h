@@ -37,12 +37,6 @@ Torus Knot Software Ltd.
 
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
 
 	/** Compiler for parsing & lexing .compositor scripts */
 	class _OgreExport CompositorScriptCompiler : public Compiler2Pass
@@ -85,7 +79,6 @@ namespace Ogre {
 			ID_PF_FLOAT16_R, ID_PF_FLOAT16_RGB, ID_PF_FLOAT16_RGBA,
 			ID_PF_FLOAT32_R, ID_PF_FLOAT32_RGB, ID_PF_FLOAT32_RGBA,
 			ID_PF_FLOAT16_GR, ID_PF_FLOAT32_GR,
-			ID_SHARED, ID_GAMMA, ID_NO_FSAA,
 			// Targets
 			ID_PREVIOUS, ID_NONE,
 			// Passes
@@ -133,7 +126,7 @@ namespace Ogre {
 		CompositorScriptContext mScriptContext;
 
 		typedef void (CompositorScriptCompiler::* CSC_Action)(void);
-		typedef map<size_t, CSC_Action>::type TokenActionMap;
+		typedef std::map<size_t, CSC_Action> TokenActionMap;
 		typedef TokenActionMap::iterator TokenActionIterator;
 		/** Map of Token value as key to an Action.  An Action converts tokens into
 		the final format.
@@ -162,7 +155,6 @@ namespace Ogre {
 		void parseCompositor(void);
 		void parseTechnique(void);
 		void parseTexture(void);
-		void parseScheme(void);
 		void parseTarget(void);
 		void parseInput(void);
 		void parseTargetOutput(void);
@@ -191,8 +183,6 @@ namespace Ogre {
 		StencilOperation extractStencilOp(void);
         CompareFunction extractCompareFunc(void);
 	};
-	/** @} */
-	/** @} */
 }
 
 #endif

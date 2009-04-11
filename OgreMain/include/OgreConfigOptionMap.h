@@ -37,13 +37,7 @@ Torus Knot Software Ltd.
 
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
-	/** Packages the details of a configuration option.
+    /** Packages the details of a configuration option.
         @remarks
             Used for RenderSystem::getConfigOptions. If immutable is true, this
             option must be disabled for modifying.
@@ -56,9 +50,7 @@ namespace Ogre {
         bool immutable;
     } ConfigOption;
 
-    typedef map< String, ConfigOption >::type ConfigOptionMap;
-	/** @} */
-	/** @} */
+    typedef std::map< String, ConfigOption > ConfigOptionMap;
 }
 
 #endif

@@ -33,12 +33,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
 	/** Class for performing a radix sort (fast comparison-less sort based on 
 		byte value) on various standard STL containers. 
 	@remarks
@@ -111,11 +105,10 @@ namespace Ogre {
 
 		};
 		/// Temp sort storage
-		typedef std::vector<SortEntry, STLAllocator<SortEntry, GeneralAllocPolicy> > SortVector; 
-		SortVector mSortArea1;
-		SortVector mSortArea2;
-		SortVector* mSrc;
-		SortVector* mDest;
+		std::vector<SortEntry> mSortArea1;
+		std::vector<SortEntry> mSortArea2;
+		std::vector<SortEntry>* mSrc;
+		std::vector<SortEntry>* mDest;
 		TContainer mTmpContainer; // initial copy
 
 
@@ -305,7 +298,7 @@ namespace Ogre {
 			{
 				sortPass(p);
 				// flip src/dst
-				SortVector* tmp = mSrc;
+				std::vector<SortEntry>* tmp = mSrc;
 				mSrc = mDest;
 				mDest = tmp;
 			}
@@ -323,8 +316,6 @@ namespace Ogre {
 
 	};
 
-	/** @} */
-	/** @} */
 
 }
 #endif

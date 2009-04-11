@@ -51,14 +51,14 @@ namespace Ogre
 		Capsule (const Segment&, Real);
 
 		// set values
-		void set(const Vector3& newOrigin, const Vector3& newEnd, Real newRadius);
-		void setOrigin(const Vector3& newOrigin);
-		void setEndPoint(const Vector3& newEndpoint);
+		void set(Vector3& newOrigin, Vector3& newEnd, Real newRadius);
+		void setOrigin(Vector3 & newOrigin);
+		void setEndPoint(Vector3 & newEndpoint);
 		void setRadius(Real newRadius);
 
 		// intersection tests
-		bool intersects(const Capsule&) const;
-		bool intersects(const Segment&) const;
+		bool intersects(Capsule&);
+		bool intersects(Segment&);
 
 		// defining members
 		Segment	mSegment;

@@ -29,7 +29,6 @@ Torus Knot Software Ltd.
 
 #include <CoreFoundation/CoreFoundation.h>
 
-
 #include "OgreString.h"
 #include "macPlugins.h"
 
@@ -98,34 +97,5 @@ namespace Ogre {
     const char *mac_errorBundle() {
         return "Unknown Error";
     }
-	
-	std::string macPluginPath()
-	{
-		char path[1024];
-		CFBundleRef mainBundle = CFBundleGetMainBundle();
-		assert(mainBundle);
-		
-		CFURLRef mainBundleURL = CFBundleCopyBundleURL(mainBundle);
-		assert(mainBundleURL);
-		
-		CFStringRef cfStringRef = CFURLCopyFileSystemPath( mainBundleURL, kCFURLPOSIXPathStyle);
-		assert(cfStringRef);
-		
-		CFStringGetCString(cfStringRef, path, 1024, kCFStringEncodingASCII);
-		
-		CFRelease(mainBundleURL);
-		CFRelease(cfStringRef);
-		
-		return std::string(path) + "/Contents/Plugins/";
-	}
-	
-	void* mac_loadDylib(const char* name)
-	{
-		std::string fullPath = macPluginPath() + name;
-		
-		return dlopen(fullPath.c_str(), RTLD_LAZY | RTLD_GLOBAL);
-	}
-	
-	
 
 }

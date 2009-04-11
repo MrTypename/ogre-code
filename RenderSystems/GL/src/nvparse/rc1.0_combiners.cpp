@@ -2,6 +2,7 @@
 #include "nvparse_errors.h"
 #include "nvparse_externs.h"
 #include <string.h>
+#include <OgreGLPrerequisites.h>
 
 void CombinersStruct::Validate()
 {

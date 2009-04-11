@@ -38,13 +38,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre
 {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Math
-	*  @{
-	*/
-	/** Specifies perspective (realistic) or orthographic (architectural) projection.
+    /** Specifies perspective (realistic) or orthographic (architectural) projection.
     */
     enum ProjectionType
     {
@@ -631,8 +625,6 @@ namespace Ogre
 		virtual const Quaternion& getOrientationForViewUpdate(void) const;
     };
 
-	/** @} */
-	/** @} */
 
 }
 

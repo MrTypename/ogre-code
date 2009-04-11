@@ -35,15 +35,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre 
 {
-	class Pass;
-
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Materials
-	*  @{
-	*/
-	/** This class makes the usage of a vertex and fragment programs (low-level or high-level), 
+    /** This class makes the usage of a vertex and fragment programs (low-level or high-level), 
         with a given set of parameters, explicit.
     @remarks
         Using a vertex or fragment program can get fairly complex; besides the fairly rudimentary
@@ -71,32 +63,25 @@ namespace Ogre
         Just incase it wasn't clear from the above, this class provides linkage to both 
         GpuProgram and HighLevelGpuProgram, despite its name.
     */
-	class _OgreExport GpuProgramUsage : public Resource::Listener, public PassAlloc
+	class _OgreExport GpuProgramUsage : public PassAlloc
     {
     protected:
         GpuProgramType mType;
-		Pass* mParent;
         // The program link
         GpuProgramPtr mProgram;
 
         /// program parameters
         GpuProgramParametersSharedPtr mParameters;
-		
-		/// Whether to recreate parameters next load
-		bool mRecreateParams;
 
-		void recreateParameters();
 
     public:
         /** Default constructor.
         @param gptype The type of program to link to
         */
-        GpuProgramUsage(GpuProgramType gptype, Pass* parent);
+        GpuProgramUsage(GpuProgramType gptype);
 
 		/** Copy constructor */
-		GpuProgramUsage(const GpuProgramUsage& rhs, Pass* newparent);
-
-		~GpuProgramUsage();
+		GpuProgramUsage(const GpuProgramUsage& rhs);
 
         /** Gets the type of program we're trying to link to. */
         GpuProgramType getType(void) const { return mType; }
@@ -139,12 +124,6 @@ namespace Ogre
         /// Unload this usage 
         void _unload(void);
 
-		// Resource Listener
-		void unloadingComplete(Resource* prog);
-		void loadingComplete(Resource* prog);
-
     };
-	/** @} */
-	/** @} */
 }
 #endif

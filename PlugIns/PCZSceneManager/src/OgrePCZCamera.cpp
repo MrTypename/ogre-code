@@ -40,7 +40,6 @@ email                : ericc@xenopi.com
 #include "OgreSceneNode.h"
 #include "OgrePCZCamera.h"
 #include "OgrePCZFrustum.h"
-#include "OgrePortal.h"
 
 namespace Ogre
 {
@@ -142,10 +141,13 @@ namespace Ogre
     /* isVisible() function for portals */
     // NOTE: Everything needs to be updated spatially before this function is
     //       called including portal corners, frustum planes, etc.
-    bool PCZCamera::isVisible(PortalBase* portal, FrustumPlane* culledBy) const
+    bool PCZCamera::isVisible (Portal * portal, FrustumPlane *culledBy)
     {
-		// if portal isn't enabled, it's not visible
-		if (!portal->getEnabled()) return false;
+		// if portal isn't open, it's not visible
+		if (!portal->isOpen())
+		{
+			return false;
+		}
 
         // check the extra frustum first
         if (!mExtraCullingFrustum.isVisible(portal))
@@ -154,31 +156,26 @@ namespace Ogre
         }
 
 		// if portal is of type AABB or Sphere, then use simple bound check against planes
-		if (portal->getType() == PortalBase::PORTAL_TYPE_AABB)
+		if (portal->getType() == Portal::PORTAL_TYPE_AABB)
 		{
 			AxisAlignedBox aabb;
 			aabb.setExtents(portal->getDerivedCorner(0), portal->getDerivedCorner(1));
 			return Camera::isVisible(aabb, culledBy);
 		}
-		else if (portal->getType() == PortalBase::PORTAL_TYPE_SPHERE)
+		else if (portal->getType() == Portal::PORTAL_TYPE_SPHERE)
 		{
 			return Camera::isVisible(portal->getDerivedSphere(), culledBy);
 		}
 
-		// only do this check if it's a portal. (anti portal doesn't care about facing)
-		if (portal->getTypeFlags() == PortalFactory::FACTORY_TYPE_FLAG)
-		{
-			// check if the portal norm is facing the camera
-			Vector3 cameraToPortal = portal->getDerivedCP() - getDerivedPosition();
-			Vector3 portalDirection = portal->getDerivedDirection();
-			Real dotProduct = cameraToPortal.dotProduct(portalDirection);
-			if ( dotProduct > 0 )
-			{
-				// portal is faced away from camera 
-				return false;
-			}
-		}
-
+        // check if the portal norm is facing the camera
+		Vector3 cameraToPortal = portal->getDerivedCP() - getDerivedPosition();
+		Vector3 portalDirection = portal->getDerivedDirection();
+		Real dotProduct = cameraToPortal.dotProduct(portalDirection);
+		if ( dotProduct > 0 )
+        {
+            // portal is faced away from camera 
+            return false;
+        }
         // check against regular frustum planes
         bool visible_flag;
 		if (mCullFrustum)
@@ -203,7 +200,6 @@ namespace Ogre
                     if (side != Plane::NEGATIVE_SIDE)
                     {
                         visible_flag = true;
-						break;
                     }
                 }
                 // if the visible_flag is still false, then this plane
@@ -244,7 +240,6 @@ namespace Ogre
                     if (side != Plane::NEGATIVE_SIDE)
                     {
                         visible_flag = true;
-						break;
                     }
                 }
                 // if the visible_flag is still false, then this plane
@@ -294,7 +289,7 @@ namespace Ogre
     // origin and add to list of extra culling planes
 	// NOTE: returns 0 if portal was completely culled by existing planes
 	//		 returns > 0 if culling planes are added (# is planes added)
-	int PCZCamera::addPortalCullingPlanes(PortalBase* portal)
+    int PCZCamera::addPortalCullingPlanes(Portal * portal)
     {
         // add the extra culling planes from the portal
         return mExtraCullingFrustum.addPortalCullingPlanes(portal);
@@ -302,7 +297,7 @@ namespace Ogre
 
     // remove extra culling planes created from the given portal
 	// NOTE: This should only be used during visibility traversal (backing out of a recursion)
-	void PCZCamera::removePortalCullingPlanes(PortalBase* portal)
+    void PCZCamera::removePortalCullingPlanes(Portal *portal)
     {
         mExtraCullingFrustum.removePortalCullingPlanes(portal);
     }

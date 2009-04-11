@@ -932,7 +932,7 @@ namespace Ogre
         if (mLightListDirty)
         {
             getParentSceneNode()->getCreator()->_populateLightList(
-                mCenter, this->getBoundingRadius(), mLightList, getLightMask());
+                mCenter, this->getBoundingRadius(), mLightList);
             mLightListDirty = false;
         }
         return mLightList;

@@ -41,13 +41,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Resources
-	*  @{
-	*/
-	/** Defines a generic resource handler.
+    /** Defines a generic resource handler.
     @remarks
         A resource manager is responsible for managing a pool of
         resources of a particular type. It must index them, look
@@ -284,7 +278,7 @@ namespace Ogre {
 
         /** Retrieves a pointer to a resource by name, or null if the resource does not exist.
         */
-        virtual ResourcePtr getByName(const String& name, const String& groupName = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+        virtual ResourcePtr getByName(const String& name);
         /** Retrieves a pointer to a resource by handle, or null if the resource does not exist.
         */
         virtual ResourcePtr getByHandle(ResourceHandle handle);
@@ -438,12 +432,10 @@ namespace Ogre {
 
     public:
 		typedef HashMap< String, ResourcePtr > ResourceMap;
-		typedef HashMap< String, ResourceMap > ResourceWithGroupMap;
-		typedef map<ResourceHandle, ResourcePtr>::type ResourceHandleMap;
+		typedef std::map<ResourceHandle, ResourcePtr> ResourceHandleMap;
     protected:
         ResourceHandleMap mResourcesByHandle;
         ResourceMap mResources;
-		ResourceWithGroupMap mResourcesWithGroup;
         ResourceHandle mNextHandle;
         size_t mMemoryBudget; // In bytes
         size_t mMemoryUsage; // In bytes
@@ -473,8 +465,6 @@ namespace Ogre {
     
 
     };
-	/** @} */
-	/** @} */
 
 }
 

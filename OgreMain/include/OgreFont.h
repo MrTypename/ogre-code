@@ -34,13 +34,7 @@ http://www.gnu.org/copyleft/lesser.txt
 
 namespace Ogre
 {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Resources
-	*  @{
-	*/
-	/** Enumerates the types of Font usable in the engine. */
+    /** Enumerates the types of Font usable in the engine. */
     enum FontType
     {
         /// Generated from a truetype (.ttf) font
@@ -141,10 +135,10 @@ namespace Ogre
 		};
 		/// A range of code points, inclusive on both ends
 		typedef std::pair<CodePoint, CodePoint> CodePointRange;
-		typedef vector<CodePointRange>::type CodePointRangeList;
+		typedef std::vector<CodePointRange> CodePointRangeList;
 	protected:
 		/// Map from unicode code point to texture coordinates
-		typedef map<CodePoint, GlyphInfo>::type CodePointMap;
+		typedef std::map<CodePoint, GlyphInfo> CodePointMap;
 		CodePointMap mCodePointMap;
 
         /// The material which is generated for this font
@@ -445,8 +439,6 @@ namespace Ogre
 			return *this;
 		}
 	};
-	/** @} */
-	/** @} */
 }
 
 #endif

@@ -38,13 +38,7 @@ namespace Ogre	{
 
 
 	
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Animation
-	*  @{
-	*/
-	/** A tagged point on a skeleton, which can be used to attach entities to on specific
+    /** A tagged point on a skeleton, which can be used to attach entities to on specific
         other entities.
     @remarks
         A Skeleton, like a Mesh, is shared between Entity objects and simply updated as required
@@ -115,8 +109,6 @@ namespace Ogre	{
         bool mInheritParentEntityScale;
 	};
 
-	/** @} */
-	/** @} */
 
 } //namespace
 

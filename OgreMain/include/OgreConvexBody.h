@@ -37,12 +37,6 @@ Torus Knot Software Ltd.
 namespace Ogre
 {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Math
-	*  @{
-	*/
 	/** Holds a solid representation of a convex body.
 		@remarks
 			Administers a convex body. All polygons of the body are convex and
@@ -52,7 +46,7 @@ namespace Ogre
 	class _OgreExport ConvexBody
 	{
 	public:
-		typedef vector< Polygon* >::type	PolygonList;
+		typedef std::vector< Polygon* >	PolygonList;
 
 	protected:
 		PolygonList mPolygons;
@@ -252,9 +246,6 @@ namespace Ogre
 			Polygon::EdgeMap& intersectionEdges, Vector3& vNext ) const;
 
 	};
-	/** @} */
-	/** @} */
-
 }
 
 #endif 

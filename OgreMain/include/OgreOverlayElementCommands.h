@@ -34,12 +34,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre  {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Overlays
-	*  @{
-	*/
 
     namespace OverlayElementCommands {
         /// Command object for OverlayElement  - see ParamCommand 
@@ -114,8 +108,6 @@ namespace Ogre  {
         };
 
     }
-	/** @} */
-	/** @} */
 }
 
 #endif

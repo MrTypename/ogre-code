@@ -41,13 +41,6 @@ Torus Knot Software Ltd.
 #include "OgreAny.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-
-	/** \addtogroup Animation
-	*  @{
-	*/
 
 	/** Defines an object property which is animable, i.e. may be keyframed.
 	@remarks
@@ -238,7 +231,7 @@ namespace Ogre {
 	class _OgreExport AnimableObject
 	{
 	protected:
-		typedef map<String, StringVector>::type AnimableDictionaryMap;
+		typedef std::map<String, StringVector> AnimableDictionaryMap;
 		/// Static map of class name to list of animable value names
 		static AnimableDictionaryMap msAnimableDictionary;
 		/** Get the name of the animable dictionary for this class.
@@ -328,8 +321,6 @@ namespace Ogre {
 
 	};
 
-	/** @} */
-	/** @} */
 
 }
 #endif

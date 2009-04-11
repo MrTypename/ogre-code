@@ -19,7 +19,7 @@ TexturePtr ptex;
 HardwarePixelBufferSharedPtr buffer;
 Overlay* overlay;
 static const int reactorExtent = 130; // must be 2^N + 2
-Ogre::uint32 clut[1024];
+uint32 clut[1024];
 AnimationState *swim;
 // Nano fixed point library
 #define FROMFLOAT(X) ((int)((X)*((float)(1<<16))))
@@ -112,7 +112,7 @@ public:
 	void fireUpReactor()
 	{
 		LogManager::getSingleton().logMessage("Warning: reactor is being fired up");
-		unsigned int center = reactorExtent/2;
+		int center = reactorExtent/2;
 		for(unsigned int x=center-10; x<center+10; x++) 
 		{
 			for(unsigned int y=center-10; y<center+10; y++) 
@@ -197,7 +197,7 @@ public:
 		const PixelBox &pb = buffer->getCurrentLock();
 		unsigned int idx = reactorExtent+1;
 		for(unsigned int y=0; y<(reactorExtent-2); y++) {
-			Ogre::uint32 *data = static_cast<Ogre::uint32*>(pb.data) + y*pb.rowPitch;
+			uint32 *data = static_cast<uint32*>(pb.data) + y*pb.rowPitch;
 			int *chem = &chemical[0][idx];
 			for(unsigned int x=0; x<(reactorExtent-2); x++) {
 				data[x] = clut[(chem[x]>>6)&1023];
@@ -378,7 +378,7 @@ protected:
 		//TextureManager::getSingleton().getByName("RustySteel.jpg");
 		
 		
-		Ogre::StringStream d;
+		std::stringstream d;
 		d << "HardwarePixelBuffer " << buffer->getWidth() << " " << buffer->getHeight() << " " << buffer->getDepth();
 		LogManager::getSingleton().logMessage(d.str());
 		

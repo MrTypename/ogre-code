@@ -35,12 +35,6 @@ Torus Knot Software Ltd.
 #include "OgreDataStream.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Image
-	*  @{
-	*/
 
     enum ImageFlags
     {
@@ -298,15 +292,7 @@ namespace Ogre {
         */
 		Image & load(DataStreamPtr& stream, const String& type = StringUtil::BLANK );
         
-        /** Save the image as a file. 
-		@remarks
-			Saving and loading are implemented by back end (sometimes third 
-			party) codecs.  Implemented saving functionality is more limited
-			than loading in some cases.	Particulary DDS file format support 
-			is currently limited to true colour or single channel float32, 
-			square, power of two textures with no mipmaps.  Volumetric support
-			is currently limited to DDS files.
-		*/
+        /** Save the image as a file. */
         void save(const String& filename);
 
 		/** Encode the image and return a stream to the data. 
@@ -447,11 +433,9 @@ namespace Ogre {
 		bool m_bAutoDelete;
     };
 
-	typedef vector<Image*>::type ImagePtrList;
-	typedef vector<const Image*>::type ConstImagePtrList;
+	typedef std::vector<Image*> ImagePtrList;
+	typedef std::vector<const Image*> ConstImagePtrList;
 
-	/** @} */
-	/** @} */
 
 } // namespace
 

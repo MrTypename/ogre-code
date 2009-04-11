@@ -37,13 +37,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Overlays
-	*  @{
-	*/
-	/** Defines the interface which all components wishing to 
+    /** Defines the interface which all components wishing to 
         supply OverlayElement subclasses must implement.
     @remarks
         To allow the OverlayElement types available for inclusion on 
@@ -119,8 +113,6 @@ namespace Ogre {
             return name;
         }
     };
-	/** @} */
-	/** @} */
 
 }
 

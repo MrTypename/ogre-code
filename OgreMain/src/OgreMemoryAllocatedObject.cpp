@@ -27,7 +27,7 @@ Torus Knot Software Ltd
 ---------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
-#include "OgrePrerequisites.h"
+#include "OgreMemoryAllocatorConfig.h"
 
 namespace Ogre
 {

@@ -36,13 +36,7 @@ Torus Knot Software Ltd.
 namespace Ogre
 {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Math
-	*  @{
-	*/
-	/** Standard 3-dimensional vector.
+    /** Standard 3-dimensional vector.
         @remarks
             A direction in 3D space represented as distances along the 3
             orthogonal axes (x, y, z). Note that positions, directions and
@@ -90,15 +84,6 @@ namespace Ogre
         {
         }
 
-
-		/** Exchange the contents of this vector with another. 
-		*/
-		inline void swap(Vector3& other)
-		{
-			std::swap(x, other.x);
-			std::swap(y, other.y);
-			std::swap(z, other.z);
-		}
 
 		inline Real operator [] ( const size_t i ) const
         {
@@ -784,8 +769,6 @@ namespace Ogre
             return o;
         }
     };
-	/** @} */
-	/** @} */
 
 }
 #endif
