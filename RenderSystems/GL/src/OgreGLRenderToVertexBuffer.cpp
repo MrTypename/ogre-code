@@ -189,12 +189,12 @@ namespace Ogre {
 		if (r2vbPass->hasVertexProgram())
 		{
 			targetRenderSystem->bindGpuProgramParameters(GPT_VERTEX_PROGRAM, 
-				r2vbPass->getVertexProgramParameters(), GPV_ALL);
+				r2vbPass->getVertexProgramParameters());
 		}
 		if (r2vbPass->hasGeometryProgram())
 		{
 			targetRenderSystem->bindGpuProgramParameters(GPT_GEOMETRY_PROGRAM,
-				r2vbPass->getGeometryProgramParameters(), GPV_ALL);
+				r2vbPass->getGeometryProgramParameters());
 		}
 		targetRenderSystem->_render(renderOp);
 		
@@ -311,7 +311,7 @@ namespace Ogre {
 			GLSLLinkProgram* linkProgram = GLSLLinkProgramManager::getSingleton().getActiveLinkProgram();
 			GLhandleARB linkProgramId = linkProgram->getGLHandle();
 			
-			vector<GLint>::type locations;
+			std::vector<GLint> locations;
 			for (unsigned short e=0; e < declaration->getElementCount(); e++)
 			{
 				const VertexElement* element =declaration->getElement(e);
@@ -333,7 +333,7 @@ namespace Ogre {
 		else
 		{
 			//Either fixed function or assembly (CG = assembly) shaders
-			vector<GLint>::type attribs;
+			std::vector<GLint> attribs;
 			for (unsigned short e=0; e < declaration->getElementCount(); e++)
 			{
 				const VertexElement* element = declaration->getElement(e);

@@ -35,13 +35,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Effects
-	*  @{
-	*/
-
     /** Specialisation of ParticleSystemRenderer to render particles using 
         a BillboardSet. 
     @remarks
@@ -202,7 +195,7 @@ namespace Ogre {
         const String& getType(void) const;
         /// @copydoc ParticleSystemRenderer::_updateRenderQueue
         void _updateRenderQueue(RenderQueue* queue, 
-            list<Particle*>::type& currentParticles, bool cullIndividually);
+            std::list<Particle*>& currentParticles, bool cullIndividually);
 		/// @copydoc ParticleSystemRenderer::visitRenderables
 		void visitRenderables(Renderable::Visitor* visitor, 
 			bool debugRenderables = false);
@@ -253,8 +246,6 @@ namespace Ogre {
         /// @copydoc FactoryObj::destroyInstance
         void destroyInstance( ParticleSystemRenderer* inst);    
     };
-	/** @} */
-	/** @} */
 
 }
 

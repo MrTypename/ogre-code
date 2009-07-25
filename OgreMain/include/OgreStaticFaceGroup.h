@@ -36,13 +36,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Scene
-	*  @{
-	*/
-	/** A type of face group, i.e. face list of procedural etc */
+    /** A type of face group, i.e. face list of procedural etc */
     enum FaceGroupType {
         FGT_FACE_LIST,
         FGT_PATCH,
@@ -134,8 +128,6 @@ namespace Ogre {
 
 
     };
-	/** @} */
-	/** @} */
 
 } // namespace
 

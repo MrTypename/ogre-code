@@ -34,24 +34,18 @@ Torus Knot Software Ltd.
 namespace Ogre {
 
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Effects
-	*  @{
-	*/
-	/** Convenience class to make it easy to step through all particles in a ParticleSystem.
+    /** Convenience class to make it easy to step through all particles in a ParticleSystem.
     */
     class _OgreExport ParticleIterator
     {
         friend class ParticleSystem;
     protected:
-        list<Particle*>::type::iterator mPos;
-        list<Particle*>::type::iterator mStart;
-        list<Particle*>::type::iterator mEnd;
+        std::list<Particle*>::iterator mPos;
+        std::list<Particle*>::iterator mStart;
+        std::list<Particle*>::iterator mEnd;
 
         /// Protected constructor, only available from ParticleSystem::getIterator
-        ParticleIterator(list<Particle*>::type::iterator start, list<Particle*>::type::iterator end);
+        ParticleIterator(std::list<Particle*>::iterator start, std::list<Particle*>::iterator end);
 
     public:
         // Returns true when at the end of the particle list
@@ -60,8 +54,6 @@ namespace Ogre {
         /** Returns a pointer to the next particle, and moves the iterator on by 1 element. */
         Particle* getNext(void);
     };
-	/** @} */
-	/** @} */
 }
 
 

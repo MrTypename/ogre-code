@@ -48,7 +48,7 @@ Code Style Update	 :
 
 namespace Ogre
 {
-    class PortalBase;
+    class Portal;
 
 
     class _OgrePCZPluginExport PCPlane : public Plane
@@ -70,14 +70,14 @@ namespace Ogre
 
         /** Returns the Portal that was used to create this plane
         */
-        PortalBase* getPortal()
+        Portal * getPortal()
         {
             return mPortal;
         };
 
         /** Sets the Portal that was used to create this plane
         */
-        void setPortal(PortalBase* o)
+        void setPortal( Portal *o )
         {
             mPortal = o;
         };
@@ -86,7 +86,7 @@ namespace Ogre
     protected:
 
         ///Portal used to create this plane.
-        PortalBase *mPortal;
+        Portal *mPortal;
     };
 
 }

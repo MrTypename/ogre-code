@@ -38,13 +38,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre
 {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
-	/** The log manager handles the creation and retrieval of logs for the
+    /** The log manager handles the creation and retrieval of logs for the
         application.
         @remarks
             This class will create new log files and will retrieve instances
@@ -65,7 +59,7 @@ namespace Ogre
     class _OgreExport LogManager : public Singleton<LogManager>, public LogAlloc
     {
 	protected:
-		typedef map<String, Log*>::type	LogList;
+        typedef std::map<String, Log*, std::less<String> >	LogList;
 
         /// A list of all the logs the manager can access
         LogList mLogs;
@@ -169,8 +163,6 @@ namespace Ogre
     };
 
 
-	/** @} */
-	/** @} */
 }
 
 #endif

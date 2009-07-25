@@ -34,13 +34,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup RenderSystem
-	*  @{
-	*/
-	/** Struct containing information about a RenderTarget event.
+    /** Struct containing information about a RenderTarget event.
     */
     struct RenderTargetEvent
     {
@@ -133,8 +127,6 @@ namespace Ogre {
 		*/
 		virtual void viewportRemoved(const RenderTargetViewportEvent& evt) {}
     };
-	/** @} */
-	/** @} */
 }
 
 #endif

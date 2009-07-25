@@ -34,8 +34,6 @@ Torus Knot Software Ltd.
 #include "OgreBitwise.h"
 #include "OgreD3D9RenderSystem.h"
 #include "OgreRoot.h"
-#include "OgreD3D9Device.h"
-#include "OgreD3D9DeviceManager.h"
 
 namespace Ogre 
 {
@@ -45,7 +43,7 @@ namespace Ogre
 		/// Clear targets
 		for(size_t x=0; x<OGRE_MAX_MULTIPLE_RENDER_TARGETS; ++x)
 		{
-			mRenderTargets[x] = 0;
+			targets[x] = 0;
 		}
 	}
 	D3D9MultiRenderTarget::~D3D9MultiRenderTarget()
@@ -62,13 +60,13 @@ namespace Ogre
 
 		/// Find first non-null target
 		int y;
-		for(y=0; y<OGRE_MAX_MULTIPLE_RENDER_TARGETS && !mRenderTargets[y]; ++y) ;
+		for(y=0; y<OGRE_MAX_MULTIPLE_RENDER_TARGETS && !targets[y]; ++y) ;
 		
 		if(y!=OGRE_MAX_MULTIPLE_RENDER_TARGETS)
 		{
 			/// If there is another target bound, compare sizes
-			if (mRenderTargets[y]->getWidth() != buffer->getWidth() ||
-				mRenderTargets[y]->getHeight() != buffer->getHeight())
+			if(targets[y]->getWidth() != buffer->getWidth() ||
+				targets[y]->getHeight() != buffer->getHeight())
 			{
 				OGRE_EXCEPT(
 					Exception::ERR_INVALIDPARAMS, 
@@ -77,7 +75,7 @@ namespace Ogre
 			}
 
 			if (!Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_MRT_DIFFERENT_BIT_DEPTHS)
-				&& (PixelUtil::getNumElemBits(mRenderTargets[y]->getFormat()) != 
+				&& (PixelUtil::getNumElemBits(targets[y]->getFormat()) != 
 					PixelUtil::getNumElemBits(buffer->getFormat())))
 			{
 				OGRE_EXCEPT(
@@ -88,41 +86,25 @@ namespace Ogre
 			}
 		}
 
-		mRenderTargets[attachment] = buffer;
+		targets[attachment] = buffer;
 		checkAndUpdate();
 	}
 
 	void D3D9MultiRenderTarget::unbindSurfaceImpl(size_t attachment)
 	{
 		assert(attachment<OGRE_MAX_MULTIPLE_RENDER_TARGETS);
-		mRenderTargets[attachment] = 0;
+		targets[attachment] = 0;
 		checkAndUpdate();
 	}
 
     void D3D9MultiRenderTarget::update(bool swapBuffers)
-    {     
-		D3D9DeviceManager* deviceManager = D3D9RenderSystem::getDeviceManager();       	
-		D3D9Device* currRenderWindowDevice = deviceManager->getActiveRenderTargetDevice();
+    {
+        D3D9RenderSystem* rs = static_cast<D3D9RenderSystem*>(
+            Root::getSingleton().getRenderSystem());
+        if (rs->isDeviceLost())
+            return;
 
-		if (currRenderWindowDevice != NULL)
-		{
-			if (currRenderWindowDevice->isDeviceLost() == false)
-				MultiRenderTarget::update(swapBuffers);
-		}
-		else
-		{
-			for (UINT i=0; i < deviceManager->getDeviceCount(); ++i)
-			{
-				D3D9Device* device = deviceManager->getDevice(i);
-
-				if (device->isDeviceLost() == false)
-				{
-					deviceManager->setActiveRenderTargetDevice(device);
-					MultiRenderTarget::update(swapBuffers);
-					deviceManager->setActiveRenderTargetDevice(NULL);
-				}								
-			}
-		}		
+        MultiRenderTarget::update(swapBuffers);
     }
 
 	void D3D9MultiRenderTarget::getCustomAttribute(const String& name, void *pData)
@@ -133,8 +115,8 @@ namespace Ogre
 			/// Transfer surfaces
 			for(size_t x=0; x<OGRE_MAX_MULTIPLE_RENDER_TARGETS; ++x)
 			{
-				if(mRenderTargets[x] != NULL)								
-					pSurf[x] = mRenderTargets[x]->getSurface(D3D9RenderSystem::getActiveD3D9Device());			
+				if(targets[x])
+					pSurf[x] = targets[x]->getSurface();
 			}
 			return;
         }
@@ -142,10 +124,10 @@ namespace Ogre
 
 	void D3D9MultiRenderTarget::checkAndUpdate()
 	{
-		if(mRenderTargets[0])
+		if(targets[0])
 		{
-			mWidth  = (unsigned int)mRenderTargets[0]->getWidth();
-			mHeight = (unsigned int)mRenderTargets[0]->getHeight();
+			mWidth = targets[0]->getWidth();
+			mHeight = targets[0]->getHeight();
 		}
 		else
 		{
@@ -153,5 +135,7 @@ namespace Ogre
 			mHeight = 0;
 		}
 	}
+
+
 }
 

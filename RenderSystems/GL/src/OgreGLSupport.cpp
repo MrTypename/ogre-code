@@ -72,7 +72,7 @@ namespace Ogre {
         LogManager::getSingleton().logMessage("GL_RENDERER = " + tmpStr);
 
         // Set extension list
-		StringStream ext;
+		std::stringstream ext;
         String str;
 
         const GLubyte* pcExt = glGetString(GL_EXTENSIONS);

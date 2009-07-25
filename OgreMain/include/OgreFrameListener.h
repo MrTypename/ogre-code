@@ -34,13 +34,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
-	/** Struct containing information about a frame event.
+    /** Struct containing information about a frame event.
     */
     struct FrameEvent
     {
@@ -130,8 +124,6 @@ namespace Ogre {
 		virtual ~FrameListener() {}
 		
     };
-	/** @} */
-	/** @} */
 }
 
 #endif

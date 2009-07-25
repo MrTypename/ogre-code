@@ -40,12 +40,6 @@ namespace Ogre {
 
 	class ConvexBody;
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Scene
-	*  @{
-	*/
 	/** Implements the uniform shadow mapping algorithm in focused mode.
 	@remarks
 		Differs from the default shadow mapping projection in that it focuses the
@@ -281,8 +275,6 @@ namespace Ogre {
 
 	};
 
-	/** @} */
-	/** @} */
 
 }
 

@@ -33,12 +33,6 @@ Torus Knot Software Ltd.
 #include "OgreDataStream.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Effects
-	*  @{
-	*/
 
     class CompositorScriptCompiler;
 
@@ -59,8 +53,6 @@ namespace Ogre {
         CompositorScriptCompiler* mScriptCompiler;
 
     };
-	/** @} */
-	/** @} */
 
 }
 

@@ -36,13 +36,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre 
 {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Animation
-	*  @{
-	*/
-
     /** A bone in a skeleton.
     @remarks
         See Skeleton for more information about the principles behind skeletal animation.
@@ -143,8 +136,6 @@ namespace Ogre
         Vector3 mBindDerivedInversePosition;
     };
 
-	/** @} */
-	/** @} */
 
 }
 

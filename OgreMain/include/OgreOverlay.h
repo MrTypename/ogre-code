@@ -38,13 +38,7 @@ Torus Knot Software Ltd.
 namespace Ogre {
 
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Overlays
-	*  @{
-	*/
-	/** Represents a layer which is rendered on top of the 'normal' scene contents.
+    /** Represents a layer which is rendered on top of the 'normal' scene contents.
     @remarks
         An overlay is a container for visual components (2D and 3D) which will be 
         rendered after the main scene in order to composite heads-up-displays, menus
@@ -72,7 +66,7 @@ namespace Ogre {
     {
 
     public:
-              typedef list<OverlayContainer*>::type OverlayContainerList;
+              typedef std::list<OverlayContainer*> OverlayContainerList;
     protected:
         String mName;
         /// Internal root node, used as parent for 3D objects
@@ -271,8 +265,6 @@ namespace Ogre {
 
 
     };
-	/** @} */
-	/** @} */
 
 }
 

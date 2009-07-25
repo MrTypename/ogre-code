@@ -34,15 +34,9 @@ Torus Knot Software Ltd.
 #include "OgreHardwareIndexBuffer.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup RenderSystem
-	*  @{
-	*/
-
+	
 	/// Define a list of usage flags
-	typedef vector<HardwareBuffer::Usage>::type BufferUsageList;
+	typedef std::vector<HardwareBuffer::Usage> BufferUsageList;
 
 
 	/** Summary class collecting together vertex source information. */
@@ -53,25 +47,8 @@ namespace Ogre {
         VertexData(const VertexData& rhs); /* do nothing, should not use */
         /// Protected operator=, to prevent misuse
         VertexData& operator=(const VertexData& rhs); /* do not use */
-
-		HardwareBufferManagerBase* mMgr;
     public:
-		/** Constructor.
-		@note 
-			This constructor creates the VertexDeclaration and VertexBufferBinding
-			automatically, and arranges for their deletion afterwards.
-		@param mgr Optional HardwareBufferManager from which to create resources
-		*/
-        VertexData(HardwareBufferManagerBase* mgr = 0);
-		/** Constructor.
-		@note 
-		This constructor receives the VertexDeclaration and VertexBufferBinding
-		from the caller, and as such does not arrange for their deletion afterwards, 
-		the caller remains responsible for that.
-		@param dcl The VertexDeclaration to use
-		@param bind The VertexBufferBinding to use
-		*/
-		VertexData(VertexDeclaration* dcl, VertexBufferBinding* bind);
+        VertexData();
         ~VertexData();
 
 		/** Declaration of the vertex to be used in this operation. 
@@ -82,8 +59,6 @@ namespace Ogre {
 		@remarks Note that this is created for you on construction.
 		*/
 		VertexBufferBinding* vertexBufferBinding;
-		/// Whether this class should delete the declaration and binding
-		bool mDeleteDclBinding;
 		/// The base vertex index to start from
 		size_t vertexStart;
 		/// The number of vertices used in this operation
@@ -96,18 +71,16 @@ namespace Ogre {
 			const VertexElement* targetVertexElement;
 			Real parametric;
 		};
-		typedef vector<HardwareAnimationData>::type HardwareAnimationDataList;
+		typedef std::vector<HardwareAnimationData> HardwareAnimationDataList;
 		/// VertexElements used for hardware morph / pose animation
 		HardwareAnimationDataList hwAnimationDataList;
 		/// Number of hardware animation data items used
 		size_t hwAnimDataItemsUsed;
 		
 		/** Clones this vertex data, potentially including replicating any vertex buffers.
-		@param copyData Whether to create new vertex buffers too or just reference the existing ones
-		@param mgr If supplied, the buffer manager through which copies should be made
 		@remarks The caller is expected to delete the returned pointer when ready
 		*/
-		VertexData* clone(bool copyData = true, HardwareBufferManagerBase* mgr = 0) const;
+		VertexData* clone(bool copyData = true) const;
 
         /** Modifies the vertex data to be suitable for use for rendering shadow geometry.
         @remarks
@@ -161,11 +134,8 @@ namespace Ogre {
 		@param bufferUsages Vector of usage flags which indicate the usage options
 			for each new vertex buffer created. The indexes of the entries must correspond
 			to the buffer binding values referenced in the declaration.
-		@param mgr Optional pointer to the manager to use to create new declarations
-			and buffers etc. If not supplied, the HardwareBufferManager singleton will be used
 		*/
-		void reorganiseBuffers(VertexDeclaration* newDeclaration, const BufferUsageList& bufferUsage, 
-			HardwareBufferManagerBase* mgr = 0);
+		void reorganiseBuffers(VertexDeclaration* newDeclaration, const BufferUsageList& bufferUsage);
 
 		/** Reorganises the data in the vertex buffers according to the 
 			new vertex declaration passed in. Note that new vertex buffers
@@ -181,10 +151,8 @@ namespace Ogre {
 			must not include any elements which do not already exist in the 
 			current declaration; you can drop elements by 
 			excluding them from the declaration if you wish, however.
-		@param mgr Optional pointer to the manager to use to create new declarations
-			and buffers etc. If not supplied, the HardwareBufferManager singleton will be used
 		*/
-		void reorganiseBuffers(VertexDeclaration* newDeclaration, HardwareBufferManagerBase* mgr = 0);
+		void reorganiseBuffers(VertexDeclaration* newDeclaration);
 
         /** Remove any gaps in the vertex buffer bindings.
         @remarks
@@ -257,11 +225,9 @@ namespace Ogre {
 		size_t indexCount;
 
 		/** Clones this index data, potentially including replicating the index buffer.
-		@param copyData Whether to create new buffers too or just reference the existing ones
-		@param mgr If supplied, the buffer manager through which copies should be made
 		@remarks The caller is expected to delete the returned pointer when finished
 		*/
-		IndexData* clone(bool copyData = true, HardwareBufferManagerBase* mgr = 0) const;
+		IndexData* clone(bool copyData = true) const;
 
 		/** Re-order the indexes in this index data structure to be more
 			vertex cache friendly; that is to re-use the same vertices as close
@@ -315,8 +281,6 @@ namespace Ogre {
 
 			bool inCache(unsigned int index);
 	};
-	/** @} */
-	/** @} */
 }
 #endif
 

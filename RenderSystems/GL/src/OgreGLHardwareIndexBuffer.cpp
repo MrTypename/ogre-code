@@ -33,9 +33,9 @@ Torus Knot Software Ltd.
 namespace Ogre {
 
 	//---------------------------------------------------------------------
-    GLHardwareIndexBuffer::GLHardwareIndexBuffer(HardwareBufferManagerBase* mgr, IndexType idxType,
+    GLHardwareIndexBuffer::GLHardwareIndexBuffer(IndexType idxType,
         size_t numIndexes, HardwareBuffer::Usage usage, bool useShadowBuffer)
-        : HardwareIndexBuffer(mgr, idxType, numIndexes, usage, false, useShadowBuffer)
+        : HardwareIndexBuffer(idxType, numIndexes, usage, false, useShadowBuffer)
     {
         glGenBuffersARB( 1, &mBufferId );
 

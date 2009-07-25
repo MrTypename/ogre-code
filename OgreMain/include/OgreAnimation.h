@@ -38,13 +38,6 @@ Torus Knot Software Ltd.
 #include "OgreAnimationState.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-
-	/** \addtogroup Animation
-	*  @{
-	*/
 
     /** An animation sequence. 
     @remarks
@@ -305,13 +298,13 @@ namespace Ogre {
         /** Gets the default rotation interpolation mode for all animations. */
         static RotationInterpolationMode getDefaultRotationInterpolationMode(void);
 
-        typedef map<unsigned short, NodeAnimationTrack*>::type NodeTrackList;
+        typedef std::map<unsigned short, NodeAnimationTrack*> NodeTrackList;
         typedef ConstMapIterator<NodeTrackList> NodeTrackIterator;
 
-		typedef map<unsigned short, NumericAnimationTrack*>::type NumericTrackList;
+		typedef std::map<unsigned short, NumericAnimationTrack*> NumericTrackList;
 		typedef ConstMapIterator<NumericTrackList> NumericTrackIterator;
 
-		typedef map<unsigned short, VertexAnimationTrack*>::type VertexTrackList;
+		typedef std::map<unsigned short, VertexAnimationTrack*> VertexTrackList;
 		typedef ConstMapIterator<VertexTrackList> VertexTrackIterator;
 
 		/// Fast access to NON-UPDATEABLE node track list
@@ -357,7 +350,7 @@ namespace Ogre {
 		void optimise(bool discardIdentityNodeTracks = true);
 
         /// A list of track handles
-        typedef set<ushort>::type TrackHandleList;
+        typedef std::set<ushort> TrackHandleList;
 
         /** Internal method for collecting identity node tracks.
         @remarks
@@ -414,7 +407,7 @@ namespace Ogre {
         static RotationInterpolationMode msDefaultRotationInterpolationMode;
 
         /// Global keyframe time list used to search global keyframe index.
-        typedef vector<Real>::type KeyFrameTimeList;
+        typedef std::vector<Real> KeyFrameTimeList;
         mutable KeyFrameTimeList mKeyFrameTimes;
         /// Dirty flag indicate that keyframe time list need to rebuild
         mutable bool mKeyFrameTimesDirty;
@@ -426,8 +419,7 @@ namespace Ogre {
         void buildKeyFrameTimeList(void) const;
     };
 
-	/** @} */
-	/** @} */
+
 }
 
 

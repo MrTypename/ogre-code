@@ -36,13 +36,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Animation
-	*  @{
-	*/
-	/** Class for serialising skeleton data to/from an OGRE .skeleton file.
+    /** Class for serialising skeleton data to/from an OGRE .skeleton file.
     @remarks
         This class allows exporters to write OGRE .skeleton files easily, and allows the
         OGRE engine to import .skeleton files into instantiated OGRE Skeleton objects.
@@ -116,8 +110,6 @@ namespace Ogre {
 
 
     };
-	/** @} */
-	/** @} */
 
 }
 

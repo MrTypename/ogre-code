@@ -31,13 +31,38 @@ LGPL like the rest of the engine.
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
-#elif OGRE_PLATFORM == OGRE_PLATFORM_APPLE || OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
-#include "macUtils.h"
 #endif
 
 
 #include "Compositor.h"
 #include "CompositorDemo_FrameListener.h"
+
+/**********************************************************************
+OS X Specific Resource Location Finding
+**********************************************************************/
+#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+
+Ogre::String bundlePath()
+{
+    char path[1024];
+    CFBundleRef mainBundle = CFBundleGetMainBundle();
+    assert(mainBundle);
+    
+    CFURLRef mainBundleURL = CFBundleCopyBundleURL( mainBundle);
+    assert(mainBundleURL);
+    
+    CFStringRef cfStringRef = CFURLCopyFileSystemPath( mainBundleURL, kCFURLPOSIXPathStyle);
+    assert(cfStringRef);
+    
+    CFStringGetCString(cfStringRef, path, 1024, kCFStringEncodingASCII);
+    
+    CFRelease(mainBundleURL);
+    CFRelease(cfStringRef);
+    
+    return Ogre::String(path);
+}
+
+#endif
 
 /*************************************************************************
 	                    CompositorDemo Methods
@@ -49,10 +74,6 @@ LGPL like the rest of the engine.
         delete mFrameListener;
 
         delete mRoot;
-#ifdef OGRE_STATIC_LIB
-		mStaticPluginLoader.unload();
-#endif
-
     }
 
 //--------------------------------------------------------------------------
@@ -67,22 +88,16 @@ LGPL like the rest of the engine.
 //--------------------------------------------------------------------------
     bool CompositorDemo::setup(void)
     {
-		Ogre::String mResourcePath;
-		Ogre::String pluginsPath;
-		// only use plugins.cfg if not static
-#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-		mResourcePath = Ogre::macBundlePath() + "/Contents/Resources/";
-#endif
-#ifndef OGRE_STATIC_LIB
-		pluginsPath = mResourcePath + "plugins.cfg";
-#endif
-
-		mRoot = new Ogre::Root(pluginsPath,
-			mResourcePath + "ogre.cfg", mResourcePath + "Ogre.log");
-
-#ifdef OGRE_STATIC_LIB
-		mStaticPluginLoader.load();
-#endif
+		#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+            Ogre::String mResourcePath;
+            mResourcePath = bundlePath() + "/Contents/Resources/";
+            mRoot = new Ogre::Root(mResourcePath + "plugins.cfg", 
+                               mResourcePath + "ogre.cfg", mResourcePath + "Ogre.log");
+        #else
+		
+			mRoot = new Ogre::Root();
+		
+		#endif
 
         setupResources();
         bool carryOn = configure();
@@ -168,7 +183,7 @@ void CompositorDemo::createViewports(void)
 		
 		#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
                 Ogre::String mResourcePath;
-                mResourcePath = Ogre::macBundlePath() + "/Contents/Resources/";
+                mResourcePath = bundlePath() + "/Contents/Resources/";
                 cf.load(mResourcePath + "resources.cfg");
         #else
 		
@@ -193,12 +208,12 @@ void CompositorDemo::createViewports(void)
                 // OS X does not set the working directory relative to the app,
                 // In order to make things portable on OS X we need to provide
                 // the loading with it's own bundle path location
-				if (!Ogre::StringUtil::startsWith(archName, "/", false)) // only adjust relative dirs
-					archName = Ogre::macBundlePath() + "/" + archName;
+                Ogre::ResourceGroupManager::getSingleton().addResourceLocation(
+                    Ogre::String(bundlePath() + "/" + archName), typeName, secName);
+#else
+                Ogre::ResourceGroupManager::getSingleton().addResourceLocation(
+                    archName, typeName, secName);
 #endif
-				Ogre::ResourceGroupManager::getSingleton().addResourceLocation(
-                       archName, typeName, secName);
-				
 
             }
         }
@@ -517,7 +532,7 @@ void CompositorDemo::createViewports(void)
 		HardwarePixelBufferSharedPtr ptr = tex->getBuffer(0,0);
 		ptr->lock(HardwareBuffer::HBL_DISCARD);
 		const PixelBox &pb = ptr->getCurrentLock();
-		Ogre::uint8 *data = static_cast<Ogre::uint8*>(pb.data);
+		uint8 *data = static_cast<uint8*>(pb.data);
 
 		size_t height = pb.getHeight();
 		size_t width = pb.getWidth();
@@ -557,7 +572,7 @@ void CompositorDemo::createViewports(void)
 		HardwarePixelBufferSharedPtr ptr2 = tex2->getBuffer(0,0);
 		ptr2->lock(HardwareBuffer::HBL_DISCARD);
 		const PixelBox &pb2 = ptr2->getCurrentLock();
-		Ogre::uint8 *data2 = static_cast<Ogre::uint8*>(pb2.data);
+		uint8 *data2 = static_cast<uint8*>(pb2.data);
 		
 		size_t height2 = pb2.getHeight();
 		size_t width2 = pb2.getWidth();
@@ -591,12 +606,6 @@ extern "C" {
 	int main(int argc, char *argv[])
 #endif
 {
-#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
-        NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
-        int retVal = UIApplicationMain(argc, argv, @"UIApplication", @"AppDelegate");
-        [pool release];
-        return retVal;
-#else
    // Create application object
     CompositorDemo app;
 
@@ -610,83 +619,10 @@ extern "C" {
 #endif
     }
 
+
     return 0;
-#endif
 }
 
 #ifdef __cplusplus
 }
-#endif
-
-#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
-#   ifdef __OBJC__
-@interface AppDelegate : NSObject <UIApplicationDelegate>
-{
-}
-
-- (void)go;
-
-@end
-
-@implementation AppDelegate
-
-- (void)go {
-    // Create application object
-    CompositorDemo app;
-    try {
-        app.go();
-    } catch( Ogre::Exception& e ) {
-        std::cerr << "An exception has occured: " <<
-        e.getFullDescription().c_str() << std::endl;
-    }
-}
-
-- (void)applicationDidFinishLaunching:(UIApplication *)application {
-    // Hide the status bar
-    [[UIApplication sharedApplication] setStatusBarHidden:YES];
-
-    // Create a window
-    UIWindow *window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-
-    // Create an image view
-    UIImageView *imageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Default.png"]];
-    [window addSubview:imageView];
-    
-    // Create an indeterminate status indicator
-    UIActivityIndicatorView *indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
-    [indicator setFrame:CGRectMake(150, 280, 20, 20)];
-    [indicator startAnimating];
-    [window addSubview:indicator];
-    
-    // Display our window
-    [window makeKeyAndVisible];
-    
-    // Clean up
-    [imageView release];
-    [indicator release];
-
-    [NSThread detachNewThreadSelector:@selector(go) toTarget:self withObject:nil];
-}
-
-- (void)applicationWillTerminate:(UIApplication *)application {
-    Root::getSingleton().queueEndRendering();
-}
-
-//- (void)applicationWillResignActive:(UIApplication *)application
-//{
-//    // Pause FrameListeners and rendering
-//}
-//
-//- (void)applicationDidBecomeActive:(UIApplication *)application
-//{
-//    // Resume FrameListeners and rendering
-//}
-
-- (void)dealloc {
-    [super dealloc];
-}
-
-@end
-#   endif
-
 #endif

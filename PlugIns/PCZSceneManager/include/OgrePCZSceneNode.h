@@ -53,8 +53,8 @@ namespace Ogre
 	class PCZone;
 	class ZoneData;
 	class PCZCamera;
-    typedef map<String, PCZone*>::type ZoneMap;
-	typedef map<String, ZoneData*>::type ZoneDataMap;
+    typedef std::map<String, PCZone*> ZoneMap;
+	typedef std::map<String, ZoneData*> ZoneDataMap;
 
 	class _OgrePCZPluginExport PCZSceneNode : public SceneNode
 	{
@@ -65,8 +65,7 @@ namespace Ogre
 		PCZSceneNode( SceneManager* creator, const String& name );
 		/** Standard destructor */
 		~PCZSceneNode();
-		void _update(bool updateChildren, bool parentHasChanged);
-		void updateFromParentImpl() const;
+		virtual void _update(bool updateChildren, bool parentHasChanged);
 
         /** Creates an unnamed new SceneNode as a child of this node.
         @param
@@ -116,20 +115,17 @@ namespace Ogre
 		void		updateZoneData(void);
 		void		enable(bool yesno) {mEnabled = yesno;}
 		bool		isEnabled(void) {return mEnabled;}
-		bool		isMoved(void) {return mMoved;}
-		void		setMoved(bool value) {mMoved = value;}
 	protected:
-		mutable Vector3	mNewPosition; 
+		Vector3         mNewPosition; 
 		PCZone *		mHomeZone;
 		bool			mAnchored;
 		bool			mAllowedToVisit;
 		ZoneMap			mVisitingZones;
-		mutable Vector3	mPrevPosition;
+		Vector3			mPrevPosition;
 		unsigned long	mLastVisibleFrame;
 		PCZCamera*		mLastVisibleFromCamera;
 		ZoneDataMap		mZoneData;
 		bool			mEnabled;
-		mutable bool	mMoved;
 	};
 }
 

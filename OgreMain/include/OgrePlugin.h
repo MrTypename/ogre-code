@@ -33,12 +33,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre
 {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
 	/** Class defining a generic OGRE plugin.
 	@remarks
 		OGRE is very plugin-oriented and you can customise much of its behaviour
@@ -130,8 +124,6 @@ namespace Ogre
 		*/
 		virtual void uninstall() = 0;
 	};
-	/** @} */
-	/** @} */
 
 }
 

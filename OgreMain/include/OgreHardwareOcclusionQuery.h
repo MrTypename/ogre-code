@@ -36,12 +36,6 @@ namespace Ogre {
 
 
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup RenderSystem
-	*  @{
-	*/
 /**
   * This is a abstract class that that provides the interface for the query class for 
   * hardware occlusion.
@@ -126,8 +120,6 @@ public:
 		bool		 mIsQueryResultStillOutstanding;
 };
 
-	/** @} */
-	/** @} */
 }
 #endif
 

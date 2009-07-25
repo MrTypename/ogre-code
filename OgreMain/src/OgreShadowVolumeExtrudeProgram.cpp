@@ -31,7 +31,6 @@ Torus Knot Software Ltd.
 #include "OgreShadowVolumeExtrudeProgram.h"
 #include "OgreString.h"
 #include "OgreGpuProgramManager.h"
-#include "OgreHighLevelGpuProgramManager.h"
 #include "OgreGpuProgram.h"
 #include "OgreException.h"
 
@@ -68,30 +67,6 @@ namespace Ogre {
         "dp4 oPos.z, c2, r0\n"
         "dp4 oPos.w, c3, r0\n";
 
-	String ShadowVolumeExtrudeProgram::mPointVs_4_0 = 
-		"// Point light shadow volume extrude\n"
-		"struct VS_OUTPUT\n"
-		"{\n"
-		"\tfloat4 Pos : SV_POSITION;\n"
-		"};\n"
-		"VS_OUTPUT vs_main (\n"
-		"    float4 position			: POSITION,\n"
-		"    float  wcoord			: TEXCOORD0,\n"
-		"    uniform float4x4 worldviewproj_matrix,\n"
-		"    uniform float4   light_position_object_space // homogeneous, object space\n"
-		"    )\n"
-		"{\n"
-		"    // extrusion in object space\n"
-		"    // vertex unmodified if w==1, extruded if w==0\n"
-		"    float4 newpos = \n"
-		"        (wcoord.xxxx * light_position_object_space) + \n"
-		"        float4(position.xyz - light_position_object_space.xyz, 0);\n"
-		"\n"
-		"    VS_OUTPUT output = (VS_OUTPUT)0;\n"
-		"    output.Pos = mul(worldviewproj_matrix, newpos);\n"
-		"    return output;\n"
-		"}\n";
-
     String ShadowVolumeExtrudeProgram::mDirArbvp1 = 
         "!!ARBvp1.0\n"
         "TEMP R0;\n"
@@ -117,30 +92,6 @@ namespace Ogre {
         "dp4 oPos.y, c1, r0\n"
         "dp4 oPos.z, c2, r0\n"
         "dp4 oPos.w, c3, r0\n";
-
-	String ShadowVolumeExtrudeProgram::mDirVs_4_0 = 
-		"// Directional light extrude\n"
-		"struct VS_OUTPUT\n"
-		"{\n"
-		"\tfloat4 Pos : SV_POSITION;\n"
-		"};\n"
-		"VS_OUTPUT vs_main (\n"
-		"    float4 position			: POSITION,\n"
-		"    float  wcoord			: TEXCOORD0,\n"
-		"\n"
-		"    uniform float4x4 worldviewproj_matrix,\n"
-		"    uniform float4   light_position_object_space // homogenous, object space\n"
-		"    )\n"
-		"{\n"
-		"    // extrusion in object space\n"
-		"    // vertex unmodified if w==1, extruded if w==0\n"
-		"    float4 newpos = \n"
-		"        (wcoord.xxxx * (position + light_position_object_space)) - light_position_object_space;\n"
-		"\n"
-		"    VS_OUTPUT output = (VS_OUTPUT)0;\n"
-		"    output.Pos = mul(worldviewproj_matrix, newpos);\n"
-		"    return output;\n"
-		"}\n";
 
 
     String ShadowVolumeExtrudeProgram::mPointArbvp1Debug = 
@@ -177,8 +128,6 @@ namespace Ogre {
         "dp4 oPos.w, c3, r0\n"
         "mov oD0, c6.x\n";
 
-	String ShadowVolumeExtrudeProgram::mPointVs_4_0Debug = mPointVs_4_0;
-
     String ShadowVolumeExtrudeProgram::mDirArbvp1Debug = 
         "!!ARBvp1.0\n"
         "PARAM c5 = { 1, 1, 1, 1};\n"
@@ -208,8 +157,6 @@ namespace Ogre {
         "dp4 oPos.z, c2, r0\n"
         "dp4 oPos.w, c3, r0\n"
         "mov oD0, c5.x\n";
-
-	String ShadowVolumeExtrudeProgram::mDirVs_4_0Debug = mDirVs_4_0;
 
 
     // c4 is the light position/direction in these
@@ -253,37 +200,6 @@ namespace Ogre {
         "dp4 oPos.y, c1, r0\n"
         "dp4 oPos.z, c2, r0\n"
         "dp4 oPos.w, c3, r0\n";
-
-	String ShadowVolumeExtrudeProgram::mPointVs_4_0Finite = 
-		"// Point light shadow volume extrude - FINITE\n"
-		"struct VS_OUTPUT\n"
-		"{\n"
-		"\tfloat4 Pos : SV_POSITION;\n"
-		"};\n"
-		"VS_OUTPUT vs_main (\n"
-		"    float4 position			: POSITION,\n"
-		"    float  wcoord			: TEXCOORD0,\n"
-		"\n"
-		"    uniform float4x4 worldviewproj_matrix,\n"
-		"    uniform float4   light_position_object_space, // homogeneous, object space\n"
-		"	uniform float    shadow_extrusion_distance // how far to extrude\n"
-		"    )\n"
-		"{\n"
-		"    // extrusion in object space\n"
-		"    // vertex unmodified if w==1, extruded if w==0\n"
-		"	float3 extrusionDir = position.xyz - light_position_object_space.xyz;\n"
-		"	extrusionDir = normalize(extrusionDir);\n"
-		"	\n"
-		"    float4 newpos = float4(position.xyz +  \n"
-		"        ((1 - wcoord.x) * shadow_extrusion_distance * extrusionDir), 1);\n"
-		"\n"
-		"    VS_OUTPUT output = (VS_OUTPUT)0;\n"
-		"    output.Pos = mul(worldviewproj_matrix, newpos);\n"
-		"    return output;\n"
-
-		"\n"
-		"}\n";
-
     String ShadowVolumeExtrudeProgram::mDirArbvp1Finite = 
         "!!ARBvp1.0\n"
         "PARAM c6 = { 1, 0, 0, 0 };\n"
@@ -301,7 +217,6 @@ namespace Ogre {
         "DPH result.position.z, R0.xyzz, c0[2];\n"
         "DPH result.position.w, R0.xyzz, c0[3];\n"
         "END\n";
-
     String ShadowVolumeExtrudeProgram::mDirVs_1_1Finite = 
         "vs_1_1\n"
         "def c6, 1, 0, 0, 0\n"
@@ -315,34 +230,6 @@ namespace Ogre {
         "dp4 oPos.y, c1, r0\n"
         "dp4 oPos.z, c2, r0\n"
         "dp4 oPos.w, c3, r0\n";
-
-	String ShadowVolumeExtrudeProgram::mDirVs_4_0Finite = 
-		"// Directional light extrude - FINITE\n"
-		"struct VS_OUTPUT\n"
-		"{\n"
-		"\tfloat4 Pos : SV_POSITION;\n"
-		"};\n"
-		"VS_OUTPUT vs_main (\n"
-		"    float4 position			: POSITION,\n"
-		"    float  wcoord			: TEXCOORD0,\n"
-		"\n"
-		"    uniform float4x4 worldviewproj_matrix,\n"
-		"    uniform float4   light_position_object_space, // homogeneous, object space\n"
-		"	uniform float    shadow_extrusion_distance // how far to extrude\n"
-		"    )\n"
-		"{\n"
-		"    // extrusion in object space\n"
-		"    // vertex unmodified if w==1, extruded if w==0\n"
-		"	// -ve light_position_object_space is direction\n"
-		"    float4 newpos = float4(position.xyz - \n"
-		"        (wcoord.x * shadow_extrusion_distance * light_position_object_space.xyz), 1);\n"
-		"\n"
-		"    VS_OUTPUT output = (VS_OUTPUT)0;\n"
-		"    output.Pos = mul(worldviewproj_matrix, newpos);\n"
-		"    return output;\n"
-		"\n"
-		"}\n";
-
     String ShadowVolumeExtrudeProgram::mPointArbvp1FiniteDebug = 
         "!!ARBvp1.0\n"
         "PARAM c6 = { 1, 0, 0, 0 };\n"
@@ -365,8 +252,7 @@ namespace Ogre {
         "DPH result.position.z, R0.xyzz, c0[2];\n"
         "DPH result.position.w, R0.xyzz, c0[3];\n"
         "END\n";
-
-	String ShadowVolumeExtrudeProgram::mPointVs_1_1FiniteDebug = 
+    String ShadowVolumeExtrudeProgram::mPointVs_1_1FiniteDebug = 
         "vs_1_1\n"
         "def c6, 1, 0, 0, 0\n"
         "dcl_texcoord0 v7\n"
@@ -384,9 +270,6 @@ namespace Ogre {
         "dp4 oPos.y, c1, r0\n"
         "dp4 oPos.z, c2, r0\n"
         "dp4 oPos.w, c3, r0\n";
-
-	String ShadowVolumeExtrudeProgram::mPointVs_4_0FiniteDebug = mPointVs_4_0Finite;
-
     String ShadowVolumeExtrudeProgram::mDirArbvp1FiniteDebug = 
         "!!ARBvp1.0\n"
         "PARAM c6 = { 1, 0, 0, 0 };\n"
@@ -405,7 +288,6 @@ namespace Ogre {
         "DPH result.position.z, R0.xyzz, c0[2];\n"
         "DPH result.position.w, R0.xyzz, c0[3];\n"
         "END\n";
-
     String ShadowVolumeExtrudeProgram::mDirVs_1_1FiniteDebug = 
         "vs_1_1\n"
         "def c6, 1, 0, 0, 0\n"
@@ -422,20 +304,6 @@ namespace Ogre {
         "dp4 oPos.w, c3, r0\n";
 
 
-	String ShadowVolumeExtrudeProgram::mDirVs_4_0FiniteDebug = mDirVs_4_0Finite;
-
-
-	String ShadowVolumeExtrudeProgram::mGeneralFs_4_0 = 
-		"struct VS_OUTPUT\n"
-		"{\n"
-		"\tfloat4 Pos : SV_POSITION;\n"
-		"};\n"
-		"float4 fs_main (VS_OUTPUT input): SV_Target\n"
-		"{\n"
-		"    float4 finalColor = float4(1,1,1,1);\n"
-		"    return finalColor;\n"
-		"}\n";
-
     const String ShadowVolumeExtrudeProgram::programNames[OGRE_NUM_SHADOW_EXTRUDER_PROGRAMS] = 
     {
         "Ogre/ShadowExtrudePointLight",
@@ -448,8 +316,6 @@ namespace Ogre {
             "Ogre/ShadowExtrudeDirLightFiniteDebug"
     };
 
-	String ShadowVolumeExtrudeProgram::frgProgramName = "";
-
 	bool ShadowVolumeExtrudeProgram::mInitialised = false;
     //---------------------------------------------------------------------
     //---------------------------------------------------------------------
@@ -458,17 +324,17 @@ namespace Ogre {
 		if (!mInitialised)
 		{
 			String syntax;
-			bool vertexProgramFinite[OGRE_NUM_SHADOW_EXTRUDER_PROGRAMS] = 
+			bool vertexProgramFinite[8] = 
 			{
 				false, false, false, false, 
 					true, true, true, true
 			};
-			bool vertexProgramDebug[OGRE_NUM_SHADOW_EXTRUDER_PROGRAMS] = 
+			bool vertexProgramDebug[8] = 
 			{
 				false, true, false, true, 
 					false, true, false, true
 			};
-			Light::LightTypes vertexProgramLightTypes[OGRE_NUM_SHADOW_EXTRUDER_PROGRAMS] = 
+			Light::LightTypes vertexProgramLightTypes[8] = 
 			{
 				Light::LT_POINT, Light::LT_POINT, 
 					Light::LT_DIRECTIONAL, Light::LT_DIRECTIONAL, 
@@ -486,15 +352,11 @@ namespace Ogre {
 			{
 				syntax = "vs_1_1";
 			}
-			else if (GpuProgramManager::getSingleton().isSyntaxSupported("vs_4_0"))
-			{
-				syntax = "vs_4_0";
-			}
 			else
 			{
 				OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
 					"Vertex programs are supposedly supported, but neither "
-					"arbvp1, vs_1_1 nor vs_4_0 syntaxes are present.", 
+					"arbvp1 nor vs_1_1 syntaxes are present.", 
 					"SceneManager::initShadowVolumeMaterials");
 			}
 			// Create all programs
@@ -504,44 +366,14 @@ namespace Ogre {
 				if (GpuProgramManager::getSingleton().getByName(
 					programNames[v]).isNull())
 				{
-					if (syntax == "vs_4_0")
-					{
-						HighLevelGpuProgramPtr vp = 
-							HighLevelGpuProgramManager::getSingleton().createProgram(
-							programNames[v], ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME,
-							"hlsl", GPT_VERTEX_PROGRAM);
-						vp->setSource(ShadowVolumeExtrudeProgram::getProgramSource(
-							vertexProgramLightTypes[v], syntax, 
-							vertexProgramFinite[v], vertexProgramDebug[v]));
-						vp->setParameter("target", syntax);
-						vp->setParameter("entry_point", "vs_main");			
-						vp->load();
-
-						if (frgProgramName.empty())
-						{
-							frgProgramName = "Ogre/ShadowFrgProgram";
-							HighLevelGpuProgramPtr fp = 
-								HighLevelGpuProgramManager::getSingleton().createProgram(
-								frgProgramName, ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME,
-								"hlsl", GPT_FRAGMENT_PROGRAM);
-							fp->setSource(mGeneralFs_4_0);
-							fp->setParameter("target", "ps_4_0");
-							fp->setParameter("entry_point", "fs_main");			
-							fp->load();
-						}
-					}
-					else
-					{
-						GpuProgramPtr vp = 
-							GpuProgramManager::getSingleton().createProgramFromString(
-							programNames[v], ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME,
-							ShadowVolumeExtrudeProgram::getProgramSource(
-							vertexProgramLightTypes[v], syntax, 
-							vertexProgramFinite[v], vertexProgramDebug[v]),
-							GPT_VERTEX_PROGRAM, syntax);
-						vp->load();
-					}
-
+					GpuProgramPtr vp = 
+						GpuProgramManager::getSingleton().createProgramFromString(
+						programNames[v], ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME,
+						ShadowVolumeExtrudeProgram::getProgramSource(
+						vertexProgramLightTypes[v], syntax, 
+						vertexProgramFinite[v], vertexProgramDebug[v]),
+						GPT_VERTEX_PROGRAM, syntax);
+					vp->load();
 				}
 			}
 			mInitialised = true;
@@ -590,8 +422,8 @@ namespace Ogre {
                         return getDirectionalLightExtruderArbvp1();
                     }
                 }
-            } 
-            else if (syntax == "vs_1_1")
+            }
+            else
             {
                 if (finite)
                 {
@@ -616,39 +448,6 @@ namespace Ogre {
                     }
                 }
             }
-			else if (syntax == "vs_4_0")
-			{
-				if (finite)
-				{
-					if (debug)
-					{
-						return getDirectionalLightExtruderVs_4_0FiniteDebug();
-					}
-					else
-					{
-						return getDirectionalLightExtruderVs_4_0Finite();
-					}
-				}
-				else
-				{
-					if (debug)
-					{
-						return getDirectionalLightExtruderVs_4_0Debug();
-					}
-					else
-					{
-						return getDirectionalLightExtruderVs_4_0();
-					}
-				}
-			}
-			else
-			{
-				OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
-					"Vertex programs are supposedly supported, but neither "
-					"arbvp1, vs_1_1 nor vs_4_0 syntaxes are present.", 
-					"SceneManager::getProgramSource");
-			}
-
         }
         else
         {
@@ -677,7 +476,7 @@ namespace Ogre {
                     }
                 }
             }
-            else if (syntax == "vs_1_1")
+            else
             {
                 if (finite)
                 {
@@ -702,39 +501,6 @@ namespace Ogre {
                     }
                 }
             }
-			else if (syntax == "vs_4_0")
-			{
-				if (finite)
-				{
-					if (debug)
-					{
-						return getPointLightExtruderVs_4_0FiniteDebug();
-					}
-					else
-					{
-						return getPointLightExtruderVs_4_0Finite();
-					}
-				}
-				else
-				{
-					if (debug)
-					{
-						return getPointLightExtruderVs_4_0Debug();
-					}
-					else
-					{
-						return getPointLightExtruderVs_4_0();
-					}
-				}
-			}
-			else
-			{
-				OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
-					"Vertex programs are supposedly supported, but neither "
-					"arbvp1, vs_1_1 nor vs_4_0 syntaxes are present.", 
-					"SceneManager::getProgramSource");
-			}
-
         }
         // to keep compiler happy
         return StringUtil::BLANK;

@@ -44,7 +44,7 @@ Code Style Update	 :
 namespace Ogre
 {
 
-    typedef list<PCZone*>::type ZoneList;
+    typedef std::list<PCZone*> ZoneList;
 
     /** Specialized version of Ogre::Light which caches which zones the light affects
     @remarks
@@ -90,7 +90,7 @@ namespace Ogre
 
         /** Update the list of zones the light affects 
         */
-        void updateZones(PCZone * defaultZone, unsigned long frameCount);
+        void updateZones(PCZone * defaultZone, long frameCount);
 
 		void removeZoneFromAffectedZonesList(PCZone * zone); // manually remove a zone from the affected list
 

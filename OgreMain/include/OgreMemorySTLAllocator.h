@@ -36,12 +36,6 @@ namespace Ogre
 {
 
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Memory
-	*  @{
-	*/
 	/**
 	Wrapper class for operating as an STL container allocator.
 	This class acts as the host for a configured allocation policy.
@@ -92,7 +86,7 @@ namespace Ogre
 		{ }
 
 		/// copy ctor - done component wise
-		inline STLAllocator( STLAllocator const& )
+		inline STLAllocator( STLAllocator const& rhs )
 		{ }
 
 		/// cast
@@ -102,7 +96,7 @@ namespace Ogre
 
 		/// cast
 		template <typename U, typename P>
-		inline STLAllocator( STLAllocator<U, P> const& )
+		inline STLAllocator( STLAllocator<U, P> const& rhs )
 		{ }
 
 		/// memory allocation (elements, used by STL)
@@ -116,10 +110,10 @@ namespace Ogre
 		}
 
 		/// memory deallocation (elements, used by STL)
-		inline void deallocate( pointer ptr, size_type )
+		inline void deallocate( pointer ptr, size_type count )
 		{
 			// convert request to bytes, but we can't use this?
-			// register size_type sz = count*sizeof( T );
+			register size_type sz = count*sizeof( T );
 			AllocPolicy::deallocateBytes(ptr);
 		}
 
@@ -192,8 +186,6 @@ namespace Ogre
 	}
 
 
-	/** @} */
-	/** @} */
 
 }// namespace Ogre
 

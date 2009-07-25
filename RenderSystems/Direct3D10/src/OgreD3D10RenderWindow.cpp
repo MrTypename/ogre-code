@@ -31,7 +31,6 @@ Torus Knot Software Ltd.
 #include "OgreD3D10RenderSystem.h"
 #include "OgreWindowEventUtilities.h"
 #include "OgreD3D10Driver.h"
-#include "OgreRoot.h"
 
 namespace Ogre
 {
@@ -86,11 +85,9 @@ namespace Ogre
 		HWND parentHWnd = 0;
 		HWND externalHandle = 0;
 		mFSAAType.Count = 1;
-		mFSAAType.Quality = 0;
-		mFSAA = 0;
-		mFSAAHint = "";
+		mFSAAType.Quality=0;
+		//mFSAAQuality = 0;
 		mVSync = false;
-		mVSyncInterval = 1;
 		String title = name;
 		unsigned int colourDepth = 32;
 		int left = -1; // Defaults to screen center
@@ -128,10 +125,6 @@ namespace Ogre
 			opt = miscParams->find("vsync");
 			if(opt != miscParams->end())
 				mVSync = StringConverter::parseBool(opt->second);
-			// vsyncInterval	[parseUnsignedInt]
-			opt = miscParams->find("vsyncInterval");
-			if(opt != miscParams->end())
-				mVSyncInterval = StringConverter::parseUnsignedInt(opt->second);
 			// displayFrequency
 			opt = miscParams->find("displayFrequency");
 			if(opt != miscParams->end())
@@ -149,11 +142,12 @@ namespace Ogre
 			if(opt != miscParams->end())
 			{
 				mFSAA = StringConverter::parseUnsignedInt(opt->second);
+				mFSAAType.Count = (UINT)mFSAA;
 			}
 			// FSAA quality
-			opt = miscParams->find("FSAAHint");
+			opt = miscParams->find("FSAAQuality");
 			if(opt != miscParams->end())
-				mFSAAHint = opt->second;
+				mFSAAType.Quality = StringConverter::parseUnsignedInt(opt->second);
 			// window border style
 			opt = miscParams->find("border");
 			if(opt != miscParams->end())
@@ -416,8 +410,7 @@ namespace Ogre
 		}
 		md3dpp.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-		D3D10RenderSystem* rsys = static_cast<D3D10RenderSystem*>(Root::getSingleton().getRenderSystem());
-		rsys->determineFSAASettings(mFSAA, mFSAAHint, md3dpp.BufferDesc.Format, &mFSAAType);
+
 
 
 		if (mVSync)
@@ -537,8 +530,6 @@ namespace Ogre
 
 			// create the render target view
 			D3D10_RENDER_TARGET_VIEW_DESC RTVDesc;
-			ZeroMemory( &RTVDesc, sizeof(RTVDesc) );
-
 			RTVDesc.Format = BBDesc.Format;
 			RTVDesc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2D;
 			RTVDesc.Texture2D.MipSlice = 0;
@@ -582,7 +573,7 @@ namespace Ogre
 				descDepth.Height = mHeight;
 				descDepth.MipLevels = 1;
 				descDepth.ArraySize = 1;
-				descDepth.Format = DXGI_FORMAT_R32_TYPELESS;
+				descDepth.Format = DXGI_FORMAT_D16_UNORM;
 				descDepth.SampleDesc.Count = 1;
 				descDepth.SampleDesc.Quality = 0;
 				descDepth.Usage = D3D10_USAGE_DEFAULT;
@@ -601,7 +592,7 @@ namespace Ogre
 
 				// Create the depth stencil view
 				D3D10_DEPTH_STENCIL_VIEW_DESC descDSV;
-				descDSV.Format = DXGI_FORMAT_D32_FLOAT;
+				descDSV.Format = descDepth.Format;
 				descDSV.ViewDimension = D3D10_DSV_DIMENSION_TEXTURE2D;
 				descDSV.Texture2D.MipSlice = 0;
 				hr = mDevice->CreateDepthStencilView( pDepthStencil, &descDSV, &mDepthStencilView );
@@ -871,7 +862,7 @@ namespace Ogre
 			HRESULT hr;
 			if (mIsSwapChain)
 			{
-				hr = mpSwapChain->Present(waitForVSync ? mVSyncInterval : 0, 0);
+				hr = mpSwapChain->Present(0, 0);
 			}
 			else
 			{

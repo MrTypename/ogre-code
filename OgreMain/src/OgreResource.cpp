@@ -114,10 +114,9 @@ namespace Ogre
 		//if(mCreator)
 		//	mCreator->_notifyResourcePrepared(this);
 
-		// Fire events (if not background)
-		if (!mIsBackgroundLoaded)
-			_firePreparingComplete();
-
+		// Fire (deferred) events
+		if (mIsBackgroundLoaded)
+			queueFireBackgroundPreparingComplete();
 
 	}
 
@@ -212,9 +211,9 @@ namespace Ogre
 		if(mCreator)
 			mCreator->_notifyResourceLoaded(this);
 
-		// Fire events, if not background
-		if (!mIsBackgroundLoaded)
-			_fireLoadingComplete();
+		// Fire (deferred) events
+		if (mIsBackgroundLoaded)
+			queueFireBackgroundLoadingComplete();
 
 
 	}
@@ -266,9 +265,6 @@ namespace Ogre
 		if(old==LOADSTATE_LOADED && mCreator)
 			mCreator->_notifyResourceUnloaded(this);
 
-		_fireUnloadingComplete();
-
-
 	}
 	//-----------------------------------------------------------------------
 	void Resource::reload(void) 
@@ -303,48 +299,42 @@ namespace Ogre
 		mListenerList.remove(lis);
 	}
 	//-----------------------------------------------------------------------
-	void Resource::_fireLoadingComplete(void)
+	void Resource::queueFireBackgroundLoadingComplete(void)
+	{
+		// Lock the listener list
+		OGRE_LOCK_MUTEX(mListenerListMutex)
+		if(!mListenerList.empty())
+			ResourceBackgroundQueue::getSingleton()._queueFireBackgroundLoadingComplete(this);
+	}
+	//-----------------------------------------------------------------------
+	void Resource::_fireBackgroundLoadingComplete(void)
 	{
 		// Lock the listener list
 		OGRE_LOCK_MUTEX(mListenerListMutex)
 		for (ListenerList::iterator i = mListenerList.begin();
 			i != mListenerList.end(); ++i)
 		{
-			// deprecated call
-			if (isBackgroundLoaded())
-				(*i)->backgroundLoadingComplete(this);
-
-			(*i)->loadingComplete(this);
+			(*i)->backgroundLoadingComplete(this);
 		}
 	}
 	//-----------------------------------------------------------------------
-	void Resource::_firePreparingComplete(void)
+	void Resource::queueFireBackgroundPreparingComplete(void)
+	{
+		// Lock the listener list
+		OGRE_LOCK_MUTEX(mListenerListMutex)
+		if(!mListenerList.empty())
+			ResourceBackgroundQueue::getSingleton()._queueFireBackgroundPreparingComplete(this);
+	}
+	//-----------------------------------------------------------------------
+	void Resource::_fireBackgroundPreparingComplete(void)
 	{
 		// Lock the listener list
 		OGRE_LOCK_MUTEX(mListenerListMutex)
 		for (ListenerList::iterator i = mListenerList.begin();
 			i != mListenerList.end(); ++i)
 		{
-			// deprecated call
-			if (isBackgroundLoaded())
-				(*i)->backgroundPreparingComplete(this);
-
-			(*i)->preparingComplete(this);
-
+			(*i)->backgroundPreparingComplete(this);
 		}
-	}
-	//-----------------------------------------------------------------------
-	void Resource::_fireUnloadingComplete(void)
-	{
-		// Lock the listener list
-		OGRE_LOCK_MUTEX(mListenerListMutex)
-			for (ListenerList::iterator i = mListenerList.begin();
-				i != mListenerList.end(); ++i)
-			{
-
-				(*i)->unloadingComplete(this);
-
-			}
 	}
 
 }

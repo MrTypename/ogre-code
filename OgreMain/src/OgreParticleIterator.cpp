@@ -33,8 +33,8 @@ Torus Knot Software Ltd.
 namespace Ogre {
 
     //-----------------------------------------------------------------------
-    ParticleIterator::ParticleIterator(list<Particle*>::type::iterator start, 
-        list<Particle*>::type::iterator end)
+    ParticleIterator::ParticleIterator(std::list<Particle*>::iterator start, 
+        std::list<Particle*>::iterator end)
     {
         mStart = mPos = start;
         mEnd = end;

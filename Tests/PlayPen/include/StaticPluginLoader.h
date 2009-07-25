@@ -39,9 +39,6 @@ Description: Utility class to load plugins statically
 #ifdef ENABLE_PLUGIN_GL
 #  include "OgreGLPlugin.h"
 #endif
-#ifdef ENABLE_PLUGIN_GLES
-#  include "OgreGLESPlugin.h"
-#endif
 #ifdef ENABLE_PLUGIN_Direct3D9
 #  include "OgreD3D9Plugin.h"
 #endif
@@ -75,9 +72,6 @@ namespace Ogre
 #ifdef ENABLE_PLUGIN_GL
 		GLPlugin* mGLPlugin;
 #endif
-#ifdef ENABLE_PLUGIN_GLES
-		GLESPlugin* mGLESPlugin;
-#endif
 #ifdef ENABLE_PLUGIN_Direct3D9
 		D3D9Plugin* mD3D9Plugin;
 #endif
@@ -90,10 +84,6 @@ namespace Ogre
 #ifdef ENABLE_PLUGIN_GL
 			mGLPlugin = new GLPlugin();
 			root.installPlugin(mGLPlugin);
-#endif
-#ifdef ENABLE_PLUGIN_GLES
-			mGLESPlugin = new GLESPlugin();
-			root.installPlugin(mGLESPlugin);
 #endif
 #ifdef ENABLE_PLUGIN_Direct3D9
 			mD3D9Plugin = new D3D9Plugin();
@@ -135,8 +125,8 @@ namespace Ogre
 #ifdef ENABLE_PLUGIN_Direct3D9
 			delete mD3D9Plugin;
 #endif
-#ifdef ENABLE_PLUGIN_GLES
-			delete mGLESPlugin;
+#ifdef ENABLE_PLUGIN_GL
+			delete mGLPlugin;
 #endif
 
 		}

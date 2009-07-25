@@ -42,19 +42,18 @@ namespace Ogre {
     {
 	protected:
 		unsigned char* mpData;
-        /// @copydoc HardwareBuffer::lock
+        /** See HardwareBuffer. */
         void* lockImpl(size_t offset, size_t length, LockOptions options);
-        /// @copydoc HardwareBuffer::unlock
-        void unlockImpl(void);
+        /** See HardwareBuffer. */
+		void unlockImpl(void);
 
     public:
 		GLDefaultHardwareVertexBuffer(size_t vertexSize, size_t numVertices, 
             HardwareBuffer::Usage usage);
         ~GLDefaultHardwareVertexBuffer();
-        /// @copydoc HardwareBuffer::readData
+        /** See HardwareBuffer. */
         void readData(size_t offset, size_t length, void* pDest);
-        /// @copydoc HardwareBuffer::writeData
-
+        /** See HardwareBuffer. */
         void writeData(size_t offset, size_t length, const void* pSource,
 				bool discardWholeBuffer = false);
         /** Override HardwareBuffer to turn off all shadowing. */
@@ -71,22 +70,22 @@ namespace Ogre {
     {
 	protected:
 		unsigned char* mpData;
-        /// @copydoc HardwareBuffer::lock
+        /** See HardwareBuffer. */
         void* lockImpl(size_t offset, size_t length, LockOptions options);
-        /// @copydoc HardwareBuffer::unlock
-        void unlockImpl(void);
+        /** See HardwareBuffer. */
+		void unlockImpl(void);
     public:
 		GLDefaultHardwareIndexBuffer(IndexType idxType, size_t numIndexes, HardwareBuffer::Usage usage);
         ~GLDefaultHardwareIndexBuffer();
-        /// @copydoc HardwareBuffer::readData
+        /** See HardwareBuffer. */
         void readData(size_t offset, size_t length, void* pDest);
-        /// @copydoc HardwareBuffer::writeData
+        /** See HardwareBuffer. */
         void writeData(size_t offset, size_t length, const void* pSource,
 				bool discardWholeBuffer = false);
         /** Override HardwareBuffer to turn off all shadowing. */
         void* lock(size_t offset, size_t length, LockOptions options);
         /** Override HardwareBuffer to turn off all shadowing. */
-        void unlock(void);
+		void unlock(void);
 
         void* getDataPtr(size_t offset) const { return (void*)(mpData + offset); }
     };
@@ -98,11 +97,11 @@ namespace Ogre {
 		rendering system (which is required to create a 'real' hardware
 		buffer manager.
 	*/
-	class _OgrePrivate GLDefaultHardwareBufferManagerBase : public HardwareBufferManagerBase
+	class _OgrePrivate GLDefaultHardwareBufferManager : public HardwareBufferManager
 	{
     public:
-        GLDefaultHardwareBufferManagerBase();
-        ~GLDefaultHardwareBufferManagerBase();
+        GLDefaultHardwareBufferManager();
+        ~GLDefaultHardwareBufferManager();
         /// Creates a vertex buffer
 		HardwareVertexBufferSharedPtr 
             createVertexBuffer(size_t vertexSize, size_t numVerts, 
@@ -116,20 +115,7 @@ namespace Ogre {
 
     };
 
-	/// GLDefaultHardwareBufferManagerBase as a Singleton
-	class _OgrePrivate GLDefaultHardwareBufferManager : public HardwareBufferManager
-	{
-	public:
-		GLDefaultHardwareBufferManager()
-			: HardwareBufferManager(OGRE_NEW GLDefaultHardwareBufferManagerBase()) 
-		{
 
-		}
-		~GLDefaultHardwareBufferManager()
-		{
-			OGRE_DELETE mImpl;
-		}
-	};
 }
 
 #endif

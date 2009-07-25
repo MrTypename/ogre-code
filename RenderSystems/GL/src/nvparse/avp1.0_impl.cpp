@@ -10,6 +10,8 @@
 #include <GL/glu.h>
 #endif
 
+#include <OgreGLPrerequisites.h>
+
 using namespace std;
 
 namespace
@@ -114,8 +116,8 @@ namespace
 					nchar++;
 				}
 			}
-			int start = 0;
-			int end = 0;
+			int start;
+			int end;
 			int flag = ((instring[errPos]==';') | (instring[errPos-1]==';')) ? 1 : 0;
 			for (i = errPos; i >= 0; i--)
 			{

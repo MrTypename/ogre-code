@@ -81,9 +81,9 @@ namespace Ogre {
     {
         //setup the neighbor links.
 
-        for ( unsigned short j = 0; j < tilesPerPage; j++ )
+        for ( size_t j = 0; j < tilesPerPage; j++ )
         {
-            for ( unsigned short i = 0; i < tilesPerPage; i++ )
+            for ( size_t i = 0; i < tilesPerPage; i++ )
             {
                 if ( j != tilesPerPage - 1 )
                 {
@@ -130,9 +130,9 @@ namespace Ogre {
 	//-------------------------------------------------------------------------
 	void TerrainZonePage::setRenderQueue(uint8 qid)
 	{
-		for ( unsigned short j = 0; j < tilesPerPage; j++ )
+		for ( size_t j = 0; j < tilesPerPage; j++ )
 		{
-			for ( unsigned short i = 0; i < tilesPerPage; i++ )
+			for ( size_t i = 0; i < tilesPerPage; i++ )
 			{
 				if ( j != tilesPerPage - 1 )
 				{

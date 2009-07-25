@@ -109,7 +109,7 @@ namespace Ogre {
         size_t numVertices)
     {
         // Source vectors
-        Vector3 sourceVec = Vector3::ZERO, sourceNorm = Vector3::ZERO;
+        Vector3 sourceVec, sourceNorm;
         // Accumulation vectors
         Vector3 accumVecPos, accumVecNorm;
 

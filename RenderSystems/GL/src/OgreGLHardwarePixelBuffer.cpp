@@ -296,7 +296,7 @@ void GLTextureBuffer::upload(const PixelBox &data, const Image::Box &dest)
 		if(data.format != mFormat || !data.isConsecutive())
 			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
 			"Compressed images must be consecutive, in the source format",
-		 	"GLTextureBuffer::upload");
+		 	"GLHardwarePixelBuffer::upload");
 		GLenum format = GLPixelUtil::getClosestGLInternalFormat(mFormat);
 		// Data must be consecutive and at beginning of buffer as PixelStorei not allowed
 		// for compressed formats
@@ -468,14 +468,14 @@ void GLTextureBuffer::download(const PixelBox &data)
 		data.getHeight() != getHeight() ||
 		data.getDepth() != getDepth())
 		OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "only download of entire buffer is supported by GL",
-		 	"GLTextureBuffer::download");
+		 	"GLHardwarePixelBuffer::download");
 	glBindTexture( mTarget, mTextureID );
 	if(PixelUtil::isCompressed(data.format))
 	{
 		if(data.format != mFormat || !data.isConsecutive())
 			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
 			"Compressed images must be consecutive, in the source format",
-		 	"GLTextureBuffer::download");
+		 	"GLHardwarePixelBuffer::upload");
 		// Data must be consecutive and at beginning of buffer as PixelStorei not allowed
 		// for compressed formate
 		glGetCompressedTexImageARB(mFaceTarget, mLevel, data.data);
@@ -783,7 +783,7 @@ void GLTextureBuffer::blitFromMemory(const PixelBox &src_orig, const Image::Box 
     }
     if(!mBuffer.contains(dstBox))
         OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "destination box out of range",
-                    "GLTextureBuffer::blitFromMemory");
+                    "GLHardwarePixelBuffer::blitFromMemory");
     /// For scoped deletion of conversion buffer
     MemoryDataStreamPtr buf;
     PixelBox src;

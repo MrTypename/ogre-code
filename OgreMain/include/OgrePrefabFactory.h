@@ -34,12 +34,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Resources
-	*  @{
-	*/
 	/** A factory class that can create various mesh prefabs. 
 	@remarks
 		This class is used by OgreMeshManager to offload the loading of various prefab types 
@@ -66,8 +60,6 @@ namespace Ogre {
 		/// Creates a sphere with a diameter of 100 units as a submesh of the given mesh
 		static void createSphere(Mesh* mesh);
 	};
-	/** @} */
-	/** @} */
 
 } // namespace Ogre
 

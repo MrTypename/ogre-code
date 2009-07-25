@@ -39,11 +39,10 @@ Torus Knot Software Ltd.
 namespace Ogre {
 
     //-----------------------------------------------------------------------------
-    HardwareVertexBuffer::HardwareVertexBuffer(HardwareBufferManagerBase* mgr, size_t vertexSize,  
+    HardwareVertexBuffer::HardwareVertexBuffer(size_t vertexSize,  
         size_t numVertices, HardwareBuffer::Usage usage, 
         bool useSystemMemory, bool useShadowBuffer) 
         : HardwareBuffer(usage, useSystemMemory, useShadowBuffer), 
-		  mMgr(mgr),
           mNumVertices(numVertices),
           mVertexSize(vertexSize)
     {
@@ -61,9 +60,10 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     HardwareVertexBuffer::~HardwareVertexBuffer()
     {
-		if (mMgr)
+		HardwareBufferManager* mgr = HardwareBufferManager::getSingletonPtr();
+		if (mgr)
 		{
-			mMgr->_notifyVertexBufferDestroyed(this);
+			mgr->_notifyVertexBufferDestroyed(this);
 		}
         if (mpShadowBuffer)
         {
@@ -413,10 +413,9 @@ namespace Ogre {
 		return sz;
 	}
     //-----------------------------------------------------------------------------
-    VertexDeclaration* VertexDeclaration::clone(HardwareBufferManagerBase* mgr)
+    VertexDeclaration* VertexDeclaration::clone(void)
     {
-		HardwareBufferManagerBase* pManager = mgr ? mgr : HardwareBufferManager::getSingletonPtr(); 
-        VertexDeclaration* ret = pManager->createVertexDeclaration();
+        VertexDeclaration* ret = HardwareBufferManager::getSingleton().createVertexDeclaration();
 
 		VertexElementList::const_iterator i, iend;
 		iend = mElementList.end();
@@ -536,12 +535,6 @@ namespace Ogre {
                 // Blend weights/indices can be sharing with their own buffer only
                 splitWithNext = true;
                 break;
-            case VES_DIFFUSE:
-            case VES_SPECULAR:
-            case VES_TEXTURE_COORDINATES:
-            case VES_BINORMAL:
-            case VES_TANGENT:
-                break;
             }
 
             if (splitWithPrev && offset)
@@ -652,7 +645,7 @@ namespace Ogre {
     {
         if (mBindingMap.empty())
             return false;
-        if (mBindingMap.rbegin()->first + 1 == (int) mBindingMap.size())
+        if (mBindingMap.rbegin()->first + 1 == mBindingMap.size())
             return false;
         return true;
     }

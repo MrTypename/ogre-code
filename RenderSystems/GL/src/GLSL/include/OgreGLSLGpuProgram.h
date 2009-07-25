@@ -69,7 +69,7 @@ namespace Ogre {
 		/// Execute the unbinding functions for this program
 		void unbindProgram(void);
 		/// Execute the param binding functions for this program
-		void bindProgramParameters(GpuProgramParametersSharedPtr params, uint16 mask);
+		void bindProgramParameters(GpuProgramParametersSharedPtr params);
 		/// Execute the pass iteration param binding functions for this program
 		void bindProgramPassIterationParameters(GpuProgramParametersSharedPtr params);
 

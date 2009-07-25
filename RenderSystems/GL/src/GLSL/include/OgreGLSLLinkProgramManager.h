@@ -55,7 +55,7 @@ namespace Ogre {
 
 	private:
 	
-		typedef map<uint64, GLSLLinkProgram*>::type LinkProgramMap;
+		typedef std::map<uint64, GLSLLinkProgram*> LinkProgramMap;
 		typedef LinkProgramMap::iterator LinkProgramIterator;
 
 		/// container holding previously created program objects 
@@ -67,7 +67,7 @@ namespace Ogre {
 		GLSLGpuProgram* mActiveFragmentGpuProgram;
 		GLSLLinkProgram* mActiveLinkProgram;
 
-		typedef map<String, GLenum>::type StringToEnumMap;
+		typedef std::map<String, GLenum> StringToEnumMap;
 		StringToEnumMap mTypeEnumMap;
 
 		/// Use type to complete other information

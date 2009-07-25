@@ -33,13 +33,7 @@ Torus Knot Software Ltd.
 #include "OgreCommon.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Image
-	*  @{
-	*/
-	/** The pixel format used for images, textures, and render surfaces */
+    /** The pixel format used for images, textures, and render surfaces */
     enum PixelFormat
     {
         /// Unknown pixel format.
@@ -145,7 +139,7 @@ namespace Ogre {
 		// Number of pixel formats currently defined
         PF_COUNT = 38
     };
-	typedef vector<PixelFormat>::type PixelFormatList;
+	typedef std::vector<PixelFormat> PixelFormatList;
 
     /**
      * Flags defining some on/off properties of pixel formats
@@ -183,11 +177,10 @@ namespace Ogre {
      	Pixels are stored as a succession of "depth" slices, each containing "height" rows of 
      	"width" pixels.
     */
-    class _OgreExport PixelBox: public Box, public ImageAlloc {
+    class _OgreExport PixelBox: public Box {
     public:
     	/// Parameter constructor for setting the members manually
     	PixelBox() {}
-		~PixelBox() {}
 		/** Constructor providing extents in the form of a Box object. This constructor
     		assumes the pixel data is laid out consecutively in memory. (this
     		means row after row, slice after slice, with no space in between)
@@ -360,11 +353,6 @@ namespace Ogre {
         */
         static void getBitMasks(PixelFormat format, uint32 rgba[4]);
 
-		/** Gives the bit shifts for R, G, B and A component
-		@note			Only valid for native endian formats
-		*/
-		static void getBitShifts(PixelFormat format, unsigned char rgba[4]);
-
         /** Gets the name of an image format
         */
         static String getFormatName(PixelFormat srcformat);
@@ -480,8 +468,6 @@ namespace Ogre {
         */
         static void bulkPixelConversion(const PixelBox &src, const PixelBox &dst);
     };
-	/** @} */
-	/** @} */
 
 }
 

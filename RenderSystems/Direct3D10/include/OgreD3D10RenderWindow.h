@@ -112,7 +112,6 @@ namespace Ogre
 		//DWORD mFSAAQuality;
 		UINT mDisplayFrequency;
 		bool mVSync;
-		unsigned int mVSyncInterval;
 		bool mUseNVPerfHUD;
 		ID3D10RenderTargetView*		mRenderTargetView;
 		ID3D10DepthStencilView*		mDepthStencilView;

@@ -185,8 +185,8 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     //-----------------------------------------------------------------------
-    MemoryDataStream::MemoryDataStream(void* pMem, size_t size, bool freeOnClose, bool readOnly)
-		: DataStream(readOnly ? READ : (READ | WRITE))
+    MemoryDataStream::MemoryDataStream(void* pMem, size_t size, bool freeOnClose)
+        : DataStream()
     {
         mData = mPos = static_cast<uchar*>(pMem);
         mSize = size;
@@ -196,8 +196,8 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     MemoryDataStream::MemoryDataStream(const String& name, void* pMem, size_t size, 
-        bool freeOnClose, bool readOnly)
-        : DataStream(name, readOnly ? READ : (READ | WRITE))
+        bool freeOnClose)
+        : DataStream(name)
     {
         mData = mPos = static_cast<uchar*>(pMem);
         mSize = size;
@@ -207,8 +207,8 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     MemoryDataStream::MemoryDataStream(DataStream& sourceStream, 
-        bool freeOnClose, bool readOnly)
-        : DataStream(readOnly ? READ : (READ | WRITE))
+        bool freeOnClose)
+        : DataStream()
     {
         // Copy data from incoming stream
         mSize = sourceStream.size();
@@ -220,8 +220,8 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     MemoryDataStream::MemoryDataStream(DataStreamPtr& sourceStream, 
-        bool freeOnClose, bool readOnly)
-        : DataStream(readOnly ? READ : (READ | WRITE))
+        bool freeOnClose)
+        : DataStream()
     {
         // Copy data from incoming stream
         mSize = sourceStream->size();
@@ -233,8 +233,8 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     MemoryDataStream::MemoryDataStream(const String& name, DataStream& sourceStream, 
-        bool freeOnClose, bool readOnly)
-        : DataStream(name, readOnly ? READ : (READ | WRITE))
+        bool freeOnClose)
+        : DataStream(name)
     {
         // Copy data from incoming stream
         mSize = sourceStream.size();
@@ -246,8 +246,8 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     MemoryDataStream::MemoryDataStream(const String& name, const DataStreamPtr& sourceStream, 
-        bool freeOnClose, bool readOnly)
-        : DataStream(name, readOnly ? READ : (READ | WRITE))
+        bool freeOnClose)
+        : DataStream(name)
     {
         // Copy data from incoming stream
         mSize = sourceStream->size();
@@ -258,8 +258,8 @@ namespace Ogre {
         assert(mEnd >= mPos);
     }
     //-----------------------------------------------------------------------
-    MemoryDataStream::MemoryDataStream(size_t size, bool freeOnClose, bool readOnly)
-        : DataStream(readOnly ? READ : (READ | WRITE))
+    MemoryDataStream::MemoryDataStream(size_t size, bool freeOnClose)
+        : DataStream()
     {
         mSize = size;
         mFreeOnClose = freeOnClose;
@@ -270,8 +270,8 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     MemoryDataStream::MemoryDataStream(const String& name, size_t size, 
-        bool freeOnClose, bool readOnly)
-        : DataStream(name, readOnly ? READ : (READ | WRITE))
+        bool freeOnClose)
+        : DataStream(name)
     {
         mSize = size;
         mFreeOnClose = freeOnClose;
@@ -301,25 +301,6 @@ namespace Ogre {
         mPos += cnt;
         return cnt;
     }
-	//---------------------------------------------------------------------
-	size_t MemoryDataStream::write(const void* buf, size_t count)
-	{
-		size_t written = 0;
-		if (isWriteable())
-		{
-			written = count;
-			// we only allow writing within the extents of allocated memory
-			// check for buffer overrun & disallow
-			if (mPos + written > mEnd)
-				written = mEnd - mPos;
-			if (written == 0)
-				return 0;
-
-			memcpy(mPos, buf, written);
-			mPos += written;
-		}
-		return written;
-	}
     //-----------------------------------------------------------------------
     size_t MemoryDataStream::readLine(char* buf, size_t maxCount, 
         const String& delim)
@@ -415,77 +396,32 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     //-----------------------------------------------------------------------
     FileStreamDataStream::FileStreamDataStream(std::ifstream* s, bool freeOnClose)
-        : DataStream(), mpInStream(s), mpFStreamRO(s), mpFStream(0), mFreeOnClose(freeOnClose)
+        : DataStream(), mpStream(s), mFreeOnClose(freeOnClose)
     {
         // calculate the size
-        mpInStream->seekg(0, std::ios_base::end);
-        mSize = mpInStream->tellg();
-        mpInStream->seekg(0, std::ios_base::beg);
-		determineAccess();
+        mpStream->seekg(0, std::ios_base::end);
+        mSize = mpStream->tellg();
+        mpStream->seekg(0, std::ios_base::beg);
+
     }
     //-----------------------------------------------------------------------
     FileStreamDataStream::FileStreamDataStream(const String& name, 
         std::ifstream* s, bool freeOnClose)
-        : DataStream(name), mpInStream(s), mpFStreamRO(s), mpFStream(0), mFreeOnClose(freeOnClose)
+        : DataStream(name), mpStream(s), mFreeOnClose(freeOnClose)
     {
         // calculate the size
-        mpInStream->seekg(0, std::ios_base::end);
-        mSize = mpInStream->tellg();
-        mpInStream->seekg(0, std::ios_base::beg);
-		determineAccess();
+        mpStream->seekg(0, std::ios_base::end);
+        mSize = mpStream->tellg();
+        mpStream->seekg(0, std::ios_base::beg);
     }
     //-----------------------------------------------------------------------
     FileStreamDataStream::FileStreamDataStream(const String& name, 
         std::ifstream* s, size_t size, bool freeOnClose)
-        : DataStream(name), mpInStream(s), mpFStreamRO(s), mpFStream(0), mFreeOnClose(freeOnClose)
+        : DataStream(name), mpStream(s), mFreeOnClose(freeOnClose)
     {
         // Size is passed in
         mSize = size;
-		determineAccess();
     }
-	//---------------------------------------------------------------------
-	FileStreamDataStream::FileStreamDataStream(std::fstream* s, bool freeOnClose)
-		: DataStream(false), mpInStream(s), mpFStreamRO(0), mpFStream(s), mFreeOnClose(freeOnClose)
-	{
-		// writeable!
-		// calculate the size
-		mpInStream->seekg(0, std::ios_base::end);
-		mSize = mpInStream->tellg();
-		mpInStream->seekg(0, std::ios_base::beg);
-		determineAccess();
-
-	}
-	//-----------------------------------------------------------------------
-	FileStreamDataStream::FileStreamDataStream(const String& name, 
-		std::fstream* s, bool freeOnClose)
-		: DataStream(name, false), mpInStream(s), mpFStreamRO(0), mpFStream(s), mFreeOnClose(freeOnClose)
-	{
-		// writeable!
-		// calculate the size
-		mpInStream->seekg(0, std::ios_base::end);
-		mSize = mpInStream->tellg();
-		mpInStream->seekg(0, std::ios_base::beg);
-		determineAccess();
-	}
-	//-----------------------------------------------------------------------
-	FileStreamDataStream::FileStreamDataStream(const String& name, 
-		std::fstream* s, size_t size, bool freeOnClose)
-		: DataStream(name, false), mpInStream(s), mpFStreamRO(0), mpFStream(s), mFreeOnClose(freeOnClose)
-	{
-		// writeable!
-		// Size is passed in
-		mSize = size;
-		determineAccess();
-	}
-	//---------------------------------------------------------------------
-	void FileStreamDataStream::determineAccess()
-	{
-		mAccess = 0;
-		if (mpInStream)
-			mAccess |= READ;
-		if (mpFStream)
-			mAccess |= WRITE;
-	}
     //-----------------------------------------------------------------------
     FileStreamDataStream::~FileStreamDataStream()
     {
@@ -494,20 +430,9 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     size_t FileStreamDataStream::read(void* buf, size_t count)
     {
-		mpInStream->read(static_cast<char*>(buf), static_cast<std::streamsize>(count));
-        return mpInStream->gcount();
+		mpStream->read(static_cast<char*>(buf), static_cast<std::streamsize>(count));
+        return mpStream->gcount();
     }
-	//-----------------------------------------------------------------------
-	size_t FileStreamDataStream::write(const void* buf, size_t count)
-	{
-		size_t written = 0;
-		if (isWriteable() && mpFStream)
-		{
-			mpFStream->write(static_cast<const char*>(buf), static_cast<std::streamsize>(count));
-			written = count;
-		}
-		return written;
-	}
     //-----------------------------------------------------------------------
     size_t FileStreamDataStream::readLine(char* buf, size_t maxCount, 
         const String& delim)
@@ -529,26 +454,26 @@ namespace Ogre {
 			trimCR = true;
 		}
 		// maxCount + 1 since count excludes terminator in getline
-		mpInStream->getline(buf, static_cast<std::streamsize>(maxCount+1), delim.at(0));
-		size_t ret = mpInStream->gcount();
+		mpStream->getline(buf, static_cast<std::streamsize>(maxCount+1), delim.at(0));
+		size_t ret = mpStream->gcount();
 		// three options
 		// 1) we had an eof before we read a whole line
 		// 2) we ran out of buffer space
 		// 3) we read a whole line - in this case the delim character is taken from the stream but not written in the buffer so the read data is of length ret-1 and thus ends at index ret-2
 		// in all cases the buffer will be null terminated for us
 
-		if (mpInStream->eof()) 
+		if (mpStream->eof()) 
 		{
 			// no problem
 		}
-		else if (mpInStream->fail())
+		else if (mpStream->fail())
 		{
 			// Did we fail because of maxCount hit? No - no terminating character
 			// in included in the count in this case
 			if (ret == maxCount)
 			{
 				// clear failbit for next time 
-				mpInStream->clear();
+				mpStream->clear();
 			}
 			else
 			{
@@ -583,65 +508,52 @@ namespace Ogre {
 		// it's seems the stream was putted in intermediate state, and will be
 		// fail if try to repositioning relative to current position.
 		// Note: tellg() fail in this case too.
-		if (mpInStream->eof())
+		if (mpStream->eof())
 		{
-			mpInStream->clear();
+			mpStream->clear();
 			// Use seek relative to either begin or end to bring the stream
 			// back to normal state.
-			mpInStream->seekg(0, std::ios::end);
+			mpStream->seekg(0, std::ios::end);
 		}
 #endif 		
-		mpInStream->clear(); //Clear fail status in case eof was set
-		mpInStream->seekg(static_cast<std::ifstream::pos_type>(count), std::ios::cur);
+		mpStream->clear(); //Clear fail status in case eof was set
+		mpStream->seekg(static_cast<std::ifstream::pos_type>(count), std::ios::cur);
     }
     //-----------------------------------------------------------------------
     void FileStreamDataStream::seek( size_t pos )
     {
-		mpInStream->clear(); //Clear fail status in case eof was set
-		mpInStream->seekg(static_cast<std::streamoff>(pos), std::ios::beg);
-	}
+		mpStream->clear(); //Clear fail status in case eof was set
+        mpStream->seekg(static_cast<std::streamoff>(pos), std::ios::beg);
+    }
 	//-----------------------------------------------------------------------
     size_t FileStreamDataStream::tell(void) const
 	{
-		mpInStream->clear(); //Clear fail status in case eof was set
-		return mpInStream->tellg();
+		mpStream->clear(); //Clear fail status in case eof was set
+		return mpStream->tellg();
 	}
 	//-----------------------------------------------------------------------
     bool FileStreamDataStream::eof(void) const
     {
-        return mpInStream->eof();
+        return mpStream->eof();
     }
     //-----------------------------------------------------------------------
     void FileStreamDataStream::close(void)
     {
-        if (mpInStream)
+        if (mpStream)
         {
-			// Unfortunately, there is no file-specific shared class hierarchy between fstream and ifstream (!!)
-			if (mpFStreamRO)
-	            mpFStreamRO->close();
-			if (mpFStream)
-			{
-				mpFStream->flush();
-				mpFStream->close();
-			}
-
+            mpStream->close();
             if (mFreeOnClose)
             {
                 // delete the stream too
-				if (mpFStreamRO)
-					OGRE_DELETE_T(mpFStreamRO, basic_ifstream, MEMCATEGORY_GENERAL);
-				if (mpFStream)
-					OGRE_DELETE_T(mpFStream, basic_fstream, MEMCATEGORY_GENERAL);
-				mpInStream = 0;
-				mpFStreamRO = 0; 
-				mpFStream = 0; 
+                OGRE_DELETE_T(mpStream, basic_ifstream, MEMCATEGORY_GENERAL);
+                mpStream = 0;
             }
         }
     }
     //-----------------------------------------------------------------------
     //-----------------------------------------------------------------------
-    FileHandleDataStream::FileHandleDataStream(FILE* handle, uint16 accessMode)
-        : DataStream(accessMode), mFileHandle(handle)
+    FileHandleDataStream::FileHandleDataStream(FILE* handle)
+        : DataStream(), mFileHandle(handle)
     {
 		// Determine size
 		fseek(mFileHandle, 0, SEEK_END);
@@ -649,8 +561,8 @@ namespace Ogre {
 		fseek(mFileHandle, 0, SEEK_SET);
     }
     //-----------------------------------------------------------------------
-    FileHandleDataStream::FileHandleDataStream(const String& name, FILE* handle, uint16 accessMode)
-        : DataStream(name, accessMode), mFileHandle(handle)
+    FileHandleDataStream::FileHandleDataStream(const String& name, FILE* handle)
+        : DataStream(name), mFileHandle(handle)
     {
 		// Determine size
 		fseek(mFileHandle, 0, SEEK_END);
@@ -667,15 +579,6 @@ namespace Ogre {
     {
         return fread(buf, 1, count, mFileHandle);
     }
-	//-----------------------------------------------------------------------
-	size_t FileHandleDataStream::write(const void* buf, size_t count)
-	{
-		if (!isWriteable())
-			return 0;
-		else
-			return fwrite(buf, 1, count, mFileHandle);
-	}
-	//---------------------------------------------------------------------
     //-----------------------------------------------------------------------
     void FileHandleDataStream::skip(long count)
     {

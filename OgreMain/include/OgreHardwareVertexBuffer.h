@@ -36,30 +36,19 @@ Torus Knot Software Ltd.
 #include "OgreColourValue.h"
 
 namespace Ogre {
-	class HardwareBufferManagerBase;
-
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup RenderSystem
-	*  @{
-	*/
-	/** Specialisation of HardwareBuffer for a vertex buffer. */
+    /** Specialisation of HardwareBuffer for a vertex buffer. */
     class _OgreExport HardwareVertexBuffer : public HardwareBuffer
     {
 	    protected:
 
-			HardwareBufferManagerBase* mMgr;
 		    size_t mNumVertices;
             size_t mVertexSize;
 
 	    public:
 		    /// Should be called by HardwareBufferManager
-		    HardwareVertexBuffer(HardwareBufferManagerBase* mgr, size_t vertexSize, size_t numVertices,
+		    HardwareVertexBuffer(size_t vertexSize, size_t numVertices,
                 HardwareBuffer::Usage usage, bool useSystemMemory, bool useShadowBuffer);
             ~HardwareVertexBuffer();
-			/// Return the manager of this buffer, if any
-			HardwareBufferManagerBase* getManager() const { return mMgr; }
             /// Gets the size in bytes of a single vertex in this buffer
             size_t getVertexSize(void) const { return mVertexSize; }
             /// Get the number of vertices in this buffer
@@ -303,7 +292,7 @@ namespace Ogre {
     {
     public:
 		/// Defines the list of vertex elements that makes up this declaration
-        typedef list<VertexElement>::type VertexElementList;
+        typedef std::list<VertexElement> VertexElementList;
         /// Sort routine for vertex elements
         static bool vertexElementLess(const VertexElement& e1, const VertexElement& e2);
     protected:
@@ -434,11 +423,8 @@ namespace Ogre {
 		/** Gets the vertex size defined by this declaration for a given source. */
         virtual size_t getVertexSize(unsigned short source);
 
-        /** Clones this declaration. 
-		@param mgr Optional HardwareBufferManager to use for creating the clone
-			(if null, use the current default).
-		*/
-        virtual VertexDeclaration* clone(HardwareBufferManagerBase* mgr = 0);
+        /** Clones this declaration. */
+        virtual VertexDeclaration* clone(void);
 
         inline bool operator== (const VertexDeclaration& rhs) const
         {
@@ -481,7 +467,7 @@ namespace Ogre {
 	{
 	public:
 		/// Defines the vertex buffer bindings used as source for vertex declarations
-		typedef map<unsigned short, HardwareVertexBufferSharedPtr>::type VertexBufferBindingMap;
+		typedef std::map<unsigned short, HardwareVertexBufferSharedPtr> VertexBufferBindingMap;
 	protected:
 		VertexBufferBindingMap mBindingMap;
 		mutable unsigned short mHighIndex;
@@ -525,7 +511,7 @@ namespace Ogre {
         */
         virtual unsigned short getLastBoundIndex(void) const;
 
-        typedef map<ushort, ushort>::type BindingIndexMap;
+        typedef std::map<ushort, ushort> BindingIndexMap;
 
         /** Check whether any gaps in the bindings.
         */
@@ -547,8 +533,6 @@ namespace Ogre {
 
 
 	};
-	/** @} */
-	/** @} */
 
 
 

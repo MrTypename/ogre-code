@@ -68,7 +68,7 @@ namespace Ogre {
 		/*
 ***Key: "title" Description: The title of the window that will appear in the title bar Values: string Default: RenderTarget name
 
-***Key: "colourDepth" Description: Colour depth of the resulting rendering window; only applies if fullScreen is set. Values: 16 or 32 Default: desktop depth Notes: [W32 specific]
+Key: "colourDepth" Description: Colour depth of the resulting rendering window; only applies if fullScreen is set. Values: 16 or 32 Default: desktop depth Notes: [W32 specific]
 
 ***Key: "left" Description: screen x coordinate from left Values: positive integers Default: 'center window on screen' Notes: Ignored in case of full screen
 
@@ -80,24 +80,24 @@ namespace Ogre {
 
 ***Key: "FSAA" Description: Full screen antialiasing factor Values: 0,2,4,6,... Default: 0
 
-***Key: "displayFrequency" Description: Display frequency rate, for fullscreen mode Values: 60...? Default: Desktop vsync rate
+Key: "displayFrequency" Description: Display frequency rate, for fullscreen mode Values: 60...? Default: Desktop vsync rate
 
-***Key: "vsync" Description: Synchronize buffer swaps to vsync Values: true, false Default: 0
+Key: "vsync" Description: Synchronize buffer swaps to vsync Values: true, false Default: 0
 */
 
 		BOOL hasDepthBuffer = YES;
 		int fsaa_samples = 0;
-		NSString *windowTitle = [NSString stringWithCString:name.c_str() encoding:NSASCIIStringEncoding];
+		NSString *windowTitle = [NSString stringWithCString:name.c_str()];
 		int winx = 0, winy = 0;
 		int depth = 32;
 		
 		if(miscParams)
 		{
-			NameValuePairList::const_iterator opt(NULL);
+			NameValuePairList::const_iterator opt = 0;
 			
 			opt = miscParams->find("title");
 			if(opt != miscParams->end())
-				windowTitle = [NSString stringWithCString:opt->second.c_str() encoding:NSASCIIStringEncoding];
+				windowTitle = [NSString stringWithCString:opt->second.c_str()];
 				
 			opt = miscParams->find("left");
 			if(opt != miscParams->end())
@@ -122,7 +122,7 @@ namespace Ogre {
 		}		
 		
 
-		NSOpenGLPixelFormat* openglFormat = nil;
+		NSOpenGLPixelFormat* openglFormat;
 		{
 			NSOpenGLPixelFormatAttribute attribs[30];
 			int i=0;
@@ -186,7 +186,7 @@ namespace Ogre {
 				openglFormat = [[[NSOpenGLPixelFormat alloc] initWithAttributes: attribs] autorelease];
 			}
 			
-			NameValuePairList::const_iterator opt2(NULL);
+			NameValuePairList::const_iterator opt2 = 0;
 			if(miscParams)
 			{
 				opt2 = miscParams->find("pixelFormat");
@@ -199,15 +199,9 @@ namespace Ogre {
 
 			glContext = [[NSOpenGLContext alloc] initWithFormat: openglFormat shareContext:shareContext];
 			
-			NameValuePairList::const_iterator opt(NULL);
-			NameValuePairList::const_iterator param_useNSView_pair(NULL);
-			if(miscParams) {
+			NameValuePairList::const_iterator opt = 0;
+			if(miscParams)
 				opt = miscParams->find("externalWindowHandle");
-				param_useNSView_pair = miscParams->find("macAPICocoaUseNSView") ;
-
-				
-			}
-			
 			if(!miscParams || opt == miscParams->end())
 			{
 				//Not sure why this should be but it is required for the window to work at fullscreen.
@@ -223,30 +217,14 @@ namespace Ogre {
 			}
 			else
 			{
-				bool useNSView = false ;
-				if(param_useNSView_pair != miscParams->end())
-					if(param_useNSView_pair->second == "true")
-						useNSView = true ;
-
-				// If the macAPICocoaUseNSView parmeter was set, use the winhandler as pointer to an NSView
-				// Otherwise we assume the user created the inerface with Interface Builder and instantiated an OgreView.
+				mView = (OgreView*)StringConverter::parseUnsignedLong(opt->second);
+				[mView setOgreWindow:this];
 				
-				if(useNSView) {
-					LogManager::getSingleton().logMessage("Mac Cocoa Window: Rendering on an external plain NSView*") ;
-					NSView * nsview = (NSView*)StringConverter::parseUnsignedLong(opt->second);
-					mView = nsview ;					
-				} else {
-					OgreView * view = (OgreView*)StringConverter::parseUnsignedLong(opt->second);
-					[view setOgreWindow:this];
-					mView = view ;
-				
-					NSRect b = [mView bounds];
-					width = b.size.width;
-					height = b.size.height;
-				}
+				NSRect b = [mView bounds];
+				width = b.size.width;
+				height = b.size.height;
 			}
-
-				
+			
 			[glContext setView:mView];
 
 			mName = name;

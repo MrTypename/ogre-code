@@ -34,13 +34,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup RenderSystem
-	*  @{
-	*/
-	/** Abstract class defining common features of hardware buffers.
+    /** Abstract class defining common features of hardware buffers.
     @remarks
  	    A 'hardware buffer' is any area of memory held outside of core system ram,
 	    and in our case refers mostly to video ram, although in theory this class
@@ -281,18 +275,7 @@ namespace Ogre {
 				srcBuffer.unlock();
 			}
 
-			/** Copy all data from another buffer into this one. 
-			@remarks
-				Normally these buffers should be of identical size, but if they're
-				not, the routine will use the smallest of the two sizes.
-			*/
-			virtual void copyData(HardwareBuffer& srcBuffer)
-			{
-				size_t sz = std::min(getSizeInBytes(), srcBuffer.getSizeInBytes()); 
-				copyData(srcBuffer, 0, 0, sz, true);
-			}
-			
-			/// Updates the real buffer from the shadow buffer, if required
+            /// Updates the real buffer from the shadow buffer, if required
             virtual void _updateFromShadow(void)
             {
                 if (mUseShadowBuffer && mShadowUpdated && !mSuppressHardwareUpdate)
@@ -341,8 +324,6 @@ namespace Ogre {
 
     		
     };
-	/** @} */
-	/** @} */
 }
 #endif
 

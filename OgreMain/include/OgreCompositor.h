@@ -34,13 +34,7 @@ Torus Knot Software Ltd.
 #include "OgreResource.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Effects
-	*  @{
-	*/
-	/** Class representing a Compositor object. Compositors provide the means 
+    /** Class representing a Compositor object. Compositors provide the means 
         to flexibly "composite" the final rendering result from multiple scene renders
         and intermediate operations like rendering fullscreen quads. This makes 
         it possible to apply postfilter effects, HDRI postprocessing, and shadow 
@@ -54,7 +48,7 @@ namespace Ogre {
         ~Compositor();
         
         /// Data types for internal lists
-        typedef vector<CompositionTechnique *>::type Techniques;
+        typedef std::vector<CompositionTechnique *> Techniques;
         typedef VectorIterator<Techniques> TechniqueIterator;
         
         /** Create a new technique, and return a pointer to it.
@@ -103,16 +97,6 @@ namespace Ogre {
             an empty list, try calling Compositor::load.
         */
         TechniqueIterator getSupportedTechniqueIterator(void);
-
-		/** Get a pointer to a supported technique for a given scheme. 
-		@remarks
-			If there is no specific supported technique with this scheme name, 
-			then the first supported technique with no specific scheme will be returned.
-		@param schemeName The scheme name you are looking for. Blank means to 
-			look for techniques with no scheme associated
-		*/
-		CompositionTechnique *getSupportedTechnique(const String& schemeName = StringUtil::BLANK);
-
     protected:
         /// @copydoc Resource::loadImpl
         void loadImpl(void);
@@ -190,8 +174,6 @@ namespace Ogre {
             return *this;
         }
     };
-	/** @} */
-	/** @} */
 }
 
 #endif

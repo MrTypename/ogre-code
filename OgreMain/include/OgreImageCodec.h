@@ -34,13 +34,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Image
-	*  @{
-	*/
-	/** Codec specialized in images.
+    /** Codec specialized in images.
         @remarks
             The users implementing subclasses of ImageCodec are required to return
             a valid pointer to a ImageData class from the decode(...) function.
@@ -83,8 +77,6 @@ namespace Ogre {
         }
     };
 
-	/** @} */
-	/** @} */
 } // namespace
 
 #endif

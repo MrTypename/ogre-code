@@ -37,13 +37,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
-
 	class _OgreExport ScriptParser : public ScriptCompilerAlloc
 	{
 	public:
@@ -57,8 +50,6 @@ namespace Ogre {
 		ScriptTokenList::iterator skipNewlines(ScriptTokenList::iterator i, ScriptTokenList::iterator end);
 	};
 	
-	/** @} */
-	/** @} */
 }
 
 #endif

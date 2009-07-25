@@ -32,137 +32,100 @@ Torus Knot Software Ltd.
 #include "OgreLogManager.h"
 #include "OgreD3D9Mappings.h"
 #include "OgreResourceGroupManager.h"
-#include "OgreD3D9RenderSystem.h"
 
 namespace Ogre {
 
     //-----------------------------------------------------------------------------
     D3D9GpuProgram::D3D9GpuProgram(ResourceManager* creator, const String& name, ResourceHandle handle,
-        const String& group, bool isManual, ManualResourceLoader* loader) 
-        : GpuProgram(creator, name, handle, group, isManual, loader), mpExternalMicrocode(NULL)
-    {			
+        const String& group, bool isManual, ManualResourceLoader* loader, LPDIRECT3DDEVICE9 pDev) 
+        : GpuProgram(creator, name, handle, group, isManual, loader), 
+        mpDevice(pDev), mpExternalMicrocode(NULL)
+    {
         if (createParamDictionary("D3D9GpuProgram"))
         {
             setupBaseParamDictionary();
         }
     }
-
-	//-----------------------------------------------------------------------------
-	D3D9GpuProgram::~D3D9GpuProgram()
-	{
-
-	}
-
 	//-----------------------------------------------------------------------------
     void D3D9GpuProgram::loadImpl(void)
     {
-		for (uint i = 0; i < D3D9RenderSystem::getResourceCreationDeviceCount(); ++i)
-		{
-			IDirect3DDevice9* d3d9Device = D3D9RenderSystem::getResourceCreationDevice(i);
+        if (mpExternalMicrocode)
+        {
+            loadFromMicrocode(mpExternalMicrocode);
+        }
+        else
+        {
+            // Normal load-from-source approach
+            if (mLoadFromFile)
+            {
+                // find & load source code
+                DataStreamPtr stream = 
+                    ResourceGroupManager::getSingleton().openResource(
+						mFilename, mGroup, true, this);
+                mSource = stream->getAsString();
+            }
 
-			loadImpl(d3d9Device);
-		}		       
+            // Call polymorphic load
+            loadFromSource();
+        }
+
     }
-
-	//-----------------------------------------------------------------------------
-	void D3D9GpuProgram::loadImpl(IDirect3DDevice9* d3d9Device)
-	{
-		if (mpExternalMicrocode)
-		{
-			loadFromMicrocode(d3d9Device, mpExternalMicrocode);
-		}
-		else
-		{
-			// Normal load-from-source approach
-			if (mLoadFromFile)
-			{
-				// find & load source code
-				DataStreamPtr stream = 
-					ResourceGroupManager::getSingleton().openResource(
-					mFilename, mGroup, true, this);
-				mSource = stream->getAsString();
-			}
-
-			// Call polymorphic load
-			loadFromSource(d3d9Device);
-		}
-	}
-
 	//-----------------------------------------------------------------------------
     void D3D9GpuProgram::loadFromSource(void)
     {
-		for (uint i = 0; i < D3D9RenderSystem::getResourceCreationDeviceCount(); ++i)
-		{
-			IDirect3DDevice9* d3d9Device = D3D9RenderSystem::getResourceCreationDevice(i);
+        // Create the shader
+        // Assemble source into microcode
+        LPD3DXBUFFER microcode;
+        LPD3DXBUFFER errors;
+        HRESULT hr = D3DXAssembleShader(
+            mSource.c_str(),
+            static_cast<UINT>(mSource.length()),
+            NULL,               // no #define support
+            NULL,               // no #include support
+            0,                  // standard compile options
+            &microcode,
+            &errors);
 
-			loadFromSource(d3d9Device);
-		}
-    }
-
-	//-----------------------------------------------------------------------------
-	void D3D9GpuProgram::loadFromSource(IDirect3DDevice9* d3d9Device)
-	{
-		// Create the shader
-		// Assemble source into microcode
-		LPD3DXBUFFER microcode;
-		LPD3DXBUFFER errors;
-		HRESULT hr = D3DXAssembleShader(
-			mSource.c_str(),
-			static_cast<UINT>(mSource.length()),
-			NULL,               // no #define support
-			NULL,               // no #include support
-			0,                  // standard compile options
-			&microcode,
-			&errors);
-
-		if (FAILED(hr))
-		{
-			String message = "Cannot assemble D3D9 shader " + mName + " Errors:\n" +
-				static_cast<const char*>(errors->GetBufferPointer());
-			errors->Release();
+        if (FAILED(hr))
+        {
+            String message = "Cannot assemble D3D9 shader " + mName + " Errors:\n" +
+                static_cast<const char*>(errors->GetBufferPointer());
+            errors->Release();
 			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, message,
-				"D3D9GpuProgram::loadFromSource");
+                "D3D9GpuProgram::loadFromSource");
+            
+        }
 
-		}
-	
-		loadFromMicrocode(d3d9Device, microcode);		
+        loadFromMicrocode(microcode);
 
-		SAFE_RELEASE(microcode);
-		SAFE_RELEASE(errors);
-	}
-	
+        SAFE_RELEASE(microcode);
+        SAFE_RELEASE(errors);
+    }
 	//-----------------------------------------------------------------------------
     D3D9GpuVertexProgram::D3D9GpuVertexProgram(ResourceManager* creator, 
         const String& name, ResourceHandle handle, const String& group, 
-        bool isManual, ManualResourceLoader* loader) 
-        : D3D9GpuProgram(creator, name, handle, group, isManual, loader)       
+        bool isManual, ManualResourceLoader* loader, LPDIRECT3DDEVICE9 pDev) 
+        : D3D9GpuProgram(creator, name, handle, group, isManual, loader, pDev)
+        , mpVertexShader(NULL)
     {
-        mType = GPT_VERTEX_PROGRAM;		
+        mType = GPT_VERTEX_PROGRAM;
     }
 	//-----------------------------------------------------------------------------
 	D3D9GpuVertexProgram::~D3D9GpuVertexProgram()
 	{
 		// have to call this here reather than in Resource destructor
 		// since calling virtual methods in base destructors causes crash
-		unload(); 		
+		unload(); 
 	}
 	//-----------------------------------------------------------------------------
-    void D3D9GpuVertexProgram::loadFromMicrocode(IDirect3DDevice9* d3d9Device, ID3DXBuffer* microcode)
-    {		 
-		DeviceToVertexShaderIterator it = mMapDeviceToVertexShader.find(d3d9Device);
-
-		if (it != mMapDeviceToVertexShader.end())
-			SAFE_RELEASE(it->second);
-
+    void D3D9GpuVertexProgram::loadFromMicrocode(LPD3DXBUFFER microcode)
+    {
 		if (isSupported())
 		{
 			// Create the shader
-			IDirect3DVertexShader9* pVertexShader;
-			HRESULT hr;
-			
-			hr = d3d9Device->CreateVertexShader( 
+			HRESULT hr = mpDevice->CreateVertexShader( 
 				static_cast<DWORD*>(microcode->GetBufferPointer()), 
-				&pVertexShader);
+				&mpVertexShader);
 
 			if (FAILED(hr))
 			{
@@ -171,77 +134,25 @@ namespace Ogre {
 					"D3D9GpuVertexProgram::loadFromMicrocode");
 	            
 			}
-
-			mMapDeviceToVertexShader[d3d9Device] = pVertexShader;
 		}
 		else
 		{
 			LogManager::getSingleton().logMessage(
 				"Unsupported D3D9 vertex shader '" + mName + "' was not loaded.");
-
-			mMapDeviceToVertexShader[d3d9Device] = NULL;
 		}
     }
 	//-----------------------------------------------------------------------------
     void D3D9GpuVertexProgram::unloadImpl(void)
     {
-        DeviceToVertexShaderIterator it = mMapDeviceToVertexShader.begin();
-
-		while (it != mMapDeviceToVertexShader.end())
-		{
-			SAFE_RELEASE(it->second);
-			++it;
-		}
-		mMapDeviceToVertexShader.clear();		
+        SAFE_RELEASE(mpVertexShader);
     }
-
-	//-----------------------------------------------------------------------------
-	void D3D9GpuVertexProgram::notifyOnDeviceCreate(IDirect3DDevice9* d3d9Device)
-	{
-			
-	}
-
-	//-----------------------------------------------------------------------------
-	void D3D9GpuVertexProgram::notifyOnDeviceDestroy(IDirect3DDevice9* d3d9Device)
-	{
-		DeviceToVertexShaderIterator it;
-
-		// Find the shader of this device.
-		it = mMapDeviceToVertexShader.find(d3d9Device);
-
-		// Case shader found -> release it and erase from map.
-		if (it != mMapDeviceToVertexShader.end())
-		{
-			SAFE_RELEASE(it->second);
-			mMapDeviceToVertexShader.erase(it);
-		}
-	}
-
-	//-----------------------------------------------------------------------------
-	IDirect3DVertexShader9* D3D9GpuVertexProgram::getVertexShader( void )
-	{
-		IDirect3DDevice9* d3d9Device = D3D9RenderSystem::getActiveD3D9Device();
-		DeviceToVertexShaderIterator it;
-
-		// Find the shader of this device.
-		it = mMapDeviceToVertexShader.find(d3d9Device);
-		
-		// Shader was not found -> load it.
-		if (it == mMapDeviceToVertexShader.end())		
-		{
-			loadImpl(d3d9Device);		
-			it = mMapDeviceToVertexShader.find(d3d9Device);
-		}
-	
-		return it->second;
-	}
-
 	//-----------------------------------------------------------------------------
 	//-----------------------------------------------------------------------------
     D3D9GpuFragmentProgram::D3D9GpuFragmentProgram(ResourceManager* creator, 
         const String& name, ResourceHandle handle, const String& group, 
-        bool isManual, ManualResourceLoader* loader) 
-        : D3D9GpuProgram(creator, name, handle, group, isManual, loader)       
+        bool isManual, ManualResourceLoader* loader, LPDIRECT3DDEVICE9 pDev) 
+        : D3D9GpuProgram(creator, name, handle, group, isManual, loader, pDev)
+        , mpPixelShader(NULL)
     {
         mType = GPT_FRAGMENT_PROGRAM;
     }
@@ -253,22 +164,14 @@ namespace Ogre {
 		unload(); 
 	}
 	//-----------------------------------------------------------------------------
-    void D3D9GpuFragmentProgram::loadFromMicrocode(IDirect3DDevice9* d3d9Device, ID3DXBuffer* microcode)
+    void D3D9GpuFragmentProgram::loadFromMicrocode(LPD3DXBUFFER microcode)
     {
-		DeviceToPixelShaderIterator it = mMapDeviceToPixelShader.find(d3d9Device);
-
-		if (it != mMapDeviceToPixelShader.end())
-			SAFE_RELEASE(it->second);
-
 		if (isSupported())
 		{
 			// Create the shader
-			IDirect3DPixelShader9* pPixelShader;
-			HRESULT hr;
-
-			hr = d3d9Device->CreatePixelShader(
+			HRESULT hr = mpDevice->CreatePixelShader(
 				static_cast<DWORD*>(microcode->GetBufferPointer()), 
-				&pPixelShader);
+				&mpPixelShader);
 
 			if (FAILED(hr))
 			{
@@ -277,70 +180,18 @@ namespace Ogre {
 					"D3D9GpuFragmentProgram::loadFromMicrocode");
 	            
 			}
-
-			mMapDeviceToPixelShader[d3d9Device] = pPixelShader;
 		}
 		else
 		{
 			LogManager::getSingleton().logMessage(
 				"Unsupported D3D9 pixel shader '" + mName + "' was not loaded.");
-
-			mMapDeviceToPixelShader[d3d9Device] = NULL;
 		}
     }
 	//-----------------------------------------------------------------------------
     void D3D9GpuFragmentProgram::unloadImpl(void)
     {
-		DeviceToPixelShaderIterator it = mMapDeviceToPixelShader.begin();
-
-		while (it != mMapDeviceToPixelShader.end())
-		{
-			SAFE_RELEASE(it->second);
-			++it;
-		}
-		mMapDeviceToPixelShader.clear();		
+        SAFE_RELEASE(mpPixelShader);
     }
-	//-----------------------------------------------------------------------------
-	void D3D9GpuFragmentProgram::notifyOnDeviceCreate(IDirect3DDevice9* d3d9Device)
-	{
-		
-
-	}
-
-	//-----------------------------------------------------------------------------
-	void D3D9GpuFragmentProgram::notifyOnDeviceDestroy(IDirect3DDevice9* d3d9Device)
-	{
-		DeviceToPixelShaderIterator it;
-
-		// Find the shader of this device.
-		it = mMapDeviceToPixelShader.find(d3d9Device);
-
-		// Case shader found -> release it and erase from map.
-		if (it != mMapDeviceToPixelShader.end())
-		{
-			SAFE_RELEASE(it->second);
-			mMapDeviceToPixelShader.erase(it);
-		}
-	}
-
-	//-----------------------------------------------------------------------------
-	IDirect3DPixelShader9* D3D9GpuFragmentProgram::getPixelShader( void )
-	{
-		IDirect3DDevice9* d3d9Device = D3D9RenderSystem::getActiveD3D9Device();
-		DeviceToPixelShaderIterator it;
-
-		// Find the shader of this device.
-		it = mMapDeviceToPixelShader.find(d3d9Device);
-
-		// Shader was not found -> load it.
-		if (it == mMapDeviceToPixelShader.end())		
-		{
-			loadImpl(d3d9Device);			
-			it = mMapDeviceToPixelShader.find(d3d9Device);
-		}
-
-		return it->second;
-	}
 	//-----------------------------------------------------------------------------
 
 }

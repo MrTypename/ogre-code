@@ -38,13 +38,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup LOD
-	*  @{
-	*/
-	/** A surface which is defined by curves of some kind to form a patch, e.g. a Bezier patch.
+    /** A surface which is defined by curves of some kind to form a patch, e.g. a Bezier patch.
         @remarks
             This object will take a list of control points with various assorted data, and will
             subdivide it into a patch mesh. Currently only Bezier curves are supported for defining
@@ -204,7 +198,7 @@ namespace Ogre {
 
         Real mSubdivisionFactor;
 
-        vector<Vector3>::type mVecCtlPoints;
+        std::vector<Vector3> mVecCtlPoints;
 
         /** Internal method for finding the subdivision level given 3 control points.
         */
@@ -233,8 +227,6 @@ namespace Ogre {
 
     };
 
-	/** @} */
-	/** @} */
 
 } // namespace
 

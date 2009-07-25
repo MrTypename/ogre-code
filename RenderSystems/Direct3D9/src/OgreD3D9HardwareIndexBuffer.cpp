@@ -24,111 +24,81 @@ http://www.gnu.org/copyleft/lesser.txt.
 You may alternatively use this source under the terms of a specific version of
 the OGRE Unrestricted License provided you have obtained such a license from
 Torus Knot Software Ltd.
-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 */
 #include "OgreD3D9HardwareIndexBuffer.h"
 #include "OgreD3D9Mappings.h"
 #include "OgreException.h"
 #include "OgreD3D9HardwareBufferManager.h"
-#include "OgreD3D9RenderSystem.h"
-#include "OgreRoot.h"
-#include "OgreD3D9Device.h"
-#include "OgreD3D9ResourceManager.h"
 
 namespace Ogre {
 
 	//---------------------------------------------------------------------
-    D3D9HardwareIndexBuffer::D3D9HardwareIndexBuffer(HardwareBufferManagerBase* mgr, HardwareIndexBuffer::IndexType idxType, 
-        size_t numIndexes, HardwareBuffer::Usage usage,
+    D3D9HardwareIndexBuffer::D3D9HardwareIndexBuffer(HardwareIndexBuffer::IndexType idxType, 
+        size_t numIndexes, HardwareBuffer::Usage usage, LPDIRECT3DDEVICE9 pDev, 
         bool useSystemMemory, bool useShadowBuffer)
-        : HardwareIndexBuffer(mgr, idxType, numIndexes, usage, useSystemMemory, useShadowBuffer)
+        : HardwareIndexBuffer(idxType, numIndexes, usage, useSystemMemory, useShadowBuffer)
     {
-		D3DPOOL eResourcePool;
-
 #if OGRE_D3D_MANAGE_BUFFERS
-		eResourcePool = useSystemMemory? D3DPOOL_SYSTEMMEM : 
+		mD3DPool = useSystemMemory? D3DPOOL_SYSTEMMEM : 
 			// If not system mem, use managed pool UNLESS buffer is discardable
 			// if discardable, keeping the software backing is expensive
 			(usage & HardwareBuffer::HBU_DISCARDABLE)? D3DPOOL_DEFAULT : D3DPOOL_MANAGED;
 #else
-		eResourcePool = useSystemMemory? D3DPOOL_SYSTEMMEM : D3DPOOL_DEFAULT;
+		mD3DPool = useSystemMemory? D3DPOOL_SYSTEMMEM : D3DPOOL_DEFAULT;
 #endif
+        // Create the Index buffer
+        HRESULT hr = pDev->CreateIndexBuffer(
+            static_cast<UINT>(mSizeInBytes),
+            D3D9Mappings::get(mUsage),
+            D3D9Mappings::get(mIndexType),
+			mD3DPool,
+            &mlpD3DBuffer,
+            NULL
+            );
+            
+        if (FAILED(hr))
+        {
+			String msg = DXGetErrorDescription9(hr);
+            OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
+				"Cannot create D3D9 Index buffer: " + msg, 
+                "D3D9HardwareIndexBuffer::D3D9HardwareIndexBuffer");
+        }
 
-		// Set the desired memory pool.
-		mBufferDesc.Pool = eResourcePool;
-				
-		// Allocate the system memory buffer.
-		mSystemMemoryBuffer = new char [getSizeInBytes()];
-		memset(mSystemMemoryBuffer, 0, getSizeInBytes());
-
-		// Case we have to create this buffer resource on loading.
-		if (D3D9RenderSystem::getResourceManager()->getCreationPolicy() == RCP_CREATE_ON_ALL_DEVICES)
-		{
-			for (uint i = 0; i < D3D9RenderSystem::getResourceCreationDeviceCount(); ++i)
-			{
-				IDirect3DDevice9* d3d9Device = D3D9RenderSystem::getResourceCreationDevice(i);
-
-				createBuffer(d3d9Device, mBufferDesc.Pool);
-			}
-		}				
     }
 	//---------------------------------------------------------------------
     D3D9HardwareIndexBuffer::~D3D9HardwareIndexBuffer()
     {
-		DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.begin();
-
-		while (it != mMapDeviceToBufferResources.end())
-		{
-			SAFE_RELEASE(it->second->mBuffer);
-			SAFE_DELETE(it->second);
-			++it;
-		}	
-		mMapDeviceToBufferResources.clear();   
-		SAFE_DELETE(mSystemMemoryBuffer);
+        SAFE_RELEASE(mlpD3DBuffer);
     }
 	//---------------------------------------------------------------------
     void* D3D9HardwareIndexBuffer::lockImpl(size_t offset, 
         size_t length, LockOptions options)
-    {		
-		if (options != HBL_READ_ONLY)
-		{
-			DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.begin();
+    {
+        void* pBuf;
+        HRESULT hr = mlpD3DBuffer->Lock(
+            static_cast<UINT>(offset), 
+            static_cast<UINT>(length), 
+            &pBuf,
+            D3D9Mappings::get(options, mUsage));
 
-			while (it != mMapDeviceToBufferResources.end())
-			{
-				BufferResources* bufferResources = it->second;
+        if (FAILED(hr))
+        {
+			String msg = DXGetErrorDescription9(hr);
+            OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
+				"Cannot lock D3D9 Index buffer: " + msg, 
+                "D3D9HardwareIndexBuffer::lock");
+        }
 
-				bufferResources->mOutOfDate = true;
-				if (offset < bufferResources->mLockOffset)
-					bufferResources->mLockOffset = offset;
-				if (length > bufferResources->mLockLength)
-					bufferResources->mLockLength = length;
-				if (bufferResources->mLockOptions != HBL_DISCARD)
-					bufferResources->mLockOptions = options;
 
-				++it;
-			}
-		}
+        return pBuf;
 
-		return mSystemMemoryBuffer + offset;		
+
     }
 	//---------------------------------------------------------------------
 	void D3D9HardwareIndexBuffer::unlockImpl(void)
-    {	
-		DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.begin();
-		uint nextFrameNumber = Root::getSingleton().getNextFrameNumber();
-
-		while (it != mMapDeviceToBufferResources.end())
-		{
-			BufferResources* bufferResources = it->second;
-
-			if (bufferResources->mOutOfDate && 
-				bufferResources->mBuffer != NULL &&
-				nextFrameNumber - bufferResources->mLastUsedFrame <= 1)
-				updateBufferResources(mSystemMemoryBuffer, bufferResources);
-
-			++it;
-		}			
+    {
+        HRESULT hr = mlpD3DBuffer->Unlock();
     }
 	//---------------------------------------------------------------------
     void D3D9HardwareIndexBuffer::readData(size_t offset, size_t length, 
@@ -146,171 +116,50 @@ namespace Ogre {
             const void* pSource,
 			bool discardWholeBuffer)
     {
-        // There is no functional interface in D3D, just do via manual 
+       // There is no functional interface in D3D, just do via manual 
         // lock, copy & unlock
         void* pDst = this->lock(offset, length, 
             discardWholeBuffer ? HardwareBuffer::HBL_DISCARD : HardwareBuffer::HBL_NORMAL);
         memcpy(pDst, pSource, length);
-        this->unlock();    
-	}
+        this->unlock();    }
 	//---------------------------------------------------------------------
-	void D3D9HardwareIndexBuffer::notifyOnDeviceCreate(IDirect3DDevice9* d3d9Device)
-	{	
-
-	}
-	//---------------------------------------------------------------------
-	void D3D9HardwareIndexBuffer::notifyOnDeviceDestroy(IDirect3DDevice9* d3d9Device)
-	{		
-		DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.find(d3d9Device);
-
-		if (it != mMapDeviceToBufferResources.end())	
-		{									
-			SAFE_RELEASE(it->second->mBuffer);
-			SAFE_DELETE(it->second);
-			mMapDeviceToBufferResources.erase(it);
-		}
-	}
-	//---------------------------------------------------------------------
-	void D3D9HardwareIndexBuffer::notifyOnDeviceLost(IDirect3DDevice9* d3d9Device)
+	bool D3D9HardwareIndexBuffer::releaseIfDefaultPool(void)
 	{
-		if (mBufferDesc.Pool == D3DPOOL_DEFAULT)
+		if (mD3DPool == D3DPOOL_DEFAULT)
 		{
-			DeviceToBufferResourcesIterator it = mMapDeviceToBufferResources.find(d3d9Device);
-
-			if (it != mMapDeviceToBufferResources.end())
-			{			
-				SAFE_RELEASE(it->second->mBuffer);	
-			}					
+			SAFE_RELEASE(mlpD3DBuffer);
+			return true;
 		}
+		return false;
+
 	}
 	//---------------------------------------------------------------------
-	void D3D9HardwareIndexBuffer::notifyOnDeviceReset(IDirect3DDevice9* d3d9Device)
+	bool D3D9HardwareIndexBuffer::recreateIfDefaultPool(LPDIRECT3DDEVICE9 pDev)
 	{
-		if (D3D9RenderSystem::getResourceManager()->getCreationPolicy() == RCP_CREATE_ON_ALL_DEVICES)
-			createBuffer(d3d9Device, mBufferDesc.Pool);		
+		if (mD3DPool == D3DPOOL_DEFAULT)
+		{
+			// Create the Index buffer
+			HRESULT hr = pDev->CreateIndexBuffer(
+				static_cast<UINT>(mSizeInBytes),
+				D3D9Mappings::get(mUsage),
+				D3D9Mappings::get(mIndexType),
+				mD3DPool,
+				&mlpD3DBuffer,
+				NULL
+				);
+
+			if (FAILED(hr))
+			{
+				String msg = DXGetErrorDescription9(hr);
+				OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
+					"Cannot create D3D9 Index buffer: " + msg, 
+					"D3D9HardwareIndexBuffer::D3D9HardwareIndexBuffer");
+			}
+
+			return true;
+		}
+		return false;
 	}
 	//---------------------------------------------------------------------
-	void D3D9HardwareIndexBuffer::createBuffer(IDirect3DDevice9* d3d9Device, D3DPOOL ePool)
-	{
-		BufferResources* bufferResources;		
-		HRESULT hr;
 
-		DeviceToBufferResourcesIterator it;
-
-		// Find the vertex buffer of this device.
-		it = mMapDeviceToBufferResources.find(d3d9Device);
-		if (it != mMapDeviceToBufferResources.end())
-		{
-			bufferResources = it->second;
-			SAFE_RELEASE(bufferResources->mBuffer);
-		}
-		else
-		{
-			bufferResources = new BufferResources;			
-			mMapDeviceToBufferResources[d3d9Device] = bufferResources;
-		}
-
-		bufferResources->mBuffer = NULL;
-		bufferResources->mOutOfDate = true;
-		bufferResources->mLockOffset = 0;
-		bufferResources->mLockLength = getSizeInBytes();
-		bufferResources->mLockOptions = HBL_NORMAL;
-		bufferResources->mLastUsedFrame = Root::getSingleton().getNextFrameNumber();
-
-		// Create the Index buffer				
-		hr = d3d9Device->CreateIndexBuffer(
-			static_cast<UINT>(mSizeInBytes),
-			D3D9Mappings::get(mUsage),
-			D3D9Mappings::get(mIndexType),
-			ePool,
-			&bufferResources->mBuffer,
-			NULL
-			);
-
-		if (FAILED(hr))
-		{
-			String msg = DXGetErrorDescription9(hr);
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-				"Cannot create D3D9 Index buffer: " + msg, 
-				"D3D9HardwareIndexBuffer::createBuffer");
-		}
-
-		hr = bufferResources->mBuffer->GetDesc(&mBufferDesc);
-		if (FAILED(hr))
-		{
-			String msg = DXGetErrorDescription9(hr);
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-				"Cannot get D3D9 Index buffer desc: " + msg, 
-				"D3D9HardwareIndexBuffer::createBuffer");
-		}		
-	}
-
-	//---------------------------------------------------------------------
-	IDirect3DIndexBuffer9* D3D9HardwareIndexBuffer::getD3DIndexBuffer(void)
-	{		
-		IDirect3DDevice9* d3d9Device = D3D9RenderSystem::getActiveD3D9Device();
-		DeviceToBufferResourcesIterator it;
-
-		// Find the index buffer of this device.
-		it = mMapDeviceToBufferResources.find(d3d9Device);
-
-		// Case index buffer was not found for the current device -> create it.		
-		if (it == mMapDeviceToBufferResources.end() || it->second->mBuffer == NULL)		
-		{						
-			createBuffer(d3d9Device, mBufferDesc.Pool);
-			it = mMapDeviceToBufferResources.find(d3d9Device);						
-		}
-
-		if (it->second->mOutOfDate)
-			updateBufferResources(mSystemMemoryBuffer, it->second);
-
-		it->second->mLastUsedFrame = Root::getSingleton().getNextFrameNumber();
-
-		return it->second->mBuffer;
-	}
-	//---------------------------------------------------------------------
-	bool D3D9HardwareIndexBuffer::updateBufferResources(const char* systemMemoryBuffer,
-		BufferResources* bufferResources)
-	{
-		assert(bufferResources != NULL);
-		assert(bufferResources->mBuffer != NULL);
-		assert(bufferResources->mOutOfDate);
-			
-		void* dstBytes;
-		HRESULT hr;
-	
-		// Lock the buffer.
-		hr = bufferResources->mBuffer->Lock(
-			static_cast<UINT>(bufferResources->mLockOffset), 
-			static_cast<UINT>(bufferResources->mLockLength), 
-			&dstBytes,
-			D3D9Mappings::get(bufferResources->mLockOptions, mUsage));
-
-		if (FAILED(hr))
-		{
-			String msg = DXGetErrorDescription9(hr);
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-				"Cannot lock D3D9 vertex buffer: " + msg, 
-				"D3D9HardwareIndexBuffer::updateBufferResources");
-		}
-
-		memcpy(dstBytes, systemMemoryBuffer + bufferResources->mLockOffset, bufferResources->mLockLength);
-
-		// Unlock the buffer.
-		hr = bufferResources->mBuffer->Unlock();
-		if (FAILED(hr))
-		{
-			String msg = DXGetErrorDescription9(hr);
-			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
-				"Cannot unlock D3D9 vertex buffer: " + msg, 
-				"D3D9HardwareIndexBuffer::updateBufferResources");
-		}
-
-		bufferResources->mOutOfDate = false;
-		bufferResources->mLockOffset = mSizeInBytes;
-		bufferResources->mLockLength = 0;
-		bufferResources->mLockOptions = HBL_NORMAL;
-
-		return true;			
-	}
 }

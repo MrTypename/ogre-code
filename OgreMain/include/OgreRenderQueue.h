@@ -34,13 +34,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup RenderSystem
-	*  @{
-	*/
-	/** Enumeration of queue groups, by which the application may group queued renderables
+    /** Enumeration of queue groups, by which the application may group queued renderables
         so that they are rendered together with events in between
 	@remarks
 		When passed into methods these are actually passed as a uint8 to allow you
@@ -88,7 +82,7 @@ namespace Ogre {
     class _OgreExport RenderQueue : public RenderQueueAlloc
     {
     public:
-        typedef map< uint8, RenderQueueGroup* >::type RenderQueueGroupMap;
+        typedef std::map< uint8, RenderQueueGroup* > RenderQueueGroupMap;
         /// Iterator over queue groups
         typedef MapIterator<RenderQueueGroupMap> QueueGroupIterator;
 		/** Class to listen in on items being added to the render queue. 
@@ -260,8 +254,6 @@ namespace Ogre {
 
     };
 
-	/** @} */
-	/** @} */
 
 }
 

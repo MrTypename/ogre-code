@@ -231,6 +231,7 @@ namespace Ogre
 			uint32 *p32 = 0;
 
 			HardwareIndexBufferSharedPtr ibuf = i_in->indexBuffer;
+			bool use32bit = false;
 			if (ibuf->getType() == HardwareIndexBuffer::IT_32BIT)
 			{
 				p32 = static_cast<uint32*>(
@@ -246,7 +247,7 @@ namespace Ogre
 				p16 += i_in->indexStart;
 			}
 			// current triangle
-			size_t vertInd[3] = { 0, 0, 0 };
+			size_t vertInd[3];
 			// loop through all faces to calculate the tangents and normals
 			size_t faceCount = opType == RenderOperation::OT_TRIANGLE_LIST ? 
 				i_in->indexCount / 3 : i_in->indexCount - 2;
@@ -659,7 +660,7 @@ namespace Ogre
 		}
 
 		HardwareVertexBufferSharedPtr targetBuffer, origBuffer;
-		unsigned char* pSrc = NULL;
+		unsigned char* pSrc;
 
 		if (needsToBeCreated)
 		{

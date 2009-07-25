@@ -34,13 +34,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup RenderSystem
-	*  @{
-	*/
-	/** Abstract interface which classes must implement if they wish to receive
+    /** Abstract interface which classes must implement if they wish to receive
         events from the render queue. 
     @remarks
         The OGRE render queue is divided into several queue groups, as defined by
@@ -58,14 +52,6 @@ namespace Ogre {
     {
     public:
 		virtual ~RenderQueueListener() {}
-
-		/** Event raised before all render queues are processed. 
-		*/
-		virtual void preRenderQueues() {}
-		/** Event raised after all render queues are processed. 
-		*/
-		virtual void postRenderQueues() {}
-
         /** Event raised before a queue group is rendered. 
         @remarks
             This method is called by the SceneManager before each queue group is
@@ -79,7 +65,7 @@ namespace Ogre {
 			for this queue group.
         */
         virtual void renderQueueStarted(uint8 queueGroupId, const String& invocation, 
-			bool& skipThisInvocation) {}
+			bool& skipThisInvocation) = 0;
 
         /** Event raised after a queue group is rendered. 
         @remarks
@@ -94,10 +80,8 @@ namespace Ogre {
 			events will also be fired for it again.
         */
         virtual void renderQueueEnded(uint8 queueGroupId, const String& invocation, 
-			bool& repeatThisInvocation) {}
+			bool& repeatThisInvocation) = 0;
     };
-	/** @} */
-	/** @} */
 
 }
 

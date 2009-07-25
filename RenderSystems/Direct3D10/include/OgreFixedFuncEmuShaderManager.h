@@ -40,11 +40,6 @@ namespace Ogre
 	
 	class FixedFuncPrograms
 	{
-	#ifdef OGRE_DEBUG_MODE
-	public:
-			String ShaderSource;
-	#endif
-
 	protected:
 		// Vertex program details
 		GpuProgramUsage * mVertexProgramUsage;
@@ -54,6 +49,7 @@ namespace Ogre
 		GpuProgramParametersSharedPtr mFragmentProgramParameters;
 
 		FixedFuncState mFixedFuncState;
+
 		void _setProgramParameter(const GpuProgramType type, const String paramName, const void * value, const size_t sizeInBytes);
 
 		void _updateParameter( GpuProgramParametersSharedPtr & programParameters, const String paramName, const void * value, const size_t sizeInBytes );
@@ -67,8 +63,8 @@ namespace Ogre
 		class FixedFuncProgramsParameters
 		{
 		public:
-			typedef vector<Matrix4>::type  TextureMatrixVector;
-			typedef vector<bool>::type  TextureEnabledVector;
+			typedef std::vector<Matrix4>  TextureMatrixVector;
+			typedef std::vector<bool>  TextureEnabledVector;
 		protected:
 			Matrix4 mWorldMat;
 			Matrix4 mProjectionMat;
@@ -140,15 +136,15 @@ namespace Ogre
 	class FixedFuncEmuShaderManager
 	{
 	protected:
-		typedef map<String, FixedFuncEmuShaderGenerator *>::type FixedFuncEmuShaderGeneratorMap;
+		typedef std::map<String, FixedFuncEmuShaderGenerator *> FixedFuncEmuShaderGeneratorMap;
 		FixedFuncEmuShaderGeneratorMap mFixedFuncEmuShaderGeneratorMap;
 
-		typedef map<VertexBufferDeclaration, FixedFuncPrograms *>::type VertexBufferDeclaration2FixedFuncProgramsMap;
-		typedef map<FixedFuncState, VertexBufferDeclaration2FixedFuncProgramsMap>::type State2Declaration2ProgramsMap;
-		typedef map<String, State2Declaration2ProgramsMap>::type Language2State2Declaration2ProgramsMap;
+		typedef std::map<VertexBufferDeclaration, FixedFuncPrograms *> VertexBufferDeclaration2FixedFuncProgramsMap;
+		typedef std::map<FixedFuncState, VertexBufferDeclaration2FixedFuncProgramsMap> State2Declaration2ProgramsMap;
+		typedef std::map<String, State2Declaration2ProgramsMap> Language2State2Declaration2ProgramsMap;
 		Language2State2Declaration2ProgramsMap mLanguage2State2Declaration2ProgramsMap;
 
-		vector<FixedFuncPrograms *>::type mProgramsToDeleteAtTheEnd;
+		std::vector<FixedFuncPrograms *> mProgramsToDeleteAtTheEnd;
 
 		FixedFuncPrograms * _createShaderPrograms(const String & generatorName,
 			const VertexBufferDeclaration & vertexBufferDeclaration, 

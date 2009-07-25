@@ -87,11 +87,10 @@ namespace Ogre {
         // Transparent and depth/colour settings mean depth sorting is required?
         // Note: colour write disabled with depth check/write enabled means
         //       setup depth buffer for other passes use.
-        if (pTech->isTransparentSortingForced() || 
-			(pTech->isTransparent() && 
+        if (pTech->isTransparent() && 
             (!pTech->isDepthWriteEnabled() ||
              !pTech->isDepthCheckEnabled() ||
-             pTech->hasColourWriteDisabled())))
+             pTech->hasColourWriteDisabled()))
         {
 			if (pTech->isTransparentSortingEnabled())
 				addTransparentRenderable(pTech, rend);
@@ -158,7 +157,7 @@ namespace Ogre {
         {
             // Insert into solid list
             IlluminationPass* p = pi.getNext();
-            QueuedRenderableCollection* collection = NULL;
+            QueuedRenderableCollection* collection;
             switch(p->stage)
             {
             case IS_AMBIENT:

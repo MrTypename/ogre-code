@@ -35,12 +35,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
 	/** Abstract class defining the interface used by classes which wish 
 		to perform script loading to define instances of whatever they manage.
 	@remarks
@@ -88,8 +82,6 @@ namespace Ogre {
 
 	};
 
-	/** @} */
-	/** @} */
 
 }
 

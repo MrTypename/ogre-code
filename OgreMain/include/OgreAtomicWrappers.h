@@ -35,12 +35,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
     template <class T> class AtomicObject {
 
         public:
@@ -106,22 +100,13 @@ namespace Ogre {
         volatile T mField;
 
     };
-	/** @} */
-	/** @} */
 
 }
 
-// These GCC instrinsics are not supported on ARM - masterfalcon
-#if OGRE_COMPILER == OGRE_COMPILER_GNUC && OGRE_COMP_VER >= 412 && OGRE_THREAD_SUPPORT && OGRE_CPU != OGRE_CPU_ARM
+#if OGRE_COMPILER == OGRE_COMPILER_GNUC && OGRE_COMP_VER >= 412 && OGRE_THREAD_SUPPORT
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
     template<class T> class AtomicScalar
     {
 
@@ -182,8 +167,6 @@ namespace Ogre {
         volatile T mField;
 
     };
-	/** @} */
-	/** @} */
 
 }
 
@@ -196,12 +179,6 @@ namespace Ogre {
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
     template<class T> class AtomicScalar
     {
 
@@ -305,8 +282,6 @@ namespace Ogre {
         volatile T mField;
 
     };
-	/** @} */
-	/** @} */
 
 }
 
@@ -314,12 +289,6 @@ namespace Ogre {
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
     template <class T> class AtomicScalar {
 
         public:
@@ -394,8 +363,6 @@ namespace Ogre {
         volatile T mField;
 
     };
-	/** @} */
-	/** @} */
 
 }
 

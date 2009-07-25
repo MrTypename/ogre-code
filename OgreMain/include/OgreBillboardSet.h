@@ -36,15 +36,8 @@ Torus Knot Software Ltd.
 #include "OgreRenderable.h"
 #include "OgreRadixSort.h"
 #include "OgreCommon.h"
-#include "OgreResourceGroupManager.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Effects
-	*  @{
-	*/
 
     /** Enum covering what exactly a billboard's position means (center,
         top-left etc).
@@ -149,9 +142,9 @@ namespace Ogre {
         bool mAllDefaultRotation;
         bool mWorldSpace;
 
-        typedef list<Billboard*>::type ActiveBillboardList;
-        typedef list<Billboard*>::type FreeBillboardList;
-        typedef vector<Billboard*>::type BillboardPool;
+        typedef std::list<Billboard*> ActiveBillboardList;
+        typedef std::list<Billboard*> FreeBillboardList;
+        typedef std::vector<Billboard*> BillboardPool;
 
         /** Active billboard list.
             @remarks
@@ -208,7 +201,7 @@ namespace Ogre {
         /// Flag indicating whether each billboard should be culled separately (default: false)
         bool mCullIndividual;
 
-        typedef vector< Ogre::FloatRect >::type TextureCoordSets;
+        typedef std::vector< Ogre::FloatRect > TextureCoordSets;
         TextureCoordSets mTextureCoords;
 
         /// The type of billboard to render
@@ -525,7 +518,7 @@ namespace Ogre {
             @param
                 name The new name of the material to use for this set.
         */
-        virtual void setMaterialName( const String& name, const String& groupName = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME );
+        virtual void setMaterialName(const String& name);
 
         /** Sets the name of the material to be used for this billboard set.
             @returns The name of the material that is used for this set.
@@ -840,8 +833,7 @@ namespace Ogre {
 		void destroyInstance( MovableObject* obj);  
 
 	};
-	/** @} */
-	/** @} */
+
 
 }
 

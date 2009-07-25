@@ -37,13 +37,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre
 {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
-
 	/** Defines the behaviour of an automatic renderer configuration dialog.
 	@remarks
 		OGRE comes with it's own renderer configuration dialog, which
@@ -88,7 +81,5 @@ namespace Ogre
 		RenderSystem* mSelectedRenderSystem;
         HINSTANCE mHInstance; // HInstance of application, for dialog
     };
-	/** @} */
-	/** @} */
 }
 #endif

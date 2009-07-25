@@ -166,27 +166,24 @@ public:
 
 	virtual bool processUnbufferedKeyInput(const FrameEvent& evt)
 	{
-		Real moveScale = mMoveScale;
-		if(mKeyboard->isKeyDown(OIS::KC_LSHIFT))
-			moveScale *= 10;
 
 		if(mKeyboard->isKeyDown(OIS::KC_A))
-			mTranslateVector.x = -moveScale;	// Move camera left
+			mTranslateVector.x = -mMoveScale;	// Move camera left
 
 		if(mKeyboard->isKeyDown(OIS::KC_D))
-			mTranslateVector.x = moveScale;	// Move camera RIGHT
+			mTranslateVector.x = mMoveScale;	// Move camera RIGHT
 
 		if(mKeyboard->isKeyDown(OIS::KC_UP) || mKeyboard->isKeyDown(OIS::KC_W) )
-			mTranslateVector.z = -moveScale;	// Move camera forward
+			mTranslateVector.z = -mMoveScale;	// Move camera forward
 
 		if(mKeyboard->isKeyDown(OIS::KC_DOWN) || mKeyboard->isKeyDown(OIS::KC_S) )
-			mTranslateVector.z = moveScale;	// Move camera backward
+			mTranslateVector.z = mMoveScale;	// Move camera backward
 
 		if(mKeyboard->isKeyDown(OIS::KC_PGUP))
-			mTranslateVector.y = moveScale;	// Move camera up
+			mTranslateVector.y = mMoveScale;	// Move camera up
 
 		if(mKeyboard->isKeyDown(OIS::KC_PGDOWN))
-			mTranslateVector.y = -moveScale;	// Move camera down
+			mTranslateVector.y = -mMoveScale;	// Move camera down
 
 		if(mKeyboard->isKeyDown(OIS::KC_RIGHT))
 			mCamera->yaw(-mRotScale);
@@ -231,7 +228,7 @@ public:
 
 		if(mKeyboard->isKeyDown(OIS::KC_SYSRQ) && mTimeUntilNextToggle <= 0)
 		{
-			Ogre::StringStream ss;
+			std::ostringstream ss;
 			ss << "screenshot_" << ++mNumScreenShots << ".png";
 			mWindow->writeContentsToFile(ss.str());
 			mTimeUntilNextToggle = 0.5;
@@ -282,30 +279,6 @@ public:
 		{
 			mRotX = Degree(-ms.X.rel * 0.13);
 			mRotY = Degree(-ms.Y.rel * 0.13);
-#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
-            // Adjust the input depending upon viewport orientation
-            Radian origRotY, origRotX;
-            switch(mCamera->getViewport()->getOrientation())
-            {
-                case Viewport::OR_LANDSCAPELEFT:
-                    origRotY = mRotY;
-                    origRotX = mRotX;
-                    mRotX = origRotY;
-                    mRotY = -origRotX;
-                    break;
-                case Viewport::OR_LANDSCAPERIGHT:
-                    origRotY = mRotY;
-                    origRotX = mRotX;
-                    mRotX = -origRotY;
-                    mRotY = origRotX;
-                    break;
-                    
-                // Portrait doesn't need any change
-                case Viewport::OR_PORTRAIT:
-                default:
-                    break;
-            }
-#endif
 		}
 
 		return true;
@@ -368,11 +341,9 @@ public:
 		}
 
 		//Check to see which device is not buffered, and handle it
-#if OGRE_PLATFORM != OGRE_PLATFORM_IPHONE
 		if( !mKeyboard->buffered() )
 			if( processUnbufferedKeyInput(evt) == false )
 				return false;
-#endif
 		if( !mMouse->buffered() )
 			if( processUnbufferedMouseInput(evt) == false )
 				return false;
@@ -419,7 +390,7 @@ protected:
 	RenderWindow* mWindow;
 	bool mStatsOn;
 
-	String mDebugText;
+	std::string mDebugText;
 
 	unsigned int mNumScreenShots;
 	float mMoveScale;

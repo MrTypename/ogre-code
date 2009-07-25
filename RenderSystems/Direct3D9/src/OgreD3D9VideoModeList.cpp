@@ -28,7 +28,6 @@ Torus Knot Software Ltd.
 */
 #include "OgreD3D9VideoModeList.h"
 #include "OgreException.h"
-#include "OgreD3D9RenderSystem.h"
 
 namespace Ogre 
 {
@@ -50,7 +49,7 @@ namespace Ogre
 	BOOL D3D9VideoModeList::enumerate()
 	{
 		UINT iMode;
-		IDirect3D9* pD3D = D3D9RenderSystem::getDirect3D9();
+		LPDIRECT3D9 pD3D = mpDriver->getD3D();
 		UINT adapter = mpDriver->getAdapterNumber();
 
 		for( iMode=0; iMode < pD3D->GetAdapterModeCount( adapter, D3DFMT_R5G6B5 ); iMode++ )
@@ -64,7 +63,7 @@ namespace Ogre
 
 			// Check to see if it is already in the list (to filter out refresh rates)
 			BOOL found = FALSE;
-			vector<D3D9VideoMode>::type::iterator it;
+			std::vector<D3D9VideoMode>::iterator it;
 			for( it = mModeList.begin(); it != mModeList.end(); it++ )
 			{
 				D3DDISPLAYMODE oldDisp = it->getDisplayMode();
@@ -95,7 +94,7 @@ namespace Ogre
 
 			// Check to see if it is already in the list (to filter out refresh rates)
 			BOOL found = FALSE;
-			vector<D3D9VideoMode>::type::iterator it;
+			std::vector<D3D9VideoMode>::iterator it;
 			for( it = mModeList.begin(); it != mModeList.end(); it++ )
 			{
 				D3DDISPLAYMODE oldDisp = it->getDisplayMode();
@@ -125,14 +124,14 @@ namespace Ogre
 
 	D3D9VideoMode* D3D9VideoModeList::item( size_t index )
 	{
-		vector<D3D9VideoMode>::type::iterator p = mModeList.begin();
+		std::vector<D3D9VideoMode>::iterator p = mModeList.begin();
 
 		return &p[index];
 	}
 
 	D3D9VideoMode* D3D9VideoModeList::item( const String &name )
 	{
-		vector<D3D9VideoMode>::type::iterator it = mModeList.begin();
+		std::vector<D3D9VideoMode>::iterator it = mModeList.begin();
 		if (it == mModeList.end())
 			return NULL;
 

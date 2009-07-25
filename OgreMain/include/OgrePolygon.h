@@ -38,12 +38,6 @@ namespace Ogre
 {
 
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Math
-	*  @{
-	*/
 	/** The class represents a polygon in 3D space.
 	@remarks
 		It is made up of 3 or more vertices in a single plane, listed in 
@@ -53,9 +47,9 @@ namespace Ogre
 	{
 
 	public:
-		typedef vector<Vector3>::type				VertexList;
+		typedef std::vector<Vector3>				VertexList;
 
-		typedef multimap<Vector3, Vector3>::type		EdgeMap;
+		typedef std::multimap<Vector3, Vector3>		EdgeMap;
 		typedef std::pair< Vector3, Vector3>		Edge;
 
 	protected:
@@ -138,8 +132,6 @@ namespace Ogre
 		_OgreExport friend std::ostream& operator<< ( std::ostream& strm, const Polygon& poly );
 
 	};
-	/** @} */
-	/** @} */
 
 }
 

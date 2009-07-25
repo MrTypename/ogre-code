@@ -45,13 +45,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup RenderSystem
-	*  @{
-	*/
-	/** A 'canvas' which can receive the results of a rendering
+    /** A 'canvas' which can receive the results of a rendering
         operation.
         @remarks
             This abstract class defines a common root to all targets of rendering operations. A
@@ -356,9 +350,6 @@ namespace Ogre {
 		*/
 		virtual uint getFSAA() const { return mFSAA; }
 
-		/** Gets the FSAA hint (@see Root::createRenderWindow)
-		*/
-		virtual const String& getFSAAHint() const { return mFSAAHint; }
 
         /** RenderSystem specific interface for a RenderTarget;
             this should be subclassed by RenderSystems.
@@ -366,6 +357,11 @@ namespace Ogre {
         class Impl
         {
         protected:
+            /** Declared protected as interface is never used for destruction.
+                gcc will issue a warning here: `class Impl' has virtual functions 
+                but non-virtual destructor. This is no problem because this interface 
+                is never used to delete an object.
+            */
             ~Impl() { };
         };
         /** Get rendersystem specific interface for this RenderTarget.
@@ -399,15 +395,14 @@ namespace Ogre {
 		bool mHwGamma;
 		// FSAA performed?
 		uint mFSAA;
-		String mFSAAHint;
 
         void updateStats(void);
 
-		typedef map<int, Viewport*>::type ViewportList;
+        typedef std::map<int, Viewport*, std::less<int> > ViewportList;
         /// List of viewports, map on Z-order
         ViewportList mViewportList;
 
-        typedef vector<RenderTargetListener*>::type RenderTargetListenerList;
+        typedef std::vector<RenderTargetListener*> RenderTargetListenerList;
         RenderTargetListenerList mListeners;
 	
 
@@ -427,8 +422,6 @@ namespace Ogre {
 		/// Internal implementation of update()
 		virtual void updateImpl();
     };
-	/** @} */
-	/** @} */
 
 } // Namespace
 

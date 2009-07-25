@@ -35,13 +35,10 @@ Torus Knot Software Ltd.
 namespace Ogre {
 
     //-----------------------------------------------------------------------------
-    HardwareIndexBuffer::HardwareIndexBuffer(HardwareBufferManagerBase* mgr, IndexType idxType, 
+    HardwareIndexBuffer::HardwareIndexBuffer(IndexType idxType, 
         size_t numIndexes, HardwareBuffer::Usage usage, 
         bool useSystemMemory, bool useShadowBuffer) 
-        : HardwareBuffer(usage, useSystemMemory, useShadowBuffer)
-		, mMgr(mgr)
-		, mIndexType(idxType)
-		, mNumIndexes(numIndexes)
+        : HardwareBuffer(usage, useSystemMemory, useShadowBuffer), mIndexType(idxType), mNumIndexes(numIndexes)
     {
         // Calculate the size of the indexes
         switch (mIndexType)
@@ -67,9 +64,10 @@ namespace Ogre {
     //-----------------------------------------------------------------------------
     HardwareIndexBuffer::~HardwareIndexBuffer()
     {
-		if (mMgr)
+		HardwareBufferManager* mgr = HardwareBufferManager::getSingletonPtr();
+		if (mgr)
 		{
-			mMgr->_notifyIndexBufferDestroyed(this);
+			mgr->_notifyIndexBufferDestroyed(this);
 		}
 
         if (mpShadowBuffer)

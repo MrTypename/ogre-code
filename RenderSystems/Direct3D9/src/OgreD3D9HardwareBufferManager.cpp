@@ -36,18 +36,19 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
     //-----------------------------------------------------------------------
-    D3D9HardwareBufferManagerBase::D3D9HardwareBufferManagerBase()       
+    D3D9HardwareBufferManager::D3D9HardwareBufferManager(LPDIRECT3DDEVICE9 device)
+        : mlpD3DDevice(device)
     {
     }
     //-----------------------------------------------------------------------
-    D3D9HardwareBufferManagerBase::~D3D9HardwareBufferManagerBase()
+    D3D9HardwareBufferManager::~D3D9HardwareBufferManager()
     {
         destroyAllDeclarations();
         destroyAllBindings();
     }
     //-----------------------------------------------------------------------
     HardwareVertexBufferSharedPtr 
-    D3D9HardwareBufferManagerBase::
+    D3D9HardwareBufferManager::
     createVertexBuffer(size_t vertexSize, size_t numVerts, HardwareBuffer::Usage usage,
 		bool useShadowBuffer)
     {
@@ -72,7 +73,7 @@ namespace Ogre {
         }
 #endif
 		D3D9HardwareVertexBuffer* vbuf = new D3D9HardwareVertexBuffer(
-			this, vertexSize, numVerts, usage, false, useShadowBuffer);
+			vertexSize, numVerts, usage, mlpD3DDevice, false, useShadowBuffer);
 		{
 			OGRE_LOCK_MUTEX(mVertexBuffersMutex)
 			mVertexBuffers.insert(vbuf);
@@ -81,7 +82,7 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
 	HardwareIndexBufferSharedPtr 
-    D3D9HardwareBufferManagerBase::
+    D3D9HardwareBufferManager::
     createIndexBuffer(HardwareIndexBuffer::IndexType itype, size_t numIndexes, 
         HardwareBuffer::Usage usage, bool useShadowBuffer)
     {
@@ -104,7 +105,7 @@ namespace Ogre {
         }
 #endif
 		D3D9HardwareIndexBuffer* idx = new D3D9HardwareIndexBuffer(
-			this, itype, numIndexes, usage, false, useShadowBuffer);
+			itype, numIndexes, usage, mlpD3DDevice, false, useShadowBuffer);
 		{
 			OGRE_LOCK_MUTEX(mIndexBuffersMutex)
 			mIndexBuffers.insert(idx);
@@ -114,20 +115,101 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     RenderToVertexBufferSharedPtr 
-        D3D9HardwareBufferManagerBase::createRenderToVertexBuffer()
+        D3D9HardwareBufferManager::createRenderToVertexBuffer()
     {
         OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
             "Direct3D9 does not support render to vertex buffer objects", 
-            "D3D9HardwareBufferManagerBase::createRenderToVertexBuffer");
+            "D3D9HardwareBufferManager::createRenderToVertexBuffer");
 	}
     //-----------------------------------------------------------------------
-    VertexDeclaration* D3D9HardwareBufferManagerBase::createVertexDeclarationImpl(void)
+    VertexDeclaration* D3D9HardwareBufferManager::createVertexDeclarationImpl(void)
     {
-        return new D3D9VertexDeclaration();
+        return new D3D9VertexDeclaration(mlpD3DDevice);
     }
     //-----------------------------------------------------------------------
-    void D3D9HardwareBufferManagerBase::destroyVertexDeclarationImpl(VertexDeclaration* decl)
+    void D3D9HardwareBufferManager::destroyVertexDeclarationImpl(VertexDeclaration* decl)
     {
         delete decl;
     }
+	//-----------------------------------------------------------------------
+	void D3D9HardwareBufferManager::releaseDefaultPoolResources(void)
+	{
+		size_t iCount = 0;
+		size_t vCount = 0;
+
+		
+		{
+			OGRE_LOCK_MUTEX(mVertexBuffersMutex)
+			VertexBufferList::iterator v, vend;
+			vend = mVertexBuffers.end();
+			for (v = mVertexBuffers.begin(); v != vend; ++v)
+			{
+				D3D9HardwareVertexBuffer* vbuf = 
+					static_cast<D3D9HardwareVertexBuffer*>(*v);
+				if (vbuf->releaseIfDefaultPool())
+					vCount++;
+			}
+		}
+
+		{
+			OGRE_LOCK_MUTEX(mIndexBuffersMutex)
+			IndexBufferList::iterator i, iend;
+			iend = mIndexBuffers.end();
+			for (i = mIndexBuffers.begin(); i != iend; ++i)
+			{
+				D3D9HardwareIndexBuffer* ibuf = 
+					static_cast<D3D9HardwareIndexBuffer*>(*i);
+				if (ibuf->releaseIfDefaultPool())
+					iCount++;
+
+			}
+		}
+
+		LogManager::getSingleton().logMessage("D3D9HardwareBufferManager released:");
+		LogManager::getSingleton().logMessage(
+			StringConverter::toString(vCount) + " unmanaged vertex buffers");
+		LogManager::getSingleton().logMessage(
+			StringConverter::toString(iCount) + " unmanaged index buffers");
+	}
+	//-----------------------------------------------------------------------
+	void D3D9HardwareBufferManager::recreateDefaultPoolResources(void)
+	{
+		size_t iCount = 0;
+		size_t vCount = 0;
+
+		{
+			OGRE_LOCK_MUTEX(mVertexBuffersMutex)
+			VertexBufferList::iterator v, vend;
+			vend = mVertexBuffers.end();
+			for (v = mVertexBuffers.begin(); v != vend; ++v)
+			{
+				D3D9HardwareVertexBuffer* vbuf = 
+					static_cast<D3D9HardwareVertexBuffer*>(*v);
+				if (vbuf->recreateIfDefaultPool(mlpD3DDevice))
+					vCount++;
+			}
+		}
+
+		{
+			OGRE_LOCK_MUTEX(mIndexBuffersMutex)
+			IndexBufferList::iterator i, iend;
+			iend = mIndexBuffers.end();
+			for (i = mIndexBuffers.begin(); i != iend; ++i)
+			{
+				D3D9HardwareIndexBuffer* ibuf = 
+					static_cast<D3D9HardwareIndexBuffer*>(*i);
+				if (ibuf->recreateIfDefaultPool(mlpD3DDevice))
+					iCount++;
+
+			}
+		}
+
+		LogManager::getSingleton().logMessage("D3D9HardwareBufferManager recreated:");
+		LogManager::getSingleton().logMessage(
+			StringConverter::toString(vCount) + " unmanaged vertex buffers");
+		LogManager::getSingleton().logMessage(
+			StringConverter::toString(iCount) + " unmanaged index buffers");
+	}
+	//-----------------------------------------------------------------------
+
 }

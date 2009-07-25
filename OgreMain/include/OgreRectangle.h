@@ -33,13 +33,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup General
-	*  @{
-	*/
-
     struct _OgreExport Rectangle
     {
         Real left;
@@ -70,8 +63,6 @@ namespace Ogre {
 
         return r;
     }
-	/** @} */
-	/** @} */
 
 }
 

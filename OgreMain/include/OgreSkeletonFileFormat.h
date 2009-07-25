@@ -33,12 +33,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Animation
-	*  @{
-	*/
 /** Definition of the OGRE .skeleton file format 
 
     .skeleton files are binary files (for read efficiency at runtime) and are arranged into chunks 
@@ -101,8 +95,6 @@ namespace Ogre {
 			// float scale							: scale to apply to trans/scale keys
 
     };
-	/** @} */
-	/** @} */
 
 } // namespace
 

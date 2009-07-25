@@ -53,7 +53,6 @@ namespace Ogre
 	GLContext* OSXCocoaContext::clone() const
 	{
 		NSLog(@"ERROR: OgreGLOSXContext doesn't implement clone.");
-        return nil;
 	}
 	
 	String OSXCocoaContext::getContextType()

@@ -34,13 +34,7 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Resources
-	*  @{
-	*/
-	/** Abstract base class representing a high-level program (a vertex or
+    /** Abstract base class representing a high-level program (a vertex or
         fragment program).
     @remarks
         High-level programs are vertex and fragment programs written in a high-level
@@ -188,8 +182,6 @@ namespace Ogre {
 		/// Operator used to convert a GpuProgramPtr to a HighLevelGpuProgramPtr
 		HighLevelGpuProgramPtr& operator=(const GpuProgramPtr& r);
     };
-	/** @} */
-	/** @} */
 
 }
 #endif

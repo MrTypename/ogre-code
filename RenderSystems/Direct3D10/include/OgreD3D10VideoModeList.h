@@ -38,7 +38,7 @@ namespace Ogre
 	{
 	private:
 		D3D10Driver* mpDriver;
-		vector<D3D10VideoMode>::type mModeList;
+		std::vector<D3D10VideoMode> mModeList;
 
 	public:
 		D3D10VideoModeList( D3D10Driver* pDriver );

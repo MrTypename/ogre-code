@@ -218,7 +218,7 @@ namespace Ogre {
                 }
                 if (pass[p].tcModStretchWave != SHADER_FUNC_NONE)
                 {
-                    WaveformType wft = WFT_SINE;
+                    WaveformType wft;
                     switch(pass[p].tcModStretchWave)
                     {
                     case SHADER_FUNC_SIN:

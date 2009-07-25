@@ -66,9 +66,6 @@ void Compiler2Pass::InitSymbolTypeLib()
 				// update text index in typelib
 				if (mRootRulePath[i].mSymbol != NULL) mSymbolTypeLib[token_ID].mDefTextID = i;
 				break;
-            case otREPEAT:
-            case otEND:
-                break;
 		}
 	}
 
