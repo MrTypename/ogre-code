@@ -4,25 +4,26 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __FixedFuncEmuShaderManager_H__
@@ -39,11 +40,6 @@ namespace Ogre
 	
 	class FixedFuncPrograms
 	{
-	#ifdef OGRE_DEBUG_MODE
-	public:
-			String ShaderSource;
-	#endif
-
 	protected:
 		// Vertex program details
 		GpuProgramUsage * mVertexProgramUsage;
@@ -53,6 +49,7 @@ namespace Ogre
 		GpuProgramParametersSharedPtr mFragmentProgramParameters;
 
 		FixedFuncState mFixedFuncState;
+
 		void _setProgramParameter(const GpuProgramType type, const String paramName, const void * value, const size_t sizeInBytes);
 
 		void _updateParameter( GpuProgramParametersSharedPtr & programParameters, const String paramName, const void * value, const size_t sizeInBytes );
@@ -66,8 +63,8 @@ namespace Ogre
 		class FixedFuncProgramsParameters
 		{
 		public:
-			typedef vector<Matrix4>::type  TextureMatrixVector;
-			typedef vector<bool>::type  TextureEnabledVector;
+			typedef std::vector<Matrix4>  TextureMatrixVector;
+			typedef std::vector<bool>  TextureEnabledVector;
 		protected:
 			Matrix4 mWorldMat;
 			Matrix4 mProjectionMat;
@@ -139,15 +136,15 @@ namespace Ogre
 	class FixedFuncEmuShaderManager
 	{
 	protected:
-		typedef map<String, FixedFuncEmuShaderGenerator *>::type FixedFuncEmuShaderGeneratorMap;
+		typedef std::map<String, FixedFuncEmuShaderGenerator *> FixedFuncEmuShaderGeneratorMap;
 		FixedFuncEmuShaderGeneratorMap mFixedFuncEmuShaderGeneratorMap;
 
-		typedef map<VertexBufferDeclaration, FixedFuncPrograms *>::type VertexBufferDeclaration2FixedFuncProgramsMap;
-		typedef map<FixedFuncState, VertexBufferDeclaration2FixedFuncProgramsMap>::type State2Declaration2ProgramsMap;
-		typedef map<String, State2Declaration2ProgramsMap>::type Language2State2Declaration2ProgramsMap;
+		typedef std::map<VertexBufferDeclaration, FixedFuncPrograms *> VertexBufferDeclaration2FixedFuncProgramsMap;
+		typedef std::map<FixedFuncState, VertexBufferDeclaration2FixedFuncProgramsMap> State2Declaration2ProgramsMap;
+		typedef std::map<String, State2Declaration2ProgramsMap> Language2State2Declaration2ProgramsMap;
 		Language2State2Declaration2ProgramsMap mLanguage2State2Declaration2ProgramsMap;
 
-		vector<FixedFuncPrograms *>::type mProgramsToDeleteAtTheEnd;
+		std::vector<FixedFuncPrograms *> mProgramsToDeleteAtTheEnd;
 
 		FixedFuncPrograms * _createShaderPrograms(const String & generatorName,
 			const VertexBufferDeclaration & vertexBufferDeclaration, 

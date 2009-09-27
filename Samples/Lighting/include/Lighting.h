@@ -4,11 +4,11 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
-same license as the rest of the engine.
+LGPL like the rest of the engine.
 -----------------------------------------------------------------------------
 */
 
@@ -76,7 +76,7 @@ public:
 // Some global node data
 SceneNode* mRedYellowLightsNode;
 SceneNode* mGreenBlueLightsNode;
-vector<AnimationState*>::type mAnimStateList;
+std::vector<AnimationState*> mAnimStateList;
 
 
 // Listener class for frame updates
@@ -94,7 +94,7 @@ public:
 	if( ExampleFrameListener::frameRenderingQueued(evt) == false )
 		return false;
 
-		vector<AnimationState*>::type::iterator animi;
+		std::vector<AnimationState*>::iterator animi;
 		for (animi = mAnimStateList.begin(); animi != mAnimStateList.end(); ++animi)
 		{
 			(*animi)->addTime(evt.timeSinceLastFrame);

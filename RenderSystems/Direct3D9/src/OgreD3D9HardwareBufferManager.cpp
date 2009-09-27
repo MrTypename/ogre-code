@@ -4,25 +4,26 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9HardwareBufferManager.h"
@@ -35,18 +36,19 @@ THE SOFTWARE.
 
 namespace Ogre {
     //-----------------------------------------------------------------------
-    D3D9HardwareBufferManagerBase::D3D9HardwareBufferManagerBase()       
+    D3D9HardwareBufferManager::D3D9HardwareBufferManager(LPDIRECT3DDEVICE9 device)
+        : mlpD3DDevice(device)
     {
     }
     //-----------------------------------------------------------------------
-    D3D9HardwareBufferManagerBase::~D3D9HardwareBufferManagerBase()
+    D3D9HardwareBufferManager::~D3D9HardwareBufferManager()
     {
         destroyAllDeclarations();
         destroyAllBindings();
     }
     //-----------------------------------------------------------------------
     HardwareVertexBufferSharedPtr 
-    D3D9HardwareBufferManagerBase::
+    D3D9HardwareBufferManager::
     createVertexBuffer(size_t vertexSize, size_t numVerts, HardwareBuffer::Usage usage,
 		bool useShadowBuffer)
     {
@@ -71,7 +73,7 @@ namespace Ogre {
         }
 #endif
 		D3D9HardwareVertexBuffer* vbuf = new D3D9HardwareVertexBuffer(
-			this, vertexSize, numVerts, usage, false, useShadowBuffer);
+			vertexSize, numVerts, usage, mlpD3DDevice, false, useShadowBuffer);
 		{
 			OGRE_LOCK_MUTEX(mVertexBuffersMutex)
 			mVertexBuffers.insert(vbuf);
@@ -80,7 +82,7 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
 	HardwareIndexBufferSharedPtr 
-    D3D9HardwareBufferManagerBase::
+    D3D9HardwareBufferManager::
     createIndexBuffer(HardwareIndexBuffer::IndexType itype, size_t numIndexes, 
         HardwareBuffer::Usage usage, bool useShadowBuffer)
     {
@@ -103,7 +105,7 @@ namespace Ogre {
         }
 #endif
 		D3D9HardwareIndexBuffer* idx = new D3D9HardwareIndexBuffer(
-			this, itype, numIndexes, usage, false, useShadowBuffer);
+			itype, numIndexes, usage, mlpD3DDevice, false, useShadowBuffer);
 		{
 			OGRE_LOCK_MUTEX(mIndexBuffersMutex)
 			mIndexBuffers.insert(idx);
@@ -113,20 +115,101 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     RenderToVertexBufferSharedPtr 
-        D3D9HardwareBufferManagerBase::createRenderToVertexBuffer()
+        D3D9HardwareBufferManager::createRenderToVertexBuffer()
     {
         OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
             "Direct3D9 does not support render to vertex buffer objects", 
-            "D3D9HardwareBufferManagerBase::createRenderToVertexBuffer");
+            "D3D9HardwareBufferManager::createRenderToVertexBuffer");
 	}
     //-----------------------------------------------------------------------
-    VertexDeclaration* D3D9HardwareBufferManagerBase::createVertexDeclarationImpl(void)
+    VertexDeclaration* D3D9HardwareBufferManager::createVertexDeclarationImpl(void)
     {
-        return new D3D9VertexDeclaration();
+        return new D3D9VertexDeclaration(mlpD3DDevice);
     }
     //-----------------------------------------------------------------------
-    void D3D9HardwareBufferManagerBase::destroyVertexDeclarationImpl(VertexDeclaration* decl)
+    void D3D9HardwareBufferManager::destroyVertexDeclarationImpl(VertexDeclaration* decl)
     {
         delete decl;
     }
+	//-----------------------------------------------------------------------
+	void D3D9HardwareBufferManager::releaseDefaultPoolResources(void)
+	{
+		size_t iCount = 0;
+		size_t vCount = 0;
+
+		
+		{
+			OGRE_LOCK_MUTEX(mVertexBuffersMutex)
+			VertexBufferList::iterator v, vend;
+			vend = mVertexBuffers.end();
+			for (v = mVertexBuffers.begin(); v != vend; ++v)
+			{
+				D3D9HardwareVertexBuffer* vbuf = 
+					static_cast<D3D9HardwareVertexBuffer*>(*v);
+				if (vbuf->releaseIfDefaultPool())
+					vCount++;
+			}
+		}
+
+		{
+			OGRE_LOCK_MUTEX(mIndexBuffersMutex)
+			IndexBufferList::iterator i, iend;
+			iend = mIndexBuffers.end();
+			for (i = mIndexBuffers.begin(); i != iend; ++i)
+			{
+				D3D9HardwareIndexBuffer* ibuf = 
+					static_cast<D3D9HardwareIndexBuffer*>(*i);
+				if (ibuf->releaseIfDefaultPool())
+					iCount++;
+
+			}
+		}
+
+		LogManager::getSingleton().logMessage("D3D9HardwareBufferManager released:");
+		LogManager::getSingleton().logMessage(
+			StringConverter::toString(vCount) + " unmanaged vertex buffers");
+		LogManager::getSingleton().logMessage(
+			StringConverter::toString(iCount) + " unmanaged index buffers");
+	}
+	//-----------------------------------------------------------------------
+	void D3D9HardwareBufferManager::recreateDefaultPoolResources(void)
+	{
+		size_t iCount = 0;
+		size_t vCount = 0;
+
+		{
+			OGRE_LOCK_MUTEX(mVertexBuffersMutex)
+			VertexBufferList::iterator v, vend;
+			vend = mVertexBuffers.end();
+			for (v = mVertexBuffers.begin(); v != vend; ++v)
+			{
+				D3D9HardwareVertexBuffer* vbuf = 
+					static_cast<D3D9HardwareVertexBuffer*>(*v);
+				if (vbuf->recreateIfDefaultPool(mlpD3DDevice))
+					vCount++;
+			}
+		}
+
+		{
+			OGRE_LOCK_MUTEX(mIndexBuffersMutex)
+			IndexBufferList::iterator i, iend;
+			iend = mIndexBuffers.end();
+			for (i = mIndexBuffers.begin(); i != iend; ++i)
+			{
+				D3D9HardwareIndexBuffer* ibuf = 
+					static_cast<D3D9HardwareIndexBuffer*>(*i);
+				if (ibuf->recreateIfDefaultPool(mlpD3DDevice))
+					iCount++;
+
+			}
+		}
+
+		LogManager::getSingleton().logMessage("D3D9HardwareBufferManager recreated:");
+		LogManager::getSingleton().logMessage(
+			StringConverter::toString(vCount) + " unmanaged vertex buffers");
+		LogManager::getSingleton().logMessage(
+			StringConverter::toString(iCount) + " unmanaged index buffers");
+	}
+	//-----------------------------------------------------------------------
+
 }

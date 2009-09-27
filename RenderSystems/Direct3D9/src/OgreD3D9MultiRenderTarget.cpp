@@ -4,25 +4,26 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9MultiRenderTarget.h"
@@ -33,8 +34,6 @@ THE SOFTWARE.
 #include "OgreBitwise.h"
 #include "OgreD3D9RenderSystem.h"
 #include "OgreRoot.h"
-#include "OgreD3D9Device.h"
-#include "OgreD3D9DeviceManager.h"
 
 namespace Ogre 
 {
@@ -44,7 +43,7 @@ namespace Ogre
 		/// Clear targets
 		for(size_t x=0; x<OGRE_MAX_MULTIPLE_RENDER_TARGETS; ++x)
 		{
-			mRenderTargets[x] = 0;
+			targets[x] = 0;
 		}
 	}
 	D3D9MultiRenderTarget::~D3D9MultiRenderTarget()
@@ -61,13 +60,13 @@ namespace Ogre
 
 		/// Find first non-null target
 		int y;
-		for(y=0; y<OGRE_MAX_MULTIPLE_RENDER_TARGETS && !mRenderTargets[y]; ++y) ;
+		for(y=0; y<OGRE_MAX_MULTIPLE_RENDER_TARGETS && !targets[y]; ++y) ;
 		
 		if(y!=OGRE_MAX_MULTIPLE_RENDER_TARGETS)
 		{
 			/// If there is another target bound, compare sizes
-			if (mRenderTargets[y]->getWidth() != buffer->getWidth() ||
-				mRenderTargets[y]->getHeight() != buffer->getHeight())
+			if(targets[y]->getWidth() != buffer->getWidth() ||
+				targets[y]->getHeight() != buffer->getHeight())
 			{
 				OGRE_EXCEPT(
 					Exception::ERR_INVALIDPARAMS, 
@@ -76,7 +75,7 @@ namespace Ogre
 			}
 
 			if (!Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_MRT_DIFFERENT_BIT_DEPTHS)
-				&& (PixelUtil::getNumElemBits(mRenderTargets[y]->getFormat()) != 
+				&& (PixelUtil::getNumElemBits(targets[y]->getFormat()) != 
 					PixelUtil::getNumElemBits(buffer->getFormat())))
 			{
 				OGRE_EXCEPT(
@@ -87,41 +86,25 @@ namespace Ogre
 			}
 		}
 
-		mRenderTargets[attachment] = buffer;
+		targets[attachment] = buffer;
 		checkAndUpdate();
 	}
 
 	void D3D9MultiRenderTarget::unbindSurfaceImpl(size_t attachment)
 	{
 		assert(attachment<OGRE_MAX_MULTIPLE_RENDER_TARGETS);
-		mRenderTargets[attachment] = 0;
+		targets[attachment] = 0;
 		checkAndUpdate();
 	}
 
     void D3D9MultiRenderTarget::update(bool swapBuffers)
-    {     
-		D3D9DeviceManager* deviceManager = D3D9RenderSystem::getDeviceManager();       	
-		D3D9Device* currRenderWindowDevice = deviceManager->getActiveRenderTargetDevice();
+    {
+        D3D9RenderSystem* rs = static_cast<D3D9RenderSystem*>(
+            Root::getSingleton().getRenderSystem());
+        if (rs->isDeviceLost())
+            return;
 
-		if (currRenderWindowDevice != NULL)
-		{
-			if (currRenderWindowDevice->isDeviceLost() == false)
-				MultiRenderTarget::update(swapBuffers);
-		}
-		else
-		{
-			for (UINT i=0; i < deviceManager->getDeviceCount(); ++i)
-			{
-				D3D9Device* device = deviceManager->getDevice(i);
-
-				if (device->isDeviceLost() == false)
-				{
-					deviceManager->setActiveRenderTargetDevice(device);
-					MultiRenderTarget::update(swapBuffers);
-					deviceManager->setActiveRenderTargetDevice(NULL);
-				}								
-			}
-		}		
+        MultiRenderTarget::update(swapBuffers);
     }
 
 	void D3D9MultiRenderTarget::getCustomAttribute(const String& name, void *pData)
@@ -132,8 +115,8 @@ namespace Ogre
 			/// Transfer surfaces
 			for(size_t x=0; x<OGRE_MAX_MULTIPLE_RENDER_TARGETS; ++x)
 			{
-				if(mRenderTargets[x] != NULL)								
-					pSurf[x] = mRenderTargets[x]->getSurface(D3D9RenderSystem::getActiveD3D9Device());			
+				if(targets[x])
+					pSurf[x] = targets[x]->getSurface();
 			}
 			return;
         }
@@ -141,10 +124,10 @@ namespace Ogre
 
 	void D3D9MultiRenderTarget::checkAndUpdate()
 	{
-		if(mRenderTargets[0])
+		if(targets[0])
 		{
-			mWidth  = (unsigned int)mRenderTargets[0]->getWidth();
-			mHeight = (unsigned int)mRenderTargets[0]->getHeight();
+			mWidth = targets[0]->getWidth();
+			mHeight = targets[0]->getHeight();
 		}
 		else
 		{
@@ -152,5 +135,7 @@ namespace Ogre
 			mHeight = 0;
 		}
 	}
+
+
 }
 

@@ -4,25 +4,26 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -67,14 +68,14 @@ void CompositorChain::destroyResources(void)
 		if (mOriginalScene)
 		{
 			mViewport->getTarget()->removeListener(this);
-			OGRE_DELETE mOriginalScene;
+			mOriginalScene->getTechnique()->destroyInstance(mOriginalScene);
 			mOriginalScene = 0;
 		}
 		mViewport = 0;
 	}
 }
 //-----------------------------------------------------------------------
-CompositorInstance* CompositorChain::addCompositor(CompositorPtr filter, size_t addPosition, const String& scheme)
+CompositorInstance* CompositorChain::addCompositor(CompositorPtr filter, size_t addPosition, size_t technique)
 {
 	// Init on demand
 	if (!mOriginalScene)
@@ -84,21 +85,21 @@ CompositorInstance* CompositorChain::addCompositor(CompositorPtr filter, size_t 
 		/// Create base "original scene" compositor
 		CompositorPtr base = CompositorManager::getSingleton().load("Ogre/Scene",
 			ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME);
-		mOriginalScene = OGRE_NEW CompositorInstance(base->getSupportedTechnique(), this);
+		mOriginalScene = base->getSupportedTechnique(0)->createInstance(this);
 	}
 
 
 	filter->touch();
-    CompositionTechnique *tech = filter->getSupportedTechnique(scheme);
-	if(!tech)
-	{
-		/// Warn user
-		LogManager::getSingleton().logMessage(
-			"CompositorChain: Compositor " + filter->getName() + " has no supported techniques.", LML_CRITICAL
-			);
-		return 0;
-	}
-    CompositorInstance *t = OGRE_NEW CompositorInstance(tech, this);
+    if(technique >= filter->getNumSupportedTechniques())
+    {
+        /// Warn user
+        LogManager::getSingleton().logMessage(
+            "CompositorChain: Compositor " + filter->getName() + " has no supported techniques.", LML_CRITICAL
+        );
+        return 0;
+    }
+    CompositionTechnique *tech = filter->getSupportedTechnique(technique);
+    CompositorInstance *t = tech->createInstance(this);
     
     if(addPosition == LAST)
         addPosition = mInstances.size();
@@ -115,7 +116,7 @@ void CompositorChain::removeCompositor(size_t index)
 {
     assert (index < mInstances.size() && "Index out of bounds.");
     Instances::iterator i = mInstances.begin() + index;
-    OGRE_DELETE *i;
+    (*i)->getTechnique()->destroyInstance(*i);
     mInstances.erase(i);
     
     mDirty = true;
@@ -132,7 +133,7 @@ void CompositorChain::removeAllCompositors()
     iend = mInstances.end();
     for (i = mInstances.begin(); i != iend; ++i)
     {
-		OGRE_DELETE *i;
+        (*i)->getTechnique()->destroyInstance(*i);
     }
     mInstances.clear();
     
@@ -142,7 +143,7 @@ void CompositorChain::removeAllCompositors()
 void CompositorChain::_removeInstance(CompositorInstance *i)
 {
 	mInstances.erase(std::find(mInstances.begin(), mInstances.end(), i));
-	OGRE_DELETE i;
+	i->getTechnique()->destroyInstance(i);
 }
 //-----------------------------------------------------------------------
 void CompositorChain::_queuedOperation(CompositorInstance::RenderSystemOperation* op)
@@ -165,34 +166,7 @@ CompositorChain::InstanceIterator CompositorChain::getCompositors()
 //-----------------------------------------------------------------------
 void CompositorChain::setCompositorEnabled(size_t position, bool state)
 {
-	CompositorInstance* inst = getCompositor(position);
-	if (!state && inst->getEnabled())
-	{
-		// If we're disabling a 'middle' compositor in a chain, we have to be
-		// careful about textures which might have been shared by non-adjacent
-		// instances which have now become adjacent. 
-		CompositorInstance* nextInstance = getNextInstance(inst, true);
-		if (nextInstance)
-		{
-			CompositionTechnique::TargetPassIterator tpit = nextInstance->getTechnique()->getTargetPassIterator();
-			while(tpit.hasMoreElements())
-			{
-				CompositionTargetPass* tp = tpit.getNext();
-				if (tp->getInputMode() == CompositionTargetPass::IM_PREVIOUS)
-				{
-					if (nextInstance->getTechnique()->getTextureDefinition(tp->getOutputName())->shared)
-					{
-						// recreate
-						nextInstance->freeResources(false, true);
-						nextInstance->createResources(false);
-					}
-				}
-
-			}
-		}
-
-	}
-    inst->setEnabled(state);
+    getCompositor(position)->setEnabled(state);
 }
 //-----------------------------------------------------------------------
 void CompositorChain::preRenderTargetUpdate(const RenderTargetEvent& evt)
@@ -467,43 +441,4 @@ void CompositorChain::RQListener::flushUpTo(uint8 id)
 	}
 }
 //-----------------------------------------------------------------------
-CompositorInstance* CompositorChain::getPreviousInstance(CompositorInstance* curr, bool activeOnly)
-{
-	bool found = false;
-	for(Instances::reverse_iterator i=mInstances.rbegin(); i!=mInstances.rend(); ++i)
-	{
-		if (found)
-		{
-			if ((*i)->getEnabled() || !activeOnly)
-				return *i;
-		}
-		else if(*i == curr)
-		{
-			found = true;
-		}
-	}
-
-	return 0;
 }
-//---------------------------------------------------------------------
-CompositorInstance* CompositorChain::getNextInstance(CompositorInstance* curr, bool activeOnly)
-{
-	bool found = false;
-	for(Instances::iterator i=mInstances.begin(); i!=mInstances.end(); ++i)
-	{
-		if (found)
-		{
-			if ((*i)->getEnabled() || !activeOnly)
-				return *i;
-		}
-		else if(*i == curr)
-		{
-			found = true;
-		}
-	}
-
-	return 0;
-}
-//---------------------------------------------------------------------
-}
-

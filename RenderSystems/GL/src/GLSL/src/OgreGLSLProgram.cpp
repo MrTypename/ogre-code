@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -74,7 +74,7 @@ namespace Ogre {
 			checkForGLSLError( "GLSLProgram::GLSLProgram", "GL Errors before creating shader object", 0 );
 			// create shader object
 
-			GLenum shaderType = 0x0000;
+			GLenum shaderType;
 			switch (mType)
 			{
 			case GPT_VERTEX_PROGRAM:
@@ -223,8 +223,7 @@ namespace Ogre {
 	//-----------------------------------------------------------------------
 	void GLSLProgram::populateParameterNames(GpuProgramParametersSharedPtr params)
 	{
-		getConstantDefinitions();
-		params->_setNamedConstants(mConstantDefs);
+		params->_setNamedConstants(&getConstantDefinitions());
 		// Don't set logical / physical maps here, as we can't access parameters by logical index in GLHL.
 	}
 	//-----------------------------------------------------------------------
@@ -235,9 +234,10 @@ namespace Ogre {
 
 
 		// Therefore instead, parse the source code manually and extract the uniforms
-		createParameterMappingStructures(true);
+		mConstantDefs.floatBufferSize = 0;
+		mConstantDefs.intBufferSize = 0;
 		GLSLLinkProgramManager::getSingleton().extractConstantDefs(
-			mSource, *mConstantDefs.get(), mName);
+			mSource, mConstantDefs, mName);
 
 		// Also parse any attached sources
 		for (GLSLProgramContainer::const_iterator i = mAttachedGLSLPrograms.begin();
@@ -246,7 +246,7 @@ namespace Ogre {
 			GLSLProgram* childShader = *i;
 
 			GLSLLinkProgramManager::getSingleton().extractConstantDefs(
-				childShader->getSource(), *mConstantDefs.get(), childShader->getName());
+				childShader->getSource(), mConstantDefs, childShader->getName());
 
 		}
 	}
@@ -290,20 +290,13 @@ namespace Ogre {
         }
         // Manually assign language now since we use it immediately
         mSyntaxCode = "glsl";
+
+		// want scenemanager to pass on surface and light states to the rendersystem
+		mPassSurfaceAndLightStates = true;
+
         
     }
-	//---------------------------------------------------------------------
-	bool GLSLProgram::getPassSurfaceAndLightStates(void) const
-	{
-		// scenemanager should pass on light & material state to the rendersystem
-		return true;
-	}
-	//---------------------------------------------------------------------
-	bool GLSLProgram::getPassTransformStates(void) const
-	{
-		// scenemanager should pass on transform state to the rendersystem
-		return true;
-	}
+
 	//-----------------------------------------------------------------------
     String GLSLProgram::CmdAttach::doGet(const void *target) const
     {

@@ -4,25 +4,26 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 // Ogre includes
@@ -53,6 +54,7 @@ THE SOFTWARE.
 #include "OgreStringConverter.h"
 #include "OgreArchiveManager.h"
 #include "OgrePlugin.h"
+#include "OgreZip.h"
 #include "OgreFileSystem.h"
 #include "OgreShadowVolumeExtrudeProgram.h"
 #include "OgreResourceBackgroundQueue.h"
@@ -65,7 +67,6 @@ THE SOFTWARE.
 #include "OgreRenderQueueInvocation.h"
 #include "OgrePlatformInformation.h"
 #include "OgreConvexBody.h"
-#include "Threading/OgreDefaultWorkQueue.h"
 	
 #if OGRE_NO_FREEIMAGE == 0
 #include "OgreFreeImageCodec.h"
@@ -75,9 +76,6 @@ THE SOFTWARE.
 #endif
 #if OGRE_NO_DDS_CODEC == 0
 #include "OgreDDSCodec.h"
-#endif
-#if OGRE_NO_ZIP_ARCHIVE == 0
-#include "OgreZip.h"
 #endif
 
 #include "OgreFontManager.h"
@@ -92,10 +90,6 @@ THE SOFTWARE.
 #include "OgreScriptCompiler.h"
 
 #include "OgreWindowEventUtilities.h"
-
-#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
-#include "macUtils.h"
-#endif
 
 namespace Ogre {
     //-----------------------------------------------------------------------
@@ -112,7 +106,6 @@ namespace Ogre {
     typedef void (*DLL_START_PLUGIN)(void);
     typedef void (*DLL_STOP_PLUGIN)(void);
 
-	const uint16 Root::MAX_USER_WORKQUEUE_CHANNEL = 32767;
 
     //-----------------------------------------------------------------------
     Root::Root(const String& pluginFileName, const String& configFileName, 
@@ -150,25 +143,6 @@ namespace Ogre {
 
 		// ResourceGroupManager
 		mResourceGroupManager = OGRE_NEW ResourceGroupManager();
-
-		// WorkQueue (note: users can replace this if they want)
-		DefaultWorkQueue* defaultQ = OGRE_NEW DefaultWorkQueue("Root");
-		// never process responses in main thread for longer than 10ms by default
-		defaultQ->setResponseProcessingTimeLimit(10);
-		// match threads to hardware
-#if OGRE_THREAD_SUPPORT
-		unsigned threadCount = OGRE_THREAD_HARDWARE_CONCURRENCY;
-		if (!threadCount)
-			threadCount = 1;
-		defaultQ->setWorkerThreadCount(threadCount);
-#endif
-		// only allow workers to access rendersystem if threadsupport is 1
-#if OGRE_THREAD_SUPPORT == 1
-		defaultQ->setWorkersCanAccessRenderSystem(true);
-#else
-		defaultQ->setWorkersCanAccessRenderSystem(false);
-#endif
-		mWorkQueue = defaultQ;
 
 		// ResourceBackgroundQueue
 		mResourceBackgroundQueue = OGRE_NEW ResourceBackgroundQueue();
@@ -212,9 +186,6 @@ namespace Ogre {
         // Font manager
         mFontManager = OGRE_NEW FontManager();
 
-        // Lod strategy manager
-        mLodStrategyManager = OGRE_NEW LodStrategyManager();
-
 #if OGRE_PROFILING
         // Profiler
         mProfiler = OGRE_NEW Profiler();
@@ -222,10 +193,8 @@ namespace Ogre {
 #endif
         mFileSystemArchiveFactory = OGRE_NEW FileSystemArchiveFactory();
         ArchiveManager::getSingleton().addArchiveFactory( mFileSystemArchiveFactory );
-#if OGRE_NO_ZIP_ARCHIVE == 0
         mZipArchiveFactory = OGRE_NEW ZipArchiveFactory();
         ArchiveManager::getSingleton().addArchiveFactory( mZipArchiveFactory );
-#endif
 #if OGRE_NO_FREEIMAGE == 0
 		// Register image codecs
 		FreeImageCodec::startup();
@@ -303,11 +272,8 @@ namespace Ogre {
 #endif
         OGRE_DELETE mOverlayManager;
         OGRE_DELETE mFontManager;
-		OGRE_DELETE mLodStrategyManager;
         OGRE_DELETE mArchiveManager;
-#if OGRE_NO_ZIP_ARCHIVE == 0
         OGRE_DELETE mZipArchiveFactory;
-#endif
         OGRE_DELETE mFileSystemArchiveFactory;
         OGRE_DELETE mSkeletonManager;
         OGRE_DELETE mMeshManager;
@@ -336,8 +302,6 @@ namespace Ogre {
 		OGRE_DELETE mBillboardChainFactory;
 		OGRE_DELETE mRibbonTrailFactory;
 
-		OGRE_DELETE mWorkQueue;
-
 		OGRE_DELETE mTimer;
 
         OGRE_DELETE mDynLibManager;
@@ -355,20 +319,11 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void Root::saveConfig(void)
     {
-#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
-        // Check the Documents directory within the application sandbox
-        Ogre::String outBaseName, extension, configFileName;
-        Ogre::StringUtil::splitFilename(mConfigFileName, outBaseName, extension);
-        configFileName = macBundlePath() + "/../Documents/" + outBaseName;
-		std::ofstream of(configFileName.c_str());
-        if (of)
-            mConfigFileName = configFileName;
-#else
         if (mConfigFileName.empty ())
             return;
 
 		std::ofstream of(mConfigFileName.c_str());
-#endif
+
         if (!of)
             OGRE_EXCEPT(Exception::ERR_CANNOT_WRITE_TO_FILE, "Cannot create settings file.",
             "Root::saveConfig");
@@ -382,7 +337,7 @@ namespace Ogre {
             of << "Render System=" << std::endl;
         }
 
-        for (RenderSystemList::const_iterator pRend = getAvailableRenderers().begin(); pRend != getAvailableRenderers().end(); ++pRend)
+        for (RenderSystemList::const_iterator pRend = getAvailableRenderers()->begin(); pRend != getAvailableRenderers()->end(); ++pRend)
         {
             RenderSystem* rs = *pRend;
             of << std::endl;
@@ -400,24 +355,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     bool Root::restoreConfig(void)
     {
-#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
-        // Read the config from Documents first(user config) if it exists on iPhone.
-        // If it doesn't exist or is invalid then use mConfigFileName
-        // TODO: I really want to use NSFileManager here but I'll find another way
-
-//        Ogre::String outBaseName, extension, configFileName;
-//        Ogre::StringUtil::splitFilename(mConfigFileName, outBaseName, extension);
-//        configFileName = macBundlePath() + "/../Documents/" + outBaseName;
-//		std::ifstream fp;
-//        fp.open(configFileName.c_str(), std::ios::in | std::ios::binary);
-//        if(fp)
-//            mConfigFileName = configFileName;
-//        else
-//            mConfigFileName = Ogre::StringUtil::BLANK;
-//        fp.close();
-        return true;
-#endif
-        
         if (mConfigFileName.empty ())
             return true;
 
@@ -426,6 +363,7 @@ namespace Ogre {
         //   available, and false if no saved config is
         //   stored, or if there has been a problem
         ConfigFile cfg;
+        //RenderSystemList::iterator pRend;
 
         try {
             // Don't trim whitespace
@@ -497,11 +435,11 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    const RenderSystemList& Root::getAvailableRenderers(void)
+    RenderSystemList* Root::getAvailableRenderers(void)
     {
         // Returns a vector of renders
 
-        return mRenderers;
+        return &mRenderers;
 
     }
 
@@ -515,7 +453,7 @@ namespace Ogre {
         }
 
         RenderSystemList::const_iterator pRend;
-        for (pRend = getAvailableRenderers().begin(); pRend != getAvailableRenderers().end(); ++pRend)
+        for (pRend = getAvailableRenderers()->begin(); pRend != getAvailableRenderers()->end(); ++pRend)
         {
             RenderSystem* rs = *pRend;
             if (rs->getName() == name)
@@ -708,7 +646,7 @@ namespace Ogre {
     void Root::addFrameListener(FrameListener* newListener)
     {
 		// Check if the specified listener is scheduled for removal
-		set<FrameListener *>::type::iterator i = mRemovedFrameListeners.find(newListener);
+		std::set<FrameListener *>::iterator i = mRemovedFrameListeners.find(newListener);
 
 		// If yes, cancel the removal. Otherwise add it to other listeners.
 		if (i != mRemovedFrameListeners.end())
@@ -727,10 +665,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     bool Root::_fireFrameStarted(FrameEvent& evt)
     {
-		OgreProfileBeginGroup("Frame", OGREPROF_GENERAL);
-
         // Remove all marked listeners
-        set<FrameListener*>::type::iterator i;
+        std::set<FrameListener*>::iterator i;
         for (i = mRemovedFrameListeners.begin();
             i != mRemovedFrameListeners.end(); i++)
         {
@@ -755,7 +691,7 @@ namespace Ogre {
 		++mNextFrame;
 
         // Remove all marked listeners
-        set<FrameListener*>::type::iterator i;
+        std::set<FrameListener*>::iterator i;
         for (i = mRemovedFrameListeners.begin();
             i != mRemovedFrameListeners.end(); i++)
         {
@@ -777,7 +713,7 @@ namespace Ogre {
     bool Root::_fireFrameEnded(FrameEvent& evt)
     {
         // Remove all marked listeners
-        set<FrameListener*>::type::iterator i;
+        std::set<FrameListener*>::iterator i;
         for (i = mRemovedFrameListeners.begin();
             i != mRemovedFrameListeners.end(); i++)
         {
@@ -800,50 +736,48 @@ namespace Ogre {
         if (HardwareBufferManager::getSingletonPtr())
             HardwareBufferManager::getSingleton()._releaseBufferCopies();
 
-		// Tell the queue to process responses
-		mWorkQueue->processResponses();
-
-		OgreProfileEndGroup("Frame", OGREPROF_GENERAL);
+		// Also tell the ResourceBackgroundQueue to propagate background load events
+		ResourceBackgroundQueue::getSingleton()._fireOnFrameCallbacks();
 
         return ret;
     }
     //-----------------------------------------------------------------------
     bool Root::_fireFrameStarted()
     {
+        unsigned long now = mTimer->getMilliseconds();
         FrameEvent evt;
-		populateFrameEvent(FETT_STARTED, evt);
+        evt.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
+        evt.timeSinceLastFrame = calculateEventTime(now, FETT_STARTED);
 
         return _fireFrameStarted(evt);
     }
     //-----------------------------------------------------------------------
     bool Root::_fireFrameRenderingQueued()
     {
-		FrameEvent evt;
-		populateFrameEvent(FETT_QUEUED, evt);
+        unsigned long now = mTimer->getMilliseconds();
+        FrameEvent evt;
+        evt.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
+        evt.timeSinceLastFrame = calculateEventTime(now, FETT_QUEUED);
 
         return _fireFrameRenderingQueued(evt);
     }
     //-----------------------------------------------------------------------
     bool Root::_fireFrameEnded()
     {
+        unsigned long now = mTimer->getMilliseconds();
         FrameEvent evt;
-		populateFrameEvent(FETT_ENDED, evt);
+        evt.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
+        evt.timeSinceLastFrame = calculateEventTime(now, FETT_ENDED);
+
         return _fireFrameEnded(evt);
     }
-	//---------------------------------------------------------------------
-	void Root::populateFrameEvent(FrameEventTimeType type, FrameEvent& evtToUpdate)
-	{
-		unsigned long now = mTimer->getMilliseconds();
-		evtToUpdate.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
-		evtToUpdate.timeSinceLastFrame = calculateEventTime(now, type);
-	}
     //-----------------------------------------------------------------------
     Real Root::calculateEventTime(unsigned long now, FrameEventTimeType type)
     {
         // Calculate the average time passed between events of the given type
         // during the last mFrameSmoothingTime seconds.
 
-        EventTimesQueue& times = mEventTimes[type];
+        std::deque<unsigned long>& times = mEventTimes[type];
         times.push_back(now);
 
         if(times.size() == 1)
@@ -854,7 +788,7 @@ namespace Ogre {
 			static_cast<unsigned long>(mFrameSmoothingTime * 1000.0f);
 
         // Find the oldest time to keep
-        EventTimesQueue::iterator it = times.begin(),
+        std::deque<unsigned long>::iterator it = times.begin(),
             end = times.end()-2; // We need at least two times
         while(it != end)
         {
@@ -908,26 +842,7 @@ namespace Ogre {
 
         return _fireFrameEnded();
     }
-	//---------------------------------------------------------------------
-	bool Root::renderOneFrame(Real timeSinceLastFrame)
-	{
-		FrameEvent evt;
-		evt.timeSinceLastFrame = timeSinceLastFrame;
 
-		unsigned long now = mTimer->getMilliseconds();
-		evt.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
-
-		if(!_fireFrameStarted(evt))
-			return false;
-
-		if (!_updateAllRenderTargets(evt))
-			return false;
-
-		now = mTimer->getMilliseconds();
-		evt.timeSinceLastEvent = calculateEventTime(now, FETT_ANY);
-
-		return _fireFrameEnded(evt);
-	}
     //-----------------------------------------------------------------------
     void Root::shutdown(void)
     {
@@ -936,7 +851,6 @@ namespace Ogre {
 
         ShadowVolumeExtrudeProgram::shutdown();
 		mResourceBackgroundQueue->shutdown();
-		mWorkQueue->shutdown();
         ResourceGroupManager::getSingleton().shutdownAll();
 
 		// Destroy pools
@@ -966,7 +880,7 @@ namespace Ogre {
         pluginDir = cfg.getSetting("PluginFolder"); // Ignored on Mac OS X, uses Resources/ directory
         pluginList = cfg.getMultiSetting("Plugin");
 
-#if OGRE_PLATFORM != OGRE_PLATFORM_APPLE && OGRE_PLATFORM != OGRE_PLATFORM_IPHONE
+#if OGRE_PLATFORM != OGRE_PLATFORM_APPLE
 		if (pluginDir.empty())
 		{
 			// User didn't specify plugins folder, try current one
@@ -1080,28 +994,6 @@ namespace Ogre {
         return ret;
 
     }
-	//-----------------------------------------------------------------------
-	bool Root::createRenderWindows(const RenderWindowDescriptionList& renderWindowDescriptions, 
-		RenderWindowList& createdWindows)
-	{
-		if (!mActiveRenderer)
-		{
-			OGRE_EXCEPT(Exception::ERR_INVALID_STATE,
-				"Cannot create render windows - no render "
-				"system has been selected.", "Root::createRenderWindows");
-		}
-
-		bool success;
-		
-		success = mActiveRenderer->_createRenderWindows(renderWindowDescriptions, createdWindows);		
-		if(success && !mFirstTimePostWindowInit)
-		{
-			oneTimePostWindowInit();
-			createdWindows[0]->_setPrimary();
-		}
-
-		return success;
-	}	
     //-----------------------------------------------------------------------
     void Root::detachRenderTarget(RenderTarget* target)
     {
@@ -1226,7 +1118,6 @@ namespace Ogre {
         {
 			// Background loader
 			mResourceBackgroundQueue->initialise();
-			mWorkQueue->startup();
 			// Initialise material manager
 			mMaterialManager->initialise();
             // Init particle systems manager
@@ -1248,31 +1139,7 @@ namespace Ogre {
 		bool ret = _fireFrameRenderingQueued();
 		// block for final swap
 		mActiveRenderer->_swapAllRenderTargetBuffers(mActiveRenderer->getWaitForVerticalBlank());
-
-        // This belongs here, as all render targets must be updated before events are
-        // triggered, otherwise targets could be mismatched.  This could produce artifacts,
-        // for instance, with shadows.
-        for (SceneManagerEnumerator::SceneManagerIterator it = getSceneManagerIterator(); it.hasMoreElements(); it.moveNext())
-            it.peekNextValue()->_handleLodEvents();
-
-		return ret;
-	}
-	//---------------------------------------------------------------------
-	bool Root::_updateAllRenderTargets(FrameEvent& evt)
-	{
-		// update all targets but don't swap buffers
-		mActiveRenderer->_updateAllRenderTargets(false);
-		// give client app opportunity to use queued GPU time
-		bool ret = _fireFrameRenderingQueued(evt);
-		// block for final swap
-		mActiveRenderer->_swapAllRenderTargetBuffers(mActiveRenderer->getWaitForVerticalBlank());
-
-		// This belongs here, as all render targets must be updated before events are
-		// triggered, otherwise targets could be mismatched.  This could produce artifacts,
-		// for instance, with shadows.
-		for (SceneManagerEnumerator::SceneManagerIterator it = getSceneManagerIterator(); it.hasMoreElements(); it.moveNext())
-			it.peekNextValue()->_handleLodEvents();
-
+		
 		return ret;
 	}
 	//-----------------------------------------------------------------------
@@ -1423,34 +1290,7 @@ namespace Ogre {
 		}
 		mRQSequenceMap.clear();
 	}
-
 	//---------------------------------------------------------------------
-	unsigned int Root::getDisplayMonitorCount() const
-	{
-		if (!mActiveRenderer)
-		{
-			OGRE_EXCEPT(Exception::ERR_INVALID_STATE,
-				"Cannot get display monitor count "
-				"No render system has been selected.", "Root::getDisplayMonitorCount");
-		}
-
-		return mActiveRenderer->getDisplayMonitorCount();
-
-	}
-	//---------------------------------------------------------------------
-	void Root::setWorkQueue(WorkQueue* queue)
-	{
-		if (mWorkQueue != queue)
-		{
-			// delete old one (will shut down)
-			OGRE_DELETE mWorkQueue;
-
-			mWorkQueue = queue;
-			if (mIsInitialised)
-				mWorkQueue->startup();
-
-		}
-	}
 
 
 

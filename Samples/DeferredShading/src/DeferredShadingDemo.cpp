@@ -33,7 +33,6 @@ This demo source file is in the public domain.
 #include "DeferredShading.h"
 #include "MLight.h"
 #include "GeomUtils.h"
-
 class SharedData : public Ogre::Singleton<SharedData> {
 
 public:
@@ -68,7 +67,7 @@ public:
 
 		MLight *iMainLight;
 
-		vector<Node*>::type mLightNodes;
+		std::vector<Node*> mLightNodes;
 
 };
 template<> SharedData* Singleton<SharedData>::ms_Singleton = 0;
@@ -125,8 +124,8 @@ public:
 			timeoutDelay = 0.5f;
 			SharedData::getSingleton().iActivate = !SharedData::getSingleton().iActivate;
 			// Hide/show all minilights
-			vector<Node*>::type::iterator i = SharedData::getSingleton().mLightNodes.begin();
-			vector<Node*>::type::iterator iend = SharedData::getSingleton().mLightNodes.end();
+			std::vector<Node*>::iterator i = SharedData::getSingleton().mLightNodes.begin();
+			std::vector<Node*>::iterator iend = SharedData::getSingleton().mLightNodes.end();
 			for(; i!=iend; ++i)
 			{
 				static_cast<SceneNode*>(*i)->setVisible(SharedData::getSingleton().iActivate, true);
@@ -171,10 +170,6 @@ public:
 			name="ShowNormals"; break;
 		case DeferredShadingSystem::DSM_SHOWDSP:
 			name="ShowDepthSpecular"; break;
-        
-        // This will never happen but it silences a warning
-        case DeferredShadingSystem::DSM_COUNT:
-                break;
 		}
 		OverlayManager::getSingleton().getOverlayElement( "Example/Shadows/Materials" )
 			->setCaption( "[C] Change mode, current is \"" 
@@ -375,10 +370,10 @@ protected:
 	void createSampleLights()
 	{
 		// Create some lights		
-		vector<MLight*>::type lights;
+		std::vector<MLight*> lights;
 		SceneNode *parentNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("LightsParent");
 		// Create light nodes
-		vector<Node*>::type nodes;
+		std::vector<Node*> nodes;
 
 		MLight *a = mSystem->createMLight();
 		SceneNode *an = parentNode->createChildSceneNode();
@@ -444,7 +439,7 @@ protected:
 		// Create marker meshes to show user where the lights are
 		Entity *ent;
 		GeomUtils::createSphere("PointLightMesh", 1.0f, 5, 5, true, true);
-		for(vector<MLight*>::type::iterator i=lights.begin(); i!=lights.end(); ++i)
+		for(std::vector<MLight*>::iterator i=lights.begin(); i!=lights.end(); ++i)
 		{
 			MLight* light = *i;
 			ent = mSceneMgr->createEntity(light->getName()+"v", "PointLightMesh");
@@ -479,12 +474,12 @@ protected:
 		float stations_per_revolution = 3.5f;
 		size_t skip = 2; // stations between lights
 		Vector3 station_pos[stations];
-		for(unsigned int x=0; x<s_to_top; ++x)
+		for(int x=0; x<s_to_top; ++x)
 		{
 			float theta = ((float)x/stations_per_revolution)*2.0f*Math::PI;
 			station_pos[x] = base+Vector3(Math::Sin(theta)*r, ascend*x, Math::Cos(theta)*r);
 		}
-		for(unsigned int x=s_to_top; x<stations; ++x)
+		for(int x=s_to_top; x<stations; ++x)
 		{
 			float theta = ((float)x/stations_per_revolution)*2.0f*Math::PI;
 			station_pos[x] = base+Vector3(Math::Sin(theta)*r, h-ascend*(x-s_to_top), Math::Cos(theta)*r);
@@ -497,7 +492,7 @@ protected:
 		{
 			// Create a track to animate the camera's node
 			NodeAnimationTrack* track = anim->createNodeTrack(x, nodes[x]);
-			for(unsigned int y=0; y<=stations; ++y)
+			for(int y=0; y<=stations; ++y)
 			{
 				// Setup keyframes
 				TransformKeyFrame* key = track->createNodeKeyFrame(y*seconds_per_station); // A start position
@@ -512,6 +507,9 @@ protected:
 	}
 
 };
+
+
+
 
 
 #ifdef __cplusplus
@@ -544,3 +542,5 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
+

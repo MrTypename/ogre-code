@@ -4,25 +4,26 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -57,7 +58,7 @@ namespace Ogre {
     }
 
     //-----------------------------------------------------------------------
-    void SubMesh::setMaterialName( const String& name, const String& groupName /* = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME */)
+    void SubMesh::setMaterialName(const String& name)
     {
         mMaterialName = name;
         mMatInitialised = true;
@@ -241,7 +242,7 @@ namespace Ogre {
     struct Cluster
     {
         Vector3 mMin, mMax;
-        set<uint32>::type mIndices;
+        std::set<uint32> mIndices;
 
         Cluster ()
         { }
@@ -275,7 +276,7 @@ namespace Ogre {
             mMin.x = mMin.y = mMin.z = Math::POS_INFINITY;
             mMax.x = mMax.y = mMax.z = Math::NEG_INFINITY;
 
-            for (set<uint32>::type::const_iterator i = mIndices.begin ();
+            for (std::set<uint32>::const_iterator i = mIndices.begin ();
                  i != mIndices.end (); ++i)
             {
                 float *v;
@@ -291,7 +292,7 @@ namespace Ogre {
             Cluster newbox;
 
             // Separate all points that are inside the new bbox
-            for (set<uint32>::type::iterator i = mIndices.begin ();
+            for (std::set<uint32>::iterator i = mIndices.begin ();
                  i != mIndices.end (); )
             {
                 float *v;
@@ -299,7 +300,7 @@ namespace Ogre {
                 if (v [split_axis] > r)
                 {
                     newbox.mIndices.insert (*i);
-                    set<uint32>::type::iterator x = i++;
+                    std::set<uint32>::iterator x = i++;
                     mIndices.erase(x);
                 }
                 else
@@ -332,7 +333,7 @@ namespace Ogre {
         uint8 *vdata = (uint8 *)vbuf->lock (HardwareBuffer::HBL_READ_ONLY);
         size_t vsz = vbuf->getVertexSize ();
 
-        vector<Cluster>::type boxes;
+        std::vector<Cluster> boxes;
         boxes.reserve (count);
 
 		// First of all, find min and max bounding box of the submesh
@@ -376,7 +377,7 @@ namespace Ogre {
             // Find the largest box with more than one vertex :)
             Cluster *split_box = NULL;
             Real split_volume = -1;
-            for (vector<Cluster>::type::iterator b = boxes.begin ();
+            for (std::vector<Cluster>::iterator b = boxes.begin ();
                  b != boxes.end (); ++b)
             {
                 if (b->empty ())
@@ -412,13 +413,13 @@ namespace Ogre {
 
         // Fine, now from every cluster choose the vertex that is most
         // distant from the geometrical center and from other extremes.
-        for (vector<Cluster>::type::const_iterator b = boxes.begin ();
+        for (std::vector<Cluster>::const_iterator b = boxes.begin ();
              b != boxes.end (); ++b)
         {
             Real rating = 0;
             Vector3 best_vertex;
 
-            for (set<uint32>::type::const_iterator i = b->mIndices.begin ();
+            for (std::set<uint32>::const_iterator i = b->mIndices.begin ();
                  i != b->mIndices.end (); ++i)
             {
                 float *v;
@@ -427,7 +428,7 @@ namespace Ogre {
                 Vector3 vv (v [0], v [1], v [2]);
                 Real r = (vv - center).squaredLength ();
 
-                for (vector<Vector3>::type::const_iterator e = extremityPoints.begin ();
+                for (std::vector<Vector3>::const_iterator e = extremityPoints.begin ();
                      e != extremityPoints.end (); ++e)
                     r += (*e - vv).squaredLength ();
                 if (r > rating)
@@ -454,5 +455,4 @@ namespace Ogre {
 		}
 	}
 }
-
 

@@ -4,25 +4,26 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __AxisAlignedBox_H_
@@ -35,12 +36,6 @@ THE SOFTWARE.
 #include "OgreMatrix4.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Math
-	*  @{
-	*/
 
 	/** A 3D box aligned with the x/y/z axes.
 	@remarks
@@ -88,22 +83,21 @@ namespace Ogre {
 			NEAR_LEFT_TOP = 5,
 			NEAR_RIGHT_TOP = 4
 		} CornerEnum;
-		inline AxisAlignedBox() : mMinimum(Vector3::ZERO), mMaximum(Vector3::UNIT_SCALE), mpCorners(0)
+		inline AxisAlignedBox() : mpCorners(0)
 		{
 			// Default to a null box 
 			setMinimum( -0.5, -0.5, -0.5 );
 			setMaximum( 0.5, 0.5, 0.5 );
 			mExtent = EXTENT_NULL;
 		}
-		inline AxisAlignedBox(Extent e) : mMinimum(Vector3::ZERO), mMaximum(Vector3::UNIT_SCALE), mpCorners(0)
+		inline AxisAlignedBox(Extent e) : mpCorners(0)
 		{
 			setMinimum( -0.5, -0.5, -0.5 );
 			setMaximum( 0.5, 0.5, 0.5 );
 			mExtent = e;
 		}
 
-		inline AxisAlignedBox(const AxisAlignedBox & rkBox) : mMinimum(Vector3::ZERO), mMaximum(Vector3::UNIT_SCALE), mpCorners(0)
-
+		inline AxisAlignedBox(const AxisAlignedBox & rkBox) : mpCorners(0)
 		{
 			if (rkBox.isNull())
 				setNull();
@@ -113,14 +107,14 @@ namespace Ogre {
 				setExtents( rkBox.mMinimum, rkBox.mMaximum );
 		}
 
-		inline AxisAlignedBox( const Vector3& min, const Vector3& max ) : mMinimum(Vector3::ZERO), mMaximum(Vector3::UNIT_SCALE), mpCorners(0)
+		inline AxisAlignedBox( const Vector3& min, const Vector3& max ) : mpCorners(0)
 		{
 			setExtents( min, max );
 		}
 
 		inline AxisAlignedBox(
 			Real mx, Real my, Real mz,
-			Real Mx, Real My, Real Mz ) : mMinimum(Vector3::ZERO), mMaximum(Vector3::UNIT_SCALE), mpCorners(0)
+			Real Mx, Real My, Real Mz ) : mpCorners(0)
 		{
 			setExtents( mx, my, mz, Mx, My, Mz );
 		}
@@ -806,8 +800,6 @@ namespace Ogre {
 
 	};
 
-	/** @} */
-	/** @} */
 } // namespace Ogre
 
 #endif

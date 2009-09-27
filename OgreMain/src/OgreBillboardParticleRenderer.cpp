@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under 
@@ -125,14 +125,14 @@ namespace Ogre {
     }
     //-----------------------------------------------------------------------
     void BillboardParticleRenderer::_updateRenderQueue(RenderQueue* queue, 
-        list<Particle*>::type& currentParticles, bool cullIndividually)
+        std::list<Particle*>& currentParticles, bool cullIndividually)
     {
         mBillboardSet->setCullIndividually(cullIndividually);
 
         // Update billboard set geometry
         mBillboardSet->beginBillboards(currentParticles.size());
         Billboard bb;
-        for (list<Particle*>::type::iterator i = currentParticles.begin();
+        for (std::list<Particle*>::iterator i = currentParticles.begin();
             i != currentParticles.end(); ++i)
         {
             Particle* p = *i;
@@ -170,7 +170,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void BillboardParticleRenderer::_setMaterial(MaterialPtr& mat)
     {
-        mBillboardSet->setMaterialName(mat->getName(), mat->getGroup());
+        mBillboardSet->setMaterialName(mat->getName());
     }
     //-----------------------------------------------------------------------
     void BillboardParticleRenderer::setBillboardType(BillboardType bbt)
@@ -487,5 +487,4 @@ namespace Ogre {
 	}
 
 }
-
 

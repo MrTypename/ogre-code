@@ -1,10 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 // animation.h
-// Author       : Francesco Giordana
-// Sponsored by : Anygma N.V. (http://www.nazooka.com)
-// Start Date   : January 13, 2005
-// Copyright    : (C) 2006 by Francesco Giordana
-// Email        : fra.giordana@tiscali.it
+// Author     : Francesco Giordana
+// Start Date : January 13, 2005
+// Copyright  : (C) 2006 by Francesco Giordana
+// Email      : fra.giordana@tiscali.it
 ////////////////////////////////////////////////////////////////////////////////
 
 /*********************************************************************************
@@ -70,7 +69,6 @@ namespace OgreMayaExporter
 	{
 		target poseTarget;
 		long index;
-		int blendShapeIndex;
 		MString name;
 		std::vector<vertexOffset> offsets;
 	} pose;

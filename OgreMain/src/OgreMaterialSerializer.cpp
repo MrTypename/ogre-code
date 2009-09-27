@@ -4,25 +4,26 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -38,8 +39,6 @@ THE SOFTWARE.
 #include "OgreGpuProgramManager.h"
 #include "OgreHighLevelGpuProgramManager.h"
 #include "OgreExternalTextureSourceManager.h"
-#include "OgreLodStrategyManager.h"
-#include "OgreDistanceLodStrategy.h"
 
 namespace Ogre
 {
@@ -1702,12 +1701,12 @@ namespace Ogre
 		return false;
 	}
     //-----------------------------------------------------------------------
-    bool parseLodValues(String& params, MaterialScriptContext& context)
+    bool parseLodDistances(String& params, MaterialScriptContext& context)
     {
         StringVector vecparams = StringUtil::split(params, " \t");
 
-        // iterate over the parameters and parse values out of them
-        Material::LodValueList lodList;
+        // iterate over the parameters and parse distances out of them
+        Material::LodDistanceList lodList;
         StringVector::iterator i, iend;
         iend = vecparams.end();
         for (i = vecparams.begin(); i != iend; ++i)
@@ -2185,7 +2184,6 @@ namespace Ogre
         try {
 			const GpuConstantDefinition& def = 
 				context.programParams->getConstantDefinition(vecparams[0]);
-            (void)def; // Silence warning
         }
         catch (Exception& e)
         {
@@ -2218,7 +2216,6 @@ namespace Ogre
         try {
 			const GpuConstantDefinition& def = 
 				context.programParams->getConstantDefinition(vecparams[0]);
-            (void)def; // Silence warning
         }
         catch (Exception& e)
         {
@@ -2925,41 +2922,6 @@ namespace Ogre
 		return false;
 
 	}
-    //-----------------------------------------------------------------------
-    bool parseLodStrategy(String& params, MaterialScriptContext& context)
-    {
-        LodStrategy *strategy = LodStrategyManager::getSingleton().getStrategy(params);
-        
-        if (strategy == 0)
-            logParseError(
-            "Bad lod_strategy attribute, available lod strategy name expected.",
-            context);
-
-        context.material->setLodStrategy(strategy);
-
-        return false;
-    }
-    //-----------------------------------------------------------------------
-    bool parseLodDistances(String& params, MaterialScriptContext& context)
-    {
-        // Set to distance strategy
-        context.material->setLodStrategy(DistanceLodStrategy::getSingletonPtr());
-
-        StringVector vecparams = StringUtil::split(params, " \t");
-
-        // iterate over the parameters and parse values out of them
-        Material::LodValueList lodList;
-        StringVector::iterator i, iend;
-        iend = vecparams.end();
-        for (i = vecparams.begin(); i != iend; ++i)
-        {
-            lodList.push_back(StringConverter::parseReal(*i));
-        }
-
-        context.material->setLodLevels(lodList);
-
-        return false;
-    }
 	//-----------------------------------------------------------------------
     //-----------------------------------------------------------------------
     MaterialSerializer::MaterialSerializer()
@@ -2971,8 +2933,6 @@ namespace Ogre
         mRootAttribParsers.insert(AttribParserList::value_type("fragment_program", (ATTRIBUTE_PARSER)parseFragmentProgram));
 
         // Set up material attribute parsers
-        mMaterialAttribParsers.insert(AttribParserList::value_type("lod_values", (ATTRIBUTE_PARSER)parseLodValues));
-        mMaterialAttribParsers.insert(AttribParserList::value_type("lod_strategy", (ATTRIBUTE_PARSER)parseLodStrategy));
         mMaterialAttribParsers.insert(AttribParserList::value_type("lod_distances", (ATTRIBUTE_PARSER)parseLodDistances));
         mMaterialAttribParsers.insert(AttribParserList::value_type("receive_shadows", (ATTRIBUTE_PARSER)parseReceiveShadows));
 		mMaterialAttribParsers.insert(AttribParserList::value_type("transparency_casts_shadows", (ATTRIBUTE_PARSER)parseTransparencyCastsShadows));
@@ -3368,7 +3328,7 @@ namespace Ogre
                 hgp->setSourceFile(def->source);
 
 			    // Set custom parameters
-				vector<std::pair<String, String> >::type::const_iterator i, iend;
+				std::vector<std::pair<String, String> >::const_iterator i, iend;
 			    iend = def->customParameters.end();
 			    for (i = def->customParameters.begin(); i != iend; ++i)
 			    {
@@ -3538,20 +3498,21 @@ namespace Ogre
         beginSection(0);
         {
             // Write LOD information
-            Material::LodValueIterator valueIt = pMat->getLodValueIterator();
+            Material::LodDistanceIterator distIt = pMat->getLodDistanceIterator();
             // Skip zero value
-            if (valueIt.hasMoreElements())
-                valueIt.getNext();
+            if (distIt.hasMoreElements())
+                distIt.getNext();
             String attributeVal;
-            while (valueIt.hasMoreElements())
+            while (distIt.hasMoreElements())
             {
-                attributeVal.append(StringConverter::toString(valueIt.getNext()));
-                if (valueIt.hasMoreElements())
+                Real sqdist = distIt.getNext();
+                attributeVal.append(StringConverter::toString(Math::Sqrt(sqdist)));
+                if (distIt.hasMoreElements())
                     attributeVal.append(" ");
             }
             if (!attributeVal.empty())
             {
-                writeAttribute(1, "lod_values");
+                writeAttribute(1, "lod_distances");
                 writeValue(attributeVal);
             }
 
@@ -3976,8 +3937,6 @@ namespace Ogre
 				case IS_DECAL:
 					writeValue("decal");
 					break;
-                case IS_UNKNOWN:
-                    break;
 				};
 			}
 
@@ -4885,7 +4844,7 @@ namespace Ogre
 		// This will represent the values which have been set
 
 		// float params
-		GpuLogicalBufferStructPtr floatLogical = params->getFloatLogicalBufferStruct();
+		const GpuLogicalBufferStruct* floatLogical = params->getFloatLogicalBufferStruct();
 		{
 			OGRE_LOCK_MUTEX(floatLogical->mutex)
 
@@ -4912,7 +4871,7 @@ namespace Ogre
 		}
 
 		// int params
-		GpuLogicalBufferStructPtr intLogical = params->getIntLogicalBufferStruct();
+		const GpuLogicalBufferStruct* intLogical = params->getIntLogicalBufferStruct();
 		{
 			OGRE_LOCK_MUTEX(intLogical->mutex)
 

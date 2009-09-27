@@ -4,6 +4,7 @@
 #include <string>
 #include <ctype.h>
 
+#include <OgreGLPrerequisites.h>
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
 #	include <OpenGL/glu.h>
 #else
@@ -94,8 +95,8 @@ namespace
 					nchar++;
 				}
 			}
-			int start = 0;
-			int end = 0;
+			int start;
+			int end;
 			int flag = ((instring[errPos]==';') | (instring[errPos-1]==';')) ? 1 : 0;
 			for ( i = errPos; i >= 0; i-- )
 			{

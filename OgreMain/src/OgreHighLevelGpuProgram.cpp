@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -57,7 +57,6 @@ namespace Ogre
 			{
 				mAssemblerProgram->load();
 			}
-
 		}
     }
     //---------------------------------------------------------------------------
@@ -110,22 +109,6 @@ namespace Ogre
 			{
 				loadHighLevelImpl();
 				mHighLevelLoaded = true;
-				if (!mDefaultParams.isNull())
-				{
-					// Keep a reference to old ones to copy
-					GpuProgramParametersSharedPtr savedParams = mDefaultParams;
-					// reset params to stop them being referenced in the next create
-					mDefaultParams.setNull();
-
-					// Create new params
-					mDefaultParams = createParameters();
-
-					// Copy old (matching) values across
-					// Don't use copyConstantsFrom since program may be different
-					mDefaultParams->copyMatchingNamedConstantsFrom(*savedParams.get());
-
-				}
-
 			}
 			catch (const Exception& e)
 			{
@@ -146,8 +129,14 @@ namespace Ogre
         {
             unloadHighLevelImpl();
 			// Clear saved constant defs
+			mConstantDefs.map.clear();
+			mConstantDefs.floatBufferSize = 0;
+			mConstantDefs.intBufferSize = 0;
 			mConstantDefsBuilt = false;
-			createParameterMappingStructures(true);
+			mFloatLogicalToPhysical.map.clear();
+			mFloatLogicalToPhysical.bufferSize = 0;
+			mIntLogicalToPhysical.map.clear();
+			mIntLogicalToPhysical.bufferSize = 0;
 
             mHighLevelLoaded = false;
         }
@@ -166,8 +155,6 @@ namespace Ogre
         }
 
         loadFromSource();
-
-
     }
 	//---------------------------------------------------------------------
 	const GpuNamedConstants& HighLevelGpuProgram::getConstantDefinitions() const
@@ -177,16 +164,15 @@ namespace Ogre
 			buildConstantDefinitions();
 			mConstantDefsBuilt = true;
 		}
-		return *mConstantDefs.get();
+		return mConstantDefs;
 
 	}
 	//---------------------------------------------------------------------
 	void HighLevelGpuProgram::populateParameterNames(GpuProgramParametersSharedPtr params)
 	{
-		getConstantDefinitions();
-		params->_setNamedConstants(mConstantDefs);
+		params->_setNamedConstants(&getConstantDefinitions());
 		// also set logical / physical maps for programs which use this
-		params->_setLogicalIndexes(mFloatLogicalToPhysical, mIntLogicalToPhysical);
+		params->_setLogicalIndexes(&mFloatLogicalToPhysical, &mIntLogicalToPhysical);
 	}
 	//-----------------------------------------------------------------------
 	//-----------------------------------------------------------------------

@@ -3,6 +3,8 @@
 #include "nvparse_errors.h"
 #include "nvparse_externs.h"
 
+#include <OgreGLPrerequisites.h>
+
 #include <string>
 #include <map>
 #include <algorithm>

@@ -1907,7 +1907,7 @@ char *FindDefineParm(MACROENTRY *srcParms, MACROENTRY *invParms,
 	MACROTEXT *srcText;
 	MACROTEXT *invText;
 	char *checkStr;
-	unsigned int checkLen = 0;
+	unsigned int checkLen;
 	unsigned int sLen;
 
 	checkStr = lookString;
@@ -2250,7 +2250,7 @@ void MacroMathFunction(MACROENTRY *invMacro, unsigned int *recognizedLen, char *
 	char *numStartStr;
 	unsigned int sLen;
 	char numberStr[256];
-	unsigned int number = 0;
+	unsigned int number;
 	char *operand;
 
 

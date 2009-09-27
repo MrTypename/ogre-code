@@ -4,25 +4,26 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -49,8 +50,7 @@ struct XmlOptions
     String logFile;
     bool interactiveMode;
     unsigned short numLods;
-    Real lodValue;
-    String lodStrategy;
+    Real lodDist;
     Real lodPercent;
     size_t lodFixed;
     size_t nuextremityPoints;
@@ -79,8 +79,7 @@ void help(void)
     cout << "-i             = interactive mode - prompt for options" << endl;
     cout << "(The next 4 options are only applicable when converting XML to Mesh)" << endl;
     cout << "-l lodlevels   = number of LOD levels" << endl;
-    cout << "-v lodvalue     = value increment to reduce LOD" << endl;
-    cout << "-s lodstrategy = LOD strategy to use for this mesh" << endl;
+    cout << "-d loddist     = distance increment to reduce LOD" << endl;
     cout << "-p lodpercent  = Percentage triangle reduction amount per LOD" << endl;
     cout << "-f lodnumtris  = Fixed vertex reduction per LOD" << endl;
     cout << "-e             = DON'T generate edge lists (for stencil shadows)" << endl;
@@ -114,7 +113,7 @@ XmlOptions parseArgs(int numArgs, char **args)
     XmlOptions opts;
 
     opts.interactiveMode = false;
-    opts.lodValue = 250000;
+    opts.lodDist = 500;
     opts.lodFixed = 0;
     opts.lodPercent = 20;
     opts.numLods = 0;
@@ -150,8 +149,7 @@ XmlOptions parseArgs(int numArgs, char **args)
 	unOpt["-d3d"] = false;
 	unOpt["-gl"] = false;
     binOpt["-l"] = "";
-    binOpt["-v"] = "";
-    binOpt["-s"] = "Distance";
+    binOpt["-d"] = "";
     binOpt["-p"] = "";
     binOpt["-f"] = "";
     binOpt["-E"] = "";
@@ -232,16 +230,10 @@ XmlOptions parseArgs(int numArgs, char **args)
             opts.numLods = StringConverter::parseInt(bi->second);
         }
 
-        bi = binOpt.find("-v");
+        bi = binOpt.find("-d");
         if (!bi->second.empty())
         {
-            opts.lodValue = StringConverter::parseReal(bi->second);
-        }
-
-        bi = binOpt.find("-s");
-        if (!bi->second.empty())
-        {
-            opts.lodStrategy = bi->second;
+            opts.lodDist = StringConverter::parseReal(bi->second);
         }
 
         bi = binOpt.find("-p");
@@ -310,7 +302,7 @@ XmlOptions parseArgs(int numArgs, char **args)
     }
     // Work out what kind of conversion this is
     opts.source = source;
-	Ogre::vector<String>::type srcparts = StringUtil::split(opts.source, ".");
+	std::vector<String> srcparts = StringUtil::split(opts.source, ".");
     String& ext = srcparts.back();
 	StringUtil::toLowerCase(ext);
     opts.sourceExt = ext;
@@ -334,7 +326,7 @@ XmlOptions parseArgs(int numArgs, char **args)
     {
         opts.dest = dest;
     }
-	Ogre::vector<String>::type dstparts = StringUtil::split(opts.dest, ".");
+	std::vector<String> dstparts = StringUtil::split(opts.dest, ".");
     ext = dstparts.back();
 	StringUtil::toLowerCase(ext);
     opts.destExt = ext;
@@ -354,8 +346,7 @@ XmlOptions parseArgs(int numArgs, char **args)
         else
         {
             cout << "lod levels       = " << opts.numLods << endl;
-            cout << "lod value     = " << opts.lodValue << endl;
-            cout << "lod strategy     = " << opts.lodStrategy << endl;
+            cout << "lod distance     = " << opts.lodDist << endl;
             if (opts.usePercent)
             {
                 cout << "lod reduction    = " << opts.lodPercent << "%" << endl;
@@ -389,7 +380,6 @@ XmlOptions parseArgs(int numArgs, char **args)
 //   instantiate the singletons used in the dlls
 LogManager* logMgr = 0;
 Math* mth = 0;
-LodStrategyManager *lodMgr = 0;
 MaterialManager* matMgr = 0;
 SkeletonManager* skelMgr = 0;
 MeshSerializer* meshSerializer = 0;
@@ -565,15 +555,12 @@ void XMLToBinary(XmlOptions opts)
             unsigned short numLod;
             ProgressiveMesh::VertexReductionQuota quota;
             Real reduction;
-            Mesh::LodValueList valueList;
+            Mesh::LodDistanceList distanceList;
 
             if (askLodDtls)
             {
                 cout << "\nHow many extra LOD levels would you like to generate?";
                 cin >> numLod;
-
-                cout << "\nWhat lod strategy should be used?";
-                cin >> opts.lodStrategy;
 
                 cout << "\nWhat unit of reduction would you like to use:" <<
                     "\n(f)ixed or (p)roportional?";
@@ -604,7 +591,7 @@ void XMLToBinary(XmlOptions opts)
                 {
                     cout << "\nLOD Level " << (iLod+1) << ":";
                     cin >> distance;
-                    valueList.push_back(distance);
+                    distanceList.push_back(distance);
                 }
             }
             else
@@ -623,15 +610,13 @@ void XMLToBinary(XmlOptions opts)
                 Real currDist = 0;
                 for (unsigned short iLod = 0; iLod < numLod; ++iLod)
                 {
-                    currDist += opts.lodValue;
-                    Real currDistSq = Ogre::Math::Sqr(currDist);
-                    valueList.push_back(currDistSq);
+                    currDist += opts.lodDist;
+                    distanceList.push_back(currDist);
                 }
 
             }
 
-            newMesh->setLodStrategy(LodStrategyManager::getSingleton().getStrategy(opts.lodStrategy));
-            newMesh->generateLodLevels(valueList, quota, reduction);
+            newMesh->generateLodLevels(distanceList, quota, reduction);
         }
 
         if (opts.interactiveMode)
@@ -796,7 +781,6 @@ int main(int numargs, char** args)
 		logMgr->createLog(opts.logFile, false, !opts.quietMode); 
 		rgm = new ResourceGroupManager();
 		mth = new Math();
-        lodMgr = new LodStrategyManager();
 		meshMgr = new MeshManager();
 		matMgr = new MaterialManager();
 		matMgr->initialise();
@@ -842,7 +826,6 @@ int main(int numargs, char** args)
     delete matMgr;
     delete meshMgr;
 	delete bufferManager;
-    delete lodMgr;
     delete mth;
     delete rgm;
     delete logMgr;

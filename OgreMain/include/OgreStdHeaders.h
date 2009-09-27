@@ -95,7 +95,7 @@ extern "C" {
 }
 #endif
 
-#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE || OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
 extern "C" {
 #   include <unistd.h>
 #   include <sys/param.h>
@@ -106,7 +106,10 @@ extern "C" {
 #if OGRE_THREAD_SUPPORT
 #	undef NOMINMAX
 #	define NOMINMAX
-#   include "Threading/OgreThreadHeaders.h"
+#	include <boost/thread/tss.hpp>
+#	include <boost/thread/recursive_mutex.hpp>
+#	include <boost/thread/condition.hpp>
+#	include <boost/thread/thread.hpp>
 #endif
 
 #if defined ( OGRE_GCC_VISIBILITY )
