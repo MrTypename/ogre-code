@@ -4,25 +4,26 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -38,20 +39,14 @@ THE SOFTWARE.
 #include "OgreFactoryObj.h"
 #include "OgreAnimable.h"
 #include "OgreAny.h"
-#include "OgreUserObjectBindings.h"
+#include "OgreUserDefinedObject.h"
 
 namespace Ogre {
 
 	// Forward declaration
 	class MovableObjectFactory;
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Scene
-	*  @{
-	*/
-	/** Abstract class defining a movable object in a scene.
+    /** Abstract class defining a movable object in a scene.
         @remarks
             Instances of this class are discrete, relatively small, movable objects
             which are attached to SceneNode objects to define their position.
@@ -122,9 +117,9 @@ namespace Ogre {
 		Real mUpperDistance;
 		Real mSquaredUpperDistance;
 		/// Hidden because of distance?
-		bool mBeyondFarDistance;	
-		/// User objects binding.
-		UserObjectBindings mUserObjectBindings;
+		bool mBeyondFarDistance;
+		/// User defined link to another object / value / whatever
+		Any mUserAny;
         /// The render queue to use when rendering this object
         uint8 mRenderQueueID;
 		/// Flags whether the RenderQueue's default should be used.
@@ -151,9 +146,6 @@ namespace Ogre {
         mutable LightList mLightList;
         /// The last frame that this light list was updated in
         mutable ulong mLightListUpdated;
-
-		/// the light mask defined for this movable. This will be taken into consideration when deciding which light should affect this movable
-		uint32 mLightMask;
 
 		// Static members
 		/// Default query flags
@@ -205,9 +197,6 @@ namespace Ogre {
         */
         virtual SceneNode* getParentSceneNode(void) const;
 
-		/// Gets whether the parent node is a TagPoint (or a SceneNode)
-		virtual bool isParentTagPoint() const { return mParentIsTagPoint; }
-
         /** Internal method called to notify the object that it has been attached to a node.
         */
         virtual void _notifyAttached(Node* parent, bool isTagPoint = false);
@@ -216,7 +205,7 @@ namespace Ogre {
         virtual bool isAttached(void) const;
 
 		/** Detaches an object from a parent SceneNode or TagPoint, if attached. */
-		virtual void detachFromParent(void);
+		virtual void detatchFromParent(void);
 
         /** Returns true if this object is attached to a SceneNode or TagPoint, 
 			and this SceneNode / TagPoint is currently in an active part of the
@@ -294,33 +283,35 @@ namespace Ogre {
 		}
 
 		/** Gets the distance at which batches are no longer rendered. */
-		virtual Real getRenderingDistance(void) const { return mUpperDistance; }		
+		virtual Real getRenderingDistance(void) const { return mUpperDistance; }
 
-		/** @deprecated use UserObjectBindings::setUserAny via getUserObjectBindings() instead.
-			Sets any kind of user value on this object.
+        /** Call this to associate your own custom user object instance with this MovableObject.
+        @remarks
+            By simply making your game / application object a subclass of UserDefinedObject, you
+            can establish a link between an OGRE instance of MovableObject and your own application
+            classes. Call this method to establish the link.
+        */
+        virtual void setUserObject(UserDefinedObject* obj) { mUserAny = Any(obj); }
+        /** Retrieves a pointer to a custom application object associated with this movable by an earlier
+            call to setUserObject.
+        */
+        virtual UserDefinedObject* getUserObject(void) 
+		{ 
+			return mUserAny.isEmpty() ? 0 : any_cast<UserDefinedObject*>(mUserAny); 
+		}
+
+		/** Sets any kind of user value on this object.
 		@remarks
 			This method allows you to associate any user value you like with 
 			this MovableObject. This can be a pointer back to one of your own
-			classes for instance.		
+			classes for instance.
+		@note This value is shared with setUserObject so don't use both!
 		*/
-		virtual void setUserAny(const Any& anything) { getUserObjectBindings().setUserAny(anything); }
+		virtual void setUserAny(const Any& anything) { mUserAny = anything; }
 
-		/** @deprecated use UserObjectBindings::getUserAny via getUserObjectBindings() instead.
-			Retrieves the custom user value associated with this object.
+		/** Retrieves the custom user value associated with this object.
 		*/
-		virtual const Any& getUserAny(void) const { return getUserObjectBindings().getUserAny(); }
-
-		/** Return an instance of user objects binding associated with this class.
-		You can use it to associate one or more custom objects with this class instance.
-		@see UserObjectBindings::setUserAny.		
-		*/
-		UserObjectBindings&	getUserObjectBindings() { return mUserObjectBindings; }
-
-		/** Return an instance of user objects binding associated with this class.
-		You can use it to associate one or more custom objects with this class instance.
-		@see UserObjectBindings::setUserAny.		
-		*/
-		const UserObjectBindings& getUserObjectBindings() const { return mUserObjectBindings; }
+		virtual const Any& getUserAny(void) const { return mUserAny; }
 
         /** Sets the render queue group this entity will be rendered through.
         @remarks
@@ -428,19 +419,6 @@ namespace Ogre {
         @returns The list of lights use to lighting this object.
         */
         virtual const LightList& queryLights(void) const;
-
-		/** Get a bitwise mask which will filter the lights affecting this object
-		@remarks
-		By default, this mask is fully set meaning all lights will affect this object
-		*/
-		virtual uint32 getLightMask()const { return mLightMask; }
-		/** Set a bitwise mask which will filter the lights affecting this object
-		@remarks
-		This mask will be compared against the mask held against Light to determine
-		if a light should affect a given object. 
-		By default, this mask is fully set meaning all lights will affect this object
-		*/
-		virtual void setLightMask(uint32 lightMask);
 
 		/** Returns a pointer to the current list of lights for this object.
 		@remarks
@@ -595,8 +573,6 @@ namespace Ogre {
 		unsigned long getTypeFlags(void) const { return mTypeFlag; }
 
 	};
-	/** @} */
-	/** @} */
 
 }
 #endif

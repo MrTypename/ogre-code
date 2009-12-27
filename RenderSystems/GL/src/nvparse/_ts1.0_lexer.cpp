@@ -49,9 +49,6 @@
 /* The "const" storage-class-modifier is valid. */
 #define YY_USE_CONST
 
-/* yyunput is never used */
-#define YY_NO_UNPUT
-
 #else	/* ! __cplusplus */
 
 #if __STDC__
@@ -722,9 +719,7 @@ char *yytext;
 #include "_ts1.0_parser.h"
 #ifdef _WIN32
 #  define WIN32_LEAN_AND_MEAN
-#  if !defined(NOMINMAX) && defined(_MSC_VER)
-#	define NOMINMAX // required to stop windows.h messing up std::min
-#  endif
+#  define NOMINMAX // required to stop windows.h messing up std::min
 #  include <windows.h>
 #endif
 #include <GL/glew.h>

@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
 Also see acknowledgements in Readme.html
 
 This program is free software you can redistribute it and/or modify it under
@@ -45,7 +45,7 @@ namespace Ogre {
 		const GpuConstantDefinition* mConstantDef;
 	};
 
-	typedef vector<GLUniformReference>::type GLUniformReferenceList;
+	typedef std::vector<GLUniformReference> GLUniformReferenceList;
 	typedef GLUniformReferenceList::iterator GLUniformReferenceIterator;
 
 	/** C++ encapsulation of GLSL Program Object
@@ -79,7 +79,7 @@ namespace Ogre {
 		/// extract attributes
 		void extractAttributes(void);
 
-		typedef set<GLuint>::type AttributeSet;
+		typedef std::set<GLuint> AttributeSet;
 		// Custom attribute bindings
 		AttributeSet mValidAttributes;
 
@@ -109,7 +109,7 @@ namespace Ogre {
 		/** updates program object uniforms using data from GpuProgramParamters.
 		normally called by GLSLGpuProgram::bindParameters() just before rendering occurs.
 		*/
-		void updateUniforms(GpuProgramParametersSharedPtr params, uint16 mask, GpuProgramType fromProgType);
+		void updateUniforms(GpuProgramParametersSharedPtr params, GpuProgramType fromProgType);
 		/** updates program object uniforms using data from pass iteration GpuProgramParamters.
 		normally called by GLSLGpuProgram::bindMultiPassParameters() just before multi pass rendering occurs.
 		*/

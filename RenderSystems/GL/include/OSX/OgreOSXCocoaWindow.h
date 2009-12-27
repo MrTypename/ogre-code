@@ -37,7 +37,7 @@ namespace Ogre {
     {
     private:
 		NSWindow *mWindow;
-		NSView *mView;
+		OgreView *mView;
 		NSOpenGLContext *glContext;
 		
         bool mActive;
@@ -50,8 +50,7 @@ namespace Ogre {
         OSXCocoaWindow();
         ~OSXCocoaWindow();
 		
-		NSView* ogreView() const { return mView; };
-		NSWindow* ogreWindow() const { return mWindow; };
+		OgreView* ogreView() const { return mView; };
 		NSOpenGLContext* nsopenGLContext() const { return glContext; };
 		void createWithView(OgreView *view);
 
@@ -69,8 +68,6 @@ namespace Ogre {
         void resize(unsigned int width, unsigned int height);
         /** Overridden - see RenderWindow */
         void swapBuffers(bool waitForVSync);
-        /** Overridden - see RenderWindow */
-        virtual void setFullscreen(bool fullScreen, unsigned int width, unsigned int height);
         /** Overridden - see RenderWindow */
 		void windowMovedOrResized();
 

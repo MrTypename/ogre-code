@@ -4,7 +4,7 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
 Also see acknowledgements in Readme.html
 
 This program is free software; you can redistribute it and/or modify it under 
@@ -34,13 +34,6 @@ Torus Knot Software Ltd.
 #include "OgreBillboardSet.h"
 
 namespace Ogre {
-
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Effects
-	*  @{
-	*/
 
     /** Specialisation of ParticleSystemRenderer to render particles using 
         a BillboardSet. 
@@ -202,7 +195,7 @@ namespace Ogre {
         const String& getType(void) const;
         /// @copydoc ParticleSystemRenderer::_updateRenderQueue
         void _updateRenderQueue(RenderQueue* queue, 
-            list<Particle*>::type& currentParticles, bool cullIndividually);
+            std::list<Particle*>& currentParticles, bool cullIndividually);
 		/// @copydoc ParticleSystemRenderer::visitRenderables
 		void visitRenderables(Renderable::Visitor* visitor, 
 			bool debugRenderables = false);
@@ -253,8 +246,6 @@ namespace Ogre {
         /// @copydoc FactoryObj::destroyInstance
         void destroyInstance( ParticleSystemRenderer* inst);    
     };
-	/** @} */
-	/** @} */
 
 }
 

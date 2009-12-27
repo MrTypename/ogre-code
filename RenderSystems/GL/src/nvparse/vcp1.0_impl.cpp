@@ -4,6 +4,8 @@
 #include <string>
 #include <ctype.h>
 
+#include <OgreGLPrerequisites.h>
+
 #ifndef _WIN32
 # define strnicmp strncasecmp
 #endif

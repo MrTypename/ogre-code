@@ -4,25 +4,26 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 // Ogre includes
@@ -54,10 +55,9 @@ namespace Ogre
 		// Just call load as if this is the background thread, locking on
 		// load status will prevent race conditions
 		load(true);
-		_fireLoadingComplete(true);
 	}
 	//-----------------------------------------------------------------------
-	void Resource::prepare(bool background)
+	void Resource::prepare()
 	{
         // quick check that avoids any synchronisation
         LoadingState old = mLoadingState.get();
@@ -128,10 +128,9 @@ namespace Ogre
 		//if(mCreator)
 		//	mCreator->_notifyResourcePrepared(this);
 
-		// Fire events (if not background)
-		if (!background)
-			_firePreparingComplete(false);
-
+		// Fire (deferred) events
+		if (mIsBackgroundLoaded)
+			queueFireBackgroundPreparingComplete();
 
 	}
 	//---------------------------------------------------------------------
@@ -149,7 +148,7 @@ namespace Ogre
 		// This next section is to deal with cases where 2 threads are fighting over
 		// who gets to prepare / load - this will only usually happen if loading is escalated
 		bool keepChecking = true;
-		LoadingState old = LOADSTATE_UNLOADED;
+		LoadingState old;
 		while (keepChecking)
 		{
 			// quick check that avoids any synchronisation
@@ -263,9 +262,9 @@ namespace Ogre
 		if(mCreator)
 			mCreator->_notifyResourceLoaded(this);
 
-		// Fire events, if not background
-		if (!background)
-			_fireLoadingComplete(false);
+		// Fire (deferred) events
+		if (mIsBackgroundLoaded)
+			queueFireBackgroundLoadingComplete();
 
 
 	}
@@ -317,9 +316,6 @@ namespace Ogre
 		if(old==LOADSTATE_LOADED && mCreator)
 			mCreator->_notifyResourceUnloaded(this);
 
-		_fireUnloadingComplete();
-
-
 	}
 	//-----------------------------------------------------------------------
 	void Resource::reload(void) 
@@ -354,48 +350,42 @@ namespace Ogre
 		mListenerList.remove(lis);
 	}
 	//-----------------------------------------------------------------------
-	void Resource::_fireLoadingComplete(bool wasBackgroundLoaded)
+	void Resource::queueFireBackgroundLoadingComplete(void)
+	{
+		// Lock the listener list
+		OGRE_LOCK_MUTEX(mListenerListMutex)
+		if(!mListenerList.empty())
+			ResourceBackgroundQueue::getSingleton()._queueFireBackgroundLoadingComplete(this);
+	}
+	//-----------------------------------------------------------------------
+	void Resource::_fireBackgroundLoadingComplete(void)
 	{
 		// Lock the listener list
 		OGRE_LOCK_MUTEX(mListenerListMutex)
 		for (ListenerList::iterator i = mListenerList.begin();
 			i != mListenerList.end(); ++i)
 		{
-			// deprecated call
-			if (wasBackgroundLoaded)
-				(*i)->backgroundLoadingComplete(this);
-
-			(*i)->loadingComplete(this);
+			(*i)->backgroundLoadingComplete(this);
 		}
 	}
 	//-----------------------------------------------------------------------
-	void Resource::_firePreparingComplete(bool wasBackgroundLoaded)
+	void Resource::queueFireBackgroundPreparingComplete(void)
+	{
+		// Lock the listener list
+		OGRE_LOCK_MUTEX(mListenerListMutex)
+		if(!mListenerList.empty())
+			ResourceBackgroundQueue::getSingleton()._queueFireBackgroundPreparingComplete(this);
+	}
+	//-----------------------------------------------------------------------
+	void Resource::_fireBackgroundPreparingComplete(void)
 	{
 		// Lock the listener list
 		OGRE_LOCK_MUTEX(mListenerListMutex)
 		for (ListenerList::iterator i = mListenerList.begin();
 			i != mListenerList.end(); ++i)
 		{
-			// deprecated call
-			if (wasBackgroundLoaded)
-				(*i)->backgroundPreparingComplete(this);
-
-			(*i)->preparingComplete(this);
-
+			(*i)->backgroundPreparingComplete(this);
 		}
-	}
-	//-----------------------------------------------------------------------
-	void Resource::_fireUnloadingComplete(void)
-	{
-		// Lock the listener list
-		OGRE_LOCK_MUTEX(mListenerListMutex)
-			for (ListenerList::iterator i = mListenerList.begin();
-				i != mListenerList.end(); ++i)
-			{
-
-				(*i)->unloadingComplete(this);
-
-			}
 	}
 
 }

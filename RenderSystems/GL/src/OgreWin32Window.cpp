@@ -4,31 +4,29 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0500
-#endif
 #include "OgreWin32Window.h"
 #include "OgreRoot.h"
 #include "OgreLogManager.h"
@@ -42,8 +40,6 @@ THE SOFTWARE.
 #include "OgreGLPixelFormat.h"
 
 namespace Ogre {
-
-	#define _MAX_CLASS_NAME_ 128
 
 	Win32Window::Win32Window(Win32GLSupport &glsupport):
 		mGLSupport(glsupport),
@@ -59,7 +55,6 @@ namespace Ogre {
 		mClosed = false;
 		mDisplayFrequency = 0;
 		mActive = false;
-		mDeviceName = NULL;
 	}
 
 	Win32Window::~Win32Window()
@@ -87,21 +82,22 @@ namespace Ogre {
 		mHWnd = 0;
 		mName = name;
 		mIsFullScreen = fullScreen;
-		mClosed = false;		
+		mClosed = false;
+
+		// load window defaults
+		mLeft = mTop = -1; // centered
+		mWidth = width;
+		mHeight = height;
 		mDisplayFrequency = 0;
 		mIsDepthBuffered = true;
 		mColourDepth = mIsFullScreen? 32 : GetDeviceCaps(GetDC(0), BITSPIXEL);
-		int left = -1; // Defaults to screen center
-		int top = -1; // Defaults to screen center
+
 		HWND parent = 0;
 		String title = name;
 		bool vsync = false;
-		unsigned int vsyncInterval = 1;
 		String border;
 		bool outerSize = false;
 		bool hwGamma = false;
-		int monitorIndex = -1;
-		HMONITOR hMonitor = NULL;
 
 		if(miscParams)
 		{
@@ -113,10 +109,10 @@ namespace Ogre {
 				title = opt->second;
 
 			if ((opt = miscParams->find("left")) != end)
-				left = StringConverter::parseInt(opt->second);
+				mLeft = StringConverter::parseInt(opt->second);
 
 			if ((opt = miscParams->find("top")) != end)
-				top = StringConverter::parseInt(opt->second);
+				mTop = StringConverter::parseInt(opt->second);
 
 			if ((opt = miscParams->find("depthBuffer")) != end)
 				mIsDepthBuffered = StringConverter::parseBool(opt->second);
@@ -124,14 +120,8 @@ namespace Ogre {
 			if ((opt = miscParams->find("vsync")) != end)
 				vsync = StringConverter::parseBool(opt->second);
 
-			if ((opt = miscParams->find("vsyncInterval")) != end)
-				vsyncInterval = StringConverter::parseUnsignedInt(opt->second);
-
 			if ((opt = miscParams->find("FSAA")) != end)
 				mFSAA = StringConverter::parseUnsignedInt(opt->second);
-
-			if ((opt = miscParams->find("FSAAHint")) != end)
-				mFSAAHint = opt->second;
 
 			if ((opt = miscParams->find("gamma")) != end)
 				hwGamma = StringConverter::parseBool(opt->second);
@@ -174,7 +164,7 @@ namespace Ogre {
 				if (!mIsFullScreen)
 				{
 					// make sure we don't exceed desktop colour depth
-					if ((int)mColourDepth > GetDeviceCaps(GetDC(0), BITSPIXEL))
+					if (mColourDepth > GetDeviceCaps(GetDC(0), BITSPIXEL))
 						mColourDepth = GetDeviceCaps(GetDC(0), BITSPIXEL);
 				}
 			}
@@ -182,92 +172,24 @@ namespace Ogre {
 			// incompatible with fullscreen
 			if ((opt = miscParams->find("parentWindowHandle")) != end)
 				parent = (HWND)StringConverter::parseUnsignedInt(opt->second);
-
-
-			// monitor index
-			if ((opt = miscParams->find("monitorIndex")) != end)
-				monitorIndex = StringConverter::parseInt(opt->second);
-			
-			// monitor handle
-			if ((opt = miscParams->find("monitorHandle")) != end)
-				hMonitor = (HMONITOR)StringConverter::parseInt(opt->second);			
 		}
 
 		if (!mIsExternal)
 		{
-			DWORD		  dwStyle = WS_VISIBLE | WS_CLIPCHILDREN;
-			DWORD		  dwStyleEx = 0;					
-			MONITORINFOEX monitorInfoEx;
-			RECT		  rc;
-			
-			// If we didn't specified the adapter index, or if it didn't find it
-			if (hMonitor == NULL)
-			{
-				POINT windowAnchorPoint;
-
-				// Fill in anchor point.
-				windowAnchorPoint.x = left;
-				windowAnchorPoint.y = top;
-
-
-				// Get the nearest monitor to this window.
-				hMonitor = MonitorFromPoint(windowAnchorPoint, MONITOR_DEFAULTTONEAREST);
-			}
-
-			// Get the target monitor info		
-			memset(&monitorInfoEx, 0, sizeof(MONITORINFOEX));
-			monitorInfoEx.cbSize = sizeof(MONITORINFOEX);
-			GetMonitorInfo(hMonitor, &monitorInfoEx);
-
-			size_t devNameLen = strlen(monitorInfoEx.szDevice);
-			mDeviceName = new char[devNameLen + 1];
-
-			strcpy(mDeviceName, monitorInfoEx.szDevice);			
-
-
-			// No specified top left -> Center the window in the middle of the monitor
-			if (left == -1 || top == -1)
-			{				
-				int screenw = monitorInfoEx.rcMonitor.right  - monitorInfoEx.rcMonitor.left;
-				int screenh = monitorInfoEx.rcMonitor.bottom - monitorInfoEx.rcMonitor.top;
-
-				SetRect(&rc, 0, 0, width, height);
-				AdjustWindowRect(&rc, dwStyle, false);
-
-				// clamp window dimensions to screen size
-				int outerw = (rc.right-rc.left < screenw)? rc.right-rc.left : screenw;
-				int outerh = (rc.bottom-rc.top < screenh)? rc.bottom-rc.top : screenh;
-
-				if (left == -1)
-					left = monitorInfoEx.rcMonitor.left + (screenw - outerw) / 2;
-				else if (monitorIndex != -1)
-					left += monitorInfoEx.rcMonitor.left;
-
-				if (top == -1)
-					top = monitorInfoEx.rcMonitor.top + (screenh - outerh) / 2;
-				else if (monitorIndex != -1)
-					top += monitorInfoEx.rcMonitor.top;
-			}
-			else if (monitorIndex != -1)
-			{
-				left += monitorInfoEx.rcMonitor.left;
-				top += monitorInfoEx.rcMonitor.top;
-			}
-
-			mWidth = width;
-			mHeight = height;
-			mTop = top;
-			mLeft = left;
+			DWORD dwStyle = WS_VISIBLE | WS_CLIPCHILDREN;
+			DWORD dwStyleEx = 0;
+			int outerw, outerh;
 
 			if (mIsFullScreen)
 			{
 				dwStyle |= WS_POPUP;
 				dwStyleEx |= WS_EX_TOPMOST;
-				mTop = monitorInfoEx.rcMonitor.top;
-				mLeft = monitorInfoEx.rcMonitor.left;											
+				outerw = mWidth;
+				outerh = mHeight;
+				mLeft = mTop = 0;
 			}
 			else
-			{				
+			{
 				if (parent)
 				{
 					dwStyle |= WS_CHILD;
@@ -288,26 +210,26 @@ namespace Ogre {
 
 				if (!outerSize)
 				{
-					// Calculate window dimensions required
-					// to get the requested client area
-					SetRect(&rc, 0, 0, mWidth, mHeight);
+					// calculate overall dimensions for requested client area
+					RECT rc = { 0, 0, mWidth, mHeight };
 					AdjustWindowRect(&rc, dwStyle, false);
-					mWidth = rc.right - rc.left;
-					mHeight = rc.bottom - rc.top;
 
-					// Clamp window rect to the nearest display monitor.
-					if (mLeft < monitorInfoEx.rcMonitor.left)
-						mLeft = monitorInfoEx.rcMonitor.left;		
+					// clamp window dimensions to screen size
+					outerw = (rc.right-rc.left < screenw)? rc.right-rc.left : screenw;
+					outerh = (rc.bottom-rc.top < screenh)? rc.bottom-rc.top : screenh;
+				}
 
-					if (mTop < monitorInfoEx.rcMonitor.top)					
-						mTop = monitorInfoEx.rcMonitor.top;					
+				// center window if given negative coordinates
+				if (mLeft < 0)
+					mLeft = (screenw - outerw) / 2;
+				if (mTop < 0)
+					mTop = (screenh - outerh) / 2;
 
-					if ((int)mWidth > monitorInfoEx.rcMonitor.right - mLeft)					
-						mWidth = monitorInfoEx.rcMonitor.right - mLeft;	
-
-					if ((int)mHeight > monitorInfoEx.rcMonitor.bottom - mTop)					
-						mHeight = monitorInfoEx.rcMonitor.bottom - mTop;		
-				}			
+				// keep window contained in visible screen area
+				if (mLeft > screenw - outerw)
+					mLeft = screenw - outerw;
+				if (mTop > screenh - outerh)
+					mTop = screenh - outerh;
 			}
 
 			// register class and create window
@@ -316,34 +238,9 @@ namespace Ogre {
 				(HBRUSH)GetStockObject(BLACK_BRUSH), NULL, "OgreGLWindow" };
 			RegisterClass(&wc);
 
-			if (mIsFullScreen)
-			{
-				DEVMODE displayDeviceMode;
-
-				memset(&displayDeviceMode, 0, sizeof(displayDeviceMode));
-				displayDeviceMode.dmSize = sizeof(DEVMODE);
-				displayDeviceMode.dmBitsPerPel = mColourDepth;
-				displayDeviceMode.dmPelsWidth = mWidth;
-				displayDeviceMode.dmPelsHeight = mHeight;
-				displayDeviceMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-
-				if (mDisplayFrequency)
-				{
-					displayDeviceMode.dmDisplayFrequency = mDisplayFrequency;
-					displayDeviceMode.dmFields |= DM_DISPLAYFREQUENCY;
-					if (ChangeDisplaySettingsEx(mDeviceName, &displayDeviceMode, NULL, CDS_FULLSCREEN | CDS_TEST, NULL) != DISP_CHANGE_SUCCESSFUL)
-					{
-						LogManager::getSingleton().logMessage(LML_NORMAL, "ChangeDisplaySettings with user display frequency failed");
-						displayDeviceMode.dmFields ^= DM_DISPLAYFREQUENCY;
-					}
-				}
-				if (ChangeDisplaySettingsEx(mDeviceName, &displayDeviceMode, NULL, CDS_FULLSCREEN, NULL) != DISP_CHANGE_SUCCESSFUL)								
-					LogManager::getSingleton().logMessage(LML_CRITICAL, "ChangeDisplaySettings failed");
-			}
-
 			// Pass pointer to self as WM_CREATE parameter
 			mHWnd = CreateWindowEx(dwStyleEx, "OgreGLWindow", title.c_str(),
-				dwStyle, mLeft, mTop, mWidth, mHeight, parent, 0, hInst, this);
+				dwStyle, mLeft, mTop, outerw, outerh, parent, 0, hInst, this);
 
 			WindowEventUtilities::_addRenderWindow(this);
 
@@ -351,7 +248,28 @@ namespace Ogre {
 				<< "Created Win32Window '"
 				<< mName << "' : " << mWidth << "x" << mHeight
 				<< ", " << mColourDepth << "bpp";
-			
+
+			if (mIsFullScreen)
+			{
+				DEVMODE dm;
+				dm.dmSize = sizeof(DEVMODE);
+				dm.dmBitsPerPel = mColourDepth;
+				dm.dmPelsWidth = mWidth;
+				dm.dmPelsHeight = mHeight;
+				dm.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+				if (mDisplayFrequency)
+				{
+					dm.dmDisplayFrequency = mDisplayFrequency;
+					dm.dmFields |= DM_DISPLAYFREQUENCY;
+					if (ChangeDisplaySettings(&dm, CDS_FULLSCREEN | CDS_TEST) != DISP_CHANGE_SUCCESSFUL)
+					{
+						LogManager::getSingleton().logMessage(LML_NORMAL, "ChangeDisplaySettings with user display frequency failed");
+						dm.dmFields ^= DM_DISPLAYFREQUENCY;
+					}
+				}
+				if (ChangeDisplaySettings(&dm, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
+					LogManager::getSingleton().logMessage(LML_CRITICAL, "ChangeDisplaySettings failed");
+			}
 		}
 
 		HDC old_hdc = wglGetCurrentDC();
@@ -425,7 +343,7 @@ namespace Ogre {
 			PFNWGLSWAPINTERVALEXTPROC _wglSwapIntervalEXT = 
 				(PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
 			if (_wglSwapIntervalEXT)
-				_wglSwapIntervalEXT(vsync? vsyncInterval : 0);
+				_wglSwapIntervalEXT(vsync? 1 : 0);
 		}
 
         if (old_context && old_context != mGlrc)
@@ -456,61 +374,42 @@ namespace Ogre {
 			{
 				dwStyle |= WS_POPUP;
 
-				DEVMODE displayDeviceMode;
-
-				memset(&displayDeviceMode, 0, sizeof(displayDeviceMode));
-				displayDeviceMode.dmSize = sizeof(DEVMODE);
-				displayDeviceMode.dmBitsPerPel = mColourDepth;
-				displayDeviceMode.dmPelsWidth = width;
-				displayDeviceMode.dmPelsHeight = height;
-				displayDeviceMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+				DEVMODE dm;
+				dm.dmSize = sizeof(DEVMODE);
+				dm.dmBitsPerPel = mColourDepth;
+				dm.dmPelsWidth = width;
+				dm.dmPelsHeight = height;
+				dm.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 				if (mDisplayFrequency)
 				{
-					displayDeviceMode.dmDisplayFrequency = mDisplayFrequency;
-					displayDeviceMode.dmFields |= DM_DISPLAYFREQUENCY;
-
-					if (ChangeDisplaySettingsEx(mDeviceName, &displayDeviceMode, NULL, 
-						CDS_FULLSCREEN | CDS_TEST, NULL) != DISP_CHANGE_SUCCESSFUL)					
+					dm.dmDisplayFrequency = mDisplayFrequency;
+					dm.dmFields |= DM_DISPLAYFREQUENCY;
+					if (ChangeDisplaySettings(&dm, CDS_FULLSCREEN | CDS_TEST) != DISP_CHANGE_SUCCESSFUL)
 					{
 						LogManager::getSingleton().logMessage(LML_NORMAL, "ChangeDisplaySettings with user display frequency failed");
-						displayDeviceMode.dmFields ^= DM_DISPLAYFREQUENCY;
+						dm.dmFields ^= DM_DISPLAYFREQUENCY;
 					}
 				}
 				else
 				{
 					// try a few
-					displayDeviceMode.dmDisplayFrequency = 100;
-					displayDeviceMode.dmFields |= DM_DISPLAYFREQUENCY;
-					if (ChangeDisplaySettingsEx(mDeviceName, &displayDeviceMode, NULL, 
-						CDS_FULLSCREEN | CDS_TEST, NULL) != DISP_CHANGE_SUCCESSFUL)		
+					dm.dmDisplayFrequency = 100;
+					dm.dmFields |= DM_DISPLAYFREQUENCY;
+					if (ChangeDisplaySettings(&dm, CDS_FULLSCREEN | CDS_TEST) != DISP_CHANGE_SUCCESSFUL)
 					{
-						displayDeviceMode.dmDisplayFrequency = 75;
-						if (ChangeDisplaySettingsEx(mDeviceName, &displayDeviceMode, NULL, 
-							CDS_FULLSCREEN | CDS_TEST, NULL) != DISP_CHANGE_SUCCESSFUL)		
+						dm.dmDisplayFrequency = 75;
+						if (ChangeDisplaySettings(&dm, CDS_FULLSCREEN | CDS_TEST) != DISP_CHANGE_SUCCESSFUL)
 						{
-							displayDeviceMode.dmFields ^= DM_DISPLAYFREQUENCY;
+							dm.dmFields ^= DM_DISPLAYFREQUENCY;
 						}
 					}
 
 				}
-				if (ChangeDisplaySettingsEx(mDeviceName, &displayDeviceMode, NULL, CDS_FULLSCREEN, NULL) != DISP_CHANGE_SUCCESSFUL)				
+				if (ChangeDisplaySettings(&dm, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
 					LogManager::getSingleton().logMessage(LML_CRITICAL, "ChangeDisplaySettings failed");
 
-				// Get the nearest monitor to this window.
-				HMONITOR hMonitor = MonitorFromWindow(mHWnd, MONITOR_DEFAULTTONEAREST);
-
-				// Get monitor info	
-				MONITORINFO monitorInfo;
-
-				memset(&monitorInfo, 0, sizeof(MONITORINFO));
-				monitorInfo.cbSize = sizeof(MONITORINFO);
-				GetMonitorInfo(hMonitor, &monitorInfo);
-
-				mTop = monitorInfo.rcMonitor.top;
-				mLeft = monitorInfo.rcMonitor.left;
-
 				SetWindowLong(mHWnd, GWL_STYLE, dwStyle);
-				SetWindowPos(mHWnd, HWND_TOPMOST, mLeft, mTop, width, height,
+				SetWindowPos(mHWnd, HWND_TOPMOST, 0, 0, width, height,
 					SWP_NOACTIVATE);
 				mWidth = width;
 				mHeight = height;
@@ -522,7 +421,7 @@ namespace Ogre {
 				dwStyle |= WS_OVERLAPPEDWINDOW;
 
 				// drop out of fullscreen
-				ChangeDisplaySettingsEx(mDeviceName, NULL, NULL, 0, NULL);
+				ChangeDisplaySettings(NULL, 0);
 
 				// calculate overall dimensions for requested client area
 				RECT rc = { 0, 0, width, height };
@@ -565,7 +464,7 @@ namespace Ogre {
 			WindowEventUtilities::_removeRenderWindow(this);
 
 			if (mIsFullScreen)
-				ChangeDisplaySettingsEx(mDeviceName, NULL, NULL, 0, NULL);
+				ChangeDisplaySettings(NULL, 0);
 			DestroyWindow(mHWnd);
 		}
 		else
@@ -578,22 +477,6 @@ namespace Ogre {
 		mClosed = true;
 		mHDC = 0; // no release thanks to CS_OWNDC wndclass style
 		mHWnd = 0;
-
-		if (mDeviceName != NULL)
-		{
-			delete[] mDeviceName;
-			mDeviceName = NULL;
-		}
-		
-	}
-
-
-	bool Win32Window::isActive(void) const
-	{
-		if (isFullScreen())
-			return isVisible();
-
-		return mActive && isVisible();
 	}
 
 	bool Win32Window::isVisible() const
@@ -736,49 +619,32 @@ namespace Ogre {
 	}
 
 	void Win32Window::setActive( bool state )
-	{	
-		if (mDeviceName != NULL && state == false)
-		{
-			HWND hActiveWindow = GetActiveWindow();
-			char classNameSrc[_MAX_CLASS_NAME_ + 1];
-			char classNameDst[_MAX_CLASS_NAME_ + 1];
-
-			GetClassName(mHWnd, classNameSrc, _MAX_CLASS_NAME_);
-			GetClassName(hActiveWindow, classNameDst, _MAX_CLASS_NAME_);
-
-			if (strcmp(classNameDst, classNameSrc) == 0)
-			{
-				state = true;
-			}						
-		}
-		
+	{
 		mActive = state;
 
 		if( mIsFullScreen )
 		{
 			if( state == false )
 			{	//Restore Desktop
-				ChangeDisplaySettingsEx(mDeviceName, NULL, NULL, 0, NULL);
+				ChangeDisplaySettings(NULL, 0);
 				ShowWindow(mHWnd, SW_SHOWMINNOACTIVE);
 			}
 			else
 			{	//Restore App
 				ShowWindow(mHWnd, SW_SHOWNORMAL);
 
-				DEVMODE displayDeviceMode;
-
-				memset(&displayDeviceMode, 0, sizeof(displayDeviceMode));
-				displayDeviceMode.dmSize = sizeof(DEVMODE);
-				displayDeviceMode.dmBitsPerPel = mColourDepth;
-				displayDeviceMode.dmPelsWidth = mWidth;
-				displayDeviceMode.dmPelsHeight = mHeight;
-				displayDeviceMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+				DEVMODE dm;
+				dm.dmSize = sizeof(DEVMODE);
+				dm.dmBitsPerPel = mColourDepth;
+				dm.dmPelsWidth = mWidth;
+				dm.dmPelsHeight = mHeight;
+				dm.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 				if (mDisplayFrequency)
 				{
-					displayDeviceMode.dmDisplayFrequency = mDisplayFrequency;
-					displayDeviceMode.dmFields |= DM_DISPLAYFREQUENCY;
+					dm.dmDisplayFrequency = mDisplayFrequency;
+					dm.dmFields |= DM_DISPLAYFREQUENCY;
 				}
-				ChangeDisplaySettingsEx(mDeviceName, &displayDeviceMode, NULL, CDS_FULLSCREEN, NULL);
+				ChangeDisplaySettings(&dm, CDS_FULLSCREEN);
 			}
 		}
 	}

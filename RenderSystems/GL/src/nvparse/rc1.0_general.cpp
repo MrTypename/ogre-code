@@ -3,6 +3,8 @@
 #include "nvparse_externs.h"
 #include <stdio.h>
 
+#include <OgreGLPrerequisites.h>
+
 void GeneralCombinersStruct::Validate(int numConsts, ConstColorStruct *pcc)
 {
 	GLint maxGCs;

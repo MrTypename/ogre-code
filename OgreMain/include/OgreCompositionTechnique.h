@@ -4,25 +4,26 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __CompositionTechnique_H__
@@ -33,13 +34,7 @@ THE SOFTWARE.
 #include "OgreIteratorWrappers.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Effects
-	*  @{
-	*/
-	/** Base composition technique, can be subclassed in plugins.
+    /** Base composition technique, can be subclassed in plugins.
      */
 	class _OgreExport CompositionTechnique : public CompositorInstAlloc
     {
@@ -47,41 +42,23 @@ namespace Ogre {
         CompositionTechnique(Compositor *parent);
         virtual ~CompositionTechnique();
     
-        //The scope of a texture defined by the compositor
-        enum TextureScope { 
-            //Local texture - only available to the compositor passes in this technique
-            TS_LOCAL, 
-            //Chain texture - available to the other compositors in the chain
-            TS_CHAIN, 
-            //Global texture - available to everyone in every scope
-            TS_GLOBAL 
-        };
-
         /// Local texture definition
         class TextureDefinition : public CompositorInstAlloc
         {
         public:
             String name;
-			//Texture definition being a reference is determined by these two fields not being empty.
-			String refCompName; //If a reference, the name of the compositor being referenced
-			String refTexName;	//If a reference, the name of the texture in the compositor being referenced
             size_t width;       // 0 means adapt to target width
             size_t height;      // 0 means adapt to target height
 			float widthFactor;  // multiple of target width to use (if width = 0)
 			float heightFactor; // multiple of target height to use (if height = 0)
             PixelFormatList formatList; // more than one means MRT
-			bool fsaa;			// FSAA enabled; true = determine from main target (if render_scene), false = disable
-			bool hwGammaWrite;	// Do sRGB gamma correction on write (only 8-bit per channel formats) 
-			bool pooled;		// whether to use pooled textures for this one
-            TextureScope scope; // Which scope has access to this texture
 
-			TextureDefinition() :width(0), height(0), widthFactor(1.0f), heightFactor(1.0f), 
-				fsaa(true), hwGammaWrite(false), pooled(false), scope(TS_LOCAL) {}
+			TextureDefinition() :width(0), height(0), widthFactor(1.0f), heightFactor(1.0f) {}
         };
         /// Typedefs for several iterators
-        typedef vector<CompositionTargetPass *>::type TargetPasses;
+        typedef std::vector<CompositionTargetPass *> TargetPasses;
         typedef VectorIterator<TargetPasses> TargetPassIterator;
-        typedef vector<TextureDefinition*>::type TextureDefinitions;
+        typedef std::vector<TextureDefinition*> TextureDefinitions;
         typedef VectorIterator<TextureDefinitions> TextureDefinitionIterator;
         
         /** Create a new local texture definition, and return a pointer to it.
@@ -97,11 +74,7 @@ namespace Ogre {
         */
         TextureDefinition *getTextureDefinition(size_t idx);
         
-		/** Get a local texture definition with a specific name.
-		*/
-		TextureDefinition *getTextureDefinition(const String& name);
-
-		/** Get the number of local texture definitions.
+        /** Get the number of local texture definitions.
         */
         size_t getNumTextureDefinitions();
         
@@ -144,21 +117,14 @@ namespace Ogre {
          */
         virtual bool isSupported(bool allowTextureDegradation);
         
-		/** Assign a scheme name to this technique, used to switch between 
-			multiple techniques by choice rather than for hardware compatibility.
-		*/
-		virtual void setSchemeName(const String& schemeName);
-		/** Get the scheme name assigned to this technique. */
-		const String& getSchemeName() const { return mSchemeName; }
+        /** Create an instance of this technique.
+         */
+        virtual CompositorInstance *createInstance(CompositorChain *chain);
         
-		/** Set the name of the compositor logic assigned to this technique.
-			Instances of this technique will be auto-coupled with the matching logic.
-		*/
-		void setCompositorLogicName(const String& compositorLogicName) 
-			{ mCompositorLogicName = compositorLogicName; }
-		/** Get the compositor logic name assigned to this technique */
-		const String& getCompositorLogicName() const { return mCompositorLogicName; }
-
+        /** Destroy an instance of this technique.
+         */
+        virtual void destroyInstance(CompositorInstance *instance);
+        
         /** Get parent object */
         Compositor *getParent();
     private:
@@ -170,17 +136,12 @@ namespace Ogre {
         /// Intermediate target passes
         TargetPasses mTargetPasses;
         /// Output target pass (can be only one)
-        CompositionTargetPass *mOutputTarget;  
+        CompositionTargetPass *mOutputTarget;    
 
-		/// Optional scheme name
-		String mSchemeName;
-		
-		/// Optional compositor logic name
-		String mCompositorLogicName;
-
+		/// List of instances
+		typedef std::vector<CompositorInstance *> Instances;
+		Instances mInstances;
     };
-	/** @} */
-	/** @} */
 
 }
 

@@ -4,25 +4,26 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef _ResourceGroupManager_H__
@@ -37,22 +38,16 @@ THE SOFTWARE.
 #include "OgreIteratorWrappers.h"
 #include <ctime>
 
-// If X11/Xlib.h gets included before this header (for example it happens when
-// including wxWidgets and FLTK), Status is defined as an int which we don't
-// want as we have an enum named Status.
+/// If X11/Xlib.h gets included before this header (for example it happens when
+/// including wxWidgets and FLTK), Status is defined as an int which we don't
+/// want as we have an enum named Status.
 #ifdef Status
 #undef Status
 #endif
 
 namespace Ogre {
 
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Resources
-	*  @{
-	*/
-	/** This abstract class defines an interface which is called back during
+    /** This abstract class defines an interface which is called back during
         resource group loading to indicate the progress of the load. 
 	@remarks
 		Resource group loading is in 2 phases - creating resources from 
@@ -117,15 +112,11 @@ namespace Ogre {
 		@param resourceCount The number of resources which will be prepared, including
             a number of stages required to prepare any linked world geometry
 		*/
-		virtual void resourceGroupPrepareStarted(const String& groupName, size_t resourceCount)
-                { (void)groupName; (void)resourceCount; }
-
+		virtual void resourceGroupPrepareStarted(const String& groupName, size_t resourceCount) {}
 		/** This event is fired when a declared resource is about to be prepared. 
 		@param resource Weak reference to the resource prepared.
 		*/
-		virtual void resourcePrepareStarted(const ResourcePtr& resource)
-                { (void)resource; }
-
+		virtual void resourcePrepareStarted(const ResourcePtr& resource) {}
         /** This event is fired when the resource has been prepared. 
         */
         virtual void resourcePrepareEnded(void) {}
@@ -134,9 +125,7 @@ namespace Ogre {
             included in the resourceCount passed in resourceGroupLoadStarted.
         @param description Text description of what was just prepared
         */
-        virtual void worldGeometryPrepareStageStarted(const String& description)
-        { (void)description; }
-
+        virtual void worldGeometryPrepareStageStarted(const String& description) {}
         /** This event is fired when a stage of preparing linked world geometry 
             has been completed. The number of stages required will have been 
             included in the resourceCount passed in resourceGroupLoadStarted.
@@ -144,8 +133,7 @@ namespace Ogre {
         */
         virtual void worldGeometryPrepareStageEnded(void) {}
         /** This event is fired when a resource group finished preparing. */
-        virtual void resourceGroupPrepareEnded(const String& groupName)
-        { (void)groupName; }
+        virtual void resourceGroupPrepareEnded(const String& groupName) {}
 
 		/** This event is fired  when a resource group begins loading.
 		@param groupName The name of the group being loaded
@@ -272,9 +260,25 @@ namespace Ogre {
 			NameValuePairList parameters;
         };
         /// List of resource declarations
-        typedef list<ResourceDeclaration>::type ResourceDeclarationList;
-		typedef map<String, ResourceManager*>::type ResourceManagerMap;
+        typedef std::list<ResourceDeclaration> ResourceDeclarationList;
+		typedef std::map<String, ResourceManager*> ResourceManagerMap;
 		typedef MapIterator<ResourceManagerMap> ResourceManagerIterator;
+    protected:
+		/// Map of resource types (strings) to ResourceManagers, used to notify them to load / unload group contents
+        ResourceManagerMap mResourceManagerMap;
+
+		/// Map of loading order (Real) to ScriptLoader, used to order script parsing
+		typedef std::multimap<Real, ScriptLoader*> ScriptLoaderOrderMap;
+		ScriptLoaderOrderMap mScriptLoaderOrderMap;
+
+		typedef std::vector<ResourceGroupListener*> ResourceGroupListenerList;
+        ResourceGroupListenerList mResourceGroupListenerList;
+
+		ResourceLoadingListener *mLoadingListener;
+
+        /// Resource index entry, resourcename->location 
+        typedef std::map<String, Archive*> ResourceLocationIndex;
+
 		/// Resource location entry
 		struct ResourceLocation
 		{
@@ -284,26 +288,9 @@ namespace Ogre {
 			bool recursive;
 		};
 		/// List of possible file locations
-		typedef list<ResourceLocation*>::type LocationList;
-
-    protected:
-		/// Map of resource types (strings) to ResourceManagers, used to notify them to load / unload group contents
-        ResourceManagerMap mResourceManagerMap;
-
-		/// Map of loading order (Real) to ScriptLoader, used to order script parsing
-		typedef multimap<Real, ScriptLoader*>::type ScriptLoaderOrderMap;
-		ScriptLoaderOrderMap mScriptLoaderOrderMap;
-
-		typedef vector<ResourceGroupListener*>::type ResourceGroupListenerList;
-        ResourceGroupListenerList mResourceGroupListenerList;
-
-		ResourceLoadingListener *mLoadingListener;
-
-        /// Resource index entry, resourcename->location 
-        typedef map<String, Archive*>::type ResourceLocationIndex;
-
+		typedef std::list<ResourceLocation*> LocationList;
 		/// List of resources which can be loaded / unloaded
-		typedef list<ResourcePtr>::type LoadUnloadResourceList;
+		typedef std::list<ResourcePtr> LoadUnloadResourceList;
 		/// Resource group entry
 		struct ResourceGroup
 		{
@@ -334,22 +321,15 @@ namespace Ogre {
 			/// Created resources which are ready to be loaded / unloaded
 			// Group by loading order of the type (defined by ResourceManager)
 			// (e.g. skeletons and materials before meshes)
-			typedef map<Real, LoadUnloadResourceList*>::type LoadResourceOrderMap;
+			typedef std::map<Real, LoadUnloadResourceList*> LoadResourceOrderMap;
 			LoadResourceOrderMap loadResourceOrderMap;
             /// Linked world geometry, as passed to setWorldGeometry
             String worldGeometry;
             /// Scene manager to use with linked world geometry
             SceneManager* worldGeometrySceneManager;
-			// in global pool flag - if true the resource will be loaded even a different	group was requested in the load method as a parameter.
-			bool inGlobalPool;
-
-			void addToIndex(const String& filename, Archive* arch);
-			void removeFromIndex(const String& filename, Archive* arch);
-			void removeFromIndex(Archive* arch);
-
 		};
         /// Map from resource group names to groups
-        typedef map<String, ResourceGroup*>::type ResourceGroupMap;
+        typedef std::map<String, ResourceGroup*> ResourceGroupMap;
         ResourceGroupMap mResourceGroupMap;
 
         /// Group name for world resources
@@ -441,10 +421,8 @@ namespace Ogre {
 			You must remember to call initialiseResourceGroup if you intend to use
 			the first 2 types.
         @param name The name to give the resource group.
-		@param inGlobalPool if true the resource will be loaded even a different
-			group was requested in the load method as a parameter.
         */
-        void createResourceGroup(const String& name, const bool inGlobalPool = true);
+        void createResourceGroup(const String& name);
 
 
         /** Initialises a resource group.
@@ -600,11 +578,6 @@ namespace Ogre {
 		*/
 		bool isResourceGroupLoaded(const String& name);
 
-		/*** Verify if a resource group exists
-		@param name The name of the resource group to look for
-		*/
-		bool resourceGroupExists(const String& name);
-
         /** Method to add a resource location to for a given resource group. 
         @remarks
             Resource locations are places which are searched to load resource files.
@@ -630,9 +603,6 @@ namespace Ogre {
             const String& resGroup = DEFAULT_RESOURCE_GROUP_NAME, bool recursive = false);
         /** Removes a resource location from the search path. */ 
         void removeResourceLocation(const String& name, 
-			const String& resGroup = DEFAULT_RESOURCE_GROUP_NAME);
-        /** Verify if a resource location exists for the given group. */ 
-		bool resourceLocationExists(const String& name, 
 			const String& resGroup = DEFAULT_RESOURCE_GROUP_NAME);
 
         /** Declares a resource to be a part of a resource group, allowing you 
@@ -806,12 +776,6 @@ namespace Ogre {
         @param filename Fully qualified name of the file to test for
         */
         bool resourceExists(ResourceGroup* group, const String& filename);
-		
-        /** Find out if the named file exists in any group. 
-        @param filename Fully qualified name of the file to test for
-        */
-        bool resourceExistsInAnyGroup(const String& filename);
-
 		/** Find the group in which a resource exists.
 		@param filename Fully qualified name of the file the resource should be
 			found as
@@ -834,63 +798,9 @@ namespace Ogre {
 
 		/** Retrieve the modification time of a given file */
 		time_t resourceModifiedTime(const String& group, const String& filename); 
-        /** List all resource locations in a resource group.
-        @param groupName The name of the group
-        @returns A list of resource locations matching the criteria
-        */
-        StringVectorPtr listResourceLocations(const String& groupName);
-
-        /** Find all resource location names matching a given pattern in a
-            resource group.
-        @param groupName The name of the group
-        @param pattern The pattern to search for; wildcards (*) are allowed
-        @returns A list of resource locations matching the criteria
-        */
-        StringVectorPtr findResourceLocation(const String& groupName, const String& pattern);
-
+        
 		/** Retrieve the modification time of a given file */
 		time_t resourceModifiedTime(ResourceGroup* group, const String& filename); 
-
-		/** Create a new resource file in a given group.
-		@remarks
-			This method creates a new file in a resource group and passes you back a 
-			writeable stream. 
-		@param filename The name of the file to create
-		@param groupName The name of the group in which to create the file
-		@param overwrite If true, an existing file will be overwritten, if false
-			an error will occur if the file already exists
-		@param locationPattern If the resource group contains multiple locations, 
-			then usually the file will be created in the first writable location. If you 
-			want to be more specific, you can include a location pattern here and 
-			only locations which match that pattern (as determined by StringUtil::match)
-			will be considered candidates for creation.
-		*/
-		DataStreamPtr createResource(const String& filename, const String& groupName = DEFAULT_RESOURCE_GROUP_NAME, 
-			bool overwrite = false, const String& locationPattern = StringUtil::BLANK);
-
-		/** Delete a single resource file.
-		@param filename The name of the file to delete. 
-		@param groupName The name of the group in which to search
-		@param locationPattern If the resource group contains multiple locations, 
-			then usually first matching file found in any location will be deleted. If you 
-			want to be more specific, you can include a location pattern here and 
-			only locations which match that pattern (as determined by StringUtil::match)
-			will be considered candidates for deletion.
-		*/
-		void deleteResource(const String& filename, const String& groupName = DEFAULT_RESOURCE_GROUP_NAME, 
-			const String& locationPattern = StringUtil::BLANK);
-
-		/** Delete all matching resource files.
-		@param filePattern The pattern (see StringUtil::match) of the files to delete. 
-		@param groupName The name of the group in which to search
-		@param locationPattern If the resource group contains multiple locations, 
-			then usually all matching files in any location will be deleted. If you 
-			want to be more specific, you can include a location pattern here and 
-			only locations which match that pattern (as determined by StringUtil::match)
-			will be considered candidates for deletion.
-		*/
-		void deleteMatchingResources(const String& filePattern, const String& groupName = DEFAULT_RESOURCE_GROUP_NAME, 
-			const String& locationPattern = StringUtil::BLANK);
 
 		/** Adds a ResourceGroupListener which will be called back during 
             resource loading events. 
@@ -932,15 +842,6 @@ namespace Ogre {
         */
         void unlinkWorldGeometryFromResourceGroup(const String& group);
 
-			/** Checks the status of a resource group.
-		@remarks
-			Looks at the state of a resource group.
-			If loadResourceGroup has been called for the resource
-			group return true, otherwise return false.
-		@param name The name to of the resource group to access.
-		*/
-		bool isResourceGroupInGlobalPool(const String& name);
-
         /** Shutdown all ResourceManagers, performed as part of clean-up. */
         void shutdownAll(void);
 
@@ -980,11 +881,6 @@ namespace Ogre {
         @param su Pointer to the ScriptLoader instance.
         */
         void _unregisterScriptLoader(ScriptLoader* su);
-
-		/** Method used to directly query for registered script loaders.
-		@param pattern The specific script pattern (e.g. *.material) the script loader handles
-		*/
-		ScriptLoader *_findScriptLoader(const String &pattern);
 
 		/** Internal method for getting a registered ResourceManager.
 		@param resourceType String identifying the resource type.
@@ -1042,12 +938,6 @@ namespace Ogre {
 		*/
 		ResourceDeclarationList getResourceDeclarationList(const String& groupName);
 
-		/** Get the list of resource locations for the specified group name.
-		@param groupName The name of the group
-		@returns The list of resource locations associated with the given group.
-		*/		
-		const LocationList& getResourceLocationList(const String& groupName);
-
 		/// Sets a new loading listener
 		void setLoadingListener(ResourceLoadingListener *listener);
 		/// Returns the current loading listener
@@ -1087,8 +977,6 @@ namespace Ogre {
         static ResourceGroupManager* getSingletonPtr(void);
 
     };
-	/** @} */
-	/** @} */
 }
 
 #endif

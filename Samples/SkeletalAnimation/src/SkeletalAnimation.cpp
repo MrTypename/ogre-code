@@ -1,23 +1,51 @@
-#include "SamplePlugin.h"
+/*
+-----------------------------------------------------------------------------
+This source file is part of OGRE
+    (Object-oriented Graphics Rendering Engine)
+For the latest info, see http://www.ogre3d.org/
+
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
+
+You may use this sample code for anything you like, it is not covered by the
+LGPL like the rest of the engine.
+-----------------------------------------------------------------------------
+*/
+
 #include "SkeletalAnimation.h"
 
-using namespace Ogre;
-using namespace OgreBites;
+#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
+#define WIN32_LEAN_AND_MEAN
+#include "windows.h"
+#endif
 
-SamplePlugin* sp;
-Sample* s;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-extern "C" _OgreSampleExport void dllStartPlugin()
+#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
+INT WINAPI WinMain( HINSTANCE hInst, HINSTANCE, LPSTR strCmdLine, INT )
+#else
+int main(int argc, char **argv)
+#endif
 {
-	s = new Sample_SkeletalAnimation;
-	sp = OGRE_NEW SamplePlugin(s->getInfo()["Title"] + " Sample");
-	sp->addSample(s);
-	Root::getSingleton().installPlugin(sp);
+    // Create application object
+    SkeletalApplication app;
+
+    try {
+        app.go();
+    } catch( Exception& e ) {
+#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
+        MessageBox( NULL, e.getFullDescription().c_str(), "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+#else
+        std::cerr << "An exception has occured: " << e.getFullDescription();
+#endif
+    }
+
+
+    return 0;
 }
 
-extern "C" _OgreSampleExport void dllStopPlugin()
-{
-	Root::getSingleton().uninstallPlugin(sp); 
-	OGRE_DELETE sp;
-	delete s;
+#ifdef __cplusplus
 }
+#endif

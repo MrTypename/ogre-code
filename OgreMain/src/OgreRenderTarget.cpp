@@ -4,25 +4,26 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -97,74 +98,33 @@ namespace Ogre {
 
     void RenderTarget::updateImpl(void)
     {
-		_beginUpdate();
-		_updateAutoUpdatedViewports(true);
-		_endUpdate();
-    }
 
-	void RenderTarget::_beginUpdate()
-	{
-		// notify listeners (pre)
+        // notify listeners (pre)
         firePreUpdate();
 
         mStats.triangleCount = 0;
         mStats.batchCount = 0;
-	}
-
-	void RenderTarget::_updateAutoUpdatedViewports(bool updateStatistics)
-	{
-		// Go through viewports in Z-order
+        // Go through viewports in Z-order
         // Tell each to refresh
-		ViewportList::iterator it = mViewportList.begin();
+        ViewportList::iterator it = mViewportList.begin();
         while (it != mViewportList.end())
         {
-			Viewport* viewport = (*it).second;
-			if(viewport->isAutoUpdated())
-			{
-				_updateViewport(viewport,updateStatistics);
-			}
-			++it;
-		}
-	}
+            fireViewportPreUpdate((*it).second);
+            (*it).second->update();
+            mStats.triangleCount += (*it).second->_getNumRenderedFaces();
+            mStats.batchCount += (*it).second->_getNumRenderedBatches();
+            fireViewportPostUpdate((*it).second);
+            ++it;
+        }
 
-	void RenderTarget::_endUpdate()
-	{
-		 // notify listeners (post)
+        // notify listeners (post)
         firePostUpdate();
 
         // Update statistics (always on top)
         updateStats();
-	}
 
-	void RenderTarget::_updateViewport(Viewport* viewport, bool updateStatistics)
-	{
-		assert(viewport->getTarget() == this &&
-				"RenderTarget::_updateViewport the requested viewport is "
-				"not bound to the rendertarget!");
 
-		fireViewportPreUpdate(viewport);
-		viewport->update();
-		if(updateStatistics)
-		{
-			mStats.triangleCount += viewport->_getNumRenderedFaces();
-			mStats.batchCount += viewport->_getNumRenderedBatches();
-		}
-		fireViewportPostUpdate(viewport);
-	}
-
-	void RenderTarget::_updateViewport(int zorder, bool updateStatistics)
-	{
-		ViewportList::iterator it = mViewportList.find(zorder);
-        if (it != mViewportList.end())
-        {
-			_updateViewport((*it).second,updateStatistics);
-		}
-		else
-		{
-			OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND,"No viewport with given zorder : "
-				+ StringConverter::toString(zorder), "RenderTarget::_updateViewport");
-		}
-	}
+    }
 
     Viewport* RenderTarget::addViewport(Camera* cam, int ZOrder, float left, float top ,
         float width , float height)
@@ -264,12 +224,12 @@ namespace Ogre {
 
     float RenderTarget::getBestFrameTime() const
     {
-        return (float)mStats.bestFrameTime;
+        return mStats.bestFrameTime;
     }
 
     float RenderTarget::getWorstFrameTime() const
     {
-        return (float)mStats.worstFrameTime;
+        return mStats.worstFrameTime;
     }
 
     void RenderTarget::resetStatistics(void)
@@ -304,7 +264,7 @@ namespace Ogre {
         if (thisTime - mLastSecond > 1000) 
         { 
             // new second - not 100% precise
-            mStats.lastFPS = (float)mFrameCount / (float)(thisTime - mLastSecond) * 1000.0f;
+            mStats.lastFPS = (float)mFrameCount / (float)(thisTime - mLastSecond) * 1000.0;
 
             if (mStats.avgFPS == 0)
                 mStats.avgFPS = mStats.lastFPS;
@@ -471,7 +431,7 @@ namespace Ogre {
         struct tm *pTime;
         time_t ctTime; time(&ctTime);
         pTime = localtime( &ctTime );
-        Ogre::StringStream oss;
+        std::ostringstream oss;
         oss	<< std::setw(2) << std::setfill('0') << (pTime->tm_mon + 1)
             << std::setw(2) << std::setfill('0') << pTime->tm_mday
             << std::setw(2) << std::setfill('0') << (pTime->tm_year + 1900)
@@ -479,7 +439,7 @@ namespace Ogre {
             << std::setw(2) << std::setfill('0') << pTime->tm_min
             << std::setw(2) << std::setfill('0') << pTime->tm_sec
             << std::setw(3) << std::setfill('0') << (mTimer->getMilliseconds() % 1000);
-        String filename = filenamePrefix + oss.str() + filenameSuffix;
+        String filename = filenamePrefix + String(oss.str()) + filenameSuffix;
         writeContentsToFile(filename);
         return filename;
 

@@ -39,17 +39,15 @@
 	weight			CDATA	"1.0">
 <!ELEMENT levelofdetail ( (lodmanual|lodgenerated)+ )>
 <!ATTLIST levelofdetail 
-	strategy		CDATA			"Distance"
 	numlevels		CDATA			#REQUIRED
 	manual			(true|false)	"false">
 <!ELEMENT lodmanual EMPTY>
-<!-- 'value' in lodmanual and lodgenerated is a distance (unsquared) or other LOD metric depending on stragegy -->
 <!ATTLIST lodmanual
-	value				CDATA 	#REQUIRED
+	fromdepthsquared	CDATA 	#REQUIRED
 	meshname			CDATA	#REQUIRED>
 <!ELEMENT lodgenerated (lodfacelist)>
 <!ATTLIST lodgenerated
-	value				CDATA 	#REQUIRED
+	fromdepthsquared	CDATA 	#REQUIRED
 	meshname			CDATA	#REQUIRED>
 <!ELEMENT lodfacelist (face)+>
 <!ATTLIST lodfacelist
@@ -111,8 +109,7 @@
 <!ATTLIST texcoord
 	u	CDATA	#REQUIRED	
 	v	CDATA	"0"	
-	w	CDATA	"0"	
-	x	CDATA	"0" >
+	w	CDATA	"0" >
 <!ELEMENT submeshnames (submeshname+)>
 <!ELEMENT submeshname EMPTY>
 <!ATTLIST submeshname 

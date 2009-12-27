@@ -1,3 +1,4 @@
+
 material Examples/Smoke
 {
 	technique
@@ -7,7 +8,6 @@ material Examples/Smoke
 			lighting off
 			scene_blend alpha_blend
 			depth_write off
-			diffuse vertexcolour
 
 			texture_unit
 			{

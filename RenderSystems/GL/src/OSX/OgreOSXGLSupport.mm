@@ -4,7 +4,7 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
  
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
 Also see acknowledgements in Readme.html
  
 This program is free software; you can redistribute it and/or modify it under
@@ -39,10 +39,8 @@ Torus Knot Software Ltd.
 #include "OgreGLTexture.h"
 #include "OgreOSXRenderTexture.h"
 
-#include "macUtils.h"
-#include <dlfcn.h>
-
 #include <OpenGL/OpenGL.h>
+#include <mach-o/dyld.h>
 
 namespace Ogre {
 
@@ -96,9 +94,7 @@ void OSXGLSupport::addConfig( void )
 	CGLDescribeRenderer(rend, 0, kCGLRPMaxSamples, &maxSamples);
 #endif
 
-    CGLDestroyRendererInfo(rend);
-
-    // FSAA possibilities
+    //FSAA possibilities
     optFSAA.name = "FSAA";
     optFSAA.possibleValues.push_back( "0" );
 
@@ -127,11 +123,8 @@ void OSXGLSupport::addConfig( void )
 	// Video mode possiblities
 	optVideoMode.name = "Video Mode";
 	optVideoMode.immutable = false;
-#if defined(MAC_OS_X_VERSION_10_6) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
-	CFArrayRef displayModes = CGDisplayCopyAllDisplayModes(CGMainDisplayID(), NULL);
-#else
+
 	CFArrayRef displayModes = CGDisplayAvailableModes(CGMainDisplayID());
-#endif
 	CFIndex numModes = CFArrayGetCount(displayModes);
 	CFMutableArrayRef goodModes = NULL;
 	goodModes = CFArrayCreateMutable(kCFAllocatorDefault, numModes, NULL);
@@ -139,37 +132,6 @@ void OSXGLSupport::addConfig( void )
 	// Grab all the available display modes, then weed out duplicates...
 	for(int i = 0; i < numModes; ++i)
 	{
-#if defined(MAC_OS_X_VERSION_10_6) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
-		CGDisplayModeRef modeInfo = (CGDisplayModeRef)CFArrayGetValueAtIndex(displayModes, i);
-
-        // Get IOKit flags for the display mode
-        uint32_t ioFlags = CGDisplayModeGetIOFlags(modeInfo);
-
-        bool safeForHardware = ioFlags & kDisplayModeSafetyFlags ? true : false;
-		bool stretched = ioFlags & kDisplayModeStretchedFlag ? true : false;
-		bool skipped = false;
-		
-		if((safeForHardware) || (!stretched))
-		{
-			size_t width  = CGDisplayModeGetWidth(modeInfo);
-			size_t height = CGDisplayModeGetHeight(modeInfo); 
-			
-			for(CFIndex j = 0; j < CFArrayGetCount(goodModes); ++j)
-			{
-				CGDisplayModeRef otherMode = (CGDisplayModeRef)CFArrayGetValueAtIndex(goodModes, j);
-                
-				size_t otherWidth  = CGDisplayModeGetWidth(otherMode);
-				size_t otherHeight = CGDisplayModeGetHeight(otherMode);
-				
-				// If we find a duplicate then skip this mode
-				if((otherWidth == width) && (otherHeight == height))
-					skipped = true;
-			}
-			
-			// This is a new mode, so add it to our goodModes array
-			if(!skipped)
-				CFArrayAppendValue(goodModes, modeInfo);
-#else
 		CFDictionaryRef modeInfo = (CFDictionaryRef)CFArrayGetValueAtIndex(displayModes, i);
 		
 		Boolean safeForHardware = _getDictionaryBoolean(modeInfo, kCGDisplayModeIsSafeForHardware);
@@ -196,7 +158,6 @@ void OSXGLSupport::addConfig( void )
 			// This is a new mode, so add it to our goodModes array
 			if(!skipped)
 				CFArrayAppendValue(goodModes, modeInfo);
-#endif
 		}
 	}
 	
@@ -207,37 +168,30 @@ void OSXGLSupport::addConfig( void )
 	// Now pull the modes out and put them into optVideoModes
 	for(int i = 0; i < CFArrayGetCount(goodModes); ++i)
 	{
-#if defined(MAC_OS_X_VERSION_10_6) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
-		CGDisplayModeRef resolution = (CGDisplayModeRef)CFArrayGetValueAtIndex(goodModes, i);
-		
-		size_t fWidth  = CGDisplayModeGetWidth(resolution);
-		size_t fHeight = CGDisplayModeGetHeight(resolution);
-#else
 		CFDictionaryRef resolution = (CFDictionaryRef)CFArrayGetValueAtIndex(goodModes, i);
 		
 		long fWidth  = _getDictionaryLong(resolution, kCGDisplayWidth);
 		long fHeight = _getDictionaryLong(resolution, kCGDisplayHeight);
-#endif
+		
 		String resoString = StringConverter::toString(fWidth) + " x " + StringConverter::toString(fHeight);
 		optVideoMode.possibleValues.push_back(resoString);
 		
-//		LogManager::getSingleton().logMessage( "Added resolution: " + resoString);
+		//LogManager::getSingleton().logMessage( "Added resolution: " + resoString);
 	}
 	
-    // Release memory
-    CFRelease(goodModes);
-
-    optRTTMode.name = "RTT Preferred Mode";
+	optRTTMode.name = "RTT Preferred Mode";
 	optRTTMode.possibleValues.push_back( "FBO" );
 	optRTTMode.possibleValues.push_back( "PBuffer" );
 	optRTTMode.possibleValues.push_back( "Copy" );
 	optRTTMode.currentValue = "FBO";
 	optRTTMode.immutable = false;
 
+
 	mOptions[optFullScreen.name] = optFullScreen;
 	mOptions[optVideoMode.name] = optVideoMode;
     mOptions[optFSAA.name] = optFSAA;
 	mOptions[optRTTMode.name] = optRTTMode;
+
 }
 
 String OSXGLSupport::validateConfig( void )
@@ -268,6 +222,7 @@ RenderWindow* OSXGLSupport::createWindow( bool autoCreateWindow, GLRenderSystem*
         // Parse FSAA config
 		NameValuePairList winOptions;
 		winOptions[ "title" ] = windowTitle;
+        int fsaa_x_samples = 0;
         opt = mOptions.find( "FSAA" );
         if( opt != mOptions.end() )
         {
@@ -292,7 +247,7 @@ RenderWindow* OSXGLSupport::newWindow( const String &name, unsigned int width, u
 	
 	if(miscParams)
 	{
-		NameValuePairList::const_iterator opt(NULL);
+		NameValuePairList::const_iterator opt = NULL;
 		
 		// First we must determine if this is a carbon or a cocoa window
 		// that we wish to create
@@ -324,32 +279,33 @@ RenderWindow* OSXGLSupport::newWindow( const String &name, unsigned int width, u
 void OSXGLSupport::start()
 {
 	LogManager::getSingleton().logMessage(
-			"********************************************\n"
-			"***  Starting Mac OS X OpenGL Subsystem  ***\n"
-			"********************************************");
+			"*******************************************\n"
+			"***    Starting OSX OpenGL Subsystem    ***\n"
+			"*******************************************");
 }
 
 void OSXGLSupport::stop()
 {
 	LogManager::getSingleton().logMessage(
-			"********************************************\n"
-			"***  Stopping Mac OS X OpenGL Subsystem  ***\n"
-			"********************************************");
+			"*******************************************\n"
+			"***    Stopping OSX OpenGL Subsystem    ***\n"
+			"*******************************************");
 }
 
 void* OSXGLSupport::getProcAddress( const char* name )
 {
-    void *symbol;
+	NSSymbol symbol;
+    char *symbolName;
+    // Prepend a '_' for the Unix C symbol mangling convention
+    symbolName = (char*)malloc (strlen (name) + 2);
+    strcpy(symbolName + 1, name);
+    symbolName[0] = '_';
     symbol = NULL;
-    
-    std::string fullPath = macPluginPath() + "RenderSystem_GL.dylib";
-    void *handle = dlopen(fullPath.c_str(), RTLD_LAZY | RTLD_GLOBAL);
-    if(handle) {
-        symbol = dlsym (handle, name);
-    }
-    dlclose(handle);
-    
-    return symbol;
+	// TODO:  dlopen calls, dyld
+    if (NSIsSymbolNameDefined (symbolName))
+        symbol = NSLookupAndBindSymbol (symbolName);
+    free (symbolName);
+    return symbol ? NSAddressOfSymbol (symbol) : NULL;
 }
 
 void* OSXGLSupport::getProcAddress( const String& procname )
@@ -372,29 +328,28 @@ GLPBuffer* OSXGLSupport::createPBuffer(PixelComponentType format, size_t width, 
 		return new OSXPBuffer(format, width, height);
 }
 
-#if defined(MAC_OS_X_VERSION_10_6) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
 CFComparisonResult OSXGLSupport::_compareModes (const void *val1, const void *val2, void *context)
 {
 	// These are the values we will be interested in...
 	/*
-	CGDisplayModeGetWidth
-	CGDisplayModeGetHeight
-	CGDisplayModeGetRefreshRate
+	_getDictionaryLong((mode), kCGDisplayWidth)
+	_getDictionaryLong((mode), kCGDisplayHeight)
+	_getDictionaryLong((mode), kCGDisplayRefreshRate)
 	_getDictionaryLong((mode), kCGDisplayBitsPerPixel)
-	CGDisplayModeGetIOFlags((mode), kDisplayModeStretchedFlag)
-	CGDisplayModeGetIOFlags((mode), kDisplayModeSafetyFlags)
+	_getDictionaryBoolean((mode), kCGDisplayModeIsSafeForHardware)
+	_getDictionaryBoolean((mode), kCGDisplayModeIsStretched)
 	*/
 	
 	// CFArray comparison callback for sorting display modes.
 	#pragma unused(context)
-	CGDisplayModeRef thisMode = (CGDisplayModeRef)val1;
-	CGDisplayModeRef otherMode = (CGDisplayModeRef)val2;
+	CFDictionaryRef thisMode = (CFDictionaryRef)val1;
+	CFDictionaryRef otherMode = (CFDictionaryRef)val2;
 	
-	size_t width = CGDisplayModeGetWidth(thisMode);
-	size_t otherWidth = CGDisplayModeGetWidth(otherMode);
+	long width = _getDictionaryLong(thisMode, kCGDisplayWidth);
+	long otherWidth = _getDictionaryLong(otherMode, kCGDisplayWidth);
 	
-	size_t height = CGDisplayModeGetHeight(thisMode);
-	size_t otherHeight = CGDisplayModeGetHeight(otherMode);
+	long height = _getDictionaryLong(thisMode, kCGDisplayHeight);
+	long otherHeight = _getDictionaryLong(otherMode, kCGDisplayHeight);
 
 	// sort modes in screen size order
 	if (width * height < otherWidth * otherHeight)
@@ -406,25 +361,22 @@ CFComparisonResult OSXGLSupport::_compareModes (const void *val1, const void *va
 		return kCFCompareGreaterThan;
 	}
 
-    // TODO: DJR - Find out DisplayMode API method for determining display depth
 	// sort modes by bits per pixel
-//    uint32_t ioFlags = CGDisplayModeGetIOFlags(modeInfo);
+	long bitsPerPixel = _getDictionaryLong(thisMode, kCGDisplayBitsPerPixel);
+	long otherBitsPerPixel = _getDictionaryLong(otherMode, kCGDisplayBitsPerPixel);
 
-//	size_t bitsPerPixel = _getDictionaryLong(thisMode, kCGDisplayBitsPerPixel);
-//	size_t otherBitsPerPixel = _getDictionaryLong(otherMode, kCGDisplayBitsPerPixel);
-//
-//	if (bitsPerPixel < otherBitsPerPixel)
-//	{
-//		return kCFCompareLessThan;
-//	}
-//	else if (bitsPerPixel > otherBitsPerPixel)
-//	{
-//		return kCFCompareGreaterThan;
-//	}
+	if (bitsPerPixel < otherBitsPerPixel)
+	{
+		return kCFCompareLessThan;
+	}
+	else if (bitsPerPixel > otherBitsPerPixel)
+	{
+		return kCFCompareGreaterThan;
+	}
 
 	// sort modes by refresh rate.
-	double refreshRate = CGDisplayModeGetRefreshRate(thisMode);
-	double otherRefreshRate = CGDisplayModeGetRefreshRate(otherMode);
+	long refreshRate = _getDictionaryLong(thisMode, kCGDisplayRefreshRate);
+	long otherRefreshRate = _getDictionaryLong(otherMode, kCGDisplayRefreshRate);
 
 	if (refreshRate < otherRefreshRate)
 	{
@@ -437,69 +389,6 @@ CFComparisonResult OSXGLSupport::_compareModes (const void *val1, const void *va
 
 	return kCFCompareEqualTo;
 }
-#else
-CFComparisonResult OSXGLSupport::_compareModes (const void *val1, const void *val2, void *context)
-{
-    // These are the values we will be interested in...
-    /*
-     _getDictionaryLong((mode), kCGDisplayWidth)
-     _getDictionaryLong((mode), kCGDisplayHeight)
-     _getDictionaryLong((mode), kCGDisplayRefreshRate)
-     _getDictionaryLong((mode), kCGDisplayBitsPerPixel)
-     _getDictionaryBoolean((mode), kCGDisplayModeIsSafeForHardware)
-     _getDictionaryBoolean((mode), kCGDisplayModeIsStretched)
-     */
-    
-    // CFArray comparison callback for sorting display modes.
-#pragma unused(context)
-    CFDictionaryRef thisMode = (CFDictionaryRef)val1;
-    CFDictionaryRef otherMode = (CFDictionaryRef)val2;
-    
-    long width = _getDictionaryLong(thisMode, kCGDisplayWidth);
-    long otherWidth = _getDictionaryLong(otherMode, kCGDisplayWidth);
-    
-    long height = _getDictionaryLong(thisMode, kCGDisplayHeight);
-    long otherHeight = _getDictionaryLong(otherMode, kCGDisplayHeight);
-    
-    // sort modes in screen size order
-    if (width * height < otherWidth * otherHeight)
-    {
-        return kCFCompareLessThan;
-    }
-    else if (width * height > otherWidth * otherHeight)
-    {
-        return kCFCompareGreaterThan;
-    }
-    
-    // sort modes by bits per pixel
-    long bitsPerPixel = _getDictionaryLong(thisMode, kCGDisplayBitsPerPixel);
-    long otherBitsPerPixel = _getDictionaryLong(otherMode, kCGDisplayBitsPerPixel);
-    
-    if (bitsPerPixel < otherBitsPerPixel)
-    {
-        return kCFCompareLessThan;
-    }
-    else if (bitsPerPixel > otherBitsPerPixel)
-    {
-        return kCFCompareGreaterThan;
-    }
-    
-    // sort modes by refresh rate.
-    long refreshRate = _getDictionaryLong(thisMode, kCGDisplayRefreshRate);
-    long otherRefreshRate = _getDictionaryLong(otherMode, kCGDisplayRefreshRate);
-    
-    if (refreshRate < otherRefreshRate)
-    {
-        return kCFCompareLessThan;
-    }
-    else if (refreshRate > otherRefreshRate)
-    {
-        return kCFCompareGreaterThan;
-    }
-    
-    return kCFCompareEqualTo;
-}
-#endif
 
 Boolean OSXGLSupport::_getDictionaryBoolean(CFDictionaryRef dict, const void* key)
 {

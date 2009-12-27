@@ -1,10 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 // material.cpp
-// Author       : Francesco Giordana
-// Sponsored by : Anygma N.V. (http://www.nazooka.com)
-// Start Date   : January 13, 2005
-// Copyright    : (C) 2006 by Francesco Giordana
-// Email        : fra.giordana@tiscali.it
+// Author     : Francesco Giordana
+// Start Date : January 13, 2005
+// Copyright  : (C) 2006 by Francesco Giordana
+// Email      : fra.giordana@tiscali.it
 ////////////////////////////////////////////////////////////////////////////////
 
 /*********************************************************************************
@@ -60,6 +59,7 @@ namespace OgreMayaExporter
 	// Load material data
 	MStatus Material::load(MFnDependencyNode* pShader,MStringArray& uvsets,ParamList& params)
 	{
+		int i;
 		MStatus stat;
 		clear();
 		//read material name, adding the requested prefix
@@ -70,7 +70,7 @@ namespace OgreMayaExporter
 		MStringArray tmpStrArray;
 		tmpStr.split(':',tmpStrArray);
 		m_name = "";
-		for (int i=0; i<tmpStrArray.length(); i++)
+		for (i=0; i<tmpStrArray.length(); i++)
 		{
 			m_name += tmpStrArray[i];
 			if (i < tmpStrArray.length()-1)
@@ -119,7 +119,7 @@ namespace OgreMayaExporter
 					pShader->findPlug("outColor").connectedTo(colorSrcPlugs,true,false);
 				else
 					pShader->findPlug("color").connectedTo(colorSrcPlugs,true,false);
-				for (int i=0; i<colorSrcPlugs.length(); i++)
+				for (i=0; i<colorSrcPlugs.length(); i++)
 				{
 					if (colorSrcPlugs[i].node().hasFn(MFn::kLayeredTexture))
 					{
@@ -132,7 +132,7 @@ namespace OgreMayaExporter
 				MPlug inputsPlug = pLayeredTexNode->findPlug("inputs");
 
 				// Scan inputs and export textures
-				for (int i=inputsPlug.numElements()-1; i>=0; i--)
+				for (i=inputsPlug.numElements()-1; i>=0; i--)
 				{
 					MFnDependencyNode* pTextureNode = NULL;
 					// Search for a connected texture
@@ -194,7 +194,7 @@ namespace OgreMayaExporter
 					pShader->findPlug("outColor").connectedTo(colorSrcPlugs,true,false);
 				else
 					pShader->findPlug("color").connectedTo(colorSrcPlugs,true,false);
-				for (int i=0; i<colorSrcPlugs.length(); i++)
+				for (i=0; i<colorSrcPlugs.length(); i++)
 				{
 					if (colorSrcPlugs[i].node().hasFn(MFn::kFileTexture))
 					{
@@ -224,11 +224,12 @@ namespace OgreMayaExporter
 	// Load a surface shader
 	MStatus Material::loadSurfaceShader(MFnDependencyNode *pShader)
 	{
+		int i;
 		m_type = MT_SURFACE_SHADER;
 		MPlugArray colorSrcPlugs;
 		// Check if material is textured
 		pShader->findPlug("outColor").connectedTo(colorSrcPlugs,true,false);
-		for (int i=0; i<colorSrcPlugs.length(); i++)
+		for (i=0; i<colorSrcPlugs.length(); i++)
 		{
 			if (colorSrcPlugs[i].node().hasFn(MFn::kFileTexture))
 			{
@@ -270,12 +271,13 @@ namespace OgreMayaExporter
 	// Load a lambert shader
 	MStatus Material::loadLambert(MFnDependencyNode *pShader)
 	{
+		int i;
 		MPlugArray colorSrcPlugs;
 		m_type = MT_LAMBERT;
 		MFnLambertShader* pLambert = new MFnLambertShader(pShader->object());
 		// Check if material is textured
 		pLambert->findPlug("color").connectedTo(colorSrcPlugs,true,false);
-		for (int i=0; i<colorSrcPlugs.length(); i++)
+		for (i=0; i<colorSrcPlugs.length(); i++)
 		{
 			if (colorSrcPlugs[i].node().hasFn(MFn::kFileTexture))
 			{
@@ -316,12 +318,13 @@ namespace OgreMayaExporter
 	// Load a phong shader
 	MStatus Material::loadPhong(MFnDependencyNode *pShader)
 	{
+		int i;
 		MPlugArray colorSrcPlugs;
 		m_type = MT_PHONG;
 		MFnPhongShader* pPhong = new MFnPhongShader(pShader->object());
 		// Check if material is textured
 		pPhong->findPlug("color").connectedTo(colorSrcPlugs,true,false);
-		for (int i=0; i<colorSrcPlugs.length(); i++)
+		for (i=0; i<colorSrcPlugs.length(); i++)
 		{
 			if (colorSrcPlugs[i].node().hasFn(MFn::kFileTexture))
 			{
@@ -363,12 +366,13 @@ namespace OgreMayaExporter
 	// load a blinn shader
 	MStatus Material::loadBlinn(MFnDependencyNode *pShader)
 	{
+		int i;
 		MPlugArray colorSrcPlugs;
 		m_type = MT_BLINN;
 		MFnBlinnShader* pBlinn = new MFnBlinnShader(pShader->object());
 		// Check if material is textured
 		pBlinn->findPlug("color").connectedTo(colorSrcPlugs,true,false);
-		for (int i=0; i<colorSrcPlugs.length(); i++)
+		for (i=0; i<colorSrcPlugs.length(); i++)
 		{
 			if (colorSrcPlugs[i].node().hasFn(MFn::kFileTexture))
 			{
@@ -424,6 +428,7 @@ namespace OgreMayaExporter
 	// Load texture data from a texture node
 	MStatus Material::loadTexture(MFnDependencyNode* pTexNode,TexOpType& opType,MStringArray& uvsets,ParamList& params)
 	{
+		int j;
 		Texture tex;
 		// Get texture filename
 		MString filename, absFilename;
@@ -444,7 +449,7 @@ namespace OgreMayaExporter
 		pTexNode->findPlug("uvCoord").connectedTo(texSrcPlugs,true,false);
 		// Get place2dtexture node (if connected)
 		MFnDependencyNode* pPlace2dTexNode = NULL;
-		for (int j=0; j<texSrcPlugs.length(); j++)
+		for (j=0; j<texSrcPlugs.length(); j++)
 		{
 			if (texSrcPlugs[j].node().hasFn(MFn::kPlace2dTexture))
 			{
@@ -458,7 +463,7 @@ namespace OgreMayaExporter
 		{
 			MPlugArray placetexSrcPlugs;
 			pPlace2dTexNode->findPlug("uvCoord").connectedTo(placetexSrcPlugs,true,false);
-			for (int j=0; j<placetexSrcPlugs.length(); j++)
+			for (j=0; j<placetexSrcPlugs.length(); j++)
 			{
 				if (placetexSrcPlugs[j].node().hasFn(MFn::kUvChooser))
 				{
@@ -477,7 +482,7 @@ namespace OgreMayaExporter
 			for (int i=0; i<uvsetsPlug.evaluateNumElements() && !foundMesh; i++)
 			{
 				uvsetsPlug[i].connectedTo(uvsetsSrcPlugs,true,false);
-				for (int j=0; j<uvsetsSrcPlugs.length() && !foundMesh; j++)
+				for (j=0; j<uvsetsSrcPlugs.length() && !foundMesh; j++)
 				{
 					if (uvsetsSrcPlugs[j].node().hasFn(MFn::kMesh))
 					{

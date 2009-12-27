@@ -4,25 +4,26 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -61,7 +62,6 @@ namespace Ogre {
 		mHalfBatchInstanceDimensions(Vector3(500,500,500)),
 		mOrigin(Vector3(0,0,0)),
 		mVisible(true),
-        mProvideWorldInverses(false),
         mRenderQueueID(RENDER_QUEUE_MAIN),
         mRenderQueueIDSet(false),
 		mObjectCount(0),
@@ -283,7 +283,7 @@ namespace Ogre {
 				vbuf->lock(HardwareBuffer::HBL_READ_ONLY));
 		float* pFloat;
 
-		Vector3 min = Vector3::ZERO, max = Vector3::UNIT_SCALE;
+		Vector3 min, max;
 		bool first = true;
 
 		for(size_t j = 0; j < vertexData->vertexCount; ++j, vertex += vbuf->getVertexSize())
@@ -643,12 +643,12 @@ namespace Ogre {
 				ret->setRenderQueueGroup(mRenderQueueID);
 		}
 	
-		const size_t numLod = lastBatchInstance->mLodValues.size();
-		ret->mLodValues.resize(numLod);
+		const size_t numLod = lastBatchInstance->mLodSquaredDistances.size();
+		ret->mLodSquaredDistances.resize(numLod);
 		for (ushort lod = 0; lod < numLod; lod++)
 		{
-			ret->mLodValues[lod] =
-			lastBatchInstance->mLodValues[lod];
+			ret->mLodSquaredDistances[lod] =
+			lastBatchInstance->mLodSquaredDistances[lod];
 		}
 
 
@@ -687,7 +687,7 @@ namespace Ogre {
 		
 			LODBucket* lod = lodIterator.getNext();
 			//create a new lod bucket for the new BatchInstance
-			LODBucket* lodBucket= OGRE_NEW LODBucket(ret, lod->getLod(), lod->getLodValue());
+			LODBucket* lodBucket= OGRE_NEW LODBucket(ret,lod->getLod(),lod->getSquaredDistance());
 
 			//add the lod bucket to the BatchInstance list
 			ret->updateContainers(lodBucket);
@@ -886,11 +886,6 @@ namespace Ogre {
 		}
 		of << "-------------------------------------------------" << std::endl;
 	}
-	//--------------------------------------------------------------------------
-    void InstancedGeometry::setProvideWorldInverses(bool flag)
-    {
-        mProvideWorldInverses = flag;
-    }
 	//---------------------------------------------------------------------
 	void InstancedGeometry::visitRenderables(Renderable::Visitor* visitor, 
 		bool debugRenderables)
@@ -903,8 +898,7 @@ namespace Ogre {
 
 	}
 	//--------------------------------------------------------------------------
-	InstancedGeometry::InstancedObject::InstancedObject(unsigned short index,SkeletonInstance *skeleton, AnimationStateSet*animations)
-		: mIndex(index),
+	InstancedGeometry::InstancedObject::InstancedObject(int index,SkeletonInstance *skeleton, AnimationStateSet*animations):mIndex(index),
 		mTransformation(Matrix4::ZERO),
 		mOrientation(Quaternion::IDENTITY),
 		mScale(Vector3::UNIT_SCALE),
@@ -933,8 +927,7 @@ namespace Ogre {
 			
 	}
 	//--------------------------------------------------------------------------
-	InstancedGeometry::InstancedObject::InstancedObject(unsigned short index)
-		:mIndex(index),
+	InstancedGeometry::InstancedObject::InstancedObject(int index):mIndex(index),
 		mTransformation(Matrix4::ZERO),
 		mOrientation(Quaternion::IDENTITY),
 		mScale(Vector3::UNIT_SCALE),
@@ -998,7 +991,7 @@ namespace Ogre {
                        axisX.z, axisY.z, axisZ.z);
 	}
 	//--------------------------------------------------------------------------
-	Vector3 & InstancedGeometry::InstancedObject::getPosition(void)
+	const Vector3 & InstancedGeometry::InstancedObject::getPosition(void) const
 	{
 		return mPosition;
 	}
@@ -1030,6 +1023,12 @@ namespace Ogre {
 		mScale=scale;
 		needUpdate();
 	}
+
+	const Vector3& InstancedGeometry::InstancedObject::getScale() const
+	{
+		return mScale;
+	}
+
 	//--------------------------------------------------------------------------
 	void InstancedGeometry::InstancedObject::rotate(const Quaternion& q)
 	{
@@ -1124,9 +1123,10 @@ namespace Ogre {
 		SceneManager* mgr, uint32 BatchInstanceID)
 		: MovableObject(name), mParent(parent), mSceneMgr(mgr), mNode(0),
 		mBatchInstanceID(BatchInstanceID), mBoundingRadius(0.0f),
-		mCurrentLod(0),
-        mLodStrategy(0)
+		mCurrentLod(0)
 	{
+		// First LOD mandatory, and always from 0
+		mLodSquaredDistances.push_back(0.0f);
 	}
 	//--------------------------------------------------------------------------
 	InstancedGeometry::BatchInstance::~BatchInstance()
@@ -1157,38 +1157,21 @@ namespace Ogre {
 	void InstancedGeometry::BatchInstance::assign(QueuedSubMesh* qmesh)
 	{
 		mQueuedSubMeshes.push_back(qmesh);
-
-        // Set/check lod strategy
-        const LodStrategy *lodStrategy = qmesh->submesh->parent->getLodStrategy();
-        if (mLodStrategy == 0)
-        {
-            mLodStrategy = lodStrategy;
-
-            // First LOD mandatory, and always from base lod value
-            mLodValues.push_back(mLodStrategy->getBaseValue());
-        }
-        else
-        {
-            if (mLodStrategy != lodStrategy)
-                OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Lod strategies do not match",
-                    "InstancedGeometry::InstancedObject::assign");
-        }
-
-		// update lod values
+		// update lod distances
 		ushort lodLevels = qmesh->submesh->parent->getNumLodLevels();
 		assert(qmesh->geometryLodList->size() == lodLevels);
 
-		while(mLodValues.size() < lodLevels)
+		while(mLodSquaredDistances.size() < lodLevels)
 		{
-			mLodValues.push_back(0.0f);
+			mLodSquaredDistances.push_back(0.0f);
 		}
 		// Make sure LOD levels are max of all at the requested level
 		for (ushort lod = 1; lod < lodLevels; ++lod)
 		{
 			const MeshLodUsage& meshLod =
 				qmesh->submesh->parent->getLodLevel(lod);
-			mLodValues[lod] = std::max(mLodValues[lod],
-				meshLod.value);
+			mLodSquaredDistances[lod] = std::max(mLodSquaredDistances[lod],
+				meshLod.fromDepthSquared);
 		}
 
 		// update bounds
@@ -1208,10 +1191,10 @@ namespace Ogre {
 		mNode->attachObject(this);
 		// We need to create enough LOD buckets to deal with the highest LOD
 		// we encountered in all the meshes queued
-		for (ushort lod = 0; lod < mLodValues.size(); ++lod)
+		for (ushort lod = 0; lod < mLodSquaredDistances.size(); ++lod)
 		{
 			LODBucket* lodBucket =
-				OGRE_NEW LODBucket(this, lod, mLodValues[lod]);
+				OGRE_NEW LODBucket(this, lod, mLodSquaredDistances[lod]);
 			mLodBucketList.push_back(lodBucket);
 			// Now iterate over the meshes and assign to LODs
 			// LOD bucket will pick the right LOD to use
@@ -1231,18 +1214,55 @@ namespace Ogre {
 	//--------------------------------------------------------------------------
 	void InstancedGeometry::BatchInstance::updateBoundingBox()
 	{
+			AxisAlignedBox aabb;
 
-			Vector3 *Positions = OGRE_ALLOC_T(Vector3, mInstancesMap.size(), MEMCATEGORY_GEOMETRY);
-
-			ObjectsMap::iterator objIt;
-			size_t k = 0;
-			for(objIt=mInstancesMap.begin();objIt!=mInstancesMap.end();objIt++)
-			{
-				Positions[k++] = objIt->second->getPosition();
+			//Get the first GeometryBucket to get the aabb
+			LODIterator lodIterator = getLODIterator();
+			if( lodIterator.hasMoreElements() )
+			{			
+				LODBucket* lod = lodIterator.getNext();
+				LODBucket::MaterialIterator matIt = lod->getMaterialIterator();
+				if( matIt.hasMoreElements() )
+				{					
+					MaterialBucket*mat = matIt.getNext();
+					MaterialBucket::GeometryIterator geomIt = mat->getGeometryIterator();
+					if( geomIt.hasMoreElements() )
+					{
+						GeometryBucket *geom = geomIt.getNext();
+						aabb = geom->getAABB();
+					}
+				}
 			}
 
-			LODIterator lodIterator = getLODIterator();
-			while (lodIterator.hasMoreElements())
+			ObjectsMap::iterator objIt;
+			Vector3 vMin( Vector3::ZERO );
+			Vector3 vMax( Vector3::ZERO );
+			if( !mInstancesMap.empty() )
+			{
+				objIt = mInstancesMap.begin();
+				vMin = objIt->second->getPosition() + aabb.getMinimum();
+				vMax = objIt->second->getPosition() + aabb.getMaximum();
+			}
+
+			for( objIt=mInstancesMap.begin(); objIt!=mInstancesMap.end(); objIt++ )
+			{
+				const Vector3 &position = objIt->second->getPosition();
+				const Vector3 &scale	= objIt->second->getScale();
+
+				vMin.x = std::min( vMin.x, position.x + aabb.getMinimum().x * scale.x );
+				vMin.y = std::min( vMin.y, position.y + aabb.getMinimum().y * scale.y );
+				vMin.z = std::min( vMin.z, position.z + aabb.getMinimum().z * scale.z );
+
+				vMax.x = std::max( vMax.x, position.x + aabb.getMaximum().x * scale.x );
+				vMax.y = std::max( vMax.y, position.y + aabb.getMaximum().y * scale.y );
+				vMax.z = std::max( vMax.z, position.z + aabb.getMaximum().z * scale.z );
+			}
+
+			aabb.setExtents( vMin, vMax );
+
+			//Now apply the bounding box
+			lodIterator = getLODIterator();
+			while( lodIterator.hasMoreElements() )
 			{			
 				LODBucket* lod = lodIterator.getNext();
 				LODBucket::MaterialIterator matIt = lod->getMaterialIterator();
@@ -1250,45 +1270,17 @@ namespace Ogre {
 				{					
 					MaterialBucket*mat = matIt.getNext();
 					MaterialBucket::GeometryIterator geomIt = mat->getGeometryIterator();
-					while(geomIt.hasMoreElements())
+					while( geomIt.hasMoreElements() )
 					{
-						// to generate the boundingBox
-						Real Xmin= Positions[0].x;
-						Real Ymin= Positions[0].y;
-						Real Zmin= Positions[0].z;
-
-						Real Xmax= Positions[0].x;
-						Real Ymax= Positions[0].y;
-						Real Zmax= Positions[0].z;
-
-						GeometryBucket*geom=geomIt.getNext();
-						for (size_t i = 0; i < mInstancesMap.size (); i++)
-						{
-							if(Positions[i].x<Xmin)
-								Xmin = Positions[i].x;
-							if(Positions[i].y<Ymin)
-								Ymin = Positions[i].y;
-							if(Positions[i].z<Zmin)
-								Zmin = Positions[i].z;
-							if(Positions[i].x>Xmax)
-								Xmax = Positions[i].x;
-							if(Positions[i].y>Ymax)
-								Ymax = Positions[i].y;
-							if(Positions[i].z>Zmax)
-								Zmax = Positions[i].z;
-						}
-						geom->setBoundingBox(AxisAlignedBox(Xmin,Ymin,Zmin,Xmax,Ymax,Zmax));						
+						GeometryBucket *geom = geomIt.getNext();
+						geom->setBoundingBox( aabb );
                         this->mNode->_updateBounds();
-						mAABB=AxisAlignedBox(
-							Vector3(Xmin,Ymin,Zmin) + geom->getAABB().getMinimum(),
-							Vector3(Xmax,Ymax,Zmax) + geom->getAABB().getMaximum());
-					
+						mAABB = aabb;
 					}
 				}
 			}
-
-			OGRE_FREE(Positions, MEMCATEGORY_GEOMETRY);		
 	}
+
 	
 	
 	
@@ -1298,12 +1290,12 @@ namespace Ogre {
 	
 	
 	//--------------------------------------------------------------------------
-	void InstancedGeometry::BatchInstance::addInstancedObject(unsigned short index,InstancedObject* object)
+	void InstancedGeometry::BatchInstance::addInstancedObject(int index,InstancedObject* object)
 	{
 		mInstancesMap[index]=object;
 	}
 	//--------------------------------------------------------------------------
-	 InstancedGeometry::InstancedObject* InstancedGeometry::BatchInstance::isInstancedObjectPresent(unsigned short index)
+	 InstancedGeometry::InstancedObject* InstancedGeometry::BatchInstance::isInstancedObjectPresent(int index)
 	{
 		if (mInstancesMap.find(index)!=mInstancesMap.end())
 			return mInstancesMap[index];
@@ -1324,28 +1316,44 @@ namespace Ogre {
 	//--------------------------------------------------------------------------
 	void InstancedGeometry::BatchInstance::_notifyCurrentCamera(Camera* cam)
 	{
-        // Set camera
-        mCamera = cam;
+		// Calculate squared view depth
+		Vector3 diff = cam->getLodCamera()->getDerivedPosition() ;
+		Real squaredDepth = diff.squaredLength();
 
+		// Determine whether to still render
+		Real renderingDist = mParent->getRenderingDistance();
+		if (renderingDist > 0)
+		{
+			// Max distance to still render
+			Real maxDist = renderingDist + mBoundingRadius;
+			if (squaredDepth > Math::Sqr(maxDist))
+			{
+				mBeyondFarDistance = true;
+				return;
+			}
+		}
 
-        // Cache squared view depth for use by GeometryBucket
-        mSquaredViewDepth = mParentNode->getSquaredViewDepth(cam->getLodCamera());
+		mBeyondFarDistance = false;
 
-        // No lod strategy set yet, skip (this indicates that there are no submeshes)
-        if (mLodStrategy == 0)
-            return;
+		// Distance from the edge of the bounding sphere
+		mCamDistanceSquared = squaredDepth - mBoundingRadius * mBoundingRadius;
+		// Clamp to 0
+		mCamDistanceSquared = std::max(static_cast<Real>(0.0), mCamDistanceSquared);
 
-        // Sanity check
-        assert(!mLodValues.empty());
+		// Determine active lod
+		mCurrentLod = static_cast<ushort>(mLodSquaredDistances.size() - 1);
+		assert (!mLodSquaredDistances.empty());
+		mCurrentLod = static_cast <unsigned short> (mLodSquaredDistances.size() - 1);
+	
+		for (ushort i = 0; i < mLodSquaredDistances.size(); ++i)
+		{
+			if (mLodSquaredDistances[i] > mCamDistanceSquared)
+			{
+				mCurrentLod = i - 1;
+				break;
+			}
+		}
 
-        // Calculate lod value
-        Real lodValue = mLodStrategy->getValue(this, cam);
-
-        // Store lod value for this strategy
-        mLodValue = lodValue;
-
-        // Get lod index
-        mCurrentLod = mLodStrategy->getIndex(lodValue, mLodValues);
 	}
 	//--------------------------------------------------------------------------
 	const AxisAlignedBox& InstancedGeometry::BatchInstance::getBoundingBox(void) const
@@ -1375,7 +1383,7 @@ namespace Ogre {
 		}
 	
 		mLodBucketList[mCurrentLod]->addRenderables(queue, mRenderQueueID,
-			mLodValue);
+			mCamDistanceSquared);
 	}
 	//---------------------------------------------------------------------
 	void InstancedGeometry::BatchInstance::visitRenderables(
@@ -1422,8 +1430,8 @@ namespace Ogre {
 	//--------------------------------------------------------------------------
 	//--------------------------------------------------------------------------
 	InstancedGeometry::LODBucket::LODBucket(BatchInstance* parent, unsigned short lod,
-		Real lodValue)
-		: mParent(parent), mLod(lod), mLodValue(lodValue)
+		Real lodDist)
+		: mParent(parent), mLod(lod), mSquaredDistance(lodDist)
 	{
 	}
 	//--------------------------------------------------------------------------
@@ -1492,14 +1500,14 @@ namespace Ogre {
 	}
 	//--------------------------------------------------------------------------
 	void InstancedGeometry::LODBucket::addRenderables(RenderQueue* queue,
-		uint8 group, Real lodValue)
+		uint8 group, Real camDistanceSquared)
 	{
 		// Just pass this on to child buckets
 		MaterialBucketMap::iterator i, iend;
 		iend =  mMaterialBucketMap.end();
 		for (i = mMaterialBucketMap.begin(); i != iend; ++i)
 		{
-			i->second->addRenderables(queue, group, lodValue);
+			i->second->addRenderables(queue, group, camDistanceSquared);
 		}
 	}
 	//---------------------------------------------------------------------
@@ -1526,7 +1534,7 @@ namespace Ogre {
 	{
 		of << "LOD Bucket " << mLod << std::endl;
 		of << "------------------" << std::endl;
-		of << "Lod Value: " << mLodValue << std::endl;
+		of << "Distance: " << Math::Sqrt(mSquaredDistance) << std::endl;
 		of << "Number of Materials: " << mMaterialBucketMap.size() << std::endl;
 		for (MaterialBucketMap::const_iterator i = mMaterialBucketMap.begin();
 			i != mMaterialBucketMap.end(); ++i)
@@ -1540,10 +1548,7 @@ namespace Ogre {
 	//--------------------------------------------------------------------------
 	InstancedGeometry::MaterialBucket::MaterialBucket(LODBucket* parent,
 		const String& materialName)
-		: mParent(parent)
-		, mMaterialName(materialName)
-		, mTechnique(0)
-		, mLastIndex(0)
+		: mParent(parent), mMaterialName(materialName),mLastIndex(0)
 	{
 						mMaterial = MaterialManager::getSingleton().getByName(mMaterialName);
 	}
@@ -1615,21 +1620,12 @@ namespace Ogre {
 	}
 	//--------------------------------------------------------------------------
 	void InstancedGeometry::MaterialBucket::addRenderables(RenderQueue* queue,
-		uint8 group, Real lodValue)
+		uint8 group, Real camDistanceSquared)
 	{
-        // Get batch instance
-        BatchInstance *batchInstance = mParent->getParent();
-
-        // Get material lod strategy
-        const LodStrategy *materialLodStrategy = mMaterial->getLodStrategy();
-
-        // If material strategy doesn't match, recompute lod value with correct strategy
-        if (materialLodStrategy != batchInstance->mLodStrategy)
-            lodValue = materialLodStrategy->getValue(batchInstance, batchInstance->mCamera);
 
 		// Determine the current material technique
 		mTechnique = mMaterial->getBestTechnique(
-			mMaterial->getLodIndex(lodValue));	
+			mMaterial->getLodIndexSquaredDepth(camDistanceSquared));	
 		GeometryBucketList::iterator i, iend;
 		iend =  mGeometryBucketList.end();
 			
@@ -1742,28 +1738,28 @@ namespace Ogre {
 		}
 
 
-		size_t offset=0;	
+		size_t offset=0, tcOffset=0;
 		unsigned short texCoordOffset=0;
 		unsigned short texCoordSource=0;
-
-		const Ogre::VertexElement*elem=mRenderOp.vertexData->vertexDeclaration->findElementBySemantic(VES_TEXTURE_COORDINATES);
-	
-		texCoordSource=elem->getSource();
 		for(ushort i=0;i<mRenderOp.vertexData->vertexDeclaration->getElementCount();i++)
 		{
+		
 			if(mRenderOp.vertexData->vertexDeclaration->getElement(i)->getSemantic() == VES_TEXTURE_COORDINATES)
 			{
 				texCoordOffset++;
+				texCoordSource=mRenderOp.vertexData->vertexDeclaration->getElement(i)->getSource();
+				tcOffset=mRenderOp.vertexData->vertexDeclaration->getElement(i)->getOffset()+VertexElement::getTypeSize(
+						mRenderOp.vertexData->vertexDeclaration->getElement(i)->getType());
 			}
-			if(texCoordSource==mRenderOp.vertexData->vertexDeclaration->getElement(i)->getSource())
-			{
-				offset+= VertexElement::getTypeSize(
-				mRenderOp.vertexData->vertexDeclaration->getElement(i)->getType());
-			}		
+			offset+= VertexElement::getTypeSize(
+			mRenderOp.vertexData->vertexDeclaration->getElement(i)->getType());
 		}
 
-		mRenderOp.vertexData->vertexDeclaration->addElement(texCoordSource, offset, VET_FLOAT1, VES_TEXTURE_COORDINATES, texCoordOffset);
- 		mTexCoordIndex = texCoordOffset;
+		mRenderOp.vertexData->vertexDeclaration->addElement(texCoordSource,tcOffset, VET_FLOAT1, VES_TEXTURE_COORDINATES,texCoordOffset);
+
+		mTexCoordIndex=texCoordOffset;
+		
+		
 
 	}
 	//--------------------------------------------------------------------------
@@ -1817,31 +1813,13 @@ namespace Ogre {
 			itbegin=mParent->getParent()->getParent()->getInstancesMap().begin();
 			itend=mParent->getParent()->getParent()->getInstancesMap().end();
 
-            if( mParent->getParent()->getParent()->getParent()->getProvideWorldInverses() )
-            {
-                // For shaders that use normal maps on instanced geometry objects,
-                // we can pass the world transform inverse matrices alongwith with
-                // the world matrices. This reduces our usable geometry limit by
-                // half in each instance.
-			    for (it=itbegin;
-				    it!=itend;
-				    ++it,xform+=2)
-			    {
-    				
-					    *xform = it->second->mTransformation;
-                        *(xform+1) = xform->inverse();
-			    }
-            }
-            else
-            {
-                for (it=itbegin;
-                    it!=itend;
-                    ++it,xform++)
-                {
-
-                    *xform = it->second->mTransformation;
-                }
-            }
+			for (it=itbegin;
+				it!=itend;
+				++it,++xform)
+			{
+				
+					*xform = it->second->mTransformation;
+			}
 		}
 		else
 		{
@@ -1854,21 +1832,10 @@ namespace Ogre {
 				++it)
 			{
 				
-                if( mParent->getParent()->getParent()->getParent()->getProvideWorldInverses() )
-                {
-				    for(int i=0;i<it->second->mNumBoneMatrices;++i,xform+=2)
-				    {
-					    *xform = it->second->mBoneWorldMatrices[i];
-                        *(xform+1) = xform->inverse();
-				    }
-                }
-                else
-                {
-                    for(int i=0;i<it->second->mNumBoneMatrices;++i,xform++)
-                    {
-                        *xform = it->second->mBoneWorldMatrices[i];
-                    }
-                }
+				for(int i=0;i<it->second->mNumBoneMatrices;++i,++xform)
+				{
+					*xform = it->second->mBoneWorldMatrices[i];
+				}
 			}
 				
 		}
@@ -1877,28 +1844,22 @@ namespace Ogre {
 	//--------------------------------------------------------------------------
 	unsigned short InstancedGeometry::GeometryBucket::getNumWorldTransforms(void) const 
 	{
-        bool bSendInverseXfrm = mParent->getParent()->getParent()->getParent()->getProvideWorldInverses();
-
 		if(mBatch->getBaseSkeleton().isNull())
 		{
 			BatchInstance* batch=mParent->getParent()->getParent();
-            return static_cast<ushort>(batch->getInstancesMap().size() * (bSendInverseXfrm ? 2 : 1));
+			return static_cast<ushort>(batch->getInstancesMap().size());
 		}
 		else
 		{
 			BatchInstance* batch=mParent->getParent()->getParent();
 			return static_cast<ushort>(
-				mBatch->getBaseSkeleton()->getNumBones()*batch->getInstancesMap().size() * (bSendInverseXfrm ? 2 : 1));
+				mBatch->getBaseSkeleton()->getNumBones()*batch->getInstancesMap().size());
 		}
 	}
 	//--------------------------------------------------------------------------
 	Real InstancedGeometry::GeometryBucket::getSquaredViewDepth(const Camera* cam) const
 	{
-        const BatchInstance *batchInstance = mParent->getParent()->getParent();
-        if (cam == batchInstance->mCamera)
-            return batchInstance->mSquaredViewDepth;
-        else
-            return batchInstance->getParentNode()->getSquaredViewDepth(cam->getLodCamera());
+		return mParent->getParent()->getSquaredDistance();
 	}
 	//--------------------------------------------------------------------------
 	const LightList& InstancedGeometry::GeometryBucket::getLights(void) const
@@ -1961,8 +1922,8 @@ namespace Ogre {
 		ushort b;
 		//ushort posBufferIdx = dcl->findElementBySemantic(VES_POSITION)->getSource();
 	
-		vector<uchar*>::type destBufferLocks;
-		vector<VertexDeclaration::VertexElementList>::type bufferElements;
+		std::vector<uchar*> destBufferLocks;
+		std::vector<VertexDeclaration::VertexElementList> bufferElements;
 
 		for (b = 0; b < binds->getBufferCount(); ++b)
 		{
@@ -1999,7 +1960,7 @@ namespace Ogre {
 		Ymax=0;
 		Zmax=0;
 		QueuedGeometry* precGeom = *(mQueuedGeometry.begin());
-		unsigned short index=0;
+		int index=0;
 		if( mParent->getLastIndex()!=0)
 			index=mParent->getLastIndex()+1;
 
@@ -2100,7 +2061,7 @@ namespace Ogre {
 						if(elem.getSemantic()==VES_TEXTURE_COORDINATES && elem.getIndex()==mTexCoordIndex)
 						{
 							isTheBufferWithIndex=true;
-							*pDstReal++ = static_cast<float>(index);
+							*pDstReal++=index;
 						}
 						else
 						{

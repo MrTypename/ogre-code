@@ -4,25 +4,26 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -37,7 +38,6 @@ CompositionPass::CompositionPass(CompositionTargetPass *parent):
 	mIdentifier(0),
 	mFirstRenderQueue(RENDER_QUEUE_BACKGROUND),
 	mLastRenderQueue(RENDER_QUEUE_SKIES_LATE),
-	mMaterialScheme(StringUtil::BLANK),
     mClearBuffers(FBT_COLOUR|FBT_DEPTH),
     mClearColour(0.0,0.0,0.0,0.0),
 	mClearDepth(1.0f),
@@ -54,9 +54,7 @@ CompositionPass::CompositionPass(CompositionTargetPass *parent):
     mQuadLeft(-1),
     mQuadTop(1),
     mQuadRight(1),
-    mQuadBottom(-1),
-	mQuadFarCorners(false),
-	mQuadFarCornersViewSpace(false)
+    mQuadBottom(-1)
 {
 }
 //-----------------------------------------------------------------------
@@ -104,7 +102,7 @@ void CompositionPass::setClearBuffers(uint32 val)
     mClearBuffers = val;
 }
 //-----------------------------------------------------------------------
-uint32 CompositionPass::getClearBuffers() const
+uint32 CompositionPass::getClearBuffers()
 {
     return mClearBuffers;
 }
@@ -114,7 +112,7 @@ void CompositionPass::setClearColour(ColourValue val)
     mClearColour = val;
 }
 //-----------------------------------------------------------------------
-const ColourValue &CompositionPass::getClearColour() const
+const ColourValue &CompositionPass::getClearColour()
 {
     return mClearColour;
 }
@@ -125,13 +123,13 @@ void CompositionPass::setInput(size_t id, const String &input, size_t mrtIndex)
     mInputs[id] = InputTex(input, mrtIndex);
 }
 //-----------------------------------------------------------------------
-const CompositionPass::InputTex &CompositionPass::getInput(size_t id) const
+const CompositionPass::InputTex &CompositionPass::getInput(size_t id)
 {
     assert(id<OGRE_MAX_TEXTURE_LAYERS);
     return mInputs[id];
 }
 //-----------------------------------------------------------------------
-size_t CompositionPass::getNumInputs() const
+size_t CompositionPass::getNumInputs()
 {
     size_t count = 0;
     for(size_t x=0; x<OGRE_MAX_TEXTURE_LAYERS; ++x)
@@ -160,7 +158,7 @@ void CompositionPass::setFirstRenderQueue(uint8 id)
 	mFirstRenderQueue = id;
 }
 //-----------------------------------------------------------------------
-uint8 CompositionPass::getFirstRenderQueue() const
+uint8 CompositionPass::getFirstRenderQueue()
 {
 	return mFirstRenderQueue;
 }
@@ -170,17 +168,7 @@ void CompositionPass::setLastRenderQueue(uint8 id)
 	mLastRenderQueue = id;
 }
 //-----------------------------------------------------------------------
-void CompositionPass::setMaterialScheme(const String& schemeName)
-{
-	mMaterialScheme = schemeName;
-}
-//-----------------------------------------------------------------------
-const String& CompositionPass::getMaterialScheme(void) const
-{
-	return mMaterialScheme;
-}
-//-----------------------------------------------------------------------
-uint8 CompositionPass::getLastRenderQueue() const
+uint8 CompositionPass::getLastRenderQueue()
 {
 	return mLastRenderQueue;
 }
@@ -189,7 +177,7 @@ void CompositionPass::setClearDepth(Real depth)
 {
 	mClearDepth = depth;
 }
-Real CompositionPass::getClearDepth() const
+Real CompositionPass::getClearDepth()
 {
 	return mClearDepth;
 }
@@ -197,7 +185,7 @@ void CompositionPass::setClearStencil(uint32 value)
 {
 	mClearStencil = value;
 }
-uint32 CompositionPass::getClearStencil() const
+uint32 CompositionPass::getClearStencil()
 {
 	return mClearStencil;
 }
@@ -206,7 +194,7 @@ void CompositionPass::setStencilCheck(bool value)
 {
 	mStencilCheck = value;
 }
-bool CompositionPass::getStencilCheck() const
+bool CompositionPass::getStencilCheck()
 {
 	return mStencilCheck;
 }
@@ -214,7 +202,7 @@ void CompositionPass::setStencilFunc(CompareFunction value)
 {
 	mStencilFunc = value;
 }
-CompareFunction CompositionPass::getStencilFunc() const
+CompareFunction CompositionPass::getStencilFunc()
 {
 	return mStencilFunc;
 } 
@@ -222,7 +210,7 @@ void CompositionPass::setStencilRefValue(uint32 value)
 {
 	mStencilRefValue = value;
 }
-uint32 CompositionPass::getStencilRefValue() const
+uint32 CompositionPass::getStencilRefValue()
 {
 	return mStencilRefValue;
 }
@@ -230,7 +218,7 @@ void CompositionPass::setStencilMask(uint32 value)
 {
 	mStencilMask = value;
 }
-uint32 CompositionPass::getStencilMask() const
+uint32 CompositionPass::getStencilMask()
 {
 	return mStencilMask;
 }
@@ -238,7 +226,7 @@ void CompositionPass::setStencilFailOp(StencilOperation value)
 {
 	mStencilFailOp = value;
 }
-StencilOperation CompositionPass::getStencilFailOp() const
+StencilOperation CompositionPass::getStencilFailOp()
 {
 	return mStencilFailOp;
 }
@@ -246,7 +234,7 @@ void CompositionPass::setStencilDepthFailOp(StencilOperation value)
 {
 	mStencilDepthFailOp = value;
 }
-StencilOperation CompositionPass::getStencilDepthFailOp() const
+StencilOperation CompositionPass::getStencilDepthFailOp()
 {
 	return mStencilDepthFailOp;
 }
@@ -254,7 +242,7 @@ void CompositionPass::setStencilPassOp(StencilOperation value)
 {
 	mStencilPassOp = value;
 }
-StencilOperation CompositionPass::getStencilPassOp() const
+StencilOperation CompositionPass::getStencilPassOp()
 {
 	return mStencilPassOp;
 }
@@ -262,7 +250,7 @@ void CompositionPass::setStencilTwoSidedOperation(bool value)
 {
 	mStencilTwoSidedOperation = value;
 }
-bool CompositionPass::getStencilTwoSidedOperation() const
+bool CompositionPass::getStencilTwoSidedOperation()
 {
 	return mStencilTwoSidedOperation;
 }
@@ -281,29 +269,6 @@ bool CompositionPass::getQuadCorners(Real & left,Real & top,Real & right,Real & 
     right = mQuadRight;
     bottom = mQuadBottom;
     return mQuadCornerModified;
-}
-void CompositionPass::setQuadFarCorners(bool farCorners, bool farCornersViewSpace)
-{
-	mQuadFarCorners = farCorners;
-	mQuadFarCornersViewSpace = farCornersViewSpace;
-}
-bool CompositionPass::getQuadFarCorners() const
-{
-	return mQuadFarCorners;
-}
-bool CompositionPass::getQuadFarCornersViewSpace() const
-{
-	return mQuadFarCornersViewSpace;
-}
-		
-void CompositionPass::setCustomType(const String& customType)
-{
-	mCustomType = customType;
-}
-
-const String& CompositionPass::getCustomType() const
-{
-	return mCustomType;
 }
 //-----------------------------------------------------------------------
 bool CompositionPass::_isSupported(void)

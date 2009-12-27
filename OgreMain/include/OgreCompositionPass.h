@@ -4,25 +4,26 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2000-2006 Torus Knot Software Ltd
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 #ifndef __CompositionPass_H__
@@ -34,12 +35,6 @@ THE SOFTWARE.
 #include "OgreRenderQueue.h"
 
 namespace Ogre {
-	/** \addtogroup Core
-	*  @{
-	*/
-	/** \addtogroup Effects
-	*  @{
-	*/
 	/** Object representing one pass or operation in a composition sequence. This provides a 
 		method to conveniently interleave RenderSystem commands between Render Queues.
 	 */
@@ -56,8 +51,7 @@ namespace Ogre {
             PT_CLEAR,           // Clear target to one colour
 			PT_STENCIL,			// Set stencil operation
             PT_RENDERSCENE,     // Render the scene or part of it
-            PT_RENDERQUAD,      // Render a full screen quad
-			PT_RENDERCUSTOM		// Render a custom sequence
+            PT_RENDERQUAD       // Render a full screen quad
         };
         
         /** Set the type of composition pass */
@@ -91,7 +85,7 @@ namespace Ogre {
 		/** Get the first render queue to be rendered in this pass (inclusive) 
 			@note applies when PassType is RENDERSCENE
 		*/
-		uint8 getFirstRenderQueue() const;
+		uint8 getFirstRenderQueue();
 		/** Set the last render queue to be rendered in this pass (inclusive) 
 			@note applies when PassType is RENDERSCENE
 		*/
@@ -99,20 +93,7 @@ namespace Ogre {
 		/** Get the last render queue to be rendered in this pass (inclusive) 
 			@note applies when PassType is RENDERSCENE
 		*/
-		uint8 getLastRenderQueue() const;
-
-		/** Set the material scheme used by this pass.
-		@remarks
-			Only applicable to passes that render the scene.
-			@see Technique::setScheme.
-		*/
-		void setMaterialScheme(const String& schemeName);
-		/** Get the material scheme used by this pass.
-		@remarks
-			Only applicable to passes that render the scene.
-			@see Technique::setScheme.
-		*/
-		const String& getMaterialScheme(void) const;
+		uint8 getLastRenderQueue();
 
 		/** Would be nice to have for RENDERSCENE:
 			flags to:
@@ -128,7 +109,7 @@ namespace Ogre {
         /** Get the viewport clear buffers.
 			@note applies when PassType is CLEAR
         */
-        uint32 getClearBuffers() const;
+        uint32 getClearBuffers();
         /** Set the viewport clear colour (defaults to 0,0,0,0) 
 			@note applies when PassType is CLEAR
 		 */
@@ -136,7 +117,7 @@ namespace Ogre {
         /** Get the viewport clear colour (defaults to 0,0,0,0)	
 			@note applies when PassType is CLEAR
 		 */
-        const ColourValue &getClearColour() const;
+        const ColourValue &getClearColour();
         /** Set the viewport clear depth (defaults to 1.0) 
 			@note applies when PassType is CLEAR
 		*/
@@ -144,7 +125,7 @@ namespace Ogre {
         /** Get the viewport clear depth (defaults to 1.0) 
 			@note applies when PassType is CLEAR
 		*/
-        Real getClearDepth() const;
+        Real getClearDepth();
 		/** Set the viewport clear stencil value (defaults to 0) 
 			@note applies when PassType is CLEAR
 		*/
@@ -152,7 +133,7 @@ namespace Ogre {
         /** Get the viewport clear stencil value (defaults to 0) 
 			@note applies when PassType is CLEAR
 		*/
-        uint32 getClearStencil() const;
+        uint32 getClearStencil();
 
 		/** Set stencil check on or off.
 			@note applies when PassType is STENCIL
@@ -161,7 +142,7 @@ namespace Ogre {
 		/** Get stencil check enable.
 			@note applies when PassType is STENCIL
 		*/
-		bool getStencilCheck() const;
+		bool getStencilCheck();
 		/** Set stencil compare function.
 			@note applies when PassType is STENCIL
 		*/
@@ -169,7 +150,7 @@ namespace Ogre {
 		/** Get stencil compare function.
 			@note applies when PassType is STENCIL
 		*/
-		CompareFunction getStencilFunc() const; 
+		CompareFunction getStencilFunc(); 
 		/** Set stencil reference value.
 			@note applies when PassType is STENCIL
 		*/
@@ -177,7 +158,7 @@ namespace Ogre {
 		/** Get stencil reference value.
 			@note applies when PassType is STENCIL
 		*/
-		uint32 getStencilRefValue() const;
+		uint32 getStencilRefValue();
 		/** Set stencil mask.
 			@note applies when PassType is STENCIL
 		*/
@@ -185,7 +166,7 @@ namespace Ogre {
 		/** Get stencil mask.
 			@note applies when PassType is STENCIL
 		*/
-		uint32 getStencilMask() const;
+		uint32 getStencilMask();
 		/** Set stencil fail operation.
 			@note applies when PassType is STENCIL
 		*/
@@ -193,7 +174,7 @@ namespace Ogre {
 		/** Get stencil fail operation.
 			@note applies when PassType is STENCIL
 		*/
-		StencilOperation getStencilFailOp() const;
+		StencilOperation getStencilFailOp();
 		/** Set stencil depth fail operation.
 			@note applies when PassType is STENCIL
 		*/
@@ -201,7 +182,7 @@ namespace Ogre {
 		/** Get stencil depth fail operation.
 			@note applies when PassType is STENCIL
 		*/
-		StencilOperation getStencilDepthFailOp() const;
+		StencilOperation getStencilDepthFailOp();
 		/** Set stencil pass operation.
 			@note applies when PassType is STENCIL
 		*/
@@ -209,7 +190,7 @@ namespace Ogre {
 		/** Get stencil pass operation.
 			@note applies when PassType is STENCIL
 		*/
-		StencilOperation getStencilPassOp() const;
+		StencilOperation getStencilPassOp();
 		/** Set two sided stencil operation.
 			@note applies when PassType is STENCIL
 		*/
@@ -217,7 +198,7 @@ namespace Ogre {
 		/** Get two sided stencil operation.
 			@note applies when PassType is STENCIL
 		*/
-		bool getStencilTwoSidedOperation() const;
+		bool getStencilTwoSidedOperation();
 
 		/// Inputs (for material used for rendering the quad)
 		struct InputTex
@@ -243,12 +224,12 @@ namespace Ogre {
             @param id    Input to get. Must be in 0..OGRE_MAX_TEXTURE_LAYERS-1.
 			@note applies when PassType is RENDERQUAD 
         */
-        const InputTex &getInput(size_t id) const;
+        const InputTex &getInput(size_t id);
         
         /** Get the number of inputs used.
 			@note applies when PassType is RENDERQUAD 
         */
-        size_t getNumInputs() const;
+        size_t getNumInputs();
         
         /** Clear all inputs.
 			@note applies when PassType is RENDERQUAD 
@@ -274,33 +255,6 @@ namespace Ogre {
          */
         bool getQuadCorners(Real & left,Real & top,Real & right,Real & bottom) const;
             
-		/** Sets the use of camera frustum far corners provided in the quad's normals
-			@note applies when PassType is RENDERQUAD 
-		*/
-		void setQuadFarCorners(bool farCorners, bool farCornersViewSpace);
-
-		/** Returns true if camera frustum far corners are provided in the quad.
-			@note applies when PassType is RENDERQUAD 
-		*/
-		bool getQuadFarCorners() const;
-
-		/** Returns true if the far corners provided in the quad are in view space
-			@note applies when PassType is RENDERQUAD 
-		*/
-		bool getQuadFarCornersViewSpace() const;
-
-		/** Set the type name of this custom composition pass.
-			@note applies when PassType is RENDERCUSTOM
-			@see CompositorManager::registerCustomCompositionPass
-		*/
-		void setCustomType(const String& customType);
-
-		/** Get the type name of this custom composition pass.
-			@note applies when PassType is RENDERCUSTOM
-			@see CompositorManager::registerCustomCompositionPass
-		*/
-		const String& getCustomType() const;
-
     private:
         /// Parent technique
         CompositionTargetPass *mParent;
@@ -313,8 +267,6 @@ namespace Ogre {
         /// [first,last] render queue to render this pass (in case of PT_RENDERSCENE)
 		uint8 mFirstRenderQueue;
 		uint8 mLastRenderQueue;
-		/// Material scheme name
-		String mMaterialScheme;
         /// Clear buffers (in case of PT_CLEAR)
         uint32 mClearBuffers;
         /// Clear colour (in case of PT_CLEAR)
@@ -343,13 +295,7 @@ namespace Ogre {
         Real mQuadTop;
         Real mQuadRight;
         Real mQuadBottom;
-
-		bool mQuadFarCorners, mQuadFarCornersViewSpace;
-		//The type name of the custom composition pass.
-		String mCustomType;
     };
-	/** @} */
-	/** @} */
 
 }
 

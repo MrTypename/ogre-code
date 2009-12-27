@@ -91,7 +91,7 @@ namespace Ogre
 	void D3D10Texture::loadImage( const Image &img )
 	{
 		// Use OGRE its own codecs
-		vector<const Image*>::type imagePtrs;
+		std::vector<const Image*> imagePtrs;
 		imagePtrs.push_back(&img);
 		_loadImages( imagePtrs );
 	}
@@ -118,19 +118,16 @@ namespace Ogre
 	//---------------------------------------------------------------------
 	void D3D10Texture::_loadTex()
 	{
-		size_t pos = mName.find_last_of(".");
-		String ext = mName.substr(pos+1);
-		String baseName = mName.substr(0, pos);
 		if(this->getTextureType() == TEX_TYPE_CUBE_MAP)
 		{
 			// Load from 6 separate files
 			// Use OGRE its own codecs
-		//	String baseName;
-		//	size_t pos = mName.find_last_of(".");
-			
-		//	if ( pos != String::npos )
-		//		ext = mName.substr(pos+1);
-			vector<Image>::type images(6);
+			String baseName, ext;
+			size_t pos = mName.find_last_of(".");
+			baseName = mName.substr(0, pos);
+			if ( pos != String::npos )
+				ext = mName.substr(pos+1);
+			std::vector<Image> images(6);
 			ConstImagePtrList imagePtrs;
 			static const String suffixes[6] = {"_rt", "_lf", "_up", "_dn", "_fr", "_bk"};
 
@@ -164,51 +161,18 @@ namespace Ogre
 		else
 		{
 			Image img;
-			DataStreamPtr dstream ;
 			// find & load resource data intro stream to allow resource
 			// group changes if required
-			if(ResourceGroupManager::getSingleton().resourceExists(mGroup,mName))
-			{
-				dstream = 
-					ResourceGroupManager::getSingleton().openResource(
-					mName, mGroup, true, this);
-			}
-			else
-			{
-				LogManager::getSingleton().logMessage("D3D10 : File "+mName+ " doesn't Exist ,Loading Missing.png instead ");
-				mName="Missing.png";
-				dstream =
-					ResourceGroupManager::getSingleton().openResource(
-					mName, ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true, this);
-			}
+			DataStreamPtr dstream = 
+				ResourceGroupManager::getSingleton().openResource(
+				mName, mGroup, true, this);
 
-		
-			if(ext=="dds")
-			{
-				HRESULT hr;
+			size_t pos = mName.find_last_of(".");
+			String ext = mName.substr(pos+1);
 
-				MemoryDataStreamPtr memoryptr=MemoryDataStreamPtr(new MemoryDataStream(dstream));
-				// Load the Texture
-				hr = D3DX10CreateShaderResourceViewFromMemory( mDevice.get(),
-										memoryptr->getPtr(),
-										memoryptr->size(),
-										NULL,
-										NULL, 
-										&mpShaderResourceView, 
-										NULL );
-				if( FAILED( hr ) )
-				{
-					LogManager::getSingleton().logMessage("D3D10 : "+mName+" Could not be loaded");
-				}
-				D3D10_SHADER_RESOURCE_VIEW_DESC pDesc;
-				mpShaderResourceView->GetDesc(&pDesc);
-				int a=0;
-			}
-			else
-			{
-				img.load(dstream, ext);
-				loadImage(img);
-			}
+
+			img.load(dstream, ext);
+			loadImage(img);
 		}
 	}
 	//---------------------------------------------------------------------
@@ -262,7 +226,7 @@ namespace Ogre
 		DXGI_FORMAT d3dPF = this->_chooseD3DFormat();
 
 		// Use D3DX to help us create the texture, this way it can adjust any relevant sizes
-		UINT numMips = static_cast<UINT>(mNumRequestedMipmaps );
+		UINT numMips = static_cast<UINT>(mNumRequestedMipmaps + 1);
 
 
 
@@ -342,17 +306,7 @@ namespace Ogre
 		DXGI_FORMAT d3dPF = this->_chooseD3DFormat();
 
 		// Use D3DX to help us create the texture, this way it can adjust any relevant sizes
-		UINT numMips = 0;
-		
-		if (mNumRequestedMipmaps == MIP_UNLIMITED)
-		{
-			numMips = 0;
-			mNumMipmaps = 0; // TODO - get this value from the created texture
-		}
-		else
-		{
-			numMips = static_cast<UINT>(mNumRequestedMipmaps + 1);
-		}
+		UINT numMips = static_cast<UINT>(mNumRequestedMipmaps + 1);
 
 		D3D10_TEXTURE2D_DESC desc;
 		desc.Width			= static_cast<UINT>(mSrcWidth);
@@ -762,8 +716,6 @@ namespace Ogre
 		ID3D10Resource * pBackBuffer = buffer->getParentTexture()->getTextureResource();
 
 		D3D10_RENDER_TARGET_VIEW_DESC RTVDesc;
-		ZeroMemory( &RTVDesc, sizeof(RTVDesc) );
-
 		RTVDesc.Format = buffer->getParentTexture()->getShaderResourceViewDesc().Format;
 		switch(buffer->getParentTexture()->getShaderResourceViewDesc().ViewDimension)
 		{
@@ -811,7 +763,7 @@ namespace Ogre
 		descDepth.Height = mHeight;
 		descDepth.MipLevels = 1;
 		descDepth.ArraySize = 1;
-		descDepth.Format = DXGI_FORMAT_R32_TYPELESS;
+		descDepth.Format = DXGI_FORMAT_D16_UNORM;
 		descDepth.SampleDesc.Count = 1;
 		descDepth.SampleDesc.Quality = 0;
 		descDepth.Usage = D3D10_USAGE_DEFAULT;
@@ -830,7 +782,7 @@ namespace Ogre
 
 		// Create the depth stencil view
 		D3D10_DEPTH_STENCIL_VIEW_DESC descDSV;
-		descDSV.Format = DXGI_FORMAT_D32_FLOAT;
+		descDSV.Format = descDepth.Format;
 		descDSV.ViewDimension = D3D10_DSV_DIMENSION_TEXTURE2D;
 		descDSV.Texture2D.MipSlice = 0;
 		hr = mDevice->CreateDepthStencilView( pDepthStencil, &descDSV, &mDepthStencilView );
@@ -885,12 +837,5 @@ namespace Ogre
 		mName = name;
 
 		rebind(buffer);
-	}
-
-	//---------------------------------------------------------------------
-
-	D3D10RenderTexture::~D3D10RenderTexture()
-	{
-
 	}
 }

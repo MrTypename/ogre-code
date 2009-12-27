@@ -301,8 +301,6 @@ material Examples/BumpMapping/MultiLightTangentParity : Examples/BumpMapping/Mul
 
 }
 
-
-
 //---------------------------
 // Projective texture section
 //---------------------------
@@ -426,14 +424,14 @@ material Examples/FresnelReflectionRefraction
 			texture_unit
 			{
 				// Will be filled in at runtime
-				texture reflection
+				texture Reflection
 				tex_address_mode clamp
 			}
 			// Refraction
 			texture_unit
 			{
 				// Will be filled in at runtime
-				texture refraction
+				texture Refraction
 				tex_address_mode clamp
 			}
 		}

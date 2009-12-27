@@ -8,7 +8,7 @@ Copyright (c) 2000-2005 The OGRE Team
 Also see acknowledgements in Readme.html
 
 You may use this sample code for anything you like, it is not covered by the
-same license as the rest of the engine.
+LGPL like the rest of the engine.
 -----------------------------------------------------------------------------
 */
 
@@ -20,16 +20,6 @@ same license as the rest of the engine.
 */
 
 #include "crowd.h"
-inline Ogre::String operator +(const Ogre::String& l,const CEGUI::String& o)
-{
-	return l+o.c_str();
-}
-/*
-inline CEGUI::String operator +(const CEGUI::String& l,const Ogre::String& o)
-{
-	return l+o.c_str();
-}
-*/
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,7 +101,7 @@ int main(int argc, char **argv)
 	{
 
 		burnCPU();
-		vector <AnimationState*>::type::iterator it;
+		std::vector <AnimationState*>::iterator it;
 		for(it=animations.begin();it!=animations.end();it++)
 		{
 			(*it)->addTime(evt.timeSinceLastFrame);

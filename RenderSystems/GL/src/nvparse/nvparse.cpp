@@ -1,8 +1,6 @@
 #ifdef _WIN32
 #  define WIN32_LEAN_AND_MEAN
-#  if !defined(NOMINMAX) && defined(_MSC_VER)
-#	define NOMINMAX // required to stop windows.h messing up std::min
-#  endif
+#  define NOMINMAX // required to stop windows.h messing up std::min
 #  include <windows.h>
 #else
 #include <stdarg.h>

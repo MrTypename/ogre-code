@@ -4,26 +4,27 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2009 Torus Knot Software Ltd
+Copyright (c) 2006  Torus Knot Software Ltd
 Copyright (c) 2006 Matthias Fink, netAllied GmbH <matthias.fink@web.de>								
+Also see acknowledgements in Readme.html
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+
+You may alternatively use this source under the terms of a specific version of
+the OGRE Unrestricted License provided you have obtained such a license from
+Torus Knot Software Ltd.
 -----------------------------------------------------------------------------
 */
 
@@ -71,6 +72,8 @@ namespace Ogre
 		const Camera& cam, const Light& light, Matrix4 *out_view, Matrix4 *out_proj, 
 		Camera *out_cam) const
 	{
+		const Vector3& camDir = cam.getDerivedDirection();
+
 		// get the shadow frustum's far distance
 		Real shadowDist = light.getShadowFarDistance();
 		if (!shadowDist)
@@ -142,8 +145,8 @@ namespace Ogre
 				// set FOV to 120 degrees
 				mTempFrustum->setFOVy(Degree(120));
 
-				mTempFrustum->setNearClipDistance(light._deriveShadowNearClipDistance(&cam));
-				mTempFrustum->setFarClipDistance(light._deriveShadowFarClipDistance(&cam));
+				// set near clip distance like the camera
+				mTempFrustum->setNearClipDistance(cam.getNearClipDistance());
 
 				*out_proj = mTempFrustum->getProjectionMatrix();
 			}
@@ -155,8 +158,7 @@ namespace Ogre
 				out_cam->setDirection(lightDir);
 				out_cam->setPosition(light.getDerivedPosition());
 				out_cam->setFOVy(Degree(120));
-				out_cam->setNearClipDistance(light._deriveShadowNearClipDistance(&cam));
-				out_cam->setFarClipDistance(light._deriveShadowFarClipDistance(&cam));
+				out_cam->setNearClipDistance(cam.getNearClipDistance());
 			}
 		}
 		else if (light.getType() == Light::LT_SPOTLIGHT)
@@ -175,8 +177,8 @@ namespace Ogre
 				// set FOV slightly larger than spotlight range
 				mTempFrustum->setFOVy(light.getSpotlightOuterAngle() * 1.2);
 
-				mTempFrustum->setNearClipDistance(light._deriveShadowNearClipDistance(&cam));
-				mTempFrustum->setFarClipDistance(light._deriveShadowFarClipDistance(&cam));
+				// set near clip distance like the camera
+				mTempFrustum->setNearClipDistance(cam.getNearClipDistance());
 
 				*out_proj = mTempFrustum->getProjectionMatrix();
 			}
@@ -188,8 +190,7 @@ namespace Ogre
 				out_cam->setDirection(light.getDerivedDirection());
 				out_cam->setPosition(light.getDerivedPosition());
 				out_cam->setFOVy(light.getSpotlightOuterAngle() * 1.2);
-				out_cam->setNearClipDistance(light._deriveShadowNearClipDistance(&cam));
-				out_cam->setFarClipDistance(light._deriveShadowFarClipDistance(&cam));
+				out_cam->setNearClipDistance(cam.getNearClipDistance());
 			}
 		}
 	}
@@ -415,9 +416,6 @@ namespace Ogre
 		OgreAssert(light != NULL, "Light is NULL");
 		OgreAssert(texCam != NULL, "Camera (texture) is NULL");
 		mLightFrustumCameraCalculated = false;
-
-		texCam->setNearClipDistance(light->_deriveShadowNearClipDistance(cam));
-		texCam->setFarClipDistance(light->_deriveShadowFarClipDistance(cam));
 
 		// calculate standard shadow mapping matrix
 		Matrix4 LView, LProj;
