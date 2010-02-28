@@ -34,7 +34,6 @@ set(STATIC_INST_FILES
   Packages/FindFreeImage.cmake
   Packages/FindFreetype.cmake
   Packages/FindOpenGLES.cmake
-  Packages/FindOpenGLES2.cmake
   Packages/FindPOCO.cmake
   Packages/FindTBB.cmake
   Packages/FindZLIB.cmake
@@ -53,8 +52,6 @@ if (APPLE)
   set(STATIC_INST_FILES ${STATIC_INST_FILES}
     Packages/FindCarbon.cmake
     Packages/FindCocoa.cmake
-  )
-  set(STATIC_INST_FILES ${STATIC_INST_FILES}
     Packages/FindiPhoneSDK.cmake
   )
 endif ()

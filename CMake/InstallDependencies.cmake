@@ -10,20 +10,13 @@
 #####################################################
 # Install dependencies 
 #####################################################
-
-if (UNIX)
+if ((NOT APPLE) AND (NOT WIN32))
   return()
 endif()
 
-# determine if we have a common dependencies folder to install from.
-# this is not a fool-proof test, but it should be good enough.
-get_filename_component(OGRE_DEP1_DIR ${FREETYPE_INCLUDE_DIR}/../ ABSOLUTE)
-get_filename_component(OGRE_DEP2_DIR ${ZLIB_INCLUDE_DIR}/../ ABSOLUTE)
-if (OGRE_DEP1_DIR STREQUAL OGRE_DEP2_DIR)
-  set(OGRE_DEP_DIR ${OGRE_DEP1_DIR})
-else ()
-  return()
-endif ()
+# TODO - most of this file assumes a common dependencies root folder
+# This is not robust, we should instead source dependencies from their individual locations
+get_filename_component(OGRE_DEP_DIR ${OIS_INCLUDE_DIR}/../../ ABSOLUTE)
 
 option(OGRE_INSTALL_DEPENDENCIES "Install dependency libs needed for samples" TRUE)
 option(OGRE_COPY_DEPENDENCIES "Copy dependency libs to the build directory" TRUE)
@@ -37,22 +30,30 @@ endmacro()
 macro(install_release INPUT)
   if (EXISTS ${OGRE_DEP_DIR}/bin/release/${INPUT})
     install(FILES ${OGRE_DEP_DIR}/bin/release/${INPUT} DESTINATION bin/release CONFIGURATIONS Release None "")
-	install(FILES ${OGRE_DEP_DIR}/bin/release/${INPUT} DESTINATION bin/relwithdebinfo CONFIGURATIONS RelWithDebInfo)
+    install(FILES ${OGRE_DEP_DIR}/bin/release/${INPUT} DESTINATION bin/relwithdebinfo CONFIGURATIONS RelWithDebInfo)
 	install(FILES ${OGRE_DEP_DIR}/bin/release/${INPUT} DESTINATION bin/minsizerel CONFIGURATIONS MinSizeRel)
   endif ()
 endmacro()
 
 macro(copy_debug INPUT)
   if (EXISTS ${OGRE_DEP_DIR}/bin/debug/${INPUT})
-    configure_file(${OGRE_DEP_DIR}/bin/debug/${INPUT} ${OGRE_BINARY_DIR}/bin/debug/${INPUT} COPYONLY)
+    if (MINGW OR NMAKE)
+      configure_file(${OGRE_DEP_DIR}/bin/debug/${INPUT} ${OGRE_BINARY_DIR}/bin/${INPUT} COPYONLY)
+	else ()
+      configure_file(${OGRE_DEP_DIR}/bin/debug/${INPUT} ${OGRE_BINARY_DIR}/bin/debug/${INPUT} COPYONLY)
+	endif ()
   endif ()
 endmacro()
 
 macro(copy_release INPUT)
   if (EXISTS ${OGRE_DEP_DIR}/bin/release/${INPUT})
-    configure_file(${OGRE_DEP_DIR}/bin/release/${INPUT} ${OGRE_BINARY_DIR}/bin/release/${INPUT} COPYONLY)
-    configure_file(${OGRE_DEP_DIR}/bin/release/${INPUT} ${OGRE_BINARY_DIR}/bin/relwithdebinfo/${INPUT} COPYONLY)
-    configure_file(${OGRE_DEP_DIR}/bin/release/${INPUT} ${OGRE_BINARY_DIR}/bin/minsizerel/${INPUT} COPYONLY)
+    if (MINGW OR NMAKE)
+      configure_file(${OGRE_DEP_DIR}/bin/release/${INPUT} ${OGRE_BINARY_DIR}/bin/${INPUT} COPYONLY)
+	else ()
+      configure_file(${OGRE_DEP_DIR}/bin/release/${INPUT} ${OGRE_BINARY_DIR}/bin/release/${INPUT} COPYONLY)
+      configure_file(${OGRE_DEP_DIR}/bin/release/${INPUT} ${OGRE_BINARY_DIR}/bin/relwithdebinfo/${INPUT} COPYONLY)
+      configure_file(${OGRE_DEP_DIR}/bin/release/${INPUT} ${OGRE_BINARY_DIR}/bin/minsizerel/${INPUT} COPYONLY)
+	endif ()
   endif ()
 endmacro ()
 
@@ -177,7 +178,6 @@ if (OGRE_INSTALL_DEPENDENCIES)
 		PATTERN "system" EXCLUDE
 		PATTERN "test" EXCLUDE
 		PATTERN "tr1" EXCLUDE
-		PATTERN "tuple" EXCLUDE
 		PATTERN "typeof" EXCLUDE
 		PATTERN "units" EXCLUDE
 		PATTERN "unordered" EXCLUDE
@@ -200,15 +200,6 @@ if (OGRE_INSTALL_DEPENDENCIES)
 		
 	endif()
   endif()
-  
-  
-  # install GLES2 dlls
-  if (OGRE_BUILD_RENDERSYSTEM_GLES2)
-    install_debug(libEGL.dll)
-    install_debug(libGLESv2.dll)
-	install_release(libEGL.dll)
-	install_release(libGLESv2.dll)
-  endif ()
   
 endif ()
 
@@ -238,11 +229,4 @@ if (OGRE_COPY_DEPENDENCIES)
       copy_release(Cg.framework)
     endif ()
   endif ()
-  if (OGRE_BUILD_RENDERSYSTEM_GLES2)	
-	copy_debug(libEGL.dll)
-    copy_debug(libGLESv2.dll)
-	copy_release(libEGL.dll)
-	copy_release(libGLESv2.dll)
-  endif ()
-
 endif ()

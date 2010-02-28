@@ -57,7 +57,6 @@ namespace Ogre
 	class D3D10RenderWindow;
 	class D3D10Texture;
 	class D3D10TextureManager;
-	class D3D10DepthBuffer;
 	class D3D10Driver;
 	class D3D10DriverList;
 	class D3D10VideoMode;

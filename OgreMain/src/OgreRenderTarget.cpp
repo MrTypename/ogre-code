@@ -35,7 +35,6 @@ THE SOFTWARE.
 #include "OgreRenderTargetListener.h"
 #include "OgreRoot.h"
 #include "OgreRenderSystem.h"
-#include "OgreDepthBuffer.h"
 
 namespace Ogre {
 
@@ -44,9 +43,7 @@ namespace Ogre {
 		mActive(true),
 		mAutoUpdate(true),
 		mHwGamma(false), 
-		mFSAA(0),
-		mDepthBuffer(0),
-		mDepthBufferPoolId(DepthBuffer::POOL_DEFAULT)
+		mFSAA(0)
     {
         mTimer = Root::getSingleton().getTimer();
         resetStatistics();
@@ -61,9 +58,6 @@ namespace Ogre {
             fireViewportRemoved(i->second);
             OGRE_DELETE (*i).second;
         }
-
-		//DepthBuffer keeps track of us, avoid a dangling pointer
-		detachDepthBuffer();
 
 
         // Write closing message
@@ -100,53 +94,6 @@ namespace Ogre {
     {
         return mColourDepth;
     }
-	//-----------------------------------------------------------------------
-	void RenderTarget::setDepthBufferPool( uint16 poolId )
-	{
-		if( mDepthBufferPoolId != poolId )
-		{
-			mDepthBufferPoolId = poolId;
-			detachDepthBuffer();
-		}
-	}
-	//-----------------------------------------------------------------------
-	uint16 RenderTarget::getDepthBufferPool() const
-	{
-		return mDepthBufferPoolId;
-	}
-	//-----------------------------------------------------------------------
-	DepthBuffer* RenderTarget::getDepthBuffer() const
-	{
-		return mDepthBuffer;
-	}
-	//-----------------------------------------------------------------------
-	bool RenderTarget::attachDepthBuffer( DepthBuffer *depthBuffer )
-	{
-		bool retVal = false;
-
-		if( retVal = depthBuffer->isCompatible( this ) )
-		{
-			detachDepthBuffer();
-			mDepthBuffer = depthBuffer;
-			mDepthBuffer->_notifyRenderTargetAttached( this );
-		}
-
-		return retVal;
-	}
-	//-----------------------------------------------------------------------
-	void RenderTarget::detachDepthBuffer()
-	{
-		if( mDepthBuffer )
-		{
-			mDepthBuffer->_notifyRenderTargetDetached( this );
-			mDepthBuffer = 0;
-		}
-	}
-	//-----------------------------------------------------------------------
-	void RenderTarget::_detachDepthBuffer()
-	{
-		mDepthBuffer = 0;
-	}
 
     void RenderTarget::updateImpl(void)
     {

@@ -174,8 +174,6 @@ namespace Ogre {
         // Should it only be run for a certain light type?
         bool mRunOnlyForOneLightType;
         Light::LightTypes mOnlyLightType;
-		// With a specific light mask?
-		uint32 mLightMask;
 
         /// Shading options
         ShadeOptions mShadeOptions;
@@ -864,11 +862,6 @@ namespace Ogre {
 		void setStartLight(unsigned short startLight);
 		/** Gets the light index that this pass will start at in the light list. */
 		unsigned short getStartLight(void) const;
-
-		/** Sets the light mask which can be matched to specific light flags to be handled by this pass */
-		void setLightMask(uint32 mask);
-		/** Gets the light mask controlling which lights are used for this pass */
-		uint32 getLightMask() const;
 
         /** Sets the type of light shading required
         @note

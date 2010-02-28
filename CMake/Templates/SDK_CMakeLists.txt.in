@@ -22,8 +22,11 @@ set (CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 # Note that up to CMake 2.8.0 on MSVC the .pdbs are still referenced absolutely
 # This has been fixed with a patch so I expect that in future we will be able to use this
 # to pre-generate the sample projects for the SDK. 
-set(CMAKE_USE_RELATIVE_PATHS true)
-set(CMAKE_SUPPRESS_REGENERATION true)
+if(WIN32)
+  # This seems to break Xcode projects so definitely don't enable on Apple builds
+  set(CMAKE_USE_RELATIVE_PATHS true)
+  set(CMAKE_SUPPRESS_REGENERATION true)
+endif()
 
 project(OGRE)
 
@@ -34,7 +37,7 @@ if (WIN32 OR APPLE)
   set(OGRE_WORK_DIR "${OGRE_ROOT_DIR}")
   set(CMAKE_MODULE_PATH "${OGRE_ROOT_DIR}/cmake")
 elseif (UNIX)
-  get_filename_component(OGRE_ROOT_DIR "${OGRE_SOURCE_DIR}/../../../" ABSOLUTE)
+  get_filename_component(OGRE_ROOT_DIR "${OGRE_SOURCE_DIR}/../.." ABSOLUTE)
   set(OGRE_TEMPLATES_DIR "${OGRE_ROOT_DIR}/lib/OGRE/cmake")
   set(OGRE_WORK_DIR "${OGRE_ROOT_DIR}")
   set(CMAKE_MODULE_PATH "${OGRE_ROOT_DIR}/lib/OGRE/cmake")
@@ -113,6 +116,15 @@ include_directories(
   ${OIS_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/Common/include
 )
+if (APPLE)
+  if (OGRE_BUILD_PLATFORM_IPHONE)
+    include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/OGRE/iPhone")
+  else ()
+    # SDK's only include libraries built for i386
+    set(CMAKE_OSX_ARCHITECTURES "i386")
+    include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/OGRE/OSX")
+  endif ()
+endif (APPLE)
 
 if (OGRE_RTShaderSystem_FOUND)
 	add_definitions(-DUSE_RTSHADER_SYSTEM)
@@ -122,6 +134,15 @@ if (OGRE_RTShaderSystem_FOUND)
   		set(OGRE_LIBRARIES ${OGRE_LIBRARIES} ${OGRE_RTShaderSystem_LIBRARIES})
 	endif () 
 endif()
+
+if (UNIX AND NOT APPLE)
+  # on Linux, shipped samples will still be compiled with CMake, so we need
+  # the .cfg files in the build directory.
+  configure_file(${OGRE_SOURCE_DIR}/plugins.cfg ${OGRE_BINARY_DIR}/bin/plugins.cfg COPYONLY)
+  configure_file(${OGRE_SOURCE_DIR}/resources.cfg ${OGRE_BINARY_DIR}/bin/resources.cfg COPYONLY)
+  configure_file(${OGRE_SOURCE_DIR}/samples.cfg ${OGRE_BINARY_DIR}/bin/samples.cfg COPYONLY)
+  configure_file(${OGRE_SOURCE_DIR}/quakemap.cfg ${OGRE_BINARY_DIR}/bin/quakemap.cfg COPYONLY)
+endif ()
 
 
 if (OGRE_STATIC)
@@ -153,6 +174,10 @@ if (OGRE_STATIC)
   if (OGRE_RenderSystem_GL_FOUND)
     include_directories(${OGRE_RenderSystem_GL_INCLUDE_DIRS})
     set(OGRE_PLUGIN_LIBRARIES ${OGRE_PLUGIN_LIBRARIES} ${OGRE_RenderSystem_GL_LIBRARIES})
+  endif ()
+  if (OGRE_RenderSystem_GLES_FOUND)
+    include_directories(${OGRE_RenderSystem_GLES_INCLUDE_DIRS})
+    set(OGRE_PLUGIN_LIBRARIES ${OGRE_PLUGIN_LIBRARIES} ${OGRE_RenderSystem_GLES_LIBRARIES})
   endif ()
 endif ()
 

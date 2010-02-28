@@ -10,7 +10,6 @@
 # Configure Direct3D10 RenderSystem build
 
 set (HEADER_FILES
-  include/OgreD3D10DepthBuffer.h
   include/OgreD3D10Device.h
   include/OgreD3D10Driver.h
   include/OgreD3D10DriverList.h
@@ -43,7 +42,6 @@ set (HEADER_FILES
 )
 
 set (SOURCE_FILES
-  src/OgreD3D10DepthBuffer.cpp
   src/OgreD3D10Device.cpp
   src/OgreD3D10Driver.cpp
   src/OgreD3D10DriverList.cpp

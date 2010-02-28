@@ -40,7 +40,6 @@ THE SOFTWARE.
 #include "OgreWin32Context.h"
 #include "OgreWindowEventUtilities.h"
 #include "OgreGLPixelFormat.h"
-#include "OgreDepthBuffer.h"
 
 namespace Ogre {
 
@@ -90,7 +89,7 @@ namespace Ogre {
 		mIsFullScreen = fullScreen;
 		mClosed = false;		
 		mDisplayFrequency = 0;
-		mDepthBufferPoolId = DepthBuffer::POOL_DEFAULT;
+		mIsDepthBuffered = true;
 		mColourDepth = mIsFullScreen? 32 : GetDeviceCaps(GetDC(0), BITSPIXEL);
 		int left = -1; // Defaults to screen center
 		int top = -1; // Defaults to screen center
@@ -120,10 +119,7 @@ namespace Ogre {
 				top = StringConverter::parseInt(opt->second);
 
 			if ((opt = miscParams->find("depthBuffer")) != end)
-			{
-				mDepthBufferPoolId = StringConverter::parseBool(opt->second) ?
-												DepthBuffer::POOL_DEFAULT : DepthBuffer::POOL_NO_DEPTH;
-			}
+				mIsDepthBuffered = StringConverter::parseBool(opt->second);
 
 			if ((opt = miscParams->find("vsync")) != end)
 				vsync = StringConverter::parseBool(opt->second);

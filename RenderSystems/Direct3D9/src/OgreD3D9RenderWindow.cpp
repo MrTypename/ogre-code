@@ -37,7 +37,6 @@ THE SOFTWARE.
 #include "OgreRoot.h"
 #include "OgreWindowEventUtilities.h"
 #include "OgreD3D9DeviceManager.h"
-#include "OgreDepthBuffer.h"
 
 namespace Ogre
 {
@@ -331,8 +330,7 @@ namespace Ogre
 		mHeight = rc.bottom;
 
 		mName = name;
-		mDepthBufferPoolId = depthBuffer ? DepthBuffer::POOL_DEFAULT : DepthBuffer::POOL_NO_DEPTH;
-		mDepthBuffer = 0;
+		mIsDepthBuffered = depthBuffer;
 		mIsFullScreen = fullScreen;
 		mColourDepth = colourDepth;
 
@@ -513,7 +511,7 @@ namespace Ogre
 		presentParams->SwapEffect				= D3DSWAPEFFECT_DISCARD;
 		// triple buffer if VSync is on
 		presentParams->BackBufferCount			= mVSync ? 2 : 1;
-		presentParams->EnableAutoDepthStencil	= (mDepthBufferPoolId != DepthBuffer::POOL_NO_DEPTH);
+		presentParams->EnableAutoDepthStencil	= mIsDepthBuffered;
 		presentParams->hDeviceWindow			= mHWnd;
 		presentParams->BackBufferWidth			= mWidth;
 		presentParams->BackBufferHeight			= mHeight;
@@ -837,7 +835,7 @@ namespace Ogre
 	//-----------------------------------------------------------------------------
 	bool D3D9RenderWindow::isDepthBuffered() const
 	{
-		return (mDepthBufferPoolId != DepthBuffer::POOL_NO_DEPTH);
+		return mIsDepthBuffered;
 	}
 
 	//-----------------------------------------------------------------------------

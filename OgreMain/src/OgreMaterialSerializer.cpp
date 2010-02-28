@@ -3812,11 +3812,6 @@ namespace Ogre
                 }
             }
 
-			if(mDefaults || pPass->getLightMask() != 0xFFFFFFFF)
-			{
-				writeAttribute(3, "light_mask");
-				writeValue(StringConverter::toString(pPass->getLightMask()));
-			}
 
             if (pPass->getLightingEnabled())
             {

@@ -36,12 +36,10 @@ THE SOFTWARE.
 #include "OgreShaderCGProgramWriter.h"
 #include "OgreShaderHLSLProgramWriter.h"
 #include "OgreShaderGLSLProgramWriter.h"
-#include "OgreShaderGLSLESProgramWriter.h"
 #include "OgreShaderProgramProcessor.h"
 #include "OgreShaderCGProgramProcessor.h"
 #include "OgreShaderHLSLProgramProcessor.h"
 #include "OgreShaderGLSLProgramProcessor.h"
-#include "OgreShaderGLSLESProgramProcessor.h"
 #include "OgreGpuProgramManager.h"
 
 namespace Ogre {
@@ -171,7 +169,6 @@ void ProgramManager::createDefaultProgramWriterFactories()
 	// Add standard shader writer factories 
 	mProgramWriterFactories.push_back(OGRE_NEW ShaderProgramWriterCGFactory());
 	mProgramWriterFactories.push_back(OGRE_NEW ShaderProgramWriterGLSLFactory());
-	mProgramWriterFactories.push_back(OGRE_NEW ShaderProgramWriterGLSLESFactory());
 	mProgramWriterFactories.push_back(OGRE_NEW ShaderProgramWriterHLSLFactory());
 	
 	for (unsigned int i=0; i < mProgramWriterFactories.size(); ++i)
@@ -197,7 +194,6 @@ void ProgramManager::createDefaultProgramProcessors()
 	// Add standard shader processors
 	mDefaultProgramProcessors.push_back(OGRE_NEW CGProgramProcessor);
 	mDefaultProgramProcessors.push_back(OGRE_NEW GLSLProgramProcessor);
-	mDefaultProgramProcessors.push_back(OGRE_NEW GLSLESProgramProcessor);
 	mDefaultProgramProcessors.push_back(OGRE_NEW HLSLProgramProcessor);
 
 	for (unsigned int i=0; i < mDefaultProgramProcessors.size(); ++i)

@@ -128,13 +128,8 @@ namespace Ogre {
 			<< "L: " << mActLeft << " T: " << mActTop << " W: " << mActWidth << " H: " << mActHeight;
 #endif
 
-		 mUpdated = true;
-
-		for (ListenerList::iterator i = mListeners.begin(); i != mListeners.end(); ++i)
-		{
-			(*i)->viewportDimensionsChanged(this);
-		}
-	}
+        mUpdated = true;
+    }
 	//---------------------------------------------------------------------
 	int Viewport::getZOrder(void) const
 	{
@@ -328,9 +323,9 @@ namespace Ogre {
     {
 		return mCamera ? mCamera->_getNumRenderedBatches() : 0;
     }
-	//---------------------------------------------------------------------
-	void Viewport::setCamera(Camera* cam)
-	{
+    //---------------------------------------------------------------------
+    void Viewport::setCamera(Camera* cam)
+    {
 		if(mCamera)
 		{
 			if(mCamera->getViewport() == this)
@@ -338,25 +333,9 @@ namespace Ogre {
 				mCamera->_notifyViewport(0);
 			}
 		}
-
-		mCamera = cam;
-		if (cam)
-		{
-			// update aspect ratio of new camera if needed.
-			if (cam->getAutoAspectRatio())
-			{
-				cam->setAspectRatio((Real) mActWidth / (Real) mActHeight);
-			}
-#if OGRE_NO_VIEWPORT_ORIENTATIONMODE == 0
-			cam->setOrientationMode(mOrientationMode);
-#endif
-			cam->_notifyViewport(this);
-		}
-
-		for (ListenerList::iterator i = mListeners.begin(); i != mListeners.end(); ++i)
-		{
-			(*i)->viewportCameraChanged(this);
-		}
+        mCamera = cam;
+		_updateDimensions();
+		if(cam) mCamera->_notifyViewport(this);
     }
     //---------------------------------------------------------------------
 	void Viewport::setAutoUpdated(bool isAutoUpdated)
@@ -454,17 +433,4 @@ namespace Ogre {
         }
     }
 	//-----------------------------------------------------------------------
-	void Viewport::addListener(Listener* l)
-	{
-		if (std::find(mListeners.begin(), mListeners.end(), l) == mListeners.end())
-			mListeners.push_back(l);
-	}
-	//-----------------------------------------------------------------------
-	void Viewport::removeListener(Listener* l)
-	{
-		ListenerList::iterator i = std::find(mListeners.begin(), mListeners.end(), l);
-		if (i != mListeners.end())
-			mListeners.erase(i);
-	}
-
 }

@@ -206,6 +206,9 @@ namespace Ogre
 		{
 			D3D9RenderSystem* renderSystem = static_cast<D3D9RenderSystem*>(Root::getSingleton().getRenderSystem());
 
+			// Clean up depth stencil surfaces
+			renderSystem->_cleanupDepthStencils(mpDevice);	
+
 			RenderWindowToResorucesIterator it = mMapRenderWindowToResoruces.begin();
 
 			while (it != mMapRenderWindowToResoruces.end())
@@ -306,11 +309,7 @@ namespace Ogre
 	{	
 		// Lock access to rendering device.
 		D3D9RenderSystem::getResourceManager()->lockDeviceAccess();
-
-		//Remove _all_ depth buffers created by this device
-		D3D9RenderSystem* renderSystem = static_cast<D3D9RenderSystem*>(Root::getSingleton().getRenderSystem());
-		renderSystem->_cleanupDepthBuffers( mpDevice );
-
+		
 		release();
 		
 		RenderWindowToResorucesIterator it = mMapRenderWindowToResoruces.begin();
@@ -385,7 +384,7 @@ namespace Ogre
 
 
 		// Cleanup depth stencils surfaces.
-		renderSystem->_cleanupDepthBuffers();
+		renderSystem->_cleanupDepthStencils(mpDevice);
 
 		updatePresentationParameters();
 
@@ -1086,13 +1085,6 @@ namespace Ogre
 					mpDevice->SetDepthStencilSurface(renderWindowResources->depthBuffer);
 				}
 			}
-
-			//Tell the RS we have a depth buffer we created it needs to add to the default pool
-			D3D9RenderSystem* renderSystem = static_cast<D3D9RenderSystem*>(Root::getSingleton().getRenderSystem());
-			DepthBuffer *depthBuf = renderSystem->_addManualDepthBuffer( renderWindowResources->depthBuffer );
-
-			//Don't forget we want this window to use _this_ depth buffer
-			renderWindow->attachDepthBuffer( depthBuf );
 		}
 
 		renderWindowResources->acquired = true; 

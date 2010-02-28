@@ -57,6 +57,8 @@ endif ()
 include(OgreGetVersion)
 ogre_get_version(${OGRE_SOURCE_DIR}/OgreMain/include/OgrePrerequisites.h)
 message(STATUS "Configuring OGRE ${OGRE_VERSION}")
+# Configure version file for use by scripts
+configure_file("${OGRE_TEMPLATES_DIR}/version.txt.in" "${OGRE_BINARY_DIR}/version.txt" @ONLY)
 
 if (NOT APPLE)
   # Create debug libraries with _d postfix
@@ -71,6 +73,10 @@ if (CMAKE_COMPILER_IS_GNUCXX)
   endif ()
 endif ()
 if (MSVC)
+  if (CMAKE_BUILD_TOOL STREQUAL "nmake")
+    # set variable to state that we are using nmake makefiles
+	set(NMAKE TRUE)
+  endif ()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:fast")
   # Enable intrinsics on MSVC in debug mode
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Oi")
@@ -164,8 +170,7 @@ if (OGRE_BUILD_PLATFORM_IPHONE)
   set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_UNIVERSAL_IPHONE_OS)")
   set(CMAKE_EXE_LINKER_FLAGS "-framework Foundation -framework CoreGraphics -framework QuartzCore -framework UIKit ${OGRE_SOURCE_DIR}/iPhoneDependencies/lib/release/libboost_date_time.a ${OGRE_SOURCE_DIR}/iPhoneDependencies/lib/release/libboost_thread.a")
   set(XCODE_ATTRIBUTE_SDKROOT iphoneos3.0)
-  set(OGRE_BUILD_RENDERSYSTEM_GLES TRUE CACHE BOOL "Forcing OpenGL ES 1.x RenderSystem for iPhone" FORCE)
-  set(OGRE_BUILD_RENDERSYSTEM_GLES2 TRUE CACHE BOOL "Forcing OpenGL ES 2.x RenderSystem for iPhone" FORCE)
+  set(OGRE_BUILD_RENDERSYSTEM_GLES TRUE CACHE BOOL "Forcing OpenGL ES RenderSystem for iPhone" FORCE)
   set(OGRE_STATIC TRUE CACHE BOOL "Forcing static build for iPhone" FORCE)
   set(OGRE_SET_USE_BOOST TRUE CACHE BOOL "Forcing use of Boost libraries for iPhone" FORCE)
   set(OGRE_USE_BOOST TRUE CACHE BOOL "Forcing use of Boost libraries for iPhone" FORCE)
@@ -193,7 +198,6 @@ elseif (APPLE AND NOT OGRE_BUILD_PLATFORM_IPHONE)
   # Make sure that the OpenGL render system is selected for non-iPhone Apple builds
   set(OGRE_BUILD_RENDERSYSTEM_GL TRUE)
   set(OGRE_BUILD_RENDERSYSTEM_GLES FALSE)
-  set(OGRE_BUILD_RENDERSYSTEM_GLES2 FALSE)
 endif ()
 
 # Enable the PVRTC codec if OpenGL ES is being built
@@ -211,9 +215,8 @@ cmake_dependent_option(OGRE_BUILD_RENDERSYSTEM_D3D9 "Build Direct3D9 RenderSyste
 cmake_dependent_option(OGRE_BUILD_RENDERSYSTEM_D3D10 "Build Direct3D10 RenderSystem [EXPERIMENTAL]" FALSE "WIN32;DirectX_D3D10_FOUND" FALSE)
 cmake_dependent_option(OGRE_BUILD_RENDERSYSTEM_D3D11 "Build Direct3D11 RenderSystem [EXPERIMENTAL]" FALSE "WIN32;DirectX_D3D11_FOUND" FALSE)
 cmake_dependent_option(OGRE_BUILD_RENDERSYSTEM_GL "Build OpenGL RenderSystem" TRUE "OPENGL_FOUND;NOT OGRE_BUILD_PLATFORM_IPHONE" FALSE)
-cmake_dependent_option(OGRE_BUILD_RENDERSYSTEM_GLES "Build OpenGL ES 1.x RenderSystem" FALSE "OPENGLES_FOUND" FALSE)
-cmake_dependent_option(OGRE_BUILD_RENDERSYSTEM_GLES2 "Build OpenGL ES 2.x RenderSystem" FALSE "OPENGLES2_FOUND" FALSE)
-cmake_dependent_option(OGRE_BUILD_PLATFORM_IPHONE "Build Ogre for iPhone OS" FALSE "iPhoneSDK_FOUND;OPENGLES_FOUND;OPENGLES2_FOUND" FALSE)
+cmake_dependent_option(OGRE_BUILD_RENDERSYSTEM_GLES "Build OpenGL ES RenderSystem" FALSE "OPENGLES_FOUND" FALSE)
+cmake_dependent_option(OGRE_BUILD_PLATFORM_IPHONE "Build Ogre for iPhone OS" FALSE "iPhoneSDK_FOUND;OPENGLES_FOUND" FALSE)
 option(OGRE_BUILD_PLUGIN_BSP "Build BSP SceneManager plugin" TRUE)
 option(OGRE_BUILD_PLUGIN_OCTREE "Build Octree SceneManager plugin" TRUE)
 option(OGRE_BUILD_PLUGIN_PCZ "Build PCZ SceneManager plugin" TRUE)
@@ -256,12 +259,26 @@ option(OGRE_INSTALL_TOOLS "Install Ogre tools." TRUE)
 option(OGRE_INSTALL_DOCS "Install documentation." FALSE)
 option(OGRE_INSTALL_SAMPLES_SOURCE "Install samples source files." FALSE)
 cmake_dependent_option(OGRE_INSTALL_PDB "Install debug pdb files" FALSE "MSVC" FALSE)
-option(OGRE_FULL_RPATH "Build executables with the full required RPATH to run from their install location." FALSE)
+cmake_dependent_option(OGRE_FULL_RPATH "Build executables with the full required RPATH to run from their install location." FALSE "NOT WIN32" FALSE)
 option(OGRE_PROFILING "Enable internal profiling support." FALSE)
 cmake_dependent_option(OGRE_CONFIG_STATIC_LINK_CRT "Statically link the MS CRT dlls (msvcrt)" FALSE "MSVC" FALSE)
 
 # hide advanced options
-mark_as_advanced(OGRE_BUILD_RTSHADERSYSTEM_CORE_SHADERS OGRE_BUILD_RTSHADERSYSTEM_EXT_SHADERS)
+mark_as_advanced(
+  OGRE_BUILD_RTSHADERSYSTEM_CORE_SHADERS 
+  OGRE_BUILD_RTSHADERSYSTEM_EXT_SHADERS
+  OGRE_CONFIG_DOUBLE
+  OGRE_CONFIG_ALLOCATOR
+  OGRE_CONFIG_CONTAINERS_USE_CUSTOM_ALLOCATOR
+  OGRE_CONFIG_STRING_USE_CUSTOM_ALLOCATOR
+  OGRE_CONFIG_MEMTRACK_DEBUG
+  OGRE_CONFIG_MEMTRACK_RELEASE
+  OGRE_CONFIG_NEW_COMPILERS
+  OGRE_INSTALL_SAMPLES_SOURCE
+  OGRE_FULL_RPATH
+  OGRE_PROFILING
+  OGRE_CONFIG_STATIC_LINK_CRT
+)
 
 ###################################################################
 # configure global build settings based on selected build options

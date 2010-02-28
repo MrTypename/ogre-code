@@ -84,10 +84,7 @@ namespace Ogre {
 		/// Notify TextureBuffer of destruction of render target
 		virtual void _clearSliceRTT(size_t zoffset)
 		{
-			if (mSliceTRT.size() > zoffset)
-			{
-				mSliceTRT[zoffset] = 0;
-			}
+			mSliceTRT[zoffset] = 0;
 		}
 
 		D3D11Texture * getParentTexture() const;
